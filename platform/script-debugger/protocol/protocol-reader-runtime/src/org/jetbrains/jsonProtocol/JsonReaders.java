@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
@@ -20,6 +21,27 @@ public final class JsonReaders {
       return reader.nextString();
     }
   };
+
+  public static <T extends Enum<T>> List<T> readEnumArray(@NotNull JsonReaderEx reader, @NotNull Class<T> enumClass) {
+    return readObjectArray(reader, new EnumFactory<>(enumClass));
+  }
+
+  public static double[] readDoubleArray(JsonReaderEx reader) {
+    checkIsNull(reader);
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return new double[0];
+    }
+
+    DoubleArrayList result = new DoubleArrayList();
+    do {
+      result.add(reader.nextDouble());
+    }
+    while (reader.hasNext());
+    reader.endArray();
+    return result.toDoubleArray();
+  }
 
   private JsonReaders() {
   }
@@ -94,6 +116,19 @@ public final class JsonReaders {
     }
     catch (IllegalArgumentException ignored) {
       return Enum.valueOf(enumClass, "NO_ENUM_CONST");
+    }
+  }
+
+  public static final class EnumFactory<T extends Enum<T>> extends ObjectFactory<T> {
+    private final Class<T> enumClass;
+
+    public EnumFactory(Class<T> enumClass) {
+      this.enumClass = enumClass;
+    }
+
+    @Override
+    public T read(JsonReaderEx reader) {
+      return readEnum(reader, enumClass);
     }
   }
 
@@ -221,21 +256,15 @@ public final class JsonReaders {
     return result.toLongArray();
   }
 
-  public static double[] readDoubleArray(JsonReaderEx reader) {
-    checkIsNull(reader);
-    reader.beginArray();
-    if (!reader.hasNext()) {
-      reader.endArray();
-      return new double[]{0};
-    }
+  public static final class WrapperFactory<T> extends ObjectFactory<T> {
+    private final Function1<? super JsonReaderEx, ? extends T> innerReader;
 
-    DoubleArrayList result = new DoubleArrayList();
-    do {
-      result.add(reader.nextDouble());
+    public WrapperFactory(Function1<? super JsonReaderEx, ? extends T> reader) { innerReader = reader; }
+
+    @Override
+    public T read(JsonReaderEx reader) {
+      return innerReader.invoke(reader);
     }
-    while (reader.hasNext());
-    reader.endArray();
-    return result.toDoubleArray();
   }
 
   public static int[] readIntArray(JsonReaderEx reader) {

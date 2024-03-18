@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
 import com.intellij.lexer.Lexer
@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.jetbrains.python.requirements.lexer.RequirementsLexerAdapter
-import com.jetbrains.python.requirements.psi.RequirementsTypes
 
 
 class RequirementsSyntaxHighlighter : SyntaxHighlighterBase() {
@@ -21,31 +20,31 @@ class RequirementsSyntaxHighlighter : SyntaxHighlighterBase() {
   override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey?> {
     return when (tokenType) {
       TokenType.BAD_CHARACTER -> BAD_CHAR_KEYS
-      RequirementsTypes.AND -> OPERATOR_KEYS
-      RequirementsTypes.COMMENT -> COMMENT_KEYS
-      RequirementsTypes.CONSTRAINT -> IDENTIFIER_KEYS
-      RequirementsTypes.EDITABLE -> IDENTIFIER_KEYS
-      RequirementsTypes.ENV_VAR -> ENV_VAR_KEYS
-      RequirementsTypes.EXTRA_INDEX_URL -> IDENTIFIER_KEYS
-      RequirementsTypes.FIND_LINKS -> IDENTIFIER_KEYS
-      RequirementsTypes.IDENTIFIER -> IDENTIFIER_KEYS
-      RequirementsTypes.IN -> OPERATOR_KEYS
-      RequirementsTypes.INDEX_URL -> URL_KEYS
-      RequirementsTypes.NO_BINARY -> IDENTIFIER_KEYS
-      RequirementsTypes.NO_INDEX -> IDENTIFIER_KEYS
-      RequirementsTypes.NOT -> OPERATOR_KEYS
-      RequirementsTypes.ONLY_BINARY -> IDENTIFIER_KEYS
-      RequirementsTypes.OR -> OPERATOR_KEYS
-      RequirementsTypes.PRE -> IDENTIFIER_KEYS
-      RequirementsTypes.PREFER_BINARY -> IDENTIFIER_KEYS
-      RequirementsTypes.PYTHON_STR_C -> PYTHON_STR_C_KEYS
-      RequirementsTypes.REFER -> IDENTIFIER_KEYS
-      RequirementsTypes.REQUIRE_HASHES -> IDENTIFIER_KEYS
-      RequirementsTypes.SEMICOLON -> SEMICOLON_KEYS
-      RequirementsTypes.SHARP -> SHARP_KEYS
-      RequirementsTypes.TRUSTED_HOST -> IDENTIFIER_KEYS
-      RequirementsTypes.USE_FEATURE -> IDENTIFIER_KEYS
-      RequirementsTypes.VERSION -> VERSION_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.AND -> OPERATOR_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.COMMENT -> COMMENT_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.CONSTRAINT -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.EDITABLE -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.ENV_VAR -> ENV_VAR_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.EXTRA_INDEX_URL -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.FIND_LINKS -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.IDENTIFIER -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.IN -> OPERATOR_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.INDEX_URL -> URL_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.NO_BINARY -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.NO_INDEX -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.NOT -> OPERATOR_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.ONLY_BINARY -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.OR -> OPERATOR_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.PRE -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.PREFER_BINARY -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.PYTHON_STR_C -> PYTHON_STR_C_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.REFER -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.REQUIRE_HASHES -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.SEMICOLON -> SEMICOLON_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.SHARP -> SHARP_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.TRUSTED_HOST -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.USE_FEATURE -> IDENTIFIER_KEYS
+      com.jetbrains.python.requirements.psi.RequirementsTypes.VERSION -> VERSION_KEYS
       else -> EMPTY_KEYS
     }
   }

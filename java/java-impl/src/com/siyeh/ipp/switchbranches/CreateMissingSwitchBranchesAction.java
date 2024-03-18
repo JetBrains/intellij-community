@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.switchbranches;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
@@ -11,6 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CreateMissingSwitchBranchesAction extends PsiUpdateModCommandAction<PsiSwitchBlock> {
+public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommandAction<PsiSwitchBlock> {
   private static final int MAX_NUMBER_OF_BRANCHES = 100;
   private List<Value> myAllValues;
 
@@ -39,7 +39,7 @@ public class CreateMissingSwitchBranchesAction extends PsiUpdateModCommandAction
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock block, @NotNull ModPsiUpdater updater) {
-    if (block instanceof PsiSwitchExpression && !HighlightingFeature.SWITCH_EXPRESSION.isAvailable(block)) {
+    if (block instanceof PsiSwitchExpression && !PsiUtil.isAvailable(JavaFeature.SWITCH_EXPRESSION, block)) {
       // Do not suggest if switch expression is not supported as we may generate unparseable code with 'yield' statement
       return;
     }

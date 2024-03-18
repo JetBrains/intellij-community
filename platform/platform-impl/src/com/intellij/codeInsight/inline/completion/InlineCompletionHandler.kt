@@ -2,22 +2,29 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingTracker
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -28,13 +35,14 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
+import kotlinx.coroutines.flow.withIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -49,6 +57,8 @@ class InlineCompletionHandler(
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
+
+  private var customDocumentChangesAllowed = false
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -114,10 +124,13 @@ class InlineCompletionHandler(
   @RequiresWriteLock
   @RequiresBlockingContext
   fun insert() {
+    ThreadingAssertions.assertEventDispatchThread()
+    ThreadingAssertions.assertWriteAccess()
+
     val session = InlineCompletionSession.getOrNull(editor) ?: return
     val context = session.context
     val offset = context.startOffset() ?: return
-    trace(InlineCompletionEventType.Insert)
+    traceBlocking(InlineCompletionEventType.Insert)
 
     val elements = context.state.elements.map { it.element }
     val textToInsert = context.textToInsert()
@@ -129,6 +142,7 @@ class InlineCompletionHandler(
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
     PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
+    traceBlocking(InlineCompletionEventType.AfterInsert)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
   }
@@ -136,13 +150,15 @@ class InlineCompletionHandler(
   @RequiresEdt
   @RequiresBlockingContext
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
+    ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!context.isDisposed)
-    trace(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
+    traceBlocking(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
 
     InlineCompletionSession.remove(editor)
     sessionManager.sessionRemoved()
   }
 
+  @RequiresBlockingContext
   fun cancel(finishType: FinishType = FinishType.OTHER) {
     executor.cancel()
     application.invokeAndWait {
@@ -156,29 +172,31 @@ class InlineCompletionHandler(
     currentCoroutineContext().ensureActive()
 
     val context = session.context
-    val offset = request.endOffset
-
     val result = Result.runCatching {
-      val suggestion = request(session.provider, request)
+      ensureDocumentAndFileSynced(request.file.project, request.document)
+      var variants = request(session.provider, request).getVariants()
+      if (variants.size > InlineCompletionSuggestion.MAX_VARIANTS_NUMBER) {
+        val provider = session.provider
+        LOG.warn("$provider gave too many variants: ${variants.size} > ${InlineCompletionSuggestion.MAX_VARIANTS_NUMBER}.")
+        variants = variants.take(InlineCompletionSuggestion.MAX_VARIANTS_NUMBER)
+      }
+      if (variants.isEmpty()) {
+        withContext(Dispatchers.EDT) {
+          coroutineToIndicator {
+            traceBlocking(InlineCompletionEventType.NoVariants)
+          }
+        }
+        return@runCatching
+      }
 
-      // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
-      withContext(Dispatchers.EDT) {
-        suggestion.suggestionFlow.flowOn(Dispatchers.Default)
-          .onEmpty {
-            coroutineToIndicator {
-              trace(InlineCompletionEventType.Empty)
-              hide(context, FinishType.EMPTY)
-            }
+      coroutineScope {
+        // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
+        withContext(Dispatchers.EDT) {
+          val variantsComputer = coroutineToIndicator {
+            getVariantsComputer(variants, context, this@coroutineScope)
           }
-          .onCompletion {
-            if (it == null && !suggestion.isUserDataEmpty) {
-              suggestion.copyUserDataTo(context)
-            }
-          }
-          .collectIndexed { index, it ->
-            ensureActive()
-            showInlineElement(it, index, offset, context)
-          }
+          session.assignVariants(variantsComputer)
+        }
       }
     }
 
@@ -203,11 +221,13 @@ class InlineCompletionHandler(
     cause: Throwable?,
     context: InlineCompletionContext
   ) {
-    trace(InlineCompletionEventType.Completion(cause, isActive))
     if (cause != null && !context.isDisposed) {
       hide(context, FinishType.ERROR)
-      return
     }
+    if (!context.isDisposed && context.state.elements.isEmpty()) {
+      hide(context, FinishType.EMPTY)
+    }
+    traceBlocking(InlineCompletionEventType.Completion(cause, isActive))
   }
 
   /**
@@ -236,15 +256,37 @@ class InlineCompletionHandler(
       invokeEvent(event)
     }
     else {
-      sessionManager.invalidate()
+      if (!customDocumentChangesAllowed) {
+        sessionManager.invalidate()
+      }
     }
   }
 
-  private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
+  /**
+   * All the document events (except typings) that appear while executing [block] do not clear the current session
+   * and do not change anything in the state.
+   *
+   * Intended to be used to customly change a document when reacting to events.
+   *
+   * **This API is highly experimental**.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  fun <T> withIgnoringDocumentChanges(block: () -> T): T {
+    ThreadingAssertions.assertEventDispatchThread()
+    val currentCustomDocumentChangesAllowed = customDocumentChangesAllowed
+    customDocumentChangesAllowed = true
+    val result = block()
+    customDocumentChangesAllowed = currentCustomDocumentChangesAllowed
+    return result
+  }
+
+  private suspend fun request(
+    provider: InlineCompletionProvider,
+    request: InlineCompletionRequest
+  ): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
-      coroutineToIndicator {
-        trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
-      }
+      trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
     }
     return provider.getSuggestion(request)
   }
@@ -267,18 +309,23 @@ class InlineCompletionHandler(
     }
   }
 
-  @RequiresEdt
-  private suspend fun showInlineElement(
-    element: InlineCompletionElement,
-    index: Int,
-    offset: Int,
-    context: InlineCompletionContext
-  ) {
-    coroutineToIndicator { trace(InlineCompletionEventType.Show(element, index)) }
-    context.renderElement(element, offset)
+  private suspend fun ensureDocumentAndFileSynced(project: Project, document: Document) {
+    val documentManager = PsiDocumentManager.getInstance(project)
+    val isCommitted = readAction { documentManager.isCommitted(document) }
+    if (isCommitted) {
+      // We do not need one big readAction: it's enough to have them synced at this moment
+      return
+    }
+    coroutineToIndicator {
+      // documentManager.commitAllDocuments/commitDocument takes too much EDT and non-cancellable: performance tests fail
+      // constrainedReadAction takes too much time to finish (because no explicit call of 'commit')
+      // This method is the best choice I've found: cancellable, doesn't occupy EDT, fast
+      documentManager.commitAndRunReadAction { }
+    }
   }
 
   @RequiresEdt
+  @RequiresBlockingContext
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
     val presentable = element.toPresentable()
     presentable.render(editor, endOffset() ?: startOffset)
@@ -288,23 +335,91 @@ class InlineCompletionHandler(
   private fun createSessionManager(): InlineCompletionSessionManager {
     return object : InlineCompletionSessionManager() {
       override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
-        val context = session.context
+        ThreadingAssertions.assertEventDispatchThread()
         when (result) {
-          is UpdateSessionResult.Overtyped -> {
-            trace(InlineCompletionEventType.Change(result.overtypedLength))
-            editor.inlayModel.execute(true) {
-              context.clear()
-              result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }
-            }
-            if (context.textToInsert().isEmpty()) {
-              hide(context, FinishType.TYPED)
-            }
+          UpdateSessionResult.Invalidated -> hide(session.context, FinishType.INVALIDATED)
+          UpdateSessionResult.Emptied -> hide(session.context, FinishType.TYPED)
+          UpdateSessionResult.Succeeded -> Unit
+        }
+      }
+    }
+  }
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  private fun getVariantsComputer(
+    variants: List<InlineCompletionVariant>,
+    context: InlineCompletionContext,
+    scope: CoroutineScope
+  ): InlineCompletionVariantsComputer {
+    return object : InlineCompletionVariantsComputer(variants) {
+      private val job = scope.launch(Dispatchers.EDT) {
+        val allVariantsEmpty = AtomicBoolean(true)
+        for ((variantIndex, variant) in variants.withIndex()) {
+          val isEmpty = AtomicBoolean(false)
+          val isSuccess = variantComputing(variantIndex) {
+            variant.elements.flowOn(Dispatchers.Default)
+              .onEmpty {
+                trace(InlineCompletionEventType.Empty(variantIndex))
+                isEmpty.set(true)
+              }
+              .withIndex()
+              .collect { (elementIndex, element) ->
+                ensureActive()
+                trace(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
+                coroutineToIndicator { elementComputed(variantIndex, elementIndex, element) }
+                allVariantsEmpty.set(false)
+              }
           }
-          is UpdateSessionResult.Same -> Unit
-          UpdateSessionResult.Invalidated -> {
-            hide(context, FinishType.INVALIDATED)
+
+          if (isSuccess) {
+            trace(InlineCompletionEventType.VariantComputed(variantIndex))
+          }
+
+          if ((!isSuccess || isEmpty.get()) && allVariantsEmpty.get()) {
+            if (variantIndex < variants.size - 1) {
+              coroutineToIndicator { forceNextVariant() }
+            }
+            else {
+              trace(InlineCompletionEventType.NoVariants)
+            }
           }
         }
+      }
+
+      override fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
+        ThreadingAssertions.assertEventDispatchThread()
+        context.renderElement(element, context.expectedStartOffset)
+        traceBlocking(InlineCompletionEventType.Show(variantIndex, element, elementIndex))
+      }
+
+      override fun disposeCurrentVariant() {
+        ThreadingAssertions.assertEventDispatchThread()
+        context.clear()
+      }
+
+      override fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
+        ThreadingAssertions.assertEventDispatchThread()
+        traceBlocking(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
+      }
+
+      override fun variantChanged(variantIndex: Int, oldText: String, newText: String) {
+        ThreadingAssertions.assertEventDispatchThread()
+        traceBlocking(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
+      }
+
+      override fun variantInvalidated(variantIndex: Int) {
+        ThreadingAssertions.assertEventDispatchThread()
+        traceBlocking(InlineCompletionEventType.Invalidated(variantIndex))
+      }
+
+      override fun dataChanged() {
+        currentVariant().data.copyUserDataTo(context)
+      }
+
+      override fun dispose() {
+        super.dispose()
+        job.cancel()
       }
     }
   }
@@ -325,12 +440,19 @@ class InlineCompletionHandler(
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun trace(event: InlineCompletionEventType) {
+  private fun traceBlocking(event: InlineCompletionEventType) {
+    ThreadingAssertions.assertEventDispatchThread()
     eventListeners.getMulticaster().on(event)
+  }
+
+  @RequiresEdt
+  private suspend fun trace(event: InlineCompletionEventType) {
+    coroutineToIndicator { traceBlocking(event) }
   }
 
   @TestOnly
   suspend fun awaitExecution() {
+    ThreadingAssertions.assertEventDispatchThread()
     executor.awaitAll()
   }
 

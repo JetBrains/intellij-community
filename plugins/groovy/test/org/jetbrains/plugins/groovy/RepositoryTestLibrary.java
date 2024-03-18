@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -54,9 +55,14 @@ public final class RepositoryTestLibrary implements TestLibrary {
     model.findLibraryOrderEntry(library).setScope(myDependencyScope);
   }
 
-  public static Collection<OrderRoot> loadRoots(Project project, String coordinates) {
+  public String[] getCoordinates() {
+    return myCoordinates;
+  }
+
+  public static Collection<OrderRoot> loadRoots(Project project, String coordinates, RemoteRepositoryDescription... additional) {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, true);
-    Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, getRemoteRepositoryDescriptions());
+    Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null,
+                                                                             ContainerUtil.append(getRemoteRepositoryDescriptions(), additional));
     assert !roots.isEmpty();
     return roots;
   }

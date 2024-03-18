@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins.advertiser
@@ -12,10 +12,10 @@ import org.jetbrains.annotations.Nls
 
 @Serializable
 data class PluginData(
-  val pluginIdString: String = "",
-  @NlsSafe val nullablePluginName: String? = null,
-  val isBundled: Boolean = false,
-  val isFromCustomRepository: Boolean = false,
+  @JvmField val pluginIdString: String = "",
+  @NlsSafe @JvmField val nullablePluginName: String? = null,
+  @JvmField val isBundled: Boolean = false,
+  @JvmField val isFromCustomRepository: Boolean = false,
 ) : Comparable<PluginData> {
   val pluginId: PluginId
     get() = PluginId.getId(pluginIdString)
@@ -38,8 +38,8 @@ data class PluginData(
 
 @Serializable
 data class FeaturePluginData(
-  val displayName: @Nls String = "",
-  val pluginData: PluginData = PluginData(),
+  @JvmField val displayName: @Nls String = "",
+  @JvmField val pluginData: PluginData = PluginData(),
 )
 
 @Serializable
@@ -47,9 +47,8 @@ data class PluginDataSet(val dataSet: Set<PluginData> = emptySet())
 
 @Serializable
 data class PluginFeatureMap(
-  val featureMap: Map<String, PluginDataSet> = emptyMap(),
-  val lastUpdateTime: Long = 0L,
+  @JvmField val featureMap: Map<String, PluginDataSet> = emptyMap(),
+  @JvmField val lastUpdateTime: Long = 0L,
 ) {
-
   fun get(implementationName: String): Set<PluginData> = featureMap.get(implementationName)?.dataSet ?: emptySet()
 }

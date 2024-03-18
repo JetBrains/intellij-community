@@ -4,12 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.util.*
-import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import com.intellij.collaboration.ui.util.name
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
 
 internal class GitLabMergeRequestSubmitReviewAction(
   parentCs: CoroutineScope,

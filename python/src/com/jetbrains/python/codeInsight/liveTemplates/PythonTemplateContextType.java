@@ -64,7 +64,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     return capture.accepts(element, new ProcessingContext());
   }
 
-  public static class General extends PythonTemplateContextType {
+  public static final class General extends PythonTemplateContextType {
 
     public General() {
       super("Python"); //NON-NLS
@@ -76,7 +76,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     }
   }
 
-  public static class Class extends PythonTemplateContextType {
+  public static final class Class extends PythonTemplateContextType {
     public Class() {
       super(PyBundle.message("live.template.context.class"));
     }
@@ -87,7 +87,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     }
   }
 
-  public static class TopLevel extends PythonTemplateContextType {
+  public static final class TopLevel extends PythonTemplateContextType {
     public TopLevel() {
       super(PyBundle.message("live.template.context.top.level"));
     }

@@ -22,6 +22,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -42,7 +43,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CloneableImplementsCloneInspection extends BaseInspection {
+public final class CloneableImplementsCloneInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -125,7 +126,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       }
       @NonNls final StringBuilder methodText = new StringBuilder();
       final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
-      if (PsiUtil.isLanguageLevel5OrHigher(aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");
       }
       final String className = aClass.getName();

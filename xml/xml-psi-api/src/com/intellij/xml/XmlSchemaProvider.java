@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml;
 
@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.psi.PsiDirectory;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,14 +21,14 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class XmlSchemaProvider {
+public abstract class XmlSchemaProvider implements PossiblyDumbAware {
   public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.schemaProvider");
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
     if (file.getProject().isDefault()) return null;
     final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
-    for (XmlSchemaProvider provider: EP_NAME.getExtensionList()) {
+    for (XmlSchemaProvider provider : EP_NAME.getExtensionList()) {
       if (dumb && !DumbService.isDumbAware(provider)) {
         continue;
       }
@@ -46,8 +46,7 @@ public abstract class XmlSchemaProvider {
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @NotNull PsiFile baseFile) {
-    final PsiDirectory directory = baseFile.getParent();
-    final Module module = ModuleUtilCore.findModuleForPsiElement(directory == null ? baseFile : directory);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(baseFile);
     return findSchema(namespace, module, baseFile);
   }
 
@@ -64,8 +63,9 @@ public abstract class XmlSchemaProvider {
   }
 
   /**
-   * Provides specific namespaces for given xml file.
-   * @param file an xml or jsp file.
+   * Provides specific namespaces for given XML file.
+   *
+   * @param file    XML or JSP file.
    * @param tagName optional
    * @return available namespace uris, or {@code null} if the provider did not recognize the file.
    */

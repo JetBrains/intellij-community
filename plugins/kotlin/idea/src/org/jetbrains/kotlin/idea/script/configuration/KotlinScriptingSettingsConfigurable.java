@@ -101,7 +101,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
                 settings.setAutoReloadConfigurations(definition, item.getAutoReloadConfigurations());
             }
 
-            manager.reorderScriptDefinitions();
+            manager.reorderDefinitions();
         }
 
         for (UnnamedConfigurable supportSpecificSetting : scriptingSupportSettingsConfigurables) {

@@ -16,19 +16,29 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.IconManager
+import com.intellij.ui.JBColor
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import javax.swing.UIManager
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
+  override fun init(toolWindow: ToolWindow) {
+    toolWindow.setStripeShortTitleProvider(GithubBundle.messagePointer("toolwindow.stripe.Pull_Requests.shortName"))
+  }
+
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
-    toolWindow.project.serviceAsync<GHPRToolWindowController>().manageAvailability(toolWindow)
+    toolWindow.project.serviceAsync<GHPRToolWindowController>().manageIconInToolbar(toolWindow)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) =
@@ -41,7 +51,8 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 private class GHPRToolWindowController(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Main)
 
-  suspend fun manageAvailability(toolWindow: ToolWindow) {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun manageIconInToolbar(toolWindow: ToolWindow) {
     coroutineScope {
       val vm = project.serviceAsync<GHPRToolWindowViewModel>()
       launch {
@@ -58,6 +69,22 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
             toolWindow.activate(null)
           }
         }
+      }
+
+      val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
+      launch {
+        vm.projectVm
+          .filterNotNull().flatMapLatest { it.listVm.hasUpdates }
+          .distinctUntilChanged()
+          .collectLatest {
+            withContext(Dispatchers.EDT) {
+              toolWindow.setIcon(
+                if (!it) GithubIcons.PullRequestsToolWindow
+                else IconManager.getInstance().withIconBadge(GithubIcons.PullRequestsToolWindow, JBColor {
+                  if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.INFORMATION
+                }))
+            }
+          }
       }
     }
   }

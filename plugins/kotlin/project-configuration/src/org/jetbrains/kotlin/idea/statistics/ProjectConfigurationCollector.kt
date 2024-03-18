@@ -61,7 +61,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
 
     private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
     private val platformField = EventFields.String("platform", composePlatformFields())
-    private val languageLevelField = EventFields.StringValidatedByRegexp("languageLevel", "version")
+    private val languageLevelField = EventFields.StringValidatedByRegexpReference("languageLevel", "version")
     private val isMPPBuild = EventFields.Boolean("isMPP")
     private val pluginInfoField = EventFields.PluginInfo
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -60,12 +60,17 @@ public final class SystemInfo {
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
   public static final boolean isWin11OrNewer = isWindows && isOsVersionAtLeast("11.0");
 
-  public static final boolean isXWindow = SystemInfoRt.isXWindow;
-  public static final boolean isWayland, isGNOME, isKDE, isXfce, isI3;
+  /**
+   * Set to true if we are running in a Wayland environment, either through
+   * XWayland or using Wayland directly.
+   */
+  public static final boolean isWayland;
+  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
+  public static final boolean isGNOME, isKDE, isXfce, isI3;
   static {
     // http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669
     // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
-    if (isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       isWayland = System.getenv("WAYLAND_DISPLAY") != null;
       @SuppressWarnings("SpellCheckingInspection") String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
       isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
@@ -82,12 +87,14 @@ public final class SystemInfo {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final Supplier<Boolean> ourHasXdgOpen = isXWindow ? PathExecLazyValue.create("xdg-open") : () -> false;
+  private static final Supplier<Boolean> ourHasXdgOpen = SystemInfoRt.isUnix && !SystemInfoRt.isMac
+                                                         ? PathExecLazyValue.create("xdg-open") : () -> false;
   public static boolean hasXdgOpen() {
     return ourHasXdgOpen.get();
   }
 
-  private static final Supplier<Boolean> ourHasXdgMime = isXWindow ? PathExecLazyValue.create("xdg-mime") : () -> false;
+  private static final Supplier<Boolean> ourHasXdgMime = SystemInfoRt.isUnix && !SystemInfoRt.isMac
+                                                         ? PathExecLazyValue.create("xdg-mime") : () -> false;
   public static boolean hasXdgMime() {
     return ourHasXdgMime.get();
   }
@@ -99,16 +106,11 @@ public final class SystemInfo {
   public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
 
   /**
-   * Build number is the only more or less stable approach to get comparable win version.
-   * See <a href="https://www.gaijin.at/en/infos/windows-version-numbers">list of builds</a>.
-   * There is also <a href="https://en.wikipedia.org/wiki/Windows_10_version_history">Wikipedia article</a>.
-   * And <a href="https://en.wikipedia.org/wiki/Windows_11_version_history">another one for Windows 11</a>.
-   * <p>
-   * ReleaseID (1903, 2004 e.t.c.) is marketing term which is not a number since 20H2 while build numbers
-   * grow since NT 3.1 (see the first link) and this trend is unlikely to change.
+   * Build number is the only more or less stable approach to get comparable Windows versions.
+   * See <a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">list of builds</a>.
    */
   public static @Nullable Long getWinBuildNumber() {
-    return isWin10OrNewer ? WinBuildVersionKt.getWinBuildNumber() : null;
+    return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
   }
 
   public static @NotNull String getMacOSMajorVersion() {
@@ -210,10 +212,5 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean isMacOSMountainLion = isMac;
-
-  /** @deprecated always true (Java 17 requires macOS 10.14+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isMacOSMojave = isMac;
   //</editor-fold>
 }

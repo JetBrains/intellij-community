@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
@@ -15,12 +14,10 @@ import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 
-class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
-  companion object {
-    private const val LOCALHOST = "127.0.0.1"
-    private const val endpoint = "/gradle/compatibility.json"
-  }
+private const val LOCALHOST = "127.0.0.1"
+private const val endpoint = "/gradle/compatibility.json"
 
+class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
   private lateinit var myServer: HttpServer
   private lateinit var myUrl: String
   private val zeroUpdateTime = 0L
@@ -91,7 +88,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
 
   fun `test update configuration`() {
     withResponse { byFile("newConfig.json") }
-    PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
+    GradleCompatibilitySupportUpdater.getInstance().checkForUpdates()
     assertEquals(1, requests)
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedGradleVersions!!, "1.0", "2.0")
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedJavaVersions!!, "5", "6")
@@ -100,7 +97,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
 
   fun `test should not update configuration twice`() {
     withResponse { byFile("newConfig.json") }
-    PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
+    GradleCompatibilitySupportUpdater.getInstance().checkForUpdates()
     assertEquals(1, requests)
     val newUpdateTime = GradleJvmSupportMatrix.getInstance().state?.lastUpdateTime
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedGradleVersions!!, "1.0", "2.0")
@@ -108,7 +105,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
     assertFalse(zeroUpdateTime == newUpdateTime)
     requests = 0
 
-    PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
+    GradleCompatibilitySupportUpdater.getInstance().checkForUpdates()
     assertEquals(0, requests)
     assertEquals(newUpdateTime, GradleJvmSupportMatrix.getInstance().state?.lastUpdateTime)
 
@@ -116,7 +113,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
 
   fun `test update configuration for appropriate idea version`() {
     withResponse { byFile("newConfigWithDifferentIdea.json") }
-    PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
+    GradleCompatibilitySupportUpdater.getInstance().checkForUpdates()
     assertEquals(1, requests)
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedGradleVersions!!, "42.0", "43.0")
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedJavaVersions!!, "7", "8")
@@ -127,7 +124,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
     withResponse { throw Exception() }
     GradleJvmSupportMatrix.getInstance().noStateLoaded()
     val previousState = GradleJvmSupportMatrix.getInstance().state
-    PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
+    GradleCompatibilitySupportUpdater.getInstance().checkForUpdates()
     assertEquals(GradleJvmSupportMatrix.getInstance().state, previousState)
   }
 
@@ -139,7 +136,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
       Registry.get("gradle.compatibility.update.interval").setValue(previous)
     }
     val previousState = GradleJvmSupportMatrix.getInstance().state
-    PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
+    GradleCompatibilitySupportUpdater.getInstance().checkForUpdates()
     assertEquals(0, requests)
     assertEquals(GradleJvmSupportMatrix.getInstance().state, previousState)
   }

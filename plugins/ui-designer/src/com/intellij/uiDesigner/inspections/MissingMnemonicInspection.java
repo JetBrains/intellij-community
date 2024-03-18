@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -47,9 +47,8 @@ public class MissingMnemonicInspection extends BaseFormInspection {
   }
 
   private static class MyEditorQuickFixProvider implements EditorQuickFixProvider {
-    @NotNull
     @Override
-    public QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component) {
+    public @NotNull QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component) {
       return new AssignMnemonicFix(editor, component,
                                    UIDesignerBundle.message("inspections.missing.mnemonic.quickfix"));
     }

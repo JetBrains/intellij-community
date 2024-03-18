@@ -106,7 +106,7 @@ class CommitRenderer<T> private constructor(
       if (ExperimentalUI.isNewUI()) {
         commitRenderer = RoundedCellRenderer(commitRenderer, false)
       }
-      return GroupedRenderer(commitRenderer, hasSeparatorBelow = { value, _ ->
+      return GroupedRenderer.create(commitRenderer, hasSeparatorBelow = { value, _ ->
         presenter(value).value == null
       })
     }

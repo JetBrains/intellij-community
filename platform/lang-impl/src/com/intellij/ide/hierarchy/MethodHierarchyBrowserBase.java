@@ -116,7 +116,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageMethodHierarchy.INSTANCE);
+      super(LanguageMethodHierarchy.INSTANCE);
     }
   }
 

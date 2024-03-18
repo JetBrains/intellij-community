@@ -4,6 +4,8 @@ package com.intellij.ui.dsl.builder
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toUnscaled
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -100,8 +102,9 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
   override val horizontalSmallGap: Int = 6
   override val horizontalDefaultGap: Int = 16
   override val horizontalColumnsGap: Int = 60
-  override val horizontalIndent: Int = 20
-  override val horizontalToggleButtonIndent: Int = 20
+  override val horizontalIndent: Int = calculateHorizontalIndent()
+  override val horizontalToggleButtonIndent: Int = calculateHorizontalIndent()
+
   override val verticalComponentGap: Int = 6
   override val verticalSmallGap: Int = 8
   override val verticalMediumGap: Int = 20
@@ -109,4 +112,16 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
   override val segmentedButtonVerticalGap: Int = 3
   override val segmentedButtonHorizontalGap: Int = 12
   override val dialogUnscaledGaps: UnscaledGaps = UnscaledGaps(10, 12, 10, 12)
+}
+
+/**
+ * Returns space between left visible part of CheckBox and text
+ *
+ * See [com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI] and [com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder]
+ */
+private fun calculateHorizontalIndent(): Int {
+  val iconSize = JBUIScale.scale(JBUI.getInt("CheckBox.iconSize", 18))
+  val textIconGap = JBUIScale.scale(JBUI.getInt("CheckBox.textIconGap", 5))
+  val insets = JBUI.insets("CheckBox.borderInsets", JBUI.insets(1))
+  return iconSize - insets.left + textIconGap
 }

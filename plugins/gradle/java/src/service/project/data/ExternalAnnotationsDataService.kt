@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -24,6 +23,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
@@ -124,6 +125,7 @@ fun lookForLocations(project: Project, lib: Library, libData: LibraryData): Pair
   }
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<AnnotationsLocation>>,
                                project: Project, onResolveCompleted: () -> Unit = {}){
   val locationsToSkip = mutableSetOf<AnnotationsLocation>()
@@ -147,10 +149,12 @@ fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<Anno
             indicator.fraction = index / total
           }
         }
-        if (diff.hasChanges()) {
-          runInEdt {
-            runWriteAction { project.workspaceModel.updateProjectModel("Applying resolved annotations") { it.addDiff(diff) } }
-          }
+        if ((diff as MutableEntityStorageInstrumentation).hasChanges()) {
+          ApplicationManager.getApplication().invokeLater(Runnable {
+            ApplicationManager.getApplication().runWriteAction {
+              project.workspaceModel.updateProjectModel("Applying resolved annotations") { it.applyChangesFrom(diff) }
+            }
+          }, project.disposed)
         }
       }
       finally {

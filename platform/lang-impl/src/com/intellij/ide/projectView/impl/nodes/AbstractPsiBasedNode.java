@@ -33,10 +33,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredText;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.icons.PredefinedIconOverlayService;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -243,7 +242,10 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     Icon icon = original;
 
     if (file.is(VFileProperty.SYMLINK)) {
-      icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
+      PredefinedIconOverlayService iconOverlayService = PredefinedIconOverlayService.getInstanceOrNull();
+      if (iconOverlayService != null) {
+        icon = iconOverlayService.createSymlinkIcon(icon);
+      }
     }
 
     Icon bookmarkIcon = getBookmarkIcon(project, file);

@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.ActionHandler
 import com.intellij.ui.awt.RelativePoint
@@ -306,12 +305,7 @@ private class SdkPopupImpl(
     }
 
   override fun showPopup(e: AnActionEvent) {
-    if (e is AnActionButton.AnActionEventWrapper) {
-      e.showPopup(this)
-    }
-    else {
-      showInBestPositionFor(e.dataContext)
-    }
+    showInBestPositionFor(e.dataContext)
   }
 
   override fun showUnderneathToTheRightOf(component: Component) {

@@ -20,7 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
-public class PyMultiplePsiFilesVisitorFilter implements PythonVisitorFilter {
+public final class PyMultiplePsiFilesVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
     if (visitorClass == StringLiteralQuotesAnnotator.class &&

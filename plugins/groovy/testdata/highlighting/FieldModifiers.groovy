@@ -20,7 +20,7 @@ class Combinations {
 }
 
 class Duplicates {
-  <error descr="Duplicate modifier 'public'">public public</error> a
+  public <error descr="Duplicate modifier 'public'">public</error> a
 }
 
 interface I {

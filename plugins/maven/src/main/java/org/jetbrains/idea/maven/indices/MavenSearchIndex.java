@@ -16,38 +16,49 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 
 import java.io.File;
 import java.util.Set;
 
-public interface MavenSearchIndex {
+public interface MavenSearchIndex extends MavenRepositoryIndex {
 
-  void close(boolean releaseIndexContext);
-
-  @NlsSafe
-  String getRepositoryId();
-
-  File getRepositoryFile();
-
-  @Nullable MavenRepositoryInfo getRepository();
+  @Topic.AppLevel
+  Topic<IndexListener> INDEX_IS_BROKEN =
+    new Topic<>("Maven Index Broken Listener", IndexListener.class);
 
   @NlsSafe
-  String getRepositoryUrl();
+  default String getRepositoryId() {
+    return getRepository().getId();
+  }
+
+  @Nullable
+  default File getRepositoryFile() {
+    MavenRepositoryInfo repository = getRepository();
+    if (repository.getKind() == RepositoryKind.LOCAL) {
+      return new File(repository.getUrl());
+    }
+    return null;
+  }
 
   @NlsSafe
-  String getRepositoryPathOrUrl();
+  default String getRepositoryUrl() {
+    MavenRepositoryInfo repository = getRepository();
+    if (repository.getKind() == RepositoryKind.REMOTE) {
+      return repository.getUrl();
+    }
+    return null;
+  }
 
-  IndexKind getKind();
-
-  long getUpdateTimestamp();
+  @NlsSafe
+  default String getRepositoryPathOrUrl() {
+    return getRepository().getUrl();
+  }
 
   @NlsSafe
   String getFailureMessage();

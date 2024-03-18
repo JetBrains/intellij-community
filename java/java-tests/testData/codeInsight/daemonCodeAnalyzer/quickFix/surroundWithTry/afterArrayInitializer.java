@@ -5,7 +5,7 @@ public class ExTest {
     }
 
     {
-        String[] a = new String[0];
+        String[] a = null;
         try {
             a = new String[]{maybeThrow("")};
         } catch (Ex e) {

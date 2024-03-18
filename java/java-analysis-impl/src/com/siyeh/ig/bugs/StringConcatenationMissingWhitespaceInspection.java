@@ -23,7 +23,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * @author Bas Leijdekkers
  */
-public class StringConcatenationMissingWhitespaceInspection extends BaseInspection {
+public final class StringConcatenationMissingWhitespaceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreNonStringLiterals = true;

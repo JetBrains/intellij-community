@@ -49,7 +49,10 @@ internal object CodeFenceLanguageAliases {
    * @return recommended alias if any or just [id]
    */
   fun findMainAlias(id: String): String {
-    val alias = aliases.singleOrNull { id == it.id }?.main
-    return alias ?: StringUtil.toLowerCase(id)
+    return findMainAliasIfRegistered(id) ?: StringUtil.toLowerCase(id)
+  }
+
+  fun findMainAliasIfRegistered(id: String): String? {
+    return aliases.singleOrNull { id == it.id }?.main
   }
 }

@@ -18,35 +18,39 @@ public final class EditorColorSchemesComparator implements Comparator<EditorColo
 
   public static final int DEFAULT_SCHEME          = 0;
   public static final int ONE_OF_DEFAULT_SCHEMES  = DEFAULT_SCHEME + 1;
-  public static final int BUNDLED_SCHEME          = ONE_OF_DEFAULT_SCHEMES + 1;
-  public static final int CUSTOM_SCHEME           = BUNDLED_SCHEME + 1;
+  public static final int BUNDLED_NEW_UI_SCHEME   = ONE_OF_DEFAULT_SCHEMES + 1;
+  public static final int BUNDLED_CLASSIC_SCHEME  = BUNDLED_NEW_UI_SCHEME + 1;
+  public static final int CUSTOM_SCHEME           = BUNDLED_CLASSIC_SCHEME + 1;
 
   private EditorColorSchemesComparator() {
   }
 
   @Override
   public int compare(EditorColorsScheme s1, EditorColorsScheme s2) {
-    int order1 = getOrder(s1);
-    int order2 = getOrder(s2);
+    int order1 = getOrder(s1, false);
+    int order2 = getOrder(s2, false);
     if (order1 != order2) return order1 - order2;
     return s1.getName().compareToIgnoreCase(s2.getName());
   }
 
+  public static int getGroupNumber(@NotNull EditorColorsScheme scheme) {
+    return getOrder(scheme, true);
+  }
 
-  private static int getOrder(@NotNull EditorColorsScheme scheme) {
+  private static int getOrder(@NotNull EditorColorsScheme scheme, boolean groupNumberOnly) {
     if (scheme instanceof AbstractColorsScheme) {
       EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
-      if (original instanceof DefaultColorsScheme) {
+      if (!groupNumberOnly && original instanceof DefaultColorsScheme) {
         return DEFAULT_SCHEME_NAME.equals(original.getName()) ? DEFAULT_SCHEME : ONE_OF_DEFAULT_SCHEMES;
       }
       if (original != null && original.isReadOnly()) {
         if (ExperimentalUI.isNewUI()) {
           int i = Arrays.asList("High contrast", "Dark", "Light").indexOf(original.getName());
           if (i >= 0) {
-            return -(i + 1);
+            return groupNumberOnly ? BUNDLED_NEW_UI_SCHEME : -(i + 1);
           }
         }
-        return BUNDLED_SCHEME;
+        return BUNDLED_CLASSIC_SCHEME;
       }
     }
     return CUSTOM_SCHEME;

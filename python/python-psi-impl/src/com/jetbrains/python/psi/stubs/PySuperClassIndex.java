@@ -7,7 +7,7 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PySuperClassIndex extends StringStubIndexExtension<PyClass> {
+public final class PySuperClassIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.super");
 
   @Override

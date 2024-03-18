@@ -19,7 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 
-public class DeprecatedSkipper extends CompletionPreselectSkipper {
+public final class DeprecatedSkipper extends CompletionPreselectSkipper {
 
   @Override
   public boolean skipElement(LookupElement element, CompletionLocation location) {

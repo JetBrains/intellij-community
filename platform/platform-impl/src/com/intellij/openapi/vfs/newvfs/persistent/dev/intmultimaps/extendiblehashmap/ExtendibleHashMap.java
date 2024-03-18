@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
@@ -76,6 +76,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   private static final boolean MARK_SAFELY_CLOSED_ON_FLUSH = getBooleanProperty("ExtendibleHashMap.MARK_SAFELY_CLOSED_ON_FLUSH", true);
 
   //TODO RC: unfinished work
+  //        0) remove 'synchronized' and put synchronization on clients to decide?
   //        1) prune tombstones (see comment in a .split() method for details)
   //        2) .size() is now O(N), make it O(1)
   //        3) Half-utilized segmentTable room (see HeaderLayout)
@@ -220,9 +221,26 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @Override
+  public boolean remove(int key,
+                        int value) throws IOException {
+    HashMapSegmentLayout segment = segmentForKey(key);
+
+    return hashMapAlgo.remove(segment, key, value);
+  }
+
+  @Override
+  public boolean replace(int key,
+                         int oldValue,
+                         int newValue) throws IOException {
+    HashMapSegmentLayout segment = segmentForKey(key);
+
+    return hashMapAlgo.replace(segment, key, oldValue, newValue);
+  }
+
+  @Override
   public synchronized int size() throws IOException {
     checkNotClosed();
-    //FIXME RC: now it is O(N), better to have O(1) -- just keep records count in a header
+    //FIXME RC: it is O(#segments) now, but O(1) would be better -> just keep recordsCount in a header
     int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     int totalEntries = 0;
@@ -247,6 +265,23 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     return true;
   }
 
+  /** @return false if iteration was cancelled early, by processor returning false, true if all items were processed */
+  @Override
+  public synchronized boolean forEach(@NotNull KeyValueProcessor processor) throws IOException {
+    checkNotClosed();
+    int segmentSize = header.segmentSize();
+    int segmentsCount = header.actualSegmentsCount();
+    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
+      if (segment.aliveEntriesCount() > 0) {
+        if (!hashMapAlgo.forEach(segment, processor)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
 
   @Override
   public synchronized void flush() throws IOException {
@@ -264,6 +299,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
+  public synchronized boolean isDirty() {
+    return dirty;
+  }
+
   @Override
   public synchronized void close() throws IOException {
     if (storage.isOpen()) {
@@ -275,6 +314,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       header = null;
       bufferSource = null;
     }
+  }
+
+  public synchronized boolean isClosed() {
+    return !storage.isOpen();
   }
 
   @Override
@@ -403,6 +446,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
    * new segment. Such semantics for allocateSegment() is quite convenient: new segment is always properly 'attached'
    * into a overall structure, there is no way calling code could attach it incorrectly.
    */
+  //@GuardedBy(this)
   private HashMapSegmentLayout allocateSegment(int hashSuffix,
                                                byte hashSuffixDepth) throws IOException {
     int segmentsCount = header.actualSegmentsCount();
@@ -423,6 +467,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
    * @return pair [segmentToSplit, newSegment], there segmentToSplit contains entries with hash=...0..., while
    * newSegment contains entries with hash=...1...
    */
+  //@GuardedBy(this)
   private Pair<HashMapSegmentLayout, HashMapSegmentLayout> split(@NotNull HashMapSegmentLayout segmentToSplit) throws IOException {
     int oldHashSuffix = segmentToSplit.hashSuffix();
     byte oldHashSuffixDepth = segmentToSplit.hashSuffixDepth();
@@ -476,6 +521,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
    * Doubles segments table size, and copies entries from the first half into a second (new) half.
    * E.g. table[1,2,3] after doubling become [1,2,3, 1,2,3]
    */
+  //@GuardedBy(this)
   private void doubleSegmentsTable() throws IOException {
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int oldTableSize = header.segmentTableSize();
@@ -800,7 +846,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     @Override
     public String toString() {
       return "HashMapSegmentLayout[segmentNo=" + segmentIndex + ", segmentSize=" + segmentSize + "]" +
-             "[hashSuffix: " + hashSuffix() + ", depth: " + hashSuffixDepth() + "]";
+             "[hashSuffix: " + hashSuffix() + ", depth: " + hashSuffixDepth() + "]" +
+             "{" + aliveEntriesCount() + " alive entries of " + entriesCount() + "}";
     }
 
     public String dump() throws IOException {
@@ -822,12 +869,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   @FunctionalInterface
   public interface BufferSource {
-    @NotNull ByteBuffer slice(long offsetInFile,
-                              int length) throws IOException;
+    @NotNull
+    ByteBuffer slice(long offsetInFile,
+                     int length) throws IOException;
   }
 
   /** Abstracts data storage for open-addressing hash-table implementation */
   public interface HashTableData {
+    /** entry = (key, value) pair */
     int entriesCount();
 
     int aliveEntriesCount();
@@ -878,7 +927,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
                       int key,
                       ValueAcceptor valuesAcceptor) throws IOException {
       checkNotNoValue("key", key);
-      int capacity = table.entriesCount();
+      int capacity = capacity(table);
       int startIndex = Math.abs(hash(key) % capacity);
       for (int probe = 0; probe < capacity; probe++) {
         int slotIndex = (startIndex + probe) % capacity;
@@ -960,23 +1009,43 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         }
       }
 
+      //MAYBE RC: it could be there are not-so-many alive entries, but a lot of tombstones, and no free slots remain.
+      // This is because in the current design we never clear tombstones: during segment split we copy half of alive
+      // entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones in the old segment.
+      // Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is stochastic, and could be
+      // not very effective
+      if (aliveValues(table) == 0) {
+        //If there is 0 alive records => it is OK to clear all the tombstones.
+        // We can't clear all tombstones while there alive entries because such cleaning breaks lookup: we treat
+        // free slots and tombstones differently during the probing -- continue to probe over tombstones, but stop
+        // on free slots. Converting tombstone to free slot could stop probing earlier than it should stop, thus
+        // making some existing entries unreachable.
+        // But if there are no alive entries anymore -- we finally _can_ clear everything without breaking anything!
+
+        //This deals with the issue above -- table being overflowed by tombstones -- but only partially. This branch
+        // fixes correctness (table doesn't fail if there is at least 1 unfilled slot), but doesn't fix performance,
+        // which likely is awful long before we reach this branch due to looooong probing sequences
+        
+        for (int slot = 0; slot < capacity; slot++) {
+          table.updateEntry(slot, NO_VALUE, NO_VALUE);
+        }
+        return put(table, key, value);
+      }
+
+
       //Table must be resized well before such a condition occurs!
       throw new AssertionError(
         "Table is full: all " + capacity + " items were traversed, but no free slot found" +
         "table.aliveEntries: " + table.aliveEntriesCount() + ", table: " + table
       );
-      //MAYBE RC: actually, it could be there are not-so-many alive entries, but a lot of tombstones, and no free
-      // slots remain. This is because in the current design we never clear tombstones: during segment split we copy
-      // half of alive entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones
-      // in the old segment. Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is
-      // stochastic, and could be not very effective
     }
 
-    public void remove(@NotNull HashTableData table,
-                       int key,
-                       int value) {
+    public boolean remove(@NotNull HashTableData table,
+                          int key,
+                          int value) {
       checkNotNoValue("key", key);
       checkNotNoValue("value", value);
+
       int capacity = capacity(table);
       int startIndex = Math.abs(hash(key) % capacity);
       for (int probe = 0; probe < capacity; probe++) {
@@ -987,28 +1056,83 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
           //reset key, but leave value as-is: this is the marker of 'removed' slot
           markEntryAsDeleted(table, slotIndex);
           //No need to look farther, since only one (key,value) record could be in the map
-          return;
+          return true;
         }
         if (slotKey == NO_VALUE && slotValue == NO_VALUE) {
           //free slot -> end of probing sequence, no (key, value) found -> nothing to remove:
-          return;
+          return false;
         }
+      }
+      return false;
+    }
+
+    public boolean replace(@NotNull HashTableData table,
+                           int key,
+                           int oldValue,
+                           int newValue) {
+      checkNotNoValue("key", key);
+      checkNotNoValue("oldValue", oldValue);
+      checkNotNoValue("newValue", newValue);
+
+      int capacity = capacity(table);
+      int startIndex = Math.abs(hash(key) % capacity);
+      //BEWARE: .replace() must maintain an invariant that key's values is a _set_ -- not just a list.
+      // I.e. if newValue is already exist among the key's values -- oldValue should NOT be replaced, but just removed,
+      // to not create 2 newValue entries => we need to look for both old & newValue first, and only then decide
+      // how to behave:
+      int oldValueSlotIndex = -1;
+      int newValueSlotIndex = -1;
+      for (int probe = 0; probe < capacity; probe++) {
+        int slotIndex = (startIndex + probe) % capacity;
+        int slotKey = table.entryKey(slotIndex);
+        int slotValue = table.entryValue(slotIndex);
+        if (slotKey == key) {
+          if (slotValue == oldValue) {
+            oldValueSlotIndex = slotIndex;
+          }
+          else if (slotValue == newValue) {
+            newValueSlotIndex = slotIndex;
+          }
+        }
+        if (slotKey == NO_VALUE && slotValue == NO_VALUE) {
+          //free slot -> end of probing sequence
+          break;
+        }
+      }
+
+      if (oldValueSlotIndex != -1) {
+        if (newValueSlotIndex != -1) {
+          //both oldValue and newValue exists in the map
+          // => no need to update anything, just mark oldValue slot as 'deleted':
+          markEntryAsDeleted(table, oldValueSlotIndex);
+        }
+        else {
+          //newValue is not exists in key's values set
+          // => update slot (old->new)Value:
+          table.updateEntry(oldValueSlotIndex, key, newValue);
+        }
+        return true;
+      }
+      else {
+        //oldValue is not exist -> do nothing
+        return false;
       }
     }
 
-    public void forEach(@NotNull HashTableData table,
-                        KeyValueProcessor processor) {
+    public boolean forEach(@NotNull HashTableData table,
+                           @NotNull KeyValueProcessor processor) throws IOException {
       int capacity = capacity(table);
       for (int index = 0; index < capacity; index++) {
-        final int key = table.entryKey(index);
-        final int value = table.entryValue(index);
+        int key = table.entryKey(index);
+        int value = table.entryValue(index);
         if (isSlotOccupied(key)) {
           assert value != NO_VALUE : "value(table[" + (index + 1) + "]) = " + NO_VALUE + ", while key(table[" + index + "]) = " + key;
           if (!processor.process(key, value)) {
-            return;
+            return false;
           }
         }
       }
+      return true;
     }
 
     public boolean isSlotOccupied(int key) {
@@ -1048,17 +1172,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       table.updateAliveEntriesCount(table.aliveEntriesCount() - 1);
     }
 
-    private static void checkNotNoValue(final String paramName,
-                                        final int value) {
+    private static void checkNotNoValue(String paramName,
+                                        int value) {
       if (value == NO_VALUE) {
         throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
       }
     }
-  }
-
-  @FunctionalInterface
-  public interface KeyValueProcessor {
-    boolean process(final int key,
-                    final int value);
   }
 }

@@ -26,6 +26,7 @@ public interface FoldingModelEx extends FoldingModel {
    */
   int getLastCollapsedRegionBefore(int offset);
 
+  @Nullable
   TextAttributes getPlaceholderAttributes();
 
   FoldRegion[] fetchTopLevel();

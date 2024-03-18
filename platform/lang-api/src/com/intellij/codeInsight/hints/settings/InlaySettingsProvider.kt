@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
@@ -30,11 +30,8 @@ interface InlaySettingsProvider {
   }
 
   object EP {
-    val EXTENSION_POINT_NAME: ExtensionPointName<InlaySettingsProvider> =
-      ExtensionPointName.create("com.intellij.config.inlaySettingsProvider")
+    val EXTENSION_POINT_NAME: ExtensionPointName<InlaySettingsProvider> = ExtensionPointName("com.intellij.config.inlaySettingsProvider")
 
-    fun getExtensions(): Array<out InlaySettingsProvider> {
-      return EXTENSION_POINT_NAME.extensions
-    }
+    fun getExtensions(): List<InlaySettingsProvider> = EXTENSION_POINT_NAME.extensionList
   }
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
-import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
-import com.intellij.codeInsight.hints.InlayHintsSink
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
@@ -11,19 +11,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
-class GroovyImplicitNullArgumentCollector(editor: Editor) : FactoryInlayHintsCollector(editor) {
-
-  override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+class GroovyImplicitNullArgumentCollector : SharedBypassCollector {
+  override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
     if (element !is GrArgumentList) {
-      return true
+      return
     }
     if (element.allArguments.isNotEmpty()) {
-      return true
+      return
     }
-    val methodCall = element.parentOfType<GrCall>()?.takeIf { it.argumentList === element } ?: return true
+    val methodCall = element.parentOfType<GrCall>()?.takeIf { it.argumentList === element } ?: return
     if (PsiUtil.isEligibleForInvocationWithNull(methodCall)) {
-      sink.addInlineElement(element.firstChild.endOffset, true, factory.roundWithBackground(factory.smallText("null")), false)
+      sink.addPresentation(InlineInlayPosition(element.firstChild.endOffset, relatedToPrevious = true), hasBackground = true) {
+        text("null")
+      }
     }
-    return true
   }
 }

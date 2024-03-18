@@ -1,5 +1,7 @@
 package source
 
+import source.SourceObject.other
+
 fun sourcePackFun(){}
 
 object SourceObject {
@@ -12,7 +14,7 @@ object SourceObject {
 
 
 fun foo() {
-    SourceObject.other()
+    other()
     sourcePackFun()
     bar++
 }

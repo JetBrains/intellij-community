@@ -91,9 +91,10 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
     else {
       openFilesOnLoading(list)
     }
+    Desktop.getDesktop().requestForeground(true)
   }
   if (JnaLoader.isLoaded()) {
-    installAutoUpdateMenu()
+    Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
     installProtocolHandler()
   }
 }

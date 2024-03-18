@@ -1,16 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.other;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
@@ -25,9 +24,9 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrCreateMissingSwitchBranchesIntention extends Intention {
+public class GrCreateMissingSwitchBranchesIntention extends GrPsiUpdateIntention {
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrSwitchStatement)) return;
 
     final List<PsiEnumConstant> constants = findUnusedConstants((GrSwitchStatement)element);
@@ -37,13 +36,13 @@ public class GrCreateMissingSwitchBranchesIntention extends Intention {
     final PsiClass aClass = first.getContainingClass();
     if (aClass == null) return;
     String qName = aClass.getQualifiedName();
-
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project());
     PsiElement anchor = findAnchor(element);
     for (PsiEnumConstant constant : constants) {
       final GrCaseSection section = factory.createSwitchSection("case " + qName + "." + constant.getName() + ":\n break");
       final PsiElement added = element.addBefore(section, anchor);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(added);
+      JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(added);
     }
   }
 

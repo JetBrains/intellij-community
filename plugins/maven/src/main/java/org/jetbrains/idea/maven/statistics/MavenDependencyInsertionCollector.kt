@@ -45,7 +45,7 @@ object MavenDependencyInsertionCollector : CounterUsagesCollector() {
   }
 
   private val packageIdField = EventFields.StringValidatedByCustomRule(PACKAGE_ID, TopPackageIdValidationRule::class.java)
-  private val packageVersionField = EventFields.StringValidatedByRegexp(PACKAGE_VERSION, regexpRef = "version")
+  private val packageVersionField = EventFields.StringValidatedByRegexpReference(PACKAGE_VERSION, regexpRef = "version")
   private val completionPrefixLengthField = EventFields.Int(COMPLETION_PREFIX_LENGTH)
   private val selectedLookupIndexField = EventFields.Int(SELECTED_LOOKUP_INDEX)
   private val buildSystemField = EventFields.Enum<BuildSystem>(BUILD_SYSTEM)

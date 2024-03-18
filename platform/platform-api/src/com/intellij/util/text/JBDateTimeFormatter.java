@@ -6,31 +6,35 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 
-/**
- * @author Konstantin Bulenkov
- */
+/** @deprecated use methods of {@link DateFormatUtil} */
+@Deprecated(forRemoval = true)
+@SuppressWarnings("unused")
 public abstract class JBDateTimeFormatter {
-  protected abstract boolean isPrettyFormattingSupported();
-
-  public @NotNull String formatTime(@NotNull Date time) {
+  public @NotNull @NlsSafe String formatTime(@NotNull Date time) {
     return formatTime(time.getTime());
   }
 
-  public abstract @NotNull String formatTime(long time);
+  public @NotNull @NlsSafe String formatTime(long time) {
+    return DateFormatUtil.formatTime(time);
+  }
 
-  public @NotNull String formatTimeWithSeconds(@NotNull Date time) {
+  public @NotNull @NlsSafe String formatTimeWithSeconds(@NotNull Date time) {
     return formatTimeWithSeconds(time.getTime());
   }
 
-  public abstract @NotNull String formatTimeWithSeconds(long time);
+  public @NotNull @NlsSafe String formatTimeWithSeconds(long time) {
+    return DateFormatUtil.formatTimeWithSeconds(time);
+  }
 
   public @NotNull @NlsSafe String formatDate(@NotNull Date time) {
     return formatDate(time.getTime());
   }
 
-  public abstract @NotNull String formatDate(long time);
+  public @NotNull @NlsSafe String formatDate(long time) {
+    return DateFormatUtil.formatDate(time);
+  }
 
-  public @NotNull String formatDateTime(Date date) {
+  public @NotNull @NlsSafe String formatDateTime(Date date) {
     return formatDateTime(date.getTime());
   }
 
@@ -42,11 +46,15 @@ public abstract class JBDateTimeFormatter {
     return formatPrettyDateTime(date.getTime());
   }
 
-  public abstract @NotNull String formatPrettyDateTime(long time);
+  public @NotNull @NlsSafe String formatPrettyDateTime(long time) {
+    return DateFormatUtil.formatPrettyDateTime(time);
+  }
 
-  public @NotNull String formatPrettyDate(@NotNull Date date) {
+  public @NotNull @NlsSafe String formatPrettyDate(@NotNull Date date) {
     return formatPrettyDate(date.getTime());
   }
 
-  public abstract @NotNull String formatPrettyDate(long time);
+  public @NotNull @NlsSafe String formatPrettyDate(long time) {
+    return DateFormatUtil.formatPrettyDate(time);
+  }
 }

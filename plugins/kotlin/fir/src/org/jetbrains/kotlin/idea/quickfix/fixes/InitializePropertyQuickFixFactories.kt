@@ -27,7 +27,7 @@ object InitializePropertyQuickFixFactories {
         applyTo { property, input, context, updater ->
             val initializer = property.setInitializer(KtPsiFactory(context.project).createExpression(input.initializerText ?: "TODO()"))!!
             updater.select(TextRange(initializer.startOffset, initializer.endOffset))
-            updater.moveTo(initializer.endOffset)
+            updater.moveCaretTo(initializer.endOffset)
         }
     }
 

@@ -67,18 +67,6 @@ public abstract class FindSettings {
   public abstract void setLocalRegularExpressions(boolean regularExpressions);
 
   /**
-   * @deprecated use {@link FindInProjectSettings#getRecentFindStrings()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract String @NotNull [] getRecentFindStrings();
-
-  /**
-   * @deprecated use {@link FindInProjectSettings#getRecentReplaceStrings()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract String @NotNull [] getRecentReplaceStrings();
-
-  /**
    * Returns the list of file masks used by the user in the "File name filter"
    * group box.
    *

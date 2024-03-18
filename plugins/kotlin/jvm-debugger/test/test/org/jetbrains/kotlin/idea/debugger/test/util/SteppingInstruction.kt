@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.test.util
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 
 enum class SteppingInstructionKind(val directiveName: String) {
+    RunToCursor("RUN_TO_CURSOR"),
     StepIntoIgnoreFilters("STEP_INTO_IGNORE_FILTERS"),
     StepInto("STEP_INTO"),
     StepOut("STEP_OUT"),
@@ -18,6 +19,9 @@ enum class SteppingInstructionKind(val directiveName: String) {
 }
 
 class SteppingInstruction(val kind: SteppingInstructionKind, val arg: Int) {
+    var lineIndex = 0
+    var fileName = ""
+
     companion object {
         fun parse(file: TestFile): List<SteppingInstruction> {
             return parse(file, Companion::parseLine)
@@ -34,9 +38,14 @@ class SteppingInstruction(val kind: SteppingInstructionKind, val arg: Int) {
 
         private fun parse(file: TestFile, processor: (String) -> SteppingInstruction?): List<SteppingInstruction> {
             return file.content.lineSequence()
-                .map { it.trimStart() }
-                .filter { it.startsWith("// ") }
-                .mapNotNullTo(mutableListOf(), processor)
+                .mapIndexed { index, s -> index to s.trimStart()}
+                .filter { it.second.startsWith("// ") }
+                .mapNotNullTo(mutableListOf()) { lineIndexToLine ->
+                    processor(lineIndexToLine.second)?.also { si ->
+                        si.lineIndex = lineIndexToLine.first
+                        si.fileName = file.name
+                    }
+                }
         }
 
         private fun parseLine(line: String): SteppingInstruction? {

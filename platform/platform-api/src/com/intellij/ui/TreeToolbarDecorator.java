@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EditableTreeModel;
@@ -81,7 +82,7 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         if (parent != null) {
          parent.insert(new DefaultMutableTreeNode(element), parent.getChildCount());
         }
-        final TreePath createdPath = model.addNode(new TreePath(parent.getPath()));
+        final TreePath createdPath = model.addNode(new CachingTreePath(parent.getPath()));
         if (path != null) {
           TreeUtil.selectPath(myTree, createdPath);
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));

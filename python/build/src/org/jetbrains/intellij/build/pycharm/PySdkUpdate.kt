@@ -19,9 +19,9 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.io.path.fileSize
 
+val SUPPORTED_LEVELS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isAtLeast(LanguageLevel.PYTHON38) }
 const val BASE_URL = "https://www.python.org/ftp/python/"
 val SDKS_JSON_PATH = Path(".", "community", "python", "python-sdk", "resources", "sdks.json")
-
 
 /**
  * Resources we are currently tracking.
@@ -162,7 +162,7 @@ fun main() {
     return resolvedResources.entries.groupBy({ (_, v) -> v }, { (k, _) -> k })
   }
 
-  for (languageLevel in LanguageLevel.SUPPORTED_LEVELS.reversed()) {
+  for (languageLevel in SUPPORTED_LEVELS.reversed()) {
     println("Update local versions for ${languageLevel.toPythonVersion()}")
     val langLevelReleases = getLangLevelReleases(languageLevel)
     langLevelReleases.forEach { (version, resources) ->

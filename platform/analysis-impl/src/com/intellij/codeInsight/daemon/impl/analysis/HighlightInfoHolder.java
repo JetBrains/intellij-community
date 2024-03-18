@@ -16,7 +16,7 @@ import java.util.List;
 
 public class HighlightInfoHolder {
   private final PsiFile myContextFile;
-  private final HighlightInfoFilter[] myFilters;
+  private final @NotNull HighlightInfoFilter @NotNull [] myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos;

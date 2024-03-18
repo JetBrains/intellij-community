@@ -12,7 +12,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.util.JavaUnnamedClassUtil;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,18 +50,18 @@ public interface JavaStubElementTypes {
     }
   };
 
-  JavaClassElementType UNNAMED_CLASS = new JavaClassElementType("UNNAMED_CLASS", BasicJavaElementType.BASIC_UNNAMED_CLASS) {
+  JavaClassElementType IMPLICIT_CLASS = new JavaClassElementType("IMPLICIT_CLASS", BasicJavaElementType.BASIC_IMPLICIT_CLASS) {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new UnnamedClassElement();
+      return new ImplicitClassElement();
     }
 
     @Override
     public void indexStub(@NotNull PsiClassStub stub, @NotNull IndexSink sink) {
       StubElement parent = stub.getParentStub();
       if (parent instanceof PsiJavaFileStub) {
-        sink.occurrence(JavaStubIndexKeys.UNNAMED_CLASSES, JavaUnnamedClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
+        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, JavaImplicitClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
       }
     }
   };

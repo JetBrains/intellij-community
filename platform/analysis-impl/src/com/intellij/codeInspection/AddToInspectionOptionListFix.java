@@ -48,7 +48,7 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return ModCommand.updateOption(descriptor.getStartElement(), myInspection,
+    return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection,
                                     inspection -> {
                                       List<String> list = myExtractor.apply(inspection);
                                       list.add(myItemToAdd);

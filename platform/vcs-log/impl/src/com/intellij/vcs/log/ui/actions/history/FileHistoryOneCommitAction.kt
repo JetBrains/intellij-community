@@ -18,7 +18,8 @@ import com.intellij.vcs.log.history.FileHistoryModel
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
-import com.intellij.vcs.log.ui.table.CommitSelectionImpl.Companion.getCachedDetails
+import com.intellij.vcs.log.ui.table.lazyMap
+import com.intellij.vcs.log.ui.table.size
 
 abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -37,16 +38,16 @@ abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), D
       e.presentation.isEnabled = false
       return
     }
-    val detail = selection.getCachedDetails(getDetailsGetter(logData)).singleOrNull()?.takeIf { it !is LoadingDetails }
+    val detail = selection.lazyMap(getDetailsGetter(logData)::getCachedDataOrPlaceholder).singleOrNull()?.takeIf { it !is LoadingDetails }
     e.presentation.isEnabled = isEnabled(model, detail, e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val logData = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
-    val selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
-    val model = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+    val logData = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: return
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
+    val model = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL) ?: return
 
     if (selection.size != 1) return
 

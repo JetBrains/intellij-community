@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -40,7 +37,6 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -63,6 +59,7 @@ import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -72,7 +69,9 @@ private val LOG = logger<RecentProjectsManager>()
  * Used directly by IntelliJ IDEA.
  */
 @OptIn(FlowPreview::class)
-@State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "RecentProjectsManager",
+       category = SettingsCategory.SYSTEM,
+       storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
@@ -269,11 +268,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
   open fun getProjectPath(projectStoreBaseDir: Path): String? {
-    return projectStoreBaseDir.systemIndependentPath
+    return projectStoreBaseDir.invariantSeparatorsPathString
   }
 
   open fun getProjectPath(project: Project): String? {
@@ -286,7 +284,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return runBlocking { openProject(projectFile, openProjectOptions) }
   }
 
-  // open for Rider
   open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
     var effectiveOptions = options
     if (options.implOptions == null) {
@@ -446,6 +443,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     synchronized(stateLock) {
+      // FIXME do we really want to make this method non-idempotent?
       state.forceReopenProjects = false
       return state.additionalInfo.values.any { canReopenProject(it) }
     }
@@ -467,12 +465,27 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
     disableUpdatingRecentInfo.set(true)
     try {
-      FUSProjectHotStartUpMeasurer.reportReopeningProjects(openPaths)
       if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
+        FUSProjectHotStartUpMeasurer.reportReopeningProjects(openPaths)
         return openOneByOne(openPaths, index = 0, someProjectWasOpened = false)
       }
+
+      val toOpen = openPaths.mapNotNull { entry ->
+        runCatching {
+          val path = Path.of(entry.key)
+          if (isValidProjectPath(path)) Pair(path, entry.value) else null
+        }.getOrLogException(LOG)
+      }
+
+      FUSProjectHotStartUpMeasurer.reportReopeningProjects(toOpen)
+
+      if (toOpen.size == 1) {
+        val pair = toOpen.get(0)
+        val pathsToOpen = listOf(AbstractMap.SimpleEntry(pair.first.toString(), pair.second))
+        return openOneByOne(pathsToOpen, index = 0, someProjectWasOpened = false)
+      }
       else {
-        return openMultiple(openPaths)
+        return openMultiple(toOpen)
       }
     }
     finally {
@@ -480,7 +493,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  // open for Rider
   protected open fun isOpenProjectsOneByOneRequired(): Boolean {
     return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
   }
@@ -512,15 +524,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(file) }
   }
 
-  private suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
-    val toOpen = openPaths.mapNotNull { entry ->
-      runCatching {
-        val path = Path.of(entry.key)
-        if (isValidProjectPath(path)) Pair(path, entry.value) else null
-      }.getOrLogException(LOG)
-    }
-
-    // ok, no non-existent project paths and every info has a frame
+  // toOpen -  no non-existent project paths and every info has a frame
+  private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
     span("project frame initialization", Dispatchers.EDT) {
@@ -684,7 +689,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
     var file: Path? = Path.of(projectPath)
     while (file != null) {
-      val projectMetaInfo = state.additionalInfo.remove(file.systemIndependentPath)
+      val projectMetaInfo = state.additionalInfo.remove(file.invariantSeparatorsPathString)
       if (projectMetaInfo != null) {
         modCounter.increment()
         fireChangeEvent()

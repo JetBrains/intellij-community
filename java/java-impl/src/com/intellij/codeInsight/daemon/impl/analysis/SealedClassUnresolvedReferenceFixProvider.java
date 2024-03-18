@@ -5,22 +5,24 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ConvertRecordToClassFix;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.registerIncreaseLanguageLevelFixes;
 
-public class SealedClassUnresolvedReferenceFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
+public final class SealedClassUnresolvedReferenceFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
-    if (!HighlightingFeature.SEALED_CLASSES.isAvailable(ref) && ref.textMatches(PsiKeyword.SEALED)) {
+    if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, ref) && ref.textMatches(PsiKeyword.SEALED)) {
       ArrayList<IntentionAction> intentions = new ArrayList<>();
-      registerIncreaseLanguageLevelFixes(ref, HighlightingFeature.SEALED_CLASSES, intentions);
+      registerIncreaseLanguageLevelFixes(ref, JavaFeature.SEALED_CLASSES, intentions);
       for (IntentionAction intention : intentions) {
         registrar.register(intention);
       }

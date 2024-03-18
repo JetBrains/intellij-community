@@ -26,7 +26,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -66,15 +65,20 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String CONSOLE_FONT_SIZE = "CONSOLE_FONT_SIZE";
   private static final @NonNls String EDITOR_LIGATURES = "EDITOR_LIGATURES";
   private static final @NonNls String CONSOLE_LIGATURES = "CONSOLE_LIGATURES";
-  private static final SimpleDateFormat META_INFO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
   private static final @NonNls String META_INFO_ELEMENT = "metaInfo";
   private static final @NonNls String PROPERTY_ELEMENT = "property";
   private static final @NonNls String PROPERTY_NAME_ATTR = "name";
+  /**
+   * Obsolete: removed since 24.1
+   */
   private static final @NonNls String META_INFO_CREATION_TIME = "created";
+  /**
+   * Obsolete: removed since 24.1
+   */
   private static final @NonNls String META_INFO_MODIFIED_TIME = "modified";
   private static final @NonNls String META_INFO_IDE = "ide";
   private static final @NonNls String META_INFO_IDE_VERSION = "ideVersion";
-  private static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
+  public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
   private final ValueElementReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
@@ -90,7 +94,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   // version influences an XML format and triggers migration
   private int version = CURR_VERSION;
   private Color deprecatedBackgroundColor = null;
-
   //endregion
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
@@ -101,7 +104,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public void setDefaultMetaInfo(@Nullable AbstractColorsScheme parentScheme) {
-    metaInfo.setProperty(META_INFO_CREATION_TIME, META_INFO_DATE_FORMAT.format(new Date()));
     metaInfo.setProperty(META_INFO_IDE, PlatformUtils.getPlatformPrefix());
     metaInfo.setProperty(META_INFO_IDE_VERSION, ApplicationInfo.getInstance().getStrictVersion());
     if (parentScheme != null &&
@@ -243,7 +245,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public @NlsSafe String getEditorFontName() {
-    return AppFontOptions.NEW_FONT_SELECTOR ? fontPreferences.getFontFamily() : getFont(EditorFontType.PLAIN).getFamily();
+    return fontPreferences.getFontFamily();
   }
 
   @Override
@@ -658,7 +660,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private @NotNull Element metaInfoToElement() {
     Element metaInfoElement = new Element(META_INFO_ELEMENT);
-    metaInfo.setProperty(META_INFO_MODIFIED_TIME, META_INFO_DATE_FORMAT.format(new Date()));
     List<String> sortedPropertyNames = new ArrayList<>(metaInfo.stringPropertyNames());
     sortedPropertyNames.sort(null);
     for (String propertyName : sortedPropertyNames) {
@@ -926,6 +927,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
+    return settingsEqual(other, colorKeyFilter, false);
+  }
+
+  public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo) {
+    return settingsEqual(other, colorKeyFilter, false, true);
+  }
+
+  public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo, boolean useDefaults) {
     if (!(other instanceof AbstractColorsScheme otherScheme)) {
       return false;
     }
@@ -936,7 +945,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
 
     for (String propertyName : metaInfo.stringPropertyNames()) {
-      if (propertyName.equals(META_INFO_CREATION_TIME) ||
+      if (ignoreMetaInfo ||
+          propertyName.equals(META_INFO_CREATION_TIME) ||
           propertyName.equals(META_INFO_MODIFIED_TIME) ||
           propertyName.equals(META_INFO_IDE) ||
           propertyName.equals(META_INFO_IDE_VERSION) ||
@@ -952,11 +962,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     return areDelegatingOrEqual(fontPreferences, otherScheme.getFontPreferences()) &&
            areDelegatingOrEqual(consoleFontPreferences, otherScheme.getConsoleFontPreferences()) &&
-           attributesEqual(otherScheme) &&
+           attributesEqual(otherScheme, useDefaults) &&
            colorsEqual(otherScheme, colorKeyFilter);
   }
 
-  protected boolean attributesEqual(AbstractColorsScheme otherScheme) {
+  protected boolean attributesEqual(AbstractColorsScheme otherScheme, boolean useDefaults) {
     return attributesMap.equals(otherScheme.attributesMap);
   }
 

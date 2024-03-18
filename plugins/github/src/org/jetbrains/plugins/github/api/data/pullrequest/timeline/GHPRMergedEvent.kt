@@ -7,10 +7,10 @@ import org.jetbrains.plugins.github.api.data.GHCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import java.util.*
 
-class GHPRMergedEvent(override val actor: GHActor?,
-                      override val createdAt: Date,
-                      val commit: GHCommitShort?,
-                      val mergeRefName: @NlsSafe String)
+data class GHPRMergedEvent(override val actor: GHActor?,
+                           override val createdAt: Date,
+                           val commit: GHCommitShort?,
+                           val mergeRefName: @NlsSafe String)
   : GHPRTimelineEvent.State {
   override val newState = GHPullRequestState.MERGED
 }

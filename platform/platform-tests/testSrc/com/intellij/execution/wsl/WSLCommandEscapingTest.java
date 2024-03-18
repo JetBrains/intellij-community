@@ -209,7 +209,7 @@ public final class WSLCommandEscapingTest {
   }
 
   private void assertPwdOutputInDirectory(String directoryName) throws ExecutionException {
-    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).getPath());
+    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).toPath());
     assertWslCommandOutput(path + "\n", path, Collections.emptyMap(), List.of("pwd"));
   }
 
@@ -249,7 +249,7 @@ public final class WSLCommandEscapingTest {
 
   private String createEchoScriptAndGetLinuxPath(String executableName) {
     File file = myTempDirectory.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
-    String wslPath = wslRule.getWsl().getWslPath(file.getPath());
+    String wslPath = wslRule.getWsl().getWslPath(file.toPath());
     assertNotNull("local path: " + file, wslPath);
     return wslPath;
   }

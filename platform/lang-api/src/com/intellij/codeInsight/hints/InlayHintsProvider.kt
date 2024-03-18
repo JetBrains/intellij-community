@@ -113,6 +113,13 @@ interface InlayHintsProvider<T : Any> {
    */
   fun isLanguageSupported(language: Language): Boolean = true
 
+  /**
+   * Determines a language for settings retrieval
+   * (can be used to share settings for multi-dialect languages, for example)
+   * @param language Original element language
+   */
+  fun getSettingsLanguage(language: Language): Language = language
+
   fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)

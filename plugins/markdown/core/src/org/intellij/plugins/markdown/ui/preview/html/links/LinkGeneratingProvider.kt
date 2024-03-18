@@ -5,28 +5,15 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.TransparentInlineHolderProvider
-import java.net.URI
 
-internal abstract class LinkGeneratingProvider(private val baseURI: URI?): GeneratingProvider {
+internal abstract class LinkGeneratingProvider: GeneratingProvider {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val info = getRenderInfo(text, node) ?: return fallbackProvider.processNode(visitor, text, node)
     renderLink(visitor, text, node, info)
   }
 
-  protected open fun makeAbsoluteUrl(destination: CharSequence): CharSequence {
-    if (destination.startsWith('#')) {
-      return destination
-    }
-    try {
-      return baseURI?.resolve(destination.toString())?.toString() ?: destination
-    }
-    catch (e: IllegalArgumentException) {
-      return destination
-    }
-  }
-
   open fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-    visitor.consumeTagOpen(node, "a", "href=\"${makeAbsoluteUrl(info.destination)}\"", info.title?.let { "title=\"$it\"" })
+    visitor.consumeTagOpen(node, "a", "href=\"${info.destination}\"", info.title?.let { "title=\"$it\"" })
     labelProvider.processNode(visitor, text, info.label)
     visitor.consumeTagClose("a")
   }

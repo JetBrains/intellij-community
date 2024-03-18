@@ -3,9 +3,10 @@ package com.intellij.ui.tree.ui
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.tree.CachingTreePath
+import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.*
@@ -31,6 +32,8 @@ class DefaultTreeLayoutCache(
   private val nodeByPath = hashMapOf<TreePath, Node>()
   private val boundsBuffer = Rectangle()
   private var variableHeight: VariableHeightSupport? = VariableHeightSupport()
+
+  internal var isCachedSizeValid = false
 
   override fun setModel(newModel: TreeModel?) {
     super.setModel(newModel)
@@ -121,6 +124,43 @@ class DefaultTreeLayoutCache(
   override fun getExpandedState(path: TreePath?): Boolean = getNode(path)?.run{ isVisible && isExpanded } == true
 
   override fun isExpanded(path: TreePath?): Boolean = getNode(path)?.isChildrenVisible == true
+
+  fun updateExpandedPaths(expandedNodes: Set<TreePath>?) {
+    rows.clear()
+    for (node in nodeByPath.values) {
+      node.isExpanded = false
+    }
+    if (expandedNodes == null) {
+      return
+    }
+    for (expandedNodePath in expandedNodes) {
+      val expandedNode = getOrCreateNode(expandedNodePath)
+      if (expandedNode?.isLeaf == false) {
+        expandedNode.isExpanded = true
+      }
+    }
+    val root = root ?: return
+    val location = Location("updateExpandedPaths(set size=%d)", expandedNodes.size)
+    rows.update(location) {
+      if (isRootVisible) {
+        rows.add(root)
+      }
+      updateExpandedPaths(root)
+      treeSelectionModel?.resetRowSelection()
+    }
+    checkInvariants(location)
+  }
+
+  private fun updateExpandedPaths(node: Node?) {
+    if (node?.isExpanded != true) {
+      return
+    }
+    val children = node.children ?: node.loadChildren()
+    for (child in children) {
+      rows.add(child)
+      updateExpandedPaths(child)
+    }
+  }
 
   override fun getPreferredHeight(): Int = if (rowHeight > 0) {
     rows.size * rowHeight
@@ -661,6 +701,9 @@ class DefaultTreeLayoutCache(
     override fun iterator(): Iterator<Node> = nodes.iterator()
 
     fun clear() {
+      for (node in nodes) {
+        node.row = -1
+      }
       nodes.clear()
     }
 
@@ -695,6 +738,8 @@ class DefaultTreeLayoutCache(
         minimumAffectedRow = -1
       }
     }
+
+    fun add(value: Node) = add(size, value)
 
     fun add(index: Int, value: Node) {
       nodes.add(index, value)
@@ -787,6 +832,9 @@ class DefaultTreeLayoutCache(
         return
       }
       val change = newHeightDelta - oldHeightDelta
+      if (change != 0) {
+        isCachedSizeValid = false
+      }
       var i = row + 1
       while (i <= rows.size) {
         rows[i - 1].fenwickTreeNodeForY += change
@@ -941,6 +989,9 @@ class DefaultTreeLayoutCache(
     private fun checkVisibleSubtrees() {
       for (i in 0 until rows.size) {
         val node = rows[i]
+        if (node.isChildrenVisible && !node.isChildrenLoaded) {
+          messages += "Node ${node.path} has its children visible, but they aren't loaded"
+        }
         val visibleSubtreeSize = node.visibleSubtreeNodeCount()
         if (visibleSubtreeSize <= 0) {
           messages += "Node ${node.path} at row $i is visible, but has the visible subtree of size $visibleSubtreeSize"

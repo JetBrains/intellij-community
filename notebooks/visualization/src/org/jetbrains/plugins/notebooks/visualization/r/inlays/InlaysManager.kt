@@ -29,19 +29,6 @@ private val logger = Logger.getInstance(InlaysManager::class.java)
 
 class InlaysManager : EditorFactoryListener {
 
-  companion object {
-    private val KEY = Key.create<EditorInlaysManager>("org.jetbrains.plugins.notebooks.visualization.r.inlays.editorInlaysManager")
-
-    fun getEditorManager(editor: Editor): EditorInlaysManager? = editor.getUserData(KEY)
-
-    private fun getDescriptor(editor: Editor): InlayElementDescriptor? {
-      return InlayDescriptorProvider.EP.extensionList
-        .asSequence()
-        .mapNotNull { it.getInlayDescriptor(editor) }
-        .firstOrNull()
-    }
-  }
-
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     val project = editor.project ?: return
@@ -56,4 +43,15 @@ class InlaysManager : EditorFactoryListener {
       event.editor.putUserData(KEY, null)
     }
   }
+}
+
+private val KEY = Key.create<EditorInlaysManager>("org.jetbrains.plugins.notebooks.visualization.r.inlays.editorInlaysManager")
+
+fun getEditorManager(editor: Editor): EditorInlaysManager? = editor.getUserData(KEY)
+
+private fun getDescriptor(editor: Editor): InlayElementDescriptor? {
+  return InlayDescriptorProvider.EP.extensionList
+    .asSequence()
+    .mapNotNull { it.getInlayDescriptor(editor) }
+    .firstOrNull()
 }

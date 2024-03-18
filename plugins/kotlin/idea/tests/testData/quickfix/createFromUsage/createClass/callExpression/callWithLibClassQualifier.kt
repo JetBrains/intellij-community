@@ -1,6 +1,4 @@
 // "Create class 'Foo'" "false"
-// ACTION: Create extension function 'Int.Foo'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: Foo
 // WITH_STDLIB
 

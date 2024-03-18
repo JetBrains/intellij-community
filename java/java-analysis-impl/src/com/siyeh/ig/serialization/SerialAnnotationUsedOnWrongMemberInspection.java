@@ -4,16 +4,18 @@ package com.siyeh.ig.serialization;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection {
+import java.util.Set;
+
+public final class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection {
 
   @Override
   public @NotNull String getID() {
@@ -21,8 +23,8 @@ public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection 
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel14OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.SERIAL_ANNOTATION);
   }
 
   @Override

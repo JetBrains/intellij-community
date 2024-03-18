@@ -2,5 +2,5 @@
 import org.jetbrains.annotations.NotNull;
 
 class X {
-  @NotNull String x = null;
+  @NotNull String x = "";
 }

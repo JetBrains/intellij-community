@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -884,22 +885,25 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
                     settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun())
             .onSuccess(selected -> {
               if (selected != Boolean.TRUE) {
-                Content previousSelection = myPreviousSelection;
-                if (previousSelection != null) {
-                  setSelectedContent(previousSelection);
-                }
+                selectPreviousContent();
               }
             })
             .onError(t -> {
-              Content previousSelection = myPreviousSelection;
-              if (previousSelection != null) {
-                setSelectedContent(previousSelection);
-              }
+              selectPreviousContent();
             });
         }
       }
       else {
         myPreviousSelection = content;
+      }
+    }
+
+    private void selectPreviousContent() {
+      Content previousSelection = myPreviousSelection;
+      if (previousSelection != null) {
+        AppUIExecutor.onUiThread().expireWith(previousSelection).submit(() -> {
+          setSelectedContent(previousSelection);
+        });
       }
     }
 

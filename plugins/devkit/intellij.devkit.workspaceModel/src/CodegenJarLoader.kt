@@ -44,9 +44,9 @@ class CodegenJarLoader(val project: Project) {
                                                  listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION),
                                                  null).await()
 
-    val pathsToJars = roots.mapNotNull { PathUtil.getLocalPath(it.file)?.let { Path.of(it) } }
+    val pathsToJars = roots.mapNotNull { root -> PathUtil.getLocalPath(root.file)?.let { Path.of(it) } }
     if (pathsToJars.isEmpty()) {
-      error("Cannot get paths ${roots.joinToString(", ") { it.file.path }}")
+      error("Cannot get paths ${roots.joinToString(", ") { it.file.path }}. Maybe the new codegen version is not yet released?")
     }
     thisLogger().info("Path to jar: ${pathsToJars.joinToString(", ")}")
     return UrlClassLoader.build().files(pathsToJars).parent(this.javaClass.classLoader).get()

@@ -30,7 +30,7 @@ import java.util.Arrays;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class StaticVariableUninitializedUseInspection extends BaseInspection {
+public final class StaticVariableUninitializedUseInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

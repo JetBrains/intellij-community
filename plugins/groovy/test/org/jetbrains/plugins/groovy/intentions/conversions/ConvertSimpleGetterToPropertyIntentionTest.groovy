@@ -25,7 +25,7 @@ class ConvertSimpleGetterToPropertyIntentionTest extends GrIntentionTestCase {
   final String basePath = TestUtils.testDataPath + "intentions/convert/getterToProperty/"
 
   ConvertSimpleGetterToPropertyIntentionTest() {
-    super(ConvertSimpleGetterToPropertyIntention)
+    super("Convert to property")
   }
 
   void testTyped() { doTest(true) }

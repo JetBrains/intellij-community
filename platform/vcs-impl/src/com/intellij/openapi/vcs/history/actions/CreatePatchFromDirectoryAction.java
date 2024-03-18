@@ -27,13 +27,19 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null) return;
+    VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    if (revisions == null) return;
 
     if (filePath.isDirectory()) {
       if (revisions.length != 1) return;
 
-      AbstractVcs vcs = VcsUtil.findVcsByKey(e.getRequiredData(CommonDataKeys.PROJECT), e.getRequiredData(VcsDataKeys.VCS));
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
+      if (vcsKey == null) return;
+      AbstractVcs vcs = VcsUtil.findVcsByKey(project, vcsKey);
       if (vcs == null) return;
 
       ProgressManager.getInstance().run(new FolderPatchCreationTask(vcs, revisions[0]));

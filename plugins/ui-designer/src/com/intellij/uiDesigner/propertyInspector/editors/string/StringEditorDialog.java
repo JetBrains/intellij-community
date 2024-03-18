@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -55,8 +55,8 @@ import java.util.*;
 public final class StringEditorDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance(StringEditorDialog.class);
 
-  @NonNls private static final String CARD_STRING = "string";
-  @NonNls private static final String CARD_BUNDLE = "bundle";
+  private static final @NonNls String CARD_STRING = "string";
+  private static final @NonNls String CARD_BUNDLE = "bundle";
 
   private final GuiEditor myEditor;
   /** Descriptor to be edited */
@@ -99,7 +99,7 @@ public final class StringEditorDialog extends DialogWrapper{
   @Override protected void doOKAction() {
     if (myForm.myRbResourceBundle.isSelected()) {
       final StringDescriptor descriptor = getDescriptor();
-      if (descriptor != null && descriptor.getKey().length() > 0) {
+      if (descriptor != null && !descriptor.getKey().isEmpty()) {
         final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
         try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-687662")) {
@@ -123,9 +123,8 @@ public final class StringEditorDialog extends DialogWrapper{
     return manager.findPropertiesFile(myEditor.getModule(), descriptor.getDottedBundleName(), myLocale);
   }
 
-  @Nullable
-  public static String saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
-                                                 final Locale locale, final String editedValue, final PsiFile formFile) {
+  public static @Nullable String saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
+                                                           final Locale locale, final String editedValue, final PsiFile formFile) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
     final PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
     if (propFile != null) {
@@ -209,7 +208,7 @@ public final class StringEditorDialog extends DialogWrapper{
     InputValidator validator = new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {
-        return inputString.length() > 0 && propFile.findPropertyByKey(inputString) == null;
+        return !inputString.isEmpty() && propFile.findPropertyByKey(inputString) == null;
       }
 
       @Override
@@ -253,7 +252,7 @@ public final class StringEditorDialog extends DialogWrapper{
   StringDescriptor getDescriptor(){
     if(myForm.myRbString.isSelected()){ // plain value
       final String value = myForm.myTfValue.getText();
-      if(myValue == null && value.length() == 0){
+      if(myValue == null && value.isEmpty()){
         return null;
       }
       else{
@@ -323,7 +322,7 @@ public final class StringEditorDialog extends DialogWrapper{
             if (!myDefaultBundleInitialized) {
               myDefaultBundleInitialized = true;
               Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myEditor.getRootContainer());
-              if (bundleNames.size() > 0) {
+              if (!bundleNames.isEmpty()) {
                 myTfBundleName.setText(ArrayUtilRt.toStringArray(bundleNames)[0]);
               }
             }
@@ -358,8 +357,8 @@ public final class StringEditorDialog extends DialogWrapper{
             PropertiesFile file = PropertiesUtilBase.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
             PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
-            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
-                                                                                                         PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
+            TreeFileChooser fileChooser = TreeFileChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
+                                                                                                        PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
               @Override
               public boolean accept(PsiFile file) {
                 final VirtualFile virtualFile = file.getVirtualFile();
@@ -399,7 +398,7 @@ public final class StringEditorDialog extends DialogWrapper{
           public void actionPerformed(final ActionEvent e) {
             // 1. Check that bundle exist. Otherwise we cannot show key chooser
             final String bundleName = myTfBundleName.getText();
-            if (bundleName.length() == 0) {
+            if (bundleName.isEmpty()) {
               Messages.showErrorDialog(
                 UIDesignerBundle.message("error.specify.bundle.name"),
                 CommonBundle.getErrorTitle()
@@ -440,12 +439,12 @@ public final class StringEditorDialog extends DialogWrapper{
       );
     }
 
-    public void showStringDescriptor(@Nullable final StringDescriptor descriptor) {
+    public void showStringDescriptor(final @Nullable StringDescriptor descriptor) {
       myTfValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(descriptor, myLocale));
       myNoI18nCheckbox.setSelected(descriptor != null && descriptor.isNoI18n());
     }
 
-    public void showResourceBundleDescriptor(@NotNull final StringDescriptor descriptor) {
+    public void showResourceBundleDescriptor(final @NotNull StringDescriptor descriptor) {
       final String key = descriptor.getKey();
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());

@@ -1,16 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
+import com.intellij.openapi.Disposable
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.Alarm
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
-class AlarmContextPropagationTest : BasePlatformTestCase() {
+@TestApplication
+@ExtendWith(ThreadContextPropagationTest.Enabler::class)
+class AlarmContextPropagationTest {
 
-  fun testAlarm() = runWithContextPropagationEnabled {
+  @Test
+  fun `alarm request`(@TestDisposable disposable: Disposable) {
+    val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
     timeoutRunBlocking {
       doPropagationTest {
-        val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
         alarm.addRequest(it, 100)
       }
     }

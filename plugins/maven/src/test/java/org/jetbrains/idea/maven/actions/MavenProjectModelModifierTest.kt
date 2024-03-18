@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -24,8 +23,6 @@ import org.junit.Test
 import java.util.regex.Pattern
 
 class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = false
-
 
   @Test
   fun testAddExternalLibraryDependency() = runBlocking {
@@ -39,7 +36,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                                                   ExternalLibraryDescriptor("junit", "junit"),
                                                   DependencyScope.COMPILE)
 
-    assertHasDependency(myProjectPom, "junit", "junit")
+    assertHasDependency(projectPom, "junit", "junit")
   }
 
 
@@ -53,7 +50,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
-    assertHasDependency(myProjectPom, "commons-io", "commons-io")
+    assertHasDependency(projectPom, "commons-io", "commons-io")
   }
 
   @Test
@@ -72,7 +69,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
-    assertHasManagedDependency(myProjectPom, "commons-io", "commons-io")
+    assertHasManagedDependency(projectPom, "commons-io", "commons-io")
   }
 
   @Test
@@ -105,7 +102,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     addExternalLibraryDependency(
       listOf(getModule("project")), ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"),
       DependencyScope.COMPILE)
-    assertHasDependency(myProjectPom, "commons-io", "commons-io", "RELEASE")
+    assertHasDependency(projectPom, "commons-io", "commons-io", "RELEASE")
     return@runBlocking
   }
 
@@ -153,7 +150,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     val libName = "Maven: junit:junit:4.0"
     assertModuleLibDep("m2", libName)
-    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libName)
+    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libName)
     assertNotNull(library)
     addLibraryDependency(getModule("m1"), library!!, DependencyScope.COMPILE, false)
 
@@ -216,7 +213,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private suspend fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String) = readAction {
-    val pomText = PsiManager.getInstance(myProject).findFile(pom)!!.getText()
+    val pomText = PsiManager.getInstance(project).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
                                   artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*<scope>(.*)</scope>\\s*</dependency>.*")
     val matcher = pattern.matcher(pomText)
@@ -226,7 +223,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private suspend fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String, version: String) = readAction {
-    val pomText = PsiManager.getInstance(myProject).findFile(pom)!!.getText()
+    val pomText = PsiManager.getInstance(project).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" +
                                   groupId +
                                   "</groupId>\\s*<artifactId>" +
@@ -241,7 +238,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private suspend fun assertHasManagedDependency(pom: VirtualFile, groupId: String, artifactId: String) = readAction {
-    val pomText = PsiManager.getInstance(myProject).findFile(pom)!!.getText()
+    val pomText = PsiManager.getInstance(project).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
                                   artifactId + "</artifactId>\\s*</dependency>.*")
     val matcher = pattern.matcher(pomText)
@@ -287,7 +284,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private val extension: MavenProjectModelModifier
-    get() = ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(myProject), MavenProjectModelModifier::class.java)
+    get() = ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(project), MavenProjectModelModifier::class.java)
 
   companion object {
     private val COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 = ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4")

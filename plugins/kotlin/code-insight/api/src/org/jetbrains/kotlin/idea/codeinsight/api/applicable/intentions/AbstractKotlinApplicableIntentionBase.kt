@@ -5,14 +5,13 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 /**
  * [AbstractKotlinApplicableIntentionBase] is a base implementation for [AbstractKotlinApplicableIntention] and
- * [AbstractKotlinApplicableIntentionWithContext].
+ * [AbstractKotlinModCommandWithContext].
  *
  * Note: A [familyNameGetter] for [SelfTargetingIntention] does not have to be set because inheritors of
  * [AbstractKotlinApplicableIntentionBase] must override [getFamilyName].

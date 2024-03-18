@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Insert 'self' in a method that lacks any arguments
  */
-public class AddSelfQuickFix implements LocalQuickFix {
+public class AddSelfQuickFix extends PsiUpdateModCommandQuickFix {
   private final String myParamName;
 
   public AddSelfQuickFix(String paramName) {
@@ -36,8 +36,7 @@ public class AddSelfQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     if (element instanceof PyParameterList parameterList) {
       PyNamedParameter newParameter = PyElementGenerator.getInstance(project).createParameter(myParamName);
       parameterList.addParameter(newParameter);

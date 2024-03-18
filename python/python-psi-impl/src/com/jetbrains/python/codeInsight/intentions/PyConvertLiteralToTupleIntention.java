@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLiteralToTupleIntention extends PyBaseConvertCollectionLiteralIntention {
+public final class PyConvertLiteralToTupleIntention extends PyBaseConvertCollectionLiteralIntention {
   public PyConvertLiteralToTupleIntention() {
     super(PyTupleExpression.class, "tuple", "(", ")");
   }

@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class IteratorHasNextCallsIteratorNextInspection
+public final class IteratorHasNextCallsIteratorNextInspection
   extends BaseInspection {
 
   @Override

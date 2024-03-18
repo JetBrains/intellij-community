@@ -1,28 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.platform.workspace.storage.tests.trace
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.instrumentation
-import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.testEntities.entities.NameId
-import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTracker
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class TraceTest {
-  lateinit var snapshot: EntityStorageSnapshot
+  lateinit var snapshot: ImmutableEntityStorage
 
   @BeforeEach
   fun setUp() {
@@ -33,9 +33,9 @@ class TraceTest {
 
   @Test
   fun `traced storage creates traced entities`() {
-    trace(snapshot) {
+    ReadTracker.trace(snapshot) {
       val entity = it.entities(NamedEntity::class.java).single()
-      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      val createdSnapshot = entity.asBase().snapshot
       assertIs<ReadTracker>(createdSnapshot)
     }
   }
@@ -45,36 +45,36 @@ class TraceTest {
     val newSnapshot = snapshot.toBuilder().also {
       it addEntity WithSoftLinkEntity(NameId("name"), MySource)
     }.toSnapshot()
-    trace(newSnapshot) {
+    ReadTracker.trace(newSnapshot) {
       val entity = it.referrers(NameId("name"), WithSoftLinkEntity::class.java).single()
-      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      val createdSnapshot = entity.asBase().snapshot
       assertIs<ReadTracker>(createdSnapshot)
     }
   }
 
   @Test
   fun `traced storage creates traced entities for resolve`() {
-    trace(snapshot) {
+    ReadTracker.trace(snapshot) {
       val entity = it.resolve(NameId("name"))!!
-      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      val createdSnapshot = entity.asBase().snapshot
       assertIs<ReadTracker>(createdSnapshot)
     }
   }
 
   @Test
   fun `traced storage creates traced entities for resolve reference`() {
-    trace(snapshot) {
+    ReadTracker.trace(snapshot) {
       val entity = it.resolve(NameId("name"))!!
-      val entityRef = entity.createReference<NamedEntity>()
+      val entityRef = entity.createPointer<NamedEntity>()
       val resolvedEntity = entityRef.resolve(it)
-      val createdSnapshot = (resolvedEntity as WorkspaceEntityBase).snapshot
+      val createdSnapshot = resolvedEntity!!.asBase().snapshot
       assertIs<ReadTracker>(createdSnapshot)
     }
   }
 
   @Test
   fun `get entities`() {
-    val traces = trace(snapshot) {
+    val traces = ReadTracker.trace(snapshot) {
       it.entities(NamedEntity::class.java)
     }
 
@@ -82,9 +82,10 @@ class TraceTest {
   }
 
   @Test
+  @OptIn(EntityStorageInstrumentationApi::class)
   fun `get entities amount`() {
-    val traces = trace(snapshot) {
-      it.entitiesAmount(NamedEntity::class.java)
+    val traces = ReadTracker.trace(snapshot) {
+      (it as ImmutableEntityStorageInstrumentation).entityCount(NamedEntity::class.java)
     }
 
     assertEquals(ReadTrace.EntitiesOfType(NamedEntity::class.java), traces.single())
@@ -92,7 +93,7 @@ class TraceTest {
 
   @Test
   fun `get reference`() {
-    val traces = trace(snapshot) {
+    val traces = ReadTracker.trace(snapshot) {
       it.referrers(NameId("name"), NamedEntity::class.java)
     }
 
@@ -101,7 +102,7 @@ class TraceTest {
 
   @Test
   fun `get resolve`() {
-    val traces = trace(snapshot) {
+    val traces = ReadTracker.trace(snapshot) {
       it.resolve(NameId("name"))
     }
 
@@ -110,17 +111,69 @@ class TraceTest {
 
   @Test
   fun `get contains`() {
-    val traces = trace(snapshot) {
+    val traces = ReadTracker.trace(snapshot) {
       it.contains(NameId("name"))
     }
 
     assertEquals(ReadTrace.Resolve(NameId("name")), traces.single())
   }
 
-  private fun trace(storage: EntityStorageSnapshot, operations: (EntityStorageSnapshot) -> Unit): Set<ReadTrace> {
-    val collector = HashSet<ReadTrace>()
-    val tracedStorage = ReadTracker(storage.instrumentation) { collector.add(it) }
-    operations(tracedStorage)
-    return collector
+  @Test
+  fun `get value`() {
+    val traces = ReadTracker.trace(snapshot) {
+      val value = it.resolve(NameId("name"))!!
+      value.myName
+    }
+
+    assertEquals(1, traces.filterIsInstance<ReadTrace.SomeFieldAccess>().size)
+  }
+
+  @Test
+  fun `get entity source`() {
+    val traces = ReadTracker.trace(snapshot) {
+      val value = it.resolve(NameId("name"))!!
+      value.entitySource
+    }
+
+    assertEquals(1, traces.filterIsInstance<ReadTrace.SomeFieldAccess>().size)
+  }
+
+  @Test
+  fun `get symbolic id`() {
+    val traces = ReadTracker.trace(snapshot) {
+      val value = it.resolve(NameId("name"))!!
+      value.symbolicId
+    }
+
+    assertEquals(1, traces.filterIsInstance<ReadTrace.SomeFieldAccess>().size)
+  }
+
+  @Test
+  fun `get by reference`() {
+    val newSnapshot = snapshot.toBuilder().also { builder ->
+      val parent = builder.entities(NamedEntity::class.java).single()
+      builder addEntity NamedChildEntity("Property", MySource) {
+        this.parentEntity = parent
+      }
+    }.toSnapshot()
+
+    val traces = ReadTracker.trace(newSnapshot) {
+      it.entities(NamedEntity::class.java).single().children.single<@Child NamedChildEntity>()
+    }
+
+    assertEquals(2, traces.size)
+    assertContains(traces, ReadTrace.EntitiesOfType(NamedEntity::class.java))
+    assertTrue(traces.filterIsInstance<ReadTrace.SomeFieldAccess>().isNotEmpty())
+  }
+
+  @Test
+  fun `recursive tracking`() {
+    assertThrows<IllegalArgumentException> {
+      ReadTracker.trace(snapshot) { tracedSnapshot ->
+        ReadTracker.trace(tracedSnapshot) {
+          it.entities(NamedEntity::class.java)
+        }
+      }
+    }
   }
 }

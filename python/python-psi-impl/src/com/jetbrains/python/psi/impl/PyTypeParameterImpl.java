@@ -3,15 +3,15 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.stubs.PyTypeParameterElementType;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   public PyTypeParameterImpl(PyTypeParameterStub stub) {
-    this(stub, PyElementTypes.TYPE_PARAMETER);
+    this(stub, PyStubElementTypes.TYPE_PARAMETER);
   }
 
   public PyTypeParameterImpl(PyTypeParameterStub stub, IStubElementType nodeType) {
@@ -43,15 +43,8 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
       return stub.getName();
     }
     else {
-      PsiElement identifier = getNameIdentifier();
-      return identifier != null ? identifier.getText() : null;
+      return PyTypeParameter.super.getName();
     }
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getBoundExpression() {
-    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
   @Override
@@ -62,12 +55,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
       return stub.getBoundExpressionText();
     }
 
-    PyExpression boundExpression = getBoundExpression();
-    if (boundExpression != null) {
-      return boundExpression.getText();
-    }
-
-    return null;
+    return PyTypeParameter.super.getBoundExpressionText();
   }
 
   @Override
@@ -79,15 +67,8 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
       return stub.getKind();
     }
     else {
-      return PyTypeParameterElementType.getTypeParameterKindFromPsi(this);
+      return PyTypeParameter.super.getKind();
     }
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNameIdentifier() {
-    ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-    return nameNode != null ? nameNode.getPsi() : null;
   }
 
   @Override

@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.testEntities.entities.DefaultValueEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

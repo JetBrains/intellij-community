@@ -3,7 +3,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -95,7 +95,7 @@ public class BasicReferenceParser {
         builder.lookAhead(1) != JavaTokenType.DOT &&
         builder.lookAhead(1) != JavaTokenType.COLON &&
         PsiKeyword.VAR.equals(builder.getTokenText()) &&
-        getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_10)) {
+        JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
     }
     else if (tokenType == JavaTokenType.VAR_KEYWORD && !isSet(flags, VAR_TYPE)) {
@@ -105,13 +105,8 @@ public class BasicReferenceParser {
     if (expect(builder, BasicElementTypes.BASIC_PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
-    else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST || isKeywordAny(builder))) {
-      if (tokenType == JavaTokenType.QUEST) {
-        builder.advanceLexer();
-      }
-      else {
-        dummy(builder);
-      }
+    else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST)) {
+      builder.advanceLexer();
       completeWildcardType(builder, isSet(flags, WILDCARD), type);
       typeInfo.marker = type;
       return typeInfo;
@@ -359,10 +354,6 @@ public class BasicReferenceParser {
 
     myParser.getDeclarationParser().parseAnnotations(builder);
 
-    if (isKeywordAny(builder)) {
-      dummy(builder);
-    }
-
     boolean wild = expect(builder, JavaTokenType.QUEST);
     if (!wild && !expect(builder, JavaTokenType.IDENTIFIER)) {
       param.rollbackTo();
@@ -403,15 +394,5 @@ public class BasicReferenceParser {
       element.error(JavaPsiBundle.message("bound.not.expected"));
     }
     return endsWithError;
-  }
-
-  private static boolean isKeywordAny(PsiBuilder builder) {
-    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X) && "any".equals(builder.getTokenText());
-  }
-
-  private void dummy(PsiBuilder builder) {
-    PsiBuilder.Marker mark = builder.mark();
-    builder.advanceLexer();
-    mark.done(myJavaElementTypeContainer.DUMMY_ELEMENT);
   }
 }

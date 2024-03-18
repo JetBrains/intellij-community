@@ -38,7 +38,7 @@ import java.util.List;
  * User: ktisha
  * See pylint W0232
  */
-public class PyClassHasNoInitInspection extends PyInspection {
+public final class PyClassHasNoInitInspection extends PyInspection {
 
   @NotNull
   @Override

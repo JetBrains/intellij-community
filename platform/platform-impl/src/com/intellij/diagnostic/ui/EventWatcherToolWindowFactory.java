@@ -6,13 +6,12 @@ import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -142,19 +141,14 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
         .disableAddAction()
         .disableRemoveAction()
         .setToolbarPosition(ActionToolbarPosition.RIGHT)
-        .addExtraAction(new DumbAwareActionButton(DiagnosticBundle.message("event.watcher.clear.button.title"),
-                                                  AllIcons.Actions.GC) {
+        .addExtraAction(new DumbAwareAction(DiagnosticBundle.message("event.watcher.clear.button.title"), null,
+                                            AllIcons.Actions.GC) {
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             Objects.requireNonNull(EventWatcher.getInstanceOrNull())
               .reset();
             setItems(tableModel, List.of());
-          }
-
-          @Override
-          public @NotNull ActionUpdateThread getActionUpdateThread() {
-            return ActionUpdateThread.BGT;
           }
         }).createPanel();
     }

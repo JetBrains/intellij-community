@@ -5,6 +5,7 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,10 +16,13 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder.doSingleStep;
 
@@ -109,14 +113,14 @@ public final class ObjectValidation implements JsonSchemaValidation {
           }
         }
       }
-      final Map<String, JsonSchemaObject> schemaDependencies = schema.getSchemaDependencies();
-      if (schemaDependencies != null) {
-        for (Map.Entry<String, JsonSchemaObject> entry : schemaDependencies.entrySet()) {
-          if (set.contains(entry.getKey())) {
-            consumer.checkObjectBySchemaRecordErrors(entry.getValue(), value);
+      final var schemaDependencies = schema.getSchemaDependencyNames();
+      StreamEx.of(schemaDependencies)
+        .forEach(name -> {
+          var dependency = schema.getSchemaDependencyByName(name);
+          if (set.contains(name) && dependency != null) {
+            consumer.checkObjectBySchemaRecordErrors(dependency, value);
           }
-        }
-      }
+        });
     }
   }
 
@@ -128,8 +132,12 @@ public final class ObjectValidation implements JsonSchemaValidation {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
       if (defaultValue == null) {
-        var example = schema.getExample();
-        defaultValue = example == null ? null : example.get(req);
+        if (Registry.is("json.schema.object.v2")) {
+          defaultValue = schema.getExampleByName(req);
+        } else {
+          var example = schema.getExample();
+          defaultValue = example == null ? null : example.get(req);
+        }
       }
       Ref<Integer> enumCount = Ref.create(0);
 
@@ -170,8 +178,9 @@ public final class ObjectValidation implements JsonSchemaValidation {
   }
 
   private static JsonSchemaObject resolvePropertySchema(@NotNull JsonSchemaObject schema, String req) {
-    if (schema.getProperties().containsKey(req)) {
-      return schema.getProperties().get(req);
+    var propOrNull = schema.getPropertyByName(req);
+    if (propOrNull != null) {
+      return propOrNull;
     }
     else {
       JsonSchemaObject propertySchema = schema.getMatchingPatternPropertySchema(req);
@@ -211,8 +220,9 @@ public final class ObjectValidation implements JsonSchemaValidation {
     }
 
     var existingProperties = ContainerUtil.map(objectValueAdapter.getPropertyList(), JsonPropertyAdapter::getName);
-    var missingProperties = new HashSet<>(ContainerUtil.filter(schema.getProperties().keySet(), it -> !existingProperties.contains(it)));
 
+    Iterable<String> iter = (() -> schema.getPropertyNames());
+    var missingProperties = StreamSupport.stream(iter.spliterator(), false).filter(it -> !existingProperties.contains(it)).collect(Collectors.toSet());
     var missingPropertiesData = createMissingPropertiesData(schema, missingProperties, validationHost);
     validationHost.error(
       JsonBundle.message("schema.validation.missing.not.required.property.or.properties", missingPropertiesData.getMessage(false)),

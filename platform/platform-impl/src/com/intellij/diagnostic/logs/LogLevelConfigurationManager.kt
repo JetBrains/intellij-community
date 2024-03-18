@@ -3,7 +3,7 @@ package com.intellij.diagnostic.logs
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import kotlinx.serialization.Serializable
 import java.util.logging.Level
 
@@ -18,9 +18,8 @@ import java.util.logging.Level
        useLoadedStateAsExisting = false,
        reportStatistic = false)
 class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLevelConfigurationManager.State>(State()) {
-
   companion object {
-    private val LOG = Logger.getInstance(LogLevelConfigurationManager::class.java)
+    private val LOG = logger<LogLevelConfigurationManager>()
 
     private const val LOG_DEBUG_CATEGORIES = "log.debug.categories"
     private const val LOG_TRACE_CATEGORIES = "log.trace.categories"

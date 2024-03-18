@@ -9,7 +9,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -24,28 +23,20 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> implements Place.Navigator {
-  private final ProjectJdkImpl myProjectJdk;
+  private final Sdk myProjectJdk;
   private final SdkEditor mySdkEditor;
   private final SdkProjectStructureElement myProjectStructureElement;
 
-  public JdkConfigurable(@NotNull ProjectJdkImpl projectJdk,
+  public JdkConfigurable(@NotNull Sdk projectJdk,
                          @NotNull ProjectSdksModel sdksModel,
                          @NotNull Runnable updateTree,
                          @NotNull History history,
                          @NotNull Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
-    mySdkEditor = createSdkEditor(project, sdksModel, history, myProjectJdk);
+    mySdkEditor = new SdkEditor(project, sdksModel, history, projectJdk);
     final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
     myProjectStructureElement = new SdkProjectStructureElement(context, myProjectJdk);
-  }
-
-  @NotNull
-  protected SdkEditor createSdkEditor(@NotNull Project project,
-                                      @NotNull ProjectSdksModel sdksModel,
-                                      @NotNull History history,
-                                      @NotNull ProjectJdkImpl projectJdk) {
-    return new SdkEditor(project, sdksModel, history, projectJdk);
   }
 
   @Override
@@ -55,7 +46,7 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
 
   @Override
   public void setDisplayName(final String name) {
-    myProjectJdk.setName(name);
+    mySdkEditor.setNewSdkName(name);
   }
 
   @Override
@@ -65,12 +56,12 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
 
   @Override
   public String getBannerSlogan() {
-    return JavaUiBundle.message("project.roots.jdk.banner.text", myProjectJdk.getName());
+    return JavaUiBundle.message("project.roots.jdk.banner.text", mySdkEditor.getActualSdkName());
   }
 
   @Override
   public String getDisplayName() {
-    return myProjectJdk.getName();
+    return mySdkEditor.getActualSdkName();
   }
 
   @Override

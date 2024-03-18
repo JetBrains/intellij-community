@@ -13,8 +13,10 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToLightServiceFix
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
 
@@ -36,11 +38,12 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
       if (uClass == null || containsUnitTestOrHeadlessModeCheck(uClass)) return
       if (aClass.hasAnnotation(Service::class.java.canonicalName)) {
         val message = DevKitBundle.message("inspection.light.service.migration.already.annotated.message")
-        holder.createProblem(element, ProblemHighlightType.ERROR, message, null)
+        holder.createProblem(element, ProblemHighlightType.ERROR, message, null, RemoveDomElementQuickFix(element))
       }
       else {
-        val message = getMessage(level)
-        holder.createProblem(element, message)
+        val message = DevKitBundle.message("inspection.light.service.migration.message")
+        val fix = ConvertToLightServiceFix(aClass, element.xmlTag, level)
+        holder.createProblem(element, message, fix)
       }
     }
   }

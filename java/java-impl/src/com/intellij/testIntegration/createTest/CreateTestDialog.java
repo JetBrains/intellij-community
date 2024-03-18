@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
@@ -113,7 +113,7 @@ public class CreateTestDialog extends DialogWrapper {
       return false;
     }
 
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensions()) {
+    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (superClass.equals(framework.getDefaultSuperClass())) {
         return false;
       }

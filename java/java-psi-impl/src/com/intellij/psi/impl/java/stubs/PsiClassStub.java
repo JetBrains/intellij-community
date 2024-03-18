@@ -19,7 +19,7 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
     return false;
   }
 
-  default boolean isUnnamed() {
+  default boolean isImplicit() {
     return false;
   }
 

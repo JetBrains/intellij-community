@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.BuildEvent
@@ -15,8 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.formatFileSize
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -125,15 +124,15 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
     fun start() {
       cs.launch {
         withBackgroundProgress(project, textWrapper.apply(title), cancellable = false) {
-          withRawProgressReporter {
+          reportRawProgress { reporter ->
             var previousFraction = 0.0
             var statusEvent = channel.receiveCatching().getOrNull()
             while (statusEvent != null && statusEvent.total - statusEvent.progress > 0) {
               val fraction = statusEvent.progress.toDouble() / statusEvent.total.toDouble()
               if (fraction > previousFraction) {
                 val text = "${formatFileSize(statusEvent.progress)} / ${formatFileSize(statusEvent.total)}"
-                rawProgressReporter?.text(text)
-                rawProgressReporter?.fraction(fraction)
+                reporter.text(text)
+                reporter.fraction(fraction)
                 previousFraction = fraction
               }
               statusEvent = channel.receiveCatching().getOrNull()

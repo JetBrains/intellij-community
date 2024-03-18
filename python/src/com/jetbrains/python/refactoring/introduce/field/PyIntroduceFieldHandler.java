@@ -20,6 +20,7 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
@@ -129,7 +130,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           final PyParameter[] parameters = function.getParameterList().getParameters();
           if (parameters.length > 0 && result == parameters[0]) {
             final PyFunction.Modifier modifier = function.getModifier();
-            if (modifier != PyFunction.Modifier.STATICMETHOD) {
+            if (modifier != PyAstFunction.Modifier.STATICMETHOD) {
               // 'self' is not a local scope dependency
               return;
             }
@@ -253,7 +254,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyFunction containingMethod = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
     if (containingMethod != null) {
       final PyFunction.Modifier modifier = containingMethod.getModifier();
-      return modifier == PyFunction.Modifier.STATICMETHOD;
+      return modifier == PyAstFunction.Modifier.STATICMETHOD;
     }
     return false;
   }

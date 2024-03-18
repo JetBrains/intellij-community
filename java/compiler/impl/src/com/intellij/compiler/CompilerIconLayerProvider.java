@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 
-public class CompilerIconLayerProvider implements IconLayerProvider {
+public final class CompilerIconLayerProvider implements IconLayerProvider {
   @Override
   public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
     VirtualFile vFile = null;

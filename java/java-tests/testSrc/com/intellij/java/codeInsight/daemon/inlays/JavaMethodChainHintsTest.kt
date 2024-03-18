@@ -29,9 +29,9 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()/*<# B #>*/
-                .c()/*<# C #>*/
-                .a()/*<# A #>*/
+      .b()/*<# [Chains.B:java.fqn.class]B #>*/
+                .c()/*<# [Chains.C:java.fqn.class]C #>*/
+                .a()/*<# [Chains.A:java.fqn.class]A #>*/
                 .c();
   }
 }""")
@@ -59,10 +59,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()/*<# A #>*/
-     .b()/*<# B #>*/
+     .a()/*<# [Chains.A:java.fqn.class]A #>*/
+     .b()/*<# [Chains.B:java.fqn.class]B #>*/
      .a() // comment
-     .c()/*<# C #>*/
+     .c()/*<# [Chains.C:java.fqn.class]C #>*/
      .b();
   }
 }
@@ -89,11 +89,11 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()/*<# C #>*/
-     .a()/*<# A #>*/
-     .b()/*<# B #>*/
-     .a()/*<# A #>*/
-     .c()/*<# C #>*/
+    a.b().c()/*<# [Chains.C:java.fqn.class]C #>*/
+     .a()/*<# [Chains.A:java.fqn.class]A #>*/
+     .b()/*<# [Chains.B:java.fqn.class]B #>*/
+     .a()/*<# [Chains.A:java.fqn.class]A #>*/
+     .c()/*<# [Chains.C:java.fqn.class]C #>*/
      .b();
   }
 }
@@ -121,10 +121,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()/*<# A #>*/
-     .b()/*<# B #>*/
+     .a()/*<# [Chains.A:java.fqn.class]A #>*/
+     .b()/*<# [Chains.B:java.fqn.class]B #>*/
      .a() // comment
-     .c()/*<# C #>*/
+     .c()/*<# [Chains.C:java.fqn.class]C #>*/
      .b();
   }
 }
@@ -151,15 +151,15 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()/*<# B #>*/
-                .c()/*<# C #>*/
-                .a()/*<# A #>*/
+      .b()/*<# [Chains.B:java.fqn.class]B #>*/
+                .c()/*<# [Chains.C:java.fqn.class]C #>*/
+                .a()/*<# [Chains.A:java.fqn.class]A #>*/
                 .c();
 
     new A()
-      .b()/*<# B #>*/
-                .c()/*<# C #>*/
-                .a()/*<# A #>*/
+      .b()/*<# [Chains.B:java.fqn.class]B #>*/
+                .c()/*<# [Chains.C:java.fqn.class]C #>*/
+                .a()/*<# [Chains.A:java.fqn.class]A #>*/
                 .c();
   }
 }
@@ -194,13 +194,13 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()/*<# A #>*/
-          .c()/*<# C #>*/
-          .b()/*<# B #>*/
+          .a()/*<# [Chains.A:java.fqn.class]A #>*/
+          .c()/*<# [Chains.C:java.fqn.class]C #>*/
+          .b()/*<# [Chains.B:java.fqn.class]B #>*/
           .a();
-      })/*<# B #>*/
-      .c()/*<# C #>*/
-      .a()/*<# A #>*/
+      })/*<# [Chains.B:java.fqn.class]B #>*/
+      .c()/*<# [Chains.C:java.fqn.class]C #>*/
+      .a()/*<# [Chains.A:java.fqn.class]A #>*/
       .c();
   }
 }

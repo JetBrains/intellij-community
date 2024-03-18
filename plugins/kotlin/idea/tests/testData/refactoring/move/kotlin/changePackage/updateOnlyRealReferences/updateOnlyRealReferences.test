@@ -3,5 +3,7 @@
   "type": "CHANGE_PACKAGE_DIRECTIVE",
   "newPackageName": "source",
   "searchInCommentsAndStrings": false,
-  "searchInNonCode": false
+  "searchInNonCode": false,
+  "enabledInK1": "true",
+  "enabledInK2": "false"
 }

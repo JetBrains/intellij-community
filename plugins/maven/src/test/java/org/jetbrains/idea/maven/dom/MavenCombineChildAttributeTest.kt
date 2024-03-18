@@ -34,6 +34,6 @@ class MavenCombineChildAttributeTest : MavenDomTestCase() {
               </build>
         """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "override", "append")
+    assertCompletionVariants(projectPom, "override", "append")
   }
 }

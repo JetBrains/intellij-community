@@ -16,9 +16,10 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
+public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @NotNull
@@ -171,7 +172,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       // disable for jsp files IDEADEV-12957
       return false;
     }
-    return !PsiUtil.isLanguageLevel11OrHigher(file);
+    return !PsiUtil.isAvailable(JavaFeature.NESTMATES, file);
   }
 
   @Override

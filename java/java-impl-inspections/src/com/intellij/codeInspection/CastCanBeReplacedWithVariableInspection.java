@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLocalInspectionTool
+public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLocalInspectionTool
   implements CleanupLocalInspectionTool {
 
   @NotNull

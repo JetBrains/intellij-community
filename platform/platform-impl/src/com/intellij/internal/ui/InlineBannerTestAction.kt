@@ -60,7 +60,7 @@ class InlineBannerTestAction : DumbAwareAction() {
         panel.add(banner1)
 
         val banner2 = InlineBanner()
-        banner2.setMessage("Share your successful solutions with other students and contribute to the learning community. Share your successful solutions with other students and contribute to the learning community. Share your successful solutions with other students and contribute to the learning community.")
+        banner2.setMessage("Share your successful solutions with other students and contribute to the learning community. Click the More <icon src=\"AllIcons.Actions.More\"/> icon in the toolbar. Share your successful solutions with other students and contribute to the learning community. Share your successful solutions with other students and contribute to the learning community.")
         banner2.addAction("Enable sharing"){}
         banner2.addAction("Add to bookmarks"){}
         banner2.addAction("AAAAAAAAAA"){}

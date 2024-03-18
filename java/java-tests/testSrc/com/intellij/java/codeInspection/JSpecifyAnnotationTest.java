@@ -19,11 +19,11 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -144,8 +144,8 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         }
         String actualText = getActualText(actual, stripped);
         if (!fileText.equals(actualText)) {
-          throw new FileComparisonFailure("Messages don't match ("+data.path.getFileName().toString()+")", 
-                                          fileText, actualText, data.path.toString());
+          throw new FileComparisonFailedError("Messages don't match (" + data.path.getFileName().toString() + ")",
+                                              fileText, actualText, data.path.toString());
         }
       });
     }

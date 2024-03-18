@@ -1,19 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-
-
 
 
 interface XParentEntity : WorkspaceEntity {
@@ -54,7 +43,7 @@ fun MutableEntityStorage.modifyEntity(entity: XParentEntity, modification: XPare
   XParentEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class DataClassX(val stringProperty: String, val parent: EntityReference<XParentEntity>)
+data class DataClassX(val stringProperty: String, val parent: EntityPointer<XParentEntity>)
 
 interface XChildEntity : WorkspaceEntity {
   val childProperty: String

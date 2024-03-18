@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.ui.navigation.History;
-import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogHighlighter;
@@ -26,12 +24,10 @@ import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,15 +35,13 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
-  private static final @NonNls String HELP_ID = "reference.changesToolWindow.log";
-
   private final @NotNull MainVcsLogUiProperties myUiProperties;
   private final @NotNull MainFrame myMainFrame;
   private final @NotNull MyVcsLogUiPropertiesListener myPropertiesListener;
-  private final @NotNull History myHistory;
   private final @NotNull LinkedHashMap<String, VcsLogHighlighter> myHighlighters = new LinkedHashMap<>();
 
   public VcsLogUiImpl(@NotNull String id,
@@ -78,8 +72,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener, this);
 
-    myHistory = VcsLogUiUtil.installNavigationHistory(this);
-
     applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
   }
 
@@ -87,7 +79,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                                                @NotNull MainVcsLogUiProperties uiProperties,
                                                @NotNull VcsLogFilterUiEx filterUi,
                                                boolean isEditorDiffPreview) {
-    return new MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this);
+    return new MainFrame(logData, this, uiProperties, filterUi, myColorManager, isEditorDiffPreview, this);
   }
 
   protected @NotNull VcsLogFilterUiEx createFilterUi(@NotNull Consumer<VcsLogFilterCollection> filterConsumer,
@@ -109,7 +101,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId,
                                           boolean commitExists,
-                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
+                                          @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     if (getFilterUi().getFilters().isEmpty() || !commitExists) {
       super.handleCommitNotFound(commitId, commitExists, rowGetter);
       return;
@@ -118,8 +110,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     List<NotificationAction> actions = new ArrayList<>();
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link"), () -> {
       getFilterUi().clearFilters();
-      invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
-                     pack -> pack.getFilters().isEmpty());
+      VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
+                                pack -> pack.getFilters().isEmpty());
     }));
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
     if (projectLog.getDataManager() == myLogData) {
@@ -177,16 +169,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @Override
   public @NotNull MainVcsLogUiProperties getProperties() {
     return myUiProperties;
-  }
-
-  @Override
-  public @Nullable String getHelpId() {
-    return HELP_ID;
-  }
-
-  @Override
-  public @Nullable History getNavigationHistory() {
-    return myHistory;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -79,8 +79,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
-                                                     @Nullable Project project);
+  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project);
 
   @ApiStatus.Internal
   public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
@@ -245,6 +244,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         IntSet fileIdsInner = new IntOpenHashSet();
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         index.getData(dataKey).forEach((id, value) -> {
+          ProgressManager.checkCanceled();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
           fileIdsInner.add(id);
           return true;
@@ -418,12 +418,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
-                                                               Processor<? super VirtualFile> processor,
-                                                               IdFilter filesSet) {
+                                                               @Nullable IdFilter filesSet,
+                                                               @NotNull Processor<? super VirtualFile> processor) {
     IntSet set = null;
-    if (filter instanceof GlobalSearchScope.FilesScope) {
-      VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
+    if (filter instanceof GlobalSearchScope.FilesScope filesScope) {
+      set = new IntOpenHashSet(filesScope.asArray());
     }
 
     //noinspection rawtypes
@@ -444,10 +443,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set = queryResult;
       }
     }
-    if (set == null || !processVirtualFiles(set, filter, processor)) {
-      return false;
-    }
-    return true;
+    return set != null && processVirtualFiles(set, filter, processor);
   }
 
   @Override
@@ -456,11 +452,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                @NotNull Processor<? super VirtualFile> processor) {
     IdFilter filesSet = extractIdFilter(filter, filter.getProject());
 
-    if (!processFilesContainingAllKeysInPhysicalFiles(queries, filter, processor, filesSet)) {
-      return false;
-    }
-
-    return true;
+    return processFilesContainingAllKeysInPhysicalFiles(queries, filter, filesSet, processor);
   }
 
   @Override
@@ -602,7 +594,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return result;
   }
 
-  @Nullable DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
+  @Nullable
+  DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
       return null;
@@ -764,7 +757,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       isFirst = false;
     }
 
-    return isFirst ? ObjectIterators.emptyIterator() :
+    return isFirst ? Collections.emptyIterator() :
            result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
            null;
   }

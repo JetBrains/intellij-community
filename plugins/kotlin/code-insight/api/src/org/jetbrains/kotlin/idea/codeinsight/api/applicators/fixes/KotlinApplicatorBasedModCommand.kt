@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinModCommandApplicator

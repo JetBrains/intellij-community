@@ -35,6 +35,9 @@ interface PathsProvider {
   val communityBinFolder: File
     get() = communityRootFolder.resolve("bin")
 
+  val ultimateRootMarker: File
+    get() = sourcesRootFolder.resolve(".ultimate.root.marker")
+
   val javaExecutable: File
     get() = JdkDownloader.getJavaExecutable(javaHomeFolder.toPath()).normalize().toFile()
 

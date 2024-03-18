@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewNode
@@ -16,7 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.project.ProjectFileNode
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 
 internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCommentAppender) {
   if (node.shouldTryToShowInplaceComments()) {
@@ -57,7 +57,7 @@ fun appendInplaceComments(appender: InplaceCommentAppender, project: Project?, f
   if (fileAttributes != null) {
     appender.append("  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
     val attributes = SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
-    appender.append(JBDateFormat.getFormatter().formatDateTime(fileAttributes.lastModifiedTime().toMillis()), attributes)
+    appender.append(DateFormatUtil.formatDateTime(fileAttributes.lastModifiedTime().toMillis()), attributes)
     appender.append(", " + StringUtil.formatFileSize(fileAttributes.size()), attributes)
   }
 

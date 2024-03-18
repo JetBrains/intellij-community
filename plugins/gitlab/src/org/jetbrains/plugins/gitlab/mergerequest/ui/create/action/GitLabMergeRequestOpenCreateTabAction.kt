@@ -9,9 +9,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.GitlabIcons
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -36,21 +40,34 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    createMergeRequestAction(e)
+    val place = if (e.place == ActionPlaces.TOOLWINDOW_TITLE)
+      GitLabStatistics.ToolWindowOpenTabActionPlace.TOOLWINDOW
+    else
+      GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION
+    openCreationTab(e, place)
   }
 }
 
 // NOTE: no need to register in plugin.xml
-internal class GitLabMergeRequestOpenCreateTabNotificationAction : NotificationAction(
+internal class GitLabMergeRequestOpenCreateTabNotificationAction(
+  private val project: Project,
+  private val projectMapping: GitLabProjectMapping,
+  private val account: GitLabAccount
+) : NotificationAction(
   GitLabBundle.message("merge.request.create.notification.action.text")
 ) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    createMergeRequestAction(e)
+    val twVm = project.service<GitLabToolWindowViewModel>()
+    val selectorVm = twVm.selectorVm.value ?: error("Tool window has not been initialized")
+    selectorVm.selectRepoAndAccount(projectMapping, account)
+    selectorVm.submitSelection()
+
+    openCreationTab(e, GitLabStatistics.ToolWindowOpenTabActionPlace.NOTIFICATION)
   }
 }
 
-private fun createMergeRequestAction(event: AnActionEvent) {
+private fun openCreationTab(event: AnActionEvent, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
   event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-    createMergeRequest()
+    showCreationTab(place)
   }
 }

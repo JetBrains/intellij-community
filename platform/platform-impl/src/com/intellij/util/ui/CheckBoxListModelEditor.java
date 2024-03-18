@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +60,7 @@ public final class CheckBoxListModelEditor<T> {
   }
 
   public @NotNull CheckBoxListModelEditor<T> copyAction(final @NotNull Consumer<? super T> consumer) {
-    toolbarDecorator.addExtraAction(new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
+    toolbarDecorator.addExtraAction(new DumbAwareAction(IdeBundle.message("button.copy"), null, PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         int[] indices = list.getSelectedIndices();
@@ -77,6 +78,11 @@ public final class CheckBoxListModelEditor<T> {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(list.getSelectedIndex() > -1);
       }
     });
     return this;

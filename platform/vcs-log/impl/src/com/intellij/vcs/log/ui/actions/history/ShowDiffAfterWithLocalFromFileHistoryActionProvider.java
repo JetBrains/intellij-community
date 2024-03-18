@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -17,6 +17,7 @@ import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
 
     e.getPresentation().setVisible(true);
 
-    if (selection.getSize() != 1) {
+    if (VcsLogCommitSelectionUtils.getSize(selection) != 1) {
       e.getPresentation().setEnabled(false);
       return;
     }
@@ -62,9 +63,12 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
-    FileHistoryModel model = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
+    FileHistoryModel model = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL);
+    if (model == null) return;
 
     List<CommitId> commits = selection.getCommits();
     if (commits.size() != 1) return;
@@ -72,9 +76,11 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    FilePath localPath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+    FilePath localPath = e.getData(VcsDataKeys.FILE_PATH);
+    if (localPath == null) return;
     FilePath pathInCommit = model.getPathInCommit(commit.getHash());
-    VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    if (handler == null) return;
 
     handler.showDiffWithLocal(commit.getRoot(), pathInCommit, commit.getHash(), localPath);
   }

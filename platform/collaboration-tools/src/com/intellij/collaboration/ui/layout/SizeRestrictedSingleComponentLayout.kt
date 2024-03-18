@@ -5,14 +5,19 @@ import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.util.ui.JBInsets
 import java.awt.*
 import kotlin.math.min
+import kotlin.properties.Delegates.observable
 
 /**
  * Wraps a single component limiting its size to [maxSize] aor overriding the preferred size with [prefSize]
  */
 class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
-  var maxSize: DimensionRestrictions = DimensionRestrictions.None
-  var prefSize: DimensionRestrictions = DimensionRestrictions.None
+  var maxSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
+    component?.revalidate()
+  }
+  var prefSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
+    component?.revalidate()
+  }
 
   private var component: Component? = null
 

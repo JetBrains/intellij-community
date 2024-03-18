@@ -1,49 +1,53 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.DateTimeFormatManager;
 import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.text.DateFormat;
 import java.util.Date;
 
 public class DateFilterComponent {
   private JPanel myDatePanel;
-  private JCheckBox myUseDateAfterFilter;
   private JCheckBox myUseDateBeforeFilter;
-  private DatePicker myDateAfter;
+  private JCheckBox myUseDateAfterFilter;
   private DatePicker myDateBefore;
+  private DatePicker myDateAfter;
   private JPanel myRootPanel;
 
-  public DateFilterComponent() {
-    this(true, DateFormatUtil.getDateTimeFormat().getDelegate());
+  /** @deprecated use {@link #withBorder} and {@link #withFormat} as appropriate */
+  @Deprecated(forRemoval = true)
+  public DateFilterComponent(boolean showBorder, @NotNull DateFormat dateFormat) {
+    this();
+    if (showBorder) withBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
+    withFormat(dateFormat);
   }
 
-  public DateFilterComponent(boolean showBorder, @NotNull DateFormat dateFormat) {
-    if (showBorder) {
-      myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
-    }
-    myDateAfter.setDateFormat(dateFormat);
-    myDateBefore.setDateFormat(dateFormat);
-    ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateAllEnabled(e);
-      }
-    };
-    myUseDateAfterFilter.addActionListener(listener);
-    myUseDateBeforeFilter.addActionListener(listener);
+  public DateFilterComponent() {
+    withFormat(DateTimeFormatManager.getInstance().getDateFormat());
+    myUseDateAfterFilter.addActionListener(e -> updateAllEnabled(e));
+    myUseDateBeforeFilter.addActionListener(e -> updateAllEnabled(e));
     updateAllEnabled(null);
+  }
+
+  public DateFilterComponent withFormat(@NotNull DateFormat format) {
+    myDateBefore.setDateFormat(format);
+    myDateAfter.setDateFormat(format);
+    return this;
+  }
+
+  public DateFilterComponent withBorder(@Nullable Border border) {
+    myDatePanel.setBorder(border);
+    return this;
   }
 
   private void updateAllEnabled(@Nullable ActionEvent e) {
@@ -51,8 +55,7 @@ public class DateFilterComponent {
     StandardVersionFilterComponent.updatePair(myUseDateAfterFilter, myDateAfter, e);
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     return myRootPanel;
   }
 
@@ -62,8 +65,7 @@ public class DateFilterComponent {
       myDateBefore.setDate(new Date(beforeTs));
       myDateBefore.setEnabled(true);
     }
-    catch (PropertyVetoException ignored) {
-    }
+    catch (PropertyVetoException ignored) { }
   }
 
   public void setAfter(long afterTs) {
@@ -72,8 +74,7 @@ public class DateFilterComponent {
       myDateAfter.setDate(new Date(afterTs));
       myDateAfter.setEnabled(true);
     }
-    catch (PropertyVetoException ignored) {
-    }
+    catch (PropertyVetoException ignored) { }
   }
 
   public long getBefore() {
@@ -91,9 +92,7 @@ public class DateFilterComponent {
       myDateBefore.setDate(settings.getDateBefore());
       myDateAfter.setDate(settings.getDateAfter());
     }
-    catch (PropertyVetoException e) {
-      // TODO: handle?
-    }
+    catch (PropertyVetoException ignored) { }
     updateAllEnabled(null);
   }
 
@@ -104,9 +103,7 @@ public class DateFilterComponent {
     settings.setDateAfter(myDateAfter.getDate());
   }
 
-  @Nls
-  @Nullable
-  public String validateInput() {
+  public @Nls @Nullable String validateInput() {
     if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {
       return VcsBundle.message("error.date.after.must.be.a.valid.date");
     }
@@ -116,3 +113,4 @@ public class DateFilterComponent {
     return null;
   }
 }
+

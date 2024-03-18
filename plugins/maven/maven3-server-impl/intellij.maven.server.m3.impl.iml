@@ -8,9 +8,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="module" module-name="intellij.maven.server.telemetry" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
+    <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-compat:3.3.9" type="repository">
         <properties maven-id="org.apache.maven:maven-compat:3.3.9">

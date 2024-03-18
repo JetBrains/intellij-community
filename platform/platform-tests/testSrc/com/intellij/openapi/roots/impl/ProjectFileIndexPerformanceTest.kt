@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.runReadAction
@@ -11,7 +11,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -19,7 +18,6 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -46,7 +44,7 @@ class ProjectFileIndexPerformanceTest {
     fun initProject() {
       runWriteActionAndWait {
         val builder = MutableEntityStorage.create()
-        val fileUrlManager = VirtualFileUrlManager.getInstance(ourProjectModel.project)
+        val fileUrlManager = WorkspaceModel.getInstance(ourProjectModel.project).getVirtualFileUrlManager()
         val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
         ourProjectRoot = fsRoot.subdir(ProjectFileIndexPerformanceTest::class.java.simpleName)
         val bigModuleRoot = ourProjectRoot.subdir("big")
@@ -54,7 +52,7 @@ class ProjectFileIndexPerformanceTest {
           val directory = bigModuleRoot.subdir("dir$i").deepSubdir("subDir", 50)
           directory.createManyFiles(50, "File", ".java", ourSourceFilesToTest)
         }
-        builder addEntity ModuleEntity("big", listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency), NonPersistentEntitySource) {
+        builder addEntity ModuleEntity("big", listOf(InheritedSdkDependency, ModuleSourceDependency), NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
             sourceRoots = listOf(
               SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
@@ -75,9 +73,9 @@ class ProjectFileIndexPerformanceTest {
             .createManyFiles(10, "Lib", ".java", ourLibrarySourceFilesToTest)
 
           val dependencies = listOf(
-            ModuleDependencyItem.InheritedSdkDependency,
-            ModuleDependencyItem.ModuleSourceDependency,
-            ModuleDependencyItem.Exportable.LibraryDependency(library.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
+            InheritedSdkDependency,
+            ModuleSourceDependency,
+            LibraryDependency(library.symbolicId, false, DependencyScope.COMPILE)
           )
 
           val srcRoot = smallModuleRoot.subdir("src")
@@ -96,7 +94,7 @@ class ProjectFileIndexPerformanceTest {
           }
         }
         WorkspaceModel.getInstance(ourProjectModel.project).updateProjectModel("set up test") {
-          it.addDiff(builder)
+          it.applyChangesFrom(builder)
         }
       }
     }
@@ -137,7 +135,7 @@ class ProjectFileIndexPerformanceTest {
     }
     val filesWithoutId = arrayOf(noId1, noId2, noId3)
     val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
-    PlatformTestUtil.startPerformanceTest("Checking status of source files in ProjectFileIndex", 2500) {
+    PlatformTestUtil.newPerformanceTest("Checking status of source files in ProjectFileIndex") {
       runReadAction {
         repeat(100) {
           assertFalse(fileIndex.isInContent(fsRoot))
@@ -154,12 +152,12 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test
   fun `access to excluded files`() {
-    PlatformTestUtil.startPerformanceTest("Checking status of excluded files in ProjectFileIndex", 250) {
+    PlatformTestUtil.newPerformanceTest("Checking status of excluded files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourExcludedFilesToTest) {
@@ -169,12 +167,12 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
   
   @Test
   fun `access to library files`() {
-    PlatformTestUtil.startPerformanceTest("Checking status of library files in ProjectFileIndex", 600) {
+    PlatformTestUtil.newPerformanceTest("Checking status of library files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibraryFilesToTest) {
@@ -190,12 +188,12 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
   
   @Test
   fun `access to library source files`() {
-    PlatformTestUtil.startPerformanceTest("Checking status of library source files in ProjectFileIndex", 600) {
+    PlatformTestUtil.newPerformanceTest("Checking status of library source files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibrarySourceFilesToTest) {
@@ -211,14 +209,14 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test
   fun `access to index after change`() {
     val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
     val module = ourProjectModel.moduleManager.findModuleByName("big")!!
-    PlatformTestUtil.startPerformanceTest("Checking status of file after adding and removing content root", 5) {
+    PlatformTestUtil.newPerformanceTest("Checking status of file after adding and removing content root") {
       runReadAction {
         repeat(50) {
           assertFalse(fileIndex.isInContent(newRoot))
@@ -227,6 +225,6 @@ class ProjectFileIndexPerformanceTest {
     }.setup {
       PsiTestUtil.addContentRoot(module, newRoot)
       PsiTestUtil.removeContentEntry(module, newRoot)
-    }.assertTiming()
+    }.start()
   }
 }

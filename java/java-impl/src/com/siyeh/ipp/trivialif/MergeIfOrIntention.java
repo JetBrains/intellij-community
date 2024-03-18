@@ -27,7 +27,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MergeIfOrIntention extends MCIntention {
+public final class MergeIfOrIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

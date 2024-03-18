@@ -18,15 +18,14 @@ import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
@@ -44,6 +43,22 @@ object CallableReturnTypeUpdaterUtils {
         } else {
             setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
+
+        if (declaration is KtProperty && !typeInfo.useTemplate) {
+            val getter = declaration.getter
+            val returnTypeReference = getter?.returnTypeReference
+            if (returnTypeReference != null && !typeInfo.defaultType.isUnit) {
+                val typeRef = shortenReferences(returnTypeReference.replace(KtPsiFactory(project).createType(typeInfo.defaultType.longTypeRepresentation)) as KtElement)
+                if (typeRef != null) {
+                    updater?.moveCaretTo(typeRef.endOffset)
+                }
+            }
+
+            val setterParameter = declaration.setter?.parameter
+            if (setterParameter?.typeReference != null) {
+                updateType(setterParameter, typeInfo, project, editor, updater)
+            }
+        }
     }
 
     private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project, updater: ModPsiUpdater? = null) {
@@ -55,7 +70,7 @@ object CallableReturnTypeUpdaterUtils {
         typeReference = newTypeRef
         typeReference?.let {
             shortenReferences(it)
-            updater?.moveTo(it.endOffset)
+            updater?.moveCaretTo(it.endOffset)
         }
     }
 
@@ -189,7 +204,7 @@ object CallableReturnTypeUpdaterUtils {
         val otherTypes: List<Type> = emptyList(),
         val useTemplate: Boolean = false,
     ) : KotlinApplicatorInput {
-        class Type(val isUnit: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
+        class Type(val isUnit: Boolean, val isError: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
         override fun isValidFor(psi: PsiElement): Boolean = true
 
@@ -204,12 +219,13 @@ object CallableReturnTypeUpdaterUtils {
             context(KtAnalysisSession)
             private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
+                isError = ktType is KtErrorType,
                 longTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
             )
 
-            val UNIT = Type(isUnit = true, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
-            val ANY = Type(isUnit = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
+            val UNIT = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
+            val ANY = Type(isUnit = false, isError = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
         }
     }
 }

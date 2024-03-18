@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProblemConsumer;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.util.Predicates;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,8 @@ public final class DelegatedInspectionToolPresentation extends DefaultInspection
     }
 
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      exportResults(descriptors, refElement, (element, problem) -> myDelegate.consume(element, problem, myToolWrapper), __ -> false);
+      exportResults(descriptors, refElement, (element, problem) -> myDelegate.consume(element, problem, myToolWrapper),
+                    Predicates.alwaysFalse());
     } else {
       myProblemElements.put(refElement, descriptors);
     }

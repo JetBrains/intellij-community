@@ -72,6 +72,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
@@ -109,7 +110,7 @@ public final class SvnVcs extends AbstractVcs {
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  private Disposable myDisposable;
+  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
 
   //Consumer<Boolean>
   public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
@@ -219,7 +220,11 @@ public final class SvnVcs extends AbstractVcs {
   @Override
   public void activate() {
     Disposable disposable = Disposer.newDisposable();
-    myDisposable = disposable;
+    // do not leak Project if 'deactivate' is never called
+    Disposer.register(SvnDisposable.getInstance(myProject), disposable);
+    // workaround the race between 'activate' and 'deactivate'
+    Disposable oldDisposable = myDisposable.getAndSet(disposable);
+    if (oldDisposable != null) Disposer.dispose(oldDisposable);
 
 
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
@@ -258,10 +263,8 @@ public final class SvnVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
-    }
+    Disposable disposable = myDisposable.getAndSet(null);
+    if (disposable != null) Disposer.dispose(disposable);
 
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();

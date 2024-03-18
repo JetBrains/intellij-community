@@ -43,34 +43,30 @@ public final class HgVFSListener extends VcsVFSListener {
     dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
-  @NotNull
-  public static HgVFSListener createInstance(@NotNull HgVcs vcs) {
+  public static @NotNull HgVFSListener createInstance(@NotNull HgVcs vcs) {
     HgVFSListener listener = new HgVFSListener(vcs);
     listener.installListeners();
     return listener;
   }
 
-  @NotNull
   @Override
-  protected String getAddTitle() {
+  protected @NotNull String getAddTitle() {
     return HgBundle.message("hg4idea.add.title");
   }
 
-  @NotNull
   @Override
-  protected String getSingleFileAddTitle() {
+  protected @NotNull String getSingleFileAddTitle() {
     return HgBundle.message("hg4idea.add.single.title");
   }
 
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
   @Override
-  protected String getSingleFileAddPromptTemplate() {
+  protected @NotNull String getSingleFileAddPromptTemplate() {
     return HgBundle.message("hg4idea.add.body");
   }
 
   @Override
-  protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void executeAdd(final @NotNull List<VirtualFile> addedFiles, final @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     saveUnsavedVcsIgnoreFiles();
 
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
@@ -121,8 +117,8 @@ public final class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles,
-                               @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
+  protected void performAdding(final @NotNull Collection<VirtualFile> addedFiles,
+                               final @NotNull Map<VirtualFile, VirtualFile> copiedFilesFrom) {
     Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
     (new Task.Backgroundable(myProject,
                              HgBundle.message("hg4idea.add.progress"),
@@ -181,9 +177,8 @@ public final class HgVFSListener extends VcsVFSListener {
     }).queue();
   }
 
-  @NotNull
   @Override
-  protected String getDeleteTitle() {
+  protected @NotNull String getDeleteTitle() {
     return HgBundle.message("hg4idea.remove.multiple.title");
   }
 
@@ -275,7 +270,7 @@ public final class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
+  protected void performDeletion(final @NotNull List<FilePath> filesToDelete) {
     List<HgFile> deletes = new ArrayList<>();
     for (FilePath file : filesToDelete) {
       VirtualFile root = VcsUtil.getVcsRootFor(myProject, file);

@@ -23,9 +23,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -90,7 +92,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   private final Project myProject;
   private final ChangelistConflictTracker myConflictTracker;
 
-  private final Scheduler myScheduler; // update thread
+  private final ChangeListScheduler myScheduler; // update thread
+  private final Disposable myUpdateDisposable = Disposer.newDisposable();
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
   private final DelayedNotificator myDelayedNotificator; // notifies myListeners on the update thread
@@ -130,7 +133,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
-    myScheduler = new Scheduler(coroutineScope);
+    myScheduler = new ChangeListScheduler(coroutineScope);
     myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
@@ -174,6 +177,18 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
           if (project == myProject) {
             //noinspection TestOnlyProblems
             waitEverythingDoneInTestMode();
+            Disposer.dispose(myUpdateDisposable);
+          }
+        }
+      });
+    }
+    else {
+      busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+        @Override
+        public void projectClosing(@NotNull Project project) {
+          if (project == myProject) {
+            // Can't use Project disposable - it will be called after pending tasks are finished
+            Disposer.dispose(myUpdateDisposable);
           }
         }
       });
@@ -476,7 +491,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
    * @return false if update was re-scheduled due to new 'markEverythingDirty' event, true otherwise.
    */
   private boolean updateImmediately() {
-    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myUpdateDisposable, () -> {
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
       if (!vcsManager.hasActiveVcss()) return true;
 
@@ -1564,9 +1579,9 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
-    private final Scheduler myScheduler;
+    private final ChangeListScheduler myScheduler;
 
-    MyChangesDeltaForwarder(final Project project, @NotNull Scheduler scheduler) {
+    MyChangesDeltaForwarder(final Project project, @NotNull ChangeListScheduler scheduler) {
       myProject = project;
       myScheduler = scheduler;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);

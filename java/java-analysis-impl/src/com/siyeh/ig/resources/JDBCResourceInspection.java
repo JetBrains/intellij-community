@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JDBCResourceInspection extends ResourceInspection {
+public final class JDBCResourceInspection extends ResourceInspection {
 
   private static final String[] creationMethodClassName =
     {

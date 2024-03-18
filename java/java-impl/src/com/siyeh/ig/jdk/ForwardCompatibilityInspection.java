@@ -7,9 +7,11 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,7 +24,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -40,6 +42,13 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       private @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
+        JavaFeature feature = JavaLexer.softKeywordFeature(name);
+        if (feature != null && 
+            feature != JavaFeature.MODULES && !name.equals(PsiKeyword.WHEN) && // Keywords from module-info and 'when' still can be used as class names
+            !feature.isSufficient(languageLevel) && parent instanceof PsiClass) {
+          return JavaErrorBundle.message("restricted.identifier.warn", name,
+                                         feature.getMinimumLevel().feature());
+        }
         switch (name) {
           case PsiKeyword.ASSERT -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
@@ -58,21 +67,6 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
               return JavaErrorBundle.message("underscore.identifier.warn");
             }
           }
-          case PsiKeyword.VAR -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.VAR, 10);
-            }
-          }
-          case PsiKeyword.YIELD -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_14) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.YIELD, 14);
-            }
-          }
-          case PsiKeyword.RECORD -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_16) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.RECORD, 16);
-            }
-          }
         }
         return null;
       }
@@ -82,7 +76,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
-            languageLevel.isLessThan(LanguageLevel.JDK_14)) {
+            !JavaFeature.SWITCH_EXPRESSION.isSufficient(languageLevel)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
           holder.registerProblem(nameElement, JavaErrorBundle.message("yield.unqualified.method.warn"),
                                    qualifier == null ? null : new QualifyCallFix(), new RenameFix());

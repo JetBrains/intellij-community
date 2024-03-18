@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.*
@@ -59,24 +60,29 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
 
     fun addInlay(inlay: Inlay<ComponentInlayRenderer<*>>) {
+      if (AppMode.isRemoteDevHost())
+        return
       val editor = inlay.editor as EditorEx
+      if (editor.isDisposed)
+        return
       val inlaysContainer = editor.getUserData(INLAYS_CONTAINER) ?: ComponentInlaysContainer(editor).also { container ->
         editor.putUserData(INLAYS_CONTAINER, container)
         editor.contentComponent.add(container)
-        EditorUtil.disposeWithEditor(editor, container)
         container.whenDisposed {
           editor.contentComponent.remove(container)
           editor.removeUserData(INLAYS_CONTAINER)
         }
+        EditorUtil.disposeWithEditor(editor, container)
       }
+
       inlaysContainer.add(inlay)
-      Disposer.register(inlaysContainer, inlay)
       inlay.whenDisposed {
         // auto-dispose container when last inlay removed
         if (inlaysContainer.remove(inlay) && inlaysContainer.inlays.isEmpty()) {
           Disposer.dispose(inlaysContainer)
         }
       }
+      Disposer.register(inlaysContainer, inlay)
     }
   }
 

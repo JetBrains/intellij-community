@@ -17,8 +17,8 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val item = getSelectedItem(event) ?: return
-    removeItem(item)
+    val items = getSelectedItems(event) ?: return
+    removeItems(items)
   }
 
   override fun update(event: AnActionEvent) {
@@ -26,24 +26,36 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
   }
 
   companion object {
-    fun removeItem(item: RecentProjectTreeItem) {
+    fun removeItems(items: List<RecentProjectTreeItem>) {
+      if (items.isEmpty()) return
+
       val recentProjectsManager = RecentProjectsManager.getInstance()
       val cloneableProjectsService = CloneableProjectsService.getInstance()
 
+      val title =
+        if (items.size == 1) IdeBundle.message("dialog.title.remove.recent.project")
+        else IdeBundle.message("dialog.title.remove.recent.project.plural")
+
+      val message =
+        if (items.size == 1) IdeBundle.message("dialog.message.remove.0.from.recent.projects.list", items.first().displayName())
+        else IdeBundle.message("dialog.message.remove.projects.from.recent.projects.list")
+
       val exitCode = Messages.showYesNoDialog(
-        IdeBundle.message("dialog.message.remove.0.from.recent.projects.list", item.displayName()),
-        IdeBundle.message("dialog.title.remove.recent.project"),
+        message,
+        title,
         IdeBundle.message("button.remove"),
         IdeBundle.message("button.cancel"),
         Messages.getQuestionIcon()
       )
 
       if (exitCode == Messages.OK) {
-        when (item) {
-          is ProjectsGroupItem -> recentProjectsManager.removeGroup(item.group)
-          is RecentProjectItem -> recentProjectsManager.removePath(item.projectPath)
-          is CloneableProjectItem -> cloneableProjectsService.removeCloneableProject(item.cloneableProject)
-          is RootItem -> {}
+        items.forEach { item ->
+          when (item) {
+            is ProjectsGroupItem -> recentProjectsManager.removeGroup(item.group)
+            is RecentProjectItem -> recentProjectsManager.removePath(item.projectPath)
+            is CloneableProjectItem -> cloneableProjectsService.removeCloneableProject(item.cloneableProject)
+            is RootItem -> {}
+          }
         }
       }
     }

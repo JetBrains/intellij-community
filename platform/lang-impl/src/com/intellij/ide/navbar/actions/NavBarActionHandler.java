@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.actions;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -21,9 +21,5 @@ public interface NavBarActionHandler {
 
   void moveUpDown();
 
-  void escape();
-
   void enter();
-
-  void navigate();
 }

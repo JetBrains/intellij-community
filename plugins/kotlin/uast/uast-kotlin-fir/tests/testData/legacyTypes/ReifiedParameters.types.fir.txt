@@ -37,7 +37,8 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UParameter (name = t) [@kotlin.Suppress(names = "s") var t: T]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
                     UNamedExpression (name = names) [names = "s"]
-                        ULiteralExpression (value = "s") ["s"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["s"] : PsiType:String
+                            ULiteralExpression (value = "s") ["s"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return t]
                     USimpleNameReferenceExpression (identifier = t) [t] : PsiType:T
@@ -46,7 +47,8 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                 UAnnotation (fqName = null) [@null]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
                     UNamedExpression (name = names) [names = "s"]
-                        ULiteralExpression (value = "s") ["s"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["s"] : PsiType:String
+                            ULiteralExpression (value = "s") ["s"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return t]
                     USimpleNameReferenceExpression (identifier = t) [t] : PsiType:<ErrorType>

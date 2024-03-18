@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -76,7 +76,7 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     withJavaPlugin()
     withTask(name, "JavaExec", dependsOn) {
       assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
-      if (gradleVersion >= GradleVersion.version("7.0")) {
+      if (gradleVersion.isGradleAtLeast("7.0")) {
         assign("mainClass", "pack.AClass")
       } else {
         assign("main", "pack.AClass")

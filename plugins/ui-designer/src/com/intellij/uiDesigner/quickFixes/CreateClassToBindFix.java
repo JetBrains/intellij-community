@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
@@ -28,7 +28,7 @@ public final class CreateClassToBindFix extends QuickFix{
 
   private final String myClassName;
 
-  public CreateClassToBindFix(final GuiEditor editor, @NotNull final String className) {
+  public CreateClassToBindFix(final GuiEditor editor, final @NotNull String className) {
     super(editor, UIDesignerBundle.message("action.create.class", className), null);
     myClassName = className;
   }
@@ -55,7 +55,7 @@ public final class CreateClassToBindFix extends QuickFix{
           final int indexOfLastDot = myClassName.lastIndexOf('.');
           final String packageName = myClassName.substring(0, indexOfLastDot != -1 ? indexOfLastDot : 0);
           final PsiDirectory psiDirectory;
-          if(packageName.length() > 0){
+          if(!packageName.isEmpty()){
             final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
             try {
               psiDirectory = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);

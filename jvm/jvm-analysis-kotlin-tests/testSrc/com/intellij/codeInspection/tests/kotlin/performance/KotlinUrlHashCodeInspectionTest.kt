@@ -80,4 +80,18 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       }
     """.trimIndent())
   }
+
+  fun `test URL doesn't highlight when comparing with null`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import java.net.URL
+
+      @Suppress("DEPRECATION", "SENSELESS_COMPARISON")
+      fun main() {
+          val sample = URL("")
+          if (sample == null) {}
+          if (null == sample) {}
+          sample.equals(null)
+      }
+    """.trimIndent())
+  }
 }

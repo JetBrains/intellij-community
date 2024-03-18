@@ -1,30 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ui.laf
 
 import com.intellij.ide.ui.UITheme
-import com.intellij.testFramework.LightPlatformTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 /**
  * @author Konstantin Bulenkov
  */
-class UIThemeIconsTest: LightPlatformTestCase() {
-  val basePath = "/com/intellij/ide/ui/laf/icons"
-  val intelliJIcons = "$basePath/intellij/"
-  val darculaIcons = "$basePath/darcula/"
+class UIThemeIconsTest {
+  private val basePath = "/com/intellij/ide/ui/laf/icons"
+  private val intelliJIcons = "$basePath/intellij/"
+  private val darculaIcons = "$basePath/darcula/"
 
-  fun testComponentIconsLocation() {
-    arrayOf("checkBox.svg", "radio.svg")
-      .forEach {
-        TestCase.assertNotNull(iconsAreMovedMsg(false), loadIconText(false, it))
-        TestCase.assertNotNull(iconsAreMovedMsg(true), loadIconText(true, it))
-      }
+  @Test
+  fun componentIconsLocation() {
+    arrayOf("checkBox.svg", "radio.svg").forEach {
+      assertThat(loadIconText(false, it)).describedAs(iconsAreMovedMsg(false)).isNotNull
+      assertThat(loadIconText(true, it)).describedAs(iconsAreMovedMsg(true)).isNotNull
+    }
   }
 
-  private fun iconsAreMovedMsg(isDark: Boolean) = "Laf icons are moved from '" + toPath(isDark) + "'. Please fix PaletteScopeManager.getScopeByURL and the test"
+  private fun iconsAreMovedMsg(isDark: Boolean): String {
+    return "Laf icons are moved from '" + toPath(isDark) + "'. Please fix PaletteScopeManager.getScopeByURL and the test"
+  }
+
   private fun toPath(isDark: Boolean) = if (isDark) darculaIcons else intelliJIcons
 
-  fun testCheckboxColors() {
+  @Test
+  fun checkboxColors() {
     doCheckColorInFile("Checkbox.Background.Default", "checkBox.svg")
     doCheckColorInFile("Checkbox.Background.Disabled", "checkBoxDisabled.svg")
     doCheckColorInFile("Checkbox.Border.Default", "checkBox.svg")
@@ -39,12 +45,12 @@ class UIThemeIconsTest: LightPlatformTestCase() {
   }
 
   private fun doCheckColorInFile(colorName: String, filename: String) {
-    val lightColor = UITheme.getColorPalette()[colorName]!!.toLowerCase()
-    val darkColor = UITheme.getColorPalette()["$colorName.Dark"]!!.toLowerCase()
-    val lightSvg = loadIconText(false, filename)!!.toLowerCase()
-    val darkSvg = loadIconText(true, filename)!!.toLowerCase()
-    TestCase.assertTrue(msgColorsDontMatch(lightColor, filename, colorName, false), lightSvg.contains(lightColor))
-    TestCase.assertTrue(msgColorsDontMatch(darkColor, filename, colorName, true), darkSvg.contains(darkColor))
+    val lightColor = UITheme.getColorPalette().get(colorName)!!.lowercase()
+    val darkColor = UITheme.getColorPalette().get("$colorName.Dark")!!.lowercase()
+    val lightSvg = loadIconText(isDark = false, filename = filename)!!.lowercase()
+    val darkSvg = loadIconText(isDark = true, filename = filename)!!.lowercase()
+    assertThat(lightSvg.contains(lightColor)).describedAs(msgColorsDontMatch(lightColor, filename, colorName, false)).isTrue()
+    assertThat(darkSvg.contains(darkColor)).describedAs(msgColorsDontMatch(darkColor, filename, colorName, true)).isTrue()
   }
 
   private fun msgColorsDontMatch(lightColor: String, filename: String, colorName: String, isDark: Boolean): String {
@@ -53,7 +59,7 @@ class UIThemeIconsTest: LightPlatformTestCase() {
     return "$lightColor is not presented in $path. Please fix the icon or update color key $key in UITheme class"
   }
 
-  fun loadIconText(isDark: Boolean, filename: String): String? {
+  private fun loadIconText(isDark: Boolean, filename: String): String? {
     return this.javaClass.getResourceAsStream(toPath(isDark) + filename)?.bufferedReader()?.readText()
   }
 }

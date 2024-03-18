@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimate
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon
 
@@ -25,9 +26,15 @@ internal abstract class UltimatePromoAction(private val pluginId: String): AnAct
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    FUSEventSource.ACTIONS.openDownloadPageAndLog(e.project,
-                                                  PluginAdvertiserService.ideaUltimate.downloadUrl,
-                                                  PluginId.getId(pluginId))
+    val project = e.project
+    val pluginId = PluginId.getId(pluginId)
+    
+    if (project != null) {
+      tryUltimate(pluginId, PluginAdvertiserService.ideaUltimate, project, FUSEventSource.ACTIONS)
+      return
+    }
+    
+    FUSEventSource.ACTIONS.openDownloadPageAndLog(e.project, PluginAdvertiserService.ideaUltimate.downloadUrl, pluginId)
   }
 }
 

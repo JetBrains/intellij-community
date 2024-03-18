@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.LoadingOrder;
@@ -151,7 +151,7 @@ public class LoadingOrderTest {
    * Assert that after sorting the given elements, their IDs form the expected string.
    */
   private static void assertSequence(String expected, @NotNull List<LoadingOrder.Orderable> list) {
-    LoadingOrder.Companion.sort(list);
+    LoadingOrder.Companion.sortByLoadingOrder(list);
     String sequence = list.stream().map(o -> ((MyOrderable)o).getName()).collect(Collectors.joining(" "));
     assertEquals(expected, sequence);
   }
@@ -162,7 +162,7 @@ public class LoadingOrderTest {
    */
   private static void checkSortingFailure(@NotNull List<LoadingOrder.Orderable> list) {
     try {
-      LoadingOrder.Companion.sort(list);
+      LoadingOrder.Companion.sortByLoadingOrder(list);
       fail("Should have failed");
     }
     catch (SortingException e) {

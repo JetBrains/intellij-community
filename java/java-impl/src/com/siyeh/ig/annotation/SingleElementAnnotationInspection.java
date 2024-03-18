@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class SingleElementAnnotationInspection extends BaseInspection {
+public final class SingleElementAnnotationInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

@@ -8,44 +8,50 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 abstract class LightJavaCodeInsightFixtureTestCaseWithUtils : LightJavaCodeInsightFixtureTestCase() {
-  protected fun deleteTextAtCaret(text: String) {
+  protected fun deleteTextAtCaret(text: String) = editAction {
     val offset = editor.caretModel.offset
     val actualText = editor.document.getText(TextRange(offset, offset + text.length))
     require(actualText == text)
     editor.document.deleteString(offset, offset + text.length)
   }
 
-  protected fun deleteTextBeforeCaret(text: String) {
+  protected fun deleteTextBeforeCaret(text: String) = editAction {
     val offset = editor.caretModel.offset
     val actualText = editor.document.getText(TextRange(offset - text.length, offset))
     require(actualText == text)
     editor.document.deleteString(offset - text.length, offset)
   }
 
-  protected fun replaceTextAtCaret(oldText: String, newText: String) {
+  protected fun replaceTextAtCaret(oldText: String, newText: String) = editAction {
     val offset = editor.caretModel.offset
     val actualText = editor.document.getText(TextRange(offset, offset + oldText.length))
     require(actualText == oldText)
     editor.document.replaceString(offset, offset + oldText.length, newText)
   }
 
-  protected fun executeEditingActions(editingActions: Array<out () -> Unit>, wrapIntoCommandAndWriteActionAndCommitAll: Boolean) {
+  protected fun type(text: String) {
+    myFixture.type(text)
+    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+  }
+
+  protected fun performAction(actionId: String) {
+    myFixture.performEditorAction(actionId)
+    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+  }
+
+  protected fun editAction(action: () -> Unit) {
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
-    for (action in editingActions) {
-      if (wrapIntoCommandAndWriteActionAndCommitAll) {
-        executeCommand {
-          runWriteAction {
-            action()
-            psiDocumentManager.commitAllDocuments()
-            psiDocumentManager.doPostponedOperationsAndUnblockDocument(editor.document)
-          }
-        }
-      }
-      else {
+    executeCommand {
+      runWriteAction {
         action()
+        psiDocumentManager.commitAllDocuments()
+        psiDocumentManager.doPostponedOperationsAndUnblockDocument(editor.document)
       }
     }
+  }
 
-    psiDocumentManager.commitAllDocuments()
+  protected fun executeEditingActions(editingActions: () -> Unit) {
+    editingActions()
+    PsiDocumentManager.getInstance(this.project).commitAllDocuments()
   }
 }

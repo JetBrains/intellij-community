@@ -10,9 +10,9 @@ import org.junit.Test
 class MavenProjectsTreeIgnoresTest : MavenProjectsTreeTestCase() {
   private var myLog = ""
   private var myRoots: List<MavenProject>? = null
-  @Throws(Exception::class)
-  override fun setUpInWriteAction() {
-    super.setUpInWriteAction()
+
+  override fun setUp() = runBlocking {
+    super.setUp()
     tree.addListener(MyLoggingListener(), getTestRootDisposable())
     val m1 = createModulePom("m1",
                              """

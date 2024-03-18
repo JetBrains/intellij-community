@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -11,10 +11,12 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
@@ -22,18 +24,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-final class JavaServiceUtil {
-  static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall("java.util.ServiceLoader", "load", "loadInstalled");
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 
-  static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
-    return "provider".equals(method.getName()) &&
+/**
+ * Utility for working with Java services (jigsaw)
+ */
+final public class JavaServiceUtil {
+  public static final String PROVIDER = "provider";
+  public static final Set<String> JAVA_UTIL_SERVICE_LOADER_METHODS = Set.of("load", "loadInstalled");
+
+  static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall(JAVA_UTIL_SERVICE_LOADER,
+                                                                        ArrayUtil.toStringArray(JAVA_UTIL_SERVICE_LOADER_METHODS));
+
+  /**
+   * Checks if the given method is a service provider method.
+   *
+   * @param method for checking
+   * @return true if the method is a service provider method, false otherwise
+   */
+  public static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
+    return PROVIDER.equals(method.getName()) &&
            method.getParameterList().isEmpty() &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&
            method.hasModifierProperty(PsiModifier.STATIC);
+  }
+
+  /**
+   * Finds a service provider method within a given PsiClass.
+   *
+   * @param psiClass to search for the service provider method
+   * @return service provider method, or null if not found
+   */
+  @Nullable
+  public static PsiMethod findServiceProviderMethod(@NotNull PsiClass psiClass) {
+    return ContainerUtil.find(psiClass.findMethodsByName("provider", false), JavaServiceUtil::isServiceProviderMethod);
   }
 
   @NotNull
@@ -45,6 +71,10 @@ final class JavaServiceUtil {
 
   @NotNull
   static List<LineMarkerInfo<PsiElement>> collectServiceImplementationClass(@NotNull PsiClass psiClass) {
+    if (findServiceProviderMethod(psiClass) != null) return Collections.emptyList();
+    for (PsiMethod constructor : psiClass.getConstructors()) {
+      if (!constructor.hasParameters()) return createJavaServiceLineMarkerInfo(constructor.getNameIdentifier(), psiClass, psiClass);
+    }
     return createJavaServiceLineMarkerInfo(psiClass.getNameIdentifier(), psiClass, psiClass);
   }
 
@@ -52,42 +82,42 @@ final class JavaServiceUtil {
   private static List<LineMarkerInfo<PsiElement>> createJavaServiceLineMarkerInfo(@Nullable PsiIdentifier identifier,
                                                                                   @Nullable PsiClass implementerClass,
                                                                                   @Nullable PsiClass resultClass) {
-    if (identifier != null && implementerClass != null && resultClass != null) {
-      String implementerClassName = implementerClass.getQualifiedName();
-      if (implementerClassName != null && PsiUtil.isLanguageLevel9OrHigher(identifier)) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(identifier);
-        if (javaModule != null) {
-          for (PsiProvidesStatement providesStatement : javaModule.getProvides()) {
-            PsiClassType interfaceType = providesStatement.getInterfaceType();
-            PsiReferenceList implementationList = providesStatement.getImplementationList();
-            if (interfaceType != null && implementationList != null) {
-              PsiClassType[] implementationTypes = implementationList.getReferencedTypes();
-              for (PsiClassType implementationType : implementationTypes) {
-                if (implementerClass.equals(implementationType.resolve())) {
-                  PsiClass interfaceClass = interfaceType.resolve();
-                  if (InheritanceUtil.isInheritorOrSelf(resultClass, interfaceClass, true)) {
-                    String interfaceClassName = interfaceClass.getQualifiedName();
-                    if (interfaceClassName != null) {
-                      LineMarkerInfo<PsiElement> info =
-                        new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
-                                             e -> calculateTooltip("service.provides", interfaceClassName),
-                                             new ServiceProvidesNavigationHandler(interfaceClassName, implementerClassName),
-                                             GutterIconRenderer.Alignment.LEFT);
-                      return Collections.singletonList(info);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+    if (identifier == null || implementerClass == null || resultClass == null) return Collections.emptyList();
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, identifier)) return Collections.emptyList();
+
+    String implementerClassName = implementerClass.getQualifiedName();
+    if (implementerClassName == null) return Collections.emptyList();
+
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(identifier);
+    if (javaModule == null) return Collections.emptyList();
+
+    for (PsiProvidesStatement providesStatement : javaModule.getProvides()) {
+      PsiClassType interfaceType = providesStatement.getInterfaceType();
+      if (interfaceType == null) continue;
+      PsiReferenceList implementationList = providesStatement.getImplementationList();
+      if (implementationList == null) continue;
+
+      PsiClassType[] implementationTypes = implementationList.getReferencedTypes();
+      for (PsiClassType implementationType : implementationTypes) {
+        if (!implementerClass.equals(implementationType.resolve())) continue;
+        PsiClass interfaceClass = interfaceType.resolve();
+        if (!InheritanceUtil.isInheritorOrSelf(resultClass, interfaceClass, true)) continue;
+        String interfaceClassName = interfaceClass.getQualifiedName();
+        if (interfaceClassName == null) continue;
+
+        return Collections.singletonList(new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
+                                                              e -> calculateTooltip("service.provides", interfaceClassName),
+                                                              new ServiceProvidesNavigationHandler(interfaceClassName,
+                                                                                                   implementerClassName),
+                                                              GutterIconRenderer.Alignment.LEFT,
+                                                              () -> JavaAnalysisBundle.message("service.provides")));
       }
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  private static String calculateTooltip(String key, @NlsSafe String interfaceClassName) {
+  private static String calculateTooltip(@NotNull String key, @NlsSafe String interfaceClassName) {
     return new HtmlBuilder().append(JavaAnalysisBundle.message(key)).append(" ")
       .appendLink("#javaClass/" + interfaceClassName, interfaceClassName)
       .br().append(HtmlChunk.text(JavaAnalysisBundle.message("service.click.to.navigate"))
@@ -97,47 +127,47 @@ final class JavaServiceUtil {
 
   static List<LineMarkerInfo<PsiElement>> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
                                                                        @NotNull PsiMethodCallExpression methodCall) {
-    if (PsiUtil.isLanguageLevel9OrHigher(methodCall)) {
-      PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, methodCall)) return Collections.emptyList();
+    PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
 
-      JavaReflectionReferenceUtil.ReflectiveType serviceType = null;
-      for (int i = 0; i < arguments.length && serviceType == null; i++) {
-        serviceType = JavaReflectionReferenceUtil.getReflectiveType(arguments[i]);
-      }
+    JavaReflectionReferenceUtil.ReflectiveType serviceType = findServiceTypeInArguments(arguments);
+    if (serviceType == null || !serviceType.isExact()) return Collections.emptyList();
 
-      if (serviceType != null && serviceType.isExact()) {
-        PsiClass psiClass = serviceType.getPsiClass();
-        if (psiClass != null) {
-          String qualifiedName = psiClass.getQualifiedName();
-          if (qualifiedName != null) {
-            PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(methodCall);
-            if (javaModule != null) {
-              for (PsiUsesStatement statement : javaModule.getUses()) {
-                PsiClassType usedClass = statement.getClassType();
-                if (usedClass != null && psiClass.equals(usedClass.resolve())) {
-                  LineMarkerInfo<PsiElement> info =
-                    new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
-                                         e -> calculateTooltip("service.uses", qualifiedName),
-                                         new ServiceUsesNavigationHandler(qualifiedName),
-                                         GutterIconRenderer.Alignment.LEFT);
-                  return Collections.singletonList(info);
-                }
-              }
-            }
-          }
-        }
-      }
+    PsiClass psiClass = serviceType.getPsiClass();
+    if (psiClass == null) return Collections.emptyList();
+
+    String qualifiedName = psiClass.getQualifiedName();
+    if (qualifiedName == null) return Collections.emptyList();
+
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(methodCall);
+    if (javaModule == null) return Collections.emptyList();
+
+    for (PsiUsesStatement statement : javaModule.getUses()) {
+      PsiClassType usedClass = statement.getClassType();
+      if (usedClass == null || !Objects.equals(psiClass, usedClass.resolve())) continue;
+      return Collections.singletonList(new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
+                                                            e -> calculateTooltip("service.uses", qualifiedName),
+                                                            new ServiceUsesNavigationHandler(qualifiedName),
+                                                            GutterIconRenderer.Alignment.LEFT,
+                                                            () -> JavaAnalysisBundle.message("service.uses")));
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  private static JavaReflectionReferenceUtil.ReflectiveType findServiceTypeInArguments(PsiExpression[] arguments) {
+    return StreamEx.of(arguments).map(JavaReflectionReferenceUtil::getReflectiveType)
+      .filter(Objects::nonNull).findAny()
+      .orElse(null);
   }
 
   abstract static class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     final String myInterfaceClassName;
 
-    ServiceNavigationHandler(@NotNull String interfaceClassName) {myInterfaceClassName = interfaceClassName;}
+    ServiceNavigationHandler(@NotNull String interfaceClassName) { myInterfaceClassName = interfaceClassName; }
 
     @Override
-    public void navigate(MouseEvent e, PsiElement element) {
+    public void navigate(MouseEvent e, @Nullable PsiElement element) {
       Optional.ofNullable(JavaModuleGraphUtil.findDescriptorByElement(element))
         .map(this::findTargetReference)
         .filter(NavigationItem.class::isInstance)
@@ -153,7 +183,7 @@ final class JavaServiceUtil {
     }
 
     boolean isTargetReference(PsiJavaCodeReferenceElement reference) {
-      return reference != null && getTargetFQN().equals(reference.getQualifiedName());
+      return reference != null && Objects.equals(getTargetFQN(), reference.getQualifiedName());
     }
   }
 
@@ -182,14 +212,12 @@ final class JavaServiceUtil {
     @Override
     public PsiJavaCodeReferenceElement findTargetReference(@NotNull PsiJavaModule module) {
       PsiProvidesStatement statement = ContainerUtil.find(module.getProvides(), this::isTargetStatement);
-      if (statement != null) {
-        PsiReferenceList list = statement.getImplementationList();
-        if (list != null) {
-          return ContainerUtil.find(list.getReferenceElements(), this::isTargetReference);
-        }
-      }
+      if (statement == null) return null;
 
-      return null;
+      PsiReferenceList list = statement.getImplementationList();
+      if (list == null) return null;
+
+      return ContainerUtil.find(list.getReferenceElements(), this::isTargetReference);
     }
 
     @NotNull

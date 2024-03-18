@@ -11,22 +11,4 @@ public class StatementParser extends BasicStatementParser {
   public StatementParser(@NotNull JavaParser javaParser) {
     super(javaParser);
   }
-
-
-  @Nullable
-  @Override
-  public PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder) {
-    return super.parseCodeBlock(builder);
-  }
-
-  @Override
-  public void parseStatements(@NotNull PsiBuilder builder) {
-    super.parseStatements(builder);
-  }
-
-  @NotNull
-  @Override
-  public PsiBuilder.Marker parseExprInParenthWithBlock(@NotNull PsiBuilder builder, @NotNull IElementType type, boolean block) {
-    return super.parseExprInParenthWithBlock(builder, type, block);
-  }
 }

@@ -11,14 +11,15 @@ import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.*
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import it.unimi.dsi.fastutil.objects.Object2IntMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.util.function.BiConsumer
 import java.util.function.ToIntFunction
 
@@ -28,7 +29,7 @@ internal class StorageSerializerUtil(
   private val virtualFileManager: VirtualFileUrlManager,
   private val interner: StorageInterner,
   private val urlRelativizer: UrlRelativizer?,
-  private val classCache: Object2IntMap<TypeInfo>
+  private val classCache: Object2IntWithDefaultMap<TypeInfo>,
 ) {
 
   internal fun getParentEntityIdSerializer(): Serializer<ParentEntityId> = object : Serializer<ParentEntityId>(false, true) {
@@ -160,12 +161,12 @@ internal class StorageSerializerUtil(
 
       if (urlRelativizer == null) {
         val url = kryo.readObject(input, ArrayList::class.java) as List<String>
-        return virtualFileManager.fromUrlSegments(url)
+        return (virtualFileManager as VirtualFileUrlManagerImpl).fromUriSegments(url)
       }
       else {
         val serializedUrl = kryo.readObject(input, String::class.java) as String
         val convertedUrl = urlRelativizer.toAbsoluteUrl(serializedUrl)
-        return virtualFileManager.fromUrl(convertedUrl)
+        return virtualFileManager.getOrCreateFromUri(convertedUrl)
       }
     }
   }
@@ -245,7 +246,7 @@ internal class StorageSerializerUtil(
       vfu2EntityId.forEach { (key: VirtualFileUrl, value) ->
         kryo.writeObject(output, key)
         output.writeInt(value.keys.size)
-        value.forEach { (internalKey: EntityIdWithProperty, internalValue) ->
+        value.forEach { internalKey: EntityIdWithProperty, internalValue ->
           kryo.writeObject(output, internalKey.entityId.toSerializableEntityId())
           output.writeString(internalKey.propertyName)
           kryo.writeObject(output, internalValue.toSerializableEntityId())
@@ -258,7 +259,7 @@ internal class StorageSerializerUtil(
       repeat(input.readInt()) {
         val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
         val size = input.readInt()
-        val data = Object2LongOpenHashMap<EntityIdWithProperty>(size)
+        val data = Object2LongWithDefaultMap<EntityIdWithProperty>(size)
         repeat(size) {
           val internalKeyEntityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classCache)
           val internalKeyPropertyName = interner.intern(input.readString())
@@ -313,7 +314,7 @@ internal class StorageSerializerUtil(
     return interner.intern(SerializableEntityId(arrayId, clazz.typeInfo))
   }
 
-  private fun SerializableEntityId.toEntityId(classCache: Object2IntMap<TypeInfo>): EntityId {
+  private fun SerializableEntityId.toEntityId(classCache: Object2IntWithDefaultMap<TypeInfo>): EntityId {
     val classId = classCache.computeIfAbsent(type, ToIntFunction {
       typesResolver.resolveClass(name = this.type.fqName, pluginId = this.type.pluginId).toClassId()
     })
@@ -341,4 +342,7 @@ internal class StorageSerializerUtil(
 
 public class UnsupportedClassException(
   pluginId: PluginId, entityClassFqn: String, unsupportedClassFqn: String
-): Exception("Unsupported class $unsupportedClassFqn in the entity $entityClassFqn with $pluginId plugin")
+): Exception(
+  "Unsupported class $unsupportedClassFqn in the entity $entityClassFqn with $pluginId plugin." +
+  "Please make sure that you do not use anonymous implementations of ${EntitySource::class.java.name} and ${SymbolicEntityId::class.java.name}"
+)

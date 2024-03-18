@@ -1,16 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.analysis.providers.modules
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.LibraryScope
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
@@ -19,18 +25,23 @@ import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
+import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.Assert.assertNotEquals
 import java.io.File
 
@@ -40,6 +51,28 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File = throw UnsupportedOperationException()
+
+    override fun setUp() {
+        super.setUp()
+
+        val testProjectStructureInsightsProvider = object : ProjectStructureInsightsProvider {
+            override fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean {
+                if (!RootKindFilter.projectSources.matches(psiElement)) return false
+                val containingFile = psiElement.containingFile as? KtFile ?: return false
+                val virtualFile = containingFile.virtualFile
+                val index = ProjectFileIndex.getInstance(psiElement.project)
+                val module = index.getModuleForFile(virtualFile) ?: return false
+                return module.name == "buildSrc"
+            }
+        }
+
+        ExtensionTestUtil.maskExtensions(
+            ProjectStructureInsightsProvider.EP_NAME,
+            ProjectStructureInsightsProvider.EP_NAME.extensionList +
+                    listOf(testProjectStructureInsightsProvider),
+            testRootDisposable
+        )
+    }
 
     fun `test unrelated library`() {
         val moduleWithLibrary = createModule(
@@ -300,6 +333,46 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKtModuleType<KtSourceModule>("Test.kt")
     }
 
+    fun `test that buildSrc sources belong to KtSourceModule`() {
+        createModule(
+            moduleName = "buildSrc",
+            srcContentSpec = directoryContent {
+                dir("main") {
+                    dir("kotlin") {
+                        file("utils.kt", "fun callMeFromKtsFile() {}")
+                    }
+                }
+            }
+        )
+
+        createModule(
+            moduleName = "utils",
+            srcContentSpec = directoryContent {
+                file("build.gradle.kts", "callMeFromKtsFile()")
+            }
+        )
+
+        val dependency = getFile("utils.kt")
+        val scriptFile = getFile("build.gradle.kts")
+
+        ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
+
+        assertKtModuleType<KtSourceModule>(dependency, ktModule(scriptFile))
+    }
+
+    fun `test that script in buildSrc belong to KtScriptModule`() {
+        createModule(
+            moduleName = "buildSrc",
+            srcContentSpec = directoryContent {
+                file("build.gradle.kts", "")
+            }
+        )
+
+        val scriptFile = getFile("build.gradle.kts")
+        ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
+        assertKtModuleType<KtScriptModule>(scriptFile, ktModule(scriptFile))
+    }
+
     fun `test module of source directory`() {
         createModule(
             moduleName = "a",
@@ -319,8 +392,13 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     }
 
     fun `test out of content module`() {
-        val file = createDummyFile("dummy.kt", "class A")
-        assertKtModuleType<KtNotUnderContentRootModule>(file)
+        val dummyRoot = directoryContent { file("dummy.kt", "class A") }
+            .generateInVirtualTempDir()
+
+        val dummyVirtualFile = dummyRoot.findChild("dummy.kt")!!
+        val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
+
+        assertKtModuleType<KtNotUnderContentRootModule>(dummyFile)
 
         createModule(
             moduleName = "m",
@@ -335,10 +413,24 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKtModuleType<KtSourceModule>("resource.kt")
     }
 
-    fun `test script module`() {
+    fun `test dangling file module`() {
+        val file = createDummyFile("dummy.kt", "class A")
+        assertKtModuleType<KtDanglingFileModule>(file)
+    }
+
+    fun `test dangling script file module`() {
         val file = createDummyFile("dummy.kts", "class A")
-        // It is KtNotUnderContentRootModule and not KtScriptModule due to a lack of virtual file
-        assertKtModuleType<KtNotUnderContentRootModule>(file)
+        assertKtModuleType<KtDanglingFileModule>(file)
+    }
+
+    fun `test script module`() {
+        val dummyRoot = directoryContent { file("dummy.kts", "class A") }
+            .generateInVirtualTempDir()
+
+        val dummyVirtualFile = dummyRoot.findChild("dummy.kts")!!
+        val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
+
+        assertKtModuleType<KtScriptModule>(dummyFile)
 
         createModule(
             moduleName = "m",
@@ -350,6 +442,69 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         assertKtModuleType<KtScriptModule>("myScript.kts")
+    }
+
+    fun `test element to library mapping consistency with contextual library module`() {
+        val firstStdlibLibrary = projectLibrary(
+            "kotlin-stdlib-first",
+            TestKotlinArtifacts.kotlinStdlib.jarRoot,
+            TestKotlinArtifacts.kotlinStdlibSources.jarRoot
+        )
+
+        val secondStdlibLibrary = projectLibrary(
+            "kotlin-stdlib-second",
+            TestKotlinArtifacts.kotlinStdlib.jarRoot,
+            TestKotlinArtifacts.kotlinStdlibSources.jarRoot
+        )
+
+        val kotlinReflectLibrary = projectLibrary(
+            "kotlin-reflect",
+            TestKotlinArtifacts.kotlinReflect.jarRoot,
+            TestKotlinArtifacts.kotlinReflectSources.jarRoot
+        )
+
+        val firstModule = createModule("first").apply { addDependency(firstStdlibLibrary) }
+        val secondModule = createModule("second").apply { addDependency(secondStdlibLibrary) }
+        val thirdModule = createModule("third").apply { addDependency(kotlinReflectLibrary) }
+
+        fun testClassModule(className: String, module: Module, expectedLibrary: Library, contextLibrary: Library = expectedLibrary) {
+            val expectedLibraryKtModule = expectedLibrary.toKtModule()
+            val expectedLibrarySourceKtModule = expectedLibraryKtModule.librarySources!!
+
+            val contextLibraryKtModule = contextLibrary.toKtModule()
+            val contextLibrarySourceKtModule = contextLibraryKtModule.librarySources!!
+
+            val javaLightClass = JavaPsiFacade.getInstance(project)
+                .findClass(className, GlobalSearchScope.moduleWithLibrariesScope(module)) as KtLightClass
+
+            val kotlinDecompiledClass = javaLightClass.kotlinOrigin!!
+            assert(kotlinDecompiledClass.containingKtFile.isCompiled)
+
+            val actualLibraryKtModule = ProjectStructureProvider.getInstance(project)
+                .getModule(kotlinDecompiledClass, contextualModule = contextLibraryKtModule)
+
+            assertEquals(expectedLibraryKtModule, actualLibraryKtModule)
+
+            val kotlinSourceClass = service<KotlinDeclarationNavigationPolicy>().getNavigationElement(kotlinDecompiledClass)
+            assertFalse(kotlinSourceClass.containingKtFile.isCompiled)
+
+            val actualLibrarySourceKtModule = ProjectStructureProvider.getInstance(project)
+                .getModule(kotlinSourceClass, contextualModule = contextLibrarySourceKtModule)
+
+            assertEquals(expectedLibrarySourceKtModule, actualLibrarySourceKtModule)
+        }
+
+        testClassModule("kotlin.KotlinVersion", firstModule, firstStdlibLibrary)
+        testClassModule("kotlin.KotlinVersion", secondModule, secondStdlibLibrary)
+        testClassModule("kotlin.reflect.full.IllegalCallableAccessException", thirdModule, kotlinReflectLibrary)
+
+        // Passing a wrong contextual module
+        testClassModule("kotlin.reflect.full.IllegalCallableAccessException", thirdModule, kotlinReflectLibrary, firstStdlibLibrary)
+    }
+
+    private fun Library.toKtModule(): KtLibraryModule {
+        val expectedLibraryInfo = LibraryInfoCache.getInstance(project)[this].single()
+        return expectedLibraryInfo.toKtModuleOfType<KtLibraryModule>()
     }
 
     private inline fun <reified T> assertKtModuleType(element: PsiElement, contextualModule: KtModule? = null) {

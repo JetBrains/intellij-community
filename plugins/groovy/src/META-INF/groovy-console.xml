@@ -2,7 +2,6 @@
   <resource-bundle>messages.GroovyBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.console.GroovyConsoleStateService"/>
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleResolveScopeProvider"/>
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleEditorDecorator"/>
   </extensions>

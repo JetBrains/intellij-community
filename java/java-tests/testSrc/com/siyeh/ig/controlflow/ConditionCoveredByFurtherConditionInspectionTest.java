@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public class ConditionCoveredByFurtherConditionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testConditionCoveredByFurtherCondition() {
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTest);
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(()->doTest());
   }
   public void testMultiCatch() {
     doTest();

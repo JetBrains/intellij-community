@@ -50,7 +50,7 @@ import java.util.*;
  *   doSomething(foo)
  *
  */
-public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
+public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull

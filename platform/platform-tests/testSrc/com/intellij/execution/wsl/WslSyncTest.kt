@@ -100,6 +100,10 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
+  fun testNonExistingLinuxDir() {
+    Assert.assertTrue("Folder must be empty", LinuxFileStorage("/etc/foobarbuz", wslRule.wsl).isEmpty())
+  }
+  @Test
   fun testLinks() {
     val sources = arrayOf("source", "source_2").map { FilePathRelativeToDir(it) }.toTypedArray()
     val from: FileStorage<*, *>

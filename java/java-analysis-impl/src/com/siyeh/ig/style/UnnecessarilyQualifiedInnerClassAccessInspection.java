@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreReferencesNeedingImport = false;
@@ -166,6 +166,9 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       }
       if (parent instanceof PsiJavaFile) {
         return true;
+      }
+      if (!(parent instanceof PsiClass)) {
+        return false;
       }
       aClass = (PsiClass)parent;
     }

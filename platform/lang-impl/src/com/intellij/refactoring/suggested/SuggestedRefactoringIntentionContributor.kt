@@ -13,11 +13,15 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import org.jetbrains.annotations.NonNls
+
+val REFACTORING_DATA_KEY = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
 
 class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
   private val icon = AllIcons.Actions.SuggestedRefactoringBulb
@@ -29,15 +33,30 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     passIdToShowIntentionsFor: Int,
     offset: Int
   ) {
+    val intention = suggestRefactoringIntention(hostFile, offset)
+
+    if (intention == null) {
+      hostFile.removeUserData(REFACTORING_DATA_KEY)
+      return
+    }
+
+    // we add it into 'errorFixesToShow' if it's not empty to always be at the top of the list
+    // we don't add into it if it's empty to keep the color of the bulb
+    val collectionToAdd = intentions.errorFixesToShow.takeIf { it.isNotEmpty() }
+                          ?: intentions.inspectionFixesToShow
+    collectionToAdd.add(HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
+  }
+
+  private fun suggestRefactoringIntention(hostFile: PsiFile, offset: Int): MyIntention? {
     val project = hostFile.project
-    if (LightEdit.owns(project)) return
+    if (LightEdit.owns(project)) return null
     val refactoringProvider = SuggestedRefactoringProviderImpl.getInstance(project)
     var state = refactoringProvider.state
-    if (state == null) return
+    if (state == null) return null
 
     val anchor = state.anchor
-    if (!anchor.isValid || state.errorLevel == ErrorLevel.INCONSISTENT) return
-    if (hostFile != anchor.containingFile) return
+    if (!anchor.isValid || state.errorLevel == ErrorLevel.INCONSISTENT) return null
+    if (hostFile != anchor.containingFile) return null
 
     val refactoringSupport = state.refactoringSupport
 
@@ -46,10 +65,10 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
       ApplicationManager.getApplication().invokeLater {
         refactoringProvider.suppressForCurrentDeclaration()
       }
-      return
+      return null
     }
 
-    if (state.errorLevel != ErrorLevel.NO_ERRORS) return
+    if (state.errorLevel != ErrorLevel.NO_ERRORS) return null
 
     state = refactoringSupport.availability.refineSignaturesWithResolve(state)
 
@@ -61,7 +80,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
           refactoringProvider.availabilityIndicator.clear()
         }
       }
-      return
+      return null
     }
 
     val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)
@@ -69,13 +88,15 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     // update availability indicator with more precise state that takes into account resolve
     refactoringProvider.availabilityIndicator.update(anchor, refactoringData, refactoringSupport)
 
+    if (refactoringData != null) hostFile.putUserData(REFACTORING_DATA_KEY, refactoringData)
+
     val range = when (refactoringData) {
       is SuggestedRenameData -> refactoringSupport.nameRange(refactoringData.declaration)!!
       is SuggestedChangeSignatureData -> refactoringSupport.changeSignatureAvailabilityRange(anchor)!!
-      else -> return
+      else -> return null
     }
 
-    if (!range.containsOffset(offset)) return
+    if (!range.containsOffset(offset)) return null
 
     SuggestedRefactoringFeatureUsage.refactoringSuggested(refactoringData, state)
 
@@ -92,12 +113,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
       )
     }
 
-    val intention = MyIntention(text, showReviewBalloon = refactoringData is SuggestedChangeSignatureData)
-    // we add it into 'errorFixesToShow' if it's not empty to always be at the top of the list
-    // we don't add into it if it's empty to keep the color of the bulb
-    val collectionToAdd = intentions.errorFixesToShow.takeIf { it.isNotEmpty() }
-                          ?: intentions.inspectionFixesToShow
-    collectionToAdd.add(HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
+    return MyIntention(text, showReviewBalloon = refactoringData is SuggestedChangeSignatureData)
   }
 
   private class MyIntention(

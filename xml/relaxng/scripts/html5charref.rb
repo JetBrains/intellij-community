@@ -25,10 +25,8 @@ header = <<header
 header
 
 body = ""
-refs.scan(/<td class="named"><code>&amp;((\w|; &amp;)+);\<\/code><td class="hex"><code>&amp;(#([^;])*);<\/code><td class="dec"><code>&amp;(#([^;])*);<\/code>/) do | match |
-  $1.split("; &amp;").each do | name |
-    body = body + " <!ENTITY #{name}  \"&#{$5};\" >\n"
-  end
+refs.scan(/<td> <code>([^<;]*);\<\/code> <td> U\+([0-9A-F]+) <td>/).sort_by { |match| [Integer("0x"+match[1]), /[[:upper:]]/.match(match[0].chr) ? 1 : 0, match[0].length, match[0]] }.each do | match |
+  body = body + " <!ENTITY #{match[0]}  \"&##{Integer("0x"+match[1])};\" >\n"
 end
 
 

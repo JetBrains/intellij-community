@@ -163,6 +163,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean reportErrorStripeInconsistency = true;
   private final @NotNull TrafficLightPopup myTrafficLightPopup;
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
+  private final DefaultActionGroup inspectionWidgetActions = new DefaultActionGroup();
   private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
@@ -188,7 +189,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     };
 
     TrafficLightAction trafficLightAction = new TrafficLightAction();
-    DefaultActionGroup actions = new DefaultActionGroup(createInspectionWidgetActions(), trafficLightAction, navigateGroup);
+    populateInspectionWidgetActionsFromExtensions();
+    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, trafficLightAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -407,15 +409,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private @NotNull DefaultActionGroup createInspectionWidgetActions() {
-    DefaultActionGroup epActions = new DefaultActionGroup();
-
+  private void populateInspectionWidgetActionsFromExtensions() {
     InspectionWidgetActionProvider.EP_NAME.getExtensionList().
       forEach(extension -> {
         AnAction action = extension.createAction(myEditor);
         if (action != null) {
           extensionActions.put(extension, action);
-          epActions.add(action);
+          addInspectionWidgetAction(action, null);
         }
       });
 
@@ -425,7 +425,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         AnAction action = extension.createAction(myEditor);
         if (action != null) {
           extensionActions.put(extension, action);
-          epActions.add(action);
+          addInspectionWidgetAction(action, null);
         }
       }
 
@@ -433,12 +433,25 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         AnAction action = extensionActions.remove(extension);
         if (action != null) {
-          epActions.remove(action);
+          removeInspectionWidgetAction(action);
         }
       }
     }, resourcesDisposable);
+  }
 
-    return epActions;
+  @Override
+  public void addInspectionWidgetAction(@NotNull AnAction action, @Nullable Constraints constraints) {
+    if (constraints != null) {
+      inspectionWidgetActions.add(action, constraints);
+    }
+    else {
+      inspectionWidgetActions.add(action);
+    }
+  }
+
+  @Override
+  public void removeInspectionWidgetAction(@NotNull AnAction action) {
+    inspectionWidgetActions.remove(action);
   }
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {

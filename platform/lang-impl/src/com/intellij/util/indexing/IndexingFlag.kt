@@ -36,7 +36,7 @@ object IndexingFlag {
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {
-    return asSafely<VirtualFileWithId>()?.let { if (VfsData.isIsIndexedFlagDisabled()) null else it }
+    return asSafely<VirtualFileWithId>()?.let { if (VfsData.isIndexedFlagDisabled()) null else it }
   }
 
   @JvmStatic
@@ -72,7 +72,7 @@ object IndexingFlag {
   }
 
   private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
-    if (!VfsData.isIsIndexedFlagDisabled()) {
+    if (!VfsData.isIndexedFlagDisabled()) {
       stamp.store { s ->
         persistence.writeInt(fileId, s)
       }

@@ -76,8 +76,8 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   }
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
-    val editor = MarkdownActionUtil.findRequiredMarkdownEditor(event)
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
+    val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
 
     if (state) {
       for (caret in editor.caretModel.allCarets) {

@@ -11,13 +11,16 @@ UFile (package = )
                 USimpleNameReferenceExpression (identifier = a)
                 UExpressionList (when)
                     USwitchClauseExpressionWithBody
-                        ULiteralExpression (value = "abc")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "abc")
                         UExpressionList (when_entry)
                             UYieldExpression
                                 ULiteralExpression (value = 1)
                     USwitchClauseExpressionWithBody
-                        ULiteralExpression (value = "def")
-                        ULiteralExpression (value = "ghi")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "def")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "ghi")
                         UExpressionList (when_entry)
                             UYieldExpression
                                 ULiteralExpression (value = 2)

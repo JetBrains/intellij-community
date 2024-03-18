@@ -237,7 +237,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         buffer.append(JavaPsiBundle.message("anonymous.class.derived.display", name));
       }
       else {
-        String name = aClass.getName();
+        String name = aClass instanceof PsiImplicitClass ? aClass.getQualifiedName() : aClass.getName();
         if (name != null) {
           appendSpaceIfNeeded(buffer);
           if (BitUtil.isSet(options, SHOW_FQ_NAME)) {

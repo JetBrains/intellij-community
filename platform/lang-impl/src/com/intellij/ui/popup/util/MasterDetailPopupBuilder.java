@@ -319,7 +319,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
   }
 
   @Override
-  public JLabel getPathLabel() {
+  public @Nullable JLabel getPathLabel() {
     return myPathLabel;
   }
 

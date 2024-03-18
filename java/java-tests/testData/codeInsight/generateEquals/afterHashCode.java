@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 class Test {
     int i;
     Test a;
@@ -9,13 +11,10 @@ class Test {
         if (o == null || getClass() != o.getClass()) return false;
 
         final Test test = (Test) o;
-
-        if (i != test.i) return false;
-        if (Double.compare(c, test.c) != 0) return false;
-        if (!a.equals(test.a)) return false;
-        if (b != null ? !b.equals(test.b) : test.b != null) return false;
-
-        return true;
+        return i == test.i &&
+                Double.compare(c, test.c) == 0 &&
+                a.equals(test.a) &&
+                Objects.equals(b, test.b);
     }
 
     public int hashCode() {
@@ -23,7 +22,7 @@ class Test {
         long temp;
         result = i;
         result = 31 * result + a.hashCode();
-        result = 31 * result + (b != null ? b.hashCode() : 0);
+        result = 31 * result + Objects.hashCode(b);
         temp = Double.doubleToLongBits(c);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;

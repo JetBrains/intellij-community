@@ -15,9 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstDoubleStarExpression;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyDoubleStarExpression extends PyExpression {
+public interface PyDoubleStarExpression extends PyAstDoubleStarExpression, PyExpression {
+  @Override
   @Nullable
-  PyExpression getExpression();
+  default PyExpression getExpression() {
+    return (PyExpression)PyAstDoubleStarExpression.super.getExpression();
+  }
 }

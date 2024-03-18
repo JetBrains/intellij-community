@@ -14,7 +14,7 @@ import com.intellij.util.PlatformIcons;
 import javax.swing.*;
 
 
-public class JavaFileIconPatcher implements FileIconPatcher {
+public final class JavaFileIconPatcher implements FileIconPatcher {
   @Override
   public Icon patchIcon(final Icon baseIcon, final VirtualFile file, final int flags, final Project project) {
     if (project == null) {

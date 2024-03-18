@@ -4,7 +4,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeParameter
-import com.jetbrains.python.psi.PyTypeParameter.Kind.TypeVar
+import com.jetbrains.python.ast.PyAstTypeParameter.Kind.TypeVar
 import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyPsiUtils
 

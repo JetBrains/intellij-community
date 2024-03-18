@@ -9,30 +9,28 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 
-class PyCodeVisionUsageCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("python.code.vision", 1)
+internal object PyCodeVisionUsageCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("python.code.vision", 1)
 
-    private const val CLASS_LOCATION = "class"
-    private const val FUNCTION_LOCATION = "function"
-    private const val METHOD_LOCATION = "method"
-    private const val UNKNOWN_LOCATION = "unknown"
-    private val LOCATION_FIELD: StringEventField = EventFields.String("location", listOf(
-      CLASS_LOCATION, FUNCTION_LOCATION, METHOD_LOCATION, UNKNOWN_LOCATION
-    ))
+  private const val CLASS_LOCATION = "class"
+  private const val FUNCTION_LOCATION = "function"
+  private const val METHOD_LOCATION = "method"
+  private const val UNKNOWN_LOCATION = "unknown"
+  private val LOCATION_FIELD: StringEventField = EventFields.String("location", listOf(
+    CLASS_LOCATION, FUNCTION_LOCATION, METHOD_LOCATION, UNKNOWN_LOCATION
+  ))
 
-    private val USAGES_CLICKED_EVENT_ID = GROUP.registerEvent("usages.clicked", LOCATION_FIELD)
+  private val USAGES_CLICKED_EVENT_ID = GROUP.registerEvent("usages.clicked", LOCATION_FIELD)
 
-    private fun getLocation(element: PsiElement): String = when(element) {
-      is PyClass -> CLASS_LOCATION
-      is PyFunction -> if (element.asMethod() != null) METHOD_LOCATION else FUNCTION_LOCATION
-      else -> UNKNOWN_LOCATION
-    }
+  private fun getLocation(element: PsiElement): String = when (element) {
+    is PyClass -> CLASS_LOCATION
+    is PyFunction -> if (element.asMethod() != null) METHOD_LOCATION else FUNCTION_LOCATION
+    else -> UNKNOWN_LOCATION
+  }
 
-    fun logClickToFUS(element: PsiElement) {
-      val location = getLocation(element)
-      USAGES_CLICKED_EVENT_ID.log(element.project, location)
-    }
+  fun logClickToFUS(element: PsiElement) {
+    val location = getLocation(element)
+    USAGES_CLICKED_EVENT_ID.log(element.project, location)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

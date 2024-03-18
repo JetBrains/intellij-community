@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -18,11 +19,13 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -32,6 +35,8 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -70,6 +75,10 @@ public final class TerminalSettingsPanel {
   private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
 
+  private JPanel myNewUiPanel;
+  private JBCheckBox myNewUiCheckbox;
+  private JBLabel myBetaLabel;
+
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
@@ -82,6 +91,9 @@ public final class TerminalSettingsPanel {
     myProject = project;
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
+
+    myNewUiPanel.setVisible(ExperimentalUI.isNewUI());
+    myBetaLabel.setIcon(AllIcons.General.Beta);
 
     myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
     myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
@@ -156,7 +168,8 @@ public final class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
+    return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+           || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.getCloseSessionOnLogout())
@@ -174,6 +187,12 @@ public final class TerminalSettingsPanel {
   }
 
   public void apply() {
+    var blockTerminalSetting = Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY);
+    if (blockTerminalSetting.asBoolean() != myNewUiCheckbox.isSelected()) {
+      blockTerminalSetting.setValue(myNewUiCheckbox.isSelected());
+      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
+                                                                                   BlockTerminalSwitchPlace.SETTINGS);
+    }
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
@@ -199,6 +218,7 @@ public final class TerminalSettingsPanel {
   }
 
   public void reset() {
+    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());

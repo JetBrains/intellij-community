@@ -24,6 +24,13 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
+  public boolean replace(int key,
+                         int oldValue,
+                         int newValue) throws IOException {
+    return multimap.replace(key, oldValue, newValue);
+  }
+
+  @Override
   public synchronized boolean has(int key,
                                   int value) throws IOException {
     return multimap.has(key, value);
@@ -76,6 +83,11 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
+  public boolean remove(int key, int value) throws IOException {
+    return multimap.remove(key, value);
+  }
+
+  @Override
   public synchronized int size() {
     return multimap.size();
   }
@@ -83,6 +95,18 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   @Override
   public boolean isEmpty() throws IOException {
     return multimap.size() == 0;
+  }
+
+  @Override
+  public boolean forEach(@NotNull KeyValueProcessor processor) {
+    return multimap.forEach((key, value) -> {
+      try {
+        return processor.process(key, value);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
   }
 
   @Override

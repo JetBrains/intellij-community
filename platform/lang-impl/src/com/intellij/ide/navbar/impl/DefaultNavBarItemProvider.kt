@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
 import com.intellij.diagnostic.PluginException
@@ -19,8 +19,6 @@ import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import java.util.*
-
 
 /**
  * Delegates old implementations
@@ -36,7 +34,8 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     try {
       ensureValid(item.data)
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       return null
     }
 
@@ -55,34 +54,14 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
         return null
       }
     }
-
-    val parentWithProvider = fromOldExtensions({ ext ->
-      try {
-        Pair(ext.getParent(item.data), ext)
-      }
-      catch (pce: ProcessCanceledException) {
-        // implementations may throw PCE manually, try to replace it with expected exception
-        ProgressManager.checkCanceled()
-        Pair(null, ext)
-      }
-    }, { parentWithProvider ->
-      val (parent, _) = parentWithProvider
-      parent != null && parent != item.data
-    })
-    if (parentWithProvider == null) {
-      return null
-    }
-    val (parent, parentProvider) = parentWithProvider
-    if (parent == null) {
-      return null
-    }
-    ensurePsiFromExtensionIsValid(parent, "Extension returned invalid parent", parentProvider.javaClass)
-
+    val parent = parentFromOldExtensions(item)
+                 ?: return null
     val containingFile = parent.containingFile
-    if (containingFile != null && containingFile.virtualFile == null) return null
+    if (containingFile != null && containingFile.virtualFile == null) {
+      return null
+    }
 
     val adjustedParent = adjustedParent(parent, item.ownerExtension)
-
     if (adjustedParent != null) {
       return PsiNavBarItem(adjustedParent, item.ownerExtension)
     }
@@ -108,7 +87,8 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
     if (adjustedByOwner != null) {
       ensurePsiFromExtensionIsValid(adjustedByOwner, "Owner extension returned invalid psi after adjustment", ownerExtension.javaClass)
       return adjustedByOwner
-    } else {
+    }
+    else {
       return adjustWithAllExtensions(originalParent)
     }
   }
@@ -116,55 +96,49 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun iterateChildren(item: NavBarItem): Iterable<NavBarItem> {
-
-    if (item !is DefaultNavBarItem<*>) return Iterable { Collections.emptyIterator() }
-
-    return NavBarModelExtension.EP_NAME
-      .extensionList.asSequence()
-      .flatMap { ext ->
+    if (item !is DefaultNavBarItem<*>) {
+      return emptyList()
+    }
+    return sequence {
+      for (ext in NavBarModelExtension.EP_NAME.extensionList) {
         val children = arrayListOf<Any>()
         ext.processChildren(item.data, null /*TODO: think about passing root here*/) {
           children.add(it)
           true
         }
-        children.asSequence().map { child -> Pair(child, ext) }
-      }
-      .mapNotNull { (child, ext) ->
-        when (child) {
-          is Project -> ProjectNavBarItem(child)
-          is Module -> ModuleNavBarItem(child)
-          is PsiElement -> {
-            if (ext.normalizeChildren()) {
-              val adjusted = adjustWithAllExtensions(child)
-              adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
-            }
-            else {
-              PsiNavBarItem(child, ownerExtension = null)
-            }
+        for (child in children) {
+          val childItem = compatibilityNavBarItem(child, ext)
+          if (childItem != null) {
+            yield(childItem)
           }
-          is OrderEntry -> OrderEntryNavBarItem(child)
-          else -> DefaultNavBarItem(child)
         }
       }
-      .asIterable()
+    }.asIterable()
   }
 }
 
-
-fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? {
+private fun parentFromOldExtensions(item: PsiNavBarItem): PsiElement? {
   for (ext in NavBarModelExtension.EP_NAME.extensionList) {
-    val selected = selector(ext)
-    if (selected != null) {
-      return selected
+    try {
+      val parent = ext.getParent(item.data)
+      if (parent == null || parent == item.data) {
+        continue
+      }
+      ensurePsiFromExtensionIsValid(parent, "Extension returned invalid parent", ext.javaClass)
+      return parent
+    }
+    catch (pce: ProcessCanceledException) {
+      // implementations may throw PCE manually, try to replace it with expected exception
+      ProgressManager.checkCanceled()
     }
   }
   return null
 }
 
-fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate: (T) -> Boolean): T? {
+fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? {
   for (ext in NavBarModelExtension.EP_NAME.extensionList) {
     val selected = selector(ext)
-    if (selected != null && predicate(selected)) {
+    if (selected != null) {
       return selected
     }
   }
@@ -199,6 +173,32 @@ internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, cla
     }
     else {
       throw IllegalStateException("$message, psi class: ${psi.javaClass.canonicalName}", t)
+    }
+  }
+}
+
+internal fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension?): NavBarItem? {
+  return when (o) {
+    is Project -> {
+      ProjectNavBarItem(o)
+    }
+    is Module -> {
+      ModuleNavBarItem(o)
+    }
+    is PsiElement -> {
+      if (ext != null && ext.normalizeChildren()) {
+        val adjusted = adjustWithAllExtensions(o)
+        adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
+      }
+      else {
+        PsiNavBarItem(o, ownerExtension = null)
+      }
+    }
+    is OrderEntry -> {
+      OrderEntryNavBarItem(o)
+    }
+    else -> {
+      DefaultNavBarItem(o)
     }
   }
 }

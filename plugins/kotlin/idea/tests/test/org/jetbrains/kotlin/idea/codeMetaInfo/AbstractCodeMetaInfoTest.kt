@@ -3,13 +3,16 @@
 package org.jetbrains.kotlin.idea.codeMetaInfo
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -21,6 +24,7 @@ import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
@@ -47,7 +51,7 @@ import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
@@ -61,6 +65,8 @@ import kotlin.io.path.exists
 class CodeMetaInfoTestCase(
     val codeMetaInfoTypes: Collection<AbstractCodeMetaInfoRenderConfiguration>,
     val checkNoDiagnosticError: Boolean = false,
+    val dumbMode: Boolean = false,
+    val focusMode: Boolean = false,
     private val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
 ) : DaemonAnalyzerTestCase() {
 
@@ -141,7 +147,7 @@ class CodeMetaInfoTestCase(
         ApplicationManager.getApplication().runWriteAction { TreeUtil.clearCaches(myFile.node as TreeElement) }
 
         //to initialize caches
-        if (!DumbService.isDumb(myProject)) {
+        if (!dumbMode && !DumbService.isDumb(myProject)) {
             CacheManager.getInstance(myProject).getFilesWithWord(
                 "XXX",
                 UsageSearchContext.IN_COMMENTS,
@@ -150,20 +156,40 @@ class CodeMetaInfoTestCase(
             )
         }
 
-        for (configuration in codeMetaInfoTypes) {
-            when (configuration) {
-                is DiagnosticCodeMetaInfoRenderConfiguration -> {
-                    codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
+        fun task() {
+            for (configuration in codeMetaInfoTypes) {
+                when (configuration) {
+                    is DiagnosticCodeMetaInfoRenderConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
+                    }
+
+                    is HighlightingConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
+                    }
+
+                    is LineMarkerConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getLineMarkerCodeMetaInfos(configuration))
+                    }
+
+                    else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
                 }
-                is HighlightingConfiguration -> {
-                    codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
-                }
-                is LineMarkerConfiguration -> {
-                    codeMetaInfoForCheck.addAll(getLineMarkerCodeMetaInfos(configuration))
-                }
-                else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
             }
         }
+
+        EditorSettingsExternalizable.getInstance().isFocusMode = focusMode
+
+        if (dumbMode) {
+            val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")
+            try {
+                (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, disposable)
+                DumbModeTestUtils.runInDumbModeSynchronously(project) { task() }
+            } finally {
+                Disposer.dispose(disposable)
+            }
+        } else {
+            task()
+        }
+
         if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoRenderConfiguration } &&
             !codeMetaInfoTypes.any { it is HighlightingConfiguration }
         ) {
@@ -251,7 +277,7 @@ abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
 
 abstract class AbstractLineMarkerCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        LineMarkerConfiguration()
+        LineMarkerConfiguration(renderTargetIcons = true)
     )
 }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -56,13 +56,13 @@ public final class ModifierChooser {
     {PsiKeyword.SEALED, PsiKeyword.NON_SEALED}
   };
 
-  private static final String[][] INTERFACE_9_MEMBER_MODIFIERS = {
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
     {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
-  private static final String[][] INTERFACE_8_MEMBER_MODIFIERS = {
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
     {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
@@ -95,7 +95,7 @@ public final class ModifierChooser {
   }
 
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
-    if (HighlightingFeature.SEALED_CLASSES.isAvailable(scope)) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, scope)) {
       if (list == null) {
         return CLASS_MODIFIERS_WITH_SEALED.clone();
       }
@@ -136,20 +136,20 @@ public final class ModifierChooser {
   }
 
   private static String[][] getInterfaceMemberModifiers(@NotNull PsiElement list) {
-    if (HighlightingFeature.SEALED_CLASSES.isAvailable(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
     }
     if (PsiUtil.isLanguageLevel9OrHigher(list)) {
-      return INTERFACE_9_MEMBER_MODIFIERS;
+      return INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE;
     }
-    if (PsiUtil.isLanguageLevel8OrHigher(list)) {
-      return INTERFACE_8_MEMBER_MODIFIERS;
+    if (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, list)) {
+      return INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT;
     }
     return INTERFACE_MEMBER_MODIFIERS;
   }
 
   private static String[][] getClassMemberModifiers(@NotNull PsiElement list) {
-    if (HighlightingFeature.SEALED_CLASSES.isAvailable(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
       return CLASS_MEMBER_MODIFIERS_WITH_SEALED;
     }
     return CLASS_MEMBER_MODIFIERS;

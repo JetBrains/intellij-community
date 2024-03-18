@@ -12,6 +12,9 @@ interface CodeReviewBranchesViewModel {
 
   fun fetchAndCheckoutRemoteBranch()
 
+  val canShowInLog: Boolean get() = false
+  fun fetchAndShowInLog() {}
+
   fun showBranches()
 }
 

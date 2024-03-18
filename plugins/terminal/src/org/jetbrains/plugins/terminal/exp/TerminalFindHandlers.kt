@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.blockTerminalController
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
@@ -45,5 +46,21 @@ class TerminalFindNextHandler(originalHandler: EditorActionHandler) : TerminalSe
 class TerminalFindPreviousHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
   override fun doWithBlockController(blockController: BlockTerminalController) {
     blockController.searchSession?.searchBackward()
+  }
+}
+
+/** Do nothing on replace action if it is a terminal editor */
+class TerminalReplaceHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    if (!editor.isPromptEditor && !editor.isOutputEditor && !editor.isAlternateBufferEditor) {
+      originalHandler.execute(editor, caret, dataContext)
+    }
+  }
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return !editor.isPromptEditor
+           && !editor.isOutputEditor
+           && !editor.isAlternateBufferEditor
+           && originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

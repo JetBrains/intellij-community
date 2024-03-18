@@ -46,7 +46,6 @@ public class JpsArchivePackagingElementImpl extends JpsCompositePackagingElement
   public void setArchiveName(String directoryName) {
     if (!myArchiveName.equals(directoryName)) {
       myArchiveName = directoryName;
-      fireElementChanged();
     }
   }
 }

@@ -32,7 +32,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class PublicInnerClassInspection extends BaseInspection {
+public final class PublicInnerClassInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
   @SuppressWarnings("PublicField")

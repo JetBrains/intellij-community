@@ -69,10 +69,6 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19, this::doTest);
   }
 
-  public void testRecordPatternsInForEachJava20() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
-  }
-
   public void testRecordPatternsInForEachJava21() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       doTest();
@@ -81,16 +77,16 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     });
   }
 
-  public void testDeconstructionInstanceOf20() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+  public void testDeconstructionInstanceOf21() {
+    doTest();
   }
 
   public void testForEachPatternExhaustiveness() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, this::doTest);
   }
   
   public void testBoundTypeParameter() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testNotAnnotationsInDeconstructionType() {
@@ -98,9 +94,13 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   }
   
   public void testUnnamedPatterns() {
-    doTest();
-  } 
-  
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, this::doTest);
+  }
+
+  public void testUnnamedPatternsJava22() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
   public void testUnnamedPatternsUnavailable() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, this::doTest);
   } 

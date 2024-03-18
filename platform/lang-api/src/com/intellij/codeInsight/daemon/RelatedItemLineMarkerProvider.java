@@ -22,8 +22,8 @@ public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDe
   }
 
   @Override
-  public final void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
-                                           @NotNull Collection<? super LineMarkerInfo<?>> result) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
     collectNavigationMarkers(elements, result, false);
   }
 

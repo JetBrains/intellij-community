@@ -37,6 +37,7 @@ import com.intellij.psi.*
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
+import com.intellij.vcsUtil.VcsUtil
 import java.awt.event.MouseEvent
 import java.lang.Integer.min
 import javax.swing.JComponent
@@ -122,7 +123,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     }
   }
 
-  private fun hasSupportedVcs(project: Project, file: PsiFile, editor: Editor) : Boolean {
+  private fun hasSupportedVcs(project: Project, file: PsiFile, editor: Editor): Boolean {
     if (hasPreviewInfo(editor)) {
       return true
     }
@@ -209,7 +210,8 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
 private fun getAspect(file: PsiFile, editor: Editor): AnnotationResult<LineAnnotationAspect?> {
   if (hasPreviewInfo(editor)) return AnnotationResult.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
   val virtualFile = file.virtualFile ?: return AnnotationResult.NoAnnotation
-  return when (val annotationResult = getAnnotation(file.project, virtualFile, editor)) {
+  val vcsFile = VcsUtil.resolveSymlinkIfNeeded(file.project, virtualFile)
+  return when (val annotationResult = getAnnotation(file.project, vcsFile, editor)) {
     AnnotationResult.NoAnnotation -> AnnotationResult.NoAnnotation
     AnnotationResult.NotReady -> AnnotationResult.NotReady
     is AnnotationResult.Success -> AnnotationResult.Success(

@@ -11,7 +11,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
+public final class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
   private final Project myProject;
 
   public JavaCodeFragmentFactoryImpl(Project project) {

@@ -116,7 +116,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     @JvmStatic
     fun loadFrom(project: Project,
                  filePath: String = "${getDefaultProfileDirectory(project)}/profile.yaml",
-                 toolsSupplier: InspectionToolsSupplier = InspectionToolRegistrar.getInstance(),
+                 toolsSupplier: InspectionToolsSupplier = ProjectInspectionToolRegistrar.getInstance(project),
                  profileManager: BaseInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
     ): YamlInspectionProfileImpl {
       val configFile = File(filePath).absoluteFile
@@ -129,8 +129,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       }
 
 
-
-      return loadFrom(configFile.reader(), includeProvider, toolsSupplier, profileManager)
+      return configFile.reader().use { reader ->
+        loadFrom(reader, includeProvider, toolsSupplier, profileManager)
+      }
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {

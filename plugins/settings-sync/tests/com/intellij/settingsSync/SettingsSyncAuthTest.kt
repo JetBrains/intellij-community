@@ -47,21 +47,21 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     `when`(authServiceSpy.getAccountInfoService()).thenReturn(accountInfoService)
 
     val communicator = object : CloudConfigServerCommunicator() {
-      override fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): Pair<CloudConfigFileClientV2, String?> {
+      override fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
         // we retrieve the token in the parent method
         super.createCloudConfigClient(url, versionContext)
 
-        val communicator = object : CloudConfigFileClientV2("http://localhost:7777/cloudconfig", Configuration(),
+        return object : CloudConfigFileClientV2("http://localhost:7777/cloudconfig", Configuration(),
                                                 CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, CloudConfigVersionContext()) {
           override fun getLatestVersion(file: String?): FileVersionInfo {
-            if (currentIdToken != "NEW-ID-TOKEN") {
+            if (_currentIdTokenVar != "NEW-ID-TOKEN") {
               throw UnauthorizedException("Invalid credentials!!!")
             }
             return dummyFileVersionInfo()
           }
         }
-        return Pair(communicator, accountInfoService.idToken)
       }
+
     }
 
     communicator.checkServerState()
@@ -74,7 +74,7 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
 
     // Check that userId was updated in communicator
     communicator.checkServerState()
-    assertEquals("NEW-ID-TOKEN", communicator.currentIdToken)
+    assertEquals("NEW-ID-TOKEN", communicator._currentIdTokenVar)
   }
 
   @Test
@@ -91,20 +91,19 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     `when`(authServiceSpy.getAccountInfoService()).thenReturn(accountInfoService)
 
     val communicator = object : CloudConfigServerCommunicator() {
-      override fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): Pair<CloudConfigFileClientV2, String?> {
+      override fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
         // we retrieve the token in the parent method
         super.createCloudConfigClient(url, versionContext)
 
-        val communicator = object : CloudConfigFileClientV2("http://localhost:7777/cloudconfig", Configuration(),
+        return object : CloudConfigFileClientV2("http://localhost:7777/cloudconfig", Configuration(),
                                                 CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, CloudConfigVersionContext()) {
           override fun getLatestVersion(file: String?): FileVersionInfo {
-            if (currentIdToken != null) {
+            if (_currentIdTokenVar != null) {
               fail("current token must be null!")
             }
             throw UnauthorizedException("Invalid credentials!!!")
           }
         }
-        return Pair(communicator, accountInfoService.idToken)
       }
 
     }

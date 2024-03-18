@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.addAssertConsistencyEntity
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 
 class AssertConsistencyTest {

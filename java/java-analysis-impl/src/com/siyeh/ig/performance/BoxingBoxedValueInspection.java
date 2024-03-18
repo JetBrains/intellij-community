@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BoxingBoxedValueInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class BoxingBoxedValueInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
   static final Map<String, String> boxedPrimitiveMap =

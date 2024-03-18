@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.*
@@ -40,11 +40,7 @@ interface FacetEntity: ModuleSettingsBase {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String,
-                        moduleId: ModuleId,
-                        facetType: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): FacetEntity {
+    operator fun invoke(name: String, moduleId: ModuleId, facetType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetEntity {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId
@@ -59,9 +55,7 @@ interface FacetEntity: ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit): FacetEntity = modifyEntity(
-  FacetEntity.Builder::class.java, entity, modification)
-
+fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit): FacetEntity = modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
   by WorkspaceEntity.extension()
 //endregion

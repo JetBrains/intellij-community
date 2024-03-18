@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -13,9 +12,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.LocalizationUtil;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,17 +22,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Set;
-
-import static com.intellij.DynamicBundle.findLanguageBundle;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
   public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
+  private static final String INSPECTION_DESCRIPTIONS_FOLDER = "inspectionDescriptions";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolWrapper.class);
+  private static final Pattern ADDENDUM_PLACE = Pattern.compile("<p><small>New in [\\d.]+</small></p>|(</body>)?\\s*</html>", Pattern.CASE_INSENSITIVE);
 
   protected T myTool;
   protected final E myEP;
@@ -95,7 +97,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
    * @see #isApplicable(Language)
    */
   public @Nullable String getLanguage() {
-    return myEP == null ? null : myEP.language;
+    return myEP == null ? myTool.getLanguage() : myEP.language;
   }
 
   public boolean applyToDialects() {
@@ -178,36 +180,34 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     try {
       InputStream descriptionStream = getDescriptionStream();
       //noinspection HardCodedStringLiteral(IDEA-249976)
-      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
+      return descriptionStream != null ? insertAddendum(ResourceUtil.loadText(descriptionStream),
+                                         getTool().getDescriptionAddendum()) : null;
     }
     catch (IOException ignored) { }
 
     return getTool().loadDescription();
   }
 
-  private @Nullable InputStream getDescriptionStream() {
-    Application app = ApplicationManager.getApplication();
-    String fileName = getDescriptionFileName();
-
-    InputStream langStream = getLanguagePluginStream(fileName);
-    if (langStream != null) return langStream;
-
-    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
+  private static String insertAddendum(String description, HtmlChunk addendum) {
+    String addendumString = addendum.toString();
+    if (!description.contains("<!-- tooltip end -->")) {
+      addendumString = "<!-- tooltip end -->" + addendumString;
     }
-
-    return getPluginClassLoaderStream(myEP.getPluginDescriptor().getPluginClassLoader(),
-                                      fileName);
+    Matcher matcher = ADDENDUM_PLACE.matcher(description);
+    if (matcher.find()) {
+      return description.substring(0, matcher.start()) + addendumString + description.substring(matcher.start());
+    }
+    return description + addendumString;
   }
 
-  private static @Nullable InputStream getLanguagePluginStream(@NotNull String fileName) {
-    DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-    if (langBundle == null) return null;
+  private @Nullable InputStream getDescriptionStream() {
+    Application app = ApplicationManager.getApplication();
+    Path path = Path.of(INSPECTION_DESCRIPTIONS_FOLDER).resolve(getDescriptionFileName());
+    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return LocalizationUtil.INSTANCE.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
+    }
 
-    PluginDescriptor langPluginDescriptor = langBundle.pluginDescriptor;
-    return langPluginDescriptor != null ?
-           getPluginClassLoaderStream(langPluginDescriptor.getPluginClassLoader(), fileName) :
-           null;
+    return LocalizationUtil.INSTANCE.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
   }
 
   private @NotNull String getDescriptionFileName() {
@@ -259,12 +259,5 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     if (projectType == null) return true;
 
     return projectTypes.contains(projectType);
-  }
-
-  private static @Nullable InputStream getPluginClassLoaderStream(@Nullable ClassLoader classLoader,
-                                                                  @NotNull @NlsSafe String fileName) {
-    return classLoader != null ?
-           classLoader.getResourceAsStream("inspectionDescriptions/" + fileName) :
-           null;
   }
 }

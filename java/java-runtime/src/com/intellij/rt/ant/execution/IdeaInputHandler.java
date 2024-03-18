@@ -20,7 +20,7 @@ public class IdeaInputHandler implements InputHandler {
     if (err == null) {
       throw new BuildException("Selected InputHandler should be used by Intellij IDEA");
     }
-    final PacketWriter packet = PacketFactory.ourInstance.createPacket(IdeaAntLogger2.INPUT_REQUEST);
+    final PacketWriter packet = PacketFactory.ourInstance.createPacket(AntLoggerConstants.INPUT_REQUEST);
     packet.appendLimitedString(prompt);
     packet.appendLimitedString(request.getDefaultValue());
     if (request instanceof MultipleChoiceInputRequest) {

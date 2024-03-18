@@ -8,8 +8,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.text.DateFormatUtil
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.days
 
 @Service
 internal class TipOrderUtil {
@@ -79,7 +79,7 @@ internal class TipOrderUtil {
     }
     else {
       val indexToShowFirst = tips.indexOfFirst { tip ->
-        System.currentTimeMillis() - tipsUsageManager.getLastTimeProposed(tip.id) > MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS * DateFormatUtil.DAY
+        System.currentTimeMillis() - tipsUsageManager.getLastTimeProposed(tip.id) > MIN_SUCCESSIVE_SHOW_INTERVAL_MS
       }
       if (indexToShowFirst <= 0) tips else cycleShift(tips, indexToShowFirst)
     }
@@ -107,8 +107,8 @@ internal class TipOrderUtil {
     const val SORTING_ALGORITHM = "usage_and_applicability"
     private const val SORTING_ALGORITHM_VERSION = "2"
 
-    // Minimum time between showing the same tip at the first place
-    private const val MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS = 14
+    // Minimum time between showing the same tip in the first place
+    private val MIN_SUCCESSIVE_SHOW_INTERVAL_MS = 14.days.inWholeMilliseconds
 
     @JvmStatic
     fun getInstance(): TipOrderUtil = service()

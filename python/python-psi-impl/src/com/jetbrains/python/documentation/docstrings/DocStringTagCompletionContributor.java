@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class DocStringTagCompletionContributor extends CompletionContributor implements DumbAware {
+public final class DocStringTagCompletionContributor extends CompletionContributor implements DumbAware {
   public static final PsiElementPattern.Capture<PyStringLiteralExpression> DOCSTRING_PATTERN = psiElement(PyStringLiteralExpression.class)
     .withParent(psiElement(PyExpressionStatement.class).inside(PyDocStringOwner.class));
 
@@ -41,7 +41,7 @@ public class DocStringTagCompletionContributor extends CompletionContributor imp
                                            @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                final PsiFile file = parameters.getOriginalFile();
-               DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);
+               DocStringFormat format = DocStringParser.getConfiguredDocStringFormat(file);
                if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
                  int offset = parameters.getOffset();
                  final String text = file.getText();

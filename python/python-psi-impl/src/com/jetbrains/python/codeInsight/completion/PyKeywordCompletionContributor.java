@@ -45,7 +45,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * element is cleared after matching.
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
-public class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {
   /**
    * Matches places where a keyword-based statement might be appropriate.
    */

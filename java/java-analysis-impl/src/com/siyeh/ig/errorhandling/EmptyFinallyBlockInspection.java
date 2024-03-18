@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class EmptyFinallyBlockInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class EmptyFinallyBlockInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

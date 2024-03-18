@@ -4,7 +4,8 @@ UFile (package = ) [public final class AssertionKt {...]
             UBlockExpression [{...}] : PsiType:Void
                 UDeclarationsExpression [var s: java.lang.String = "Not Null"]
                     ULocalVariable (name = s) [var s: java.lang.String = "Not Null"]
-                        ULiteralExpression (value = "Not Null") ["Not Null"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["Not Null"] : PsiType:String
+                            ULiteralExpression (value = "Not Null") ["Not Null"] : PsiType:String
                 UReturnExpression [return s!!] : PsiType:Void
                     UPostfixExpression (operator = !!) [s!!] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String

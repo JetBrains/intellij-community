@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
@@ -21,6 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.*;
@@ -34,7 +36,6 @@ import static org.openjdk.jmh.runner.options.TimeValue.seconds;
  * how much space for optimization is left.
  */
 @State(Scope.Benchmark)
-@SuppressWarnings("FieldMayBeStatic")
 public class PersistentFSStoragesBenchmarks {
   //@Param
   public static final int RECORDS_COUNT = 1 << 22;
@@ -210,10 +211,9 @@ public class PersistentFSStoragesBenchmarks {
 
     @Setup
     public void setup(FileState fileState) throws IOException {
-      storage = new PersistentFSRecordsLockFreeOverMMappedFile(
-        fileState.file,
-        PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE
-      );
+      storage = MMappedFileStorageFactory.withDefaults()
+        .pageSize(DEFAULT_MAPPED_CHUNK_SIZE)
+        .wrapStorageSafely(fileState.file, PersistentFSRecordsLockFreeOverMMappedFile::new);
       for (int i = 0; i < RECORDS_COUNT; i++) {
         storage.allocateRecord();
       }
@@ -586,7 +586,7 @@ public class PersistentFSStoragesBenchmarks {
     private static void fsRecords_randomWriteByField(final IterationState it,
                                                      final PersistentFSRecordsStorage storage) throws IOException {
       final int recordId = it.nextRandom();
-      storage.setNameId(recordId, 1);
+      storage.updateNameId(recordId, 1);
       storage.setParent(recordId, 2);
       storage.setContentRecordId(recordId, 3);
       storage.setAttributeRecordId(recordId, 4);

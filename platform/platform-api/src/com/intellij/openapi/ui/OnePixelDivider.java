@@ -14,6 +14,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -83,7 +84,7 @@ public class OnePixelDivider extends Divider {
     }
   }
 
-  private boolean myDragging = false;
+  protected boolean myDragging = false;
 
   private void setDragging(boolean dragging) {
     if (myDragging != dragging) {
@@ -206,10 +207,14 @@ public class OnePixelDivider extends Divider {
     Component eventComponent = e.getComponent();
     if (eventComponent == null) return null;
     Component deepestComponentAt = UIUtil.getDeepestComponentAt(eventComponent, e.getX(), e.getY());
-    if (deepestComponentAt == null || !SwingUtilities.isDescendingFrom(deepestComponentAt, getParent())) {
+    if (noDeepestComponent(e, deepestComponentAt)) {
       return null;//Event is related to some top layer (for example Undock tool window) and we shouldn't process it here
     }
     return SwingUtilities.convertMouseEvent(eventComponent, e, this);
+  }
+
+  protected boolean noDeepestComponent(@NotNull MouseEvent e, @Nullable Component deepestComponentAt) {
+    return deepestComponentAt == null || !SwingUtilities.isDescendingFrom(deepestComponentAt, getParent());
   }
 
   private void init() {

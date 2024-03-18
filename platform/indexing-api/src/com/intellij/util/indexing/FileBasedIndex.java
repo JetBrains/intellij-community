@@ -60,7 +60,7 @@ public abstract class FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public void removeProjectFileSets(@NotNull Project project) {
+  public void onProjectClosing(@NotNull Project project) {
     throw new UnsupportedOperationException();
   }
 

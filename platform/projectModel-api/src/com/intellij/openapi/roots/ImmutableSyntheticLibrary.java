@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.util.Condition;
@@ -33,27 +33,23 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     hashCode = Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getSourceRoots() {
+  public @NotNull Collection<VirtualFile> getSourceRoots() {
     return mySourceRoots;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getBinaryRoots() {
+  public @NotNull Collection<VirtualFile> getBinaryRoots() {
     return myBinaryRoots;
   }
 
-  @NotNull
   @Override
-  public Set<VirtualFile> getExcludedRoots() {
+  public @NotNull Set<VirtualFile> getExcludedRoots() {
     return myExcludedRoots;
   }
 
-  @Nullable
   @Override
-  public Condition<VirtualFile> getExcludeFileCondition() {
+  public @Nullable Condition<VirtualFile> getExcludeFileCondition() {
     return (Condition<VirtualFile>)myExcludeCondition;
   }
 
@@ -74,9 +70,8 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     return hashCode;
   }
 
-  @NotNull
-  @Unmodifiable
-  private static <E> List<E> immutableOrEmptyList(@NotNull List<? extends E> list) {
+  private static @NotNull
+  @Unmodifiable <E> List<E> immutableOrEmptyList(@NotNull List<? extends E> list) {
     return list.isEmpty() ? Collections.emptyList() : List.copyOf(list);
   }
 }

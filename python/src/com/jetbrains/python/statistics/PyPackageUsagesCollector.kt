@@ -7,11 +7,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.jetbrains.extensions.getSdk
+import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
  * Reports usages of packages and versions
@@ -23,7 +24,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages", 5)
+  private val GROUP = EventLogGroup("python.packages", 6)
 
   //full list is stored in metadata, see FUS-1218 for more details
   private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP,
@@ -43,6 +44,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     val pypiPackages = PyPIPackageCache.getInstance()
     for (module in project.modules) {
       val sdk = module.getSdk() ?: continue
+      if (!PythonSdkUtil.isPythonSdk(sdk)) continue
       val usageData = getPythonSpecificInfo(sdk)
       PyPackageManager.getInstance(sdk).getRequirements(module).orEmpty()
         .filter { pypiPackages.containsPackage(it.name) }
@@ -63,6 +65,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     val pypiPackages = PyPIPackageCache.getInstance()
     for (module in project.modules) {
       val sdk = module.getSdk() ?: continue
+      if (!PythonSdkUtil.isPythonSdk(sdk)) continue
       if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) continue
       val executionType = sdk.executionType
       val interpreterType = sdk.interpreterType
@@ -84,4 +87,4 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 }
 
 val PACKAGE_FIELD = EventFields.StringValidatedByEnum("package", "python_packages")
-val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexp("package_version", "version")
+val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("package_version", "version")

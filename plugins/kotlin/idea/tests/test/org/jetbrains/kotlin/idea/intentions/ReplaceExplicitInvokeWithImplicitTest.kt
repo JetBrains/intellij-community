@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.descendantsOfType
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -80,5 +80,18 @@ class ReplaceExplicitInvokeWithImplicitTest27 : KotlinLightCodeInsightFixtureTes
             DebugUtil.psiTreeToString(expressionAfter, false),
             DebugUtil.psiTreeToString(actualExpressionToCheck, false),
         )
+    }
+}
+
+
+operator fun Any.invoke(action: () -> Unit) {
+    println(this)
+    action()
+}
+
+fun foo(): Int = 42
+
+fun main() {
+    (foo()) {
     }
 }

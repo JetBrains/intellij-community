@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Bas Leijdekkers
  */
-public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
+public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
   private final PsiElementPredicate myPredicate = new AnnotateOverriddenMethodsPredicate();
   private @IntentionName String m_text = null;
 
@@ -38,7 +38,7 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
 
   @NotNull
   @Override
-  public final String getText() {
+  public String getText() {
     return m_text == null ? "" : m_text;
   }
 
@@ -62,7 +62,7 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement node) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement node) {
     final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(node);
     if (annotation == null) return false;
     final String annotationText = annotation.getText();

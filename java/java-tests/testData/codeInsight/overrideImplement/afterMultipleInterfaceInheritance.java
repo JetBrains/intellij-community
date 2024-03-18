@@ -11,6 +11,6 @@ interface B
 class C implements A, B
 {
     public String foo() {
-        <selection>return null;</selection>
+        return "";
     }
 }

@@ -30,7 +30,6 @@ import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.request.Type
@@ -77,9 +76,9 @@ object GHShareProjectUtil {
     }
 
     val progressManager = service<ProgressManager>()
-    val accountInformationProvider = service<GithubAccountInformationProvider>()
-    val gitHelper = service<GithubGitHelper>()
-    val git = service<Git>()
+    val accountInformationProvider = GithubAccountInformationProvider.getInstance()
+    val gitHelper = GithubGitHelper.getInstance()
+    val git = Git.getInstance()
 
     val accountInformationLoader = object : (GithubAccount, Component) -> Pair<Boolean, Set<String>> {
       private val loadedInfo = mutableMapOf<GithubAccount, Pair<Boolean, Set<String>>>()

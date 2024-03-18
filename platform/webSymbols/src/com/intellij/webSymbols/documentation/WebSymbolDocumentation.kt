@@ -29,6 +29,12 @@ interface WebSymbolDocumentation {
   val definition: @NlsSafe String
 
   /**
+   * The rest of symbol definition with HTML markup,
+   * if the whole definition is too long.
+   */
+  val definitionDetails: @NlsSafe String?
+
+  /**
    * Description of the symbol with HTML markup
    */
   val description: @Nls String?
@@ -80,6 +86,8 @@ interface WebSymbolDocumentation {
 
   fun withDefinition(definition: @NlsSafe String): WebSymbolDocumentation
 
+  fun withDefinitionDetails(definitionDetails: @NlsSafe String?): WebSymbolDocumentation
+
   fun withDescription(description: @Nls String?): WebSymbolDocumentation
 
   fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
@@ -100,6 +108,7 @@ interface WebSymbolDocumentation {
 
   fun with(name: @NlsSafe String = this.name,
            definition: @NlsSafe String = this.definition,
+           definitionDetails: @Nls String? = this.definitionDetails,
            description: @Nls String? = this.description,
            docUrl: @NlsSafe String? = this.docUrl,
            apiStatus: WebSymbolApiStatus? = this.apiStatus,
@@ -122,6 +131,7 @@ interface WebSymbolDocumentation {
                location: PsiElement?,
                name: String = symbol.name,
                definition: String = Strings.escapeXmlEntities(symbol.name),
+               definitionDetails: String? = null,
                description: @Nls String? = symbol.description,
                docUrl: String? = symbol.docUrl,
                apiStatus: WebSymbolApiStatus? = symbol.apiStatus,
@@ -135,7 +145,7 @@ interface WebSymbolDocumentation {
                icon: Icon? = symbol.icon,
                descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
                footnote: @Nls String? = null): WebSymbolDocumentation =
-      WebSymbolDocumentationImpl(name, definition, description, docUrl, apiStatus, required, defaultValue, library, icon,
+      WebSymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
                                  descriptionSections, footnote)
         .let { doc: WebSymbolDocumentation ->
           WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->

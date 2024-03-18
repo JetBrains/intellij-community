@@ -63,9 +63,7 @@ class KotlinIDERenderLogTest : AbstractKotlinUastLightCodeInsightFixtureTest(), 
     fun testStringTemplateComplex() = doTest("StringTemplateComplex")
 
     @Test
-    fun testStringTemplateComplexForUInjectionHost() = withForceUInjectionHostValue {
-        doTest("StringTemplateComplexForUInjectionHost")
-    }
+    fun testStringTemplateComplexForUInjectionHost() = doTest("StringTemplateComplexForUInjectionHost")
 
     @Test
     fun testQualifiedConstructorCall() = doTest("QualifiedConstructorCall")

@@ -6,6 +6,7 @@ package com.intellij.lang.documentation.ide
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.ui.DocumentationComponent
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
+import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -66,5 +67,5 @@ private class DocumentationComponentImpl(
     browser.resetBrowser(DocumentationRequest(targetPointer, targetPresentation))
   }
 
-  override val contentSizeUpdates: Flow<Any> = ui.contentSizeUpdates
+  override val contentSizeUpdates: Flow<PopupUpdateEvent> = ui.contentSizeUpdates
 }

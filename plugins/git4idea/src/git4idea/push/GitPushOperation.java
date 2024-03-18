@@ -195,7 +195,7 @@ public class GitPushOperation {
       if (pushSpec == null) { // repository is not selected to be pushed, but can be rebased
         GitPushSource source = myPushSupport.getSource(repo);
         GitPushTarget target = myPushSupport.getDefaultTarget(repo);
-        if (target == null) {
+        if (source == null || target == null) {
           return null;
         }
         pushSpec = new PushSpec<>(source, target);
@@ -350,7 +350,7 @@ public class GitPushOperation {
       return GitHistoryUtils.history(myProject, root, range).size();
     }
     catch (VcsException e) {
-      LOG.error("Couldn't collect commits from range " + range);
+      LOG.error("Couldn't collect commits from range " + range, e);
       return -1;
     }
   }

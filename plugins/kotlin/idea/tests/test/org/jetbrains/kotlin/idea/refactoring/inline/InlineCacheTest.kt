@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.psi.*
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.setUsageReplacementStrategy
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 

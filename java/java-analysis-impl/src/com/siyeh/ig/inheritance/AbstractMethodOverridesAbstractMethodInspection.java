@@ -16,42 +16,42 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
+public final class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreJavaDoc = false;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new AbstractMethodOverridesAbstractMethodFix();
   }
 
@@ -68,7 +68,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         "abstract.method.overrides.abstract.method.ignore.different.javadoc.option")));
   }
 
-  private static class AbstractMethodOverridesAbstractMethodFix extends InspectionGadgetsFix {
+  private static class AbstractMethodOverridesAbstractMethodFix extends ModCommandQuickFix {
 
     @Override
     @NotNull
@@ -77,48 +77,23 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      doFix(project, descriptor, false);
-    }
-
-    private static void doFix(Project project, ProblemDescriptor descriptor, boolean inPreview) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       assert method != null;
       final PsiMethod[] superMethods = method.findSuperMethods();
       SearchScope scope = GlobalSearchScope.allScope(project);
-      if (inPreview) {
-        scope = scope.intersectWith(new LocalSearchScope(method.getContainingFile()));
-      }
       final Collection<PsiReference> references = ReferencesSearch.search(method, scope).findAll();
-      final List<PsiElement> elements =
-        references.stream().map(ref -> ref.getElement())
-          .filter(a -> a instanceof PsiDocMethodOrFieldRef)
-          .collect(Collectors.toCollection(() -> new SmartList<>()));
-      elements.add(method);
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
-        return;
-      }
-      ThrowableRunnable<RuntimeException> fixRefsRunnable = () -> {
-        deleteElement(method);
-        references.forEach(a -> a.bindToElement(superMethods[0]));
-      };
-      if (inPreview) {
-        fixRefsRunnable.run();
-      } else {
-        WriteAction.run(fixRefsRunnable);
-      }
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      doFix(project, previewDescriptor, true);
-      return IntentionPreviewInfo.DIFF;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+      return ModCommand.psiUpdate(method, (m, updater) -> {
+        List<PsiElement> writableRefs = ContainerUtil.map(references, ref -> updater.getWritable(ref.getElement()));
+        for (PsiElement e : writableRefs) {
+          PsiReference reference = e.getReference();
+          if (reference != null) {
+            reference.bindToElement(superMethods[0]);
+          }
+        }
+        m.delete();
+      });
     }
   }
 
@@ -145,7 +120,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         if (overrideDefault) {
           return;
         }
-        accept |= methodsHaveSameReturnTypes(method, superMethod) &&
+        accept |= haveSameReturnTypes(method, superMethod) &&
                   haveSameExceptionSignatures(method, superMethod) &&
                   method.isVarArgs() == superMethod.isVarArgs();
 
@@ -210,7 +185,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     if (exceptions1.length != exceptions2.length) {
       return false;
     }
-    final Set<PsiClassType> set1 = new HashSet<>(Arrays.asList(exceptions1));
+    final Set<PsiClassType> set1 = ContainerUtil.newHashSet(exceptions1);
     for (PsiClassType anException : exceptions2) {
       if (!set1.contains(anException)) {
         return false;
@@ -219,21 +194,41 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     return true;
   }
 
-  public static boolean methodsHaveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
-    final PsiType type1 = method1.getReturnType();
-    if (type1 == null) {
-      return false;
+  public static boolean haveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
+    return areTypesEqual(method1.getReturnType(), method2.getReturnType());
+  }
+
+  public static boolean haveSameParameterTypes(PsiMethod method1, PsiMethod method2){
+    PsiParameter[] parameters1 = method1.getParameterList().getParameters();
+    PsiParameter[] parameters2 = method2.getParameterList().getParameters();
+    for (int i = 0; i < parameters1.length; i++) {
+      if (!areTypesEqual(parameters1[i].getType(), parameters2[i].getType())) return false;
     }
-    final PsiType type2 = method2.getReturnType();
-    if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
-      final PsiClass superClass = method2.getContainingClass();
-      final PsiClass aClass = method1.getContainingClass();
-      if (aClass == null || superClass == null) return false;
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      return type1.equals(substitutor.substitute(type2)) && !(((PsiClassType)type1).resolve() instanceof PsiTypeParameter);
+    return true;
+  }
+
+  private static boolean areTypesEqual(@Nullable PsiType type, @Nullable PsiType bound){
+    if (type == null || bound == null) return false;
+    PsiType typeErasure = TypeConversionUtil.erasure(type);
+    PsiType boundErasure = TypeConversionUtil.erasure(bound);
+    if(!typeErasure.equals(boundErasure)) return false;
+    if (!(type instanceof PsiClassType classType && bound instanceof PsiClassType boundClassType)) return true;
+    PsiType[] typeParameters = classType.getParameters();
+    PsiType[] boundParameters = boundClassType.getParameters();
+    if (typeParameters.length != boundParameters.length) return false;
+    for (int i = 0; i < typeParameters.length; i++) {
+      if (!areTypesEqual(typeParameters[i], boundParameters[i])) return false;
     }
-    else {
-      return type1.equals(type2);
-    }
+    return true;
+  }
+
+  public static @Nullable PsiSubstitutor getSuperSubstitutor(PsiMethod method, PsiMethod superMethod) {
+    PsiClass contextClass = method.getContainingClass();
+    PsiClass superClass = superMethod.getContainingClass();
+    if (contextClass == null || superClass == null) return null;
+    PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, contextClass, PsiSubstitutor.EMPTY);
+    MethodSignature contextSignature = method.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignature superSignature = superMethod.getSignature(classSubstitutor);
+    return MethodSignatureUtil.getSuperMethodSignatureSubstitutor(contextSignature, superSignature);
   }
 }

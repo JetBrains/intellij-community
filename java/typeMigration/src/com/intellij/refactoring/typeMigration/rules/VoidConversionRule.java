@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class VoidConversionRule extends TypeConversionRule {
+public final class VoidConversionRule extends TypeConversionRule {
   @Nullable
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from,

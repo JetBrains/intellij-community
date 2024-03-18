@@ -81,7 +81,7 @@ public class EditorHighlighterUpdater {
           FileType fileType = myFile.getFileType();
           if (fileType.getClass().getClassLoader() == pluginClassLoader ||
               (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {
-            myEditor.setHighlighter(createHighlighter(true));
+            setupHighlighter(createHighlighter(true));
           }
         }
       }
@@ -125,7 +125,7 @@ public class EditorHighlighterUpdater {
       .expireWith(myProject)
       .expireWhen(() -> (myFile != null && !myFile.isValid()) || myEditor.isDisposed())
       .coalesceBy(EditorHighlighterUpdater.class, myEditor)
-      .finishOnUiThread(ModalityState.any(), highlighter -> myEditor.setHighlighter(highlighter))
+      .finishOnUiThread(ModalityState.any(), highlighter -> setupHighlighter(highlighter))
       .submit(NonUrgentExecutor.getInstance());
   }
 
@@ -136,6 +136,10 @@ public class EditorHighlighterUpdater {
                                                                  HighlighterColors.TEXT);
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return highlighter;
+  }
+
+  protected void setupHighlighter(@NotNull EditorHighlighter highlighter) {
+    myEditor.setHighlighter(highlighter);
   }
 
   /**
@@ -150,7 +154,7 @@ public class EditorHighlighterUpdater {
 
   private void updateHighlightersSynchronously() {
     if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      myEditor.setHighlighter(createHighlighter(false));
+      setupHighlighter(createHighlighter(false));
     }
   }
 

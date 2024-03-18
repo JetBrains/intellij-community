@@ -1,0 +1,2 @@
+foo/LibraryInheritor1
+foo/LibraryInheritor2

@@ -28,10 +28,10 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
     }
 
     override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass {
-        return MyPass(file.project, file, editor)
+        return MoveDeclarationsPass(file.project, file, editor)
     }
 
-    private class MyPass(
+    private class MoveDeclarationsPass(
         private val project: Project,
         private val file: PsiFile,
         private val editor: Editor

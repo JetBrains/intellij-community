@@ -22,3 +22,10 @@ data class VcsFileStatusInfo(val typeByte: Byte, val first: CharSequence, val se
   val secondPath: String? get() = second?.toString()
   val type: Change.Type get() = Change.Type.entries[typeByte.toInt()]
 }
+
+// NB watch out for the `CharSequence#toString` performance for the FS-interned paths created by InternedGitLogRecordBuilder
+val VcsFileStatusInfo.isRenamed: Boolean
+  get() {
+    if (type != Change.Type.MOVED || second == null) return false
+    return firstPath != secondPath
+  }

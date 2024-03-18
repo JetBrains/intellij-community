@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadYieldInspection extends BaseInspection {
+public final class ThreadYieldInspection extends BaseInspection {
 
   @Override
   @NotNull

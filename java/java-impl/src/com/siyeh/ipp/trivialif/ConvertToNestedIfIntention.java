@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anna
  */
-public class ConvertToNestedIfIntention extends MCIntention {
+public final class ConvertToNestedIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -73,7 +73,7 @@ public class ConvertToNestedIfIntention extends MCIntention {
         PsiStatement st = statements[i];
         PsiElement result = CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
         if (i == 0) {
-          updater.moveTo(result);
+          updater.moveCaretTo(result);
         }
       }
       PsiReplacementUtil.replaceStatement(returnStatement, "return false;", tracker);
@@ -81,7 +81,7 @@ public class ConvertToNestedIfIntention extends MCIntention {
     else {
       blockStatement.getCodeBlock().add(elementFactory.createStatementFromText("return false;", returnStatement));
       PsiBlockStatement result = (PsiBlockStatement)tracker.replaceAndRestoreComments(returnStatement, blockStatement);
-      updater.moveTo(result.getCodeBlock().getStatements()[0]);
+      updater.moveCaretTo(result.getCodeBlock().getStatements()[0]);
     }
   }
 

@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
+public final class ContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
@@ -40,14 +40,14 @@ object TrailingCommaHelper {
 
     fun trailingCommaOrLastElement(commaOwner: KtElement): PsiElement? {
         val lastChild = commaOwner.lastSignificantChild ?: return null
-        val withSelf = when (PsiUtil.getElementType(lastChild)) {
+        val withSelf = when (PsiUtilCore.getElementType(lastChild)) {
             KtTokens.COMMA -> return lastChild
             in RIGHT_BARRIERS -> false
             else -> true
         }
 
         return lastChild.getPrevSiblingIgnoringWhitespaceAndComments(withSelf)?.takeIf {
-            PsiUtil.getElementType(it) !in LEFT_BARRIERS
+            PsiUtilCore.getElementType(it) !in LEFT_BARRIERS
         }?.takeIfIsNotError()
     }
 

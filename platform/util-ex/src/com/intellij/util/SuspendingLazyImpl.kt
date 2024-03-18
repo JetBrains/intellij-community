@@ -1,8 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
@@ -93,7 +91,7 @@ internal class SuspendingLazyImpl<out T>(
     val initCs: CoroutineScope = state.initCs
     val initJob: Job = launch(state)
     return suspendCancellableCoroutine { waiter: CancellableContinuation<Result<Any?>?> ->
-      val newState = InProgress(state, initJob, persistentHashSetOf(waiter))
+      val newState = InProgress(state, initJob, setOf(waiter))
       if (!stateHandle.compareAndSet(this, state, newState)) {
         initJob.cancel() // another thread started the job
         waiter.resume(null) // loop again
@@ -157,7 +155,7 @@ internal class SuspendingLazyImpl<out T>(
 
   private suspend fun tryAwait(state: InProgress): Result<Any?>? {
     return suspendCancellableCoroutine { waiter: CancellableContinuation<Result<Any?>?> ->
-      val newState = state.copy(waiters = state.waiters.add(waiter))
+      val newState = state.copy(waiters = state.waiters + waiter)
       if (!stateHandle.compareAndSet(this, state, newState)) {
         waiter.resume(null) // loop again
         return@suspendCancellableCoroutine
@@ -191,7 +189,7 @@ internal class SuspendingLazyImpl<out T>(
     loopState { state ->
       when (state) {
         is InProgress -> {
-          val newWaiters = state.waiters.remove(waiter)
+          val newWaiters = state.waiters - waiter
           check(newWaiters !== state.waiters)
           val newState = state.copy(waiters = newWaiters)
           if (!stateHandle.compareAndSet(this, state, newState)) {
@@ -277,7 +275,7 @@ internal class SuspendingLazyImpl<out T>(
   private data class InProgress(
     val initialState: InitialState,
     val initJob: Job,
-    val waiters: PersistentSet<CancellableContinuation<Result<Any?>>>,
+    val waiters: Set<CancellableContinuation<Result<Any?>>>,
   ) {
 
     fun resumeWaiters(result: Result<Any?>) {

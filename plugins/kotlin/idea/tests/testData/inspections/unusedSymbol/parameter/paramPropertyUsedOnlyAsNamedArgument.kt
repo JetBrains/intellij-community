@@ -1,4 +1,7 @@
-class C(val param1: Int, val param2: Int)
+class C(
+    val param1: Int,
+    val param2: Int
+)
 
 fun main(args: Array<String>) {
     println(args)

@@ -16,19 +16,19 @@
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -42,8 +42,8 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
-    return new GroovyFix() {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
+    return new PsiUpdateModCommandQuickFix() {
       @Override
       @NotNull
       public String getFamilyName() {
@@ -51,8 +51,8 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
       }
 
       @Override
-      public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-        final GrConditionalExpression expr = (GrConditionalExpression)descriptor.getPsiElement();
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final GrConditionalExpression expr = (GrConditionalExpression)element;
 
         final GrExpression condition = expr.getCondition();
         final GrExpression thenExpression = expr.getThenBranch();

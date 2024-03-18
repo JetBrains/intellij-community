@@ -38,6 +38,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
         cell(toolbar)
           .resizableColumn()
           .align(AlignX.RIGHT)
+          .customize(UnscaledGaps(left = 18))
       }
     }
 

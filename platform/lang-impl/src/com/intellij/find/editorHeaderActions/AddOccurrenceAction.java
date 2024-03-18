@@ -14,6 +14,8 @@ public final class AddOccurrenceAction extends OccurrenceAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    e.getRequiredData(EditorSearchSession.SESSION_KEY).addNextOccurrence();
+    EditorSearchSession session = e.getData(EditorSearchSession.SESSION_KEY);
+    if (session == null) return;
+    session.addNextOccurrence();
   }
 }

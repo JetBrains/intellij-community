@@ -1,15 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import junit.framework.TestCase.*
 import org.junit.Assert
@@ -19,31 +18,31 @@ import kotlin.reflect.full.memberProperties
 
 abstract class BaseSerializationChecker {
 
-  open fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
-    storage as EntityStorageSnapshotImpl
+  open fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): Pair<ByteArray, ImmutableEntityStorage> {
+    storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val file = Files.createTempFile("", "")
     try {
       serializer.serializeCache(file, storage)
 
       val deserialized = (serializer.deserializeCache(file).getOrThrow() as MutableEntityStorageImpl)
-        .toSnapshot() as EntityStorageSnapshotImpl
+        .toSnapshot() as ImmutableEntityStorageImpl
       deserialized.assertConsistency()
 
       assertStorageEquals(storage, deserialized)
 
       storage.assertConsistency()
-      return Files.readAllBytes(file)
+      return Files.readAllBytes(file) to deserialized
     }
     finally {
       Files.deleteIfExists(file)
     }
   }
 
-  internal fun assertStorageEquals(expected: EntityStorageSnapshotImpl, actual: EntityStorageSnapshotImpl) {
+  internal fun assertStorageEquals(expected: ImmutableEntityStorageImpl, actual: ImmutableEntityStorageImpl) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
     for ((clazz, expectedEntityFamily) in expected.entitiesByType.entityFamilies.withIndex()) {
@@ -171,5 +170,5 @@ object SerializationRoundTripChecker: BaseSerializationChecker() {
  * Return same entity, but in different entity storage. Fail if no entity
  */
 internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
-  return this.createReference<T>().resolve(storage)!!
+  return this.createPointer<T>().resolve(storage)!!
 }

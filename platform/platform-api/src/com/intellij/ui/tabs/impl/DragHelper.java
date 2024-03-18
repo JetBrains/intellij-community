@@ -330,9 +330,11 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
     myTabs.revalidate();
 
-    TabInfo.DragDelegate delegate = myDragSource.getDragDelegate();
-    if (delegate != null) {
-      delegate.dragFinishedOrCanceled();
+    if (myDragSource != null) {
+      TabInfo.DragDelegate delegate = myDragSource.getDragDelegate();
+      if (delegate != null) {
+        delegate.dragFinishedOrCanceled();
+      }
     }
 
     myDragSource = null;

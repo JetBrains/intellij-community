@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultSourcePositionProvider extends SourcePositionProvider {
+public final class DefaultSourcePositionProvider extends SourcePositionProvider {
   @Nullable
   @Override
   protected SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,

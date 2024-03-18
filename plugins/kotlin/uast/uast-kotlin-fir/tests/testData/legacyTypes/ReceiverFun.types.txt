@@ -13,7 +13,8 @@ UFile (package = ) [public final class ReceiverFunKt {...]
             UParameter (name = $this$rx) [@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull var $this$rx: java.lang.String]
                 UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation(name = "RegExp")]
                     UNamedExpression (name = name) [name = "RegExp"]
-                        ULiteralExpression (value = "RegExp") ["RegExp"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["RegExp"] : PsiType:String
+                            ULiteralExpression (value = "RegExp") ["RegExp"] : PsiType:String
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Void
                 UReturnExpression [return toRegex()] : PsiType:Void
@@ -22,4 +23,5 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                         USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] : PsiType:Regex
     UClass (name = MyReceiverAnnotation) [public abstract annotation MyReceiverAnnotation {...}]
         UAnnotationMethod (name = name) [public abstract fun name() : java.lang.String = UastEmptyExpression]
-            ULiteralExpression (value = "") [""] : PsiType:String
+            UPolyadicExpression (operator = +) [""] : PsiType:String
+                ULiteralExpression (value = "") [""] : PsiType:String

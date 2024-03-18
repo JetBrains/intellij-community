@@ -16,15 +16,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 
 class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)
@@ -32,9 +30,9 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testResolvingEnvVariableInRepositoryPath() = runBlocking {
-    val temp = System.getenv(getEnvVar())
+    val temp = System.getenv(envVar)
     waitForImportWithinTimeout {
-      updateSettingsXml("<localRepository>\${env." + getEnvVar() + "}/tmpRepo</localRepository>")
+      updateSettingsXml("<localRepository>\${env." + envVar + "}/tmpRepo</localRepository>")
     }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
     assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
@@ -202,7 +200,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
     waitForImportWithinTimeout {
-      mavenGeneralSettings.setUserSettingsFile(File(myDir, "settings.xml").path)
+      mavenGeneralSettings.setUserSettingsFile(File(dir, "settings.xml").path)
     }
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
@@ -215,7 +213,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    val repo1 = File(myDir, "localRepo1")
+    val repo1 = File(dir, "localRepo1")
     waitForImportWithinTimeout {
       updateSettingsXml("""
                       <localRepository>
@@ -223,7 +221,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       """.trimIndent())
     }
     assertEquals(repo1, mavenGeneralSettings.getEffectiveLocalRepository())
-    val repo2 = File(myDir, "localRepo2")
+    val repo2 = File(dir, "localRepo2")
     waitForImportWithinTimeout {
       updateSettingsXml("""
                       <localRepository>
@@ -284,14 +282,14 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </modules>
                        """.trimIndent())
     scheduleProjectImportAndWaitAsync()
-    assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size)
-    val dir = myProjectRoot.findChild("dir")
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> { dir!!.delete(null) }
+    assertEquals(2, MavenProjectsManager.getInstance(project).getProjects().size)
+    val dir = projectRoot.findChild("dir")
+    WriteCommandAction.writeCommandAction(project).run<IOException> { dir!!.delete(null) }
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitAsync()
-    assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size)
+    assertEquals(1, MavenProjectsManager.getInstance(project).getProjects().size)
   }
 
   @Test
@@ -449,6 +447,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
       """.trimIndent())
     scheduleProjectImportAndWaitAsync()
     assertModuleModuleDeps("m1", "m2")
+
+    // relying on transitive dependencies is not a good practice
+    // transitive dependency updating is not fully supported by incremental sync
+    // run full sync to pick up transitive dependency
+    updateAllProjectsFullSync()
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
   }
 
@@ -529,7 +532,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModules("project", "m1", "m2")
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> { m2.delete(this) }
+    WriteCommandAction.writeCommandAction(project).run<IOException> { m2.delete(this) }
 
 
     //configConfirmationForYesAnswer();// should update deps even if module is not removed
@@ -537,6 +540,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     scheduleProjectImportAndWaitAsync()
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
+
+    // relying on transitive dependencies is not a good practice
+    // transitive dependency updating is not fully supported by incremental sync
+    // run full sync to pick up transitive dependency changes
+    updateAllProjectsFullSync()
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 
@@ -552,7 +560,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     </modules>
                     """.trimIndent())
     assertEquals(1, projectsTree.rootProjects.size)
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> { myProjectPom.delete(this) }
+    WriteCommandAction.writeCommandAction(project).run<IOException> { projectPom.delete(this) }
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
@@ -615,8 +623,8 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                              """.trimIndent())
     importProjects(p1, p2)
     val oldDir = p2.getParent()
-    runWriteAction<RuntimeException> { VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot) }
-    val newDir = runWriteAction<VirtualFile, IOException> { myProjectRoot.createChildDirectory(this, "foo") }
+    runWriteAction<RuntimeException> { VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot) }
+    val newDir = runWriteAction<VirtualFile, IOException> { projectRoot.createChildDirectory(this, "foo") }
     assertEquals(2, projectsTree.rootProjects.size)
     runWriteAction<IOException> { p2.move(this, newDir) }
 
@@ -650,7 +658,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     importProjectAsync()
     val oldDir = m.getParent()
     writeAction {
-      val newDir = myProjectRoot.createChildDirectory(this, "m2")
+      val newDir = projectRoot.createChildDirectory(this, "m2")
       assertEquals(1, projectsTree.rootProjects.size)
       assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
       m.move(this, newDir)
@@ -659,7 +667,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
       m.move(this, oldDir)
       scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt()
       assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
-      m.move(this, myProjectRoot.createChildDirectory(this, "xxx"))
+      m.move(this, projectRoot.createChildDirectory(this, "xxx"))
     }
 
     //configConfirmationForYesAnswer();
@@ -688,6 +696,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @RequiresEdt
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
-    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh()
+    ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
   }
 }

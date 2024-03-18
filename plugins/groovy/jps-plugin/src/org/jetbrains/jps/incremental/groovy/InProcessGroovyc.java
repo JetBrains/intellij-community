@@ -208,10 +208,6 @@ final class InProcessGroovyc implements GroovycFlavor {
     return UrlClassLoader.build().
       files(toPaths(compilationClassPath))
       .parent(parent)
-      /* obsolete classpath.index files are deleted only after compilation of the module chunk finishes, so they may not include *.class 
-         files produced by javac during compilation of this chunk;
-         therefore, persistent index should be disabled for Groovy class loader */
-      .usePersistentClasspathIndexForLocalClassDirectories(false)
       .useCache(ourLoaderCachePool, file -> {
         String filePath = FileUtil.toCanonicalPath(file.toString());
         for (String output : myOutputs) {

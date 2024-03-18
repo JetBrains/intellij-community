@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
+public final class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   public ComposeFunctionChainAction() {
     super(PsiMethodCallExpression.class);
   }
@@ -85,7 +85,7 @@ public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMet
     result = CodeStyleManager.getInstance(context.project()).reformat(result);
     PsiElement applyElement = ((PsiMethodCallExpression)result).getMethodExpression().getReferenceNameElement();
     if(applyElement != null) {
-      updater.moveTo(applyElement.getTextOffset() + applyElement.getTextLength());
+      updater.moveCaretTo(applyElement.getTextOffset() + applyElement.getTextLength());
     }
   }
 

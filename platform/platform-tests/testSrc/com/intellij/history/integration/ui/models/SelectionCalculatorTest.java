@@ -24,10 +24,10 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   @Test
   public void testSelectionWasNotChanged() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 2);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 2);
 
-    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
-    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
+    Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
+    Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
 
     assertBlock(0, 3, "abc1\ndef1\nghi1", b0);
     assertBlock(0, 3, "abc\ndef\nghi", b1);
@@ -36,10 +36,10 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   @Test
   public void testSelectionWasMoved() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 1);
 
-    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
-    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
+    Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
+    Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
 
     assertBlock(0, 2, "def\nghi", b0);
     assertBlock(1, 3, "def\nghi", b1);
@@ -48,11 +48,11 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   @Test
   public void testSelectionForVeryOldRevisionTakenBackward() {
     List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 1);
 
-    Block b2 = c.getSelectionFor(rr.get(2), new NullProgress());
-    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
-    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
+    Block b2 = c.getSelectionFor(rr.get(2), Progress.EMPTY);
+    Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
+    Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
 
     assertBlock(0, 2, "abc\ndef", b0);
     assertBlock(0, 3, "abc\nghi\ndef", b1);
@@ -62,10 +62,10 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   @Test
   public void testNormalizingLineEnds() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 1);
 
-    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
-    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
+    Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
+    Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
 
     assertBlock(0, 2, "abc\ndef", b0);
     assertBlock(0, 2, "abc\ndef", b1);
@@ -74,7 +74,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   @Test
   public void testProgressOnGetSelection() {
     List<Revision> rr = createRevisions("one", "two", "three", "four");
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 0);
 
     Progress p = createStrictMock(Progress.class);
     p.processed(25);
@@ -91,7 +91,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   @Test
   public void testProgressOnCanCalculate() {
     List<Revision> rr = createRevisions("one", "two");
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 0);
 
     Progress p = createMock(Progress.class);
     p.processed(50);

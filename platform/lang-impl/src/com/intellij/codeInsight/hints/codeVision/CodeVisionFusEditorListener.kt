@@ -14,6 +14,7 @@ class CodeVisionFusEditorListener : EditorFactoryListener {
     if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return
     val editor = event.editor
     val project = editor.project ?: return
+    if (project.isDisposed) return
     val histogramBuilder = editor.getUserData(CodeVisionFusCollector.PROVIDER_STORAGE_KEY)
     val document = editor.document
     val textLength = StatisticsUtil.roundToPowerOfTwo(document.textLength)

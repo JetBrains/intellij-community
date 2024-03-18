@@ -3,12 +3,13 @@ package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.testFramework.PerformanceTestInfo
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TestApplicationManager
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Files
@@ -16,33 +17,67 @@ import java.nio.file.Paths
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.div
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
-
-/** Class intentionally named *Perf* test.
+/** Class intentionally named *Perf* (and not a *Performance*) test.
  * That way it will not be ignored during Aggregator run */
 class SpanExtractionFromUnitPerfTest {
+  companion object {
+    fun checkMetricsAreFlushedToTelemetryFile(spanName: String, withWarmup: Boolean = true, vararg customSpanNames: String) {
+      val extractedMetrics = runBlocking {
+        SpanMetricsExtractor().waitTillMetricsExported(spanName = spanName)
+      }
+
+      if (withWarmup) {
+        // warmup metrics
+        Assertions.assertTrue(extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value != 0L,
+                              "Attempt metric should have non 0 value")
+        Assertions.assertTrue(extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value != 0L,
+                              "Total test duration metric should have non 0 value")
+      }
+
+      // measured metrics
+      Assertions.assertTrue(extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value != 0L,
+                            "Attempt metric should have non 0 value")
+      Assertions.assertTrue(extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value != 0L,
+                            "Total test duration metric should have non 0 value")
+
+      customSpanNames.forEach { customName ->
+        Assertions.assertTrue(extractedMetrics.single { it.id.name == customName }.value != 0L,
+                              "$customName metric should have non 0 value")
+      }
+    }
+  }
 
   private val openTelemetryReports by lazy {
     Paths.get(this::class.java.classLoader.getResource("opentelemetry")!!.toURI())
   }
 
-  companion object {
-    @JvmStatic
-    @BeforeAll
-    fun initTestApplication() {
-      TestApplicationManager.getInstance()
-    }
-  }
-
   @Test
-  fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) {
-    val mainMetricName = "Adding and removing a project library 30 times"
+  fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) = runBlocking {
+    val mainMetricName = "simple perf test"
 
-    val extractedMetrics = MetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json").toFile())
+    val extractedMetrics = SpanMetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json"))
       .waitTillMetricsExported(spanName = mainMetricName)
 
-    Assertions.assertEquals(27, extractedMetrics.single { it.id.name == "attempt.average.ms" }.value)
-    Assertions.assertEquals(12283, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
+    // warmup metrics
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.median.ms" }.value)
+    Assertions.assertEquals(0, extractedMetrics.single { it.id.name == "warmup.attempt.range.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.sum.ms" }.value)
+    Assertions.assertEquals(1, extractedMetrics.single { it.id.name == "warmup.attempt.count" }.value)
+    Assertions.assertEquals(0, extractedMetrics.single { it.id.name == "warmup.attempt.standard.deviation" }.value)
+    Assertions.assertEquals(379, extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value)
+
+    // measured metrics
+    Assertions.assertEquals(307, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
+    Assertions.assertEquals(324, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
+    Assertions.assertEquals(375, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
+    Assertions.assertEquals(921, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
+    Assertions.assertEquals(3, extractedMetrics.single { it.id.name == "attempt.count" }.value)
+    Assertions.assertEquals(153, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
+    Assertions.assertEquals(2005, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
 
     val reportFile = Files.createTempFile("temp", ".json")
 
@@ -71,31 +106,49 @@ class SpanExtractionFromUnitPerfTest {
     jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
   }
 
-  private fun checkMetricsAreFlushedToTelemetryFile(spanName: String) {
-    val extractedMetrics = MetricsExtractor().waitTillMetricsExported(spanName = spanName)
-    Assertions.assertTrue(extractedMetrics.single { it.id.name == "attempt.average.ms" }.value != 0L,
-                          "Attempt metric should have non 0 value")
-    Assertions.assertTrue(extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value != 0L,
-                          "Total test duration metric should have non 0 value")
+  @Test
+  fun perfTestWithSubtests(testInfo: TestInfo) {
+    fun runSubTest(subtestName: String) {
+      PlatformTestUtil.newPerformanceTest(testInfo.testMethod.get().name) {
+        runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
+      }.startAsSubtest(subtestName)
+    }
+
+    runSubTest("subtest1")
+    runSubTest("subtest2")
   }
 
   @Test
   fun flushingTelemetryMetricsShouldNotFailTheTest() {
     val spanName = "simple perf test"
-    PlatformTestUtil.startPerformanceTest(spanName, 100) { }.attempts(2).assertTiming()
-    checkMetricsAreFlushedToTelemetryFile(spanName)
+    val uniqueTestName = PlatformTestUtil.newPerformanceTest(spanName) {
+      runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
+    }.run {
+      start()
+      uniqueTestName
+    }
+    checkMetricsAreFlushedToTelemetryFile(uniqueTestName)
   }
 
   @Test
   fun throwingExceptionWillNotAffectMetricsPublishing() {
     val spanName = "perf test throwing exception"
+    var perfTest: PerformanceTestInfo? = null
+
     try {
-      PlatformTestUtil.startPerformanceTest(spanName, 100) { throw RuntimeException("Exception text") }.attempts(2).assertTiming()
+      perfTest = PlatformTestUtil.newPerformanceTest(spanName) {
+        runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
+        throw RuntimeException("Exception text")
+      }
+      perfTest.apply {
+        warmupIterations(0)
+        start()
+      }
     }
     catch (t: Throwable) {
       //
     }
 
-    checkMetricsAreFlushedToTelemetryFile(spanName)
+    checkMetricsAreFlushedToTelemetryFile(perfTest!!.uniqueTestName, withWarmup = false)
   }
 }

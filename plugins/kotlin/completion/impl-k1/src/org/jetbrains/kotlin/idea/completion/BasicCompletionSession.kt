@@ -22,9 +22,11 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
@@ -163,10 +165,9 @@ class BasicCompletionSession(
                 lookupElement
             }
 
-            if (isInFunctionLiteralStart(position)) {
+            if (isAtFunctionLiteralStart(position)) {
                 collector.addLookupElementPostProcessor { lookupElement ->
-                    lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
-                    lookupElement
+                    lookupElement.apply { suppressItemSelectionByCharsOnTyping = true }
                 }
             }
         }
@@ -177,16 +178,6 @@ class BasicCompletionSession(
         }
 
         completionKind.generateCategories()
-    }
-
-    private fun isInFunctionLiteralStart(position: PsiElement): Boolean {
-        var prev = position.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment }
-        if (prev?.node?.elementType == KtTokens.LPAR) {
-            prev = prev?.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment }
-        }
-        if (prev?.node?.elementType != KtTokens.LBRACE) return false
-        val functionLiteral = prev!!.parent as? KtFunctionLiteral ?: return false
-        return functionLiteral.lBrace == prev
     }
 
     override fun createSorter(): CompletionSorter {
@@ -859,8 +850,7 @@ class BasicCompletionSession(
 
             addKind(KotlinCompletionKindName.DECLARATION_NAME) {
                 collector.addLookupElementPostProcessor { lookupElement ->
-                    lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
-                    lookupElement
+                    lookupElement.apply { suppressItemSelectionByCharsOnTyping = true }
                 }
             }
 

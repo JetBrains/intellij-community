@@ -22,7 +22,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableTypeQuickFixProvider implements ChangeVariableTypeQuickFixProvider{
+public final class VariableTypeQuickFixProvider implements ChangeVariableTypeQuickFixProvider{
   @Override
   public IntentionAction @NotNull [] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     return new IntentionAction[]{new VariableTypeFix(variable, toReturn)};

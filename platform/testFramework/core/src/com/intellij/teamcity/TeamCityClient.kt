@@ -263,7 +263,6 @@ class TeamCityClient(
     }
 
     fun printTcArtifactsPublishMessage(spec: String) {
-      println(" !!teamcity[publishArtifacts '$spec'] ") //we need this to see in the usual IDEA log
       println(" ##teamcity[publishArtifacts '$spec'] ")
     }
 

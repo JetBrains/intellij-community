@@ -30,6 +30,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
@@ -69,7 +70,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    if (project.getService(GHHostedRepositoriesManager.class).getKnownRepositoriesState().getValue().isEmpty()) {
+    GHAccountManager accountManager = ApplicationManager.getApplication().getService(GHAccountManager.class);
+    GHHostedRepositoriesManager hostedRepositoriesManager = project.getService(GHHostedRepositoriesManager.class);
+    if (hostedRepositoriesManager.getKnownRepositoriesState().getValue().isEmpty() &&
+        accountManager.getAccountsState().getValue().isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

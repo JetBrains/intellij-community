@@ -17,6 +17,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -395,7 +396,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
     else {
       HtmlBuilder builder = new HtmlBuilder().append(checkBoxName);
-      if (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0) {
+      if (myCheckBoxShortcut != null && myCheckBoxShortcut.hasShortcuts()) {
         builder.append(" ")
           .append(HtmlChunk.tag("b")
                     .attr("color", ColorUtil.toHex(color)).addText(KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts())));
@@ -444,7 +445,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseByNameBase", group, true);
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     final JComponent toolbarComponent = actionToolbar.getComponent();
     actionToolbar.setTargetComponent(toolbarComponent);
     toolbarComponent.setBorder(null);

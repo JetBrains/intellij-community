@@ -15,8 +15,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 class MavenConfigImportingTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun testResolveJvmConfigProperty() = runBlocking {
     createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=1")
@@ -108,7 +107,7 @@ class MavenConfigImportingTest : MavenDomTestCase() {
                        <version>${'$'}{config.<caret></version>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "config.version")
+    assertCompletionVariants(projectPom, "config.version")
   }
 
   @Test
@@ -120,7 +119,7 @@ class MavenConfigImportingTest : MavenDomTestCase() {
                     <version>${'$'}{config.version}</version>
                     """.trimIndent())
 
-    val resolvedReference = withContext(Dispatchers.EDT) { getReference(myProjectPom, "config.version", 0)!!.resolve() }
+    val resolvedReference = withContext(Dispatchers.EDT) { getReference(projectPom, "config.version", 0)!!.resolve() }
     assertNotNull(resolvedReference)
 
     UsefulTestCase.assertInstanceOf(resolvedReference, MavenPsiElementWrapper::class.java)

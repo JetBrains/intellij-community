@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
+public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getText() {
@@ -25,7 +25,7 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
 
   @NotNull
   @Override
-  public final String getFamilyName() {
+  public String getFamilyName() {
     return getText();
   }
 
@@ -60,7 +60,7 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   }
 
   @Nullable
-  protected static PsiField getField(@Nullable PsiElement element) {
+  private static PsiField getField(@Nullable PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
       return null;
     }

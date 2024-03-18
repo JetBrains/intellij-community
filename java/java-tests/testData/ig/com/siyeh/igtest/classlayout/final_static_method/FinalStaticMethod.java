@@ -9,7 +9,7 @@ public class X {
 
   // incomplete code: suppress
 
-  <error descr="Illegal combination of modifiers: 'private' and 'public'">private</error> final
+  <error descr="Illegal combination of modifiers 'private' and 'public'">private</error> final
 
-  <error descr="Illegal combination of modifiers: 'public' and 'private'">public</error> static void main(String[] args) {}
+  <error descr="Illegal combination of modifiers 'public' and 'private'">public</error> static void main(String[] args) {}
 }

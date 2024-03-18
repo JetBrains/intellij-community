@@ -137,8 +137,7 @@ final class ActionsLoader {
       if (!(act instanceof ActionGroup)) {
         continue;
       }
-      final String actId =
-        actionManager.getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
+      String actId = actionManager.getId(act instanceof CustomisedActionGroup o ? o.getDelegate() : act);
       if (actId == null || actId.isEmpty()) {
         continue;
       }
@@ -170,7 +169,7 @@ final class ActionsLoader {
         mainLayout.addAction(act);
         continue;
       }
-      final @NotNull String gid = actionManager.getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
+      String gid = actionManager.getId(act instanceof CustomisedActionGroup o ? o.getDelegate() : act);
       if (gid.startsWith(fullGroupId + "_")) {
         final long mask = _str2mask(gid.substring(fullGroupId.length() + 1));
         if (mask != 0) {

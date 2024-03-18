@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -192,7 +193,7 @@ final class ClosureFolding {
   static boolean seemsLikeLambda(@Nullable PsiClass baseClass, @NotNull PsiElement context) {
     if (baseClass == null || !PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
 
-    return !PsiUtil.isLanguageLevel8OrHigher(context) || !LambdaUtil.isFunctionalClass(baseClass);
+    return !PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, context) || !LambdaUtil.isFunctionalClass(baseClass);
   }
 
   @NotNull

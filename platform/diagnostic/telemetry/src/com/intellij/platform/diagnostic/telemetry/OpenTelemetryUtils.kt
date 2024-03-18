@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 object OpenTelemetryUtils {
-  //flags
+  // flags
   const val RDCT_TRACING_DIAGNOSTIC_FLAG: String = "rdct.diagnostic.otlp"
   const val RDCT_CONN_METRICS_DIAGNOSTIC_FLAG: String = "rdct.connection.metrics.enabled"
   const val RDCT_LUX_METRICS_DIAGNOSTIC_FLAG: String = "lux.metrics.enabled"
@@ -55,7 +55,7 @@ object OpenTelemetryUtils {
     if(metricsReportingPath.isBlank()){
       return null
     }
-    //if metrics path is relative -> resolve it against IDEA logDir:
+    // if a metrics path is relative -> resolve it against IDEA logDir:
     return PathManager.getLogDir().resolve(metricsReportingPath).toAbsolutePath()
   }
 

@@ -15,11 +15,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.*
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
-import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
@@ -72,6 +69,8 @@ abstract class IndexableFilesBaseTest {
       (IndexableSetContributor.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
       (AdditionalLibraryRootsProvider.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
     }
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   protected fun assertIndexableFiles(vararg expectedFiles: VirtualFile) {

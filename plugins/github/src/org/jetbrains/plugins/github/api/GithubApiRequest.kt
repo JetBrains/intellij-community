@@ -72,6 +72,12 @@ sealed class GithubApiRequest<out T>(val url: String) {
       override fun extractResult(response: GithubApiResponse): List<T> = parseJsonList(response, clazz)
     }
 
+    open class JsonMap<T, U>(url: String, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+      : Get<Map<T, U>>(url, acceptMimeType) {
+
+      override fun extractResult(response: GithubApiResponse): Map<T, U> = parseJsonMap(response)
+    }
+
     open class JsonPage<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
@@ -274,6 +280,10 @@ sealed class GithubApiRequest<out T>(val url: String) {
 
     private fun <T> parseJsonList(response: GithubApiResponse, clazz: Class<T>): List<T> {
       return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJsonList(it, clazz) })
+    }
+
+    private fun <T, U> parseJsonMap(response: GithubApiResponse): Map<T, U> {
+      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJsonMap(it) })
     }
 
     private fun <T> parseJsonSearchPage(response: GithubApiResponse, clazz: Class<T>): GithubSearchResult<T> {

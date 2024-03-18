@@ -8,24 +8,24 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaModuleTestCase
-import com.intellij.testFramework.PlatformTestUtil
-import kotlinx.coroutines.*
+import com.intellij.util.io.await
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   override fun runInDispatchThread() = false
 
-  override fun tearDown(): Unit = runBlocking {
-    withContext(Dispatchers.EDT) {
-      super.tearDown()
-    }
+  override fun tearDown(): Unit = runBlocking(Dispatchers.EDT) {
+    super.tearDown()
   }
 
-  override fun setUpProject() {
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()), getTestRootDisposable())
-  }
+  override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path = Paths.get(getTestDataPath())
 
   val manager get() = CoverageDataManager.getInstance(myProject) as CoverageDataManagerImpl
 
@@ -39,11 +39,12 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     loadCoverageSuite(JavaCoverageEngine::class.java, JaCoCoCoverageRunner::class.java, path, includeFilters)
 
   @JvmOverloads
-  protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH)
-    = loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
+  protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH) =
+    loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
 
-  protected fun closeSuite(bundle: CoverageSuitesBundle) {
+  protected suspend fun closeSuite(bundle: CoverageSuitesBundle) {
     manager.closeSuitesBundle(bundle)
+    awaitGutterAnnotations()
   }
 
   protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) = waitSuiteProcessing {
@@ -63,11 +64,14 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     withTimeout(10_000) {
       // wait until data collected
       while (!dataCollected) delay(1)
+      awaitGutterAnnotations()
     }
     Disposer.dispose(disposable)
   }
 
-  protected fun createCoverageFileProvider(coverageDataPath: String) =
+  protected suspend fun awaitGutterAnnotations(): Any? = CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
+
+  private fun createCoverageFileProvider(coverageDataPath: String) =
     DefaultCoverageFileProvider(File(coverageDataPath))
 
   private fun loadCoverageSuite(coverageEngineClass: Class<out CoverageEngine>, coverageRunnerClass: Class<out CoverageRunner>,
@@ -93,12 +97,18 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     return loadIJSuite(path = ijSuiteFile.absolutePath)
   }
 
+  protected fun assertNoSuites() {
+    Assert.assertNull(manager.currentSuitesBundle)
+    Assert.assertEquals(0, manager.suites.size)
+  }
+
   companion object {
     protected fun getTestDataPath() = PluginPathManager.getPluginHomePath("coverage") + "/testData/simple"
 
-    val SIMPLE_IJ_REPORT_PATH = File(getTestDataPath(), "simple\$foo_in_simple.ic").path
-    val SIMPLE_XML_REPORT_PATH = File(getTestDataPath(), "simple\$foo_in_simple.xml").path
-    val SIMPLE_JACOCO_REPORT_PATH = File(getTestDataPath(), "simple\$foo_in_simple.exec").path
+    val SIMPLE_IJ_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.ic").path
+    val SIMPLE_FULL_IJ_REPORT_PATH: String = File(getTestDataPath(), "simple\$All_in_simple.ic").path
+    val SIMPLE_XML_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.xml").path
+    val SIMPLE_JACOCO_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.exec").path
     val DEFAULT_FILTER = arrayOf("foo.*")
   }
 }

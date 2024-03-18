@@ -18,7 +18,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
   public ExtractIfConditionAction() {
     super(PsiElement.class);
   }

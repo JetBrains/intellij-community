@@ -46,6 +46,8 @@ open class EditorCodeVisionContext(
   private val submittedGroupings = ArrayList<Pair<TextRange, (Int) -> Unit>>()
   val codeVisionModel : CodeVisionModel = CodeVisionModel()
 
+  var zombies: List<Pair<TextRange, CodeVisionEntry>> = ArrayList()
+
   init {
     (editor as EditorImpl).disposable.createLifetime().onTermination {
       frontendResults.forEach { it.dispose() }
@@ -66,6 +68,12 @@ open class EditorCodeVisionContext(
   @Suppress("unused")
   open val hasAnyPendingLenses: Boolean
     get() = hasPendingLenses
+
+  @RequiresEdt
+  fun setZombieResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
+     zombies = lenses.filter { (range, _) ->  range.isValidFor(editor.document) }.toList()
+    setResults(zombies)
+  }
 
   @RequiresEdt
   fun setResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
@@ -93,7 +101,7 @@ open class EditorCodeVisionContext(
   fun resubmitThings() {
     val project = editor.project
     if (project == null) {
-      LOG.error("Project wasn't available from editor during code vision calculation")
+      LOG.warn("Project wasn't available from editor during code vision calculation")
       return
     }
     val viewService = project.service<CodeVisionView>()
@@ -136,6 +144,10 @@ open class EditorCodeVisionContext(
 
   open fun getValidResult(): Sequence<RangeMarker> = frontendResults.asSequence().filter { it.isValid }
 
+  fun getValidPairResult(): Sequence<Pair<TextRange, CodeVisionEntry>> = getValidResult().map {
+    Pair(it.textRange, it.codeVisionEntryOrThrow)
+  }
+
   protected fun TextRange.isValidFor(document: Document): Boolean {
     return this.startOffset >= 0 && this.endOffset <= document.textLength
   }
@@ -159,7 +171,7 @@ private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContex
   }
   val project = editor.project
   if (project == null) {
-    LOG.error("Project wasn't available from editor during creating of code vision context")
+    LOG.warn("Project wasn't available from editor during creating of code vision context")
     return null
   }
   val newContext = project.service<CodeVisionContextProvider>().createCodeVisionContext(editor)

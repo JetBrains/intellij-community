@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.build
 
 import com.intellij.execution.ExecutionException
@@ -13,6 +13,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
 import java.util.concurrent.atomic.AtomicReference
+
+private const val ID = "MAVEN_DELEGATE_BUILD_RUNNER"
+private val LOG = logger<DelegateBuildRunner>()
 
 internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
   override fun getRunnerId() = ID
@@ -42,11 +45,9 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute delegate run configuration async") { doExecute(state, env) }
   }
 
-  companion object {
-    private const val ID = "MAVEN_DELEGATE_BUILD_RUNNER"
-    private val LOG = logger<DelegateBuildRunner>()
-
+  object Util {
     @JvmStatic
     fun getDelegateRunner(): ProgramRunner<*>? = ProgramRunner.findRunnerById(ID)
   }
+
 }

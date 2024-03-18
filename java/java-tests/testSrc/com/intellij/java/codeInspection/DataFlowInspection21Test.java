@@ -2,6 +2,8 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,10 +54,18 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   
-  public void testUnnamedPatterns() {
+  public void testDeconstructionNullability() {
     doTest();
   }
   
+  public void testUnnamedPatterns() {
+    doTest();
+  }
+
+  public void testUnnamedPatternsJava22() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
   public void testPatternInStreamNotComplex() {
     doTest();
   }
@@ -76,6 +86,41 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   }
 
   public void testChronoRange() {
+    doTest();
+  }
+
+  public void testSealedClassCast() { doTest(); }
+  public void testCastToSealedInterface() { doTest(); }
+
+  public void testWhenPatterns() {
+    doTest();
+  }
+  public void testSwitchNullability() {
+    doTest();
+  }
+  public void testRecordPatterns() {
+    doTest();
+  }
+  public void testRecordPatternNested() {
+    doTest();
+  }
+  public void testRecordPatternAndWhen() {
+    doTest();
+  }
+  public void testNestedRecordPatterns() {
+    doTest();
+  }
+  public void testSuspiciousLabelElementsJava20() {
+    doTest();
+  }
+
+  public void testForEachPattern() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         public @interface Range {
+                           long from();
+                           long to();
+                         }""");
     doTest();
   }
 }

@@ -18,6 +18,7 @@ import kotlin.time.Duration
 suspend fun Process.awaitExit(): Int {
   return loopInterruptible { timeout: Duration ->
     if (timeout.isInfinite()) {
+      @Suppress("UsePlatformProcessAwaitExit")
       Attempt.success(waitFor())
     }
     else if (waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)) {
@@ -49,7 +50,7 @@ suspend fun <T> computeDetached(
   context: CoroutineContext = EmptyCoroutineContext,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  val deferred = GlobalScope.async(context + blockingDispatcher, block = action)
+  val deferred = GlobalScope.async(blockingDispatcher + context, block = action)
   try {
     return deferred.await()
   }

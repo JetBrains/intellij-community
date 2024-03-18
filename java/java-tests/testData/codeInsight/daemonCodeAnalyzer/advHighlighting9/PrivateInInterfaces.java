@@ -7,7 +7,7 @@ interface B {
 }
 
 interface C {
-    private <error descr="Illegal combination of modifiers: 'default' and 'private'">default</error> void m() {}
+    private <error descr="Illegal combination of modifiers 'default' and 'private'">default</error> void m() {}
 }
 
 interface D {
@@ -15,7 +15,7 @@ interface D {
 }
 
 interface E {
-    <error descr="Illegal combination of modifiers: 'private' and 'public'">private</error> class E1 {}
+    <error descr="Illegal combination of modifiers 'private' and 'public'">private</error> class E1 {}
 }
 
 interface F {

@@ -149,7 +149,9 @@ internal class IncorrectFormattingInspectionHelper(
 
 
 private fun Document.areRangesAdjacent(first: TextRange, second: TextRange): Boolean {
-  if (abs(getLineNumber(first.startOffset) - getLineNumber(second.endOffset - 1)) < 2) return true
-  if (abs(getLineNumber(second.startOffset) - getLineNumber(first.endOffset - 1)) < 2) return true
-  return false
+  val secondEndLineNumber = if (second.endOffset == 0) 0 else getLineNumber(second.endOffset - 1)
+  if (abs(getLineNumber(first.startOffset) - secondEndLineNumber) < 2) return true
+
+  val firstEndLineNumber = if (first.endOffset == 0) 0 else getLineNumber(first.endOffset - 1)
+  return abs(getLineNumber(second.startOffset) - firstEndLineNumber) < 2
 }

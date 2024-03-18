@@ -84,12 +84,12 @@ public final class ComponentUtil {
 
   /**
    * Searches above in the component hierarchy starting from the specified component.
-   * Note that the initial component is also checked.
+   * Note that the initial component is <b>also checked</b>.
    *
    * @param type      expected class
    * @param component initial component
    * @return a component of the specified type, or {@code null} if the search is failed
-   * @see SwingUtilities#getAncestorOfClass
+   * @see #getStrictParentOfType(Class, Component)
    */
   @Contract(pure = true)
   public static @Nullable <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
@@ -99,6 +99,27 @@ public final class ComponentUtil {
         return (T)component;
       }
       component = component.getParent();
+    }
+    return null;
+  }
+
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is <b>not checked</b>.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see #getParentOfType(Class, Component)
+   */
+  @Contract(pure = true)
+  public static @Nullable <T> T getStrictParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      component = component.getParent();
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
+      }
     }
     return null;
   }

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * <a href="https://openjdk.org/jeps/405">JEP</a>
  * <p>
- * Represents record pattern, for example: {@code Point(int x, int y) p }
+ * Represents record pattern, for example: {@code Point(int x, int y)}
  */
 @ApiStatus.Experimental
 public interface PsiDeconstructionPattern extends PsiPrimaryPattern {

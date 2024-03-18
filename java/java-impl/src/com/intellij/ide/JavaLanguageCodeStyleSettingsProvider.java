@@ -27,7 +27,7 @@ import java.util.List;
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
@@ -185,6 +185,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WHILE_ON_NEW_LINE",
                                    "CATCH_ON_NEW_LINE",
                                    "FINALLY_ON_NEW_LINE",
+                                   "SWITCH_EXPRESSIONS_WRAP",
                                    "INDENT_CASE_FROM_SWITCH",
                                    "CASE_STATEMENT_ON_NEW_LINE",
                                    "SPECIAL_ELSE_IF_TREATMENT",
@@ -195,6 +196,14 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN",
                                    "BUILDER_METHODS",
                                    "KEEP_BUILDER_METHODS_INDENTS");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "WRAP_SEMICOLON_AFTER_CALL_CHAIN",
+                                JavaBundle.message("wrapping.semicolon.after.call.chain"),
+                                getInstance().WRAPPING_CALL_CHAIN);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "ENUM_FIELD_ANNOTATION_WRAP", JavaBundle.message("wrapping.annotation.enums"),
+                                null, getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
@@ -229,6 +238,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       String parameterAnnotationsWrapping = ApplicationBundle.message("wrapping.parameters.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
                                 JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "NEW_LINE_WHEN_BODY_IS_PRESENTED",
+                                JavaBundle.message("new.line.when.body.is.presented"),
+                                ApplicationBundle.message("wrapping.method.parentheses"));
 
       // Record components
       String recordComponentsGroup = JavaBundle.message("wrapping.record.components");
@@ -281,6 +294,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 deconstructionComponentsGroup);
+
+      consumer.renameStandardOption(
+        "SWITCH_EXPRESSIONS_WRAP",
+        JavaBundle.message("wrapping.switch.statement.or.expression")
+      );
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
@@ -626,6 +644,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
         private int f1 = 1;
         private String field2 = "";
         public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}
+        public void fooNonEmptyBody() {int x = 1;}
         public static void longerMethod() throws Exception1, Exception2, Exception3 {
       // todo something
           int

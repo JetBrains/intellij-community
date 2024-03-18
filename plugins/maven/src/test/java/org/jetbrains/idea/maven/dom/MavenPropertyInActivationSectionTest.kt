@@ -5,6 +5,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testResolvePropertyFromActivationSection() = runBlocking {
     importProjectAsync(
@@ -37,7 +39,7 @@ class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
         """.trimIndent())
 
 
-    assert(getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1)!!.resolve() != null)
-    assert(getReference(myProjectPom, "env.GLASSFISH_HOME_123", 2)!!.resolve() == null)
+    assert(getReference(projectPom, "env.GLASSFISH_HOME_123", 1)!!.resolve() != null)
+    assert(getReference(projectPom, "env.GLASSFISH_HOME_123", 2)!!.resolve() == null)
   }
 }

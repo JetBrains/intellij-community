@@ -11,6 +11,7 @@ import kotlin.time.Duration
 suspend fun <T> Future<T>.await(): T {
   if (isDone) {
     try {
+      @Suppress("BlockingMethodInNonBlockingContext")
       return get()
     }
     catch (e: ExecutionException) {

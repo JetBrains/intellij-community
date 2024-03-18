@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.SmartList;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Future;
@@ -27,6 +29,10 @@ public final class Callbacks {
     void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated);
     void registerImports(String className, Collection<String> classImports, Collection<String> staticImports);
     void registerConstantReferences(String className, Collection<ConstantRef> cRefs);
+    default void registerUsage(String className, Usage usage) {
+    }
+    default void registerUsage(Path source, Usage usage) {
+    }
   }
 
   public static ConstantRef createConstantReference(String ownerClass, String fieldName, String descriptor) {

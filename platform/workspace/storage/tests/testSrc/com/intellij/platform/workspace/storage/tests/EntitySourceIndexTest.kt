@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -50,7 +49,7 @@ class EntitySourceIndexTest {
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     assertEquals(secondEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
   }
@@ -70,7 +69,7 @@ class EntitySourceIndexTest {
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     Assertions.assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(oldSource))
 
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
   }
 
@@ -94,7 +93,7 @@ class EntitySourceIndexTest {
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
     Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
     Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
   }

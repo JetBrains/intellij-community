@@ -42,8 +42,9 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
-
-    executeAction(e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI));
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
+    if (ui == null) return;
+    executeAction(ui);
   }
 
   @Override

@@ -14,7 +14,7 @@ import java.util.List;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_CODE_BLOCK;
 import static com.intellij.psi.impl.source.BasicJavaElementType.CLASS_SET;
 
-public class JavaTokenSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class JavaTokenSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

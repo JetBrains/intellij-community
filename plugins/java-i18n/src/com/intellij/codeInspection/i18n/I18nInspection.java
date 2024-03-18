@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -42,6 +43,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -509,7 +511,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
       List<LocalQuickFix> fixes = new ArrayList<>();
 
-      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
+      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, sourcePsi)) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(myHolder.getProject());
         for (PsiModifierListOwner element : nonNlsTargets) {
           if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
@@ -543,8 +545,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
     private static boolean isSwitchCase(@NotNull UInjectionHost expression) {
       if (expression.getUastParent() instanceof USwitchClauseExpression parent) {
-        return ContainerUtil.exists(parent.getCaseValues(),
-                                    value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+        return ContainerUtil.exists(parent.getCaseValues(), value -> expression.equals(value));
       }
       return false;
     }
@@ -876,9 +877,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (containingClass == null) {
       return false;
     }
-    return InheritanceUtil.isInheritor(containingClass,"org.junit.Assert") ||
-           InheritanceUtil.isInheritor(containingClass,"org.junit.jupiter.api.Assertions") ||
-           InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert");
+    return InheritanceUtil.isInheritor(containingClass,JUnitCommonClassNames.ORG_JUNIT_ASSERT) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(UExpression expression,

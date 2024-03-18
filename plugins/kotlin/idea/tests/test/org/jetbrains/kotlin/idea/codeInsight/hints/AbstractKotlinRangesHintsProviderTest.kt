@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractKotlinRangesHintsProviderTest :
-    InlayHintsProviderTestCase() { // Abstract-prefix is just a convention for GenerateTests
+    DeclarativeInlayHintsProviderTestCase() { // Abstract-prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -24,9 +24,8 @@ abstract class AbstractKotlinRangesHintsProviderTest :
     }
 
     private fun assertThatActualHintsMatch(fileContents: String) {
-        with(KotlinValuesHintsProvider()) {
-            val settings = createSettings()
-            doTestProvider("KotlinValuesHintsProvider.kt", fileContents, this, settings)
+        with(org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider()) {
+            doTestProvider("KotlinValuesHintsProvider.kt", fileContents, this)
         }
     }
 }

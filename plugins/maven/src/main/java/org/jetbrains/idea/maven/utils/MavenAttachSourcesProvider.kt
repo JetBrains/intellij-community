@@ -87,55 +87,53 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
     })
   }
 
-  companion object {
-    private fun cleanUpUnresolvedSourceFiles(project: Project, mavenIds: Collection<MavenId>) {
-      for (mavenId in mavenIds) {
-        val parentFile = MavenUtil.getRepositoryParentFile(project, mavenId) ?: continue
-        try {
-          Files.list(parentFile).use { paths ->
-            paths.filter { isTargetFile(it.fileName.toString(), MavenExtraArtifactType.SOURCES) }
-              .forEach {
-                try {
-                  FileUtil.delete(it)
-                }
-                catch (e: IOException) {
-                  MavenLog.LOG.warn("$it not deleted", e)
-                }
+  private fun cleanUpUnresolvedSourceFiles(project: Project, mavenIds: Collection<MavenId>) {
+    for (mavenId in mavenIds) {
+      val parentFile = MavenUtil.getRepositoryParentFile(project, mavenId) ?: continue
+      try {
+        Files.list(parentFile).use { paths ->
+          paths.filter { isTargetFile(it.fileName.toString(), MavenExtraArtifactType.SOURCES) }
+            .forEach {
+              try {
+                FileUtil.delete(it)
               }
-          }
+              catch (e: IOException) {
+                MavenLog.LOG.warn("$it not deleted", e)
+              }
+            }
         }
-        catch (e: IOException) {
-          MavenLog.LOG.warn("$parentFile cannot be listed", e)
+      }
+      catch (e: IOException) {
+        MavenLog.LOG.warn("$parentFile cannot be listed", e)
+      }
+    }
+  }
+
+  private fun isTargetFile(name: String, type: MavenExtraArtifactType): Boolean {
+    return name.contains("-" + type.defaultClassifier) && name.contains("." + type.defaultExtension)
+  }
+
+  private fun findArtifacts(mavenProjects: Collection<MavenProject>,
+                            orderEntries: List<LibraryOrderEntry>): Collection<MavenArtifact> {
+    val artifacts: MutableCollection<MavenArtifact> = HashSet()
+    for (each in mavenProjects) {
+      for (entry in orderEntries) {
+        val artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary())
+        if (artifact != null && "system" != artifact.scope) {
+          artifacts.add(artifact)
         }
       }
     }
+    return artifacts
+  }
 
-    private fun isTargetFile(name: String, type: MavenExtraArtifactType): Boolean {
-      return name.contains("-" + type.defaultClassifier) && name.contains("." + type.defaultExtension)
+  private fun getMavenProjects(psiFile: PsiFile): Collection<MavenProject> {
+    val project = psiFile.getProject()
+    val result: MutableCollection<MavenProject> = ArrayList()
+    for (each in ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {
+      val mavenProject = MavenProjectsManager.getInstance(project).findProject(each.getOwnerModule())
+      if (mavenProject != null) result.add(mavenProject)
     }
-
-    private fun findArtifacts(mavenProjects: Collection<MavenProject>,
-                              orderEntries: List<LibraryOrderEntry>): Collection<MavenArtifact> {
-      val artifacts: MutableCollection<MavenArtifact> = HashSet()
-      for (each in mavenProjects) {
-        for (entry in orderEntries) {
-          val artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary())
-          if (artifact != null && "system" != artifact.scope) {
-            artifacts.add(artifact)
-          }
-        }
-      }
-      return artifacts
-    }
-
-    private fun getMavenProjects(psiFile: PsiFile): Collection<MavenProject> {
-      val project = psiFile.getProject()
-      val result: MutableCollection<MavenProject> = ArrayList()
-      for (each in ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {
-        val mavenProject = MavenProjectsManager.getInstance(project).findProject(each.getOwnerModule())
-        if (mavenProject != null) result.add(mavenProject)
-      }
-      return result
-    }
+    return result
   }
 }

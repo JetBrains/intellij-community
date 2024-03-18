@@ -3,19 +3,17 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
 import com.intellij.lang.Language;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -407,14 +405,8 @@ public final class MadTestingUtil {
   @NotNull
   static String getIntentionDescription(String intentionName, IntentionAction action) {
     IntentionAction actual = IntentionActionDelegate.unwrap(action);
-    ModCommandAction command = action.asModCommandAction();
     String family = actual.getFamilyName();
-    Class<?> aClass = command != null ? command.getClass() : actual.getClass();
-    LocalQuickFix fix = QuickFixWrapper.unwrap(actual);
-    if (fix != null) {
-      family = fix.getFamilyName();
-      aClass = fix.getClass();
-    }
+    Class<?> aClass = ReportingClassSubstitutor.getClassToReport(action);
     return "'" + intentionName + "' (family: '" + family + "'; class: '" + aClass.getName() + "')";
   }
 

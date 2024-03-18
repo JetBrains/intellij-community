@@ -5,6 +5,7 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
+import com.intellij.ide.IdeView
 import com.intellij.ide.ProhibitAWTEvents
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.ide.impl.GetDataRuleType
@@ -103,6 +104,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
         cachedData.put(dataId, answer ?: CustomizedDataContext.EXPLICIT_NULL)
       }
     }
+    answer = wrapUnsafeData(answer)
     return if (answer === CustomizedDataContext.EXPLICIT_NULL) null else answer
   }
 
@@ -140,7 +142,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
 
     answer = calcData(dataId, component)
     if (CommonDataKeys.EDITOR.`is`(dataId) || CommonDataKeys.HOST_EDITOR.`is`(dataId) || InjectedDataKeys.EDITOR.`is`(dataId)) {
-      answer = DataManagerImpl.validateEditor(answer as Editor?, component)
+      answer = DataManagerImpl.validateEditor(answer as? Editor, component)
     }
     if (cacheable) {
       cachedData.put(dataId, answer ?: CustomizedDataContext.EXPLICIT_NULL)
@@ -188,13 +190,15 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
                                     cachedData: MutableMap<String, Any>,
                                     userData: Ref<KeyFMap>,
                                     manager: DataManagerImpl,
-                                    eventCount: Int) : EdtDataContext(componentReference = componentReference,
-                                                                      cachedData = cachedData,
-                                                                      userData = userData,
-                                                                      dataManager = manager,
-                                                                      eventCount = eventCount) {
+                                    eventCount: Int)
+    : EdtDataContext(componentReference, cachedData, userData, manager, eventCount) {
     override fun getDataInner(dataId: String, cacheable: Boolean): Any? {
       return InjectedDataKeys.getInjectedData(dataId) { key -> super.getDataInner(key, cacheable) }
     }
   }
+}
+
+internal fun wrapUnsafeData(data: Any?): Any? = when {
+  data is IdeView -> safeIdeView(data)
+  else -> data
 }

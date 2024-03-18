@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.icons.AllIcons
@@ -11,9 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -29,12 +27,12 @@ class ResumeIndexingAction : DumbAwareAction() {
 
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: project.serviceIfCreated<VcsProjectLog>()?.dataManager
     val index = data?.index as? VcsLogModifiableIndex
-    if (data == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
+    if (data == null || index == null || !VcsLogUtil.isProjectLog(project, data.logProviders)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
+    if (!project.isIndexingEnabled) {
       val availableIndexers = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders)
       if (availableIndexers.isEmpty()) {
         e.presentation.isEnabledAndVisible = false

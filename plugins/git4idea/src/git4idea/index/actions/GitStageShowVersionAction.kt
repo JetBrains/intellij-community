@@ -36,8 +36,8 @@ abstract class GitStageShowVersionAction(private val showStaged: Boolean) : Dumb
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val sourceFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
+    val project = e.project ?: return
+    val sourceFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val root = getRoot(project, sourceFile) ?: return
     val targetFile = if (showStaged) {
       GitIndexFileSystemRefresher.getInstance(project).getFile(root, sourceFile.filePath())

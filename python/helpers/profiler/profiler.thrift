@@ -1,4 +1,4 @@
-namespace java com.jetbrains.python.profiler
+namespace java com.intellij.python.profiler
 
 struct FuncStat {
   1: required string file,       // File name of the executed function

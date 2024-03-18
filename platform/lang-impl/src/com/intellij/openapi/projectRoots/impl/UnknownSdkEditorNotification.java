@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,14 +49,22 @@ final class UnknownSdkEditorNotificationsProvider implements EditorNotificationP
                                                                                                                 @NotNull VirtualFile file) {
     return editor -> {
       final var sdkService = UnknownSdkEditorNotification.getInstance(project);
-      boolean relevantNotifications = false;
-      final var panel = new JPanel(new VerticalFlowLayout(0, 0));
+      List<EditorNotificationPanel> panels = new ArrayList<>();
       for (UnknownSdkFix info : sdkService.getNotifications()) {
-        if (!info.isRelevantFor(project, file)) continue;
-        relevantNotifications = true;
-        panel.add(new UnknownSdkEditorPanel(project, editor, info));
+        if (info.isRelevantFor(project, file)) {
+          panels.add(new UnknownSdkEditorPanel(project, editor, info));
+        }
       }
-      return relevantNotifications ? panel : null;
+      if (panels.isEmpty()) {
+        return null;
+      }
+      if (panels.size() == 1) {
+        return panels.get(0);
+      }
+
+      final var panel = new JPanel(new VerticalFlowLayout(0, 0));
+      EditorNotificationPanel.wrapPanels(panels, panel, EditorNotificationPanel.Status.Warning);
+      return panel;
     };
   }
 }

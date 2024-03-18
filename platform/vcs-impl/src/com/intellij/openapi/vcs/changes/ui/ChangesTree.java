@@ -197,13 +197,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         TreePath path = getPathIfCheckBoxClicked(event.getPoint());
-        if (path != null) {
-          setSelectionPath(path);
-          List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
-          boolean exclude = toggleChanges(selected);
-          logInclusionToggleEvents(exclude, event);
-        }
-        return false;
+        if (path == null) return false;
+
+        setSelectionPath(path);
+        List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
+        boolean exclude = toggleChanges(selected);
+        logInclusionToggleEvents(exclude, event);
+        return true;
       }
     };
     handler.installOn(this);
@@ -827,8 +827,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
-    if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
+    if (component instanceof ChangesBrowserNode<?> node) {
+      node.cacheBackgroundColor(myProject); // use AsyncChangesTree to move this on pooled thread
+      return node.getBackgroundColorCached();
     }
     return null;
   }

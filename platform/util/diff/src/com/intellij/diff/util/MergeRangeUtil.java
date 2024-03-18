@@ -200,6 +200,7 @@ public final class MergeRangeUtil {
       }
     }
     else {
+      //noinspection IfStatementWithIdenticalBranches
       if (isLeftEmpty && isRightEmpty) { // -=-
         return new MergeConflictType(MergeConflictType.Type.MODIFIED, true, true);
       }

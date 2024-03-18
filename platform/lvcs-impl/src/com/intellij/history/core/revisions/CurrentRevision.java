@@ -20,6 +20,8 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Clock;
 
+import java.util.Objects;
+
 public final class CurrentRevision extends Revision {
   private final RootEntry myRoot;
   private final String myPath;
@@ -43,5 +45,17 @@ public final class CurrentRevision extends Revision {
   @Override
   public RootEntry getRoot() {
     return myRoot;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof CurrentRevision that)) return false;
+    return Objects.equals(myRoot, that.myRoot) && Objects.equals(myPath, that.myPath);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRoot, myPath);
   }
 }

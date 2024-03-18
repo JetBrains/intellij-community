@@ -5,16 +5,20 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.diff.impl.DiffUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LazyRangeMarkerFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +45,7 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
-import java.util.*;
+import java.util.Objects;
 
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
@@ -163,7 +167,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
           highlighter.setGutterIconRenderer(createGutterIconRenderer());
           highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-          highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+          highlighter.setEditorFilter(XLineBreakpointImpl::isHighlighterAvailableIn);
           myHighlighter = highlighter;
 
           redrawInlineInlays();
@@ -271,9 +275,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
-    if (!Registry.is("debugger.show.breakpoints.inline")) return;
-
     if (file == null) return;
+
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
 
     var document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
@@ -369,14 +373,22 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void setLine(final int line, boolean visualLineMightBeChanged) {
     if (getLine() != line) {
+      if (visualLineMightBeChanged && !myType.changeLine(this, line, getProject())) {
+        return;
+      }
       var oldLine = getLine();
       myState.setLine(line);
       mySourcePosition = null;
+
       if (visualLineMightBeChanged) {
         removeHighlighter();
-        redrawInlineInlays(getFile(), oldLine);
-        redrawInlineInlays(getFile(), getLine());
-      } // otherwise highlighter and inlay would move together with line
+      }
+
+      // We try to redraw inlays every time,
+      // due to lack of synchronization between inlay redrawing and breakpoint changes.
+      redrawInlineInlays(getFile(), oldLine);
+      redrawInlineInlays(getFile(), line);
+
       fireBreakpointChanged();
     }
   }
@@ -401,6 +413,14 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       icon = isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon();
     }
     setIcon(icon);
+  }
+
+  private static boolean isHighlighterAvailableIn(Editor editor) {
+    if (editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting()) {
+      // suppress breakpoints on sticky lines panel
+      return false;
+    }
+    return !DiffUtil.isDiffEditor(editor);
   }
 
   @Override

@@ -131,6 +131,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   public void visitElement(@NotNull PsiElement element) {
     final IElementType elementType = element.getNode().getElementType();
     if (elementType != XPathTokenTypes.STAR && XPath2TokenTypes.KEYWORDS.contains(elementType)) {
+      if (element.getPrevSibling() == null) return;
       final PsiElement leaf = PsiTreeUtil.prevLeaf(element);
       PsiElement number;
       if (leaf != null && (number = leaf.getParent()) instanceof XPathNumber && ((XPathNumber)number).getXPathVersion() == XPathVersion.V2) {

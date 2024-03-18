@@ -9,7 +9,8 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
-import com.intellij.ide.util.scopeChooser.ScopeModel;
+import com.intellij.ide.util.scopeChooser.ScopeOption;
+import com.intellij.ide.util.scopeChooser.ScopeService;
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
@@ -107,8 +108,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   protected List<ScopeDescriptor> createScopes() {
-    DataContext context = createContext(myProject, myPsiContext);
-    return ScopeModel.getScopeDescriptors(myProject, context, EnumSet.of(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES));
+    return myProject.getService(ScopeService.class)
+      .createModel(EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
+      .getScopesImmediately(createContext(myProject, myPsiContext))
+      .getScopeDescriptors();
   }
 
   @NotNull
@@ -184,6 +187,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
                myScopeDescriptor.scopeEquals(myProjectScope);
       }
     });
+    result.add(new PreviewAction());
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }
@@ -292,11 +296,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @Override
   public List<ScopeDescriptor> getSupportedScopes() {
     return createScopes();
-  }
-
-  @Override
-  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    return WeightedSearchEverywhereContributor.super.getSupportedCommands();
   }
 
   @NotNull

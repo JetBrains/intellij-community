@@ -17,7 +17,8 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] = external append("a")("a")
                                     UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
                                     USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] = external append("a")("a")
-                                    ULiteralExpression (value = "a") ["a"] = "a"
+                                    UPolyadicExpression (operator = +) ["a"] = "a"
+                                        ULiteralExpression (value = "a") ["a"] = "a"
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
             UBlockExpression [{...}] = external let({ var it: int ->
 

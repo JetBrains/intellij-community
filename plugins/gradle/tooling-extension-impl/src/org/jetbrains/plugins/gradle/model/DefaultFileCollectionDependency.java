@@ -22,7 +22,7 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
   }
 
   public DefaultFileCollectionDependency(Collection<File> files) {
-    super(new DefaultExternalDependencyId(null, files.toString(), null), null, null);
+    super(new DefaultExternalDependencyId(null, files.toString(), null));
     this.files = new ArrayList<>(files);
     excludedFromIndexing = false;
   }

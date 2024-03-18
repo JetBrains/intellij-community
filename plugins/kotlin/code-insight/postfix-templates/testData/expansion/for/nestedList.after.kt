@@ -1,5 +1,5 @@
 fun test(list: List<List<String>>) {
-    for (strings in list) {
-        
+    for (<selection>strings<caret></selection> in list) {
+
     }
 }

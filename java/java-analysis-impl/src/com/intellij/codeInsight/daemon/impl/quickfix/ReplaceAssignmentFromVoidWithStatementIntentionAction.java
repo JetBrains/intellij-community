@@ -15,34 +15,25 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements IntentionAction {
-  private final PsiElement myParent;
-  private final PsiExpression myLExpr;
+public class ReplaceAssignmentFromVoidWithStatementIntentionAction extends PsiUpdateModCommandAction<PsiElement> {
+  private final @NotNull SmartPsiElementPointer<PsiExpression> myLExpr;
 
   public ReplaceAssignmentFromVoidWithStatementIntentionAction(@NotNull PsiElement parent, @NotNull PsiExpression lExpr) {
-    myParent = parent;
-    myLExpr = lExpr;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
+    super(parent);
+    myLExpr = SmartPointerManager.createPointer(lExpr);
   }
 
   @Nls
@@ -53,23 +44,15 @@ public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements In
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myParent.isValid() && myLExpr.isValid();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return myLExpr.getElement() != null ? Presentation.of(getFamilyName()) : null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myParent.replace(myLExpr);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new ReplaceAssignmentFromVoidWithStatementIntentionAction(PsiTreeUtil.findSameElementInCopy(myParent, target), 
-                                                                     PsiTreeUtil.findSameElementInCopy(myLExpr, target));
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiExpression lExpr = myLExpr.getElement();
+    if (lExpr != null) {
+      element.replace(lExpr);
+    }
   }
 }

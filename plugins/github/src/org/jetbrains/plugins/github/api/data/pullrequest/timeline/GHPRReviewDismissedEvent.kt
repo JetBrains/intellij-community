@@ -6,10 +6,10 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRReviewDismissedEvent(override val actor: GHActor?,
-                               override val createdAt: Date,
-                               val dismissalMessageHTML: @NlsSafe String?,
-                               @JsonProperty("review") review: ReviewAuthor?)
+data class GHPRReviewDismissedEvent(override val actor: GHActor?,
+                                    override val createdAt: Date,
+                                    val dismissalMessageHTML: @NlsSafe String?,
+                                    @JsonProperty("review") private val review: ReviewAuthor?)
   : GHPRTimelineEvent.Complex {
 
   val reviewAuthor = review?.author

@@ -38,7 +38,7 @@ import java.util.Collection;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class StringConcatenationInspection extends BaseInspection {
+public final class StringConcatenationInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAsserts = false;

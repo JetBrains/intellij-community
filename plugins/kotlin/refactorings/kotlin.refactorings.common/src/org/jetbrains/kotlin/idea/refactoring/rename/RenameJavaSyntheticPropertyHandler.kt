@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.ide.util.SuperMethodWarningUtil
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
@@ -12,6 +14,7 @@ import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
+import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -26,8 +29,33 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
     class Processor : RenamePsiElementProcessor() {
         override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
             val propertyWrapper = element as? SyntheticPropertyWrapper ?: return
-            propertyWrapper.getter?.let { allRenames[it] = JvmAbi.getterName(newName) }
-            propertyWrapper.setter?.let { allRenames[it] = JvmAbi.setterName(newName) }
+
+            propertyWrapper.getter.let { getter ->
+                val getterName = JvmAbi.getterName(newName)
+                allRenames[getter] = getterName
+                RenameJavaMethodProcessor().prepareRenaming(getter, getterName, allRenames, scope)
+            }
+
+            propertyWrapper.setter?.let { setter ->
+                val setterName = JvmAbi.setterName(newName)
+                allRenames[setter] = setterName
+                RenameJavaMethodProcessor().prepareRenaming(setter, setterName, allRenames, scope)
+            }
+        }
+
+        override fun substituteElementToRename(
+            element: PsiElement,
+            editor: Editor?
+        ): PsiElement? {
+            if (element is SyntheticPropertyWrapper) {
+            val superMethod = SuperMethodWarningUtil.checkSuperMethod(element.getter)
+            val setter = element.setter
+            return SyntheticPropertyWrapper(element.manager,
+                                            superMethod,
+                                            setter?.let { it.findSuperMethods(superMethod.containingClass).firstOrNull() } ?: element.setter,
+                                            element.name)
+            }
+            return element
         }
 
         override fun canProcessElement(element: PsiElement) = element is SyntheticPropertyWrapper
@@ -35,12 +63,12 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
 
     class SyntheticPropertyWrapper(
         manager: PsiManager,
-        val getter: PsiMethod?,
+        val getter: PsiMethod,
         val setter: PsiMethod?,
         val name: Name
     ) : LightElement(manager, KotlinLanguage.INSTANCE), PsiNamedElement {
 
-        override fun getContainingFile() = getter?.containingFile
+        override fun getContainingFile() = getter.containingFile
 
         override fun getName() = name.asString()
 
@@ -49,9 +77,7 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         }
 
         override fun toString(): String {
-            return (getter?.let {
-                PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_NAME)
-            } ?: name.asString()) +
+            return PsiFormatUtil.formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_NAME) +
                    "|" +
                    (setter?.let {
                        PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_NAME)
@@ -67,8 +93,9 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
               val symbol = refExpr.mainReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol
                       ?: return null
 
+                val getter = symbol.javaGetterSymbol.psi as? PsiMethod ?: return null
                 return SyntheticPropertyWrapper(refExpr.manager,
-                                                symbol.javaGetterSymbol.psi as? PsiMethod,
+                                                getter,
                                                 symbol.javaSetterSymbol?.psi as? PsiMethod,
                                                 symbol.name)
             }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.*;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -21,7 +22,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntentionActionOnPsiElement 
-  implements Iconable, PriorityAction, IntentionActionWithFixAllOption {
+  implements Iconable, PriorityAction, IntentionActionWithFixAllOption, ReportingClassSubstitutor {
   private final @NotNull ModCommandAction myAction;
   private @Nullable Presentation myPresentation;
 
@@ -128,5 +129,10 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
   @Override
   public @Nullable ModCommandAction asModCommandAction() {
     return myAction;
+  }
+
+  @Override
+  public @NotNull Class<?> getSubstitutedClass() {
+    return ReportingClassSubstitutor.getClassToReport(myAction);
   }
 }

@@ -41,7 +41,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     List<EditorWindow> siblings = window.getSiblings();
     if (siblings.size() == 1) {
       EditorComposite editorComposite = window.getSelectedComposite();
-      HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
+      HistoryEntry entry = editorComposite.currentStateAsHistoryEntry$intellij_platform_ide_impl();
       vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
       if (myCloseSource) {
         window.closeFile(vFile, true, false);

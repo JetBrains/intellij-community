@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -34,7 +34,7 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.CLONE_ERROR;
 public class HgCheckoutProvider implements CheckoutProvider {
 
   @Override
-  public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
+  public void doCheckout(final @NotNull Project project, final @Nullable Listener listener) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     HgCloneDialog dialog = new HgCloneDialog(project);
@@ -63,9 +63,8 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
     CloneTask cloneTask = new CloneTask() {
 
-      @NotNull
       @Override
-      public CloneTaskInfo taskInfo() {
+      public @NotNull CloneTaskInfo taskInfo() {
         return new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
                                  DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
@@ -76,9 +75,8 @@ public class HgCheckoutProvider implements CheckoutProvider {
                                  DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL));
       }
 
-      @NotNull
       @Override
-      public CloneStatus run(@NotNull ProgressIndicator indicator) {
+      public @NotNull CloneStatus run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
         clone.setRepositoryURL(sourceRepositoryURL);
         clone.setDirectory(targetDir);
@@ -112,11 +110,10 @@ public class HgCheckoutProvider implements CheckoutProvider {
     return HgBundle.message("hg4idea.vcs.name.with.mnemonic");
   }
 
-  @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
-                                                  @NotNull ModalityState modalityState,
-                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public @NotNull VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                           @NotNull ModalityState modalityState,
+                                                           @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new HgCloneDialogComponent(project, dialogStateListener);
   }
 }

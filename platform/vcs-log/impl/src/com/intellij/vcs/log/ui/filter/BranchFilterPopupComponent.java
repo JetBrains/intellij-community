@@ -34,19 +34,18 @@ import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranchPatterns;
 
-public final class BranchFilterPopupComponent
-  extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
-  private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
+public final class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<BranchFilters, BranchFilterModel> {
+  private final BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
-                                    @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
+                                    @NotNull BranchFilterModel filterModel) {
     super("Branch", VcsLogBundle.messagePointer("vcs.log.branch.filter.label"), uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 
   @Override
   protected @NotNull List<String> getFilterValues(@NotNull BranchFilters filters) {
-    return VcsLogClassicFilterUi.BranchFilterModel.getFilterPresentation(filters);
+    return BranchFilterModel.getFilterPresentation(filters);
   }
 
   @Override

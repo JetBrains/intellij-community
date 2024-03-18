@@ -18,6 +18,8 @@ package com.jetbrains.extensions
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
-
+@Deprecated(message = "Moved to com.jetbrains.python")
+@ScheduledForRemoval
 fun Module.getSdk(): Sdk? = ModuleRootManager.getInstance(this).sdk

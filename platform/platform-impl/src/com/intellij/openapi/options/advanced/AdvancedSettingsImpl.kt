@@ -8,9 +8,7 @@ import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
@@ -213,7 +211,13 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   override fun getInstance(): AdvancedSettingBean = this
 }
 
-@State(name = "AdvancedSettings", storages = [Storage("advancedSettings.xml"), Storage(value = "ide.general.xml", deprecated = true)])
+@State(name = "AdvancedSettings",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [
+         Storage("advancedSettings.xml", roamingType = RoamingType.DISABLED),
+         Storage(value = "ide.general.xml", deprecated = true, roamingType = RoamingType.DISABLED)
+       ])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
     var settings: MutableMap<String, String> = mutableMapOf()

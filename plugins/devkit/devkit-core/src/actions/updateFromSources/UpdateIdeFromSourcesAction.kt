@@ -2,19 +2,14 @@
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 
-internal open class UpdateIdeFromSourcesAction
-@JvmOverloads constructor(private val forceShowSettings: Boolean = false)
-  : AnAction(if (forceShowSettings) DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.show.settings.text")
-             else DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.text"),
-             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware {
+internal sealed class UpdateIdeFromSourcesActionBase(private val forceShowSettings: Boolean = false) : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -47,4 +42,18 @@ internal open class UpdateIdeFromSourcesAction
   }
 }
 
-internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
+internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesActionBase(forceShowSettings = true) {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    val presentation = e.presentation
+    if (!presentation.isVisible) return
+
+    presentation.description = ActionManager.getInstance()
+      .getAction("UpdateIdeFromSources")
+      .templatePresentation
+      .description
+  }
+}
+
+internal class UpdateIdeFromSourcesAction : UpdateIdeFromSourcesActionBase(forceShowSettings = false)

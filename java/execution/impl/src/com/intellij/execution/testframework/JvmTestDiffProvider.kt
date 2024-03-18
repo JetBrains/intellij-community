@@ -15,10 +15,9 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 
-abstract class JvmTestDiffProvider : TestDiffProvider {
-  abstract fun getExpectedElement(expression: UExpression, expected: String): PsiElement?
-
+class JvmTestDiffProvider : TestDiffProvider {
   override fun updateExpected(element: PsiElement, actual: String) {
     ElementManipulators.getManipulator(element)?.handleContentChange(element, actual)
   }
@@ -37,7 +36,7 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
    * content with the [expected] value as reported from our test output. If exactly 1 string literal content matches this expected value
    * we return this element. If we found 0 or more than 1 matching elements we return null.
    */
-  final override fun findExpected(project: Project, stackTrace: String, expected: String): PsiElement? {
+  override fun findExpected(project: Project, stackTrace: String, expected: String): PsiElement? {
     val exceptionCache = ExceptionInfoCache(project, GlobalSearchScope.allScope(project))
     val entryPoint = findExpectedEntryPoint(stackTrace, exceptionCache) ?: return null
     val searchStacktrace = entryPoint.stackTrace
@@ -126,5 +125,12 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     return calls
   }
 
-  protected fun String.withoutLineEndings() = replace("\n", "").replace("\r", "")
+  private fun getExpectedElement(expression: UExpression, expected: String): PsiElement? {
+    if (expression.asSafely<UInjectionHost>()?.evaluateString()?.withoutLineEndings() == expected) {
+      return expression.sourcePsi
+    }
+    return null
+  }
+
+  private fun String.withoutLineEndings() = replace("\n", "").replace("\r", "")
 }

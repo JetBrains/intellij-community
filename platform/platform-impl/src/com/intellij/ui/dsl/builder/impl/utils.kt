@@ -123,6 +123,11 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
+  if (cell is PlaceholderBaseImpl) {
+    cell.initLabelFor(label)
+    return
+  }
+
   val mnemonic = TextWithMnemonic.fromMnemonicText(label.text, true)
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
@@ -171,7 +176,7 @@ internal fun warn(message: String) {
 
 @OptIn(IntellijInternalApi::class)
 internal fun registerCreationStacktrace(component: JComponent) {
-  if (ApplicationManager.getApplication().isInternal && UiInspectorAction.isSaveStacktraces()) {
+  if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorAction.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }

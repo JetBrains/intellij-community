@@ -122,8 +122,8 @@ class ColumnVisualisationType:
     PERCENTAGE = "percentage"
 
 class ColumnVisualisationUtils:
-    NUM_BINS = 5
-    MAX_UNIQUE_VALUES = 3
+    NUM_BINS = 20
+    MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 3
     UNIQUE_VALUES_PERCENT = 50
 
     TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
@@ -169,13 +169,13 @@ def analyze_categorical_column(column):
     vis_type = ColumnVisualisationType.PERCENTAGE
     if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
-        num_unique_values = ColumnVisualisationUtils.MAX_UNIQUE_VALUES - (0 if len(value_counts) == 3 else 1)
+        num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
 
-        top_values = value_counts.iloc[:num_unique_values].apply(lambda count: round(count / all_values * 100, 1)).to_dict()
+        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda count: round(count / all_values * 100, 1)).to_dict()
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
-            others_count = value_counts.iloc[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:].sum()
+            others_count = value_counts.iloc[num_unique_values_to_show_in_vis:].sum()
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count / all_values * 100, 1)
         result = add_custom_key_value_separator(top_values.items())
     else:
@@ -190,11 +190,8 @@ def analyze_numeric_column(column):
     if unique_values <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
+        format_function = int if column.dtype.kind == 'i' else lambda x: round(x, 1)
         counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
-        if column.dtype.kind == 'i':
-            format_function = lambda x: int(x)
-        else:
-            format_function = lambda x: round(x, 1)
 
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]

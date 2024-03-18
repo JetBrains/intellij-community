@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class ImplicitThisInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtExpression, ImplicitReceiverInfo>() {
+  AbstractKotlinApplicableInspectionWithContext<KtExpression, ImplicitReceiverInfo>() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -54,7 +54,7 @@ internal class ImplicitThisInspection :
         return element.getImplicitReceiverInfo()
     }
 
-    override fun apply(element: KtExpression, context: ImplicitReceiverInfo, project: Project, editor: Editor?) {
+    override fun apply(element: KtExpression, context: ImplicitReceiverInfo, project: Project, updater: ModPsiUpdater) {
         element.addImplicitThis(context)
     }
 }

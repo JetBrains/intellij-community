@@ -8,24 +8,25 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -37,10 +38,8 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.WindowManagerImpl
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
@@ -52,11 +51,11 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Insets
 import java.awt.event.InputEvent
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -135,13 +134,13 @@ private fun createRunActionToolbar(): ActionToolbar {
   ).apply {
     targetComponent = null
     setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     if (this is ActionToolbarImpl) {
       isOpaque = false
       setMinimumButtonSize {
         JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
-      setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
+      setActionButtonBorder(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap(), JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
       setCustomButtonLook(RunWidgetButtonLook())
       border = null
     }
@@ -175,14 +174,11 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
     }
 
     if (selectedConfiguration == null) {
-      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) || DumbService.isDumb(project)) {
-        // cannot get current PSI file for the Run Current configuration in dumb mode
+      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
         return false
       }
-      val editor = e.getData(CommonDataKeys.EDITOR) ?: return false
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
-      val runConfigsForCurrentFile = ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(psiFile, false)
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { runConfigsForCurrentFile.contains(it) }
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project)
+        .getRunningDescriptors { (it as? RunnerAndConfigurationSettingsImpl)?.filePathIfRunningCurrentFile != null }
       return !runningDescriptors.isEmpty()
     }
     else {
@@ -208,7 +204,6 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
 }
 
 class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
-  override fun isPopup() = false
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -248,12 +243,12 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
   }
 }
 
-private class RunWidgetButtonLook : IdeaActionButtonLook() {
+private class RunWidgetButtonLook : HeaderToolbarButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
     val isDisabled = (component as? ActionButton)?.presentation?.isEnabled == false
     val isStopButton = isStopButton(component)
     if (isDisabled || (!isStopButton && !buttonIsRunning(component))) {
-      return getHeaderBackgroundColor(component, state)
+      return super.getStateBackground(component, state)
     }
 
     val color = if (isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND else JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
@@ -265,11 +260,13 @@ private class RunWidgetButtonLook : IdeaActionButtonLook() {
     }
   }
 
-  override fun getDisabledIcon(icon: Icon): Icon {
-    return com.intellij.ui.icons.getDisabledIcon(icon = icon, disableFilter = lightThemeDarkHeaderDisableFilter)
+  override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
+    val iconPos = getIconPosition(actionButton, icon)
+    paintIcon(g, actionButton, icon, iconPos.x, iconPos.y)
   }
 
-  override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+  override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon, x: Int, y: Int) {
+    actionButton?: return
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
@@ -309,10 +306,6 @@ private class RunWidgetButtonLook : IdeaActionButtonLook() {
 
     paintIconImpl(g, actionButton, resultIcon, x, y)
   }
-
-  override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
-
-  override fun getButtonArc() = JBUI.CurrentTheme.MainToolbar.Button.hoverArc()
 }
 
 internal const val MINIMAL_POPUP_WIDTH = 270
@@ -333,14 +326,13 @@ abstract class TogglePopupAction : ToggleAction {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (!state) return
     val component = e.inputEvent?.component as? JComponent ?: return
-    val project = e.project ?: return
-    project.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      val popup = createPopup(e)
-      popup?.showUnderneathOf(component)
-    }
+    val start = IdeEventQueue.getInstance().popupTriggerTime
+    val popup = createPopup(e) ?: return
+    Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
+    popup.showUnderneathOf(component)
   }
 
-  suspend fun createPopup(e: AnActionEvent): JBPopup? {
+  fun createPopup(e: AnActionEvent): JBPopup? {
     val presentation = e.presentation
     val actionGroup = getActionGroup(e) ?: return null
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
@@ -354,7 +346,7 @@ abstract class TogglePopupAction : ToggleAction {
                        disposeCallback: () -> Unit) = JBPopupFactory.getInstance().createActionGroupPopup(
     null, actionGroup, e.dataContext, false, false, false, disposeCallback, 30, null)
 
-  abstract suspend fun getActionGroup(e: AnActionEvent): ActionGroup?
+  abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
 private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
@@ -408,11 +400,33 @@ private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
 private class MoreRunToolbarActions : TogglePopupAction(
   IdeBundle.message("inline.actions.more.actions.text"), null, AllIcons.Actions.More
 ), DumbAware {
-  override suspend fun getActionGroup(e: AnActionEvent): ActionGroup? {
+  override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-    val result = createOtherRunnersSubgroup(selectedConfiguration, project)
-    addAdditionalActionsToRunConfigurationOptions(project, e, selectedConfiguration, result, true)
+    val result = when {
+      selectedConfiguration != null -> {
+        val exclude = if (RunWidgetResumeManager.getInstance(project).shouldMoveRun()) excludeDebug else excludeRunAndDebug
+        object : RunConfigurationsComboBoxAction.SelectConfigAction(project, selectedConfiguration) {
+          override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+            val additionalGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(configuration, true)
+            return (listOf(additionalGroup) + getDefaultChildren(exclude)).toTypedArray()
+          }
+        }
+      }
+      RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) -> {
+        object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
+          override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+            val additionalGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(null, true)
+            return (listOf(additionalGroup) + getDefaultChildren(excludeRunAndDebug)).toTypedArray()
+          }
+        }
+      }
+      else -> object : ActionGroup(), DumbAware {
+        override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+          return arrayOf(AdditionalRunningOptions.getInstance(project).getAdditionalActions(null, true))
+        }
+      }
+    }
     return result
   }
 
@@ -443,28 +457,6 @@ internal val excludeDebug: (Executor) -> Boolean = {
   it.id != ToolWindowId.DEBUG
 }
 
-private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
-  if (runConfiguration != null) {
-    val exclude = if (RunWidgetResumeManager.getInstance(project).shouldMoveRun()) excludeDebug else excludeRunAndDebug
-    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, exclude)
-  }
-  if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-    return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
-  }
-  return DefaultActionGroup()
-}
-
-internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
-                                                           e: AnActionEvent,
-                                                           selectedConfiguration: RunnerAndConfigurationSettings?,
-                                                           targetGroup: DefaultActionGroup,
-                                                           isWidget: Boolean) {
-  val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
-  for (action in additionalActions.getChildren(e).reversed()) {
-    targetGroup.add(action, Constraints.FIRST)
-  }
-}
-
 @ApiStatus.Internal
 open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
@@ -475,9 +467,8 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
     super.actionPerformed(e)
   }
 
-  override suspend fun getActionGroup(e: AnActionEvent): ActionGroup? {
-    val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project, e)
+  override fun getActionGroup(e: AnActionEvent): ActionGroup? {
+    return ActionManager.getInstance().getAction("RunConfigurationsActionGroup") as? ActionGroup
   }
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup {

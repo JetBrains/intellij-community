@@ -11,7 +11,7 @@ import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class ContinuationVariableValueDescriptorImpl(
-  private val defaultExecutionContext: DefaultExecutionContext,
+  defaultExecutionContext: DefaultExecutionContext,
   val continuation: ObjectReference,
   val fieldName: String,
   private val variableName: String

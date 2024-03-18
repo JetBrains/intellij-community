@@ -1,19 +1,26 @@
 LineBreakpoint created at multiLineLambda.kt:7 lambdaOrdinal = 1
-LineBreakpoint created at multiLineLambda.kt:11 lambdaOrdinal = 1
-LineBreakpoint created at multiLineLambda.kt:15 lambdaOrdinal = 1
-LineBreakpoint created at multiLineLambda.kt:20 lambdaOrdinal = 1
-LineBreakpoint created at multiLineLambda.kt:25 lambdaOrdinal = 2
+LineBreakpoint created at multiLineLambda.kt:10 lambdaOrdinal = 1
+LineBreakpoint created at multiLineLambda.kt:15
+LineBreakpoint created at multiLineLambda.kt:18 lambdaOrdinal = 1
+LineBreakpoint created at multiLineLambda.kt:23
+LineBreakpoint created at multiLineLambda.kt:29 lambdaOrdinal = -1
+LineBreakpoint created at multiLineLambda.kt:33 lambdaOrdinal = 2
 Run Java
 Connected to the target VM
-multiLineLambda.kt:8
-Highlight whole line
-multiLineLambda.kt:11
+multiLineLambda.kt:7
+Highlight lambda range: '{ number -> number * 2
+'
+multiLineLambda.kt:10
 Highlight lambda range: '{ println(it) }'
-multiLineLambda.kt:16
+multiLineLambda.kt:15
 Highlight whole line
-multiLineLambda.kt:21
-Highlight lambda range: '         it }'
-multiLineLambda.kt:25
+multiLineLambda.kt:18
+Highlight lambda range: '{ println(it) }'
+multiLineLambda.kt:23
+Highlight whole line
+multiLineLambda.kt:29
+Highlight lambda range: '            it }'
+multiLineLambda.kt:33
 Highlight lambda range: '{ it
 '
 Disconnected from the target VM

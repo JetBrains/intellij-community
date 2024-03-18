@@ -20,6 +20,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.roots.ModuleRootManagerTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -140,6 +141,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model);
 
     ModuleRootModificationUtil.updateModel(getModule(), m -> m.addLibraryEntry(library));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertSize(1, library.getUrls(OrderRootType.CLASSES));
     assertSameElements(library.getUrls(OrderRootType.CLASSES), libDir.getUrl());
@@ -156,6 +158,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     libDir.refresh(false, false);
     UIUtil.dispatchAllInvocationEvents();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     assertNull(libDir.findChild("lib.jar"));
 
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
@@ -163,10 +166,12 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     copy(libJar, libDir, libJar.getName());
     UIUtil.dispatchAllInvocationEvents();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
     ModuleRootModificationUtil.updateModel(getModule(), m -> m.removeOrderEntry(m.findLibraryOrderEntry(library)));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNull(aClass);
   }
@@ -185,6 +190,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model);
 
     ModuleRootModificationUtil.updateModel(getModule(), m -> m.addLibraryEntry(library));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertSize(1, library.getUrls(OrderRootType.CLASSES));
     assertSameElements(library.getUrls(OrderRootType.CLASSES), libUrl);
@@ -221,6 +227,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertNotNull(libJar);
 
     UIUtil.dispatchAllInvocationEvents();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
   }

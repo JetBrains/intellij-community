@@ -23,6 +23,8 @@ import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class VariableInplaceRenameHandler implements RenameHandler {
   private static final ThreadLocal<String> ourPreventInlineRenameFlag = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance(VariableInplaceRenameHandler.class);
@@ -114,7 +116,8 @@ public class VariableInplaceRenameHandler implements RenameHandler {
                                      @NotNull Editor editor,
                                      @Nullable DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
-    boolean startedRename = renamer != null && renamer.performInplaceRename();
+    List<String> names = dataContext == null ? null : PsiElementRenameHandler.NAME_SUGGESTIONS.getData(dataContext);
+    boolean startedRename = renamer != null && renamer.performInplaceRename(names);
 
     if (!startedRename && dataContext != null) {
       performDialogRename(elementToRename, editor, dataContext, renamer != null ? renamer.myInitialName : null);

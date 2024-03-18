@@ -28,7 +28,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExceptionNameDoesntEndWithExceptionInspection
+public final class ExceptionNameDoesntEndWithExceptionInspection
   extends BaseInspection {
 
   @Override

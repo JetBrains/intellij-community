@@ -127,7 +127,7 @@ public class Main {
 
   void test12(Integer integer) {
     switch (integer) {
-      case 1, 2, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">Integer i1</error> when i1 > 5:
+      case 1, 2, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a list of case patterns">Integer i1</error> when i1 > 5:
       case null:
         System.out.println("blah blah blah");
         break;
@@ -246,14 +246,14 @@ public class Main {
 
   void test28(Object obj) {
     switch (obj) {
-      case Integer i, <error descr="Invalid case label combination: a case label must not consist of more than one case pattern">String str</error> -> {}
+      case <error descr="Invalid case label combination: multiple patterns are allowed only if none of them declare any pattern variables">Integer i</error>, String str -> {}
       default -> {}
     }
   }
 
   void test28(String s) {
     switch (s) {
-      case String str, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">"hello"</error>, "world" -> {}
+      case String str, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a list of case patterns">"hello"</error>, "world" -> {}
     }
   }
 

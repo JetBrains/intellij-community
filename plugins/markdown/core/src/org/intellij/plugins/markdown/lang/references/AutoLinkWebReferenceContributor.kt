@@ -8,6 +8,7 @@ import com.intellij.util.ProcessingContext
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal class AutoLinkWebReferenceContributor: PsiReferenceContributor() {
@@ -17,7 +18,7 @@ internal class AutoLinkWebReferenceContributor: PsiReferenceContributor() {
 
   private class WebReferenceContributor: PsiReferenceProvider() {
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
-      if (element.hasType(MarkdownTokenTypeSets.AUTO_LINKS)) {
+      if (element.hasType(MarkdownTokenTypeSets.AUTO_LINKS) && element.parent !is MarkdownLinkDestination) {
         val link = when (element.elementType) {
           MarkdownTokenTypes.EMAIL_AUTOLINK -> WebReference(element, "mailto:${element.text}")
           else -> WebReference(element)

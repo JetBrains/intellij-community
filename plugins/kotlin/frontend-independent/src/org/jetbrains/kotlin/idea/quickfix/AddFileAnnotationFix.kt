@@ -102,6 +102,8 @@ open class AddFileAnnotationFix(
  * This class reuses the parent's [invoke] method, but overrides the [getText] method to provide
  * more descriptive opt-in related messages.
  *
+ * TODO: migrate from FqName to ClassId fully when the K1 plugin is dropped.
+ *
  * @param file the file there the annotation should be added
  * @param optInFqName name of OptIn annotation
  * @param argumentClassFqName the fully qualified name of the annotation to opt-in

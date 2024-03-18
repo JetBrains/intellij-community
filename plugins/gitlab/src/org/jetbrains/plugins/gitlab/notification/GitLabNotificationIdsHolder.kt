@@ -5,10 +5,6 @@ import com.intellij.notification.impl.NotificationIdsHolder
 
 class GitLabNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
-    return listOf(MERGE_REQUEST_CREATE)
-  }
-
-  companion object {
-    const val MERGE_REQUEST_CREATE = "gitlab.merge.request.create"
+    return listOf()
   }
 }

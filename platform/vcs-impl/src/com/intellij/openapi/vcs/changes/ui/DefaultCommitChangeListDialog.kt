@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
@@ -68,6 +69,8 @@ class DefaultCommitChangeListDialog(val workflow: SingleChangeListCommitWorkflow
 
       val insets = getRegularPanelInsets()
       border = EmptyBorder(insets.top, insets.left, 0, insets.right)
+
+      RollbackDialogAction().registerCustomShortcutSet(this, null)
     }
 
   override fun getBrowser(): CommitDialogChangesBrowser = browser

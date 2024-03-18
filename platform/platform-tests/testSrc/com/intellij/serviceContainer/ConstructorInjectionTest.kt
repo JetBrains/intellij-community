@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
 package com.intellij.serviceContainer
@@ -13,25 +13,14 @@ class ConstructorInjectionTest {
   private val pluginDescriptor = DefaultPluginDescriptor("test")
 
   @Test
-  fun `interface extension`() {
-    val componentManager = TestComponentManager(isGetComponentAdapterOfTypeCheckEnabled = false)
-    val area = componentManager.extensionArea
-    val point = area.registerPoint("bar", Bar::class.java, pluginDescriptor, false)
-    @Suppress("DEPRECATION")
-    point.registerExtension(BarImpl())
-
-    componentManager.instantiateClassWithConstructorInjection(Foo::class.java, Foo::class.java, pluginDescriptor.pluginId)
-  }
-
-  @Test
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
     assertThat(componentManager.getService(BarService::class.java)).isNotNull()
-    PlatformTestUtil.startPerformanceTest("getService() must be fast for cached service", 1000) {
+    PlatformTestUtil.newPerformanceTest("getService() must be fast for cached service") {
       for (i in 0..30_000_000) {
         componentManager.getService(BarService::class.java)!!
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test

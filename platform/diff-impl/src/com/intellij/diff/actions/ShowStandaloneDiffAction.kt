@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.actionSystem.ExtendableAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.registry.Registry
 
 /**
  * In contrast to [ShowDiffAction] which may show diff preview, this action will show diff without selection tracking.
@@ -39,7 +38,6 @@ class ShowStandaloneDiffAction : ExtendableAction(EP_NAME), DumbAware {
       }
 
       isEnabledAndVisible = project != null &&
-                            Registry.`is`("show.editor.diff.preview", true) &&
                             !ExternalDiffTool.isDefault()
     }
   }

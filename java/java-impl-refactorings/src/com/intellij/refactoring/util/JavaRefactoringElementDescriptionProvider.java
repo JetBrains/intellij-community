@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof RefactoringDescriptionLocation rdLocation)) return null;

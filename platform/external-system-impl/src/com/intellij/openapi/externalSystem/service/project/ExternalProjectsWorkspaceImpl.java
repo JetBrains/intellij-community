@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.registry.Registry;
@@ -21,6 +18,7 @@ import java.util.function.Supplier;
 /**
  * @author Vladislav.Soroka
  */
+@Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 @State(name = "externalSubstitutions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ExternalProjectsWorkspaceImpl implements PersistentStateComponent<ExternalProjectsWorkspaceImpl.State> {

@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun b(body: () -> Int) = body()
 
 class A {

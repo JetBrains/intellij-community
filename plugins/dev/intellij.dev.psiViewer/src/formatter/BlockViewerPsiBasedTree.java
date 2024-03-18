@@ -18,7 +18,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -47,7 +46,7 @@ import static com.intellij.dev.psiViewer.PsiViewerDialog.initTree;
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
-  private final JPanel myBlockStructurePanel;
+  private final JComponent myComponent;
   @NotNull
   private final Tree myBlockTree;
   @NotNull
@@ -63,9 +62,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myProject = project;
     myUpdater = updater;
     myBlockTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myBlockStructurePanel = new JPanel(new BorderLayout());
-    myBlockStructurePanel.add(ScrollPaneFactory.createScrollPane(myBlockTree));
-    myBlockStructurePanel.setBorder(IdeBorderFactory.createBorder());
+    myComponent = ScrollPaneFactory.createScrollPane(myBlockTree, true);
     initTree(myBlockTree);
   }
 
@@ -88,7 +85,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myBlockStructurePanel;
+    return myComponent;
   }
 
   @Override
@@ -253,7 +250,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Nullable
   private BlockTreeNode findBlockNode(TextRange range) {
-    if (myTreeModel == null || !myBlockStructurePanel.isVisible()) {
+    if (myTreeModel == null || !myComponent.isVisible()) {
       return null;
     }
 

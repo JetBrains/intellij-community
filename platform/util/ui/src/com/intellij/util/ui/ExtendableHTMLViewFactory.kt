@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
-import com.intellij.util.ui.html.HiDpiScalingImageView
-import com.intellij.util.ui.html.InlineViewEx
+import com.intellij.util.ui.html.*
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -46,8 +46,11 @@ class ExtendableHTMLViewFactory internal constructor(
 
   companion object {
     @JvmField
-    val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
-                                                     Extensions.INLINE_VIEW_EX)
+    val DEFAULT_EXTENSIONS: List<Extension> = listOf(
+      Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
+      Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX,
+      Extensions.LINE_VIEW_EX, Extensions.BLOCK_VIEW_EX
+    )
 
     @JvmField
     val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
@@ -113,16 +116,51 @@ class ExtendableHTMLViewFactory internal constructor(
     val WORD_WRAP: Extension = WordWrapExtension()
 
     /**
-     * Supports rendering of inline elements, like <span>, with paddings and margins
+     * Supports rendering of inline elements, like <span>, with paddings, margins
+     * and rounded corners (through `caption-side` CSS property).
      */
     @JvmField
     val INLINE_VIEW_EX: Extension = InlineViewExExtension()
+
+    /**
+     * Supports rendering of block elements, like <div>,
+     * with rounded corners (through `caption-side` CSS property).
+     */
+    @JvmField
+    val BLOCK_VIEW_EX: Extension = BlockViewExExtension()
+
+    /**
+     * Supports line-height property (%, px and no-unit) in paragraphs.
+     */
+    @JvmField
+    val PARAGRAPH_VIEW_EX: Extension = ParagraphViewExExtension()
+
+    /**
+     * Supports line-height property (%, px and no-unit) in paragraphs.
+     */
+    @JvmField
+    val LINE_VIEW_EX: Extension = LineViewExExtension()
 
     /**
      * Renders images with proper scaling according to sysScale
      */
     @JvmField
     val HIDPI_IMAGES: Extension = HiDpiImagesExtension()
+
+    /**
+     * Renders images in a fit-to-width manner.
+     *
+     * Too large image will not cause HTML editor pane to resize,
+     * but will be scaled down to fit the editor's width.
+     */
+    @JvmField
+    val FIT_TO_WIDTH_IMAGES: Extension = FitToWidthImageViewExtension()
+
+    /**
+     * Adds support for `<wbr>` tags
+     */
+    @JvmField
+    val WBR_SUPPORT: Extension = WbrSupportExtension()
 
     private class IconsExtension(private val existingIconsProvider: (key: String) -> Icon?) : Extension {
 
@@ -351,7 +389,7 @@ class ExtendableHTMLViewFactory internal constructor(
     }
   }
 
-  private class InlineViewExExtension: Extension {
+  private class InlineViewExExtension : Extension {
     override fun invoke(element: Element, view: View): View? {
       if (view.javaClass != InlineView::class.java) return null
       val attrs = view.attributes
@@ -364,11 +402,56 @@ class ExtendableHTMLViewFactory internal constructor(
           || attrs.getAttribute(CSS.Attribute.MARGIN_BOTTOM) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_LEFT) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
-          || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null) {
+          || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null
+          || attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
+            ?.asSafely<String>()?.endsWith("px") == true) {
         return InlineViewEx(element)
       }
       return null
     }
+  }
+
+  private class BlockViewExExtension : Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view.javaClass != BlockView::class.java) return null
+      val attrs = view.attributes
+      if (attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
+          ?.asSafely<String>()?.endsWith("px") == true) {
+        return BlockViewEx(element, (view as BlockView).axis)
+      }
+      return null
+    }
+  }
+
+  private class ParagraphViewExExtension : Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view.javaClass != ParagraphView::class.java) return null
+      val attrs = view.attributes
+      if (attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null) {
+        return ParagraphViewEx(element)
+      }
+      return null
+    }
+  }
+
+  private class LineViewExExtension : Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view !is ParagraphView || view.javaClass.simpleName != "LineView") return null
+      return LineViewEx(element)
+    }
+  }
+
+  private class FitToWidthImageViewExtension : Extension {
+    override fun invoke(element: Element, view: View): View? =
+      if (view is ImageView) FitToWidthImageView(element) else null
+  }
+
+  private class WbrSupportExtension : Extension {
+    override fun invoke(elem: Element, defaultView: View): View? =
+      if (elem.name.equals("wbr", true))
+        WbrView(elem)
+      else
+        null
   }
 }
 

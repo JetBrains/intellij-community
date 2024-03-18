@@ -3,10 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -16,7 +20,7 @@ import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
 
-  val submitReviewCommentDocument: Document
+  val pendingReviewComment: MutableStateFlow<String>
 
   @RequiresEdt
   fun loadPendingReview(): CompletableFuture<GHPullRequestPendingReview?>
@@ -30,9 +34,9 @@ interface GHPRReviewDataProvider {
   @RequiresEdt
   fun resetReviewThreads()
 
-  @RequiresEdt
-  fun submitReview(progressIndicator: ProgressIndicator, reviewId: String, event: GHPullRequestReviewEvent, body: String? = null)
-    : CompletableFuture<out Any?>
+  suspend fun createReview(event: GHPullRequestReviewEvent, body: String? = null): GHPullRequestPendingReview
+
+  suspend fun submitReview(reviewId: String, event: GHPullRequestReviewEvent, body: String? = null)
 
   @RequiresEdt
   fun createReview(progressIndicator: ProgressIndicator,
@@ -44,8 +48,7 @@ interface GHPRReviewDataProvider {
   @RequiresEdt
   fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<@NlsSafe String>
 
-  @RequiresEdt
-  fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
+  suspend fun deleteReview(reviewId: String)
 
   @RequiresEdt
   fun canComment(): Boolean
@@ -93,4 +96,22 @@ interface GHPRReviewDataProvider {
 
   @RequiresEdt
   fun addPendingReviewListener(disposable: Disposable, listener: () -> Unit)
+}
+
+fun GHPRReviewDataProvider.createThreadsRequestsFlow(): Flow<CompletableFuture<List<GHPullRequestReviewThread>>> = callbackFlow {
+  val disposable = Disposer.newDisposable()
+  addReviewThreadsListener(disposable) {
+    trySend(loadReviewThreads())
+  }
+  send(loadReviewThreads())
+  awaitClose { Disposer.dispose(disposable) }
+}
+
+fun GHPRReviewDataProvider.createPendingReviewRequestsFlow(): Flow<CompletableFuture<GHPullRequestPendingReview?>> = callbackFlow {
+  val disposable = Disposer.newDisposable()
+  addPendingReviewListener(disposable) {
+    trySend(loadPendingReview())
+  }
+  send(loadPendingReview())
+  awaitClose { Disposer.dispose(disposable) }
 }

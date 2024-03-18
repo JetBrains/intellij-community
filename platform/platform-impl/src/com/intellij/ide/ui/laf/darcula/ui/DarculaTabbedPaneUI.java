@@ -395,6 +395,14 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   }
 
   @Override
+  protected View getTextViewForTab(int tabIndex) {
+    if (tabPane.isValid()) {
+      return super.getTextViewForTab(tabIndex);
+    }
+    return null;
+  }
+
+  @Override
   protected int getTabLabelShiftX(int tabPlacement, int tabIndex, boolean isSelected) {
     int delta = SELECTION_HEIGHT.get();
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) {

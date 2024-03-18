@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -143,8 +143,8 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     myRbInConstructor = new JRadioButton();
     myRbInConstructor.setFocusable(false);
     myRbInConstructor.setText(RefactoringBundle.message("class.constructors.radio"));
-
-
+    boolean inOnlyConstructor = myIsCurrentMethodConstructor && myParentClass.getConstructors().length == 1;
+    myRbInConstructor.setEnabled(!myWillBeDeclaredStatic && !inOnlyConstructor);
 
     initializationPanel.add(myRbInCurrentMethod);
     initializationPanel.add(myRbInFieldDeclaration);
@@ -171,9 +171,6 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     myRbInFieldDeclaration.addItemListener(finalUpdater);
     if (myRbInSetUp != null) myRbInSetUp.addItemListener(finalUpdater);
 
-//    modifiersPanel.add(myCbFinal);
-//    modifiersPanel.add(myCbStatic);
-
     JPanel groupPanel = new JPanel(new GridLayout(1, 2));
     groupPanel.add(initializationPanel);
 
@@ -190,7 +187,8 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     if (locals) {
       myRbInFieldDeclaration.setEnabled(false);
     }
-    myRbInConstructor.setEnabled(initializedInConstructor);
+    boolean inOnlyConstructor = myIsCurrentMethodConstructor && myParentClass.getConstructors().length == 1;
+    myRbInConstructor.setEnabled(initializedInConstructor && !myWillBeDeclaredStatic && !inOnlyConstructor);
     enableFinal(false);
     if (myRbInSetUp != null){
       if (!initializedInSetup) {

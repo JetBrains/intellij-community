@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyListLiteralExpression extends PySequenceExpression {
+import com.jetbrains.python.ast.PyAstListLiteralExpression;
+
+public interface PyListLiteralExpression extends PyAstListLiteralExpression, PySequenceExpression {
 }

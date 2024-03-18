@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
@@ -28,7 +28,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
@@ -40,6 +39,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
 class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
@@ -85,7 +85,9 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     executeEntitiesGeneration(::generate)
   }
 
-  private fun executeEntitiesGeneration(generationFunction: (MutableEntityStorage, ModuleEntity, SourceRootEntity, Set<String>, Boolean, Boolean) -> Boolean) {
+  private fun executeEntitiesGeneration(
+    generationFunction: (MutableEntityStorage, ModuleEntity, SourceRootEntity, Set<String>, Boolean, Boolean, Boolean) -> Boolean
+  ) {
     // TODO :: Fix detection of entities in modules
     val regexToDetectWsmClasses = Regex(mergePatterns(
       // Regex for searching entities that implements `ModuleSettingsBase`
@@ -100,7 +102,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
     val regexToDetectOutdatedGeneratedFiles = Regex(
       // Regex for searching generated implementations of MetadataStorage
-      "object [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*MetadataStorage"
+      "object [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*MetadataStorage\\s*\\{"
     )
 
     val (storage, jpsProjectSerializer) = runBlocking { loadProjectIntellijProject() }
@@ -129,7 +131,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
       if (relativePaths.isNotEmpty()) {
         modulesToCheck.getOrPut(moduleEntity to sourceRoot) { mutableSetOf() }
-          .addAll(relativePaths.onlySubpaths().map { it.systemIndependentPath })
+          .addAll(relativePaths.onlySubpaths().map { it.invariantSeparatorsPathString })
       }
     }
 
@@ -139,6 +141,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
     var storageChanged = false
     modulesToCheck.forEach { (moduleEntity, sourceRoot), pathToPackages ->
+      val isTestModule = sourceRoot.rootType == "java-test"
       when (moduleEntity.name) {
         "intellij.platform.workspace.storage"-> {
           runWriteActionAndWait {
@@ -146,7 +149,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             removeWorkspaceStorageLibrary(modifiableModel)
             modifiableModel.commit()
           }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, true)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, true, isTestModule)
           storageChanged = storageChanged || projectModelUpdateResult
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -160,7 +163,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             removeWorkspaceJpsEntitiesLibrary(modifiableModel)
             modifiableModel.commit()
           }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
           storageChanged = storageChanged || projectModelUpdateResult
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -175,7 +178,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             addIntellijJavaLibrary(modifiableModel)
             modifiableModel.commit()
           }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
           storageChanged = storageChanged || projectModelUpdateResult
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -190,7 +193,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             addKotlinJpsCommonJar(modifiableModel)
             modifiableModel.commit()
           }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
           storageChanged = storageChanged || projectModelUpdateResult
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -200,11 +203,11 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
           }
         }
         in modulesWithAbstractTypes -> {
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false, isTestModule)
           storageChanged = storageChanged || projectModelUpdateResult
         }
         else -> {
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
           storageChanged = storageChanged || projectModelUpdateResult
         }
       }
@@ -218,10 +221,11 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun generate(
     storage: MutableEntityStorage, moduleEntity: ModuleEntity,
     sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    isTestModule: Boolean
   ): Boolean {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
-    myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
+    myFixture.copyDirectoryToProject(relativize.invariantSeparatorsPathString, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
     setupCustomIndent(moduleEntity)
 
@@ -231,7 +235,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
       val (srcRoot, genRoot) = generateCode(
         relativePathToEntitiesDirectory = packagePath,
         processAbstractTypes = processAbstractTypes,
-        explicitApiEnabled = explicitApiEnabled
+        explicitApiEnabled = explicitApiEnabled,
+        isTestModule = isTestModule
       )
 
       runWriteActionAndWait {
@@ -270,11 +275,12 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun generateAndCompare(
     storage: MutableEntityStorage, moduleEntity: ModuleEntity,
     sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    isTestModule: Boolean
   ): Boolean {
     val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
-    myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
+    myFixture.copyDirectoryToProject(relativize.invariantSeparatorsPathString, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
     setupCustomIndent(moduleEntity)
 
@@ -286,7 +292,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         dirWithExpectedImplFiles = implRootPath,
         pathToPackage = pathToPackage,
         processAbstractTypes = processAbstractTypes,
-        explicitApiEnabled = explicitApiEnabled
+        explicitApiEnabled = explicitApiEnabled,
+        isTestModule = isTestModule
       )
     }
 

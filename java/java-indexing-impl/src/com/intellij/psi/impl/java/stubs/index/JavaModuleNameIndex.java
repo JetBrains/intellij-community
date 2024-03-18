@@ -27,7 +27,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
-public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
+public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
   private static final JavaModuleNameIndex ourInstance = new JavaModuleNameIndex();
 
   public static JavaModuleNameIndex getInstance() {
@@ -55,7 +55,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
   }
 
   public Collection<PsiJavaModule> getModules(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope, true), PsiJavaModule.class);
+    Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiJavaModule.class);
     if (modules.size() > 1) {
       modules = filterVersions(project, modules);
     }

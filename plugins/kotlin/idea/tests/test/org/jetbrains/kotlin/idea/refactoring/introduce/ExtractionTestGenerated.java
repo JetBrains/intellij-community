@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce;
 
@@ -119,6 +119,21 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("outerItInsideNestedLamba.kt")
             public void testOuterItInsideNestedLamba() throws Exception {
                 runTest("testData/refactoring/introduceVariable/extractToScope/outerItInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("parameterInsideNestedLamba.kt")
+            public void testParameterInsideNestedLamba() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/parameterInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("unresolvedInsideNestedLamba.kt")
+            public void testUnresolvedInsideNestedLamba() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/unresolvedInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("variableInsideNestedLambda.kt")
+            public void testVariableInsideNestedLambda() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/variableInsideNestedLambda.kt");
             }
         }
 
@@ -289,6 +304,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testSingleEntrySuffix() throws Exception {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/singleEntrySuffix.kt");
             }
+
+            @TestMetadata("singleOccurence.kt")
+            public void testSingleOccurence() throws Exception {
+                runTest("testData/refactoring/introduceVariable/stringTemplates/singleOccurence.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -378,6 +398,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/dynamicType.kt");
             }
 
+            @TestMetadata("expressionBodyErrorType.kt")
+            public void testExpressionBodyErrorType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
+            }
+
             @TestMetadata("FewOccurrences.kt")
             public void testFewOccurrences() throws Exception {
                 runTest("testData/refactoring/introduceVariable/FewOccurrences.kt");
@@ -453,9 +478,19 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
             }
 
+            @TestMetadata("IntroduceDestructuringDeclarationAndCreateBlock.kt")
+            public void testIntroduceDestructuringDeclarationAndCreateBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
+            }
+
             @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
             public void testIntroduceLambdaAndCreateBlock() throws Exception {
                 runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
+            }
+
+            @TestMetadata("IntroduceLambdaAndCreateBlock2.kt")
+            public void testIntroduceLambdaAndCreateBlock2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
             }
 
             @TestMetadata("introduceToClass.kt")
@@ -498,6 +533,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/kt38449_int.kt");
             }
 
+            @TestMetadata("kt38449_substring.kt")
+            public void testKt38449_substring() throws Exception {
+                runTest("testData/refactoring/introduceVariable/kt38449_substring.kt");
+            }
+
+            @TestMetadata("kt38449_substrings.kt")
+            public void testKt38449_substrings() throws Exception {
+                runTest("testData/refactoring/introduceVariable/kt38449_substrings.kt");
+            }
+
             @TestMetadata("kt38449_unit.kt")
             public void testKt38449_unit() throws Exception {
                 runTest("testData/refactoring/introduceVariable/kt38449_unit.kt");
@@ -521,6 +566,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("ManyOccurrences.kt")
             public void testManyOccurrences() throws Exception {
                 runTest("testData/refactoring/introduceVariable/ManyOccurrences.kt");
+            }
+
+            @TestMetadata("ManyOccurrencesInSingleContainer.kt")
+            public void testManyOccurrencesInSingleContainer() throws Exception {
+                runTest("testData/refactoring/introduceVariable/ManyOccurrencesInSingleContainer.kt");
             }
 
             @TestMetadata("multilineBinaryExpression.kt")

@@ -16,6 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,7 +33,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodOverloadsParentMethodInspection extends BaseInspection {
+public final class MethodOverloadsParentMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean reportIncompatibleParameters = false;
 
@@ -102,7 +103,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
         return true;
       } 
       else {
-        if (PsiUtil.isLanguageLevel8OrHigher(method)) {
+        if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method)) {
           for (PsiClass superClass : psiClass.getSupers()) {
             if (processSupers(method, superClass, initialClass, visitedClasses)) {
               return true;

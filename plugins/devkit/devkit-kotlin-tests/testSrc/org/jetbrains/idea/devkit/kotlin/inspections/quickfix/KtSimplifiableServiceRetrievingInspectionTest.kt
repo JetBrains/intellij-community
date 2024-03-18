@@ -91,6 +91,10 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
   }
 
+  fun testReturnExpressionOfNullableMethod() {
+    doTest()
+  }
+
   private fun doTestWithServicesKt() {
     myFixture.configureByText(
       "services.kt",

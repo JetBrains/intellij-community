@@ -24,7 +24,7 @@ abstract class EditorConfigOptionBase(node: ASTNode) : EditorConfigDescribableEl
 
   final override fun getDescriptor(smart: Boolean): EditorConfigOptionDescriptor? =
     CachedValuesManager.getCachedValue(this, if (smart) SMART_VALUE_KEY else DUMB_VALUE_KEY) {
-      val descriptorManager = EditorConfigOptionDescriptorManager.instance
+      val descriptorManager = EditorConfigOptionDescriptorManager.getInstance(project)
       val descriptor = descriptorManager.getOptionDescriptor(key, keyParts, smart)
       CachedValueProvider.Result.create(descriptor, this)
     }

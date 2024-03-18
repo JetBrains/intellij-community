@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -549,7 +549,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
   private int toOffsetInFile(int fileId) {
     checkFileIdValid(fileId);
-    return (fileId - FSRecords.ROOT_FILE_ID) * bytesPerRow + HeaderLayout.HEADER_SIZE;
+    int offsetInFile = (fileId - FSRecords.ROOT_FILE_ID) * bytesPerRow + HeaderLayout.HEADER_SIZE;
+    if (offsetInFile < 0) {
+      throw new AssertionError("fileId(=" + fileId + ") x bytesPerRow(=" + bytesPerRow + ") is too big: " +
+                               "offsetInFile(=" + offsetInFile + ") must be positive");
+    }
+    return offsetInFile;
   }
 
   private void checkFileIdValid(int fileId) {

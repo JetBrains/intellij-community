@@ -161,10 +161,6 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
     return myAnsiColorKeys[value];
   }
 
-  public static TextAttributesKey[] getAnsiColorKeys() {
-    return myAnsiColorKeys;
-  }
-
   private static @NotNull ConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
     int foregroundColor = -1;
     int backgroundColor = -1;

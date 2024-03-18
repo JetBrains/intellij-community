@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.local
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -9,13 +9,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.xmlb.annotations.Property
-import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.serialization.Serializable
 
 @State(name = "FileTypeUsageLocalSummary", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
-class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>,
-                                  FileTypeUsageSummaryProvider,
-                                  SimpleModificationTracker() {
+private class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>,
+                                          FileTypeUsageSummaryProvider,
+                                          SimpleModificationTracker() {
   @Volatile
   private var state = FileTypeUsageLocalSummaryState()
 
@@ -28,7 +27,8 @@ class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSum
   override fun getFileTypeStats(): Map<String, FileTypeUsageSummary> {
     return if (state.data.isEmpty()) {
       emptyMap()
-    } else {
+    }
+    else {
       HashMap(state.data)
     }
   }
@@ -43,9 +43,9 @@ class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSum
   }
 }
 
+@Serializable
 data class FileTypeUsageLocalSummaryState(
-  @get:XMap(entryTagName = "fileType", keyAttributeName = "name")
-  @get:Property(surroundWithTag = false)
+  @JvmField
   internal val data: MutableMap<String, FileTypeUsageSummary> = HashMap()
 )
 

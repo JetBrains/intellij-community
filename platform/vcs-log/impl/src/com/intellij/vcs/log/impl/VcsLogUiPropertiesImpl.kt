@@ -18,9 +18,10 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
   private val eventDispatcher = EventDispatcher.create(PropertiesChangeListener::class.java)
   protected abstract val logUiState: S
 
-  override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+  @OptIn(ExperimentalStdlibApi::class)
+  override fun <T> get(property: VcsLogUiProperty<T>): T {
     if (appSettings.exists(property)) {
-      return appSettings.get(property)
+      return appSettings[property]
     }
     val state = logUiState
     val result: Any = when (property) {
@@ -39,9 +40,9 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
     return result as T
   }
 
-  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
     if (appSettings.exists(property)) {
-      appSettings.set(property, value)
+      appSettings[property] = value
       return
     }
 
@@ -54,7 +55,7 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
       MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.textFilterSettings.isRegex = value as Boolean
       MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.textFilterSettings.isMatchCase = value as Boolean
       is VcsLogHighlighterProperty -> logUiState.highlighters[(property as VcsLogHighlighterProperty).id] = value as Boolean
-      is TableColumnWidthProperty -> logUiState.columnIdWidth[property.getName()] = value as Int
+      is TableColumnWidthProperty -> logUiState.columnIdWidth[property.name] = value as Int
       else -> throw UnsupportedOperationException("Property $property does not exist")
     }
     onPropertyChanged(property)

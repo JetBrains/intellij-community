@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Supplier;
@@ -164,8 +162,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   private static final class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
-    private final DefaultActionGroup myCommonActionGroup;
     private final List<? extends MergeableLineMarkerInfo<?>> myMarkers;
+    private final List<ActionGroup> myGroups;
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, int passId) {
       this(markers, markers.get(0), passId);
@@ -180,36 +178,28 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       super(template.getElement(), getCommonTextRange(markers), template.getCommonIcon(markers),
             getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
             getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
-      myCommonActionGroup = getCommonActionGroup(markers);
       myMarkers = markers;
+      myGroups = ContainerUtil.map(markers, info -> info.createGutterRenderer().getPopupMenuActions());
       updatePass = passId;
     }
-
 
     public @NotNull List<? extends MergeableLineMarkerInfo<?>> getInfos() {
       return myMarkers;
     }
 
-    private static DefaultActionGroup getCommonActionGroup(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
-      DefaultActionGroup commonActionGroup = null;
-      boolean first = true;
-      for (MergeableLineMarkerInfo<?> marker : markers) {
-        GutterIconRenderer renderer = marker.createGutterRenderer();
-        if (renderer != null) {
-          ActionGroup actions = renderer.getPopupMenuActions();
-          if (actions != null) {
-            if (commonActionGroup == null) {
-              commonActionGroup = new DefaultActionGroup();
-            }
-            if (!first) {
-              commonActionGroup.add(Separator.getInstance());
-            }
-            first = false;
-            commonActionGroup.addAll(actions);
-          }
+    private DefaultActionGroup getCommonActionGroup(@NotNull MouseEvent mouseEvent) {
+      DefaultActionGroup commonActionGroup = new DefaultActionGroup();
+      for (int i = 0; i < myGroups.size(); i++) {
+        ActionGroup popupActions = myGroups.get(i);
+        if (popupActions != null) {
+          commonActionGroup.addSeparator();
+          commonActionGroup.addAll(popupActions);
+        }
+        else {
+          commonActionGroup.add(myMarkers.get(i).getNavigateAction(mouseEvent));
         }
       }
-      return commonActionGroup;
+      return commonActionGroup.getChildrenCount() == 0 ? null : commonActionGroup;
     }
 
     private static @NotNull TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
@@ -228,8 +218,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
     @Override
     public GutterIconRenderer createGutterRenderer() {
-      if (myCommonActionGroup == null) return super.createGutterRenderer();
-
       return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
@@ -242,8 +230,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
 
         @Override
-        public ActionGroup getPopupMenuActions() {
-          return myCommonActionGroup;
+        public @NotNull ActionGroup getPopupMenuActions() {
+          return ActionGroup.EMPTY_GROUP; // stub for remote client
+        }
+
+        @Override
+        public ActionGroup getPopupMenuActions(@NotNull MouseEvent mouseEvent) {
+          return getCommonActionGroup(mouseEvent);
         }
       };
     }
@@ -307,5 +300,31 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
       }).createPopup().show(new RelativePoint(e));
     }
+  }
+
+  protected AnAction getNavigateAction(@NotNull MouseEvent originalEvent) {
+    return new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        InputEvent event = e.getInputEvent();
+        MouseEvent mouseEvent = event instanceof MouseEvent ? (MouseEvent)event : originalEvent;
+        getNavigationHandler().navigate(mouseEvent, getElement());
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        PsiElement element = getElement();
+        if (element != null) {
+          Presentation presentation = e.getPresentation();
+          presentation.setIcon(getIcon());
+          presentation.setText(getElementPresentation(element));
+        }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+    };
   }
 }

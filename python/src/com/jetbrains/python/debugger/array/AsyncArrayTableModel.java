@@ -81,11 +81,6 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   }
 
   @Override
-  public boolean isCellEditable(int row, int col) {
-    return false;
-  }
-
-  @Override
   public Object getValueAt(final int row, final int col) {
     Pair<Integer, Integer> key = itemToChunkKey(row, col);
 

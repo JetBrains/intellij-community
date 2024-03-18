@@ -40,9 +40,11 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(t)] : PsiType:AssertionError
                             UIdentifier (Identifier (AssertionError)) [UIdentifier (Identifier (AssertionError))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AssertionError) [<init>] : PsiType:AssertionError
-                            USimpleNameReferenceExpression (identifier = t) [t] : PsiType:int
+                            UPolyadicExpression (operator = +) [t] : PsiType:String
+                                USimpleNameReferenceExpression (identifier = t) [t] : PsiType:int
                 UReturnExpression [return "OK"] : PsiType:Void
-                    ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                        ULiteralExpression (value = "OK") ["OK"] : PsiType:String
     UClass (name = Z) [public final class Z {...}]
         UField (name = data) [@org.jetbrains.annotations.NotNull private final var data: int]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

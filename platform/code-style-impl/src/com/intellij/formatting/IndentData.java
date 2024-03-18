@@ -11,7 +11,6 @@ public final class IndentData {
   private final int mySpaces;
 
   public IndentData(final int indentSpaces, final int spaces) {
-    assert indentSpaces >= 0 : "Indent spaces can't be negative";
     myIndentSpaces = indentSpaces;
     mySpaces = spaces;
   }
@@ -21,15 +20,15 @@ public final class IndentData {
   }
 
   public int getTotalSpaces() {
-    return mySpaces + myIndentSpaces;
+    return Math.max(mySpaces + myIndentSpaces, 0);
   }
 
   public int getIndentSpaces() {
-    return myIndentSpaces;
+    return Math.max(myIndentSpaces, 0);
   }
 
   public int getSpaces() {
-    return mySpaces;
+    return Math.max(mySpaces, 0);
   }
 
   public IndentData add(final IndentData childOffset) {
@@ -45,7 +44,7 @@ public final class IndentData {
   }
 
   public IndentInfo createIndentInfo() {
-    return new IndentInfo(0, myIndentSpaces, mySpaces);
+    return new IndentInfo(0, getIndentSpaces(), getSpaces());
   }
 
   @Override

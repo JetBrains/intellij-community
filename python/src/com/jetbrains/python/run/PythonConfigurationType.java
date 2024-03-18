@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
-import icons.PythonIcons;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +52,7 @@ public final class PythonConfigurationType implements ConfigurationType {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return  PythonPsiApiIcons.Python;
   }
 
   @Override

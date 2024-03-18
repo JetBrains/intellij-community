@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author shkate@jetbrains.com
  */
-public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
+public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   private final MethodNameTokenizerJava myMethodNameTokenizer = new MethodNameTokenizerJava();
   private final DocCommentTokenizer myDocCommentTokenizer = new DocCommentTokenizer();
   private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();

@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
   <component name="copyright">
     <Base>

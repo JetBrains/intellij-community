@@ -13,12 +13,16 @@ import java.net.URI
 import java.net.http.HttpResponse
 
 @SinceGitLab("9.0", note = "Not an exact version")
-suspend fun GitLabApi.Rest.getMergeRequestCommits(project: GitLabProjectCoordinates,
-                                                  mrIid: String): HttpResponse<out List<GitLabCommitRestDTO>> {
-  val request = request(project.restApiUri
-                          .resolveRelative("merge_requests")
-                          .resolveRelative(mrIid)
-                          .resolveRelative("commits")).GET().build()
+suspend fun GitLabApi.getMergeRequestCommitsURI(project: GitLabProjectCoordinates, mrIid: String): URI {
+  return project.restApiUri
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("commits")
+}
+
+@SinceGitLab("9.0", note = "Not an exact version")
+suspend fun GitLabApi.Rest.loadMergeRequestCommits(uri: URI): HttpResponse<out List<GitLabCommitRestDTO>> {
+  val request = request(uri).GET().build()
   return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_COMMITS) {
     loadJsonList<GitLabCommitRestDTO>(request)
   }

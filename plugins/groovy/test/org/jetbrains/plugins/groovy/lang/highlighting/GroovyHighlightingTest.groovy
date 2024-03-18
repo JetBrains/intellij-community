@@ -1,11 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.siyeh.ig.junit.AbstractTestClassNamingConvention
-import com.siyeh.ig.junit.TestClassNamingConvention
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
-import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt
@@ -289,14 +286,6 @@ class Bar {{
   void testIncorrectEscaping() { doTest() }
 
   void testExtendingOwnInner() { doTest() }
-
-  void testJUnitConvention() {
-    myFixture.addClass("package junit.framework; public class TestCase {}")
-    def inspection = new NewGroovyClassNamingConventionInspection()
-    inspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
-    inspection.setEnabled(true, AbstractTestClassNamingConvention.ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
-    doTest(inspection)
-  }
 
   void testDuplicateMethods() {
     myFixture.configureByText('a.groovy', '''\
@@ -1285,7 +1274,7 @@ class B extends A {
 
   void testUnresolvedQualifierHighlighting() {
     doTestHighlighting('''\
-<error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
+<error descr="Cannot resolve symbol 'Abc'">Abc</error>.<error descr="Cannot resolve symbol 'Cde'">Cde</error> abc
 ''')
   }
 
@@ -1433,7 +1422,7 @@ class X{}
 @A('ab')
 class Y{}
 
-<error descr="Duplicate modifier 'public'">public public</error> class Z {}
+public <error descr="Duplicate modifier 'public'">public</error> class Z {}
 ''')
   }
 

@@ -29,7 +29,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 abstract class LineStatusMarkerRenderer internal constructor(
   protected val project: Project?,
   protected val document: Document,
-  disposable: Disposable,
+  protected val disposable: Disposable,
   private val editorFilter: MarkupEditorFilter? = null,
   private val isMain: Boolean = true // tell clients that it's a "proper" vcs status renderer
 ) {

@@ -2,12 +2,9 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.processTools.getResultStdoutStr
-import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.createProcessWithResult
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
@@ -17,10 +14,6 @@ import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.withContext
-import javax.swing.SwingUtilities
 
 class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =
@@ -34,26 +27,6 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
   }
 
   fun isLocalTarget(): Boolean = targetEnvRequest is LocalTargetEnvironmentRequest
-
-
-  /**
-   * Runs python [command] and returns stdout or error
-   */
-  suspend fun getCommandOutput(indicator: ProgressIndicator, command: String): Result<String> {
-    assert(!SwingUtilities.isEventDispatchThread()) { "Can't run on EDT" }
-
-    val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
-    sdk.configureBuilderToRunPythonOnTarget(cmdBuilder)
-    cmdBuilder.addParameter("-c")
-    cmdBuilder.addParameter(command)
-    val cmd = cmdBuilder.build()
-
-
-    val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-    return withContext(Dispatchers.IO) {
-      environment.createProcessWithResult(cmd).mapFlat { it.getResultStdoutStr() }
-    }
-  }
 
   @Throws(ExecutionException::class)
   fun getInterpreterVersion(indicator: ProgressIndicator): String? {

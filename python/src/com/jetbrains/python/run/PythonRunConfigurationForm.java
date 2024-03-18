@@ -19,9 +19,9 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.extensions.FileChooserDescriptorExtKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 

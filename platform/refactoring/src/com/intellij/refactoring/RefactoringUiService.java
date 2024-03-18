@@ -38,9 +38,6 @@ public class RefactoringUiService {
   public void setStatusBarInfo(@NotNull Project project, @NotNull @StatusBarText String message) {
   }
 
-  public void displayPreview(Project project, ModelPatch patch) throws ProcessCanceledException {
-  }
-
   public ConflictsDialogBase createConflictsDialog(@NotNull Project project,
                                                    @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                    @Nullable Runnable doRefactoringRunnable,

@@ -3,9 +3,11 @@ package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.openapi.util.Condition;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiMethodUtil {
@@ -13,7 +15,7 @@ public final class PsiMethodUtil {
   public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
     if (PsiUtil.isLocalOrAnonymousClass(psiClass)) return false;
     if (psiClass.isAnnotationType()) return false;
-    if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
+    if (psiClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, psiClass)) return false;
     return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
   };
 
@@ -33,9 +35,18 @@ public final class PsiMethodUtil {
   @Nullable
   private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass) {
     for (final PsiMethod mainMethod : mainMethods) {
+      if (mainMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        continue;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !mainMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
       PsiClass containingClass = mainMethod.getContainingClass();
       if (containingClass != null && containingClass != aClass) {
-        if (containingClass.isInterface() && PsiUtil.getLanguageLevel(containingClass).isLessThan(LanguageLevel.JDK_21_PREVIEW)) {
+        if (containingClass.isInterface() && !instanceMainMethodsEnabled(containingClass)) {
+          continue;
+        }
+        if (mainMethod.hasModifierProperty(PsiModifier.STATIC) && !inheritedStaticMainEnabled(containingClass)) {
           continue;
         }
       }
@@ -44,17 +55,31 @@ public final class PsiMethodUtil {
     return null;
   }
 
+  private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiElement);
+    boolean is21Preview = languageLevel.equals(LanguageLevel.JDK_21_PREVIEW);
+    boolean is22PreviewOrOlder = languageLevel.isAtLeast(LanguageLevel.JDK_22_PREVIEW);
+    return is21Preview || is22PreviewOrOlder;
+  }
+
+  private static boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiElement);
+    return languageLevel.isAtLeast(LanguageLevel.JDK_22_PREVIEW);
+  }
+
   /**
-   * ATTENTION: does not check the method name equals "main"
+   * ATTENTION 1: does not check the method name equals "main"<br>
+   * ATTENTION 2: does not use implementations of {@link JavaMainMethodProvider}
+   * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
    *
-   * @param method  the method to check
+   * @param method the method to check
    * @return true, if the method satisfies a main method signature. false, otherwise
    */
   public static boolean isMainMethod(final PsiMethod method) {
     if (method == null || method.getContainingClass() == null) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+    if (instanceMainMethodsEnabled(method)) {
       if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
           !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
           !method.hasModifierProperty(PsiModifier.PROTECTED)) return false;
@@ -87,14 +112,13 @@ public final class PsiMethodUtil {
         return provider.hasMainMethod(psiClass);
       }
     }
-    return findMainMethod(psiClass.findMethodsByName("main", true), psiClass) != null;
+    final PsiMethod[] mainMethods = psiClass.findMethodsByName("main", true);
+    return findMainMethod(mainMethods, psiClass) != null;
   }
 
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
-    PsiMethod method = findMainMethod(aClass);
-    if (method != null && !method.hasModifierProperty(PsiModifier.STATIC) && aClass.isInterface()) return null;
-    return method;
+    return findMainMethod(aClass);
   }
 }

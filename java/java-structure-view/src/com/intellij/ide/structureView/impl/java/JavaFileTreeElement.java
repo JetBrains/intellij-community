@@ -20,6 +20,8 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,6 +45,11 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiClassOwner> imple
     PsiClassOwner element = getElement();
     if (element == null) return Collections.emptyList();
     PsiClass[] classes = element.getClasses();
+    PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(element);
+    if (implicitClass != null) {
+      return JavaClassTreeElement.getClassChildren(implicitClass);
+    }
+
     ArrayList<StructureViewTreeElement> result = new ArrayList<>();
     for (PsiClass aClass : classes) {
       result.add(new JavaClassTreeElement(aClass, false));

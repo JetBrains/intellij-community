@@ -15,8 +15,10 @@ import java.awt.*;
 
 /**
  * Should be moved into common place, used not only in SE
+ * @deprecated Use {@link com.intellij.ui.GroupHeaderSeparator} instead. (see UX-2329)
  */
 @ApiStatus.Internal
+@Deprecated
 public final class GroupTitleRenderer extends CellRendererPanel {
 
   private final SimpleColoredComponent titleLabel = new SimpleColoredComponent();

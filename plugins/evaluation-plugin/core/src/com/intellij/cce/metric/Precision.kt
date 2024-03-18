@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
@@ -9,6 +9,7 @@ class Precision : Metric {
   private val sample = mutableListOf<Double>()
   override val name = "Precision"
   override val description: String = "Ratio of selected proposals by all proposals"
+  override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.average()

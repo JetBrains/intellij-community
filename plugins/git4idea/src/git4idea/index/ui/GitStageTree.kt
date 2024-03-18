@@ -504,7 +504,7 @@ internal object GitStageTreeStateStrategy : ChangesTree.TreeStateStrategy<GitSta
       if (path.pathCount <= 1) return@promiseExpand TreeVisitor.Action.CONTINUE
 
       val topLevelNode = path.getPathComponent(1) as? TreeNode ?: return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN
-      if (TreeUtil.hasManyChildren(topLevelNode, ChangesTree.EXPAND_NODES_THRESHOLD)) return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN
+      if (TreeUtil.hasManyNodes(topLevelNode, ChangesTree.EXPAND_NODES_THRESHOLD)) return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN
 
       val nodeKind = TreeUtil.getLastUserObject(NodeKind::class.java, path)
       if (nodeKind == null || state.skipExpandForKind.contains(nodeKind)) return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN

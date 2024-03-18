@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Highlights doc strings in classes, functions, and files.
  */
-public class DocStringAnnotator extends PyAnnotator {
+public final class DocStringAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFile(final @NotNull PyFile node) {
@@ -64,7 +64,7 @@ public class DocStringAnnotator extends PyAnnotator {
 
   private void annotateDocStringStmt(final PyStringLiteralExpression stmt) {
     if (stmt != null) {
-      final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(stmt);
+      final DocStringFormat format = DocStringParser.getConfiguredDocStringFormat(stmt);
       final String[] tags;
       if (format == DocStringFormat.EPYTEXT) {
         tags = EpydocString.ALL_TAGS;

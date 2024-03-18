@@ -41,7 +41,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * User : catherine
  */
-public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
+public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
   /**
    * Keywords that start multiline block statements
@@ -142,7 +142,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return newText;
   }
 
-  protected boolean isSupportedFile(PsiFile file) {
+  private static boolean isSupportedFile(PsiFile file) {
     return file instanceof PyFile;
   }
 

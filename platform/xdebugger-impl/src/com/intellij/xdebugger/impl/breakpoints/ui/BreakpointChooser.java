@@ -68,7 +68,6 @@ public class BreakpointChooser {
     final Ref<Object> hackedSelection = Ref.create();
 
     myDetailController = new DetailController(new MasterController() {
-      final JLabel fake = new JLabel();
       @Override
       public ItemWrapper[] getSelectedItems() {
         if (hackedSelection.get() == null) {
@@ -78,8 +77,8 @@ public class BreakpointChooser {
       }
 
       @Override
-      public JLabel getPathLabel() {
-        return fake;
+      public @Nullable JLabel getPathLabel() {
+        return null;
       }
     });
 

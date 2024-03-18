@@ -5,7 +5,7 @@
     <fileType name="XML" extensions="fxml"/>
     <fileTypeUsageSchemaDescriptor schema="fxml"
                                    implementationClass="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
-    <fileEditorProvider implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
+    <fileEditorProvider id="JavaFX-Scene-Builder" implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
     <xml.xmlExtension implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxXmlExtension"/>
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>
     <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>

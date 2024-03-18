@@ -20,6 +20,11 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true; // to avoid retrieving and validating all children (SLOW!) just to figure out if it's a leaf
+  }
+
+  @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> getChildren() {
     Module module = getValue();
@@ -45,7 +50,8 @@ public class PackageViewModuleNode extends AbstractModuleNode{
 
   private void addSourceRoots(Module module, ArrayList<AbstractTreeNode<?>> result) {
     List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
-    result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
+    var nodeBuilder = new PackageNodeBuilder(module, false);
+    result.addAll(nodeBuilder.createPackageViewChildrenOnFiles(roots, myProject, getSettings()));
   }
 
   private void addLibraries(Module module, ArrayList<AbstractTreeNode<?>> result) {

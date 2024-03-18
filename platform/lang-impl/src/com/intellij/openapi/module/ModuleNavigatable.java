@@ -24,9 +24,4 @@ public final class ModuleNavigatable implements Navigatable {
   public boolean canNavigate() {
     return !module.isDisposed();
   }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
 }

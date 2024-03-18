@@ -499,7 +499,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     Insets i = getInsets();
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, DarculaUIUtil.MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, JBUI.CurrentTheme.ComboBox.minimumSize().width + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;

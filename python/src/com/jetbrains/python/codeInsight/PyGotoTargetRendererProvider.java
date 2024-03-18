@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyGotoTargetRendererProvider implements GotoTargetRendererProvider {
+public final class PyGotoTargetRendererProvider implements GotoTargetRendererProvider {
   @Override
   public PsiElementListCellRenderer getRenderer(@NotNull final PsiElement element, @NotNull GotoTargetHandler.GotoData gotoData) {
     if (element instanceof PyElement && element instanceof PsiNamedElement) return new PyElementListCellRenderer();

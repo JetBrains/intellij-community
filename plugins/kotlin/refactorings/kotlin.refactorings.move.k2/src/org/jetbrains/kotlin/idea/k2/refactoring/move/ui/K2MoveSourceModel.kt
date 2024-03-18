@@ -11,20 +11,23 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.list.createTargetPresentationRenderer
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
-import org.jetbrains.kotlin.psi.*
-import javax.swing.Icon
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
 
 sealed interface K2MoveSourceModel<T : KtElement> {
     val elements: Set<T>
 
-    fun toDescriptor(): K2MoveSourceDescriptor<T>
+    fun toDescriptor(): K2MoveSourceDescriptor<T>?
 
     context(Panel)
-    fun buildPanel(onError: (String?, JComponent) -> Unit)
+    fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
     class FileSource(files: Set<KtFile>) : K2MoveSourceModel<KtFile> {
         override var elements: Set<KtFile> = files
@@ -33,25 +36,26 @@ sealed interface K2MoveSourceModel<T : KtElement> {
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
         context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit) {
+        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
-            class FileInfo(val icon: Icon?, val file: KtFile)
+            class PresentableFile(val file: KtFile, val presentation: TargetPresentation)
 
-            val fileInfos = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
-                elements.map { file -> FileInfo(file.getIcon(0), file) }
+            val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
+                elements.map { file ->
+                    val presentation = TargetPresentation.builder(file.name)
+                        .icon(file.getIcon(0))
+                        .locationText(file.virtualFile.parent.path)
+                        .presentation()
+                    PresentableFile(file, presentation)
+                }
             }
 
             group(RefactoringBundle.message("move.files.group")) {
-                lateinit var list: JBList<FileInfo>
+                lateinit var list: JBList<PresentableFile>
                 row {
-                    list = JBList(CollectionListModel(fileInfos))
-                    list.cellRenderer = createTargetPresentationRenderer { fileInfo ->
-                        TargetPresentation.builder(fileInfo.file.name)
-                            .icon(fileInfo.icon)
-                            .locationText(fileInfo.file.virtualFile.parent.path)
-                            .presentation()
-                    }
+                    list = JBList(CollectionListModel(presentableFiles))
+                    list.cellRenderer = createTargetPresentationRenderer { presentableFile -> presentableFile.presentation }
                     cell(list).resizableColumn()
                 }
                 onApply {
@@ -65,17 +69,20 @@ sealed interface K2MoveSourceModel<T : KtElement> {
         override var elements: Set<KtNamedDeclaration> = declarations
             private set
 
+        private lateinit var memberSelectionPanel: KotlinMemberSelectionPanel
+
         override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
         context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit) {
-            fun getSourceFiles(elementsToMove: Collection<KtNamedDeclaration>): List<KtFile> = elementsToMove
-                .map(KtPureElement::getContainingKtFile)
-                .distinct()
+        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
+                .mapNotNull { it.parent as? KtDeclarationContainer }
+                .toSet()
 
-            fun getAllDeclarations(files: Collection<KtFile>): List<KtNamedDeclaration> = files
-                .flatMap<KtFile, KtDeclaration> { file -> if (file.isScript()) file.script!!.declarations else file.declarations }
+            fun getAllDeclarations(container: Collection<KtDeclarationContainer>): Set<KtNamedDeclaration> = container
+                .flatMap { it.declarations }
                 .filterIsInstance<KtNamedDeclaration>()
+                .toSet()
 
             fun memberInfos(
                 elementsToMove: Set<KtNamedDeclaration>,
@@ -89,18 +96,26 @@ sealed interface K2MoveSourceModel<T : KtElement> {
             val project = elements.firstOrNull()?.project ?: return
 
             val memberInfos = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
-                val sourceFiles = getSourceFiles(elements)
-                val allDeclarations = getAllDeclarations(sourceFiles)
-                return@underModalProgress memberInfos(elements, allDeclarations)
+                val containers = getDeclarationsContainers(elements)
+                val allDeclarations = getAllDeclarations(containers)
+                return@underModalProgress memberInfos(elements, allDeclarations.toList())
             }
 
-            lateinit var memberSelectionPanel: KotlinMemberSelectionPanel
-            row {
-                memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
-            }.resizableRow()
-            onApply {
-                elements = memberSelectionPanel.table.selectedMemberInfos.map { it.member }.toSet()
-            }
+            group(RefactoringBundle.message("move.declarations.group"), indent = false) {
+                row {
+                    memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
+                    val table = memberSelectionPanel.table
+                    table.addMemberInfoChangeListener {
+                        elements = table.selectedMemberInfos.map { it.member }.toSet()
+                        if (elements.isEmpty()) {
+                            onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
+                        } else {
+                            onError(null, memberSelectionPanel.table)
+                        }
+                        revalidateButtons()
+                    }
+                }.resizableRow()
+            }.topGap(TopGap.NONE).bottomGap(BottomGap.SMALL).resizableRow()
         }
     }
 }

@@ -4,8 +4,12 @@ package com.intellij.terminal.completion
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
 import org.jetbrains.terminal.completion.*
+import java.io.File
 
-internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
+internal class CommandTreeSuggestionsProvider(
+  private val commandSpecManager: CommandSpecManager,
+  private val runtimeDataProvider: ShellRuntimeDataProvider
+) {
   suspend fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {
       is SubcommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
@@ -21,19 +25,24 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
   }
 
   /**
-   * Returns the list of the commands available in the Shell.
-   * Returned [ShellCommand] objects contain only names, and a 'loadSpec' reference to load full command spec (if it exists).
+   * Returns the list of the commands and aliases available in the Shell.
+   * Returned [ShellCommand] objects contain only names, descriptions, and a 'loadSpec' reference to load full command spec (if it exists).
    */
   suspend fun getAvailableCommands(): List<ShellCommand> {
     val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
-    return sequence {
+    val commands = sequence {
       yieldAll(shellEnv.keywords)
       yieldAll(shellEnv.builtins)
       yieldAll(shellEnv.functions)
       yieldAll(shellEnv.commands)
-    }.distinct()
-      .map { ShellCommand(names = listOf(it), loadSpec = it) }
-      .toList()
+    }.map {
+      commandSpecManager.getShortCommandSpec(it) ?: ShellCommand(names = listOf(it))
+    }
+    val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
+      ShellCommand(names = listOf(alias), description = """Alias for "${command}"""")
+    }
+    // place aliases first, so the alias will have preference over the command, if there is the command with the same name
+    return (aliases + commands).distinctBy { it.names.single() }.toList()
   }
 
   fun getAvailableArguments(node: OptionNode): List<ShellArgument> {
@@ -59,7 +68,7 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
     val suggestions = mutableListOf<BaseSuggestion>()
 
     // suggest subcommands and options only if the provided value is not a file path
-    if (!nextNodeText.contains('/')) {
+    if (!nextNodeText.contains(File.separatorChar)) {
       val spec = node.spec
       if (node.children.isEmpty()) {
         suggestions.addAll(spec.subcommands)
@@ -145,22 +154,24 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
       val fileSuggestions = getFileSuggestions(arg, nextNodeText, onlyDirectories = suggestFolders && !suggestAllFiles)
       suggestions.addAll(fileSuggestions)
     }
-    if (!suggestAllFiles && !suggestFolders || !nextNodeText.contains('/')) {
+    if (!suggestAllFiles && !suggestFolders || !nextNodeText.contains(File.separatorChar)) {
       suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
     }
     return suggestions
   }
 
-  private suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
-    val basePath = if (nextNodeText.contains('/')) {
-      nextNodeText.substringBeforeLast('/') + "/"
+  suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
+    val separator = File.separatorChar
+    val nodeText = nextNodeText.removePrefix("\"").removeSuffix("'")
+    val basePath = if (nodeText.contains(separator)) {
+      nodeText.substringBeforeLast(separator) + separator
     }
     else "."
     val files = runtimeDataProvider.getFilesFromDirectory(basePath)
     return files.asSequence()
-      .filter { !onlyDirectories || it.endsWith('/') }
+      .filter { !onlyDirectories || it.endsWith(separator) }
       // do not suggest './' and '../' directories if the user already typed some path
-      .filter { basePath == "." || (it != "./" && it != "../") }
+      .filter { basePath == "." || (it != ".$separator" && it != "..$separator") }
       .map { ShellArgumentSuggestion(ShellSuggestion(names = listOf(it)), arg) }
       // add an empty choice to be able to handle the case when the folder is chosen
       .let { if (basePath != ".") it.plus(ShellArgumentSuggestion(ShellSuggestion(names = listOf("")), arg)) else it }

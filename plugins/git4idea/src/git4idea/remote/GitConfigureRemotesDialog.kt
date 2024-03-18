@@ -4,7 +4,6 @@ package git4idea.remote
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.sortRepositories
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -42,7 +41,7 @@ private val LOG = logger<GitConfigureRemotesDialog>()
 class GitConfigureRemotesDialog(val project: Project, val repositories: Collection<GitRepository>) :
     DialogWrapper(project, true, getModalityType()) {
 
-  private val git = service<Git>()
+  private val git = Git.getInstance()
 
   private val NAME_COLUMN = 0
   private val URL_COLUMN = 1

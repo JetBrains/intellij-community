@@ -166,6 +166,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-DcodeWithMe.memory.only.certificate=true", // system keychain
       "-Dide.slow.operations.assertion=false",
       "-Deap.login.enabled=false",
+      "-Didea.updates.url=http://127.0.0.1",
       "-Didea.config.path=${guestConfigFolder!!.absolutePathString()}",
       "-Didea.system.path=${guestSystemFolder!!.absolutePathString()}",
       "-Didea.log.path=${guestLogFolder!!.absolutePathString()}",

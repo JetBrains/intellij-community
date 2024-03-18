@@ -8,6 +8,7 @@ private const val NEW_THIRD_PARTY_THREAD_POST_URL = "https://exceptions.marketpl
 /**
  * Submits error reports in plugins to [JetBrains Marketplace](https://plugins.jetbrains.com/).
  */
+@Suppress("unused") // only to be used by 3rd party plugins
 @InternalIgnoreDependencyViolation
 class JetBrainsMarketplaceErrorReportSubmitter: ITNReporter(NEW_THIRD_PARTY_THREAD_POST_URL) {
   override fun getReportActionText(): String =

@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k1" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k1" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module-library">
       <library name="completion-performance-kotlin" type="repository">

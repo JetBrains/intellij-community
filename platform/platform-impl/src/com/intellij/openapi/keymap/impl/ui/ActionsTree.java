@@ -9,13 +9,12 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -52,8 +51,6 @@ import java.util.List;
 import java.util.*;
 
 public final class ActionsTree {
-  private static final Logger LOG = Logger.getInstance(ActionsTree.class);
-
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
@@ -69,8 +66,6 @@ public final class ActionsTree {
   private Condition<? super AnAction> myBaseFilter;
 
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
-
-  private final Set<String> myBrokenActions = new HashSet<>();
 
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
@@ -145,12 +140,12 @@ public final class ActionsTree {
         TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         DefaultMutableTreeNode node = path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
         Object userObject = node == null ? null : node.getUserObject();
-        if (!(userObject instanceof String)) {
+        if (!(userObject instanceof String actionId)) {
           return null;
         }
 
-        AnAction action = ActionManager.getInstance().getActionOrStub((String)userObject);
-        return action == null ? null : action.getTemplatePresentation().getDescription();
+        Presentation presentation = ActionsTreeUtil.getTemplatePresentation(actionId, null);
+        return presentation == null ? null : presentation.getDescription();
       }
     });
 
@@ -227,11 +222,10 @@ public final class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Condition<? super AnAction>
-      condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
+    Condition<? super AnAction> condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
 
-    if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()) {
+    if ((StringUtil.isNotEmpty(filter) || shortcut != null) && mainGroup.initIds().isEmpty()) {
       condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
       mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false, condFilter);
     }
@@ -360,7 +354,7 @@ public final class ActionsTree {
 
   public void selectAction(String actionId) {
     String path = myMainGroup.getActionQualifiedPath(actionId, false);
-    String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
+    String boundId = path == null ? ActionManagerEx.getInstanceEx().getActionBinding(actionId) : null;
     if (path == null && boundId != null) {
       path = myMainGroup.getActionQualifiedPath(boundId, false);
       if (path == null) {
@@ -544,12 +538,15 @@ public final class ActionsTree {
       }
       else if (userObject instanceof String) {
         actionId = (String)userObject;
-        boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
-        AnAction action = ActionManager.getInstance().getAction(actionId);
-        text = getActionText(action, actionId, null);
-        if (action != null) {
-          icon = action.getTemplatePresentation().getIcon();
-          tooltipText = action.getTemplatePresentation().getDescription();
+        boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : ActionManagerEx.getInstanceEx().getActionBinding(actionId);
+        Presentation presentation = ActionsTreeUtil.getTemplatePresentation(actionId, null);
+        if (presentation == null) {
+          text = actionId;
+        }
+        else {
+          text = StringUtil.notNullize(presentation.getText(), actionId);
+          icon = presentation.getIcon();
+          tooltipText = presentation.getDescription();
         }
         changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
       }
@@ -604,12 +601,16 @@ public final class ActionsTree {
       SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
 
       if (boundId != null) {
-        append(" ");
-        append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-        append(" ");
+        AnAction boundAction = ActionManager.getInstance().getActionOrStub(boundId);
+        if (boundAction != null) {
+          append(" ");
+          append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          append(" ");
 
-        String boundText = getActionText(ActionManager.getInstance().getAction(boundId), boundId, actionId);
-        append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+          Presentation boundPresentation = ActionsTreeUtil.getTemplatePresentation(boundId, actionId);
+          String boundText = StringUtil.notNullize(boundPresentation == null ? null : boundPresentation.getText(), boundId);
+          append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+        }
       }
 
       if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
@@ -638,18 +639,6 @@ public final class ActionsTree {
         result.add(new PropertyBean("Action ID", userObject, true));
       }
       return result;
-    }
-
-    private @NlsActions.ActionText String getActionText(@Nullable AnAction action, @NlsSafe String actionId, @Nullable String boundSourceId) {
-      String text = action == null ? null : action.getTemplateText();
-      if (text == null || text.length() == 0) { //fill dynamic presentation gaps
-        if (myBrokenActions.add(actionId)) {
-          LOG.warn("Template presentation is not defined for '" + actionId + "' - showing internal ID in UI" +
-                   (boundSourceId != null ? ", bound by " + boundSourceId : ""));
-        }
-        text = actionId;
-      }
-      return text;
     }
 
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
@@ -723,13 +712,13 @@ public final class ActionsTree {
             if (shortcuts != null && shortcuts.length > 0) {
               StringBuilder sb = new StringBuilder();
               for (Shortcut shortcut : shortcuts) {
-                if (sb.length() > 0) {
+                if (!sb.isEmpty()) {
                   sb.append(", ");
                 }
                 sb.append(KeyMapBundle.message("accessible.name.shortcut"));
                 sb.append(KeymapUtil.getShortcutText(shortcut));
               }
-              if (sb.length() > 0) {
+              if (!sb.isEmpty()) {
                 shortcutName = sb.toString();
               }
             }
@@ -810,7 +799,7 @@ public final class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
-    if (abbreviations != null && abbreviations.size() > 0) {
+    if (abbreviations != null && !abbreviations.isEmpty()) {
       for (String abbreviation : abbreviations) {
         totalWidth += metrics.stringWidth(abbreviation);
         totalWidth += 10;

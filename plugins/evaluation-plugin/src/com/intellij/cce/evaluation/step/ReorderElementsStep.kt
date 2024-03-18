@@ -54,7 +54,7 @@ class ReorderElementsStep(config: Config, project: Project) :
           workspace2.featuresStorage.saveSession(newSession, fileSessionsInfo.filePath)
         }
         workspace2.sessionsStorage.saveSessions(
-          FileSessionsInfo(fileSessionsInfo.filePath, fileSessionsInfo.text, resultSessions)
+          FileSessionsInfo(fileSessionsInfo.projectName, fileSessionsInfo.filePath, fileSessionsInfo.text, resultSessions)
         )
       }
       workspace2.sessionsStorage.saveMetadata()

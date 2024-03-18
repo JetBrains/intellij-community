@@ -3,7 +3,6 @@ package com.intellij.ide.startup
 
 import com.intellij.configurationStore.checkUnknownMacros
 import com.intellij.ide.IdeCoreBundle
-import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.serviceAsync
@@ -41,7 +40,6 @@ private class CheckProjectActivity : ProjectActivity {
 
     val watcher = (LocalFileSystem.getInstance() as? LocalFileSystemImpl)?.fileWatcher
     if (watcher == null || !watcher.isOperational) {
-      ProjectFsStatsCollector.watchedRoots(project, -1)
       return
     }
 
@@ -53,7 +51,6 @@ private class CheckProjectActivity : ProjectActivity {
     logger.debug("FW/roots waiting finished")
 
     val manualWatchRoots = watcher.manualWatchRoots
-    var pctNonWatched = 0
     if (manualWatchRoots.isNotEmpty()) {
       val unwatched = roots.filter { root -> root.isInLocalFileSystem && manualWatchRoots.any { VfsUtilCore.isAncestorOrSelf(it, root) } }
       if (unwatched.isNotEmpty()) {
@@ -61,9 +58,7 @@ private class CheckProjectActivity : ProjectActivity {
         watcher.notifyOnFailure(message, null)
         logger.info("unwatched roots: ${unwatched.map { it.presentableUrl }}")
         logger.info("manual watches: ${manualWatchRoots}")
-        pctNonWatched = (100.0 * unwatched.size / roots.size).toInt()
       }
     }
-    ProjectFsStatsCollector.watchedRoots(project, pctNonWatched)
   }
 }

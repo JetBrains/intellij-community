@@ -3,13 +3,15 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE;
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE;
+import static com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE;
+import static com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil.JDK_INTERNAL_PREVIEW_FEATURE;
 
 /**
  * This is the base visitor that checks if an element belongs to the preview feature API.
@@ -39,7 +41,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
       if (module == null) return;
 
       PsiAnnotation annotation = getPreviewFeatureAnnotation(module);
-      HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
+      @Nullable JavaFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
       if (feature == null) return;
 
       String description = JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", module.getName());
@@ -53,7 +55,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
         PsiElement resolved = element.resolve();
         if (resolved instanceof PsiClass psiClass) {
           PsiAnnotation annotation = getPreviewFeatureAnnotation(psiClass);
-          HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
+          JavaFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
           if (feature == null) continue;
           String description =
             JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", psiClass.getQualifiedName());
@@ -76,8 +78,8 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
 
   /**
    * The method validates that the language level in the project where an element the context refers to is annotated with
-   * either {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} or
-   * {@link HighlightingFeature#JDK_INTERNAL_JAVAC_PREVIEW_FEATURE} is sufficient.
+   * either {@link PreviewFeatureUtil#JDK_INTERNAL_PREVIEW_FEATURE} or
+   * {@link PreviewFeatureUtil#JDK_INTERNAL_JAVAC_PREVIEW_FEATURE} is sufficient.
    *
    * @param context the element that should be highlighted
    * @param reference the callsite of a preview feature element
@@ -85,7 +87,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
    */
   private void checkPreviewFeature(@NotNull PsiElement context, @NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiModifierListOwner owner) {
     PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
-    HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
+    JavaFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
     if (feature == null) return;
     if (isParticipating(reference, owner)) return;
 
@@ -114,7 +116,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
 
   protected abstract void registerProblem(PsiElement element,
                                           @InspectionMessage String description,
-                                          HighlightingFeature feature,
+                                          JavaFeature feature,
                                           PsiAnnotation annotation);
 
   /**

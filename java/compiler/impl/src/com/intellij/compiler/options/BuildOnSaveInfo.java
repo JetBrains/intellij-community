@@ -19,7 +19,7 @@ public class BuildOnSaveInfo extends ActionOnSaveBackedByOwnConfigurable<Compile
    * In Android Studio, the 'Build project automatically' checkbox is available on the {@link com.android.tools.idea.gradle.project.build.compiler.GradleCompilerSettingsConfigurable}
    * page, and the 'Build project' check box will be contributed to the 'Action on Save' page by {@link com.android.tools.idea.gradle.project.build.compiler.GradleCompilerSettingsConfigurable.BuildOnSaveInfoProvider}.
    */
-  public static class BuildOnSaveInfoProvider extends ActionOnSaveInfoProvider {
+  public static final class BuildOnSaveInfoProvider extends ActionOnSaveInfoProvider {
     @Override
     protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
       if (context.getSettings().find(CompilerConfigurable.CONFIGURABLE_ID) == null) {

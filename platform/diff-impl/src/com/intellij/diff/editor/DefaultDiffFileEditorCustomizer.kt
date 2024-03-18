@@ -18,7 +18,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
 
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
-    var escapeHandler = file.getUserData(DiffVirtualFileBase.ESCAPE_HANDLER)
+    var escapeHandler = (file as? DiffVirtualFileBase)?.createEscapeHandler()
                         ?: DisposeDiffEditorEscapeAction(editor)
     if (escapeHandler !is DiffEditorEscapeAction) {
       escapeHandler = DiffEditorEscapeDelegatingAction(escapeHandler)

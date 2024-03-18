@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class RecordAugmentProvider extends PsiAugmentProvider {
+public final class RecordAugmentProvider extends PsiAugmentProvider {
   @Override
   protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
                                                                     @NotNull Class<Psi> type,

@@ -27,33 +27,20 @@ class GitStageDiffAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
-    updateAvailability(e)
+    updateStageDiffAvailability(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).listSelection(true)
-      .map {
-        when (it) {
-          is GitFileStatusNode -> createTwoSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
-          is Change -> ChangeDiffRequestProducer.create(project, it)
-          else -> null
-        }
+    val stageTree = e.getData(GitStageDataKeys.GIT_STAGE_TREE) ?: return
+    val producers = stageTree.listSelection(true).map {
+      when (it) {
+        is GitFileStatusNode -> createTwoSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
+        is Change -> ChangeDiffRequestProducer.create(project, it)
+        else -> null
       }
-    DiffManager.getInstance().showDiff(project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
-  }
-
-  companion object {
-    @JvmStatic
-    fun updateAvailability(e: AnActionEvent) {
-      val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
-      val changes = e.getData(VcsDataKeys.CHANGES)
-      e.presentation.isEnabled = e.project != null &&
-                                 (nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty || !changes.isNullOrEmpty())
-      e.presentation.isVisible =
-        if (e.isFromActionToolbar && ExperimentalUI.isNewUI()) false
-        else e.presentation.isEnabled || e.isFromActionToolbar
     }
+    DiffManager.getInstance().showDiff(project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 }
 
@@ -71,8 +58,20 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(false)
-      .map { createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false) }
+    val stageTree = e.getData(GitStageDataKeys.GIT_STAGE_TREE) ?: return
+    val producers = stageTree.statusNodesListSelection(false).map {
+      createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
+    }
     DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
+}
+
+fun updateStageDiffAvailability(e: AnActionEvent) {
+  val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+  val changes = e.getData(VcsDataKeys.CHANGES)
+  e.presentation.isEnabled = e.project != null &&
+                             (nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty || !changes.isNullOrEmpty())
+  e.presentation.isVisible =
+    if (e.isFromActionToolbar && ExperimentalUI.isNewUI()) false
+    else e.presentation.isEnabled || e.isFromActionToolbar
 }

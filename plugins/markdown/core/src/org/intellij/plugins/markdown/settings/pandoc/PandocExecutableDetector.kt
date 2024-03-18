@@ -28,6 +28,8 @@ internal object PandocExecutableDetector {
     )
   }
 
+  private val PANDOC_VERSION_OUTPUT_FIRST_LINE = "pandoc(?:.exe)? .*".toRegex()
+
   fun obtainPandocVersion(project: Project, executable: String = "pandoc"): String? {
     return ProgressManager.getInstance().run(GetVersionPandocTask(project, executable))
   }
@@ -65,11 +67,10 @@ internal object PandocExecutableDetector {
 
     private fun extractVersion(lines: List<String>): String? {
       val line = lines.first()
-      val firstLinePrefix = "pandoc "
-      if (!line.startsWith(firstLinePrefix)) {
+      if (!line.matches(PANDOC_VERSION_OUTPUT_FIRST_LINE)) {
         return null
       }
-      return line.substringAfter(firstLinePrefix)
+      return line.substringAfter(' ')
     }
   }
 

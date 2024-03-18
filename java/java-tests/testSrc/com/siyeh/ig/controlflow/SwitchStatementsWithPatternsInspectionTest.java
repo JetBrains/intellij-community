@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SwitchStatementsWithPatternsInspectionTest extends LightJavaInspectionTestCase {
-
   private final SwitchStatementsWithoutDefaultInspection myInspection = new SwitchStatementsWithoutDefaultInspection();
 
   @Override
@@ -34,6 +33,6 @@ public class SwitchStatementsWithPatternsInspectionTest extends LightJavaInspect
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 }

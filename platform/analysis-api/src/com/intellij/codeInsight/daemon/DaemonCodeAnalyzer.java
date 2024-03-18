@@ -2,12 +2,14 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -117,8 +119,8 @@ public abstract class DaemonCodeAnalyzer {
     class AnnotatorStatistics {
       /** the annotator this statistics is generated for */
       public final Annotator annotator;
-      /** timestamp (in {@link System#nanoTime} sense) of the {@link #annotator} creation in {@link com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor} */
-      public long annotatorStartStamp;
+      /** timestamp (in {@link System#nanoTime} sense) of the {@link #annotator} creation */
+      public long annotatorStartStamp = System.nanoTime();
       /** timestamp (in {@link System#nanoTime} sense) of the first call to {@link com.intellij.lang.annotation.AnnotationHolder#newAnnotation} by this annotator in this annotation session (or {@code 0} if there were no annotations produced) */
       public long firstAnnotationStamp;
       /** the annotation passed to the first call to {@link com.intellij.lang.annotation.AnnotationHolder#newAnnotation} by this annotator in this annotation session (or {@code null} if there were no annotations produced) */
@@ -127,11 +129,24 @@ public abstract class DaemonCodeAnalyzer {
       public long lastAnnotationStamp;
       /** the annotation passed to the last call to {@link com.intellij.lang.annotation.AnnotationHolder#newAnnotation} by this annotator in this annotation session (or {@code null} if there were no annotations produced) */
       public Annotation lastAnnotation;
-      /** timestamp (in {@link System#nanoTime} sense) of the finish of the {@link com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor#analyze} method */
+      /** timestamp (in {@link System#nanoTime} sense) of the moment when all the {@link Annotator#annotate(PsiElement, AnnotationHolder)} methods are called */
       public long annotatorFinishStamp;
 
       AnnotatorStatistics(@NotNull Annotator annotator) {
         this.annotator = annotator;
+      }
+
+      @Override
+      public String toString() {
+        return "AnnotatorStatistics{" +
+               "annotator=" + annotator +
+               ", annotatorStartStamp=" + annotatorStartStamp +
+               ", firstAnnotationStamp=" + firstAnnotationStamp +
+               ", firstAnnotation=" + firstAnnotation +
+               ", lastAnnotationStamp=" + lastAnnotationStamp +
+               ", lastAnnotation=" + lastAnnotation +
+               ", annotatorFinishStamp=" + annotatorFinishStamp +
+               '}';
       }
     }
 

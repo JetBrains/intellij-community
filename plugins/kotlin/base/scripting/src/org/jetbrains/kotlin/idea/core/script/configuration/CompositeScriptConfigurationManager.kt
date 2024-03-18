@@ -6,14 +6,19 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.ProjectJdkTable.JDK_TABLE_TOPIC
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -121,37 +126,37 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
 
     init {
         val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
+        connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+            override fun beforeChanged(event: VersionedStorageChange) {
+                val storageBefore = event.storageBefore
+                val storageAfter = event.storageAfter
+                val changes = event.getChanges<SdkEntity>().ifEmpty { return }
 
-        connection.subscribe(JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
-            override fun jdkAdded(jdk: Sdk) = updater.checkInvalidSdks()
-            override fun jdkNameChanged(jdk: Sdk, previousName: String) = updater.checkInvalidSdks()
-            override fun jdkRemoved(jdk: Sdk) = updater.checkInvalidSdks(remove = jdk)
+                changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::newEntity)
+                    .mapNotNull { it.findSdkBridge(storageAfter) }
+                    .firstOrNull()?.let {
+                        updater.checkInvalidSdks()
+                        return
+                    }
+
+                val outdated: List<Sdk> = changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::oldEntity)
+                    .mapNotNull { it.findSdkBridge(storageBefore) }
+                    .toList()
+
+                if (outdated.isNotEmpty()) {
+                    updater.checkInvalidSdks(*outdated.toTypedArray())
+                }
+            }
         })
-    }
-
-    /**
-     * Returns script classpath roots
-     * Loads script configuration if classpath roots don't contain [file] yet
-     */
-    private fun getActualClasspathRoots(file: VirtualFile): ScriptClassRootsCache {
-        try {
-            // we should run default loader if this [file] is not cached in [classpathRoots]
-            // and it is not supported by any of [plugins]
-            // getOrLoadConfiguration will do this
-            // (despite that it's result becomes unused, it still may populate [classpathRoots])
-            getOrLoadConfiguration(file, null)
-        } catch (cancelled: ProcessCanceledException) {
-            // read actions may be cancelled if we are called by impatient reader
-        }
-
-        return this.classpathRoots
     }
 
     override fun getScriptSdk(file: VirtualFile): Sdk? =
         if (ScratchUtil.isScratch(file)) {
             ProjectRootManager.getInstance(project).projectSdk
         } else {
-            getActualClasspathRoots(file).getScriptSdk(file)
+            classpathRoots.getScriptSdk(file)
         }
 
     override fun getFirstScriptsSdk(): Sdk? =

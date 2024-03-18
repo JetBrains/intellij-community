@@ -17,13 +17,14 @@ import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
+import java.lang.ref.WeakReference
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
-private class RepaintMnemonicRequest(@JvmField val focusOwner: Component, @JvmField val pressed: Boolean)
+private class RepaintMnemonicRequest(@JvmField val focusOwnerRef: WeakReference<Component>, @JvmField val pressed: Boolean)
 
 private class LaFMnemonicDispatcher : IdeEventQueue.EventDispatcher {
   override fun dispatch(e: AWTEvent): Boolean {
@@ -34,7 +35,7 @@ private class LaFMnemonicDispatcher : IdeEventQueue.EventDispatcher {
     LookAndFeelThemeAdapter.isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
     val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
     check(service<MnemonicListenerService>().repaintRequests.tryEmit(focusOwner?.let {
-      RepaintMnemonicRequest(focusOwner = focusOwner, pressed = LookAndFeelThemeAdapter.isAltPressed)
+      RepaintMnemonicRequest(focusOwnerRef = WeakReference(focusOwner), pressed = LookAndFeelThemeAdapter.isAltPressed)
     }))
     return false
   }
@@ -56,7 +57,7 @@ private class MnemonicListenerService(coroutineScope: CoroutineScope) {
         .collectLatest {
           it?.let {
             withContext(repaintDispatcher) {
-              repaintMnemonics(focusOwner = it.focusOwner, pressed = it.pressed)
+              repaintMnemonics(focusOwner = it.focusOwnerRef.get() ?: return@withContext, pressed = it.pressed)
             }
           }
         }

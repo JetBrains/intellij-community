@@ -1,23 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.ClassNameConstants;
-import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
-import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.StructClass;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.java.decompiler.code.CodeConstants.CLINIT_NAME;
 import static org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
+import static org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent.FUNCTION_CAST;
+import static org.jetbrains.java.decompiler.struct.gen.VarType.VARTYPE_STRING;
 
 public final class SwitchHelper {
 
@@ -41,43 +44,99 @@ public final class SwitchHelper {
   }
 
   /**
-   * Method searches and simplifies "switch-on-string" patterns in the statement graph.
+   * Method searches and simplifies "switch-on-references" patterns in the statement graph.
    *
    * @param root statement to start traversal
+   * @param cl - struct class to check java version
    */
-  public static void simplifySwitchesOnString(@NotNull RootStatement root) {
-    List<SwitchOnStringCandidate> candidates = new ArrayList<>();
-    collectSwitchesOnString(root, new ArrayList<>(
-      Arrays.asList(new SwitchRecognizer.JavacRecognizer(), new SwitchRecognizer.EcjRecognizer())), candidates);
+  public static void simplifySwitchesOnReferences(@NotNull RootStatement root, StructClass cl) {
+    List<SwitchOnCandidate> candidates = new ArrayList<>();
+    ArrayList<SwitchRecognizer> recognizers = new ArrayList<>(
+      Arrays.asList(new StringSwitchRecognizer.JavacStringRecognizer(), new StringSwitchRecognizer.EcjStringRecognizer()));
+    if (cl.hasRecordPatternSupport() && DecompilerContext.getOption(IFernflowerPreferences.CONVERT_PATTERN_SWITCH)) {
+      recognizers.add(new SwitchPatternHelper.JavacReferenceRecognizer());
+    }
+    collectSwitchesOn(root, recognizers, candidates, new HashSet<>());
     if (candidates.isEmpty()) return;
-    Map<VarExprent, Statement> tempVarAssignments = new HashMap<>();
-    candidates.forEach(candidate -> candidate.simplify(tempVarAssignments));
+    List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
+    candidates.forEach(candidate -> tempVarAssignments.addAll(candidate.prepareTempAssignments()));
+    if (!checkAssignmentsToDelete(root, tempVarAssignments)) {
+      return;
+    }
+    candidates.forEach(candidate -> candidate.simplify());
     removeTempVariableDeclarations(tempVarAssignments);
   }
 
-  private static void collectSwitchesOnString(@NotNull Statement statement,
-                                              @NotNull List<SwitchRecognizer> recognizers,
-                                              @NotNull List<SwitchOnStringCandidate> candidates) {
-    if (statement instanceof SwitchStatement switchStatement) {
-      SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadExprent();
-      Exprent switchSelector = Objects.requireNonNull(switchExprent).getValue();
-      if (switchSelector instanceof InvocationExprent) {
-        SwitchRecognizer usedRecognizer = null;
-        for (SwitchRecognizer recognizer : recognizers) {
-          SwitchOnStringCandidate switchCandidate = recognizer.recognize(switchStatement, (InvocationExprent)switchSelector);
-          if (switchCandidate == null) continue;
-          candidates.add(switchCandidate);
-          usedRecognizer = recognizer;
-          break;
+  /**
+   * @return true, if all similar nested assignments have been processed, false otherwise,
+   * it helps to prevent some false positive cases
+   */
+  static boolean checkAssignmentsToDelete(@NotNull Statement parent,
+                                          @NotNull List<TempVarAssignmentItem> items) {
+    Map<VarExprent, List<VarExprent>> collected = items.stream().map(t -> t.varExprent()).collect(Collectors.groupingBy(t -> t));
+    return checkRecursivelyAssignmentsToDelete(parent, collected);
+  }
+
+  private static boolean checkRecursivelyAssignmentsToDelete(@NotNull Statement statement,
+                                                             @NotNull Map<VarExprent, List<VarExprent>> collected) {
+    List<Exprent> exprents = statement.getExprents();
+    if (exprents != null) {
+      for (Exprent exprent : exprents) {
+        if (!(exprent instanceof AssignmentExprent assignmentExprent)) {
+          continue;
         }
-        if (usedRecognizer != null) {
-          // most probably we need to leave only one recognizer
-          recognizers.retainAll(Collections.singletonList(usedRecognizer));
+        Exprent right = assignmentExprent.getRight();
+        Exprent left = assignmentExprent.getLeft();
+        boolean containsLeft = containVar(collected, left);
+        if (right instanceof VarExprent varExprent) {
+          boolean containsRight = containVar(collected, varExprent);
+          if (containsLeft || !containsRight) {
+            continue;
+          }
+          return false;
+        }
+        if (right instanceof FunctionExprent functionExprent &&
+            functionExprent.getFuncType() == FUNCTION_CAST &&
+            functionExprent.getLstOperands().size() == 2 &&
+            functionExprent.getLstOperands().get(1) instanceof ConstExprent) {
+          Exprent operand = functionExprent.getLstOperands().get(0);
+          if (operand instanceof VarExprent varExprent) {
+            boolean containsRight = containVar(collected, varExprent);
+            if (containsLeft || !containsRight) {
+              continue;
+            }
+            return false;
+          }
         }
       }
     }
     for (Statement child : statement.getStats()) {
-      collectSwitchesOnString(child, recognizers, candidates);
+      if (!checkRecursivelyAssignmentsToDelete(child, collected)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static void collectSwitchesOn(@NotNull Statement statement,
+                                        @NotNull List<SwitchRecognizer> recognizers,
+                                        @NotNull List<SwitchOnCandidate> candidates,
+                                        @NotNull Set<SwitchStatement> usedSwitchStatement) {
+    if (statement instanceof SwitchStatement switchStatement && !usedSwitchStatement.contains(switchStatement)) {
+      SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadExprent();
+      Exprent switchSelector = Objects.requireNonNull(switchExprent).getValue();
+      if (switchSelector instanceof InvocationExprent) {
+        for (SwitchRecognizer recognizer : recognizers) {
+          SwitchOnCandidate switchCandidate = recognizer.recognize(switchStatement, (InvocationExprent)switchSelector);
+          if (switchCandidate == null) continue;
+          candidates.add(0, switchCandidate);
+          usedSwitchStatement.addAll(switchCandidate.usedSwitch());
+          break;
+        }
+      }
+    }
+    for (Statement child : statement.getStats()) {
+      collectSwitchesOn(child, recognizers, candidates, usedSwitchStatement);
     }
   }
 
@@ -89,7 +148,7 @@ public final class SwitchHelper {
       FieldExprent arrayField = (FieldExprent)array.getArray();
       ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(arrayField.getClassname());
       if (classNode == null) return mapping;
-      MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
+      MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CLINIT_NAME, "()V");
       if (wrapper != null && wrapper.root != null) {
         wrapper.getOrBuildGraph().iterateExprents(exprent -> {
           if (exprent instanceof AssignmentExprent assignment) {
@@ -101,10 +160,11 @@ public final class SwitchHelper {
           return 0;
         });
       }
-
-    } else if (array.getArray().type == Exprent.EXPRENT_INVOCATION) { // Eclipse compiler
-      InvocationExprent invocationExprent = (InvocationExprent) array.getArray();
-      ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invocationExprent.getClassName());
+    }
+    else if (array.getArray().type == Exprent.EXPRENT_INVOCATION) { // Eclipse compiler
+      InvocationExprent invocationExprent = (InvocationExprent)array.getArray();
+      ClassesProcessor.ClassNode classNode =
+        DecompilerContext.getClassProcessor().getMapRootClasses().get(invocationExprent.getClassName());
       if (classNode == null) return mapping;
       MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(invocationExprent.getName(), "()[I");
       if (wrapper != null && wrapper.root != null) {
@@ -113,7 +173,7 @@ public final class SwitchHelper {
             Exprent left = assignment.getLeft();
             if (left.type == Exprent.EXPRENT_ARRAY) {
               Exprent indexExprent = ((ArrayExprent)left).getIndex();
-              if (indexExprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent) indexExprent).getName().equals("ordinal")) {
+              if (indexExprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)indexExprent).getName().equals("ordinal")) {
                 mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
               }
             }
@@ -155,62 +215,161 @@ public final class SwitchHelper {
     Exprent field = ((ArrayExprent)exprent).getArray();
     Exprent index = ((ArrayExprent)exprent).getIndex();
     boolean isJavacEnumArray = field instanceof FieldExprent &&
-      (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
-        (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
+                               (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
+                                (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
     boolean isEclipseEnumArray = field instanceof InvocationExprent &&
-      ((InvocationExprent)field).getName().startsWith("$SWITCH_TABLE");
+                                 ((InvocationExprent)field).getName().startsWith("$SWITCH_TABLE");
     return isJavacEnumArray || isEclipseEnumArray;
   }
 
-  static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
+  record TempVarAssignmentItem(@NotNull VarExprent varExprent, @NotNull Statement statement) {
+
+  }
+
+  static void removeTempVariableDeclarations(@NotNull List<TempVarAssignmentItem> tempVarAssignments) {
     if (tempVarAssignments.isEmpty()) return;
-    for (Statement statement : new HashSet<>(tempVarAssignments.values())) {
+    Set<Statement> visited = new HashSet<>();
+    Set<Statement> statements = tempVarAssignments.stream().map(a -> a.statement()).collect(Collectors.toSet());
+    Map<VarExprent, List<VarExprent>> vars = tempVarAssignments.stream().map(a -> a.varExprent()).collect(Collectors.groupingBy(t -> t));
+    for (Statement statement : statements) {
       Statement parent = statement;
       while (parent != null) {
-        boolean removed = false;
-        List<Exprent> varExprents;
-        if (parent.getFirst().type == StatementType.BASIC_BLOCK) {
-          varExprents = parent.getFirst().getExprents();
+        if (visited.contains(parent)) {
+          break;
         }
-        else if (parent.type == StatementType.TRY_CATCH) {
-          varExprents = parent.getVarDefinitions();
+        visited.add(parent);
+        List<Exprent> candidates;
+        if (parent.getFirst() != null && parent.getFirst().type == StatementType.BASIC_BLOCK) {
+          candidates = parent.getFirst().getExprents();
+        }
+        else if (parent.type == StatementType.TRY_CATCH || parent.type == StatementType.SEQUENCE) {
+          candidates = parent.getVarDefinitions();
         }
         else {
-          varExprents = Collections.emptyList();
+          candidates = Collections.emptyList();
         }
-        for (int i = 0; i < varExprents.size(); i++) {
-          Exprent exprent = varExprents.get(i);
-          Exprent assignmentExprent = null;
-          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-            assignmentExprent = exprent;
-            exprent = ((AssignmentExprent)exprent).getLeft();
-          }
-          if (exprent.type != Exprent.EXPRENT_VAR) continue;
-          VarExprent varExprent = (VarExprent)exprent;
-          if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
-            .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
-            varExprents.remove(assignmentExprent == null ? varExprent : assignmentExprent);
-            removed = true;
-            break;
-          }
+        if (candidates == null) {
+          candidates = new ArrayList<>();
         }
-        if (removed) break;
+        List<List<Exprent>> listVarExprents = new ArrayList<>();
+        listVarExprents.add(candidates);
+        if (parent.getExprents() != null) {
+          listVarExprents.add(parent.getExprents());
+        }
+        List<Exprent> toDelete = new ArrayList<>();
+        for (List<Exprent> varExprents : listVarExprents) {
+          for (int i = 0; i < varExprents.size(); i++) {
+            Exprent exprent = varExprents.get(i);
+            Exprent assignmentExprent = null;
+            if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+              assignmentExprent = exprent;
+              exprent = ((AssignmentExprent)exprent).getLeft();
+            }
+            if (exprent.type != Exprent.EXPRENT_VAR) continue;
+            VarExprent varExprent = (VarExprent)exprent;
+            if (containVar(vars, varExprent) || (varExprent.isDefinition() && vars.containsKey(varExprent))) {
+              toDelete.add(assignmentExprent == null ? varExprent : assignmentExprent);
+            }
+          }
+          varExprents.removeAll(toDelete);
+        }
         parent = parent.getParent();
       }
     }
   }
 
-  private abstract static class SwitchRecognizer {
+  private static boolean containVar(@NotNull Map<VarExprent, List<VarExprent>> vars, @Nullable Exprent exprent) {
+    if (exprent == null) {
+      return false;
+    }
+    List<VarExprent> exprents = vars.get(exprent);
+    if (exprents == null) {
+      return false;
+    }
+    for (VarExprent varExprent : exprents) {
+      if (exprent == varExprent) {
+        //exactly the same reference
+        return true;
+      }
+    }
+    return false;
+  }
 
+  public static void prepareForRules(@NotNull Statement statement, @NotNull StructClass cl) {
+    if (!cl.hasEnhancedSwitchSupport()) {
+      return;
+    }
+    if (statement instanceof SwitchStatement switchStatement) {
+      if (canBeRules(switchStatement)) {
+        switchStatement.setCanBeRule(true);
+        prepareForRules(switchStatement);
+      }
+    }
+    for (Statement child : statement.getStats()) {
+      prepareForRules(child, cl);
+    }
+  }
+
+  private static boolean canBeRules(@NotNull SwitchStatement statement) {
+    if (statement.isLabeled()) {
+      return false;
+    }
+    //only for simplification
+    for (List<Exprent> value : statement.getCaseValues()) {
+      if (value.size() != 1) {
+        return false;
+      }
+    }
+
+    for (Statement caseStatement : statement.getCaseStatements()) {
+      //only for simplification and not to create long rules
+      if (caseStatement instanceof SequenceStatement || !caseStatement.getStats().isEmpty() ||
+          caseStatement.getExprents() != null &&
+          caseStatement.getExprents().size() > 1) {
+        return false;
+      }
+      List<StatEdge> successorEdges = caseStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+      if (successorEdges.size() != 1) {
+        return false;
+      }
+      StatEdge edge = successorEdges.get(0);
+      if (edge.getType() != EdgeType.BREAK) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static void prepareForRules(@NotNull SwitchStatement statement) {
+    for (Statement caseStatement : statement.getCaseStatements()) {
+      List<StatEdge> successorEdges = caseStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+      if (successorEdges.size() != 1) {
+        continue;
+      }
+      StatEdge edge = successorEdges.get(0);
+      if (edge.getType() == EdgeType.BREAK && edge.explicit && !edge.labeled) {
+        edge.explicit = false;
+      }
+    }
+  }
+
+  interface SwitchRecognizer {
     @Nullable
-    abstract SwitchOnStringCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
+    SwitchOnCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
+  }
+
+  private abstract static class StringSwitchRecognizer implements SwitchRecognizer {
+
+    @Override
+    @Nullable
+    public abstract SwitchOnStringCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
 
     @NotNull
     Set<Object> findRealCaseValuesHashCodes(@NotNull SwitchStatement switchStatement) {
       // noinspection SSBasedInspection
       return switchStatement.getCaseValues().stream()
-        // We take only buckets that don't contain null value.
-        // null value represents default branch and no temp variable is assigned there.
+        // we take only buckets that don't contain null value.
+        // Null value represents default branch and no temp variable is assigned there.
         // Also, the bucket with null value may also contain fictive case values,
         // generated for tableswitch instruction (see com.sun.tools.javac.jvm.Gen.visitSwitch)
         .filter(values -> values.stream().noneMatch(Objects::isNull)).flatMap(Collection::stream)
@@ -242,7 +401,7 @@ public final class SwitchHelper {
       return caseLabelValue instanceof String ? (String)caseLabelValue : null;
     }
 
-    private static class JavacRecognizer extends SwitchRecognizer {
+    private static class JavacStringRecognizer extends StringSwitchRecognizer {
       /**
        * From javac doc:
        * The general approach used is to translate a single
@@ -258,8 +417,8 @@ public final class SwitchHelper {
        *
        * @param firstSwitch    outer or first switch
        * @param switchSelector <code>firstSwitch</code> selector
-       * @return recognized switch candidate
-       * @see com.sun.tools.javac.comp.Lower#visitStringSwitch(com.sun.tools.javac.tree.JCTree.JCSwitch)
+       * @return recognized a switch candidate
+       * see Lower.visitStringSwitch(JCTree.JCSwitch) in javac
        */
       @Nullable
       @Override
@@ -285,7 +444,7 @@ public final class SwitchHelper {
           if (!realCaseValueHashCodes.remove(caseLabelValue.hashCode())) return null;
           if (ifStatement.getIfstat() == null) return null;
           List<Exprent> ifStatementExprents = ifStatement.getIfstat().getExprents();
-          if (ifStatementExprents.size() != 1) return null;
+          if (ifStatementExprents == null || ifStatementExprents.size() != 1) return null;
           if (ifStatementExprents.get(0).type != Exprent.EXPRENT_ASSIGNMENT) return null;
           AssignmentExprent assignment = (AssignmentExprent)ifStatementExprents.get(0);
           if (assignment.getLeft().type != Exprent.EXPRENT_VAR || assignment.getRight().type != Exprent.EXPRENT_CONST) return null;
@@ -312,12 +471,25 @@ public final class SwitchHelper {
         if (siblingSwitchExprent == null) return null;
         if (siblingSwitchExprent.type != Exprent.EXPRENT_SWITCH) return null;
         if (!tmpVarAssignTo.equals(((SwitchExprent)siblingSwitchExprent).getValue())) return null;
+
+        Exprent secondSwitchSelector = secondSwitch.getHeadExprent();
+        if (secondSwitchSelector == null || secondSwitchSelector.type != Exprent.EXPRENT_SWITCH) return null;
+        Statement firstStatementInFirstSwitch = firstSwitch.getFirst();
+        if (firstStatementInFirstSwitch.type != StatementType.BASIC_BLOCK) return null;
+        Statement firstStatementInSecondSwitch = secondSwitch.getFirst();
+        if (firstStatementInSecondSwitch.type != StatementType.BASIC_BLOCK) return null;
+        List<Exprent> firstSwitchExprents = firstStatementInFirstSwitch.getExprents();
+        if (firstSwitchExprents == null || firstStatementInSecondSwitch.getExprents() == null) return null;
+
         return new SwitchOnStringCandidate.JavacSwitchCandidate(firstSwitch, firstSwitchSelectorQualifier, tmpVarAssignTo, secondSwitch,
-                                                                mappedCaseLabelValues);
+                                                                mappedCaseLabelValues,
+                                                                firstSwitchExprents,
+                                                                secondSwitchSelector,
+                                                                firstStatementInSecondSwitch);
       }
     }
 
-    private static class EcjRecognizer extends SwitchRecognizer {
+    private static class EcjStringRecognizer extends StringSwitchRecognizer {
       @Nullable
       @Override
       public SwitchOnStringCandidate recognize(@NotNull SwitchStatement switchStatement, @NotNull InvocationExprent switchSelector) {
@@ -337,8 +509,8 @@ public final class SwitchHelper {
           if (switchSelectorQualifier.type == Exprent.EXPRENT_ASSIGNMENT) {
             tempSwitchSelectorQualifier = ((AssignmentExprent)switchSelectorQualifier).getLeft();
           }
-          else if (switchSelectorQualifier.type == Exprent.EXPRENT_CONST) {
-            // Ecj inlines compile constants, so we try to find a temp variable that is assigned to the same const value.
+          else if (switchSelectorQualifier.type == Exprent.EXPRENT_CONST && switchStatement.getFirst().getExprents() != null) {
+            // Ecj inlines compile constants, so we try to find a temp variable assigned to the same const value.
             // It should be in the first basic block.
             Exprent finalSwitchSelectorQualifier = switchSelectorQualifier;
             tempSwitchSelectorQualifier = switchStatement.getFirst().getExprents().stream()
@@ -370,18 +542,24 @@ public final class SwitchHelper {
     }
   }
 
-  private abstract static class SwitchOnStringCandidate {
-    abstract void simplify(Map<VarExprent, Statement> tempVarAssignments);
+  interface SwitchOnCandidate {
+    void simplify();
 
+    Set<SwitchStatement> usedSwitch();
+
+    List<TempVarAssignmentItem> prepareTempAssignments();
+  }
+
+  private abstract static class SwitchOnStringCandidate implements SwitchOnCandidate {
     @Nullable
     private static AssignmentExprent addTempVarAssignment(@NotNull Exprent exprent,
                                                           @NotNull VarExprent varExprent,
                                                           @NotNull Statement statement,
-                                                          @NotNull Map<VarExprent, Statement> tempVarAssignments) {
+                                                          @NotNull List<TempVarAssignmentItem> tempVarAssignments) {
       if (exprent.type != Exprent.EXPRENT_ASSIGNMENT) return null;
       AssignmentExprent assignment = (AssignmentExprent)exprent;
       if (!varExprent.isDefinition() && varExprent.equals(assignment.getLeft())) {
-        tempVarAssignments.put(varExprent, statement);
+        tempVarAssignments.add(new TempVarAssignmentItem(varExprent, statement));
         return assignment;
       }
       return null;
@@ -389,42 +567,83 @@ public final class SwitchHelper {
 
     private static class JavacSwitchCandidate extends SwitchOnStringCandidate {
       @NotNull private final SwitchStatement firstSwitch;
-      @NotNull private final VarExprent firstSwitchSelector;
-      @NotNull private final VarExprent tmpVarInFirstSwitch;
       @NotNull private final SwitchStatement secondSwitch;
+      @NotNull private final VarExprent firstSwitchSelector;
+      @NotNull private final Exprent secondSwitchSelector;
+      @NotNull private final VarExprent tmpVarInFirstSwitch;
       @NotNull private final Map<Integer, @NotNull String> mappedCaseLabelValues;
+      @NotNull private final List<Exprent> firstSwitchExprents;
+      @NotNull private final Statement firstStatementInSecondSwitch;
+      @NotNull private final NewSelector newSelector;
+      @NotNull private final List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
 
       JavacSwitchCandidate(@NotNull SwitchStatement firstSwitch,
                            @NotNull VarExprent firstSwitchSelector,
                            @NotNull VarExprent tmpVarInFirstSwitch,
                            @NotNull SwitchStatement secondSwitch,
-                           @NotNull Map<Integer, String> mappedCaseLabelValues) {
+                           @NotNull Map<Integer, String> mappedCaseLabelValues,
+                           @NotNull List<Exprent> firstSwitchExprents,
+                           @NotNull Exprent secondSwitchSelector,
+                           @NotNull Statement firstStatementInSecondSwitch) {
         this.firstSwitch = firstSwitch;
         this.secondSwitch = secondSwitch;
         this.firstSwitchSelector = firstSwitchSelector;
+        this.secondSwitchSelector = secondSwitchSelector;
+
         this.tmpVarInFirstSwitch = tmpVarInFirstSwitch;
         this.mappedCaseLabelValues = mappedCaseLabelValues;
+
+        this.firstSwitchExprents = firstSwitchExprents;
+        this.firstStatementInSecondSwitch = firstStatementInSecondSwitch;
+
+        newSelector = getSelector(tempVarAssignments, firstSwitchExprents);
       }
 
       @Override
-      void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
-        Exprent secondSwitchSelector = secondSwitch.getHeadExprent();
-        if (secondSwitchSelector == null || secondSwitchSelector.type != Exprent.EXPRENT_SWITCH) return;
-        Statement firstStatementInFirstSwitch = firstSwitch.getFirst();
-        if (firstStatementInFirstSwitch.type != StatementType.BASIC_BLOCK) return;
-        Statement firstStatementInSecondSwitch = secondSwitch.getFirst();
-        if (firstStatementInSecondSwitch.type != StatementType.BASIC_BLOCK) return;
+      public void simplify() {
 
         for (List<Exprent> values : secondSwitch.getCaseValues()) {
           for (int i = 0; i < values.size(); i++) {
             ConstExprent constExprent = (ConstExprent)values.get(i);
             if (constExprent == null) continue;
             String labelValue = mappedCaseLabelValues.get(constExprent.getIntValue());
-            values.set(i, new ConstExprent(VarType.VARTYPE_STRING, labelValue, null));
+            values.set(i, new ConstExprent(VARTYPE_STRING, labelValue, null));
           }
         }
 
-        List<Exprent> firstSwitchExprents = firstStatementInFirstSwitch.getExprents();
+        List<Exprent> newExprents;
+        if (newSelector.lastExprentIndex() > 0) {
+          newExprents = List.copyOf(firstSwitchExprents.subList(0, newSelector.lastExprentIndex()));
+        }
+        else {
+          newExprents = Collections.emptyList();
+        }
+        Statement firstSwitchParent = firstSwitch.getParent();
+        Statement secondSwitchParent = secondSwitch.getParent();
+        boolean parentsAreTheSame = firstSwitchParent == secondSwitchParent;
+        if (parentsAreTheSame || secondSwitchParent == firstSwitch) {
+          firstSwitchParent.replaceStatement(firstSwitch, secondSwitch);
+        }
+        else if (secondSwitchParent.getParent() == firstSwitch) {
+          firstSwitchParent.replaceStatement(firstSwitch, secondSwitchParent);
+        }
+        if (parentsAreTheSame) {
+          firstSwitchParent.getStats().removeWithKey(secondSwitch.id);
+        }
+        List<Exprent> exprents = firstStatementInSecondSwitch.getExprents();
+        if (exprents != null) {
+          exprents.addAll(0, newExprents);
+        }
+        secondSwitchSelector.replaceExprent(((SwitchExprent)secondSwitchSelector).getValue(), newSelector.newSelector());
+      }
+
+      @Override
+      public Set<SwitchStatement> usedSwitch() {
+        return Set.of(firstSwitch, secondSwitch);
+      }
+
+      @NotNull
+      private NewSelector getSelector(@NotNull List<TempVarAssignmentItem> tempVarAssignments, List<Exprent> firstSwitchExprents) {
         int lastExprentIndex = firstSwitchExprents.size();
         if (lastExprentIndex > 0) {
           AssignmentExprent assignment = addTempVarAssignment(firstSwitchExprents.get(lastExprentIndex - 1), tmpVarInFirstSwitch,
@@ -442,36 +661,24 @@ public final class SwitchHelper {
             newSelector = assignment.getRight();
           }
         }
-        List<Exprent> newExprents;
-        if (lastExprentIndex > 0) {
-          newExprents = List.copyOf(firstSwitchExprents.subList(0, lastExprentIndex));
-        }
-        else {
-          newExprents = Collections.emptyList();
-        }
-        Statement firstSwitchParent = firstSwitch.getParent();
-        Statement secondSwitchParent = secondSwitch.getParent();
-        boolean parentsAreTheSame = firstSwitchParent == secondSwitchParent;
-        if (parentsAreTheSame || secondSwitchParent == firstSwitch) {
-          firstSwitchParent.replaceStatement(firstSwitch, secondSwitch);
-        }
-        else if (secondSwitchParent.getParent() == firstSwitch) {
-          firstSwitchParent.replaceStatement(firstSwitch, secondSwitchParent);
-        }
-        if (parentsAreTheSame) {
-          firstSwitchParent.getStats().removeWithKey(secondSwitch.id);
-        }
-        firstStatementInSecondSwitch.getExprents().addAll(0, newExprents);
-        secondSwitchSelector.replaceExprent(((SwitchExprent)secondSwitchSelector).getValue(), newSelector);
+        return new NewSelector(lastExprentIndex, newSelector);
+      }
+
+      @Override
+      public List<TempVarAssignmentItem> prepareTempAssignments() {
+        return tempVarAssignments;
+      }
+
+      private record NewSelector(int lastExprentIndex, Exprent newSelector) {
       }
     }
 
     private static class EcjSwitchCandidate extends SwitchOnStringCandidate {
       @NotNull private final SwitchStatement switchStatement;
       @NotNull private final Exprent switchSelector;
-      @NotNull private final VarExprent tmpVar;
       @NotNull private final Map<Integer, @NotNull IfStatement> mappedIfStatements;
       @NotNull private final Map<Integer, @NotNull String> mappedCaseLabelValues;
+      @NotNull private final List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
 
       private EcjSwitchCandidate(@NotNull SwitchStatement switchStatement,
                                  @NotNull Exprent switchSelector,
@@ -480,25 +687,24 @@ public final class SwitchHelper {
                                  @NotNull Map<Integer, String> mappedCaseLabelValues) {
         this.switchStatement = switchStatement;
         this.switchSelector = switchSelector;
-        this.tmpVar = tmpVar;
         this.mappedIfStatements = mappedIfStatements;
         this.mappedCaseLabelValues = mappedCaseLabelValues;
+        this.tempVarAssignments.add(new TempVarAssignmentItem(tmpVar, switchStatement));
       }
 
       @Override
-      void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
+      public void simplify() {
         Exprent switchSelector = switchStatement.getHeadExprent();
         if (switchSelector == null || switchSelector.type != Exprent.EXPRENT_SWITCH) return;
-        tempVarAssignments.put(tmpVar, switchStatement);
         for (List<Exprent> values : switchStatement.getCaseValues()) {
           for (int i = 0; i < values.size(); i++) {
             ConstExprent constExprent = (ConstExprent)values.get(i);
             if (constExprent == null) continue;
             int caseLabelHash = constExprent.getIntValue();
             String labelValue = mappedCaseLabelValues.get(caseLabelHash);
-            values.set(i, new ConstExprent(VarType.VARTYPE_STRING, labelValue, null));
+            values.set(i, new ConstExprent(VARTYPE_STRING, labelValue, null));
             IfStatement ifStatement = mappedIfStatements.get(caseLabelHash);
-            assert ifStatement.getStats().size() > 0;
+            assert !ifStatement.getStats().isEmpty();
             if (ifStatement.getStats().size() == 1) {
               ifStatement.getParent().replaceStatement(ifStatement, ifStatement.getStats().get(0));
               continue;
@@ -508,6 +714,16 @@ public final class SwitchHelper {
           }
         }
         switchSelector.replaceExprent(((SwitchExprent)switchSelector).getValue(), this.switchSelector);
+      }
+
+      @Override
+      public Set<SwitchStatement> usedSwitch() {
+        return Set.of(switchStatement);
+      }
+
+      @Override
+      public List<TempVarAssignmentItem> prepareTempAssignments() {
+        return tempVarAssignments;
       }
 
       private static void removeOuterBreakEdge(@NotNull IfStatement ifStatement) {

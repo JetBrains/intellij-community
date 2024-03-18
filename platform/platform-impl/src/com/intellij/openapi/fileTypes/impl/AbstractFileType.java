@@ -58,7 +58,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   void initSupport() {
-    for (FileTypeRegistrar registrar : FileTypeRegistrar.EP_NAME.getExtensions()) {
+    for (FileTypeRegistrar registrar : FileTypeRegistrar.EP_NAME.getExtensionList()) {
       registrar.initFileType(this);
     }
   }

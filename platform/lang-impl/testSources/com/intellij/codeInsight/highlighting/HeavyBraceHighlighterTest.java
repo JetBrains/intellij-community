@@ -38,7 +38,7 @@ public class HeavyBraceHighlighterTest extends LightPlatformCodeInsightTestCase 
   }
 
   @Override
-  public @Nullable String getFileSuffix(String fileName) {
+  public @Nullable String getFileSuffix(@NotNull String fileName) {
     return StringUtil.endsWith(fileName, ".txt") ? null : fileName;
   }
 

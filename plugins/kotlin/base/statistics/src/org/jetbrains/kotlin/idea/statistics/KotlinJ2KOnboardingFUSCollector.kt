@@ -48,7 +48,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
     internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
-    internal val buildSystemVersionField = EventFields.StringValidatedByRegexp("build_system_version", "version")
+    internal val buildSystemVersionField = EventFields.StringValidatedByRegexpReference("build_system_version", "version")
     internal val sessionIdField = EventFields.Int("onboarding_session_id")
     internal val canAutoConfigureField = EventFields.Boolean("can_auto_configure")
     internal val isAutoConfigurationField = EventFields.Boolean("is_auto_configuration")

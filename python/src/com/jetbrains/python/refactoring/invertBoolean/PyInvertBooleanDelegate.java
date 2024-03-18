@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
+public final class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public boolean isVisibleOnElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();

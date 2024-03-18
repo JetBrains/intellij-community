@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
-public class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntentionAction implements Iconable {
+public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntentionAction implements Iconable {
 
   @NotNull
   @Override
@@ -29,7 +29,7 @@ public class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntention
 
   @NotNull
   @Override
-  public final String getFamilyName() {
+  public String getFamilyName() {
     return getText();
   }
 

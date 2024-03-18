@@ -639,7 +639,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
 
         private static Iterable<TextRange> getEnabledRanges(@NotNull PsiElement element) {
           List<TextRange> disabledRanges = new ArrayList<>();
-          for (DisabledIndentRangesProvider rangesProvider : DisabledIndentRangesProvider.EP_NAME.getExtensions()) {
+          for (DisabledIndentRangesProvider rangesProvider : DisabledIndentRangesProvider.EP_NAME.getExtensionList()) {
             Collection<TextRange> providedDisabledRanges = rangesProvider.getDisabledIndentRanges(element);
             if (providedDisabledRanges != null) {
               disabledRanges.addAll(providedDisabledRanges);

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
-import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
@@ -169,7 +169,7 @@ internal abstract class UastFakeDescriptorLightMethodBase<T : CallableMemberDesc
         }
     }
 
-    override fun computeAnnotations(annotations: SmartList<PsiAnnotation>) {
+    override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
         original.annotations.mapTo(annotations) { annoDescriptor ->
             annoDescriptor.toLightAnnotation(this)
         }

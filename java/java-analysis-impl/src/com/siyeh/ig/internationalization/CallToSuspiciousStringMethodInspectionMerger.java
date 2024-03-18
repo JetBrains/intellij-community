@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class CallToSuspiciousStringMethodInspectionMerger extends InspectionElementsMerger {
+public final class CallToSuspiciousStringMethodInspectionMerger extends InspectionElementsMerger {
 
   @NotNull
   @Override

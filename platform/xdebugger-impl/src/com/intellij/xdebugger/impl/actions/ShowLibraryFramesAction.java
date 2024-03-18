@@ -14,11 +14,25 @@ final class ShowLibraryFramesAction extends ToggleAction {
   // - we should avoid "jumping" (visible (start) - invisible (stop) - visible (start again))
   private static final String IS_LIBRARY_FRAME_FILTER_SUPPORTED = "isLibraryFrameFilterSupported";
 
-  private volatile boolean myShouldShow;
-
   ShowLibraryFramesAction() {
-    super("", "", AllIcons.General.Filter);
-    myShouldShow = XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowLibraryStackFrames();
+    super(XDebuggerBundle.message("hide.library.frames.tooltip"), "", AllIcons.General.Filter);
+  }
+
+  private static boolean isLibraryFrameFilterSupported(@NotNull AnActionEvent e, Presentation presentation) {
+    Object isSupported = presentation.getClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED);
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (isSupported == null) {
+      if (session == null) {
+        // if session is null and isSupported is null - just return, it means that action created initially not in the xdebugger tab
+        presentation.setVisible(false);
+        return false;
+      }
+
+      isSupported = session.getDebugProcess().isLibraryFrameFilterSupported();
+      presentation.putClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED, isSupported);
+    }
+
+    return Boolean.TRUE.equals(isSupported);
   }
 
   @Override
@@ -27,23 +41,15 @@ final class ShowLibraryFramesAction extends ToggleAction {
 
     Presentation presentation = e.getPresentation();
 
-    Object isSupported = presentation.getClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED);
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-    if (isSupported == null) {
-      if (session == null) {
-        // if session is null and isSupported is null - just return, it means that action created initially not in the xdebugger tab
-        presentation.setVisible(false);
-        return;
-      }
-
-      isSupported = session.getDebugProcess().isLibraryFrameFilterSupported();
-      presentation.putClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED, isSupported);
-    }
-
-    if (Boolean.TRUE.equals(isSupported)) {
+    if (isLibraryFrameFilterSupported(e, presentation)) {
       presentation.setVisible(true);
-      final boolean shouldShow = !Toggleable.isSelected(presentation);
-      presentation.setText(XDebuggerBundle.message(shouldShow ? "hide.library.frames.tooltip" : "show.all.frames.tooltip"));
+      // Change the tooltip of a button in a toolbar and don't change anything for a context menu.
+      if (e.isFromActionToolbar()) {
+        final boolean shouldShow = !isSelected(e);
+        presentation.setText(XDebuggerBundle.message(shouldShow
+                                                     ? "hide.library.frames.tooltip"
+                                                     : "show.all.frames.tooltip"));
+      }
     }
     else {
       presentation.setVisible(false);
@@ -57,13 +63,12 @@ final class ShowLibraryFramesAction extends ToggleAction {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    return !myShouldShow;
+    return !XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowLibraryStackFrames();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
-    myShouldShow = !enabled;
-    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowLibraryStackFrames(myShouldShow);
+    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowLibraryStackFrames(!enabled);
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
   }
 }

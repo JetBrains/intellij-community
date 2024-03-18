@@ -25,11 +25,20 @@ import java.util.List;
  * Manages the version control systems used by a specific project.
  */
 public abstract class ProjectLevelVcsManager {
+  /**
+   * Fired when {@link #getVcsFor(VirtualFile)} and similar methods change their value.
+   */
   @Topic.ProjectLevel
   public static final Topic<VcsMappingListener> VCS_CONFIGURATION_CHANGED =
     new Topic<>(VcsMappingListener.class, Topic.BroadcastDirection.NONE);
+
   /**
-   * VCS configuration changed in VCS plugin.
+   * This event is only fired by SVN plugin.
+   * <p>
+   * Typically, it can be ignored unless plugin supports SVN and uses
+   * {@link #getRootsUnderVcs(AbstractVcs)}, {@link #getAllVcsRoots} or {@link #getAllVersionedRoots()} methods.
+   * <p>
+   * See {@link org.jetbrains.idea.svn.SvnFileUrlMappingImpl} and {@link AbstractVcs#getCustomConvertor}.
    */
   @Topic.ProjectLevel
   public static final Topic<PluginVcsMappingListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN =
@@ -67,9 +76,9 @@ public abstract class ProjectLevelVcsManager {
 
   /**
    * Returns the VCS managing the specified file.
-
+   *
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
-   *         it belongs to is not under version control.
+   * it belongs to is not under version control.
    */
   public abstract @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file);
 
@@ -77,7 +86,7 @@ public abstract class ProjectLevelVcsManager {
    * Returns the VCS managing the specified file path.
    *
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
-   *         it belongs to is not under version control.
+   * it belongs to is not under version control.
    */
   public abstract @Nullable AbstractVcs getVcsFor(@Nullable FilePath file);
 
@@ -102,7 +111,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
    */
-  public abstract boolean checkVcsIsActive(AbstractVcs vcs);
+  public abstract boolean checkVcsIsActive(@NotNull AbstractVcs vcs);
 
   /**
    * Checks if the VCS with the specified name is used by any of the modules in the project.
@@ -168,7 +177,7 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 
-  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs);
+  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(@NotNull AbstractVcs vcs);
 
   public abstract VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs);
 
@@ -178,7 +187,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated To be removed
    */
   @Deprecated(forRemoval = true)
-  public abstract List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs);
+  public abstract List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs);
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
@@ -191,9 +200,10 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use just {@link #setDirectoryMappings(List)}.
    */
   @Deprecated(forRemoval = true)
-  public void updateActiveVcss() {}
+  public void updateActiveVcss() { }
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
+
   public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
   public abstract @Nullable VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath path);
@@ -218,9 +228,13 @@ public abstract class ProjectLevelVcsManager {
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
   public abstract VcsHistoryCache getVcsHistoryCache();
+
   public abstract ContentRevisionCache getContentRevisionCache();
+
   public abstract boolean isFileInContent(final VirtualFile vf);
+
   public abstract boolean isIgnored(@NotNull VirtualFile vf);
+
   public abstract boolean isIgnored(@NotNull FilePath filePath);
 
   public abstract @NotNull VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
@@ -229,7 +243,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void showConsole();
 
   /**
@@ -250,7 +264,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract boolean isConsoleVisible();
 
   /**

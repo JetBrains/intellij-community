@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RAW_RUN_BLOCKING")
 
 package com.intellij.toolWindow
 
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -13,7 +13,10 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEve
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.testFramework.*
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.*
 
 @SkipInHeadlessEnvironment
@@ -32,7 +35,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
 
     runBlocking {
       val project = project
-      manager = object : ToolWindowManagerImpl(coroutineScope = project.coroutineScope, project = project) {
+      manager = object : ToolWindowManagerImpl(coroutineScope = (project as ComponentManagerEx).getCoroutineScope(), project = project) {
         override fun fireStateChanged(changeType: ToolWindowManagerEventType, toolWindow: ToolWindow?) {}
       }
       project.replaceService(ToolWindowManager::class.java, manager!!, testRootDisposable)

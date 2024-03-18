@@ -181,7 +181,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     }
   }
 
-  private static DocumentReference createDocumentReference(@NotNull VirtualFile file) {
+  private static @NotNull DocumentReference createDocumentReference(@NotNull VirtualFile file) {
     return DocumentReferenceManager.getInstance().create(file);
   }
 

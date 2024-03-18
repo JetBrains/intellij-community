@@ -2,5 +2,6 @@
   "mainFile": "source/foo.kt",
   "type": "MOVE_FILES",
   "targetPackage": "bas",
+  "enabledInK1": "true",
   "enabledInK2": "true"
 }

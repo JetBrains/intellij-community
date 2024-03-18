@@ -34,7 +34,7 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 import static java.util.Map.entry;
 
-public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CharsetCallMatcher[] MATCHERS = {
     new CharsetConstructorMatcher("java.io.InputStreamReader", "java.io.InputStream", ""),
     new CharsetConstructorMatcher("java.io.OutputStreamWriter", "java.io.OutputStream", ""),

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -8,12 +9,14 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.FilePathChange
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
+import com.intellij.vcs.VcsActivity
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.index.ContentVersion
@@ -108,7 +111,9 @@ object GitRevertOperation : StagingAreaOperation {
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED
 
   override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
-    GitFileUtils.revertUnstagedPaths(project, root, nodes.map { it.filePath })
-    StagingAreaOperation.refreshVirtualFiles(nodes, true)
+    DvcsUtil.workingTreeChangeStarted(project, VcsBundle.message("activity.name.rollback"), VcsActivity.Rollback).use {
+      GitFileUtils.revertUnstagedPaths(project, root, nodes.map { it.filePath })
+      StagingAreaOperation.refreshVirtualFiles(nodes, true)
+    }
   }
 }

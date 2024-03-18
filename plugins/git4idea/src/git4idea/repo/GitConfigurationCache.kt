@@ -2,14 +2,20 @@
 package git4idea.repo
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
+import git4idea.config.GitConfigUtil
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
 import org.jetbrains.annotations.ApiStatus
@@ -19,21 +25,60 @@ import java.util.concurrent.ExecutionException
 
 @ApiStatus.Experimental
 @Service(Service.Level.APP)
-class GitConfigurationCache : Disposable {
+class GitConfigurationCache : GitConfigurationCacheBase() {
   companion object {
     @JvmStatic
     fun getInstance(): GitConfigurationCache = service()
   }
+}
 
-  private val cache: MutableMap<ConfigKey<*>, CompletableFuture<*>> = ConcurrentCollectionFactory.createConcurrentMap()
+@ApiStatus.Experimental
+@Service(Service.Level.PROJECT)
+class GitProjectConfigurationCache(val project: Project) : GitConfigurationCacheBase() {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): GitProjectConfigurationCache = project.service()
+  }
 
   init {
-    val connection: MessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect(this)
+    val connection: MessageBusConnection = project.messageBus.connect(this)
+    connection.subscribe<VcsRepositoryMappingListener>(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
+      clearInvalidKeys()
+    })
+  }
+
+  @RequiresBackgroundThread
+  fun <T> readRepositoryConfig(repository: GitRepository, key: String): String? {
+    return computeCachedValue(RepoConfigKey(repository, key)) {
+      try {
+        GitConfigUtil.getValue(repository.getProject(), repository.getRoot(), key)
+      }
+      catch (e: VcsException) {
+        logger<GitProjectConfigurationCache>().warn(e)
+        null
+      }
+    }
+  }
+
+  private fun clearInvalidKeys() {
+    cache.keys.removeIf {
+      it is GitRepositoryConfigKey && it.repository.isDisposed()
+    }
+  }
+
+  data class RepoConfigKey(override val repository: GitRepository, val key: String) : GitRepositoryConfigKey<String?>
+}
+
+abstract class GitConfigurationCacheBase : Disposable {
+  protected val cache: MutableMap<GitConfigKey<*>, CompletableFuture<*>> = ConcurrentCollectionFactory.createConcurrentMap()
+
+  init {
+    val connection: MessageBusConnection = ApplicationManager.getApplication().messageBus.connect(this)
     connection.subscribe<GitExecutableListener>(GitExecutableManager.TOPIC, GitExecutableListener { clearCache() })
   }
 
   @RequiresBackgroundThread
-  fun <T> computeCachedValue(configKey: ConfigKey<T>, computeValue: () -> T): T {
+  fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: () -> T): T {
     val future = CompletableFuture<T>()
 
     @Suppress("UNCHECKED_CAST")
@@ -79,6 +124,9 @@ class GitConfigurationCache : Disposable {
 
   override fun dispose() {
   }
+}
 
-  interface ConfigKey<T>
+interface GitConfigKey<T>
+interface GitRepositoryConfigKey<T> : GitConfigKey<T> {
+  val repository: GitRepository
 }

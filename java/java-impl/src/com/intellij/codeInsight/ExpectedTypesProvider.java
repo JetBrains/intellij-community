@@ -8,10 +8,12 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.CommaTailType;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
+@Service(Service.Level.PROJECT)
 public final class ExpectedTypesProvider {
   private static final ExpectedTypeInfo VOID_EXPECTED = createInfoImpl(PsiTypes.voidType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE,
                                                                        PsiTypes.voidType(), TailTypes.semicolonType());
@@ -572,14 +575,13 @@ public final class ExpectedTypesProvider {
       }
       myResult.add(createInfoImpl(PsiTypes.intType(), PsiTypes.intType()));
       LanguageLevel level = PsiUtil.getLanguageLevel(statement);
-      if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
+      if (JavaFeature.ENUMS.isSufficient(level)) {
         PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, statement);
         myResult.add(createInfoImpl(enumType, enumType));
-
-        if (level.isAtLeast(LanguageLevel.JDK_1_7)) {
-          PsiClassType stringType = TypeUtils.getStringType(statement);
-          myResult.add(createInfoImpl(stringType, stringType));
-        }
+      }
+      if (JavaFeature.STRING_SWITCH.isSufficient(level)) {
+        PsiClassType stringType = TypeUtils.getStringType(statement);
+        myResult.add(createInfoImpl(stringType, stringType));
       }
     }
 

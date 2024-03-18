@@ -59,7 +59,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       PROJECT_PARTIALLY_UPDATED,
       PULL_FAILED,
       PUSH_RESULT,
-      PUSH_NOT_SUPPORTED,
       REBASE_ABORT_FAILED,
       REBASE_ABORT,
       REBASE_ABORT_SUCCESS,
@@ -169,7 +168,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val PROJECT_PARTIALLY_UPDATED = "git.project.partially.updated"
     const val PULL_FAILED = "git.pull.failed"
     const val PUSH_RESULT = "git.push.result"
-    const val PUSH_NOT_SUPPORTED = "git.push.not.supported"
     const val REBASE_ABORT_FAILED = "git.rebase.abort.failed"
     const val REBASE_ABORT = "git.rebase.abort"
     const val REBASE_ABORT_SUCCESS = "git.rebase.abort.succeeded"

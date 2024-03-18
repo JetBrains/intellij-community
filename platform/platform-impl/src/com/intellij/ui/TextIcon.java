@@ -12,6 +12,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 
+import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
 
@@ -21,8 +22,10 @@ public final class TextIcon implements Icon {
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
+  private Boolean withBorders;
   private Color myBackground;
   private Color myForeground;
+  private Color myBorderColor;
   private Font myFont;
   private String myText;
   private Rectangle myTextBounds;
@@ -49,10 +52,24 @@ public final class TextIcon implements Icon {
   }
 
   public TextIcon(String text, Color foreground, Color background, int margin) {
-    setInsets(margin, margin, margin, margin);
-    setRound(margin * 4);
+    this(text, foreground, background, margin, false);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBorders) {
+    this(text, foreground, background, margin, withBorders, withBorders ? 255 : 0);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBorders, int borderAlpha) {
+    this(text, foreground, background, ColorUtil.toAlpha(background, borderAlpha), margin, withBorders);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, Color borderColor, int margin, boolean withBorders) {
+    setWithBorders(withBorders);
     setBackground(background);
     setForeground(foreground);
+    setBorderColor(borderColor);
+    setInsets(margin, margin, margin, margin);
+    setRound(margin * 4);
     setText(text);
   }
 
@@ -72,12 +89,20 @@ public final class TextIcon implements Icon {
     myRound = round;
   }
 
+  public void setWithBorders(boolean withBorders) {
+    this.withBorders = withBorders;
+  }
+
   public void setBackground(Color background) {
     myBackground = background;
   }
 
   public void setForeground(Color foreground) {
     myForeground = foreground;
+  }
+
+  public void setBorderColor(Color borderColor) {
+    myBorderColor = borderColor;
   }
 
   public void setText(String text) {
@@ -104,9 +129,15 @@ public final class TextIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (myBackground != null && g instanceof Graphics2D) {
-      g.setColor(myBackground);
-      FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+    if (g instanceof Graphics2D) {
+      if (myBackground != null) {
+        g.setColor(myBackground);
+        FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+      }
+      if (withBorders && myBorderColor != null) {
+        g.setColor(myBorderColor);
+        DRAW.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+      }
     }
     Rectangle bounds = getTextBounds();
     if (myForeground != null && bounds != null) {
@@ -138,12 +169,14 @@ public final class TextIcon implements Icon {
            Objects.equals(myForeground, icon.myForeground) &&
            Objects.equals(myFont, icon.myFont) &&
            Objects.equals(myText, icon.myText) &&
-           Objects.equals(myTextBounds, icon.myTextBounds);
+           Objects.equals(myTextBounds, icon.myTextBounds) &&
+           Objects.equals(withBorders, icon.withBorders) &&
+           Objects.equals(myBorderColor, icon.myBorderColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBorders, myBorderColor);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {

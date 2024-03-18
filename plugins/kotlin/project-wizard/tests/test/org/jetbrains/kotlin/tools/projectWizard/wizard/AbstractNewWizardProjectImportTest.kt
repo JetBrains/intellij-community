@@ -55,7 +55,14 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         runWriteAction {
             listOf(SDK_NAME, "1.8", "11").forEach { name ->
                 PluginTestCaseBase.addJdk(testRootDisposable) {
-                    JavaSdk.getInstance().createJdk(name, IdeaTestUtil.requireRealJdkHome(), false)
+                    val jdk = JavaSdk.getInstance().createJdk(name, IdeaTestUtil.requireRealJdkHome(), false)
+                    val homePath = jdk.homePath ?: return@addJdk jdk
+                    if (homePath.isNotEmpty()) {
+                        val sdkModificator = jdk.sdkModificator
+                        sdkModificator.versionString = jdk.sdkType.getVersionString(jdk)
+                        sdkModificator.commitChanges()
+                    }
+                    jdk
                 }
             }
         }

@@ -1,19 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff.viewer
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
-import com.intellij.collaboration.ui.codereview.editor.EditorMapped
-import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
+import com.intellij.collaboration.ui.codereview.editor.*
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.Side
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
+import com.intellij.openapi.vcs.history.VcsDiffUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 
@@ -64,7 +72,7 @@ private fun <VM : DiffMapped> UnifiedDiffViewer.controlInlaysIn(
   vmKeyExtractor: (VM) -> Any,
   rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 ) {
-  val viewerReady = viewerReadyFlow { isContentGood }
+  val viewerReady = viewerReadyFlow()
   val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
     if (ready) vms else emptyList()
   }.map { vms ->
@@ -108,9 +116,88 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
   editor2.controlInlaysIn(cs, vmsForEditor2, { vmKeyExtractor(it.vm) }, { rendererFactory(it.vm) })
 }
 
+/**
+ * Create editor models for diff editors via [modelFactory] and show inlays and gutter controls
+ * Inlays are created via [rendererFactory]
+ *
+ * @param M - editor inlays and controls model
+ * @param I - inlay model
+ */
+@ApiStatus.Internal
+fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
+  cs: CoroutineScope,
+  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
+  modelKey: Key<M>,
+  rendererFactory: CoroutineScope.(I) -> CodeReviewComponentInlayRenderer
+) {
+  val viewer = this
+  cs.launchNow(Dispatchers.Main) {
+    viewerReadyFlow().collectLatest {
+      if (it) coroutineScope {
+        val currentCs = this
+        when (viewer) {
+          is SimpleOnesideDiffViewer -> {
+            val model = modelFactory(
+              { loc -> loc.takeIf { it.first == viewer.side }?.second },
+              { lineIdx -> DiffLineLocation(viewer.side, lineIdx) }
+            )
+            viewer.editor.installModelIn(currentCs, model, modelKey, rendererFactory)
+          }
+          is UnifiedDiffViewer -> {
+            val model = modelFactory(
+              { (side, lineIdx) -> viewer.transferLineToOnesideStrict(side, lineIdx).takeIf { it >= 0 } },
+              { lineIdx ->
+                val (indices, side) = viewer.transferLineFromOneside(lineIdx)
+                side.select(indices).takeIf { it >= 0 }?.let { side to it }
+              }
+            )
+            viewer.editor.installModelIn(currentCs, model, modelKey, rendererFactory)
+          }
+          is TwosideTextDiffViewer -> {
+            val modelLeft = modelFactory(
+              { (side, lineIdx) -> lineIdx.takeIf { side == Side.LEFT } },
+              { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) }
+            )
+            viewer.editor1.installModelIn(currentCs, modelLeft, modelKey, rendererFactory)
+
+
+            val modelRight = modelFactory(
+              { (side, lineIdx) -> lineIdx.takeIf { side == Side.RIGHT } },
+              { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) }
+            )
+            viewer.editor2.installModelIn(currentCs, modelRight, modelKey, rendererFactory)
+          }
+        }
+      }
+
+    }
+  }
+}
+
+private fun <I : CodeReviewInlayModel, M : CodeReviewEditorModel<I>> EditorEx.installModelIn(
+  cs: CoroutineScope,
+  model: M,
+  modelKey: Key<M>,
+  rendererFactory: CoroutineScope.(I) -> CodeReviewComponentInlayRenderer
+) {
+  controlInlaysIn(cs, model.inlays, CodeReviewInlayModel::key) { rendererFactory(it) }
+  CodeReviewEditorGutterControlsRenderer.setupIn(cs, model, this)
+  cs.launchNow {
+    putUserData(modelKey, model)
+    try {
+      awaitCancellation()
+    }
+    finally {
+      putUserData(modelKey, null)
+    }
+  }
+}
+
 private fun <V : DiffViewerBase> V.viewerReadyFlow(
-  isViewerGood: V.() -> Boolean = { true }
 ): Flow<Boolean> = callbackFlow {
+  val isViewerGood: V.() -> Boolean = {
+    if (this is UnifiedDiffViewer) isContentGood else true
+  }
   val listener = object : DiffViewerListener() {
     // for now this utility is only used for constant diffs
     // uncomment if diff can actually be changed on rediff
@@ -127,7 +214,7 @@ private fun <V : DiffViewerBase> V.viewerReadyFlow(
   awaitClose {
     removeListener(listener)
   }
-}.flowOn(Dispatchers.Main)
+}.flowOn(Dispatchers.Main).distinctUntilChanged()
 
 interface DiffMapped {
   val location: Flow<DiffLineLocation?>
@@ -137,4 +224,18 @@ interface DiffMapped {
 private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation) -> Int?) : EditorMapped {
   override val line: Flow<Int?> = vm.location.map { it?.let(mapper) }
   override val isVisible: Flow<Boolean> = vm.isVisible
+}
+
+/**
+ * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
+ */
+fun RefComparisonChange.buildChangeContext(): Map<Key<*>, Any> {
+  val titleLeft = VcsDiffUtil.getRevisionTitle(revisionNumberBefore.toShortString(), filePathBefore, filePathAfter)
+  val titleRight = VcsDiffUtil.getRevisionTitle(revisionNumberAfter.toShortString(), filePathAfter, null)
+
+  val changeContext: MutableMap<Key<*>, Any> = mutableMapOf(
+    DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE to titleLeft,
+    DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE to titleRight
+  )
+  return changeContext
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
+import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -52,7 +53,7 @@ private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
 
   private fun showGotItTooltip() {
     val diffSettingsButton: (ActionToolbar) -> JComponent? = { toolbar ->
-      findToolbarActionButton(toolbar) { action -> action is SetEditorSettingsAction }
+      findToolbarActionButton(toolbar) { action -> action is SetEditorSettingsActionGroup || action is SetEditorSettingsAction }
     }
     notificationQueue.queue(DisposableUpdate.createDisposable(this, TOOLTIP_ID) {
       ActionToolbarGotItTooltip(TOOLTIP_ID, VcsBundle.message("show.diff.in.editor.tab.got.it.tooltip"),

@@ -93,7 +93,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
                                val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val vcsLogFilterer = VcsLogFiltererImpl(logData)
-      val initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
+      val initialSortType = properties[MainVcsLogUiProperties.BEK_SORT_TYPE]
       val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialSortType, vcsLogFilterer, logId)
 
       return MyVcsLogUi(logId, logData, colorManager, properties, refresher, rangeFilter, rootFilter)
@@ -123,7 +123,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
   ) : VcsLogClassicFilterUi(data, filterConsumer, properties, colorManager, filters, parentDisposable) {
 
     val rangeFilter: VcsLogRangeFilter
-      get() = myBranchFilterModel.rangeFilter!!
+      get() = branchFilterModel.rangeFilter!!
 
     override fun createBranchComponent() = null
 
@@ -140,13 +140,13 @@ internal class GitCompareBranchesUi(internal val project: Project,
 
     override fun setFilters(collection: VcsLogFilterCollection) {
       if (collection.isEmpty) {
-        if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
-        myDateFilterModel.setFilter(null)
-        myTextFilterModel.setFilter(null)
-        myUserFilterModel.setFilter(null)
+        if (structureFilterModel.structureFilter != null) structureFilterModel.setFilter(null)
+        dateFilterModel.setFilter(null)
+        textFilterModel.setFilter(null)
+        userFilterModel.setFilter(null)
       }
       else {
-        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let(myBranchFilterModel::setRangeFilter)
+        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let { branchFilterModel.rangeFilter = it }
       }
     }
   }

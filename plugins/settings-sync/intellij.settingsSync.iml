@@ -34,35 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module-library">
-      <library name="jetbrains.intellij.deps.eclipse.jgit" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:org.eclipse.jgit:6.5.0.202303070854-r-custom-4">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4.jar">
-              <sha256sum>d9b12a3323f6447a7ca8de3d781166224f11c3505fe43dc0a9dfb1f33eb3cf04</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13.jar">
-              <sha256sum>4c0fda2b1d317750d7ea324e36c70b2bc48310c0aaae67b98df0915d696d7111</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="org.slf4j:slf4j-api" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13.jar!/" />
-        </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-javadoc.jar!/" />
-        </JAVADOC>
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="jetbrains.intellij.deps.eclipse.jgit" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

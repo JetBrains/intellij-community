@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -29,12 +28,12 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiConsumer
 import java.util.function.Function
 
 open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
   BaseInspectionProfileManager(ApplicationManager.getApplication().messageBus) {
 
+  @Suppress("unused")
   constructor() : this(SchemeManagerFactory.getInstance())
 
   init {
@@ -76,9 +75,9 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
   protected val profilesAreInitialized: Unit by lazy {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
-      BUNDLED_EP_NAME.processWithPluginDescriptor(BiConsumer { ep, pluginDescriptor ->
-        schemeManager.loadBundledScheme(ep.path!! + ".xml", null, pluginDescriptor)
-      })
+      BUNDLED_EP_NAME.processWithPluginDescriptor { ep, pluginDescriptor ->
+        schemeManager.loadBundledScheme(resourceName = ep.path!! + ".xml", requestor = null, pluginDescriptor = pluginDescriptor)
+      }
     }
     schemeManager.loadSchemes()
 
@@ -139,6 +138,6 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
 
     @JvmStatic
     fun getInstanceBase(): ApplicationInspectionProfileManagerBase =
-      service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
+      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManagerBase
   }
 }

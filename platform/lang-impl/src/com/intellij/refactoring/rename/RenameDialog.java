@@ -22,7 +22,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
@@ -44,10 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RenameDialog extends RefactoringDialog implements RenameRefactoringDialog {
   private SuggestedNameInfo mySuggestedNameInfo;
@@ -65,6 +66,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   private String myOldName;
 
   private ScopeChooserCombo myScopeCombo;
+  private final LinkedHashSet<String> myPredefinedSuggestedNames = new LinkedHashSet<>();
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext, Editor editor) {
     super(project, true);
@@ -143,6 +145,11 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     myOldName = UsageViewUtil.getShortName(myPsiElement);
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
+      protected boolean forceCombobox() {
+        return true;
+      }
+
+      @Override
       protected boolean shouldSelectAll() {
         return myEditor == null || myEditor.getSettings().isPreselectRename();
       }
@@ -163,12 +170,22 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   }
 
   @Override
+  public void addSuggestedNames(@NotNull Collection<@NotNull String> names) {
+    if (names.isEmpty()) return;
+    myPredefinedSuggestedNames.addAll(names);
+    if (myNameSuggestionsField != null) {
+      myNameSuggestionsField.setSuggestions(getSuggestedNames());
+    }
+  }
+
+  @Override
   public String[] getSuggestedNames() {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     final String initialName = VariableInplaceRenameHandler.getInitialName();
     if (initialName != null) {
       result.add(initialName);
     }
+    result.addAll(myPredefinedSuggestedNames);
     result.add(UsageViewUtil.getShortName(myPsiElement));
     mySuggestedNameInfo = NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext, result);
     return ArrayUtilRt.toStringArray(result);
@@ -301,7 +318,19 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   @Nullable
   protected JComponent createSearchScopePanel() {
-    myScopeCombo = new ScopeChooserCombo(myProject, false, true, ProjectScope.getProjectFilesScopeName());
+    var scopeService = RenameScopeService.getInstance(myProject);
+    var preselectedScopeName = scopeService.load();
+    myScopeCombo = new ScopeChooserCombo();
+    myScopeCombo.initialize(myProject, false, true, preselectedScopeName, null)
+      .onSuccess(dummy -> {
+        var selectedScopeName = myScopeCombo.getSelectedScopeName();
+        if (!Objects.equals(selectedScopeName, preselectedScopeName)) { // saved scope not found, fall back to default
+          myScopeCombo.selectItem(scopeService.defaultValue());
+        }
+      });
+    myScopeCombo.getComboBox().addItemListener(e -> {
+      scopeService.save(myScopeCombo.getSelectedScopeName());
+    });
     Disposer.register(myDisposable, myScopeCombo);
 
     // do not show scope chooser for local variables

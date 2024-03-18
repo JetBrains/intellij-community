@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
+public final class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   private static final Logger LOG = Logger.getInstance(JavaRefactoringFactoryImpl.class);
   private final Project myProject;
 

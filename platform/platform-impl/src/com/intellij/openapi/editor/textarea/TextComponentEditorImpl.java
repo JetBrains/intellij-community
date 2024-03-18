@@ -83,7 +83,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  public @NotNull TextComponentSelectionModel getSelectionModel() {
+  public @NotNull SelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 
@@ -322,6 +322,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
       SettingsImpl.class,
       SoftWrapModel.class,
       TextAreaDocument.class,
+      TextComponentCaret.class,
       TextComponentCaretModel.class,
       TextComponentDocument.class,
       TextComponentEditor.class,

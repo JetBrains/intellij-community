@@ -393,9 +393,61 @@ class LocalModelGraphElementWrapper<T> {
     return null;
   }
 }
-class LocalModelWrapper<T extends LocalModel> extends LocalModelGraphElementWrapper<T> {
-  public T getElement()  { return super.getElement(); }
+class LocalModelWrapper1<T extends LocalModel> extends LocalModelGraphElementWrapper<T> {
+  public T getElement() { return super.getElement(); }
 }
+class LocalModelWrapper2<K extends LocalModel> extends LocalModelWrapper1<K> {
+  public K <warning descr="Method 'getElement()' only delegates to its super method">getElement</warning>() { return super.getElement(); }
+}
+class LocalModelWrapper3 extends LocalModelGraphElementWrapper<String> {
+  public String getElement() { return super.getElement(); }
+}
+class LocalModelWrapper4<K> extends LocalModelGraphElementWrapper<K> {
+  public K <warning descr="Method 'getElement()' only delegates to its super method">getElement</warning>() { return super.getElement(); }
+}
+class ParentWithGeneric {
+  public <T> T getT(){ return null; }
+}
+class ChildWithGeneric extends ParentWithGeneric {
+  public <K> K <warning descr="Method 'getT()' only delegates to its super method">getT</warning>(){ return super.getT(); }
+}
+class ParentParameter<T> {
+  public void getT(T t) {
+    System.out.println();
+  }
+}
+class ChildParameter1<K> extends ParentParameter<K> {
+  public void <warning descr="Method 'getT()' only delegates to its super method">getT</warning>(K k) {
+    super.getT(k);
+  };
+}
+class ChildParameter2<K extends LocalModel> extends ParentParameter<K> { //allow "replace with method delegate"
+  public void <warning descr="Method 'getT()' is identical to its super method">getT</warning>(LocalModel k) {
+    System.out.println();
+  };
+}
+class ChildParameter3<K extends String> extends ParentParameter<K> {
+  public void getT(K k) {
+    super.getT(k);
+  };
+}
+class ParentNested<T> {
+  public TypedInterface<T> getT(){
+    return null;
+  }
+}
+class ChildNested1 extends ParentNested<String> {
+  public TypedInterface<String> getT(){
+    return super.getT();
+  }
+}
+class ChildNested2<K> extends ParentNested<K> {
+  public TypedInterface<K> <warning descr="Method 'getT()' only delegates to its super method">getT</warning>(){
+    return super.getT();
+  }
+}
+
+class TypedInterface<T> {}
 interface LocalModel {}
 ////////////////
 class X9 {

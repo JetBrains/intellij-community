@@ -41,9 +41,9 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
       () -> VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildData(null, "testChangesAccumulationPerformance.txt")
     );
     try {
-      PlatformTestUtil.startPerformanceTest("local history changes accumulation", 1800, () -> {
+      PlatformTestUtil.newPerformanceTest("local history changes accumulation", () -> {
         doChangesAccumulationPerformanceTest(f);
-      }).assertTiming();
+      }).start();
     }
     finally {
       WriteAction.run(() -> {

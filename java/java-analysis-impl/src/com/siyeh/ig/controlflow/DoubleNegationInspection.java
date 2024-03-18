@@ -18,7 +18,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DoubleNegationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class DoubleNegationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

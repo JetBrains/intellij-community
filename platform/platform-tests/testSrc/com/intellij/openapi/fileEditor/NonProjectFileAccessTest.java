@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -48,7 +49,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     super.setUp();
 
     Project project = getProject();
-    EditorNotifications notifications = new EditorNotificationsImpl(project, project.getCoroutineScope());
+    EditorNotifications notifications = new EditorNotificationsImpl(project, ((ComponentManagerEx)project).getCoroutineScope());
     ServiceContainerUtil.replaceService(project, EditorNotifications.class, notifications, getTestRootDisposable());
     NonProjectFileWritingAccessProvider.enableChecksInTests(project);
     StoreReloadManager.Companion.getInstance(project).blockReloadingProjectOnExternalChanges();

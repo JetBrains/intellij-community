@@ -18,7 +18,7 @@ import java.util.Objects;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.exactInstanceCall;
 
-public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new RedundantArrayForVarargVisitor(holder);

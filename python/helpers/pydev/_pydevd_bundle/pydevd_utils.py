@@ -54,7 +54,9 @@ def save_main_module(file, module_name):
         if hasattr(orig_module, attr):
             orig_attr = getattr(orig_module, attr)
             setattr(m, attr, orig_attr)
-    m.__file__ = file
+
+    if file is not None:
+        m.__file__ = file
 
     return m
 

@@ -113,26 +113,7 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   private val DistributionForOsTaskResult.files: List<Path>
-    get() = when (builder.targetOs) {
-      // Android Studio (b/316417922): add support for "-no-jbr" artifacts.
-      OsFamily.LINUX -> sequenceOf(".tar.gz", "-no-jbr.tar.gz")
-      OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip", ".mac.${arch.name}-no-jdk.zip")
-      OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip", "-no-jbr.win.zip")
-    }.map { extension ->
-      context.productProperties.getBaseArtifactName(context) +
-      // Android Studio (b/316417922): the arch for Mac is already added above; it should not be added here.
-      when (builder.targetOs) {
-        OsFamily.MACOS -> extension
-        else -> OsSpecificDistributionBuilder.suffix(arch) + extension
-      }
-    }.plus(
-      when {
-        builder is LinuxDistributionBuilder -> builder.snapArtifactName
-        else -> null
-      }
-    ).filterNotNull()
-      .map(context.paths.artifactDir::resolve)
-      .filter { it.exists() }.toList()
+    get() = builder.distributionFilesBuilt(arch)
 
   private fun spdxDocument(name: String): SpdxDocument {
     val uri = "$documentNamespace/$specVersion/$name.spdx"
@@ -219,7 +200,7 @@ internal class SoftwareBillOfMaterialsImpl(
             } ?: SpdxConstants.NOASSERTION_VALUE)
         }
         document.documentDescribes.add(rootPackage)
-        val runtimePackage = if (isRuntimeBundled(it.path, distribution.builder.targetOs)) {
+        val runtimePackage = if (distribution.builder.isRuntimeBundled(it.path)) {
           document.runtimePackage(distribution.builder.targetOs, distribution.arch)
         } else null
         generate(
@@ -228,14 +209,6 @@ internal class SoftwareBillOfMaterialsImpl(
           distributionDir = distribution.outDir
         )
       }
-    }
-  }
-
-  private fun isRuntimeBundled(file: Path, os: OsFamily): Boolean {
-    return when (os) {
-      OsFamily.LINUX -> !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX)
-      OsFamily.MACOS -> !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
-      OsFamily.WINDOWS -> true
     }
   }
 
@@ -815,11 +788,20 @@ internal class SoftwareBillOfMaterialsImpl(
       coroutineScope {
         documents.forEach {
           launch {
-            runProcess(
-              "docker", "run", "--rm",
-              "--volume=${it.parent}:${it.parent}:ro",
-              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
-            )
+            try {
+              runProcess(
+                "docker", "run", "--rm",
+                "--volume=${it.parent}:${it.parent}:ro",
+                ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
+              )
+            }
+            catch (e: Exception) {
+              context.messages.error("""
+                 Generated SBOM $it is not NTIA-conformant. 
+                 Please search for 'Components missing an supplier' error message and specify all missing suppliers.
+                 You may use https://package-search.jetbrains.com/ to search for them.
+              """.trimIndent(), e)
+            }
           }
         }
       }

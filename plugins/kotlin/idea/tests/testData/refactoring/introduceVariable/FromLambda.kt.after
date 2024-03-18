@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo() {
     val i = 123
     val z = i

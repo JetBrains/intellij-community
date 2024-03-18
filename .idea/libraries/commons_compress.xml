@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="commons-compress" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-compress:1.24.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-compress:1.25.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.24.0/commons-compress-1.24.0.jar">
-          <sha256sum>fbf2c5d275e513c08f4e4fb539726dbf3ac2142af956ba93efb983244f0c36bd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0.jar">
+          <sha256sum>d0ec8014ebbb0749f471803122b21796afddf2e98e194e4374622e5fbaf69f49</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.24.0/commons-compress-1.24.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.24.0/commons-compress-1.24.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

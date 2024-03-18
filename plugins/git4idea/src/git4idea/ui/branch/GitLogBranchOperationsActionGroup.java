@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
 import git4idea.actions.GitSingleCommitActionGroup;
 import git4idea.branch.GitBranchUtil;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.log.GitRefManager;
@@ -154,12 +156,19 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
                                                           @NotNull VcsRef ref,
                                                           @NotNull GitRepository selectedRepository,
                                                           boolean isLocal) {
-    if (isLocal) {
-      return new LocalBranchActions(project, repositories, ref.getName(), selectedRepository);
+
+    for (GitRepository repository : repositories) {
+      GitBranchesCollection branches = repository.getBranches();
+      GitBranch branch =
+        ContainerUtil.find(isLocal ? branches.getLocalBranches() : branches.getRemoteBranches(), b -> b.getName().equals(ref.getName()));
+      if (branch != null) {
+        return isLocal
+               ? new LocalBranchActions(project, repositories, (GitLocalBranch)branch, selectedRepository)
+               : new RemoteBranchActions(project, repositories, (GitRemoteBranch)branch, selectedRepository);
+      }
     }
-    else {
-      return new RemoteBranchActions(project, repositories, ref.getName(), selectedRepository);
-    }
+
+    throw new IllegalArgumentException("Cannot find branch by ref=" + ref);
   }
 
   private static @NotNull ActionGroup createTagActions(@NotNull Project project,

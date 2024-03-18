@@ -44,7 +44,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
     }
 
     override fun onSuccess() {
-        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+        KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
             StatisticsEvaluationResult.SUCCESS,
@@ -53,7 +53,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
     }
 
     override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
-        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+        KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
             StatisticsEvaluationResult.FAILURE,
@@ -112,7 +112,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
     }
 
     override fun onSuccess() {
-        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+        KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
             StatisticsEvaluationResult.SUCCESS,
@@ -121,7 +121,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
     }
 
     override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
-        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+        KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
             StatisticsEvaluationResult.FAILURE,

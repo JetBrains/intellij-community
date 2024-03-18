@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -140,10 +140,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       final String text = rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
       PsiElement root = roots[0];
-      if (PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_5)) {
+      if (PsiUtil.isAvailable(JavaFeature.VARARGS, root)) {
         flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
       }
-      if (PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
+      if (PsiUtil.isAvailable(JavaFeature.MULTI_CATCH, root)) {
         flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
       }
       flags |= JavaCodeFragmentFactory.ALLOW_VOID;

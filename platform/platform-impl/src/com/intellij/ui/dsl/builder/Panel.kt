@@ -146,7 +146,7 @@ interface Panel : CellBase<Panel> {
 
    * @param indent true if left indent is needed. By default, true if title exists and false otherwise
    */
-  fun buttonsGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
+  fun buttonsGroup(@NlsContexts.Label title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
 
   /**
    * Registers [callback] that will be called from [DialogPanel.apply] method

@@ -47,7 +47,7 @@ internal class PutCallsOnSeparateLinesIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("put.calls.on.separate.lines")
 
-    override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
+    override fun apply(element: KtQualifiedExpression, context: ActionContext, updater: ModPsiUpdater) {
         val rootQualifierExpression = element.topmostQualifierExpression() ?: return
         val project = context.project
         val psiFactory = KtPsiFactory(project)

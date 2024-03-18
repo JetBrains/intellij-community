@@ -6,13 +6,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction;
 import com.intellij.psi.templateLanguages.ConfigurableTemplateLanguageFileViewProvider;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
@@ -46,8 +47,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     if (file != TemplateLanguageUtil.getTemplateFile(file)) return null;
 
     FileViewProvider vp = file.getViewProvider();
-    if (vp instanceof ConfigurableTemplateLanguageFileViewProvider) {
-      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)vp;
+    if (vp instanceof ConfigurableTemplateLanguageFileViewProvider viewProvider) {
       final String text =
         LangBundle.message("quickfix.change.template.data.language.text", viewProvider.getTemplateDataLanguage().getDisplayName());
 
@@ -67,7 +67,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
                            @NotNull PsiFile file,
                            @NotNull PsiElement startElement,
                            @NotNull PsiElement endElement) {
-          ChangeTemplateDataLanguageAction.editSettings(project, file.getVirtualFile());
+          editSettings(project, file.getVirtualFile());
         }
 
         @Override
@@ -77,5 +77,14 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
       };
     }
     return null;
+  }
+
+  private static void editSettings(@NotNull Project project, final @Nullable VirtualFile virtualFile) {
+    final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+      if (virtualFile != null) {
+        configurable.selectFile(virtualFile);
+      }
+    });
   }
 }

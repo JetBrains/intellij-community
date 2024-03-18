@@ -32,7 +32,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * @author Bas Leijdekkers
  */
-public class RefusedBequestInspection extends BaseInspection {
+public final class RefusedBequestInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
     new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper",

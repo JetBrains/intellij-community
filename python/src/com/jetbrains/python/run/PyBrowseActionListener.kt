@@ -8,7 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.extensions.python.withPythonFiles
+import com.jetbrains.python.extensions.withPythonFiles
 
 open class PyBrowseActionListener
 @JvmOverloads

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties
@@ -28,6 +29,12 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
 
     @Suppress("unused") // Used by plugin XML
     constructor() : this("kotlin-function", message("function.breakpoint.tab.title"))
+
+    override fun getGeneralDescription(variant: XLineBreakpointVariant) =
+        message("function.breakpoint.description")
+
+    override fun getGeneralDescription(breakpoint: XLineBreakpoint<JavaMethodBreakpointProperties>) =
+        message("function.breakpoint.description")
 
     override fun getPriority() = 120
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -53,6 +53,7 @@ public class LabelPainter {
   protected @NotNull Color myBackground = UIUtil.getTableBackground();
   private @Nullable Color myGreyBackground = null;
   private @NotNull Color myForeground = UIUtil.getTableForeground();
+  private boolean myIsOpaque = true;
 
   private boolean myCompact;
   private boolean myLeftAligned;
@@ -274,8 +275,10 @@ public class LabelPainter {
     FontMetrics fontMetrics = g2.getFontMetrics();
     int baseLine = SimpleColoredComponent.getTextBaseLine(fontMetrics, height);
 
-    g2.setColor(myBackground);
-    g2.fillRect(x, y, myWidth, height);
+    if (myIsOpaque) {
+      g2.setColor(myBackground);
+      g2.fillRect(x, y, myWidth, height);
+    }
 
     if (myGreyBackground != null && myCompact) {
       g2.setColor(myGreyBackground);
@@ -348,6 +351,20 @@ public class LabelPainter {
 
   public void setLeftAligned(boolean leftAligned) {
     myLeftAligned = leftAligned;
+  }
+
+  /**
+   * If set to true, painter paints all the pixels, including background pixels, so that the components underneath are not visible.
+   * If set to false, the background is not painted.
+   *
+   * @param isOpaque true if all the pixels, including the background, should be painted
+   */
+  public void setOpaque(boolean isOpaque) {
+    myIsOpaque = isOpaque;
+  }
+
+  public void clear() {
+    myLabels.clear();
   }
 }
 

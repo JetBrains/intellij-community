@@ -8,16 +8,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public final class NextProjectWindow extends IdeDependentAction implements DumbAware, LightEditCompatible {
-
+final class NextProjectWindow extends IdeDependentAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    WindowDressing.getWindowActionGroup().activateNextWindow(e);
+    WindowDressing.Companion.getWindowActionGroup().activateNextWindow(e);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(WindowDressing.getWindowActionGroup().isEnabled());
+    e.getPresentation().setEnabled(WindowDressing.Companion.getWindowActionGroup().isEnabled());
     super.update(e);
   }
 

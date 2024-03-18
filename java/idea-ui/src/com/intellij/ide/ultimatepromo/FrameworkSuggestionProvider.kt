@@ -4,7 +4,6 @@ package com.intellij.ide.ultimatepromo
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.library.JavaLibraryUtil.hasLibraryJar
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.Module
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.createTryUltimateActionLabel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -32,9 +32,6 @@ internal class FrameworkSuggestionProvider : PluginSuggestionProvider {
   override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
     if (!isApplicationConfig(file.name)) return null
 
-    val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
-    if (thisProductCode == "IU") return null
-
     val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
     val framework = detectFramework(module) ?: return null
 
@@ -48,15 +45,12 @@ internal class FrameworkSuggestionProvider : PluginSuggestionProvider {
   }
 }
 
-private class FrameworkPluginSuggestion(val project: Project, val framework: Framework) : Function<FileEditor, EditorNotificationPanel?> {
+internal class FrameworkPluginSuggestion(val project: Project, val framework: Framework) : Function<FileEditor, EditorNotificationPanel?> {
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Promo)
     panel.text = IdeBundle.message("plugins.advertiser.framework.supported.in.ultimate", framework.name, ideaUltimate.name)
-
-    panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
-      FUSEventSource.EDITOR.openDownloadPageAndLog(project, ideaUltimate.downloadUrl, PluginId.getId(framework.pluginId))
-    }
-
+    panel.createTryUltimateActionLabel(ideaUltimate, project, PluginId.getId(framework.pluginId))
+    
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
       FUSEventSource.EDITOR.logIgnoreExtension(project)
       dismissPluginSuggestion(framework)
@@ -83,11 +77,11 @@ private fun dismissPluginSuggestion(framework: Framework) {
   PropertiesComponent.getInstance().setValue(FRAMEWORK_SUGGESTION_DISMISSED_PREFIX + framework.key, true)
 }
 
-private fun isPluginSuggestionDismissed(framework: Framework): Boolean {
+internal fun isPluginSuggestionDismissed(framework: Framework): Boolean {
   return PropertiesComponent.getInstance().isTrueValue(FRAMEWORK_SUGGESTION_DISMISSED_PREFIX + framework.key)
 }
 
-private class Framework(
+internal class Framework(
   val key: String,
   val pluginId: String,
   val name: String

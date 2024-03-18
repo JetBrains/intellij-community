@@ -18,8 +18,6 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
         const val MARGIN = "    "
     }
 
-    override fun useIrBackend(): Boolean = true
-
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         doOnBreakpoint {
             val frameProxy = this.frameProxy
@@ -46,8 +44,8 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
                 CoroutineFrameBuilder.lookupContinuation(this, frameProxy, sem)?.coroutineInfoData
             else
                 null
-        if (coroutineInfoData != null && coroutineInfoData.stackTrace.isNotEmpty()) {
-            print(renderAsyncStackTrace(coroutineInfoData.stackTrace), ProcessOutputTypes.SYSTEM)
+        if (coroutineInfoData != null && coroutineInfoData.continuationStackFrames.isNotEmpty()) {
+            print(renderAsyncStackTrace(coroutineInfoData.continuationStackFrames), ProcessOutputTypes.SYSTEM)
         } else {
             println("No async stack trace available", ProcessOutputTypes.SYSTEM)
         }

@@ -28,6 +28,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.vcs.commit.CheckinHandlersNotifier;
@@ -342,6 +343,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     committer.addResultHandler(new CheckinHandlersNotifier(committer, singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
+
+    EDT.dispatchAllInvocationEvents(); // wait com.intellij.vcs.commit.Committer.finishCommit
   }
 
   private LocalChangeList addChangeList(String title) {
@@ -510,6 +513,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       dialog.close(DialogWrapper.OK_EXIT_CODE);
     }
     UIUtil.dispatchAllInvocationEvents();
+  }
+
+  public void testChangelistNameWithoutId() {
+    LocalTaskImpl task = new LocalTaskImpl("", "foo");
+    assertEquals("foo", myTaskManager.getChangelistName(task));
   }
 
   @Override

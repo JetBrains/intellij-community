@@ -3,6 +3,7 @@ package com.intellij.configurationScript
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,6 +29,7 @@ import java.nio.file.Paths
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
+@Service(Service.Level.PROJECT)
 internal class ConfigurationFileManager(project: Project): Disposable {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 

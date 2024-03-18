@@ -2,8 +2,10 @@
 package com.intellij.platform.backend.workspace
 
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,7 +23,7 @@ public class StorageReplacement internal constructor(
  * Its instance can be obtained from [WorkspaceModel.getBuilderSnapshot].
  * This class can be used without global read or write lock, but it isn't a thread safe.
  */
-public class BuilderSnapshot @ApiStatus.Internal constructor(private val version: Long, private val storage: EntityStorageSnapshot) {
+public class BuilderSnapshot @ApiStatus.Internal constructor(private val version: Long, private val storage: ImmutableEntityStorage) {
   /**
    * Provides access to [MutableEntityStorage] which can be used to prepare the new state.
    */
@@ -30,15 +32,17 @@ public class BuilderSnapshot @ApiStatus.Internal constructor(private val version
   /**
    * Returns `true` if entities in this instance differ from the original storage.
    */
-  public fun areEntitiesChanged(): Boolean = !builder.hasSameEntities()
+  @OptIn(EntityStorageInstrumentationApi::class)
+  public fun areEntitiesChanged(): Boolean = !(builder as MutableEntityStorageInstrumentation).hasSameEntities()
 
   /**
    * Prepares a replacement for the storage. 
    * Execution of this function may take considerable time, so it's better to invoke it from a background thread, and only pass its result
    * to [WorkspaceModel.replaceProjectModel] under write-lock.
    */
+  @OptIn(EntityStorageInstrumentationApi::class)
   public fun getStorageReplacement(): StorageReplacement {
-    val changes = builder.collectChanges()
+    val changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
     return StorageReplacement(version, builder, changes)
   }
 }

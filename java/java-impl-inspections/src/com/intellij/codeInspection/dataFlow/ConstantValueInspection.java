@@ -18,7 +18,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -49,7 +48,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS;
   public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
@@ -84,6 +83,25 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
           for (int i = 1; i < operands.length - 1; i++) {
             processAnchor(dfr, new JavaPolyadicPartAnchor(polyadic, i), holder);
           }
+        }
+      }
+
+      @Override
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
+        checkSwitchCaseGuard(PsiUtil.skipParenthesizedExprDown(statement.getGuardExpression()));
+      }
+
+      @Override
+      public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
+        checkSwitchCaseGuard(PsiUtil.skipParenthesizedExprDown(statement.getGuardExpression()));
+      }
+
+      private void checkSwitchCaseGuard(@Nullable PsiExpression guard) {
+        if (guard == null) return;
+        if (BoolUtils.isTrue(guard)) {
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(guard, guard.textMatches(PsiKeyword.TRUE));
+          holder.registerProblem(guard, JavaAnalysisBundle
+            .message("dataflow.message.constant.no.ref", guard.textMatches(PsiKeyword.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
         }
       }
 
@@ -384,7 +402,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
            || parent instanceof PsiSwitchStatement || parent instanceof PsiSynchronizedStatement;
   }
 
-  private static boolean isFlagCheck(PsiElement element) {
+  static boolean isFlagCheck(PsiElement element) {
     PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiVariable.class);
     PsiExpression topExpression = scope instanceof PsiIfStatement ifStatement ? ifStatement.getCondition() :
                                   scope instanceof PsiVariable variable ? variable.getInitializer() :

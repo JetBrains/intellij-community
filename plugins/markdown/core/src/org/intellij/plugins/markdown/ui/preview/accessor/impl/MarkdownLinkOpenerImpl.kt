@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DoNotAskOption
@@ -180,11 +182,24 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
         return false
       }
       val headers = runReadAction {
+        if (DumbService.isDumb(project)) {
+          return@runReadAction null
+        }
         val scope = when (val file = PsiManager.getInstance(project).findFile(targetFile)) {
           null -> GlobalSearchScope.EMPTY_SCOPE
           else -> GlobalSearchScope.fileScope(file)
         }
         return@runReadAction HeaderAnchorIndex.collectHeaders(project, scope, anchor)
+      }
+      if (headers == null) {
+        invokeLater {
+          DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+            message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
+            functionality = DumbModeBlockedFunctionality.ActionWithoutId
+          )
+        }
+        // Return true to prevent external navigation from happening
+        return true
       }
       invokeLater {
         when {

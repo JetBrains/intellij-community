@@ -2,14 +2,15 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -65,6 +66,11 @@ class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
             descriptor.defaultType.memberScope.getContributedVariables(Name.identifier("xyzzy"), NoLookupLocation.FROM_TEST).single()
         val docContent = propertyDescriptor.findKDoc()
         Assert.assertEquals("Doc for property xyzzy", docContent!!.contentTag.getContent())
+    }
+
+    fun testInFunctionalParam() {
+        myFixture.configureByFile(getTestName(false) + ".kt")
+        Assert.assertNull(TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED))
     }
 
     fun testSections() {

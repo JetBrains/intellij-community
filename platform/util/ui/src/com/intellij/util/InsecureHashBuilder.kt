@@ -20,6 +20,11 @@ class InsecureHashBuilder {
   //  return this
   //}
 
+  fun putBoolean(b: Boolean): InsecureHashBuilder {
+    hashStream.putBoolean(b)
+    return this
+  }
+
   fun putString(s: String): InsecureHashBuilder {
     hashStream.putString(s)
     return this

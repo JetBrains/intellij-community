@@ -42,7 +42,8 @@ data class TextMatePreferences(val scopeName: TextMateScopeName,
                                val autoCloseBefore: String?,
                                val surroundingPairs:  Set<TextMateBracePair>?,
                                val indentationRules: IndentationRules,
-                               val customHighlightingAttributes: TextMateTextAttributes?)
+                               val customHighlightingAttributes: TextMateTextAttributes?,
+                               val onEnterRules: Set<OnEnterRule>?)
 
 fun readTextMateBundle(path: Path): TextMateBundleReader {
   val plistReader = CompositePlistReader()
@@ -150,7 +151,8 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
                           surroundingPairs = null,
                           autoCloseBefore = null,
                           indentationRules = indentationRules,
-                          customHighlightingAttributes = customHighlightingAttributes)
+                          customHighlightingAttributes = customHighlightingAttributes,
+                          onEnterRules = null)
     }
   }
 }

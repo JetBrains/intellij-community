@@ -3,7 +3,6 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -15,6 +14,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -43,7 +43,7 @@ import static com.siyeh.HardcodedMethodConstants.TO_STRING;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-public class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   enum FixType {
     REPLACE_WITH_QUALIFIER,
     REPLACE_WITH_ARGUMENTS
@@ -152,13 +152,24 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
-      if (HighlightingFeature.STRING_TEMPLATES.isAvailable(element)) {
-        if (element.getProcessor() != null && element.getLiteralExpression() != null) {
-          myHolder.registerProblem(element.getProcessor(),
-                                   InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"),
-                                   new RemoveStrTemplateProcessorFix());
-        }
+      if (!PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, element) || element.getLiteralExpression() == null) {
+        return;
       }
+      PsiExpression processor = element.getProcessor();
+      if (!(PsiUtil.skipParenthesizedExprDown(processor) instanceof PsiReferenceExpression reference)) {
+        return;
+      }
+      PsiElement target = reference.resolve();
+      if (!(target instanceof PsiField field) || !"STR".equals(field.getName())) {
+        return;
+      }
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || !JAVA_LANG_STRING_TEMPLATE.equals(containingClass.getQualifiedName())) {
+        return;
+      }
+      myHolder.registerProblem(processor,
+                               InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"),
+                               new RemoveStrTemplateProcessorFix());
     }
 
     private ProblemDescriptor getStringConstructorProblem(PsiNewExpression expression) {

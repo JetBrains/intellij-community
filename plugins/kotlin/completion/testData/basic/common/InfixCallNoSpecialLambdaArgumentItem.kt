@@ -8,6 +8,6 @@ fun foo() {
     val pair = 1 ext<caret>
 }
 
-// EXIST: ext1
-// EXIST: ext2
+// EXIST: {"lookupString":"ext1","tailText":"(handler: (String, Int) -> Unit) for Int in <root>","typeText":"Unit","icon":"Function","attributes":"bold"}
+// EXIST: {"lookupString":"ext2","tailText":"(c: Char) for Int in <root>","typeText":"Unit","icon":"Function","attributes":"bold"}
 // NOTHING_ELSE

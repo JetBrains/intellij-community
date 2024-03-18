@@ -95,7 +95,7 @@ public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
               if (batchFix instanceof ModCommandBatchQuickFix modCommandBatchQuickFix) {
                 ThrowableComputable<ModCommand, RuntimeException> actionComputable =
                   () -> ReadAction.nonBlocking(() -> modCommandBatchQuickFix.perform(myProject, myBatchModeDescriptors))
-                    .expireWhen(() -> myProject.isDisposed())
+                    .expireWith(myProject)
                     .executeSynchronously();
                 ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
                   actionComputable, LangBundle.message("apply.fixes"), true, myProject);

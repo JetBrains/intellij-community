@@ -12,7 +12,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.InvertBooleanFix;
 import org.jetbrains.annotations.NotNull;
 
-public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
+public final class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

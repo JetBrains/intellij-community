@@ -3,9 +3,9 @@ enum Operation {
   static int s = 0;
   public static final String constS = "";
   Operation() {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum constructor is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum constructor is not allowed">s</error>;
+    <error descr="Accessing static field from enum constructor is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -21,9 +21,9 @@ enum Operation {
     //Operation o = X;
   }
   {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum instance initializer is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum instance initializer is not allowed">s</error>;
+    <error descr="Accessing static field from enum instance initializer is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -38,7 +38,7 @@ enum Operation {
   <error descr="'valueOf(String)' is already defined in 'Operation'">void valueOf(String s)</error> {}
 }
 
-<error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error></error> {
+class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error> {
 }
 
 class use {
@@ -77,8 +77,8 @@ enum OurEnum {
   }
 
   {
-    Enum<OurEnum> a = <error descr="It is illegal to access static member 'A' from enum constructor or instance initializer">A</error>;
-    OurEnum enumValue = <error descr="It is illegal to access static member 'B' from enum constructor or instance initializer">B</error>;
+    Enum<OurEnum> a = <error descr="Accessing enum constant from enum instance initializer is not allowed">A</error>;
+    OurEnum enumValue = <error descr="Accessing enum constant from enum instance initializer is not allowed">B</error>;
     switch (enumValue) {
     }
 
@@ -91,7 +91,7 @@ enum OurEnum {
 
 enum TestEnum
 {
-    A(<error descr="Illegal forward reference">B</error>), B(A);
+    A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>), B(A);
     TestEnum(TestEnum other) {
       <error descr="Call to super is not allowed in enum constructor">super(null, 0)</error>;
     }

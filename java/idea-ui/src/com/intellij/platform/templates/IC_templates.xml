@@ -1,8 +1,0 @@
-<templates>
-  <template>
-    <category>Java</category>
-    <name>Java Hello World</name>
-    <description><![CDATA[ Simple Java "Hello World" application. ]]></description>
-    <path>HelloWorld.zip</path>
-  </template>
-</templates>

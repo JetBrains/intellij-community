@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayProgressStatus
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import java.util.concurrent.Future
 import javax.swing.Icon
 

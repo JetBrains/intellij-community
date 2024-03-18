@@ -41,7 +41,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.openapi.util.Predicates.nonNull;
 
-public class ForLoopReplaceableByWhileInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ForLoopReplaceableByWhileInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField

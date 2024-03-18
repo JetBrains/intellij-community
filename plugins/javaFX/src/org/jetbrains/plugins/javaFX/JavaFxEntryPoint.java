@@ -4,6 +4,8 @@ package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -14,6 +16,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+
+import static com.intellij.java.library.JavaLibraryUtil.hasLibraryClass;
 
 public final class JavaFxEntryPoint extends EntryPoint {
   public static final String INITIALIZE_METHOD_NAME = "initialize";
@@ -31,6 +35,12 @@ public final class JavaFxEntryPoint extends EntryPoint {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
+    if (module != null
+        && !hasLibraryClass(module, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION)) {
+      return false;
+    }
+
     if (psiElement instanceof PsiMethod method) {
       final int paramsCount = method.getParameterList().getParametersCount();
       final String methodName = method.getName();

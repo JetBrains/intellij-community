@@ -33,7 +33,7 @@ public class ForEachWithRecordPatternCanBeUsedInspectionTest extends LightJavaCo
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_X;
   }
 
 

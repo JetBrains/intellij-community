@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;
@@ -210,10 +211,12 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   protected void notifyResized() {}
 
   private static boolean jbrMoveSupported(Component component) {
-    // The WindowMove service is supported for all Window's except for
-    // popups on Wayland. Those are implemented as native Wayland popups
-    // and do not support interactive move, but can be moved programmatically.
-    return (component instanceof Window window) && window.getType() != Window.Type.POPUP
-           && JBR.isWindowMoveSupported();
+    if (StartupUiUtil.isWaylandToolkit()) {
+      return (component instanceof Window window) && window.getType() != Window.Type.POPUP;
+    } else {
+      // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
+      return (component instanceof Frame || component instanceof Dialog)
+             && JBR.isWindowMoveSupported();
+    }
   }
 }

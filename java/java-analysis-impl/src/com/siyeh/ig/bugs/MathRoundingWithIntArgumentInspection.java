@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
 
-public class MathRoundingWithIntArgumentInspection extends BaseInspection {
+public final class MathRoundingWithIntArgumentInspection extends BaseInspection {
 
   private static final CallMatcher MATH_ROUNDING_MATCHERS =
     CallMatcher.anyOf(

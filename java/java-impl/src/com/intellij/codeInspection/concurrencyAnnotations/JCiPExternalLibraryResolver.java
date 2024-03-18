@@ -22,7 +22,7 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JCiPExternalLibraryResolver extends ExternalLibraryResolver {
+public final class JCiPExternalLibraryResolver extends ExternalLibraryResolver {
   private static final ExternalLibraryDescriptor JDCIP_LIBRARY_DESCRIPTOR =
     new ExternalLibraryDescriptor("net.jcip", "jcip-annotations", null, null, "1.0") {
       @NotNull

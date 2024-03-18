@@ -15,7 +15,7 @@ interface ErrorMessageProvider : JvmProvider {
   fun provideErrorMessage(): @Nls String
 }
 
-private class ExtensionClassShouldBeFinalErrorMessageProvider : ErrorMessageProvider {
+internal class ExtensionClassShouldBeFinalErrorMessageProvider : ErrorMessageProvider {
   override fun provideErrorMessage(): @Nls String {
     return DevKitBundle.message("inspection.extension.class.should.be.final.text")
   }

@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public final class MavenIndexImpl implements MavenIndex {
+public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
 
   private static final String DATA_DIR_PREFIX = "data";
 
@@ -51,7 +51,7 @@ public final class MavenIndexImpl implements MavenIndex {
   private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
-  private final IndexKind myKind;
+  private final RepositoryKind myKind;
   private final AtomicBoolean myDataClosed = new AtomicBoolean(false);
   private final Lock indexUpdateLock = new ReentrantLock();
   private volatile Long myUpdateTimestamp;
@@ -103,9 +103,9 @@ public final class MavenIndexImpl implements MavenIndex {
     finally {
       boolean isCentral = isForCentral();
       MavenIndexUsageCollector.INDEX_OPENED.log(
-        myKind == IndexKind.LOCAL,
+        myKind == RepositoryKind.LOCAL,
         isCentral,
-        myKind == IndexKind.REMOTE && !isCentral);
+        myKind == RepositoryKind.REMOTE && !isCentral);
       save();
     }
   }
@@ -171,8 +171,6 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   private synchronized void save() {
-    myDir.mkdirs();
-    MavenIndexUtils.saveIndexProperty(this);
   }
 
   @Override
@@ -182,12 +180,12 @@ public final class MavenIndexImpl implements MavenIndex {
 
   @Override
   public File getRepositoryFile() {
-    return myKind == IndexKind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
+    return myKind == RepositoryKind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
 
   @Override
   public String getRepositoryUrl() {
-    return myKind == IndexKind.REMOTE ? myRepositoryPathOrUrl : null;
+    return myKind == RepositoryKind.REMOTE ? myRepositoryPathOrUrl : null;
   }
 
   @Override
@@ -196,17 +194,10 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   @Override
-  public IndexKind getKind() {
-    return myKind;
-  }
-
-  @Override
-  public MavenRepositoryInfo getRepository() {
-    if (myKind == IndexKind.ONLINE) return null;
+  public @NotNull MavenRepositoryInfo getRepository() {
     return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
-  @Override
   public long getUpdateTimestamp() {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
@@ -217,7 +208,7 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   @Override
-  public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean multithreaded)
+  public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean explicit)
     throws MavenProcessCanceledException {
     StructuredIdeActivity activity = MavenIndexUsageCollector.INDEX_UPDATE.started(null);
     boolean isSuccess = false;
@@ -230,10 +221,10 @@ public final class MavenIndexImpl implements MavenIndex {
       final File currentDataContextDir = getCurrentDataContextDir();
 
       boolean reuseExistingContext = fullUpdate ?
-                                     myKind != IndexKind.LOCAL && hasValidContext(currentDataContextDir) :
+                                     myKind != RepositoryKind.LOCAL && hasValidContext(currentDataContextDir) :
                                      hasValidContext(currentDataContextDir);
 
-      fullUpdate = fullUpdate || !reuseExistingContext && myKind == IndexKind.LOCAL;
+      fullUpdate = fullUpdate || !reuseExistingContext && myKind == RepositoryKind.LOCAL;
 
       if (reuseExistingContext) {
         try {
@@ -247,7 +238,7 @@ public final class MavenIndexImpl implements MavenIndex {
       if (fullUpdate) {
         MavenIndexId mavenIndexId = getMavenIndexId(newDataContextDir, "update");
         try {
-          updateNexusContext(mavenIndexId, progress, multithreaded);
+          updateNexusContext(mavenIndexId, progress, explicit);
         }
         finally {
           myNexusIndexer.releaseIndex(mavenIndexId);
@@ -273,11 +264,11 @@ public final class MavenIndexImpl implements MavenIndex {
       boolean finalIsSuccess = isSuccess;
       activity.finished(() ->
                           Arrays.asList(
-                            MavenIndexUsageCollector.IS_LOCAL.with(myKind == IndexKind.LOCAL),
-                            MavenIndexUsageCollector.IS_CENTRAL.with(myKind == IndexKind.REMOTE && isCentral),
-                            MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == IndexKind.REMOTE && !isCentral),
+                            MavenIndexUsageCollector.IS_LOCAL.with(myKind == RepositoryKind.LOCAL),
+                            MavenIndexUsageCollector.IS_CENTRAL.with(myKind == RepositoryKind.REMOTE && isCentral),
+                            MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == RepositoryKind.REMOTE && !isCentral),
                             MavenIndexUsageCollector.IS_SUCCESS.with(finalIsSuccess),
-                            MavenIndexUsageCollector.MANUAL.with(multithreaded)
+                            MavenIndexUsageCollector.MANUAL.with(explicit)
                           )
       );
       indexUpdateLock.unlock();
@@ -449,7 +440,7 @@ public final class MavenIndexImpl implements MavenIndex {
    */
   @Override
   @NotNull
-  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles) {
+  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<? extends File> artifactFiles) {
     var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
@@ -755,7 +746,7 @@ public final class MavenIndexImpl implements MavenIndex {
     }
 
     @NotNull
-    List<AddArtifactResponse> addArtifacts(Collection<File> artifactFiles) {
+    List<AddArtifactResponse> addArtifacts(Collection<? extends File> artifactFiles) {
       return myNexusIndexer.addArtifacts(mavenIndexId, artifactFiles);
     }
 

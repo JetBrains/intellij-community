@@ -87,7 +87,7 @@ public abstract class DialogWrapper {
       return switch (this) {
         case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
         case PROJECT -> {
-          LOG.warn("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
+          LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
           if (Registry.is("ide.treat.project.modality.as.application")) yield Dialog.ModalityType.APPLICATION_MODAL;
           else yield Dialog.ModalityType.DOCUMENT_MODAL;
         }
@@ -267,6 +267,15 @@ public abstract class DialogWrapper {
       }
     };
     window.addComponentListener(myResizeListener);
+    Disposer.register(myDisposable, this::disposeResizeListener);
+  }
+
+  private void disposeResizeListener() {
+    Window window = getWindow();
+    if (window != null && myResizeListener != null) {
+      window.removeComponentListener(myResizeListener);
+      myResizeListener = null;
+    }
   }
 
   /**
@@ -462,11 +471,7 @@ public abstract class DialogWrapper {
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
-    Window window = getWindow();
-    if (window != null && myResizeListener != null) {
-      window.removeComponentListener(myResizeListener);
-      myResizeListener = null;
-    }
+    disposeResizeListener();
 
     if (isOk) {
       processDoNotAskOnOk(exitCode);
@@ -860,7 +865,7 @@ public abstract class DialogWrapper {
   }
 
   protected @NotNull DialogWrapperPeer createPeer(Window owner, boolean canBeParent, IdeModalityType ideModalityType) {
-    if (ideModalityType == IdeModalityType.PROJECT) LOG.warn("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
+    if (ideModalityType == IdeModalityType.PROJECT) LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
     return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, ideModalityType);
   }
 
@@ -869,7 +874,7 @@ public abstract class DialogWrapper {
   }
 
   protected @NotNull DialogWrapperPeer createPeer(@Nullable Project project, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
-    if (ideModalityType == IdeModalityType.PROJECT) LOG.warn("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
+    if (ideModalityType == IdeModalityType.PROJECT) LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent, ideModalityType);
   }
 
@@ -1296,7 +1301,7 @@ public abstract class DialogWrapper {
       }
     };
     myErrorText.addComponentListener(resizeListener);
-    Disposer.register(myDisposable, () -> myErrorText.myLabel.removeComponentListener(resizeListener));
+    Disposer.register(myDisposable, () -> myErrorText.removeComponentListener(resizeListener));
 
     myRoot.setLayout(createRootLayout());
     myPeer.setContentPane(myRoot);
@@ -1456,6 +1461,10 @@ public abstract class DialogWrapper {
    */
   public void pack() {
     myPeer.pack();
+  }
+
+  public boolean setSizeDuringPack() {
+    return true;
   }
 
   /**

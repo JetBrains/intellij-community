@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.handlers;
 
@@ -140,6 +140,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("NonEmptyQualifier.kt")
         public void testNonEmptyQualifier() throws Exception {
             runTest("../testData/handlers/basic/callableReference/NonEmptyQualifier.kt");
+        }
+
+        @TestMetadata("NotImportedClassConstructor.kt")
+        public void testNotImportedClassConstructor() throws Exception {
+            runTest("../testData/handlers/basic/callableReference/NotImportedClassConstructor.kt");
         }
 
         @TestMetadata("NotImportedTopLevel.kt")
@@ -1179,6 +1184,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("AmbiguousSuperMethod.kt")
         public void testAmbiguousSuperMethod() throws Exception {
             runTest("../testData/handlers/basic/AmbiguousSuperMethod.kt");
+        }
+
+        @TestMetadata("AmbiguousSuperMethodLambdaArgument.kt")
+        public void testAmbiguousSuperMethodLambdaArgument() throws Exception {
+            runTest("../testData/handlers/basic/AmbiguousSuperMethodLambdaArgument.kt");
         }
 
         @TestMetadata("AmbiguousSuperMethodWithArgument.kt")

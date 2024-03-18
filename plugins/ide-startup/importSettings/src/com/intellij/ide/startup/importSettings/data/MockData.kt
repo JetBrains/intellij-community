@@ -1,16 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.nio.file.Path
 import java.time.LocalDate
 import java.util.*
 import javax.swing.Icon
@@ -18,8 +21,11 @@ import kotlin.random.Random
 
 internal const val IMPORT_SERVICE = "ImportService"
 
-class TestJbService : JbService {
+class TestJbService private constructor(): JbService {
   companion object {
+    private val service = TestJbService()
+
+    fun getInstance() = service
 
     private val LOG = logger<TestJbService>()
 
@@ -34,27 +40,31 @@ class TestJbService : JbService {
     val dd2 = LocalDate.now().minusDays(2)
 
 
-    val main = TestProduct("Main", "версия", dM1, "main")
+    val main3 = TestProduct("Main", "версия", dM1, "main")
     val main2 = TestProduct("IdeaMain1", "версия", LocalDate.now())
+    val main4 = TestProduct("PyCharm Professional 2023.3.3-233.666", "верс 2023.3.3-233.666", LocalDate.now())
+    val main = TestProduct("PyCharm Professional", "верс 2023.3.3-233.666", LocalDate.now())
 
     val fresh = listOf(
       main,
-      TestProduct("Idea222", "версия", dM1),
-      TestProduct("Idea333", "версия", dM6),
-      TestProduct("Idea444", "версия", dD6),
-      TestProduct("Idea555", "версия", dD1),
-      TestProduct("Idea666", "версия", dY1),
-      TestProduct("Idea666", "версия", dY3),
-      TestProduct("Idea666", "версия", dd20),
-      TestProduct("Idea666", "версия", dd5),
-      TestProduct("Idea666", "версия", dd2),
+      main3,
+      TestProduct("Idea222", "верс 2023.1-233.111", dM1),
+      TestProduct("Idea333", "верс 2023.2.2-233.222", dM6),
+      TestProduct("Idea444", "верс 2023.3.3-233.333", dD6),
+      TestProduct("Idea555", "верс 2023.4.3-233.444", dD1),
+      TestProduct("Idea666", "верс 2023.5.3-233.555", dY1),
+      TestProduct("Idea666", "верс 2023.6.3-233.666", dY3),
+      TestProduct("Idea666", "верс 2023.7.3-233.777", dd20),
+      TestProduct("Idea666", "верс 2023.8.3-233.888", dd5),
+      TestProduct("Idea666", "верс 2023.9.3-233.999", dd2),
     )
     val old = listOf(
-      TestProduct("Idea222", "версия", LocalDate.now()),
-      TestProduct("Idea333", "версия", LocalDate.now()),
-      TestProduct("Idea444", "версия", LocalDate.now()),
-      TestProduct("Idea555", "версия", LocalDate.now()),
-      TestProduct("Idea666", "версия", LocalDate.now()))
+      main4,
+      TestProduct("Idea222", "верс 2023.1-233.111", LocalDate.now()),
+      TestProduct("Idea333", "верс 2023.2.2-233.222", LocalDate.now()),
+      TestProduct("Idea444", "верс 2023.3.2-233.333", LocalDate.now()),
+      TestProduct("Idea555", "верс 2023.4.2-233.444", LocalDate.now()),
+      TestProduct("Idea666", "верс 2023.5.2-233.555", LocalDate.now()))
 
 
     val children = listOf(
@@ -62,29 +72,31 @@ class TestJbService : JbService {
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+      listOf(TestChildrenSettings("Go to Everything Everything"),
+             TestChildrenSettings("Go to Every thing", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everyt Everything", "built-in", "⇧F12"),
              TestChildrenSettings("Go to Everything Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+      listOf(TestChildrenSettings("1 Go to Everything Go to Everything Go to Everything Everyth iBBngEverything Go to Everything Everyth ingEverything 111", "built-in", "⌘T"),
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+             TestChildrenSettings("Go", "built-in", "⇧F12")),
     )
 
+    val oneChildren = listOf( listOf( TestChildrenSettings ("Go to EverythingEve rything")))
+
     val children1 = listOf(
-      listOf(TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Find Usages"),
+      listOf(TestChildrenSettings("Go to EverythingEve rything"),
+             TestChildrenSettings("Find ges"),
              TestChildrenSettings("Build Solution"),
              TestChildrenSettings("Go to Everything Go to Everything Go to Everything")),
-      listOf(TestChildrenSettings("Go to Everything"),
+      listOf(TestChildrenSettings("Go to Ev"),
              TestChildrenSettings("Go to Everything Go to Everything"),
-             TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("2 Go to Everythi Go to Everything Go to Everything 2222 Everyth ingEverything Go to Everything Everyth ingEverything 222"),
              TestChildrenSettings("Go to Everything")),
-      listOf(TestChildrenSettings("Go to Everything"),
+      listOf(TestChildrenSettings("Go to rything rything"),
              TestChildrenSettings("Find Usages"),
              TestChildrenSettings("Build Solution"),
-             TestChildrenSettings("Go to Everything")),
+             TestChildrenSettings("Go")),
     )
 
     val children2 = listOf(
@@ -92,12 +104,12 @@ class TestJbService : JbService {
              TestChildrenSettings("Find Usages"),
              TestChildrenSettings("Build Solution"),
              TestChildrenSettings("Go to Everything")),
-      listOf(TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Go to Everything")),
-      listOf(TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Find Usages"),
+      listOf(TestChildrenSettings("Go to Eveing"),
+             TestChildrenSettings("3 Go to Everything"),
+             TestChildrenSettings("Go to Everything Everything"),
+             TestChildrenSettings("Go to ")),
+      listOf(TestChildrenSettings("Go to Everything Everyth ingEverything"),
+             TestChildrenSettings("Find Usages Go to"),
              TestChildrenSettings("Build Solution"),
              TestChildrenSettings("Go to Everything")),
     )
@@ -105,7 +117,7 @@ class TestJbService : JbService {
     val settings1 = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
-      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugin_", list = oneChildren),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
 
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
@@ -119,8 +131,8 @@ class TestJbService : JbService {
 
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
-      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
-                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugin_",
+                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", oneChildren),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
@@ -197,6 +209,14 @@ class TestJbService : JbService {
       }
     }
   }
+  fun configChosen() {
+    OnboardingController.getInstance().startWizard(isModal = false)
+  }
+
+  override suspend fun hasDataToImport() = true
+  override suspend fun warmUp() {
+    TODO("Not yet implemented")
+  }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
@@ -210,6 +230,11 @@ class TestJbService : JbService {
   override fun getOldProducts(): List<Product> {
     return old
   }
+
+  override fun importFromCustomFolder(folderPath: Path) {
+    TODO("Not yet implemented")
+  }
+
 
   override fun getSettings(itemId: String): List<BaseSetting> {
     return if (itemId == main.id) settings1 else settings
@@ -229,7 +254,9 @@ class TestExternalService : ExternalService {
     private val LOG = logger<TestExternalService>()
   }
 
-  override suspend fun warmUp() {}
+  override suspend fun hasDataToImport() = true
+
+  override fun warmUp(scope: CoroutineScope) {}
 
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)
@@ -253,6 +280,11 @@ class TestExternalService : ExternalService {
 class TestSyncService : SyncService {
   companion object {
     private val LOG = logger<TestSyncService>()
+  }
+
+  override suspend fun hasDataToImport() = true
+  override suspend fun warmUp() {
+    TODO("Not yet implemented")
   }
 
   override fun baseProduct(id: String): Boolean {
@@ -295,6 +327,10 @@ class TestSyncService : SyncService {
 
   override fun getOldProducts(): List<Product> {
     return TestJbService.old
+  }
+
+  override fun importFromCustomFolder(folderPath: Path) {
+    TODO("Not yet implemented")
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {
@@ -341,11 +377,11 @@ class TestChildrenSettings(override val name: String,
 class TestSimpleImport(override val message: String, override val progress: ImportProgress) : DialogImportData
 
 class TestImportFromProduct(
-  override val from: DialogImportItem,
+  override val  from: DialogImportItem,
   override val to: DialogImportItem,
   override val progress: ImportProgress, override val message: String? = "From ${from.item.name}") : ImportFromProduct
 
-class TestImportProgress(lifetime: Lifetime) : ImportProgress {
+open class TestImportProgress(lifetime: Lifetime) : ImportProgress {
   override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()
 

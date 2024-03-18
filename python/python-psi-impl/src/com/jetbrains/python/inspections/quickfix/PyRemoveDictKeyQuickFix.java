@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -11,7 +11,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyRemoveDictKeyQuickFix implements LocalQuickFix {
+public class PyRemoveDictKeyQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -20,8 +20,7 @@ public class PyRemoveDictKeyQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     final PyKeyValueExpression expression = PsiTreeUtil.getParentOfType(element, PyKeyValueExpression.class);
     if (expression == null) return;
     final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(expression);

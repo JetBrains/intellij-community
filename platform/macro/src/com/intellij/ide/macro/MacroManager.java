@@ -13,16 +13,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ConvertingIterator;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -56,6 +57,7 @@ public final class MacroManager {
     registerMacro(new FilePathRelativeToSourcepathMacro());
     registerMacro(new JdkPathMacro());
     registerMacro(new PromptMacro());
+    registerMacro(new PasswordMacro());
     registerMacro(new FilePromptMacro());
     registerMacro(new SourcepathEntryMacro());
     registerMacro(new ProjectFileDirMacro());
@@ -155,7 +157,7 @@ public final class MacroManager {
   @Nullable
   public String expandMacrosInString(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
     throws ExecutionCancelledException {
-    return expandMacrosInString(str, firstQueueExpand, dataContext, "", false);
+    return expandMacrosInString(str, firstQueueExpand, dataContext, false);
   }
 
   /**
@@ -173,7 +175,7 @@ public final class MacroManager {
   @Nullable
   public String expandSilentMacros(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
     throws ExecutionCancelledException {
-    return expandMacrosInString(str, firstQueueExpand, dataContext, "", true);
+    return expandMacrosInString(str, firstQueueExpand, dataContext, true);
   }
 
   /**
@@ -182,7 +184,6 @@ public final class MacroManager {
    * @param str                string possibly containing macros
    * @param firstQueueExpand   expand only macros that do not implement {@link SecondQueueExpandMacro}
    * @param dataContext        data context used for macro expansion
-   * @param defaultExpandValue if macro is expended to null, {@code defaultExpandValue} will be used instead
    * @param onlySilent         does not expand macros that may require interaction with a user;
    *                           {@code defaultExpandValue} will be used for such macros
    * @return string with macros expanded or {@code null} if some macro is expanded to {@code null}
@@ -193,84 +194,29 @@ public final class MacroManager {
   public String expandMacrosInString(@Nullable String str,
                                      boolean firstQueueExpand,
                                      DataContext dataContext,
-                                     @Nullable String defaultExpandValue,
                                      boolean onlySilent) throws ExecutionCancelledException {
-    Iterator<Macro> macros = getMacros().iterator();
+    @NotNull Collection<Macro> macros = getMacros();
     if (onlySilent) {
-      Convertor<Macro, Macro> convertor = macro -> macro instanceof PromptingMacro ? new Macro.Silent(macro, defaultExpandValue) : macro;
-      macros = ConvertingIterator.create(getMacros().iterator(), convertor);
+      macros = ContainerUtil.map(macros, macro -> macro instanceof PromptingMacro ? new Macro.Silent(macro, "") : macro);
     }
-    return expandMacroSet(str, firstQueueExpand, dataContext, macros, defaultExpandValue);
+    return expandMacroSet(str, firstQueueExpand, dataContext, macros);
   }
 
   @Nullable
   private static String expandMacroSet(@Nullable String str,
                                        boolean firstQueueExpand,
                                        DataContext dataContext,
-                                       Iterator<? extends Macro> macros,
-                                       @Nullable String defaultExpandValue) throws ExecutionCancelledException {
+                                       Collection<? extends Macro> macros) throws ExecutionCancelledException {
     if (str == null) {
       return null;
     }
 
     MacroPathConverter converter = dataContext.getData(PATH_CONVERTER_KEY);
-    while (macros.hasNext()) {
-      Macro macro = macros.next();
-      if (macro instanceof SecondQueueExpandMacro && firstQueueExpand) continue;
-      String name = "$" + macro.getName() + "$";
-      String macroNameWithParamStart = "$" + macro.getName() + "(";
-      if (str.contains(name)) {
-        for (int index = str.indexOf(name);
-             index != -1 && index <= str.length() - name.length();
-             index = str.indexOf(name, index)) {
-          String expanded = macro.expand(dataContext);
-          //if (dataContext instanceof DataManagerImpl.MyDataContext) {
-          //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the dataContext
-          //  // since we know exactly that context is valid, we need to update its event count
-          //  ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
-          //}
-          expanded = expanded == null ? defaultExpandValue : expanded;
-          if (expanded == null) {
-            return null;
-          }
-          expanded = convertPathIfNeeded(converter, macro, expanded);
-          str = str.substring(0, index) + expanded + str.substring(index + name.length());
-          //noinspection AssignmentToForLoopParameter
-          index += expanded.length();
-        }
-      }
-      else if (str.contains(macroNameWithParamStart)) {
-        String macroNameWithParamEnd = ")$";
-        Map<String, String> toReplace = null;
-        int i = str.indexOf(macroNameWithParamStart);
-        while (i != -1) {
-          int j = str.indexOf(macroNameWithParamEnd, i + macroNameWithParamStart.length());
-          if (j > i) {
-            String param = str.substring(i + macroNameWithParamStart.length(), j);
-            if (toReplace == null) {
-              toReplace = new HashMap<>();
-            }
-            String expanded = macro.expand(dataContext, param);
-            expanded = expanded == null ? defaultExpandValue : expanded;
-            if (expanded == null) {
-              return null;
-            }
-            expanded = convertPathIfNeeded(converter, macro, expanded);
-            toReplace.put(macroNameWithParamStart + param + macroNameWithParamEnd, expanded);
-            i = j + macroNameWithParamEnd.length();
-          }
-          else {
-            break;
-          }
-        }
-        if (toReplace != null) {
-          for (Map.Entry<String, String> entry : toReplace.entrySet()) {
-            str = StringUtil.replace(str, entry.getKey(), entry.getValue());
-          }
-        }
-      }
-    }
-    return str;
+    List<Macro> list = ContainerUtil.filter(macros, macro -> !(macro instanceof SecondQueueExpandMacro) || firstQueueExpand);
+    return expandMacros(str, list, (macro, occurence) -> {
+      String expanded = macro.expandOccurence(dataContext, occurence);
+      return convertPathIfNeeded(converter, macro, StringUtil.notNullize(expanded));
+    });
   }
 
   private static String convertPathIfNeeded(@Nullable MacroPathConverter converter, @NotNull Macro macro, @NotNull String expandedValue) {
@@ -284,5 +230,29 @@ public final class MacroManager {
       return converter.convertPathList(expandedValue);
     }
     return expandedValue;
+  }
+
+  @FunctionalInterface
+  public interface MacroExpander {
+    @Nullable String expand(Macro macro, @NotNull String occurence) throws ExecutionCancelledException;
+  }
+
+  public static @NotNull String expandMacros(@NotNull String input, @NotNull Collection<Macro> macros, @NotNull MacroExpander expander) throws ExecutionCancelledException {
+    StringBuilder builder = new StringBuilder(input);
+    for (Macro macro : macros) {
+      expandMacro(macro, expander, builder);
+    }
+    return builder.toString();
+  }
+
+  private static void expandMacro(Macro macro, @NotNull MacroExpander expander, StringBuilder builder) throws ExecutionCancelledException {
+    int offset = 0;
+    TextRange range;
+    while (offset >= 0 && offset < builder.length() && (range = macro.findOccurence(builder, offset)) != null ) {
+      String occurence = builder.substring(range.getStartOffset(), range.getEndOffset());
+      String value = StringUtil.notNullize(expander.expand(macro, occurence));
+      builder.replace(range.getStartOffset(), range.getEndOffset(), value);
+      offset += value.length();
+    }
   }
 }

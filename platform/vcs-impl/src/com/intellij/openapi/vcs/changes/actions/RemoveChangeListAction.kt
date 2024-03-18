@@ -54,8 +54,8 @@ class RemoveChangeListAction : AbstractChangeListAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val selectedLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+    val selectedLists = e.getData(VcsDataKeys.CHANGE_LISTS) ?: return
 
     @Suppress("UNCHECKED_CAST")
     deleteLists(project, listOf(*selectedLists) as Collection<LocalChangeList>)

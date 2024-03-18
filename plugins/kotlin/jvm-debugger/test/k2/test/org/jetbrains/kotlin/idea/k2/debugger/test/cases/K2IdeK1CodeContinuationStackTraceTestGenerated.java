@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases;
 
@@ -26,6 +26,21 @@ public class K2IdeK1CodeContinuationStackTraceTestGenerated extends AbstractK2Id
     @TestMetadata("suspendFun.kt")
     public void testSuspendFun() throws Exception {
         runTest("../testData/continuation/suspendFun.kt");
+    }
+
+    @TestMetadata("suspendFunStackTraceFolded.kt")
+    public void testSuspendFunStackTraceFolded() throws Exception {
+        runTest("../testData/continuation/suspendFunStackTraceFolded.kt");
+    }
+
+    @TestMetadata("suspendFunStackTraceFoldedIDEA345945.kt")
+    public void testSuspendFunStackTraceFoldedIDEA345945() throws Exception {
+        runTest("../testData/continuation/suspendFunStackTraceFoldedIDEA345945.kt");
+    }
+
+    @TestMetadata("suspendFunStackTraceHidden.kt")
+    public void testSuspendFunStackTraceHidden() throws Exception {
+        runTest("../testData/continuation/suspendFunStackTraceHidden.kt");
     }
 
     @TestMetadata("suspendFunWithInner.kt")

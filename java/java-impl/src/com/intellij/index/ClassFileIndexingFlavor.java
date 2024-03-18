@@ -10,7 +10,7 @@ import com.intellij.util.indexing.flavor.HashBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassFileIndexingFlavor implements FileIndexingFlavorProvider<CharSequence> {
+public final class ClassFileIndexingFlavor implements FileIndexingFlavorProvider<CharSequence> {
   @Override
   public @Nullable CharSequence getFlavor(@NotNull IndexedFile file) {
     VirtualFile vFile = file.getFile();

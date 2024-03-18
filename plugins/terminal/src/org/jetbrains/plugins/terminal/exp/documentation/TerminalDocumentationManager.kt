@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.documentation
 
+import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
@@ -30,9 +31,9 @@ import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.popup.AbstractPopup
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -54,6 +55,7 @@ import javax.swing.JScrollPane
 @Service(Service.Level.PROJECT)
 internal class TerminalDocumentationManager(private val project: Project, private val scope: CoroutineScope) : Disposable {
   private var currentPopup: WeakReference<AbstractPopup>? = null
+  private var shouldHideLookup: Boolean = true
 
   // a separate scope is needed for the ability to cancel its children
   private val popupScope: CoroutineScope = scope.childScope()
@@ -68,7 +70,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       // hint's window might've been hidden by AWT without notifying us
       // dispose to remove the popup from IDE hierarchy and avoid leaking components
       popup.cancel()
-      check(this.currentPopup == null)
+      check(this.currentPopup == null)  // see popup child disposable in showDocumentationPopup method
       return null
     }
     return popup
@@ -77,11 +79,6 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   private fun setCurrentPopup(popup: AbstractPopup) {
     EDT.assertIsEdt()
     currentPopup = WeakReference(popup)
-    Disposer.register(popup) {
-      EDT.assertIsEdt()
-      currentPopup = null
-      popupScope.coroutineContext.job.cancelChildren()
-    }
   }
 
   @RequiresEdt
@@ -92,7 +89,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     val lookupElementFlow = lookup.elementFlow()
     val showDocJob = scope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
       lookupElementFlow.collectLatest {
-        showDocumentationForItem(lookup, it, allowEmpty = false, parentDisposable)
+        showDocumentationForItem(lookup, it, parentDisposable, allowEmpty = false, hideLookupOnCancel = true)
       }
     }
     Disposer.register(parentDisposable) {
@@ -100,20 +97,32 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     }
   }
 
-  /** @param [allowEmpty] whether to show "No documentation" popup when documentation is not found for initial [element] */
+  /**
+   * @param [allowEmpty] whether to show "No documentation" popup when documentation is not found for initial [element].
+   * @param [hideLookupOnCancel] when true, the lookup will be hidden if doc popup is canceled by explicit action of the user.
+   */
   @RequiresEdt
-  fun showDocumentationForItem(lookup: LookupEx, element: LookupElement, allowEmpty: Boolean, parentDisposable: Disposable) {
+  fun showDocumentationForItem(lookup: LookupEx,
+                               element: LookupElement,
+                               parentDisposable: Disposable,
+                               allowEmpty: Boolean,
+                               hideLookupOnCancel: Boolean) {
     if (getCurrentPopup() != null) {
       return
     }
     val docRequest = element.toDocRequest()
                      ?: if (allowEmpty) EmptyDocTarget.request else return
     popupScope.coroutineContext.job.cancelChildren()
-    val popup = showDocumentationPopup(docRequest, lookup, parentDisposable)
+    val popup = showDocumentationPopup(docRequest, lookup, parentDisposable, hideLookupOnCancel)
     setCurrentPopup(popup)
   }
 
-  private fun showDocumentationPopup(request: DocumentationRequest, lookup: LookupEx, parentDisposable: Disposable): AbstractPopup {
+  private fun showDocumentationPopup(
+    request: DocumentationRequest,
+    lookup: LookupEx,
+    parentDisposable: Disposable,
+    hideLookupOnCancel: Boolean,
+  ): AbstractPopup {
     val docComponent = documentationComponent(project, request.targetPointer, request.presentation, parentDisposable)
     val popupComponent = createDocPopupComponent(docComponent, parentDisposable)
     val popup = createDocPopup(lookup.project, popupComponent)
@@ -128,11 +137,20 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     }
     popupScope.launch(Dispatchers.EDT) {
       docComponent.contentSizeUpdates.collectLatest {
-        boundsHandler.updatePopup(popup, false)
+        boundsHandler.updatePopup(popup, false, it)
       }
     }
     Disposer.register(parentDisposable) {
       cancelPopup()
+    }
+    Disposer.register(popup) {
+      EDT.assertIsEdt()
+      currentPopup = null
+      popupScope.coroutineContext.job.cancelChildren()
+      // hide the lookup if it is specified, and it is explicit user action (for example, escape shortcut)
+      if (shouldHideLookup && hideLookupOnCancel) {
+        lookup.hideLookup(true)
+      }
     }
 
     boundsHandler.showPopup(popup)
@@ -150,7 +168,14 @@ internal class TerminalDocumentationManager(private val project: Project, privat
 
   private fun cancelPopup() {
     EDT.assertIsEdt()
-    getCurrentPopup()?.cancel()
+    // do not hide the lookup in this case, because it is not the explicit action of a user
+    shouldHideLookup = false
+    try {
+      getCurrentPopup()?.cancel()
+    }
+    finally {
+      shouldHideLookup = true
+    }
   }
 
   private fun createDocPopupComponent(docComponent: DocumentationComponent, parentDisposable: Disposable): JComponent {
@@ -160,7 +185,9 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       add(AdjustFontSizeAction())
     }
     val scrollPane = docComponent.getComponent() as? JScrollPane ?: error("JScrollPane expected")
-    val moreButton = actionButton(actions, scrollPane.viewport.view)
+    val docPanel = scrollPane.viewport.view as JComponent
+    val docEditor = docPanel.components.find { it is DocumentationEditorPane }
+    val moreButton = actionButton(actions, docEditor ?: docPanel)
     return scrollPaneWithCorner(parentDisposable, scrollPane, moreButton)
   }
 
@@ -179,6 +206,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   private fun actionButton(actions: ActionGroup, contextComponent: Component): JComponent {
     val presentation = Presentation().also {
       it.icon = AllIcons.Actions.More
+      it.isPopupGroup = true
       it.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     }
     val button = object : ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)) {

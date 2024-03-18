@@ -1,6 +1,7 @@
 {
-  "mainFile": "source/foo.kt",
+  "mainFile": "foo.kt",
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
-  "targetFile": "source/bar.kt",
-  "enabledInK2": "false"
+  "targetFile": "bar.kt",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
 }

@@ -4,8 +4,6 @@ package com.intellij.coverage.view;
 import com.intellij.coverage.*;
 import com.intellij.coverage.analysis.JavaCoverageAnnotator;
 import com.intellij.coverage.analysis.PackageAnnotator;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.project.Project;
@@ -16,7 +14,9 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class JavaCoverageViewExtension extends CoverageViewExtension {
   private final JavaCoverageAnnotator myAnnotator;
@@ -61,7 +61,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @NotNull
   private static String getNodeId(AbstractTreeNode<?> node) {
-    return node instanceof CoverageListRootNode ? "" : ((JavaCoverageNode)node).getQualifiedName();
+    return node instanceof CoverageListRootNode ? CoverageClassStructure.ROOT_ID : ((JavaCoverageNode)node).getQualifiedName();
   }
 
   @Override
@@ -107,6 +107,13 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
+  public boolean hasChildren(AbstractTreeNode<?> node) {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return false;
+    return structure.hasChildren(getNodeId(node));
+  }
+
+  @Override
   public List<AbstractTreeNode<?>> getChildrenNodes(final AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     CoverageClassStructure structure = myAnnotator.getStructure();
@@ -139,19 +146,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     infos.add(new PercentageCoverageColumnInfo(1, JavaCoverageBundle.message("coverage.view.column.class"), mySuitesBundle, myStateBean));
     infos.add(new PercentageCoverageColumnInfo(2, JavaCoverageBundle.message("coverage.view.column.method"), mySuitesBundle, myStateBean));
     infos.add(new PercentageCoverageColumnInfo(3, JavaCoverageBundle.message("coverage.view.column.line"), mySuitesBundle, myStateBean));
-    RunConfigurationBase<?> runConfiguration = mySuitesBundle.getRunConfiguration();
-    if (runConfiguration != null) {
-      JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
-      if (coverageEnabledConfiguration != null) {
-        tryAddBranches(infos, coverageEnabledConfiguration.getCoverageRunner(), coverageEnabledConfiguration.isBranchCoverageEnabled());
-      }
-    }
-    else {
-      for (CoverageSuite suite : mySuitesBundle.getSuites()) {
-        CoverageRunner runner = suite.getRunner();
-        if (tryAddBranches(infos, runner, false)) {
-          break;
-        }
+    for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+      if (tryAddBranches(infos, suite.getRunner(), suite.isBranchCoverage())) {
+        break;
       }
     }
     return infos.toArray(ColumnInfo.EMPTY_ARRAY);
@@ -168,7 +165,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   protected boolean isBranchInfoAvailable(CoverageRunner coverageRunner, boolean branchCoverage) {
-    return coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(branchCoverage);
+    return coverageRunner instanceof JavaCoverageRunner javaCoverageRunner && javaCoverageRunner.isBranchInfoAvailable(branchCoverage);
   }
 
   private boolean isInCoverageScope(PsiElement element) {

@@ -21,7 +21,7 @@ internal object HintUtils {
       .asSequence()
       .flatMap { it.getProvidersInfoForLanguage(language) }
       .filter { it.isLanguageSupported(language) }
-      .map { it.withSettings(language, config) }
+      .map { it.withSettings(it.getSettingsLanguage(language), config) }
       .toList()
   }
 }

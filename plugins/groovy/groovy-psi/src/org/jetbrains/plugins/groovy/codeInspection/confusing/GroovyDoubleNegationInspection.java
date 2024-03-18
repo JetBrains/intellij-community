@@ -15,17 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -45,11 +46,11 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new DoubleNegationFix();
   }
 
-  private static class DoubleNegationFix extends GroovyFix {
+  private static class DoubleNegationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -58,15 +59,15 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final GrUnaryExpression expression = (GrUnaryExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrUnaryExpression expression = (GrUnaryExpression)element;
       GrExpression operand = (GrExpression)PsiUtil.skipParentheses(expression.getOperand(), false);
       if (operand instanceof GrUnaryExpression prefixExpression) {
         final GrExpression innerOperand = prefixExpression.getOperand();
         if (innerOperand == null) {
           return;
         }
-        replaceExpression(expression, innerOperand.getText());
+        GrInspectionUtil.replaceExpression(expression, innerOperand.getText());
       }
       else if (operand instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
@@ -78,7 +79,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
           final String rhsText = rhs.getText();
           builder.append(rhsText);
         }
-        replaceExpression(expression, builder.toString());
+        GrInspectionUtil.replaceExpression(expression, builder.toString());
       }
     }
   }

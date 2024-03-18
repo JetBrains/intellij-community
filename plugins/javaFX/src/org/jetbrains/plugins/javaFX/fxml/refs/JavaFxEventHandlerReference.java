@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.codeInsight.daemon.impl.analysis.PsiReferenceWithUnresolvedQuickFixes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> {
+public final class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> implements PsiReferenceWithUnresolvedQuickFixes {
   final PsiMethod myEventHandler;
   final PsiClass myController;
 

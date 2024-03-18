@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "GradleSystemSettings", storages = @Storage(value = "gradle.settings.xml", roamingType = RoamingType.DISABLED))
+@State(name = "GradleSystemSettings",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "gradle.settings.xml", roamingType = RoamingType.DISABLED))
 public class GradleSystemSettings implements PersistentStateComponent<GradleSystemSettings.MyState> {
 
   @Nullable private String myServiceDirectoryPath;

@@ -3,9 +3,9 @@
     { "name": "L1" }
   ],
   "modules" : [
-    { "name": "A", "dependsOn": ["B"] },
-    { "name": "B", "dependsOn": ["C", "L1"] },
-    { "name": "C", "dependsOn": ["A"] }
+    { "name": "A", "dependencies": ["B"] },
+    { "name": "B", "dependencies": ["C", "L1"] },
+    { "name": "C", "dependencies": ["A"] }
   ],
   "targets": [
     {

@@ -91,6 +91,20 @@ object GHGQLRequests {
       GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteIssueComment,
                                mapOf("id" to commentId),
                                Any::class.java)
+
+    fun addReaction(server: GithubServerPath, commentId: String, reaction: GHReactionContent): GQLQuery<GHReaction> =
+      GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReaction,
+                               mapOf("id" to commentId,
+                                     "reaction" to reaction),
+                               GHReaction::class.java,
+                               "addReaction", "reaction")
+
+    fun removeReaction(server: GithubServerPath, commentId: String, reaction: GHReactionContent): GQLQuery<GHReaction> =
+      GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.removeReaction,
+                               mapOf("id" to commentId,
+                                     "reaction" to reaction),
+                               GHReaction::class.java,
+                               "removeReaction", "reaction")
   }
 
   object PullRequest {
@@ -125,7 +139,7 @@ object GHGQLRequests {
       }
     }
 
-    fun findByBranches(repository: GHRepositoryCoordinates, baseBranch: String, headBranch: String)
+    fun findByBranches(repository: GHRepositoryCoordinates, baseBranch: String?, headBranch: String)
       : GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequest>> =
       GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findOpenPullRequestsByBranches,
                                mapOf("repoOwner" to repository.repositoryPath.owner,

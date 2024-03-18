@@ -14,8 +14,6 @@ import kotlin.time.Duration.Companion.minutes
 interface DaemonCodeAnalyzer {
   fun isRunningOrPending(): Boolean
 
-  fun isRunning(): Boolean
-
   fun isAllAnalysisFinished(psiFile: PsiFile): Boolean
 }
 

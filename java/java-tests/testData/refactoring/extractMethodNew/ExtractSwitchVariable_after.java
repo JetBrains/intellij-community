@@ -7,8 +7,7 @@ class Test {
         System.out.println(x);
     }
 
-    @Nullable
-    private Integer newMethod(int y) {
+    private @Nullable Integer newMethod(int y) {
         int x;
         switch (y){
             case 3:

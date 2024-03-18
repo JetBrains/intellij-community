@@ -2,7 +2,8 @@
 package com.intellij.collaboration.ui.codereview.details.data
 
 enum class CodeReviewCIJobState {
-  PENDING,
   FAILED,
+  PENDING,
+  SKIPPED,
   SUCCESS
 }

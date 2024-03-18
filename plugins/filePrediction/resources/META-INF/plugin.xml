@@ -39,9 +39,6 @@
 
     <filePrediction.ml.model implementation="com.intellij.filePrediction.predictor.model.FilePredictionMLModelProvider"/>
 
-    <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
-    <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
-    <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionSessionHistory"/>
   </extensions>
 
   <projectListeners>

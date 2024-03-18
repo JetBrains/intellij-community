@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 
-public class JavaWordSelectioner extends AbstractWordSelectioner {
+public final class JavaWordSelectioner extends AbstractWordSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.config.KotlinSourceRootType
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.types.typeUtil.closure
-import org.jetbrains.kotlin.idea.base.facet.implementingModules as implementingModulesNew
 
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule' instead.",
@@ -56,17 +54,6 @@ val Module.sourceType: SourceType?
 @Suppress("unused")
 val Module.isMPPModule: Boolean
     get() = isMultiPlatformModule
-
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("Use 'org.jetbrains.kotlin.idea.base.facet.implementingModules' instead.")
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.facet.implementingModules' instead.",
-    ReplaceWith("implementingModules", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
-    level = DeprecationLevel.ERROR
-)
-@Suppress("unused")
-val Module.implementingModules: List<Module>
-    get() = implementingModulesNew
 
 val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
     get() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -61,6 +61,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("CompletionOnImportedFunction")
     public void testCompletionOnImportedFunction() throws Exception {
         runTest("../testData/basic/multifile/CompletionOnImportedFunction/");
+    }
+
+    @TestMetadata("ConstructorReferenceNotImported")
+    public void testConstructorReferenceNotImported() throws Exception {
+        runTest("../testData/basic/multifile/ConstructorReferenceNotImported/");
     }
 
     @TestMetadata("DoNotCompleteWithConstraints")
@@ -183,19 +188,9 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/InImportExtension/");
     }
 
-    @TestMetadata("InImportExtensionNoAttributes")
-    public void testInImportExtensionNoAttributes() throws Exception {
-        runTest("../testData/basic/multifile/InImportExtensionNoAttributes/");
-    }
-
     @TestMetadata("InImportHighOrderTopLevelFun")
     public void testInImportHighOrderTopLevelFun() throws Exception {
         runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
-    }
-
-    @TestMetadata("InImportHighOrderTopLevelFunNoTailText")
-    public void testInImportHighOrderTopLevelFunNoTailText() throws Exception {
-        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFunNoTailText/");
     }
 
     @TestMetadata("InImportJavaClass")
@@ -241,6 +236,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
         runTest("../testData/basic/multifile/JavaCallableReference/");
+    }
+
+    @TestMetadata("JavaClassQualifierWithTypeArguments")
+    public void testJavaClassQualifierWithTypeArguments() throws Exception {
+        runTest("../testData/basic/multifile/JavaClassQualifierWithTypeArguments/");
     }
 
     @TestMetadata("JavaEnum")

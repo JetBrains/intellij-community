@@ -9,8 +9,8 @@ import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.ActionLinkListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
-import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -98,8 +99,11 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
         addHyperlinkListener(actionLinkListener)
 
-        bindTextIn(scope, vm.errorState.map { error ->
+        bindTextIn(scope, vm.errorState.map { error: RepositoryAndAccountSelectorViewModel.Error? ->
           if (error == null) return@map ""
+          if (errorPresenter !is ErrorStatusPresenter.Text) {
+            return@map error.asSafely<RepositoryAndAccountSelectorViewModel.Error.SubmissionError>()?.exception?.localizedMessage.orEmpty()
+          }
           HtmlBuilder().append(errorPresenter.getErrorTitle(error)).br().apply {
             val errorDescription = errorPresenter.getErrorDescription(error)
             if (errorDescription != null) {

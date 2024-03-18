@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.impl.visible;
 
-import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter.DOWN;
 import static com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter.UP;
@@ -43,14 +43,14 @@ public class LinearFragmentGenerator {
 
   private final Function<Integer, List<Integer>> upNodesFun = new Function<>() {
     @Override
-    public List<Integer> fun(Integer integer) {
+    public List<Integer> apply(Integer integer) {
       return myLinearGraph.getNodes(integer, UP);
     }
   };
 
   private final Function<Integer, List<Integer>> downNodesFun = new Function<>() {
     @Override
-    public List<Integer> fun(Integer integer) {
+    public List<Integer> apply(Integer integer) {
       return myLinearGraph.getNodes(integer, DOWN);
     }
   };
@@ -152,13 +152,13 @@ public class LinearFragmentGenerator {
     Set<Integer> blackNodes = new HashSet<>();
     blackNodes.add(startNode);
 
-    Set<Integer> grayNodes = new HashSet<>(getNextNodes.fun(startNode));
+    Set<Integer> grayNodes = new HashSet<>(getNextNodes.apply(startNode));
 
     int endNode = -1;
     while (blackNodes.size() < SHORT_FRAGMENT_MAX_SIZE) {
       int nextBlackNode = -1;
       for (int grayNode : grayNodes) {
-        if (blackNodes.containsAll(getPrevNodes.fun(grayNode))) {
+        if (blackNodes.containsAll(getPrevNodes.apply(grayNode))) {
           nextBlackNode = grayNode;
           break;
         }
@@ -171,7 +171,7 @@ public class LinearFragmentGenerator {
         break;
       }
 
-      List<Integer> nextGrayNodes = getNextNodes.fun(nextBlackNode);
+      List<Integer> nextGrayNodes = getNextNodes.apply(nextBlackNode);
       if (nextGrayNodes.isEmpty() || thisNodeCantBeInMiddle.contains(nextBlackNode)) return null;
 
       blackNodes.add(nextBlackNode);

@@ -3,7 +3,6 @@ package com.jetbrains.python.run.configuration
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.CommandLinePanel
-import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.ide.macro.MacrosDialog
@@ -13,6 +12,7 @@ import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.RawCommandLineEditor
+import com.intellij.ui.components.TextComponentEmptyText
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.awt.BorderLayout
@@ -35,7 +35,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
       { true })
     MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
     parametersEditor.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
-    FragmentedSettingsUtil.setupPlaceholderVisibility(parametersEditor.editorField)
+    TextComponentEmptyText.setupPlaceholderVisibility(parametersEditor.editorField)
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
     fragments.add(scriptParametersFragment)

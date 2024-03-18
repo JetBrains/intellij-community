@@ -57,7 +57,7 @@ class CompletionActionsInvoker(project: Project,
       return@readActionInSmartMode createSession(offset, expectedText, properties,
                                                  Lookup.fromExpectedText(expectedText, prefix, emptyList(), latency,
                                                                          isNew = isNew,
-                                                                         caretPosition = prefix.length,
+                                                                         startOffset = prefix.length,
                                                                          comparator = this::comparator))
     }
 

@@ -27,6 +27,7 @@ public class Inspection implements Comparable<Inspection> {
   public String extendedDescription = "";
   public boolean hasOptionsPanel = false;
   public List<OptionsPanelInfo> options = null;
+  public List<Integer> cweIds = null;
 
   public Inspection(String id,
                     String name,
@@ -38,7 +39,8 @@ public class Inspection implements Comparable<Inspection> {
                     boolean appliesToDialects,
                     boolean partOfCodeCleanup,
                     boolean enabledByDefault,
-                    List<OptionsPanelInfo> options) {
+                    List<OptionsPanelInfo> options,
+                    List<Integer> cweIds) {
     this.id = id;
     this.name = name;
     this.severity = severity;
@@ -51,6 +53,7 @@ public class Inspection implements Comparable<Inspection> {
     this.isEnabledDefault = enabledByDefault;
     this.hasOptionsPanel = options != null;
     this.options = options;
+    this.cweIds = cweIds;
   }
 
   public Inspection() {

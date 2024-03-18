@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ConstructorCountInspection extends ClassMetricInspection {
+public final class ConstructorCountInspection extends ClassMetricInspection {
 
   private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
 

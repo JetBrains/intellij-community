@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaReflectionCompletionConfidence extends CompletionConfidence {
+public final class JavaReflectionCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override

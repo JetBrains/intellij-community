@@ -86,7 +86,7 @@ open class RichText(@Nls text: String, parts: Collection<RichString>) : Cloneabl
       val (_, a) = p
       val style = calculateStyle(a)
       val text = p.text.trimEnd()
-      var span = HtmlChunk.span(style).addText(p.text)
+      var span = HtmlChunk.span(style).addText(text)
 
       // Add trim whitespaces to preserve them in HTML
       if (p.text.length > text.length) {

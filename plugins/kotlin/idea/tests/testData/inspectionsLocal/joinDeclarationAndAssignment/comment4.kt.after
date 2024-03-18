@@ -1,0 +1,9 @@
+// AFTER-WARNING: Variable 'foo' is never used
+fun test() {
+    // comment 3
+    bar()
+    // comment 1
+    val foo: String = "" // comment 2
+}
+
+fun bar() {}

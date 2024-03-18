@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -20,18 +17,18 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(
-  dataSource) {
+open class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
-                                                                          ExternalSystemModuleOptionsEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -43,36 +40,59 @@ open class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Externa
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val externalSystem: String?
-    get() = dataSource.externalSystem
+    get() {
+      readField("externalSystem")
+      return dataSource.externalSystem
+    }
 
   override val externalSystemModuleVersion: String?
-    get() = dataSource.externalSystemModuleVersion
+    get() {
+      readField("externalSystemModuleVersion")
+      return dataSource.externalSystemModuleVersion
+    }
 
   override val linkedProjectPath: String?
-    get() = dataSource.linkedProjectPath
+    get() {
+      readField("linkedProjectPath")
+      return dataSource.linkedProjectPath
+    }
 
   override val linkedProjectId: String?
-    get() = dataSource.linkedProjectId
+    get() {
+      readField("linkedProjectId")
+      return dataSource.linkedProjectId
+    }
 
   override val rootProjectPath: String?
-    get() = dataSource.rootProjectPath
+    get() {
+      readField("rootProjectPath")
+      return dataSource.rootProjectPath
+    }
 
   override val externalSystemModuleGroup: String?
-    get() = dataSource.externalSystemModuleGroup
+    get() {
+      readField("externalSystemModuleGroup")
+      return dataSource.externalSystemModuleGroup
+    }
 
   override val externalSystemModuleType: String?
-    get() = dataSource.externalSystemModuleType
+    get() {
+      readField("externalSystemModuleType")
+      return dataSource.externalSystemModuleType
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
 
-  class Builder(result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(
-    result), ExternalSystemModuleOptionsEntity.Builder {
+  class Builder(result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(result), ExternalSystemModuleOptionsEntity.Builder {
     constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,8 +168,8 @@ open class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Externa
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                 MODULE_CONNECTION_ID)]!! as ModuleEntity
+          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this)
+          ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
@@ -257,18 +277,19 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ExternalSystemModuleOptionsEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ExternalSystemModuleOptionsEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = ExternalSystemModuleOptionsEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

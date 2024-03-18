@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
@@ -10,6 +13,8 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -36,7 +41,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher UNMODIFIABLE_SET = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_MAP = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableMap").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_LIST = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableList").parameterCount(1);
@@ -63,12 +68,13 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       checkbox("SUGGEST_MAP_OF_ENTRIES", JavaBundle.message("inspection.collection.factories.option.suggest.ofentries")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.COLLECTION_FACTORIES);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel9OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -178,7 +184,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         if (argumentList != null) {
           PsiExpression[] args = argumentList.getExpressions();
           PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-          if (classReference != null && PsiUtil.isLanguageLevel10OrHigher(mapDefinition) &&
+          if (classReference != null && PsiUtil.getLanguageLevel(mapDefinition).isAtLeast(LanguageLevel.JDK_10) &&
               JAVA_UTIL_HASH_MAP.equals(classReference.getQualifiedName()) && args.length == 1) {
             PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
             if (arg != null) {
@@ -275,7 +281,9 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), type);
         }
-        if(arg != null && PsiUtil.isLanguageLevel10OrHigher(arg) && InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
+        if (arg != null &&
+            PsiUtil.getLanguageLevel(arg).isAtLeast(LanguageLevel.JDK_10) &&
+            InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
           return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), type, true);
         }
       }

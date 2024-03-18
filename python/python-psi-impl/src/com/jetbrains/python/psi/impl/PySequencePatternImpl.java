@@ -22,11 +22,6 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
   }
 
   @Override
-  public boolean isIrrefutable() {
-    return false;
-  }
-
-  @Override
   public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(findChildrenByClass(PyPattern.class));
   }

@@ -4,7 +4,7 @@ public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|kotlin/Any| {
     public final [ResolvedTo(BODY_RESOLVE)] fun memberFunction([ResolvedTo(BODY_RESOLVE)] s: R|kotlin/String|): R|kotlin/Unit|
 
     public final [ResolvedTo(BODY_RESOLVE)] val memberProperty: R|kotlin/Int|
-
+        public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/Int|
 
     public [ResolvedTo(BODY_RESOLVE)] constructor(): R|library/TopLevelClass|
 

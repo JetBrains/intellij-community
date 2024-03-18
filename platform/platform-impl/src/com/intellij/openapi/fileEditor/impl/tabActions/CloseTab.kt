@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
@@ -62,7 +63,8 @@ internal class CloseTab(component: JComponent,
       }
       else {
         shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE)
-        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text",
+                                                        if (SystemInfo.isMac) "⌥" else "Alt+"))
       }
     }
   }

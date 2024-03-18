@@ -21,7 +21,6 @@ class GitLogCommandFilterUi(filters: VcsLogFilterCollection?, filterConsumer: (V
   private val eventDispatcher = EventDispatcher.create(VcsLogFilterUiEx.VcsLogFilterListener::class.java)
 
   private val textField = JBTextField().apply {
-    columns = 30
     addActionListener {
       filterConsumer(getFilters())
       eventDispatcher.multicaster.onFiltersChanged()

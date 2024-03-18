@@ -19,9 +19,6 @@
                  description="Run resolve under a global lock."
                  key="kotlin.parallel.resolve.under.global.lock"
                  restartRequired="true"/>
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.FirSealedClassInheritorsProcessorFactory"
-            serviceImplementation="org.jetbrains.kotlin.idea.fir.low.level.api.ide.FirSealedClassInheritorsProcessorFactoryIdeImpl"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySymbolProviderFactory"
                     serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserialization.LLStubBasedLibrarySymbolProviderFactory"/>

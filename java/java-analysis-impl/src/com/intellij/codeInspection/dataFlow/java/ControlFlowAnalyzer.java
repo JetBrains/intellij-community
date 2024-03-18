@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
@@ -35,8 +36,8 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -101,7 +102,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new FlushFieldsInstruction());
     }
     for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
-      if ((element instanceof PsiField field && field.hasInitializer() || element instanceof PsiClassInitializer) &&
+      if ((element instanceof PsiField field &&
+           field.hasInitializer() && PsiAugmentProvider.canTrustFieldInitializer(field) || element instanceof PsiClassInitializer) &&
           ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);
       }
@@ -1111,8 +1113,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPatternInInstanceof(@NotNull PsiPattern pattern, @NotNull PsiInstanceOfExpression expression,
                                           @NotNull PsiType checkType) {
     boolean potentiallyRedundantInstanceOf = pattern instanceof PsiTypeTestPattern ||
-                                             JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern ||
-                                             pattern instanceof PsiDeconstructionPattern dec && JavaPsiPatternUtil.hasUnconditionalComponents(dec);
+                                             pattern instanceof PsiDeconstructionPattern dec &&
+                                             JavaPsiPatternUtil.hasUnconditionalComponents(dec);
     DfaAnchor instanceofAnchor = potentiallyRedundantInstanceOf ? new JavaExpressionAnchor(expression) : null;
     DeferredOffset endPatternOffset = new DeferredOffset();
     processPattern(pattern, pattern, checkType, instanceofAnchor, endPatternOffset);
@@ -1125,10 +1127,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
                               @NotNull PsiType checkType, @Nullable DfaAnchor instanceofAnchor, @NotNull DeferredOffset endPatternOffset) {
     if (innerPattern == null) return;
-    else if (innerPattern instanceof PsiParenthesizedPattern) {
-      PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
-      processPattern(sourcePattern, unwrappedPattern, checkType, instanceofAnchor, endPatternOffset);
-    }
     else if (innerPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       PsiPatternVariable variable = deconstructionPattern.getPatternVariable();
       PsiType patternType = deconstructionPattern.getTypeElement().getType();
@@ -1140,19 +1138,24 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PopInstruction());
 
       PsiPattern[] components = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
-      PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
-      if (recordClass != null && recordClass.isRecord()) {
-        PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
-        if (components.length == recordComponents.length) {
-          for (int i = 0; i < components.length; i++) {
-            PsiRecordComponent recordComponent = recordComponents[i];
-            PsiPattern patternComponent = components[i];
-            PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
-            if (accessor == null) continue;
-            DfaVariableValue accessorDfaVar =
-              getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
-            addInstruction(new JvmPushInstruction(accessorDfaVar, null));
-            processPattern(sourcePattern, patternComponent, recordComponent.getType(), null, endPatternOffset);
+      if (patternType instanceof PsiClassType patternClassType) {
+        PsiClassType.ClassResolveResult resolveResult = patternClassType.resolveGenerics();
+        PsiClass recordClass = resolveResult.getElement();
+        boolean unchecked = JavaGenericsUtil.isUncheckedCast(patternClassType, checkType);
+        PsiSubstitutor substitutor = unchecked ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor();
+        if (recordClass != null && recordClass.isRecord()) {
+          PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+          if (components.length == recordComponents.length) {
+            for (int i = 0; i < components.length; i++) {
+              PsiRecordComponent recordComponent = recordComponents[i];
+              PsiPattern patternComponent = components[i];
+              PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
+              if (accessor == null) continue;
+              DfaVariableValue accessorDfaVar =
+                getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
+              addInstruction(new JvmPushInstruction(accessorDfaVar, null));
+              processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
+            }
           }
         }
       }
@@ -1178,10 +1181,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @NotNull DeferredOffset endPatternOffset,
                                    @NotNull DfaVariableValue patternDfaVar,
                                    @Nullable DfaAnchor instanceofAnchor) {
-    boolean java20plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
-    if (java20plus
-        ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType))
-        : !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
+    if (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
     }
     else {
@@ -2363,18 +2363,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(castExpression);
     PsiExpression operand = castExpression.getOperand();
 
+    PsiType operandType = operand == null ? null : operand.getType();
     if (operand != null) {
       operand.accept(this);
-      generateBoxingUnboxingInstructionFor(castExpression, operand.getType(), castExpression.getType(), true);
+      generateBoxingUnboxingInstructionFor(castExpression, operandType, castExpression.getType(), true);
     }
     else {
       addInstruction(new PushValueInstruction(DfTypes.typedObject(castExpression.getType(), Nullability.UNKNOWN)));
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
+    if (typeElement != null && operandType != null && !(typeElement.getType() instanceof PsiPrimitiveType) &&
+        !(operandType instanceof PsiLambdaExpressionType) && !(operandType instanceof PsiMethodReferenceType)) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ClassCastException");
       addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
+    } else {
+      addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(castExpression)));
     }
     finishElement(castExpression);
   }

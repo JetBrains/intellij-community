@@ -6,6 +6,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
+import org.junit.Ignore;
 import org.junit.internal.MethodSorter;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.Description;
@@ -160,6 +161,7 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
         return method.getParameterTypes().length == 0 &&
                method.getName().startsWith("test") &&
                method.getReturnType().equals(Void.TYPE) &&
-               Modifier.isPublic(method.getModifiers());
+               Modifier.isPublic(method.getModifiers()) &&
+               method.getAnnotation(Ignore.class) == null;
     }
 }

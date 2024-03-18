@@ -112,7 +112,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   /**
    * NOTE: if the client sets forUseInNonAWTThread to "true", then it's their responsibility to control the document and its listeners.
-   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCancelledException
+   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCanceledException
    * thrown from listeners during "changedUpdate" event, so the exceptions will be rethrown and the remaining listeners WON'T be notified.
    */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
@@ -276,7 +276,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
     List<StripTrailingSpacesFilter> filters = new ArrayList<>();
     StripTrailingSpacesFilter specialFilter = null;
-    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensions()) {
+    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensionList()) {
       StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
       if (specialFilter == null &&
           (filter == StripTrailingSpacesFilter.NOT_ALLOWED || filter == StripTrailingSpacesFilter.POSTPONED)) {
@@ -391,10 +391,14 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isWritable() {
-    if (myIsReadOnly) return false;
+    if (myIsReadOnly) {
+      return false;
+    }
 
-    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
-      if (!guard.isWritable(this).isSuccess()) return false;
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensionList()) {
+      if (!guard.isWritable(this).isSuccess()) {
+        return false;
+      }
     }
 
     return true;
@@ -690,7 +694,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new ReadOnlyModificationException(this, CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
     }
 
-    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensionList()) {
       DocumentWriteAccessGuard.Result result = guard.isWritable(this);
       if (!result.isSuccess()) {
         throw new ReadOnlyModificationException(

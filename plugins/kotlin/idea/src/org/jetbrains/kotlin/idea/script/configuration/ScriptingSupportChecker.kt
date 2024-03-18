@@ -15,20 +15,17 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.hasNoExceptionsToBeUnderSourceRoot
 import org.jetbrains.kotlin.idea.hasUnknownScriptExt
 import org.jetbrains.kotlin.idea.isEnabled
+import org.jetbrains.kotlin.idea.isStandaloneKotlinScript
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
-import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import java.util.function.Function
 import javax.swing.JComponent
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.isStandalone
 
 
 class ScriptingSupportChecker: EditorNotificationProvider {
@@ -141,13 +138,6 @@ private fun EditorNotificationPanel.close(
     manager.getSelectedEditor(file)?.let { editor ->
         manager.removeTopComponent(editor, this)
     }
-}
-
-private fun VirtualFile.isStandaloneKotlinScript(project: Project): Boolean {
-    val ktFile = toKtFile(project)?.takeIf(KtFile::isScript) ?: return false
-    val scriptDefinition = ScriptDefinitionsManager.getInstance(project).findDefinition(KtFileScriptSource(ktFile))
-        ?: return false
-    return scriptDefinition.compilationConfiguration[ScriptCompilationConfiguration.isStandalone] == true
 }
 
 private fun decideLaterIsOn(project: Project): Boolean =

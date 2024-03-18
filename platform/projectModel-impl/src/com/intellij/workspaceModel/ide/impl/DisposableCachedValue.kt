@@ -11,10 +11,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.CachedValue
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.DummyVersionedEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.concurrency.ThreadingAssertions
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.system.measureTimeMillis
@@ -29,13 +30,14 @@ class DisposableCachedValue<R : Disposable>(
   private var latestValue: R? = null
   private var latestStorageModificationCount: Long? = null
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   val value: R
     @Synchronized
     get() {
       val currentValue: R
       val storage = entityStorage()
       if (storage is DummyVersionedEntityStorage) {
-        val storageModificationCount = (storage.current as MutableEntityStorage).modificationCount
+        val storageModificationCount = (storage.current as MutableEntityStorageInstrumentation).modificationCount
         if (storageModificationCount != latestStorageModificationCount) {
           currentValue = storage.cachedValue(cachedValue)
           latestStorageModificationCount = storageModificationCount

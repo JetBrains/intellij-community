@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +69,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     }
 
     // Log final nsi directory to make debugging easier
-    val logDir = Path.of(context.paths.buildOutputRoot, "log")
+    val logDir = context.paths.buildOutputDir.resolve("log")
     val nsiLogDir = logDir.resolve("nsi$suffix")
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
@@ -80,7 +80,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
       communityRoot = context.paths.communityHomeDirRoot,
     )
     Decompressor.Zip(nsisZip).withZipExtensions().extract(box)
-    spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
+    spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope {
       val timeout = 2.hours
       if (SystemInfoRt.isWindows) {
         runProcess(
@@ -89,7 +89,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
             "/V2",
             "/DCOMMUNITY_DIR=$communityHome",
             "/DIPR=${customizer.associateIpr}",
-            "/DOUT_DIR=${context.paths.artifacts}",
+            "/DOUT_DIR=${context.paths.artifactDir}",
             "/DOUT_FILE=$outFileName",
             "$box/nsiconf/idea.nsi",
           ),
@@ -116,7 +116,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
             "-V2",
             "-DCOMMUNITY_DIR=$communityHome",
             "-DIPR=${customizer.associateIpr}",
-            "-DOUT_DIR=${context.paths.artifacts}",
+            "-DOUT_DIR=${context.paths.artifactDir}",
             "-DOUT_FILE=$outFileName",
             "$box/nsiconf/idea.nsi",
           ),

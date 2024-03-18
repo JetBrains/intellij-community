@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 public final class SSHUtil {
   public static final @NonNls Pattern PASSPHRASE_PROMPT = Pattern.compile("\\r?Enter passphrase for( key)? '?(?<keyfile>[^']*)'?:\\s?");
   public static final @NonNls Pattern PASSWORD_PROMPT = Pattern.compile("(?<username>.*)'s password:\\s?");
+  public static final @NonNls Pattern PKCS_PIN_TOKEN_PROMPT = Pattern.compile("\\r?Enter PIN for '?(?<tokenLabel>[^']*)'?:\\s?");
   public static final @NonNls String PASSWORD_PROMPT_PREFIX = "password for";
   public static final @NonNls String PASSWORD_PROMPT_SUFFIX = "password:";
   public static final @NonNls String CONFIRM_CONNECTION_PROMPT = "Are you sure you want to continue connecting";
@@ -16,6 +17,10 @@ public final class SSHUtil {
 
   public static String extractKeyPath(Matcher matcher) {
     return matcher.group("keyfile");
+  }
+
+  public static String extractPkcsTokenLabel(Matcher matcher) {
+    return matcher.group("tokenLabel");
   }
 
   public static String extractUsername(Matcher matcher) {

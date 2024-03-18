@@ -6,6 +6,9 @@ import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
 import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -157,7 +160,10 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
 
   @NotNull
   private ImplementationViewComponent createImplementationView(List<? extends PsiElement> elements) {
-    return new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+    ThrowableComputable<List<PsiImplementationViewElement>, RuntimeException> computableViewElements =
+      () -> ReadAction.compute(() -> ContainerUtil.map(elements, PsiImplementationViewElement::new));
+    List<PsiImplementationViewElement> viewElements = ProgressManager.getInstance().runProcessWithProgressSynchronously(computableViewElements, "", false, getProject());
+    return new ImplementationViewComponent(viewElements, 0);
   }
 
   public void testFunctionalInterface() {

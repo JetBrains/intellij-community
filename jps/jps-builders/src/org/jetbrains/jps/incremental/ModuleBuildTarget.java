@@ -34,10 +34,10 @@ import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -256,12 +256,45 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     for (File file : enumerator.classes().getRoots()) {
       String path = relativizer.toRelative(file.getAbsolutePath());
 
+      Integer contentHash = getContentHash(file);
       if (logBuilder != null) {
-        logBuilder.append(path).append("\n");
+        logBuilder.append(path);
+        if (contentHash != 0) logBuilder.append(": ").append(contentHash);
+        logBuilder.append("\n");
       }
-      fingerprint = 31 * fingerprint + pathHashCode(path);
+      fingerprint = 31 * fingerprint + pathHashCode(path) + contentHash;
     }
     return fingerprint;
+  }
+
+  private static Integer getContentHash(File file) {
+    if (ProjectStamps.TRACK_LIBRARY_CONTENT) {
+      try {
+        if (!file.isFile() || !file.getName().endsWith(".jar")) return 0;
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        FileInputStream inputStream = new FileInputStream(file);
+
+        byte[] bytesBuffer = new byte[1024];
+        int bytesRead;
+
+        while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
+          digest.update(bytesBuffer, 0, bytesRead);
+        }
+
+        byte[] hashBytes = digest.digest();
+        inputStream.close();
+
+        ByteBuffer buffer = ByteBuffer.wrap(hashBytes);
+        return buffer.getInt();
+      }
+      catch (NoSuchAlgorithmException | IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    else {
+      return 0;
+    }
   }
 
   private static int pathHashCode(@NotNull String path) {

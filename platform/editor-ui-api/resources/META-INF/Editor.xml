@@ -16,5 +16,6 @@
     <projectService
       serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker"
       serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
   </extensions>
 </idea-plugin>

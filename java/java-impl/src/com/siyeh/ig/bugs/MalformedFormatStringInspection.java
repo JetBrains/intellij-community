@@ -24,7 +24,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class MalformedFormatStringInspection extends BaseInspection {
+public final class MalformedFormatStringInspection extends BaseInspection {
   final List<String> classNames;
   final List<String> methodNames;
   /**

@@ -4,7 +4,6 @@
 package com.intellij.lang.documentation.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.model.psi.impl.mockEditor
 import com.intellij.openapi.util.component1

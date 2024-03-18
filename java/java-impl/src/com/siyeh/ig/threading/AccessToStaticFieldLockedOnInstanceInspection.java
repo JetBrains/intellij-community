@@ -38,7 +38,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
+public final class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 

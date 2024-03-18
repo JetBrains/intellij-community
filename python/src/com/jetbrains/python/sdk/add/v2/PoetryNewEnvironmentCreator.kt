@@ -81,6 +81,7 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
                                      false,
                                      false,
                                      false,
+                                     presenter.projectLocationContext is WslContext,
                                      InterpreterCreationMode.CUSTOM)
   }
 }

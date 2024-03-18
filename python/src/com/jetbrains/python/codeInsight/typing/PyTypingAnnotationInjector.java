@@ -29,7 +29,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * in type comments starting with <tt># type:</tt>.
  *
  */
-public class PyTypingAnnotationInjector extends PyInjectorBase {
+public final class PyTypingAnnotationInjector extends PyInjectorBase {
   public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");
 
   private static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore(\\[[^]#]*])?\\s*($|(#.*))", Pattern.CASE_INSENSITIVE);

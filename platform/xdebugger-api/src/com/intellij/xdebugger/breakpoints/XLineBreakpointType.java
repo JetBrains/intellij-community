@@ -8,13 +8,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -68,15 +68,22 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   private String filePositionDisplayText(String path, XLineBreakpoint<P> breakpoint) {
     var line = breakpoint.getLine();
     var column = getColumn(breakpoint);
-    if (column == -1 || column == 0) {
+    if (column <= 0) {
       return XDebuggerBundle.message("xbreakpoint.default.display.text", line + 1, path);
     } else {
       return XDebuggerBundle.message("xbreakpoint.default.display.text.with.column", line + 1, column + 1, path);
     }
   }
 
-  private int getColumn(XLineBreakpoint<P> breakpoint) {
-    if (!Registry.is("debugger.show.breakpoints.inline")) return -1;
+  /**
+   * Column index (zero-based) of this line breakpoint:
+   * <ul>
+   *   <li><em>positive</em> for inline breakpoints,</li>
+   *   <li><em>zero</em> for regular line breakpoint,</li>
+   *   <li><em>negative</em> if column number is not available.</li>
+   * </ul>
+   */
+  public int getColumn(XLineBreakpoint<P> breakpoint) {
 
     return ReadAction.compute(() -> {
       var range = breakpoint.getType().getHighlightRange(breakpoint);
@@ -87,9 +94,24 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       if (file == null) return -1;
       var document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return -1;
+      if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return -1;
       if (0 > offset || offset > document.getTextLength()) return -1;
       return offset - document.getLineStartOffset(document.getLineNumber(offset));
     });
+  }
+
+  /**
+   * Laconic breakpoint variant description with specification of its kind (type of target).
+   * Primarily used for tooltip in the editor, when exact target is obvious but overall semantics might be unclear.
+   * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
+   *
+   * @see XBreakpointType#getGeneralDescription(XBreakpoint)
+   */
+  @NotNull
+  @Nls
+  protected String getGeneralDescription(XLineBreakpointVariant variant) {
+    // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
+    return variant.getText();
   }
 
   /**
@@ -161,6 +183,34 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return Promises.resolvedPromise(computeVariants(project, position));
   }
 
+  /**
+   * Return whether given {@code breakpoint} corresponds to given {@code variant}.
+   * I.e., this breakpoint was created using this variant.
+   */
+  public boolean variantAndBreakpointMatch(@NotNull XLineBreakpoint<P> breakpoint, @NotNull XLineBreakpointVariant variant) {
+    // By default, we only compare highlight ranges, however, feel free to override and implement more sophisticated logic
+    // (i.e., it may be required if there are different breakpoint variants starting at the same location,
+    // e.g., to resolve issues like IDEA-337165).
+
+    var r1 = getHighlightRange(breakpoint);
+    var r2 = variant.getHighlightRange();
+
+    if (r1 == null && r2 == null) {
+      // null means "whole line"
+      return true;
+    }
+
+    if (r1 != null && r2 != null) {
+      return r1.getStartOffset() == r2.getStartOffset();
+    }
+
+    return false;
+  }
+
+  public boolean changeLine(@NotNull XLineBreakpoint<P> breakpoint, int newLine, @NotNull Project project) {
+    return true;
+  }
+
   public abstract class XLineBreakpointVariant {
     @NotNull
     @Nls
@@ -172,11 +222,30 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     @Nullable
     public abstract TextRange getHighlightRange();
 
+    /**
+     * @return true iff this variant corresponds to breakpoint hitting at all line locations
+     *         (i.e., "all", "line and all lambdas")
+     */
+    public boolean isMultiVariant() {
+      return false;
+    }
+
     @Nullable
     public abstract P createProperties();
 
     public final XLineBreakpointType<P> getType() {
       return XLineBreakpointType.this;
+    }
+
+    @NotNull
+    @Nls
+    public final String getTooltipDescription() {
+      return getType().getGeneralDescription(this);
+    }
+
+    @Override
+    public String toString() {
+      return getType() + ": " + getText();
     }
   }
 
@@ -203,6 +272,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     @Override
     public TextRange getHighlightRange() {
       return null;
+    }
+
+    @Override
+    public boolean isMultiVariant() {
+      // Historically, base class for all variants was "all" variant.
+      return true;
     }
 
     @Override
@@ -236,6 +311,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     @Override
     public TextRange getHighlightRange() {
       return myElement.getTextRange();
+    }
+
+    @Override
+    public boolean isMultiVariant() {
+      return false;
     }
   }
 }

@@ -36,7 +36,8 @@ UFile (package = ) [public final class WithGenericKt {...]
                             USimpleNameReferenceExpression (identifier = test1, resolvesTo = null) [test1] : PsiType:int
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return "fail: test1"] : PsiType:Void
-                        ULiteralExpression (value = "fail: test1") ["fail: test1"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["fail: test1"] : PsiType:String
+                            ULiteralExpression (value = "fail: test1") ["fail: test1"] : PsiType:String
                 UIfExpression [if (test2() != null) return "fail: test2"] : PsiType:Unit
                     UBinaryExpression (operator = !=) [test2() != null] : PsiType:boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test2()] : PsiType:int
@@ -44,10 +45,12 @@ UFile (package = ) [public final class WithGenericKt {...]
                             USimpleNameReferenceExpression (identifier = test2, resolvesTo = null) [test2] : PsiType:int
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return "fail: test2"] : PsiType:Void
-                        ULiteralExpression (value = "fail: test2") ["fail: test2"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["fail: test2"] : PsiType:String
+                            ULiteralExpression (value = "fail: test2") ["fail: test2"] : PsiType:String
                 UDeclarationsExpression [var result3: java.lang.String = "fail"]
                     ULocalVariable (name = result3) [var result3: java.lang.String = "fail"]
-                        ULiteralExpression (value = "fail") ["fail"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["fail"] : PsiType:String
+                            ULiteralExpression (value = "fail") ["fail"] : PsiType:String
                 UTryExpression [try {...] : PsiType:Object
                     UBlockExpression [{...}] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test3()] : PsiType:int
@@ -59,13 +62,16 @@ UFile (package = ) [public final class WithGenericKt {...]
                         UBlockExpression [{...}] : PsiType:Unit
                             UBinaryExpression (operator = =) [result3 = "OK"] : PsiType:Unit
                                 USimpleNameReferenceExpression (identifier = result3) [result3] : PsiType:String
-                                ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                                UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                                    ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                 UIfExpression [if (result3 != "OK") return "fail: test3"] : PsiType:Unit
                     UBinaryExpression (operator = !=) [result3 != "OK"] : PsiType:boolean
                         USimpleNameReferenceExpression (identifier = result3) [result3] : PsiType:String
-                        ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                            ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                     UReturnExpression [return "fail: test3"] : PsiType:Void
-                        ULiteralExpression (value = "fail: test3") ["fail: test3"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["fail: test3"] : PsiType:String
+                            ULiteralExpression (value = "fail: test3") ["fail: test3"] : PsiType:String
                 UTryExpression [try {...] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [castToString(null)] : PsiType:Unit
@@ -77,6 +83,8 @@ UFile (package = ) [public final class WithGenericKt {...]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : PsiType:Void
                             UReturnExpression [return "OK"] : PsiType:Void
-                                ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                                UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                                    ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                 UReturnExpression [return "Fail"] : PsiType:Void
-                    ULiteralExpression (value = "Fail") ["Fail"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["Fail"] : PsiType:String
+                        ULiteralExpression (value = "Fail") ["Fail"] : PsiType:String

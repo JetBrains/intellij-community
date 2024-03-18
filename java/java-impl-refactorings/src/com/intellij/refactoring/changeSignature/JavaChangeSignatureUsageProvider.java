@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-public class JavaChangeSignatureUsageProvider implements ChangeSignatureUsageProvider {
+public final class JavaChangeSignatureUsageProvider implements ChangeSignatureUsageProvider {
   private static final Logger LOG = Logger.getInstance(JavaChangeSignatureUsageProvider.class);
 
   @Override

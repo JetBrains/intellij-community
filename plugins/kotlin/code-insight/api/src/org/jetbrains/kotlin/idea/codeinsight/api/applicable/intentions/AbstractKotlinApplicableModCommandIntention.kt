@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -24,8 +25,14 @@ abstract class AbstractKotlinApplicableModCommandIntention<ELEMENT : KtElement>(
     final override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean =
         super.isApplicableTo(element, caretOffset) && isApplicableWithAnalyze(element)
 
-    override fun apply(element: ELEMENT, project: Project, editor: Editor?) {
+    final override fun apply(element: ELEMENT, project: Project, editor: Editor?) {
         throw UnsupportedOperationException("apply(ELEMENT, Project, Editor?) should not be invoked")
+    }
+
+    abstract fun apply(element: ELEMENT, context: ActionContext, updater: ModPsiUpdater)
+
+    final override fun invoke(context: ActionContext, element: ELEMENT, updater: ModPsiUpdater) {
+        apply(element, context, updater)
     }
 
 }

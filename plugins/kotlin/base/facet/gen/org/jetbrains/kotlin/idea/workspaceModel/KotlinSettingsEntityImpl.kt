@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -28,6 +27,8 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
@@ -47,65 +48,141 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
 
     }
 
-    override val name: String
-        get() = dataSource.name
+  override val moduleId: ModuleId
+    get() {
+      readField("moduleId")
+      return dataSource.moduleId
+    }
 
-    override val moduleId: ModuleId
-        get() = dataSource.moduleId
+  override val name: String
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
-    override val sourceRoots: List<String>
-        get() = dataSource.sourceRoots
+  override val sourceRoots: List<String>
+    get() {
+      readField("sourceRoots")
+      return dataSource.sourceRoots
+    }
 
-    override val configFileItems: List<ConfigFileItem>
-        get() = dataSource.configFileItems
+  override val configFileItems: List<ConfigFileItem>
+    get() {
+      readField("configFileItems")
+      return dataSource.configFileItems
+    }
 
-    override val module: ModuleEntity
-        get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
-    override val useProjectSettings: Boolean get() = dataSource.useProjectSettings
-    override val implementedModuleNames: List<String>
-        get() = dataSource.implementedModuleNames
+  override val useProjectSettings: Boolean
+    get() {
+      readField("useProjectSettings")
+      return dataSource.useProjectSettings
+    }
+  override val implementedModuleNames: List<String>
+    get() {
+      readField("implementedModuleNames")
+      return dataSource.implementedModuleNames
+    }
 
-    override val dependsOnModuleNames: List<String>
-        get() = dataSource.dependsOnModuleNames
+  override val dependsOnModuleNames: List<String>
+    get() {
+      readField("dependsOnModuleNames")
+      return dataSource.dependsOnModuleNames
+    }
 
-    override val additionalVisibleModuleNames: Set<String>
-        get() = dataSource.additionalVisibleModuleNames
+  override val additionalVisibleModuleNames: Set<String>
+    get() {
+      readField("additionalVisibleModuleNames")
+      return dataSource.additionalVisibleModuleNames
+    }
 
-    override val productionOutputPath: String
-        get() = dataSource.productionOutputPath
+  override val productionOutputPath: String
+    get() {
+      readField("productionOutputPath")
+      return dataSource.productionOutputPath
+    }
 
-    override val testOutputPath: String
-        get() = dataSource.testOutputPath
+  override val testOutputPath: String
+    get() {
+      readField("testOutputPath")
+      return dataSource.testOutputPath
+    }
 
-    override val sourceSetNames: List<String>
-        get() = dataSource.sourceSetNames
+  override val sourceSetNames: List<String>
+    get() {
+      readField("sourceSetNames")
+      return dataSource.sourceSetNames
+    }
 
-    override val isTestModule: Boolean get() = dataSource.isTestModule
-    override val externalProjectId: String
-        get() = dataSource.externalProjectId
+  override val isTestModule: Boolean
+    get() {
+      readField("isTestModule")
+      return dataSource.isTestModule
+    }
+  override val externalProjectId: String
+    get() {
+      readField("externalProjectId")
+      return dataSource.externalProjectId
+    }
 
-    override val isHmppEnabled: Boolean get() = dataSource.isHmppEnabled
-    override val pureKotlinSourceFolders: List<String>
-        get() = dataSource.pureKotlinSourceFolders
+  override val isHmppEnabled: Boolean
+    get() {
+      readField("isHmppEnabled")
+      return dataSource.isHmppEnabled
+    }
+  override val pureKotlinSourceFolders: List<String>
+    get() {
+      readField("pureKotlinSourceFolders")
+      return dataSource.pureKotlinSourceFolders
+    }
 
-    override val kind: KotlinModuleKind
-        get() = dataSource.kind
+  override val kind: KotlinModuleKind
+    get() {
+      readField("kind")
+      return dataSource.kind
+    }
 
-    override val mergedCompilerArguments: String
-        get() = dataSource.mergedCompilerArguments
+  override val compilerArguments: String
+    get() {
+      readField("compilerArguments")
+      return dataSource.compilerArguments
+    }
 
-    override val compilerArguments: String
-        get() = dataSource.compilerArguments
+  override val compilerSettings: CompilerSettingsData
+    get() {
+      readField("compilerSettings")
+      return dataSource.compilerSettings
+    }
 
-    override val compilerSettings: CompilerSettingsData
-        get() = dataSource.compilerSettings
+  override val targetPlatform: String
+    get() {
+      readField("targetPlatform")
+      return dataSource.targetPlatform
+    }
 
-    override val targetPlatform: String
-        get() = dataSource.targetPlatform
+  override val externalSystemRunTasks: List<String>
+        get() {
+            readField("externalSystemRunTasks")
+            return dataSource.externalSystemRunTasks
+        }
 
-    override val entitySource: EntitySource
-        get() = dataSource.entitySource
+  override val version: Int get() {
+      readField("version")
+      return dataSource.version
+  }
+
+  override val flushNeeded: Boolean get() {
+      readField("flushNeeded")
+      return dataSource.flushNeeded
+  }
+
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
     override fun connectionIdList(): List<ConnectionId> {
         return connections
@@ -192,9 +269,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (!getEntityData().isKindInitialized()) {
                 error("Field KotlinSettingsEntity#kind should be initialized")
             }
-            if (!getEntityData().isMergedCompilerArgumentsInitialized()) {
-                error("Field KotlinSettingsEntity#mergedCompilerArguments should be initialized")
-            }
             if (!getEntityData().isCompilerArgumentsInitialized()) {
                 error("Field KotlinSettingsEntity#compilerArguments should be initialized")
             }
@@ -203,6 +277,9 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             }
             if (!getEntityData().isTargetPlatformInitialized()) {
                 error("Field KotlinSettingsEntity#targetPlatform should be initialized")
+            }
+            if (!getEntityData().isExternalSystemRunTasksInitialized()) {
+                error("Field KotlinSettingsEntity#externalSystemRunTasks should be initialized")
             }
         }
 
@@ -239,6 +316,10 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (collection_pureKotlinSourceFolders is MutableWorkspaceList<*>) {
                 collection_pureKotlinSourceFolders.cleanModificationUpdateAction()
             }
+            val collection_externalSystemRunTasks = getEntityData().externalSystemRunTasks
+            if (collection_externalSystemRunTasks is MutableWorkspaceList<*>) {
+                collection_externalSystemRunTasks.cleanModificationUpdateAction()
+            }
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -265,11 +346,13 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders =
                 dataSource.pureKotlinSourceFolders.toMutableList()
             if (this.kind != dataSource.kind) this.kind = dataSource.kind
-            if (this.mergedCompilerArguments != dataSource.mergedCompilerArguments) this.mergedCompilerArguments =
-                dataSource.mergedCompilerArguments
             if (this.compilerArguments != dataSource.compilerArguments) this.compilerArguments = dataSource.compilerArguments
             if (this.compilerSettings != dataSource.compilerSettings) this.compilerSettings = dataSource.compilerSettings
             if (this.targetPlatform != dataSource.targetPlatform) this.targetPlatform = dataSource.targetPlatform
+            if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks =
+                dataSource.externalSystemRunTasks.toMutableList()
+            if (this.version != dataSource.version) this.version = dataSource.version
+            if (this.flushNeeded != dataSource.flushNeeded) this.flushNeeded = dataSource.flushNeeded
             updateChildToParentReferences(parents)
         }
 
@@ -543,14 +626,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
 
             }
 
-        override var mergedCompilerArguments: String
-            get() = getEntityData().mergedCompilerArguments
-            set(value) {
-                checkModificationAllowed()
-                getEntityData(true).mergedCompilerArguments = value
-                changedProperty.add("mergedCompilerArguments")
-            }
-
         override var compilerArguments: String
             get() = getEntityData().compilerArguments
             set(value) {
@@ -576,6 +651,43 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
                 changedProperty.add("targetPlatform")
             }
 
+        private val externalSystemRunTasksUpdater: (value: List<String>) -> Unit = { value ->
+
+            changedProperty.add("externalSystemRunTasks")
+        }
+        override var externalSystemRunTasks: MutableList<String>
+            get() {
+                val collection_externalSystemRunTasks = getEntityData().externalSystemRunTasks
+                if (collection_externalSystemRunTasks !is MutableWorkspaceList) return collection_externalSystemRunTasks
+                if (diff == null || modifiable.get()) {
+                    collection_externalSystemRunTasks.setModificationUpdateAction(externalSystemRunTasksUpdater)
+                } else {
+                    collection_externalSystemRunTasks.cleanModificationUpdateAction()
+                }
+                return collection_externalSystemRunTasks
+            }
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).externalSystemRunTasks = value
+                externalSystemRunTasksUpdater.invoke(value)
+            }
+
+        override var version: Int
+            get() = getEntityData().version
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).version = value
+                changedProperty.add("version")
+            }
+
+        override var flushNeeded: Boolean
+            get() = getEntityData().flushNeeded
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).flushNeeded = value
+                changedProperty.add("flushNeeded")
+            }
+
         override fun getEntityClass(): Class<KotlinSettingsEntity> = KotlinSettingsEntity::class.java
     }
 }
@@ -597,10 +709,12 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     var isHmppEnabled: Boolean = false
     lateinit var pureKotlinSourceFolders: MutableList<String>
     lateinit var kind: KotlinModuleKind
-    lateinit var mergedCompilerArguments: String
     lateinit var compilerArguments: String
     lateinit var compilerSettings: CompilerSettingsData
     lateinit var targetPlatform: String
+    lateinit var externalSystemRunTasks: MutableList<String>
+    var version: Int = 0
+    var flushNeeded: Boolean = false
 
     internal fun isNameInitialized(): Boolean = ::name.isInitialized
     internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
@@ -618,10 +732,11 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
 
     internal fun isPureKotlinSourceFoldersInitialized(): Boolean = ::pureKotlinSourceFolders.isInitialized
     internal fun isKindInitialized(): Boolean = ::kind.isInitialized
-    internal fun isMergedCompilerArgumentsInitialized(): Boolean = ::mergedCompilerArguments.isInitialized
     internal fun isCompilerArgumentsInitialized(): Boolean = ::compilerArguments.isInitialized
     internal fun isCompilerSettingsInitialized(): Boolean = ::compilerSettings.isInitialized
     internal fun isTargetPlatformInitialized(): Boolean = ::targetPlatform.isInitialized
+    internal fun isExternalSystemRunTasksInitialized(): Boolean = ::externalSystemRunTasks.isInitialized
+
 
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
@@ -639,6 +754,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         for (item in sourceSetNames) {
         }
         for (item in pureKotlinSourceFolders) {
+        }
+        for (item in externalSystemRunTasks) {
         }
         return result
     }
@@ -658,6 +775,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         for (item in sourceSetNames) {
         }
         for (item in pureKotlinSourceFolders) {
+        }
+        for (item in externalSystemRunTasks) {
         }
     }
 
@@ -681,6 +800,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         for (item in sourceSetNames) {
         }
         for (item in pureKotlinSourceFolders) {
+        }
+        for (item in externalSystemRunTasks) {
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
@@ -709,11 +830,13 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         return modifiable
     }
 
-    override fun createEntity(snapshot: EntityStorage): KotlinSettingsEntity {
-        return getCached(snapshot) {
+    @OptIn(EntityStorageInstrumentationApi::class)
+    override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinSettingsEntity {
+        val entityId = createEntityId()
+        return snapshot.initializeEntity(entityId) {
             val entity = KotlinSettingsEntityImpl(this)
             entity.snapshot = snapshot
-            entity.id = createEntityId()
+            entity.id = entityId
             entity
         }
     }
@@ -732,6 +855,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         clonedEntity.additionalVisibleModuleNames = clonedEntity.additionalVisibleModuleNames.toMutableWorkspaceSet()
         clonedEntity.sourceSetNames = clonedEntity.sourceSetNames.toMutableWorkspaceList()
         clonedEntity.pureKotlinSourceFolders = clonedEntity.pureKotlinSourceFolders.toMutableWorkspaceList()
+        clonedEntity.externalSystemRunTasks = clonedEntity.externalSystemRunTasks.toMutableWorkspaceList()
         return clonedEntity
     }
 
@@ -767,10 +891,12 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
             isHmppEnabled,
             pureKotlinSourceFolders,
             kind,
-            mergedCompilerArguments,
             compilerArguments,
             compilerSettings,
             targetPlatform,
+            externalSystemRunTasks,
+            version,
+            flushNeeded,
             entitySource
         ) {
             parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
@@ -806,10 +932,12 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         if (this.isHmppEnabled != other.isHmppEnabled) return false
         if (this.pureKotlinSourceFolders != other.pureKotlinSourceFolders) return false
         if (this.kind != other.kind) return false
-        if (this.mergedCompilerArguments != other.mergedCompilerArguments) return false
         if (this.compilerArguments != other.compilerArguments) return false
         if (this.compilerSettings != other.compilerSettings) return false
         if (this.targetPlatform != other.targetPlatform) return false
+        if (this.externalSystemRunTasks != other.externalSystemRunTasks) return false
+        if (this.version != other.version) return false
+        if (this.flushNeeded != other.flushNeeded) return false
         return true
     }
 
@@ -835,10 +963,12 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         if (this.isHmppEnabled != other.isHmppEnabled) return false
         if (this.pureKotlinSourceFolders != other.pureKotlinSourceFolders) return false
         if (this.kind != other.kind) return false
-        if (this.mergedCompilerArguments != other.mergedCompilerArguments) return false
         if (this.compilerArguments != other.compilerArguments) return false
         if (this.compilerSettings != other.compilerSettings) return false
         if (this.targetPlatform != other.targetPlatform) return false
+        if (this.externalSystemRunTasks != other.externalSystemRunTasks) return false
+        if (this.version != other.version) return false
+        if (this.flushNeeded != other.flushNeeded) return false
         return true
     }
 
@@ -860,10 +990,12 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         result = 31 * result + isHmppEnabled.hashCode()
         result = 31 * result + pureKotlinSourceFolders.hashCode()
         result = 31 * result + kind.hashCode()
-        result = 31 * result + mergedCompilerArguments.hashCode()
         result = 31 * result + compilerArguments.hashCode()
         result = 31 * result + compilerSettings.hashCode()
         result = 31 * result + targetPlatform.hashCode()
+        result = 31 * result + externalSystemRunTasks.hashCode()
+        result = 31 * result + version.hashCode()
+        result = 31 * result + flushNeeded.hashCode()
         return result
     }
 
@@ -885,10 +1017,12 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         result = 31 * result + isHmppEnabled.hashCode()
         result = 31 * result + pureKotlinSourceFolders.hashCode()
         result = 31 * result + kind.hashCode()
-        result = 31 * result + mergedCompilerArguments.hashCode()
         result = 31 * result + compilerArguments.hashCode()
         result = 31 * result + compilerSettings.hashCode()
         result = 31 * result + targetPlatform.hashCode()
+        result = 31 * result + externalSystemRunTasks.hashCode()
+        result = 31 * result + version.hashCode()
+        result = 31 * result + flushNeeded.hashCode()
         return result
     }
 }

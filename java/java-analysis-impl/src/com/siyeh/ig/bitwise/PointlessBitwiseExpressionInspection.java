@@ -38,7 +38,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.JavaTokenType.*;
 
-public class PointlessBitwiseExpressionInspection extends BaseInspection {
+public final class PointlessBitwiseExpressionInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

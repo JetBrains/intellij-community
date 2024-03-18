@@ -91,7 +91,13 @@
         </xs:element>
         <xs:element type="zendeskFormType" name="feedback" minOccurs="0"/>
         <xs:element type="whatsNewUrlType" name="whatsnew" minOccurs="0"/>
-        <xs:element type="keymapType" name="keymap" minOccurs="0"/>
+        <xs:element type="keymapType" name="keymap" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: override ExternalProductResourceUrls.keyboardShortcutsPdfUrl instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0">
           <xs:annotation>
             <xs:documentation>

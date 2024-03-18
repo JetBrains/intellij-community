@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownAnchorTargetInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -87,7 +88,8 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
       new XmlUnboundNsPrefixInspection(),
       new HtmlPresentationalElementInspection(),
       new HtmlUnknownTargetInspection(),
-      new HtmlUnknownAnchorTargetInspection()
+      new HtmlUnknownAnchorTargetInspection(),
+      new XmlUnresolvedReferenceInspection()
     };
   }
 

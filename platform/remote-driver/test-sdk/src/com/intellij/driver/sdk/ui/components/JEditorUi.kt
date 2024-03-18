@@ -2,18 +2,23 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.Document
 import com.intellij.driver.sdk.Editor
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 
-fun Finder.editor(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='EditorComponentImpl']",
-                                                                JEditorUiComponent::class.java)
+fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
+  return x(xpath ?: "//div[@class='EditorComponentImpl']",
+           JEditorUiComponent::class.java)
+}
 
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
-  val editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
-  private val document by lazy { editor.getDocument() }
+  val editor: Editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
+
+  private val document: Document by lazy { editor.getDocument() }
+
   var text: String
     get() = document.getText()
     set(value) {
@@ -78,6 +83,4 @@ interface GutterMark {
 }
 
 @Remote("javax.swing.Icon")
-interface Icon {
-
-}
+interface Icon

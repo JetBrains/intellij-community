@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public final class SshConfigCredentialsHolder {
 
   private static final @NonNls String SSH_CREDENTIALS_ID = "SSH_CREDENTIALS_ID";
@@ -68,5 +70,20 @@ public final class SshConfigCredentialsHolder {
   public void copyFrom(SshConfigCredentialsHolder credentials) {
     myCredentialsId = credentials.myCredentialsId;
     mySshId = credentials.mySshId == null ? null : credentials.mySshId.clone();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof SshConfigCredentialsHolder holder)) return false;
+
+    return myCredentialsId.equals(holder.myCredentialsId) && Objects.equals(mySshId, holder.mySshId);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myCredentialsId.hashCode();
+    result = 31 * result + Objects.hashCode(mySshId);
+    return result;
   }
 }

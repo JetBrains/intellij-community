@@ -12,8 +12,11 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -35,7 +38,6 @@ import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
-import com.intellij.util.alsoIfNull
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
 import java.nio.file.Path
@@ -47,12 +49,10 @@ open class IdeStarter : ModernApplicationStarter() {
     private var filesToLoad: List<Path> = Collections.emptyList()
     private var uriToOpen: String? = null
 
-    @JvmStatic
     fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
-    @JvmStatic
     fun openUriOnLoading(value: String) {
       uriToOpen = value
     }
@@ -73,14 +73,20 @@ open class IdeStarter : ModernApplicationStarter() {
 
       val openProjectBlock: suspend CoroutineScope.() -> Unit = {
         openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
+        // update "open projects" state to whichever projects were decided to be opened in openProjectIfNeeded (=which are open now)
+        serviceAsync<RecentProjectsManager>().updateLastProjectPath()
       }
 
-      FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)?.also {
+      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)
+      if (starter != null) {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
         }
-        withContext(it, openProjectBlock)
-      }.alsoIfNull { openProjectBlock() }
+        withContext(starter, openProjectBlock)
+      }
+      else {
+        openProjectBlock()
+      }
 
       app.serviceAsync<PerformanceWatcher>()
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
@@ -99,7 +105,6 @@ open class IdeStarter : ModernApplicationStarter() {
     }
   }
 
-  @OptIn(IntellijInternalApi::class)
   protected open suspend fun openProjectIfNeeded(args: List<String>,
                                                  app: Application,
                                                  asyncCoroutineScope: CoroutineScope,
@@ -121,12 +126,6 @@ open class IdeStarter : ModernApplicationStarter() {
 
       asyncCoroutineScope.launch {
         LifecycleUsageTriggerCollector.onIdeStart()
-      }
-
-      if (app.isInternal) {
-        asyncCoroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          UiInspectorAction.initStacktracesSaving()
-        }
       }
 
       if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
@@ -181,11 +180,18 @@ open class IdeStarter : ModernApplicationStarter() {
 
   private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
-    serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
-      showWelcomeFrameTask()
-      runCatching {
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }.getOrLogException(thisLogger())
+    serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      // https://youtrack.jetbrains.com/issue/IJPL-522
+      launch {
+        serviceAsync<ActionManager>()
+      }
+
+      withContext(Dispatchers.EDT) {
+        showWelcomeFrameTask()
+        runCatching {
+          lifecyclePublisher.welcomeScreenDisplayed()
+        }.getOrLogException(thisLogger())
+      }
     }
     return false
   }
@@ -217,7 +223,7 @@ open class IdeStarter : ModernApplicationStarter() {
         return
       }
 
-      val recentProjectManager = RecentProjectsManager.getInstance()
+      val recentProjectManager = serviceAsync<RecentProjectsManager>()
       val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
       if (!isOpened) {
         asyncCoroutineScope.launch(Dispatchers.EDT) {
@@ -242,7 +248,14 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   return result.project
 }
 
+@OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.postOpenUiTasks() {
+  if (ApplicationManager.getApplication().isInternal) {
+    launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      UiInspectorAction.initStacktracesSaving()
+    }
+  }
+
   if (PluginManagerCore.isRunningFromSources()) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
@@ -252,7 +265,7 @@ private fun CoroutineScope.postOpenUiTasks() {
       TouchbarSupport.onApplicationLoaded()
     }
   }
-  else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
+  else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
     launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
@@ -268,13 +281,14 @@ private fun CoroutineScope.postOpenUiTasks() {
 }
 
 private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
+  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors().toMutableList()
   if (pluginErrors.isEmpty()) {
     return
   }
 
   withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
+    val actions = linksToActions(pluginErrors)
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
     @Suppress("DEPRECATION")
     NotificationGroupManager.getInstance().getNotificationGroup(
@@ -283,6 +297,34 @@ private suspend fun reportPluginErrors() {
         notification.expire()
         PluginManagerMain.onEvent(event.description)
       }
+      .addActions(actions)
       .notify(null)
   }
+}
+
+private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction> {
+  val link = "<a href=\""
+  val actions = ArrayList<AnAction>()
+
+  while (!errors.isEmpty()) {
+    val builder = StringBuilder()
+    errors[errors.lastIndex].appendTo(builder)
+    val error = builder.toString()
+
+    if (error.startsWith(link)) {
+      val descriptionEnd = error.indexOf('"', link.length)
+      val description = error.substring(link.length, descriptionEnd)
+      val text = error.substring(descriptionEnd + 2, error.lastIndexOf("</a>"))
+      errors.removeAt(errors.lastIndex)
+
+      actions.add(NotificationAction.createSimpleExpiring(text) {
+        PluginManagerMain.onEvent(description)
+      })
+    }
+    else {
+      break
+    }
+  }
+
+  return actions
 }

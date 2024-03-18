@@ -52,6 +52,18 @@ interface KotlinCommonRefactoringSettings {
      */
     var renameOverloads: Boolean
 
+    /**
+     * Indicates whether automatic test methods rename based on changed production methods name is suggested
+     */
+    var renameTestMethods: Boolean
+
+    var INLINE_LOCAL_THIS: Boolean
+    var INLINE_PROPERTY_KEEP: Boolean
+    var INLINE_METHOD_THIS: Boolean
+    var INLINE_METHOD_KEEP: Boolean
+    var INLINE_TYPE_ALIAS_THIS: Boolean
+    var INLINE_TYPE_ALIAS_KEEP: Boolean
+
     companion object {
         @JvmStatic
         fun getInstance(): KotlinCommonRefactoringSettings = service()

@@ -8,9 +8,9 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
-import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogCanceled
-import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogShown
-import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackSent
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogCanceled
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogShown
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackSent
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import javax.swing.Action
 
@@ -70,14 +70,16 @@ internal class EvaluationFeedbackDialog(
   override fun doOKAction() {
     super.doOKAction()
 
-    val collectedData = collectDataToJsonObject()
-    logEvaluationFeedbackSent(
-      collectedData[interfaceJsonElementName].toString().toInt(),
-      collectedData[priceJsonElementName].toString().toInt(),
-      collectedData[stabilityJsonElementName].toString().toInt(),
-      collectedData[featureSetJsonElementName].toString().toInt(),
-      collectedData[performanceJsonElementName].toString().toInt()
-    )
+    if (emailBlockWithAgreement.getEmailAddressIfSpecified().isBlank()) {
+      val collectedData = collectDataToJsonObject()
+      logEvaluationFeedbackSent(
+        collectedData[interfaceJsonElementName].toString().toInt(),
+        collectedData[priceJsonElementName].toString().toInt(),
+        collectedData[stabilityJsonElementName].toString().toInt(),
+        collectedData[featureSetJsonElementName].toString().toInt(),
+        collectedData[performanceJsonElementName].toString().toInt()
+      )
+    }
   }
 
   override fun showThanksNotification() {

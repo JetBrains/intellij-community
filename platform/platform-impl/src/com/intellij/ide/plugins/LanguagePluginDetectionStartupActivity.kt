@@ -62,7 +62,7 @@ private var PropertiesComponent.ignoreLanguageDetector: Boolean
   set(value) = setValue(IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME, value)
 
 @RequiresBackgroundThread
-private fun findLanguagePluginToInstall(): PluginNode? {
+private suspend fun findLanguagePluginToInstall(): PluginNode? {
   try {
     val locale = Locale.getDefault()
     if (locale == Locale.ENGLISH
@@ -75,7 +75,7 @@ private fun findLanguagePluginToInstall(): PluginNode? {
 
     val requests = MarketplaceRequests.getInstance()
 
-    fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
+    suspend fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
       featureType = "com.intellij.locale",
       implementationName = implementationName,
     )

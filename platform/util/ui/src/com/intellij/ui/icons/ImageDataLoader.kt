@@ -3,11 +3,13 @@ package com.intellij.ui.icons
 
 import com.intellij.ui.scale.ScaleContext
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Image
 import java.net.URL
 
-internal sealed interface ImageDataLoader {
+@ApiStatus.Internal
+interface ImageDataLoader {
   val path: String?
 
   fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image?
@@ -28,6 +30,13 @@ internal sealed interface ImageDataLoader {
 }
 
 @Serializable
-internal sealed interface ImageDataLoaderDescriptor {
+@ApiStatus.Internal
+sealed interface ImageDataLoaderDescriptor {
   fun createIcon(): ImageDataLoader?
+}
+
+@Serializable
+@ApiStatus.Internal
+data object EmptyImageDataLoaderDescriptor : ImageDataLoaderDescriptor {
+  override fun createIcon(): ImageDataLoader? = null
 }

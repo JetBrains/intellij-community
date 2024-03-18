@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf
@@ -77,8 +76,11 @@ internal object IndexDiagnostic {
     }
     val paths = details.parents.indices.flatMapTo(mutableSetOf()) { parentIndex ->
       ChangesUtil.getPaths(details.getChanges(parentIndex))
-    }.take(FILTERED_PATHS_LIMIT).filter { !ProjectLevelVcsManager.getInstance(project).isIgnored(it) }
-    val pathsFilter = if (paths.isNotEmpty()) { VcsLogFilterObject.fromPaths(paths) } else null
+    }.take(FILTERED_PATHS_LIMIT).filter { getRoot(it)?.path == details.root.path }
+    val pathsFilter = if (paths.isNotEmpty()) {
+      VcsLogFilterObject.fromPaths(paths)
+    }
+    else null
 
     val sb = StringBuilder()
     for (filter in listOfNotNull(authorFilter, textFilter, pathsFilter)) {

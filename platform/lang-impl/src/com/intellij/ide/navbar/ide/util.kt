@@ -17,7 +17,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -36,9 +35,6 @@ import java.awt.Window
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import kotlin.coroutines.resume
-
-internal val isNavbarV2Enabled: Boolean
-  get() = Registry.`is`("ide.navBar.v2", false)
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 

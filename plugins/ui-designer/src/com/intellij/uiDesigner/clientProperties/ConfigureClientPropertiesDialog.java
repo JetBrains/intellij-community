@@ -56,8 +56,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myClassTree = new Tree();
     myClassTree.setRootVisible(false);
     myClassTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -214,8 +213,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "ConfigureClientPropertiesDialog";
   }
 

@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import java.nio.charset.Charset;
 import java.util.*;
 
-public class CompilerEncodingServiceImpl extends CompilerEncodingService {
+public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
   @NotNull private final Project myProject;
   private final CachedValue<Map<Module, Set<Charset>>> myModuleFileEncodings;
 

@@ -25,7 +25,7 @@ internal class ToolWindowExternalDecoratorBoundsHelper(private val decorator: To
 
   private var isUpdatingBounds = false
 
-  var bounds = decorator.bounds
+  var bounds = decorator.visibleWindowBounds
     set(value) {
       if (!isUpdatingBounds) { // prevent recursive calls
         field = value
@@ -67,7 +67,7 @@ internal class ToolWindowExternalDecoratorBoundsHelper(private val decorator: To
       return
     }
     val storedBounds = bounds
-    val actualBounds = decorator.bounds
+    val actualBounds = decorator.visibleWindowBounds
     if (storedBounds != actualBounds) {
       if (decorator.isMaximized) {
         decorator.log().debug {
@@ -85,7 +85,7 @@ internal class ToolWindowExternalDecoratorBoundsHelper(private val decorator: To
       )
       try {
         isUpdatingBounds = true
-        decorator.bounds = storedBounds
+        decorator.visibleWindowBounds = storedBounds
       }
       finally {
         isUpdatingBounds = false

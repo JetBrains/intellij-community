@@ -20,7 +20,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
+public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
   public String getTemplateDescription() {

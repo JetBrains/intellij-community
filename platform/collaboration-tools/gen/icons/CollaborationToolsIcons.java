@@ -19,7 +19,6 @@ public final class CollaborationToolsIcons {
   /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", 585242443, 0);
   /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -26771446, 0);
   /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", -505177250, 0);
-  /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/fileUnread.svg", 1909869412, 0);
   /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/pullRequestClosed.svg", 1915762689, 0);
   /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", 410240917, 0);
 
@@ -31,6 +30,7 @@ public final class CollaborationToolsIcons {
     /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/review/commentUnreadMany.svg", 2062007617, 2);
     /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/review/commentUnresolved.svg", 75435315, 0);
     /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", -5156320, 0);
+    /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/review/fileUnread.svg", 776396787, 0);
     /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", 717316511, 0);
 
     /** @deprecated use DvcsImplIcons.BranchLabel instead */
@@ -41,4 +41,9 @@ public final class CollaborationToolsIcons {
 
   /** 16x16 */ public static final @NotNull Icon Send = load("icons/send.svg", 1522034072, 0);
   /** 16x16 */ public static final @NotNull Icon SendHovered = load("icons/sendHovered.svg", -698602769, 0);
+
+  /** @deprecated use CollaborationToolsIcons.Review.FileUnread instead */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final @NotNull Icon FileUnread = load("icons/fileUnread.svg", 0, 0);
 }

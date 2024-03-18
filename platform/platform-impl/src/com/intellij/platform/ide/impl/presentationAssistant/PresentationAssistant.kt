@@ -1,32 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-/**
- * @author nik
- */
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
+import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.XmlSerializerUtil
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
-enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
+internal enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
   SMALL(0, IdeBundle.message("presentation.assistant.configurable.size.small")),
   MEDIUM(1, IdeBundle.message("presentation.assistant.configurable.size.medium")),
   LARGE(2, IdeBundle.message("presentation.assistant.configurable.size.large"));
@@ -40,7 +35,7 @@ enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: 
   }
 }
 
-enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val displayName: String) {
+internal enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val displayName: String) {
   TOP_LEFT(0, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.left")),
   TOP_CENTER(1, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.center")),
   TOP_RIGHT(2, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.right")),
@@ -66,7 +61,7 @@ enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val 
   }
 }
 
-enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color,
+internal enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color,
                                       val background: Color, val border: Color, val keymapLabel: Color) {
   BRIGHT(0,
          IdeBundle.message("presentation.assistant.configurable.theme.bright"),
@@ -140,41 +135,52 @@ internal fun PresentationAssistantState.resetDelta() {
   deltaY = null
 }
 
-internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistantPopupAlignment? get() =
-  if (deltaX == null || deltaY == null) PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
-  else null
+internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistantPopupAlignment?
+  get() {
+    if (deltaX == null || deltaY == null) {
+      return PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
+    }
+    else {
+      return null
+    }
+  }
 
-internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymapName)
-internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
+internal fun PresentationAssistantState.mainKeymapKind(): KeymapKind = KeymapKind.from(mainKeymapName)
 
-@State(name = "PresentationAssistantIJ", storages = [Storage("presentation-assistant-ij.xml")])
-class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
+internal fun PresentationAssistantState.alternativeKeymapKind(): KeymapKind? {
+  return alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
+}
+
+@State(name = "PresentationAssistantIJ",
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [Storage("presentation-assistant-ij.xml", roamingType = RoamingType.DISABLED)])
+class PresentationAssistant(private val coroutineScope: CoroutineScope) : PersistentStateComponent<PresentationAssistantState> {
   internal val configuration = PresentationAssistantState()
   private var warningAboutMacKeymapWasShown = false
   private var presenter: ShortcutPresenter? = null
 
   override fun getState() = configuration
+
   override fun loadState(p: PresentationAssistantState) {
     XmlSerializerUtil.copyBean(p, configuration)
   }
 
   fun initialize() {
     if (configuration.showActionDescriptions && presenter == null) {
-      presenter = ShortcutPresenter()
+      presenter = ShortcutPresenter(coroutineScope.childScope())
     }
-  }
-
-  override fun dispose() {
-    presenter?.disable()
   }
 
   fun updatePresenter(project: Project? = null, showInitialAction: Boolean = false) {
     val isEnabled = configuration.showActionDescriptions
     if (isEnabled && presenter == null) {
-      presenter = ShortcutPresenter().apply {
-        if (showInitialAction) {
-          showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID, project, TogglePresentationAssistantAction.name))
-        }
+      val presenter = ShortcutPresenter(coroutineScope.childScope())
+      this.presenter = presenter
+      if (showInitialAction) {
+        presenter.showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID,
+                                                              project,
+                                                              TogglePresentationAssistantAction.name.get()))
       }
     }
     else if (presenter != null) {
@@ -191,29 +197,33 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
   internal fun checkIfMacKeymapIsAvailable() {
     val alternativeKeymap = configuration.alternativeKeymapKind()
     if (warningAboutMacKeymapWasShown
-        || SystemInfo.isMac
+        || SystemInfoRt.isMac
         || alternativeKeymap == null
         || !alternativeKeymap.isMac
-        || alternativeKeymap.keymap != null) return
+        || KeymapManager.getInstance().getKeymap(alternativeKeymap.value) != null) {
+      return
+    }
 
+    @Suppress("SpellCheckingInspection")
     val pluginId = PluginId.getId("com.intellij.plugins.macoskeymap")
     val plugin = PluginManagerCore.getPlugin(pluginId)
-    if (plugin != null && plugin.isEnabled) return
+    if (plugin != null && plugin.isEnabled) {
+      return
+    }
 
     warningAboutMacKeymapWasShown = true
     showInstallMacKeymapPluginNotification(pluginId)
   }
 
   companion object {
-    val INSTANCE get() = service<PresentationAssistant>()
-
-    val isThemeEnabled: Boolean get() = ExperimentalUI.isNewUI()
-                                        && Registry.`is`("ide.presentation.assistant.theme.enabled", false)
+    val isThemeEnabled: Boolean
+      get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.presentation.assistant.theme.enabled", false)
   }
 }
 
-class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
-  override fun appFrameCreated(commandLineArgs: MutableList<String>) {
-    PresentationAssistant.INSTANCE.initialize()
+private class PresentationAssistantListenerRegistrar : ActionConfigurationCustomizer,
+                                                       ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+  override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
+    serviceAsync<PresentationAssistant>().initialize()
   }
 }

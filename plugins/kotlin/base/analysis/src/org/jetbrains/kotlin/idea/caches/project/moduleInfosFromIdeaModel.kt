@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.util.CachedValue
@@ -34,6 +35,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -178,9 +181,9 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
 
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
-            val moduleSettingChanges = event.getChanges(JavaModuleSettingsEntity::class.java)
+            val moduleChanges = event.getChanges<ModuleEntity>()
+            val sourceRootChanges = event.getChanges<SourceRootEntity>()
+            val moduleSettingChanges = event.getChanges<JavaModuleSettingsEntity>()
 
             if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty() && moduleSettingChanges.isEmpty()) {
                 return
@@ -239,42 +242,15 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val modules = project.ideaModules()
             project.allSdks(modules).forEach(it::get)
         }
-    ), ProjectJdkTable.Listener, ModuleRootListener {
+    ), ModuleRootListener {
 
         override fun calculate(key: Sdk): SdkInfo = SdkInfo(project, key)
 
         override fun subscribe(connection: MessageBusConnection) {
-            connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ModuleRootListener.TOPIC, this)
         }
 
         override fun checkKeyValidity(key: Sdk) = Unit
-
-        override fun jdkAdded(jdk: Sdk) {
-            applyIfPossible {
-                get(jdk)
-
-                incModificationCount()
-            }
-        }
-
-        override fun jdkRemoved(jdk: Sdk) {
-            applyIfPossible {
-                invalidateKeys(listOf(jdk))
-
-                incModificationCount()
-            }
-        }
-
-        override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-            applyIfPossible {
-                invalidateKeys(listOf(jdk))
-
-                // force calculation
-                get(jdk)
-                incModificationCount()
-            }
-        }
 
         override fun rootsChanged(event: ModuleRootEvent) {
             if (event.isCausedByWorkspaceModelChangesOnly) return
@@ -295,12 +271,16 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         override fun modelChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+            val moduleChanges = event.getChanges<ModuleEntity>()
+            val sdkChanges = event.getChanges<SdkEntity>()
+
+            if (moduleChanges.isEmpty() && sdkChanges.isEmpty()) return
 
             val outdatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.oldEntity }
                 .mapNotNull { it.findModule(storageBefore) }
-                .flatMapTo(hashSetOf(), ::moduleSdks)
+                .flatMapTo(hashSetOf(), ::moduleSdks) +
+                    sdkChanges.mapNotNull { it.oldEntity?.findSdkBridge(storageBefore) }
 
             if (outdatedModuleSdks.isNotEmpty()) {
                 invalidateKeys(outdatedModuleSdks)
@@ -309,7 +289,8 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val updatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.newEntity }
                 .mapNotNull { it.findModule(storageAfter) }
-                .flatMapTo(hashSetOf(), ::moduleSdks)
+                .flatMapTo(hashSetOf(), ::moduleSdks) +
+                    sdkChanges.mapNotNull { it.newEntity?.findSdkBridge(storageAfter) }
 
             updatedModuleSdks.forEach(::get)
 

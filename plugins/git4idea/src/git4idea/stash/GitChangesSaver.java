@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -13,11 +13,11 @@ import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 
 import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_NOT_RESTORED;
@@ -45,14 +45,28 @@ public abstract class GitChangesSaver {
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
   public static @NotNull GitChangesSaver getSaver(@NotNull Project project,
-                                         @NotNull Git git,
-                                         @NotNull ProgressIndicator progressIndicator,
-                                         @NotNull @Nls String stashMessage,
-                                         @NotNull GitSaveChangesPolicy saveMethod) {
+                                                  @NotNull Git git,
+                                                  @NotNull ProgressIndicator progressIndicator,
+                                                  @NotNull @Nls String stashMessage,
+                                                  @NotNull GitSaveChangesPolicy saveMethod) {
+    return getSaver(project, git, progressIndicator, stashMessage, saveMethod, true);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull GitChangesSaver getSaver(@NotNull Project project,
+                                                  @NotNull Git git,
+                                                  @NotNull ProgressIndicator progressIndicator,
+                                                  @NotNull @Nls String stashMessage,
+                                                  @NotNull GitSaveChangesPolicy saveMethod,
+                                                  boolean reportLocalHistoryActivity) {
     if (saveMethod == GitSaveChangesPolicy.SHELVE) {
-      return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
+      GitShelveChangesSaver shelveSaver = new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
+      shelveSaver.setReportLocalHistoryActivity(reportLocalHistoryActivity);
+      return shelveSaver;
     }
-    return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
+    GitStashChangesSaver stashSaver = new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
+    stashSaver.setReportLocalHistoryActivity(reportLocalHistoryActivity);
+    return stashSaver;
   }
 
   protected GitChangesSaver(@NotNull Project project,
@@ -82,14 +96,19 @@ public abstract class GitChangesSaver {
   public void notifyLocalChangesAreNotRestored() {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
-      VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        LOCAL_CHANGES_NOT_RESTORED, GitBundle.message("restore.notification.failed.title"),
-        getSaveMethod().selectBundleMessage(
-          GitBundle.message("restore.notification.failed.stash.message"),
-          GitBundle.message("restore.notification.failed.shelf.message")
-        ),
-        new ShowSavedChangesNotificationListener()
-      );
+      VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+        .createNotification(GitBundle.message("restore.notification.failed.title"),
+                            getSaveMethod().selectBundleMessage(
+                              GitBundle.message("restore.notification.failed.stash.message"),
+                              GitBundle.message("restore.notification.failed.shelf.message")
+                            ),
+                            NotificationType.WARNING)
+        .setDisplayId(LOCAL_CHANGES_NOT_RESTORED)
+        .addAction(NotificationAction.createSimple(
+          GitBundle.messagePointer("restore.notification.failed.show.changes.action"), () -> {
+            showSavedChanges();
+          }))
+        .notify(myProject);
     }
   }
 
@@ -135,15 +154,6 @@ public abstract class GitChangesSaver {
    */
   protected static @NotNull String getConflictLeftPanelTitle() {
     return GitBundle.message("save.load.conflict.dialog.diff.left.title");
-  }
-
-  protected final class ShowSavedChangesNotificationListener implements NotificationListener {
-    @Override
-    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
-        showSavedChanges();
-      }
-    }
   }
 }
 

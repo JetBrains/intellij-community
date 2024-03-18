@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.BaseService
 import com.intellij.ide.startup.importSettings.data.Product
@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import javax.swing.Icon
 
-open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val callback: (PageProvider) -> Unit) : ProductChooserAction() {
+open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val controller: ImportSettingsController) : ProductChooserAction() {
   private var array: Array<AnAction> = emptyArray()
 
   override fun displayTextInToolbar(): Boolean {
@@ -19,7 +19,7 @@ open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     if(array.isEmpty()) {
       val products = provider.main ?: emptyList()
-      array = productsToActions(products, provider, callback).toTypedArray()
+      array = productsToActions(products, provider, controller).toTypedArray()
     }
     return array
   }

@@ -44,7 +44,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     return true;
   }
 
-  public static class MyStoppableAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyStoppableAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     private static final String SWEARING = "No swearing";
     private final AtomicBoolean allowToRun = new AtomicBoolean(true);
 
@@ -70,7 +70,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   public void testSymbolSeverityHighlightersAreAppliedOnFileReload() {
     HighlightingMarkupGrave.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
-      DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
+      DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
         @Language("JAVA")
         String text = """
           class ClassName {
@@ -120,18 +120,9 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     // (to make sure the DocumentMarkupModel is really recreated and populated with stored highlighters, not preserved since the previous highlighting run)
     FileDocumentManager.getInstance().saveAllDocuments();
     FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-
-    try {
-      // wait markup stored
-      HighlightingMarkupStore.getExecutor().submit(() -> {}).get();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
     getProject().getService(HighlightingMarkupGrave.class).clearResurrectedZombies();
 
     myFile = null;
-
     myEditor = null;
     TestTimeOut t = TestTimeOut.setTimeout(100 * 2, TimeUnit.MILLISECONDS);
     while (!t.isTimedOut()) {
@@ -152,7 +143,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   public void testStoredHighlightersAreAppliedImmediatelyOnFileReload() {
     HighlightingMarkupGrave.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
-      DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
+      DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
         @Language("JAVA")
         String text = """
           class X {

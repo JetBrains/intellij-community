@@ -11,13 +11,15 @@ UFile (package = ) [public final class AnnotatedTypesKt {...]
                             ULiteralExpression (value = 2) [2] : PsiType:int
                 UDeclarationsExpression [var b: java.lang.String = "abc"]
                     ULocalVariable (name = b) [var b: java.lang.String = "abc"]
-                        ULiteralExpression (value = "abc") ["abc"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["abc"] : PsiType:String
+                            ULiteralExpression (value = "abc") ["abc"] : PsiType:String
                 UDeclarationsExpression [var c: java.lang.String = b]
                     ULocalVariable (name = c) [var c: java.lang.String = b]
                         USimpleNameReferenceExpression (identifier = b) [b] : {@MyAnnotation(a = 2, b = boo, c = FILE)}PsiType:String
                 UDeclarationsExpression [var v: java.lang.String = "abc"]
                     ULocalVariable (name = v) [var v: java.lang.String = "abc"]
-                        ULiteralExpression (value = "abc") ["abc"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["abc"] : PsiType:String
+                            ULiteralExpression (value = "abc") ["abc"] : PsiType:String
     UClass (name = MyAnnotation) [public abstract annotation MyAnnotation {...}]
         UAnnotation (fqName = kotlin.annotation.Target) [@kotlin.annotation.Target(allowedTargets = AnnotationTarget.TYPE)]
             UNamedExpression (name = allowedTargets) [allowedTargets = AnnotationTarget.TYPE]

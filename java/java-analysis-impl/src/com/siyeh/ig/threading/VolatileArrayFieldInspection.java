@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class VolatileArrayFieldInspection extends BaseInspection {
+public final class VolatileArrayFieldInspection extends BaseInspection {
 
   @Override
   @NotNull

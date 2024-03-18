@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConvertToStringLiteralAction extends PsiUpdateModCommandAction<PsiJavaToken> {
+public final class ConvertToStringLiteralAction extends PsiUpdateModCommandAction<PsiJavaToken> {
   
   public ConvertToStringLiteralAction() {
     super(PsiJavaToken.class);

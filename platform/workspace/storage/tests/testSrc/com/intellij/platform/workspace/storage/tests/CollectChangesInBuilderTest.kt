@@ -2,19 +2,20 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {
-  private lateinit var initialStorage: EntityStorageSnapshot
+  private lateinit var initialStorage: ImmutableEntityStorage
   private lateinit var builder: MutableEntityStorage
 
   @BeforeEach
@@ -24,7 +25,7 @@ class CollectChangesInBuilderTest {
                                   "initial",
                                   ArrayList(),
                                   HashMap(),
-                                  VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                  VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
       addEntity(SecondSampleEntity(1, SampleEntitySource("test")))
     }.toSnapshot()
@@ -37,7 +38,7 @@ class CollectChangesInBuilderTest {
                                    "added",
                                    ArrayList(),
                                    HashMap(),
-                                   VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                   VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                    SampleEntitySource("test"))
     builder.addEntity(SecondSampleEntity(2, SampleEntitySource("test")))
     builder.removeEntity(initialStorage.singleSampleEntity())
@@ -93,7 +94,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
     builder.removeEntity(added)
     assertChangelogSize(0)
@@ -106,7 +107,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
     builder.modifyEntity(added) {
       stringProperty = "changed"
@@ -121,7 +122,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
     val modified = builder.modifyEntity(added) {
       stringProperty = "changed"
@@ -329,16 +330,18 @@ class CollectChangesInBuilderTest {
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun assertChangelogSize(size: Int,
                                   myBuilder: MutableEntityStorage = builder,
-                                  original: EntityStorageSnapshot = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
-    val changes = myBuilder.collectChanges()
+                                  original: ImmutableEntityStorage = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
+    val changes = (myBuilder as MutableEntityStorageInstrumentation).collectChanges()
     assertEquals(size, changes.values.flatten().size)
     return changes
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {
-    val changes = builder.collectChanges()
+    val changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
     if (changes.isEmpty()) return emptyList()
     return changes.entries.single().value as List<EntityChange<SampleEntity>>
   }

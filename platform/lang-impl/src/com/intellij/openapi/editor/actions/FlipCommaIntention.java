@@ -2,12 +2,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.*;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -19,13 +20,11 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
 
 
-public final class FlipCommaIntention implements IntentionAction {
-  @NotNull
-  @Override
-  public String getText() {
-    return CodeInsightBundle.message("intention.name.flip");
+public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> {
+  public FlipCommaIntention() {
+    super(PsiElement.class);
   }
-
+  
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,27 +32,23 @@ public final class FlipCommaIntention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement comma = currentCommaElement(editor, file);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    PsiElement comma = currentCommaElement(context);
     if (comma == null) {
-      return false;
+      return null;
     }
     final PsiElement left = smartAdvance(comma, false);
     final PsiElement right = smartAdvance(comma, true);
-    return left != null && right != null && !left.getText().equals(right.getText()) && Flipper.isCanFlip(left, right);
+    if (left == null || right == null || left.getText().equals(right.getText()) || !Flipper.isCanFlip(left, right)) return null;
+    return Presentation.of(CodeInsightBundle.message("intention.name.flip"));
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    final PsiElement element = currentCommaElement(editor, file);
-    if (element != null) {
-      swapAtComma(element);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PsiElement comma = updater.getWritable(currentCommaElement(context));
+    if (comma != null) {
+      swapAtComma(comma);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   private static void swapAtComma(@NotNull PsiElement comma) {
@@ -69,8 +64,7 @@ public final class FlipCommaIntention implements IntentionAction {
 
   // not via PSI because such language-unaware change can lead to PSI-text inconsistencies
   private static void swapViaDocument(@NotNull PsiElement comma, PsiElement prev, PsiElement next) {
-    DocumentEx document = (DocumentEx)comma.getContainingFile().getViewProvider().getDocument();
-    if (document == null) return;
+    DocumentEx document = (DocumentEx)comma.getContainingFile().getFileDocument();
 
     String prevText = prev.getText();
     String nextText = next.getText();
@@ -119,22 +113,12 @@ public final class FlipCommaIntention implements IntentionAction {
     }
   }
 
-  private static PsiElement currentCommaElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static PsiElement currentCommaElement(@NotNull ActionContext context) {
     PsiElement element;
-    if (!isComma(element = leftElement(editor, file)) && !isComma(element = rightElement(editor, file))) {
+    if (!isComma(element = context.findLeafOnTheLeft()) && !isComma(element = context.findLeaf())) {
       return null;
     }
     return element;
-  }
-
-  @Nullable
-  private static PsiElement leftElement(@NotNull Editor editor, @NotNull PsiFile file) {
-    return file.findElementAt(editor.getCaretModel().getOffset() - 1);
-  }
-
-  @Nullable
-  private static PsiElement rightElement(@NotNull Editor editor, @NotNull PsiFile file) {
-    return file.findElementAt(editor.getCaretModel().getOffset());
   }
 
   @NotNull

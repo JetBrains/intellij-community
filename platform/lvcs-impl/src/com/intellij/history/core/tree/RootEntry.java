@@ -20,7 +20,6 @@ import com.intellij.history.core.Paths;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
-import java.io.IOException;
 
 public final class RootEntry extends DirectoryEntry {
   public RootEntry() {
@@ -28,7 +27,7 @@ public final class RootEntry extends DirectoryEntry {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(DataOutput out) {
     throw new UnsupportedOperationException();
   }
 

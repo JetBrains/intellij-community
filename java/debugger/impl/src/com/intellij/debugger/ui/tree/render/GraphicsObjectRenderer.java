@@ -8,7 +8,7 @@ import com.sun.jdi.*;
 
 import javax.swing.*;
 
-public class GraphicsObjectRenderer extends CompoundRendererProvider {
+public final class GraphicsObjectRenderer extends CompoundRendererProvider {
   @Override
   protected String getName() {
     return "Graphics";

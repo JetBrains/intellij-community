@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 @ApiStatus.NonExtendable
-public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
+public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;

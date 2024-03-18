@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -67,6 +66,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -91,6 +91,7 @@ object Switcher : BaseSwitcherAction(null) {
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
+  @ApiStatus.ScheduledForRemoval
   @JvmStatic
   fun createAndShowSwitcher(e: AnActionEvent, title: @Nls String, pinned: Boolean, vFiles: Array<VirtualFile?>?): SwitcherPanel? {
     val project = e.project ?: return null
@@ -380,12 +381,9 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     private fun updatePathLabel() {
-      fun getTitle2Text(fullText: String?): @NlsSafe String? {
-        return if (Strings.isEmpty(fullText)) " " else fullText
-      }
-
       val values = selectedList?.selectedValuesList
-      pathLabel.text = values?.singleOrNull()?.let { getTitle2Text(it.statusText) } ?: " "
+      val statusText = values?.singleOrNull()?.statusText
+      pathLabel.text = if (statusText.isNullOrEmpty()) " " else statusText
     }
 
     private fun updateMnemonics(windows: List<SwitcherToolWindow>, showMnemonics: Boolean) {
@@ -399,8 +397,9 @@ object Switcher : BaseSwitcherAction(null) {
       addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
       val otherTW: MutableList<SwitcherToolWindow> = ArrayList()
       for (window in windows) {
-        val index = ActivateToolWindowAction.getMnemonicForToolWindow(window.window.id)
-        if (index < '0'.code || index > '9'.code || !addShortcut(keymap, window, getIndexShortcut(index - '0'.code))) {
+        val index = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(window.window.id)
+        val indexShortcut = getIndexShortcut(index - '0'.code) // can never be null here in the current implementation
+        if (index < '0'.code || index > '9'.code || indexShortcut == null || !addShortcut(keymap, window, indexShortcut)) {
           otherTW.add(window)
         }
       }
@@ -410,10 +409,19 @@ object Switcher : BaseSwitcherAction(null) {
         if (addSmartShortcut(window, keymap)) {
           continue
         }
-        while (!addShortcut(keymap, window, getIndexShortcut(i))) {
-          i++
+        while (true) {
+          val indexShortcut = getIndexShortcut(i)
+          if (indexShortcut == null) {
+            break // ran out of shortcuts
+          }
+          else if (addShortcut(keymap, window, indexShortcut)) {
+            ++i // added successfully, should use the next shortcut for the next window
+            break
+          }
+          else {
+            ++i // shortcut not suitable, let's try the next one
+          }
         }
-        i++
       }
     }
 
@@ -814,7 +822,8 @@ object Switcher : BaseSwitcherAction(null) {
         return false
       }
 
-      private fun getIndexShortcut(index: Int): String {
+      private fun getIndexShortcut(index: Int): String? {
+        if (index !in 0..35) return null
         return Strings.toUpperCase(index.toString(radix = (index + 1).coerceIn(2..36)))
       }
 

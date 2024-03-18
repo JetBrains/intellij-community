@@ -10,8 +10,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.extensions.LazyExtension
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -38,9 +37,8 @@ data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<S
 
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
-class FileEditorProviderManagerImpl : FileEditorProviderManager,
-                                      SerializablePersistentStateComponent<FileEditorProviderManagerState>(
-                                        FileEditorProviderManagerState()) {
+class FileEditorProviderManagerImpl
+  : FileEditorProviderManager, SerializablePersistentStateComponent<FileEditorProviderManagerState>(FileEditorProviderManagerState()) {
   @Suppress("DuplicatedCode")
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
     // collect all possible editors
@@ -72,7 +70,6 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       }
     }
     return postProcessResult(sharedProviders)
-
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -149,8 +146,8 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     }
 
     updateState {
-      FileEditorProviderManagerState(
-        it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
+      FileEditorProviderManagerState(it.selectedProviders +
+                                     (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 
@@ -171,7 +168,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   }
 }
 
-private suspend fun getProviderIfApplicable(item: ExtensionPointName.LazyExtension<FileEditorProvider>,
+private suspend fun getProviderIfApplicable(item: LazyExtension<FileEditorProvider>,
                                             project: Project,
                                             file: VirtualFile,
                                             suppressors: List<FileEditorProviderSuppressor>): FileEditorProvider? {
@@ -241,13 +238,13 @@ private object MyComparator : Comparator<FileEditorProvider> {
   }
 }
 
-private val ExtensionPointName.LazyExtension<FileEditorProvider>.isDocumentRequired
+private val LazyExtension<FileEditorProvider>.isDocumentRequired
   get() = getCustomAttribute("isDocumentRequired").toBoolean()
 
-private val ExtensionPointName.LazyExtension<FileEditorProvider>.fileType
+private val LazyExtension<FileEditorProvider>.fileType
   get() = getCustomAttribute("fileType")
 
-private fun isAcceptedByFileType(item: ExtensionPointName.LazyExtension<FileEditorProvider>,
+private fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>,
                                  fileType: Lazy<FileType>,
                                  file: VirtualFile): Boolean {
   val providerFileTypeName = item.fileType

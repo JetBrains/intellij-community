@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.Action
@@ -57,9 +57,10 @@ class InterpretationHandlerImpl(
   }
 
   private fun updateProgress(path: String) {
+    val actualSessionsCount = sessionsLimit ?: sessionsCount
     val perMinute = actionStats.count { it.timestamp > Date().time - minInMs }
     val fileName = File(path).name
-    indicator.setProgress(fileName, "$fileName ($completed/$sessionsCount sessions, $perMinute act/min)",
-                          completed.toDouble() / sessionsCount)
+    indicator.setProgress(fileName, "$fileName ($completed/$actualSessionsCount sessions, $perMinute act/min)",
+                          completed.toDouble() / actualSessionsCount)
   }
 }

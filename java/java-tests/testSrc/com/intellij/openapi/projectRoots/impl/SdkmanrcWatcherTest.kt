@@ -3,11 +3,11 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil.createFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.childScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 
@@ -15,10 +15,13 @@ class SdkmanrcWatcherHeavyTests : HeavyPlatformTestCase() {
   override fun setUp() {
     super.setUp()
 
-    val jbr17 = IdeaTestUtil.createMockJdk("JetBrains Runtime version 17.0.7", "")
+    val graal21 = IdeaTestUtil.createMockJdk("GraalVM CE 23.1.2 - Java 21.0.2", "")
+    SdkConfigurationUtil.addSdk(graal21)
+
+    val jbr17 = IdeaTestUtil.createMockJdk("JetBrains Runtime 17.0.7", "")
     SdkConfigurationUtil.addSdk(jbr17)
 
-    val open11 = IdeaTestUtil.createMockJdk("Oracle OpenJDK version version 11.0.2", "")
+    val open11 = IdeaTestUtil.createMockJdk("Oracle OpenJDK 11.0.2", "")
     SdkConfigurationUtil.addSdk(open11)
   }
 
@@ -30,15 +33,20 @@ class SdkmanrcWatcherHeavyTests : HeavyPlatformTestCase() {
 
         assert(watcher.suggestSdkFromSdkmanrc() == null)
 
-        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=11.0.2-open")
+        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=21.0.2-graalce")
         val suggestion1 = watcher.suggestSdkFromSdkmanrc()
         assert(suggestion1 is SdkmanrcWatcherService.SdkSuggestion.Jdk)
-        assert((suggestion1 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "Oracle OpenJDK version version 11.0.2")
+        assert((suggestion1 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "GraalVM CE 23.1.2 - Java 21.0.2")
 
-        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=17.0.7-jbr")
+        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=11.0.2-open")
         val suggestion2 = watcher.suggestSdkFromSdkmanrc()
         assert(suggestion2 is SdkmanrcWatcherService.SdkSuggestion.Jdk)
-        assert((suggestion2 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "JetBrains Runtime version 17.0.7")
+        assert((suggestion2 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "Oracle OpenJDK 11.0.2")
+
+        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=17.0.7-jbr")
+        val suggestion3 = watcher.suggestSdkFromSdkmanrc()
+        assert(suggestion3 is SdkmanrcWatcherService.SdkSuggestion.Jdk)
+        assert((suggestion3 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "JetBrains Runtime 17.0.7")
       }
       catch (_: Exception) {}
       finally {
@@ -83,20 +91,21 @@ class SdkmanrcWatcherLightTests : BasePlatformTestCase() {
 
   fun `test candidates matching`() {
     for ((candidate, version) in mapOf(
-      "11.0.11.hs-adpt" to "AdoptOpenJDK (HotSpot) version 11.0.11",
-      "8.0.275.j9-adpt" to "AdoptOpenJDK (OpenJ9) version 8.0.275",
-      "18.0.2-amzn" to "Amazon Corretto version 18.0.2",
-      "17.0.7-jbr" to "JetBrains Runtime version 17.0.7",
-      "17.0.3-librca" to "BellSoft Liberica version 17.0.3",
-      "17.0.1-oracle" to "Oracle OpenJDK version 17.0.1",
-      "17.0.2-open" to "Oracle OpenJDK version 17.0.2",
-      "17.0.1-sapmchn" to "SAP SapMachine version 17.0.1",
-      "11.0.12-sem" to "IBM Semeru version 11.0.12",
-      "17.0.7-tem" to "Eclipse Temurin version 17.0.7",
-      "8.0.352-zulu" to "Azul Zulu version 8.0.352",
+      "11.0.11.hs-adpt" to "AdoptOpenJDK (HotSpot) 11.0.11",
+      "8.0.275.j9-adpt" to "AdoptOpenJDK (OpenJ9) 8.0.275",
+      "18.0.2-amzn" to "Amazon Corretto 18.0.2",
+      "17.0.7-jbr" to "JetBrains Runtime 17.0.7",
+      "17.0.3-librca" to "BellSoft Liberica 17.0.3",
+      "17.0.1-oracle" to "Oracle OpenJDK 17.0.1",
+      "17.0.2-open" to "Oracle OpenJDK 17.0.2",
+      "17.0.1-sapmchn" to "SAP SapMachine 17.0.1",
+      "11.0.12-sem" to "IBM Semeru 11.0.12",
+      "17.0.7-tem" to "Eclipse Temurin 17.0.7",
+      "8.0.352-zulu" to "Azul Zulu 8.0.352",
 
-      //"22.3.r19-grl" to "GraalVM version 17.0.1",
-      "22.ea.2-open" to "Oracle OpenJDK version 22",
+      "21.0.2-graalce" to "GraalVM CE 23.1.2 - Java 21.0.2",
+      "17.0.10-graal" to "GraalVM 23.0.3 - Java 17.0.10",
+      "22.ea.2-open" to "Oracle OpenJDK 22",
     )) {
       assert(
         SdkmanCandidate.parse(candidate)?.matchVersionString(version) == true

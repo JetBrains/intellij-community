@@ -14,7 +14,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyRemoteAnalyzeStacktraceFilter extends PythonTracebackFilter {
+public final class PyRemoteAnalyzeStacktraceFilter extends PythonTracebackFilter {
   public PyRemoteAnalyzeStacktraceFilter(Project project) {
     super(project);
   }

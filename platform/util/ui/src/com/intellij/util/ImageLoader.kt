@@ -88,7 +88,7 @@ object ImageLoader {
         // for backward compatibility, assume the image is hidpi-aware (includes default SYS_SCALE)
         val scaleContext = ScaleContext.create()
         val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-        val image = loadPng(inputStream)
+        val image = loadRasterImage(inputStream)
         if (StartupUiUtil.isJreHiDPI(scaleContext)) {
           val userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE)
           return HiDPIImage(image = image,

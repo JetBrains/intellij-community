@@ -17,8 +17,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
-import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.RequirementsTxtOrSetupPyData
+import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.InputData
+import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.RequirementsTxtOrSetupPyData
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
@@ -110,7 +110,7 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
       InputData.CHANGED
     }
     else {
-      InputData.UNCHANGED
+      PyAddNewEnvCollector.InputData.UNCHANGED
     }
   }
 

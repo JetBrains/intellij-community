@@ -156,6 +156,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return StringUtil.getQualifiedName(((PsiJavaFile)parent).getPackageName(), StringUtil.notNullize(getName()));
     }
     if (parent instanceof PsiClass) {
+      //it cannot be referenced outside ImplicitClass
+      if (parent instanceof PsiImplicitClass) return StringUtil.notNullize(getName());
       String parentQName = ((PsiClass)parent).getQualifiedName();
       if (parentQName == null) return null;
       return StringUtil.getQualifiedName(parentQName, StringUtil.notNullize(getName()));
@@ -536,6 +538,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   public Icon getElementIcon(int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
+  }
+
+  @Override
+  protected @Nullable Icon getBaseIcon() {
+    return PsiClassImplUtil.getClassIcon(0, this);
   }
 
   @Override

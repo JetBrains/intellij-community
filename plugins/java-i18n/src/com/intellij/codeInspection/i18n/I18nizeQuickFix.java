@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UBinaryExpression;
-import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastBinaryOperator;
 import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;
@@ -153,8 +153,8 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
     int breakIndex = offset - literalRange.getStartOffset() - 1;
     String lsubstring = value.substring(0, breakIndex);
     String rsubstring = value.substring(breakIndex);
-    ULiteralExpression left = elementFactory.createStringLiteralExpression(lsubstring, sourcePsi);
-    ULiteralExpression right = elementFactory.createStringLiteralExpression(rsubstring, sourcePsi);
+    UExpression left = elementFactory.createStringLiteralExpression(lsubstring, sourcePsi);
+    UExpression right = elementFactory.createStringLiteralExpression(rsubstring, sourcePsi);
     if (left == null || right == null) {
       return null;
     }

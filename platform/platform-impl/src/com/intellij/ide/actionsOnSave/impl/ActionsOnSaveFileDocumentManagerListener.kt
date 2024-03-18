@@ -43,7 +43,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
      * Implementations don't need to save modified documents. Note that the passed documents may be unsaved if already modified by some other save action.
      */
     @RequiresEdt
-    open fun processDocuments(project: Project, documents: Array<Document?>) {
+    open fun processDocuments(project: Project, documents: Array<Document>) {
     }
   }
 

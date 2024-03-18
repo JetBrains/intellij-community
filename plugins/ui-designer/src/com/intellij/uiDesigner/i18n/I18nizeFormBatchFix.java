@@ -219,8 +219,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
     }
   }
 
-  @Nullable
-  private static String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
+  private static @Nullable String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
     Class<?> componentClass = component.getComponentClass();
     for (DefaultPrefixSuggestion suggestion : PREFIX_SUGGESTIONS) {
       if (suggestion.getPropertyName().equals(propertyName) && suggestion.getComponentClass().isAssignableFrom(componentClass)) {

@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -129,7 +130,7 @@ public final class CreateFromUsageUtils {
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
     LOG.assertTrue(!aClass.isInterface() ||
-                   PsiUtil.isLanguageLevel8OrHigher(method) ||
+                   PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method) ||
                    method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
@@ -232,9 +233,9 @@ public final class CreateFromUsageUtils {
     if (l != null && r != null) {
       int start = l.getTextRange().getStartOffset();
       int end = r.getTextRange().getEndOffset();
-      updater.moveTo(Math.max(start, end));
+      updater.moveCaretTo(Math.max(start, end));
       if (end < start) {
-        updater.moveTo(end + 1);
+        updater.moveCaretTo(end + 1);
         CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
         PsiFile containingFile = body.getContainingFile();
         final String lineIndent = Objects.requireNonNullElse(styleManager.getLineIndent(containingFile, end), "");
@@ -242,7 +243,7 @@ public final class CreateFromUsageUtils {
         Document document = body.getContainingFile().getViewProvider().getDocument();
         manager.doPostponedOperationsAndUnblockDocument(document);
         document.insertString(updater.getCaretOffset(), lineIndent + "\n");
-        updater.moveTo(updater.getCaretOffset() + lineIndent.length());
+        updater.moveCaretTo(updater.getCaretOffset() + lineIndent.length());
       }
       else {
         //correct position caret for groovy and java methods

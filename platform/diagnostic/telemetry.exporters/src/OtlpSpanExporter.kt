@@ -13,6 +13,7 @@ import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.net.ConnectException
 
 @Internal
 class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
@@ -31,8 +32,11 @@ class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
     catch (e: CancellationException) {
       throw e
     }
+    catch (e: ConnectException) {
+      thisLogger().warn("Cannot export (url=$traceUrl): ${e.message}")
+    }
     catch (e: Throwable) {
-      thisLogger().error("Failed to export opentelemetry spans (url=$traceUrl)", e)
+      thisLogger().error("Cannot export (url=$traceUrl)", e)
     }
   }
 

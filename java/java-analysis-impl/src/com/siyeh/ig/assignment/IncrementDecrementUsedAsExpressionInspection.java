@@ -36,7 +36,7 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class IncrementDecrementUsedAsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

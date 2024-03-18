@@ -17,7 +17,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyUsageTypeProvider implements UsageTypeProviderEx {
+public final class PyUsageTypeProvider implements UsageTypeProviderEx {
   private static final UsageType IN_IMPORT = new UsageType(PyPsiBundle.messagePointer("python.find.usages.usage.in.import.statement"));
   private static final UsageType UNTYPED = new UsageType(PyPsiBundle.messagePointer("python.find.usages.untyped.probable.usage"));
   private static final UsageType USAGE_IN_ISINSTANCE = new UsageType(PyPsiBundle.messagePointer("python.find.usages.usage.in.isinstance"));

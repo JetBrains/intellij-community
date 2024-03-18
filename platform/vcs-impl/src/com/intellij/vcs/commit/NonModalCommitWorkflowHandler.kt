@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.notification.Notification
@@ -17,8 +17,8 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -36,9 +36,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.containers.nullize
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_EARLY
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_LATE
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_MODIFICATIONS
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_POST
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.lang.Runnable
@@ -315,11 +320,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return true
   }
 
-  private suspend fun runNonModalBeforeCommitChecks(commitInfo: DynamicCommitInfo,
-                                                    skipEarlyCommitChecks: Boolean,
-                                                    skipModificationCommitChecks: Boolean,
-                                                    skipLateCommitChecks: Boolean,
-                                                    skipPostCommitChecks: Boolean): NonModalCommitChecksFailure? {
+  private suspend fun runNonModalBeforeCommitChecks(
+    commitInfo: DynamicCommitInfo,
+    skipEarlyCommitChecks: Boolean,
+    skipModificationCommitChecks: Boolean,
+    skipLateCommitChecks: Boolean,
+    skipPostCommitChecks: Boolean,
+  ): NonModalCommitChecksFailure? = reportSequentialProgress { reporter ->
     try {
       val handlers = workflow.commitHandlers
       val commitChecks = handlers
@@ -335,15 +342,21 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
 
       if (!skipEarlyCommitChecks) {
-        runEarlyCommitChecks(commitInfo, earlyChecks)?.let { return it }
+        reporter.nextStep(PROGRESS_FRACTION_EARLY) {
+          runEarlyCommitChecks(commitInfo, earlyChecks)
+        }?.let { return it }
       }
 
       if (!skipModificationCommitChecks) {
-        runModificationCommitChecks(commitInfo, modificationChecks, metaHandlers)?.let { return it }
+        reporter.nextStep(PROGRESS_FRACTION_MODIFICATIONS) {
+          runModificationCommitChecks(commitInfo, modificationChecks, metaHandlers)
+        }?.let { return it }
       }
 
       if (!skipLateCommitChecks) {
-        runLateCommitChecks(commitInfo, lateChecks)?.let { return it }
+        reporter.nextStep(PROGRESS_FRACTION_LATE) {
+          runLateCommitChecks(commitInfo, lateChecks)
+        }?.let { return it }
       }
 
       if (!skipPostCommitChecks) {
@@ -355,7 +368,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
           }
           else {
             postCommitChecksHandler.resetPendingCommits()
-            runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
+            reporter.nextStep(PROGRESS_FRACTION_POST) {
+              runSyncPostCommitChecks(commitInfo, postCommitChecks)
+            }?.let { return it }
           }
         }
       }
@@ -374,10 +389,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private suspend fun runEarlyCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
-    val problems = mutableListOf<CommitProblem>()
-    for (commitCheck in commitChecks) {
-      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
-    }
+    val problems = commitChecks.mapWithProgress { commitCheck ->
+      AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
+    }.filterNotNull()
     if (problems.isEmpty()) return null
 
     problems.forEach { reportCommitCheckFailure(it) }
@@ -393,10 +407,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return workflow.runModificationCommitChecks underChangelist@{
       AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
 
-      for (commitCheck in commitChecks) {
-        val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
-        reportCommitCheckFailure(problem)
-        return@underChangelist NonModalCommitChecksFailure.MODIFICATIONS_FAILED
+      reportSequentialProgress(commitChecks.size) { reporter ->
+        for (commitCheck in commitChecks) {
+          val problem = reporter.itemStep {
+            AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
+          } ?: continue
+          reportCommitCheckFailure(problem)
+          return@underChangelist NonModalCommitChecksFailure.MODIFICATIONS_FAILED
+        }
       }
 
       FileDocumentManager.getInstance().saveAllDocuments()
@@ -405,24 +423,27 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private suspend fun runLateCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
-    for (commitCheck in commitChecks) {
-      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+    reportSequentialProgress(commitChecks.size) { reporter ->
+      for (commitCheck in commitChecks) {
+        val problem = reporter.itemStep {
+          AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
+        } ?: continue
 
-      val solution = problem.showModalSolution(project, commitInfo)
-      if (solution == CheckinHandler.ReturnResult.COMMIT) continue
+        val solution = problem.showModalSolution(project, commitInfo)
+        if (solution == CheckinHandler.ReturnResult.COMMIT) continue
 
-      reportCommitCheckFailure(problem)
-      return NonModalCommitChecksFailure.ABORTED
+        reportCommitCheckFailure(problem)
+        return NonModalCommitChecksFailure.ABORTED
+      }
+      return null
     }
-    return null
   }
 
   private suspend fun runSyncPostCommitChecks(commitInfo: DynamicCommitInfo,
                                               commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
-    val problems = mutableListOf<CommitProblem>()
-    for (commitCheck in commitChecks) {
-      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
-    }
+    val problems = commitChecks.mapWithProgress { commitCheck ->
+      AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
+    }.filterNotNull()
     if (problems.isEmpty()) return null
 
     problems.forEach { reportCommitCheckFailure(it) }

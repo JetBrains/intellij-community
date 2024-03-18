@@ -261,7 +261,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     internal const val COMMIT_TOOLWINDOW_ID = ToolWindowId.COMMIT
 
     @JvmField
-    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
+    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider?>("CONTENT_PROVIDER_SUPPLIER")
 
     /**
      * Whether [Content] should be shown in [ToolWindowId.COMMIT] toolwindow.

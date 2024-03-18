@@ -88,7 +88,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
       if (commonParent == null) return null;
       E satisfied = getIfSatisfied(commonParent, context);
       if (satisfied != null) return satisfied;
-      if (commonParent instanceof PsiFile) return null;
+      if (stopSearchAt(commonParent, context) || commonParent instanceof PsiFile) return null;
       commonParent = commonParent.getParent();
     }
   }
@@ -100,7 +100,23 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     return isElementApplicable(e, context) ? e : null;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @param element element to test
+   * @param context context
+   * @return true if no parent elements should be checked for applicability. By default, returns false,
+   * so we will search for applicable element until {@link PsiFile} element is reached.
+   */
+  protected boolean stopSearchAt(@NotNull PsiElement element, @NotNull ActionContext context) {
+    return false;
+  }
+
+  /**
+   * @param element element to test
+   * @param context context
+   * @return true if the supplied element is the one we want to apply the action on. Used when
+   * searching the appropriate element. By default, returns true always, meaning that the first found element
+   * of type E is applicable.
+   */
   protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
     return true;
   }

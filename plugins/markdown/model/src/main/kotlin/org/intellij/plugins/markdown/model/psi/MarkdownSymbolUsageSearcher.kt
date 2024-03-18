@@ -12,7 +12,6 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
@@ -58,7 +57,7 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
     }
 
     private fun findReferencesToSymbol(symbol: MarkdownSymbol, leafOccurrence: LeafOccurrence): Collection<MarkdownPsiSymbolReference> {
-      val service = service<PsiSymbolReferenceService>()
+      val service = PsiSymbolReferenceService.getService()
       val (scope, psiElement, offset) = leafOccurrence
       val elements = walkUp(psiElement, offset, scope).asSequence().filter { (element, _) -> element is PsiExternalReferenceHost }
       for ((element, offsetInElement) in elements) {

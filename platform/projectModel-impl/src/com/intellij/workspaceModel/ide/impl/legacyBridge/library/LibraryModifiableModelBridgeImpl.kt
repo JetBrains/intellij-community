@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -38,7 +38,6 @@ internal class LibraryModifiableModelBridgeImpl(
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
-  //private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
   private var entityId = originalLibrarySnapshot.libraryEntity.symbolicId
   private var reloadKind = false
 
@@ -95,18 +94,18 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) {
       if (targetBuilder != null) {
         if (targetBuilder !== diff) {
-          targetBuilder.addDiff(diff)
+          targetBuilder.applyChangesFrom(diff)
         }
       }
       else {
         if (originalLibrary.project != null) {
           WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel("Library model commit") {
-            it.addDiff(diff)
+            it.applyChangesFrom(diff)
           }
         }
         else {
           GlobalWorkspaceModel.getInstance().updateModel("Library model commit") {
-            it.addDiff(diff)
+            it.applyChangesFrom(diff)
           }
         }
       }
@@ -188,7 +187,7 @@ internal class LibraryModifiableModelBridgeImpl(
     assertModelIsLive()
 
     val rootTypeId = rootType.toLibraryRootType()
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
@@ -208,7 +207,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun moveRootUp(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
 
     update {
       val index = roots.indexOfFirst { it.url == virtualFileUrl }
@@ -225,7 +224,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun moveRootDown(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
 
     update {
       val index = roots.indexOfFirst { it.url == virtualFileUrl }
@@ -256,7 +255,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
 
     update {
       if (!excludedRoots.map { it.url }.contains(virtualFileUrl)) {
@@ -272,7 +271,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addRoot(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
 
     val root = LibraryRoot(
       url = virtualFileUrl,
@@ -337,7 +336,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
 
     if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) return false
 
@@ -359,7 +358,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun removeExcludedRoot(url: String): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
 
     val excludeUrlEntity = currentLibrary.libraryEntity.excludedRoots.find { it.url == virtualFileUrl }
     if (excludeUrlEntity == null) return false

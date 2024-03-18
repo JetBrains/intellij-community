@@ -20,7 +20,7 @@ import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
-import training.statistic.StatisticBase.Companion.logShowNewLessonsNotificationState
+import training.statistic.StatisticBase.logShowNewLessonsNotificationState
 import training.util.*
 
 private class LearnProjectStateListener : ProjectManagerListener {

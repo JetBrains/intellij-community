@@ -1,16 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
 // array-backed queue with additional support for fast bulk inserts
-class BulkArrayQueue<T> {
+final class BulkArrayQueue<T> {
   // maintain wrap-around queue using these pointers into myQueue
   private int tail; // index at which the next element would be stored via enqueue()
-  private int head; // index to stored element to be returned by pollFirst(); if tail==head the queue is empty
+  private int head; // index to a stored element to be returned by pollFirst(); if tail==head the queue is empty
   private Object[] myQueue = new Object[1024];
 
   void enqueue(@NotNull T info) {
@@ -69,7 +69,7 @@ class BulkArrayQueue<T> {
   }
 
   // insert all from "elements" before "head"
-  void bulkEnqueueFirst(@NotNull ObjectList<? extends @NotNull T> elements) {
+  void bulkEnqueueFirst(@NotNull ObjectArrayList<? extends @NotNull T> elements) {
     int insertSize = elements.size();
     int oldCapacity = myQueue.length;
     int emptySpace = oldCapacity - size() - 1;
@@ -88,20 +88,20 @@ class BulkArrayQueue<T> {
   }
 
   void removeAll(@NotNull Predicate<? super T> shouldRemove) {
+    int o;
     if (head <= tail) {
       // shift alive items in [head..tail) left to head
-      int o = head;
+      o = head;
       for (int i=head; i<tail; i++) {
         T info = getAndNullize(i);
         if (!shouldRemove.test(info)) {
           myQueue[o++] = info;
         }
       }
-      tail = o;
     }
     else {
-      // shift alive items in [head..capacity) right
-      int o = myQueue.length;
+      // shift living items in [head..capacity) right
+      o = myQueue.length;
       for (int i= myQueue.length-1; i>=head; i--) {
         T info = getAndNullize(i);
         if (!shouldRemove.test(info)) {
@@ -117,8 +117,8 @@ class BulkArrayQueue<T> {
           myQueue[o++] = info;
         }
       }
-      tail = o;
     }
+    tail = o;
   }
 
   boolean isEmpty() {

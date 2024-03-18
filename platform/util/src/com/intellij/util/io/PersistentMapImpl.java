@@ -172,12 +172,16 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
 
-    Path walFile = myStorageFile.resolveSibling(myStorageFile.getFileName().toString() + ".wal");
-    myWal = myBuilder.isEnableWal() ? new PersistentMapWal<>(keyDescriptor, valueExternalizer, options.useCompression(), walFile,
-                                                             myBuilder.getWalExecutor(), true) : null;
+    if (myBuilder.isEnableWal()) {
+      Path walFile = myStorageFile.resolveSibling(myStorageFile.getFileName().toString() + ".wal");
+      myWal = new PersistentMapWal<>(keyDescriptor, valueExternalizer, options.useCompression(), walFile,
+                                     myBuilder.getWalExecutor(), true);
+    }
+    else {
+      myWal = null;
+    }
 
-    final @NotNull PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler =
-      myEnumerator.getRecordHandler();
+    PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
 
     boolean inlineValues = myBuilder.getInlineValues(false);
@@ -550,9 +554,16 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
    */
   @Override
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    getReadLock().lock();
     try {
-      flushAppendCache();
+      Lock readLock = getReadLock();
+      readLock.lock();
+      try {
+        flushAppendCache();
+      }
+      finally {
+        readLock.unlock();
+      }
+      //and iterateData() was specifically made to not need lock:
       return myEnumerator.iterateData(processor);
     }
     catch (ClosedStorageException e) {
@@ -561,9 +572,6 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     catch (IOException e) {
       markCorrupted();
       throw e;
-    }
-    finally {
-      getReadLock().unlock();
     }
   }
 
@@ -1002,6 +1010,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
 
   private void flushAppendCache() {
     if (myAppendCache != null) {
+      //.clear() drains all the cache content -- so it is more like 'flush' than 'clear'
       myAppendCache.clear();
     }
   }

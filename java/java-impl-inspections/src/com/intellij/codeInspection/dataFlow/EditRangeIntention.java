@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditRangeIntention extends BaseIntentionAction implements LowPriorityAction {
+public final class EditRangeIntention extends BaseIntentionAction implements LowPriorityAction {
   private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
 
   @NotNull
@@ -36,7 +36,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
 
   @Nullable
   private static PsiModifierListOwner getTarget(Editor editor, PsiFile file) {
-    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
+    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     LongRangeSet rangeFromType = rangeFromType(owner);
     if (rangeFromType == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) return null;
     PsiElement original = owner.getOriginalElement();

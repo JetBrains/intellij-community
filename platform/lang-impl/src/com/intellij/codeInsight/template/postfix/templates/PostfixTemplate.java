@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaDat
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -42,7 +43,7 @@ import java.util.Objects;
  * @see PostfixTemplateProvider
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/postfix-templates.html">Postfix Templates (IntelliJ Platform Docs)</a>
  */
-public abstract class PostfixTemplate {
+public abstract class PostfixTemplate implements PossiblyDumbAware {
   private final @NotNull @NonNls String myId;
   private final @NotNull @NlsSafe String myPresentableName;
   private final @NotNull @NlsSafe String myKey;

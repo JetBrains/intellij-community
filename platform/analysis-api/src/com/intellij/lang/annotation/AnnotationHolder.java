@@ -188,7 +188,7 @@ public interface AnnotationHolder {
 
   /**
    * @return true if the inspections are running in batch mode (see "Code|Inspect Code..."), false if the inspections are in the on-the-fly mode (i.e., they are run when the editor opened the file in the window).
-   * The difference is in the desired latency level which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
+   * The difference is in the desired latency level, which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
    */
   boolean isBatchMode();
 

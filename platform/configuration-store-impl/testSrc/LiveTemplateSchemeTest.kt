@@ -5,30 +5,27 @@ import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 class LiveTemplateSchemeTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
-  @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  @JvmField @Rule val fsRule = InMemoryFsRule()
 
   // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
   @Test fun `do not remove unknown context`() {
     val schemeFile = fsRule.fs.getPath("templates/Groovy.xml")
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val schemeData = """
+    @Suppress("SpellCheckingInspection") val schemeData = """
     <templateSet group="Groovy">
       <template name="serr" value="System.err.println(&quot;$\END$&quot;)dwed" description="Prints a string to System.errwefwe" toReformat="true" toShortenFQNames="true" deactivated="true">
         <context>
@@ -37,8 +34,7 @@ class LiveTemplateSchemeTest {
         </context>
       </template>
     </templateSet>""".trimIndent()
-
-    schemeFile.write(schemeData)
+    schemeFile.createParentDirectories().writeText(schemeData)
 
     TemplateSettings(schemeManagerFactory)
     runBlocking { schemeManagerFactory.save() }

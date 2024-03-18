@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
+public final class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
   private final Project myProject;
 

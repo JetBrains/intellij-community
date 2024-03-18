@@ -38,7 +38,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
+public final class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   @NotNull
   @Override
   public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,

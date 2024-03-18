@@ -2,11 +2,14 @@
 package com.intellij.openapi.editor.ex.util
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderEx
@@ -118,7 +121,24 @@ fun Editor.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
     return null
   }
 
-  val overlappingIterator = markupModel.overlappingIterator(offset, offset)
+  return markupModel.isActionAvailableByHint(offset, actionId)
+         ?: document.isActionAvailableByHint(project, offset, actionId)
+}
+
+@Internal
+fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: String): Boolean? {
+  val markupModel = DocumentMarkupModel.forDocument(this, project, false)
+  if (markupModel !is MarkupModelEx) {
+    return null
+  }
+
+  return markupModel.isActionAvailableByHint(offset, actionId)
+}
+
+
+@Internal
+private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
+  val overlappingIterator = overlappingIterator(offset, offset)
   try {
     for (highlighterEx in overlappingIterator) {
       for (actionAvailabilityHint in highlighterEx.actionAvailabilityHints) {

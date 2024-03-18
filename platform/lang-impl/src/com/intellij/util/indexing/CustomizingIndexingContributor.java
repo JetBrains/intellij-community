@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
 import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
@@ -31,15 +31,15 @@ public interface CustomizingIndexingContributor<E extends WorkspaceEntity, D> ex
 
   @NotNull
   Collection<? extends ModuleAwareContentEntityIterator> createModuleAwareContentIterators(@NotNull Module module,
-                                                                                           @NotNull EntityReference<E> reference,
+                                                                                           @NotNull EntityPointer<E> reference,
                                                                                            @NotNull Collection<? extends VirtualFile> roots,
                                                                                            @Nullable D customization);
   @NotNull
-  Collection<? extends GenericContentEntityIterator> createGenericContentIterators(@NotNull EntityReference<E> reference,
+  Collection<? extends GenericContentEntityIterator> createGenericContentIterators(@NotNull EntityPointer<E> reference,
                                                                                    @NotNull Collection<? extends VirtualFile> roots,
                                                                                    @Nullable D customization);
 
-  Collection<? extends ExternalEntityIndexableIterator> createExternalEntityIterators(@NotNull EntityReference<E> reference,
+  Collection<? extends ExternalEntityIndexableIterator> createExternalEntityIterators(@NotNull EntityPointer<E> reference,
                                                                                       @NotNull Collection<? extends VirtualFile> roots,
                                                                                       @NotNull Collection<? extends VirtualFile> sourceRoots,
                                                                                       @Nullable D customization);

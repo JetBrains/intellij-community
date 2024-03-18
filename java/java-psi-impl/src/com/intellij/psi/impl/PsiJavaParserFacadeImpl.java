@@ -9,6 +9,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
@@ -140,6 +141,24 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   @NotNull
+  @Override
+  public PsiImplicitClass createImplicitClassFromText(@NotNull String body, @Nullable PsiElement context) throws IncorrectOperationException {
+    PsiJavaFile aFile = createDummyJavaFile(
+      "int i = 0;" +  //used to preserve first comments
+      body);
+    PsiClass[] classes = aFile.getClasses();
+    if (classes.length != 1) {
+      throw new IncorrectOperationException("Incorrect class '" + body + "'");
+    }
+    if (classes[0] instanceof PsiImplicitClass) {
+      PsiImplicitClass implicitClass = (PsiImplicitClass)classes[0];
+      implicitClass.getFirstChild().delete(); //delete stub field
+      return implicitClass;
+    }
+    throw new IncorrectOperationException("Incorrect implicit class '" + body + "'");
+  }
+
+  @NotNull
   public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
     return createRecordFromText("public record " + name + "() { }");
   }
@@ -248,7 +267,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @Override
   public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
     boolean isStaticImport = context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand();
-    boolean mayHaveDiamonds = context instanceof PsiNewExpression && PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7);
+    boolean mayHaveDiamonds = context instanceof PsiNewExpression && PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context);
     JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : mayHaveDiamonds ? DIAMOND_REF : REFERENCE;
     DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, level(context)), context);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());

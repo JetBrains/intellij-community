@@ -89,7 +89,8 @@ UFile (package = ) [import java.lang.Thread...]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : PsiType:Unit
                                             UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                                             USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
-                                            ULiteralExpression (value = "hello1") ["hello1"] : PsiType:String
+                                            UPolyadicExpression (operator = +) ["hello1"] : PsiType:String
+                                                ULiteralExpression (value = "hello1") ["hello1"] : PsiType:String
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
@@ -106,7 +107,8 @@ UFile (package = ) [import java.lang.Thread...]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : PsiType:Unit
                                                 UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                                                 USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
-                                                ULiteralExpression (value = "hello2") ["hello2"] : PsiType:String
+                                                UPolyadicExpression (operator = +) ["hello2"] : PsiType:String
+                                                    ULiteralExpression (value = "hello2") ["hello2"] : PsiType:String
         UMethod (name = test3) [public static final fun test3() : void {...}]
             UBlockExpression [{...}] : PsiType:String
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Supplier({ ...}))] : PsiType:String
@@ -118,7 +120,8 @@ UFile (package = ) [import java.lang.Thread...]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
                             UBlockExpression [{...}]
                                 UReturnExpression [return "Supplier"]
-                                    ULiteralExpression (value = "Supplier") ["Supplier"] : PsiType:String
+                                    UPolyadicExpression (operator = +) ["Supplier"] : PsiType:String
+                                        ULiteralExpression (value = "Supplier") ["Supplier"] : PsiType:String
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Callable({ ...}))] : PsiType:String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : PsiType:String
@@ -128,7 +131,8 @@ UFile (package = ) [import java.lang.Thread...]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
                             UBlockExpression [{...}]
                                 UReturnExpression [return "Callable"]
-                                    ULiteralExpression (value = "Callable") ["Callable"] : PsiType:String
+                                    UPolyadicExpression (operator = +) ["Callable"] : PsiType:String
+                                        ULiteralExpression (value = "Callable") ["Callable"] : PsiType:String
         UMethod (name = ambiguousSamAcceptor) [public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.function.Supplier<java.lang.String>) : java.lang.String {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.util.function.Supplier<java.lang.String>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

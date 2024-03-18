@@ -2,7 +2,6 @@
 package com.intellij.ide.util.projectWizard;
 
 
-import com.intellij.ide.NewProjectWizardLegacy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -60,7 +59,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public boolean isAvailable() {
-    return NewProjectWizardLegacy.isAvailable();
+    return false;
   }
 
   @Override

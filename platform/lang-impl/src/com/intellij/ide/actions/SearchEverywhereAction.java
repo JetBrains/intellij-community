@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeWithMe.ClientId;
@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
@@ -21,6 +22,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.FontUtil;
+import com.intellij.util.JavaCoroutines;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,14 +42,14 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
-  private static void registerShortcut() {
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
-  }
-
-  static final class ShortcutTracker implements ActionConfigurationCustomizer {
+  static final class ShortcutTracker implements ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
     @Override
-    public void customize(@NotNull ActionManager actionManager) {
-      registerShortcut();
+    public @Nullable Object customize(@NotNull ActionRuntimeRegistrar actionRegistrar,
+                                      @NotNull Continuation<? super Unit> $completion) {
+      return JavaCoroutines.suspendJava(jc -> {
+        ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
+        jc.resume(Unit.INSTANCE);
+      }, $completion);
     }
   }
 
@@ -53,9 +57,8 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
     setEnabledInModalContext(false);
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new ActionButton(this, presentation, place, () -> getMinimumSize(place)) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
@@ -81,15 +84,13 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
     return ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place);
   }
 
-  @NotNull
-  private static Dimension getMinimumSize(@NotNull String place) {
+  private static @NotNull Dimension getMinimumSize(@NotNull String place) {
     return isExperimentalToolbar(place) ? ActionToolbar.experimentalToolbarMinimumButtonSize()
                                         : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 

@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Looks for well-formedness of string constants.
  */
-public class StringLiteralQuotesAnnotator extends PyAnnotator {
+public final class StringLiteralQuotesAnnotator extends PyAnnotator {
   private static final String TRIPLE_QUOTES = "\"\"\"";
   private static final String TRIPLE_APOS = "'''";
 

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
@@ -76,7 +77,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) return
         val optimizedImports = KotlinOptimizeImportsFacility.getInstance().prepareOptimizedImports(file, data) ?: return // return if already optimized
         val project = file.project
-        val modificationTracker = OuterModelsModificationTrackerManager.getInstance(project).tracker
+        val modificationTracker = OuterModelsModificationTrackerManager.getTracker(project)
         val modificationCount = modificationTracker.modificationCount
 
         val extensionsAllowToChangeFileSilently = SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, file.virtualFile)
@@ -169,6 +170,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         override fun getFamilyName() = name
 
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+            SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
             KotlinCodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = true
             OptimizeImportsProcessor(
                 project,

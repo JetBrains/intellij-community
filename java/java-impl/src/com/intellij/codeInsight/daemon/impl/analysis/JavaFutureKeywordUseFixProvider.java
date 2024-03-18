@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
+public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     PsiTypeElement typeElement = ObjectUtils.tryCast(ref.getParent(), PsiTypeElement.class);
@@ -38,17 +39,17 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
     if ((parent instanceof PsiMethod || parent instanceof PsiField) && parent.getParent() instanceof PsiClass) {
       // record R() {} is parsed as method if records aren't supported
       // record R incomplete declaration is also possible
-      registerIncreaseLevelFixes(ref, HighlightingFeature.RECORDS, registrar);
+      registerIncreaseLevelFixes(ref, JavaFeature.RECORDS, registrar);
     }
     if (parent instanceof PsiLocalVariable && parent.getParent() instanceof PsiDeclarationStatement
         && ((PsiDeclarationStatement)parent.getParent()).getDeclaredElements().length == 1) {
       // record R() declaration inside method
-      registerIncreaseLevelFixes(ref, HighlightingFeature.RECORDS, registrar);
+      registerIncreaseLevelFixes(ref, JavaFeature.RECORDS, registrar);
     }
   }
 
   private static void registerIncreaseLevelFixes(@NotNull PsiJavaCodeReferenceElement ref,
-                                                 @NotNull HighlightingFeature feature,
+                                                 @NotNull JavaFeature feature,
                                                  @NotNull QuickFixActionRegistrar registrar) {
     List<IntentionAction> fixes = new ArrayList<>();
     HighlightUtil.registerIncreaseLanguageLevelFixes(ref, feature, fixes);
@@ -60,12 +61,12 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
   private static void registerVarLanguageLevelFix(@NotNull PsiJavaCodeReferenceElement ref,
                                                   PsiElement parent,
                                                   @NotNull QuickFixActionRegistrar registrar) {
-    HighlightingFeature feature;
+    JavaFeature feature;
     if (parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiLambdaExpression) {
-      feature = HighlightingFeature.VAR_LAMBDA_PARAMETER;
+      feature = JavaFeature.VAR_LAMBDA_PARAMETER;
     }
     else {
-      feature = HighlightingFeature.LVTI;
+      feature = JavaFeature.LVTI;
     }
     registerIncreaseLevelFixes(ref, feature, registrar);
   }

@@ -22,6 +22,8 @@ import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -157,6 +159,11 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     m = new HistoryDialogModel(myProject, myGateway, getVcs(), f) {
       @Override
       public Reverter createReverter() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public @NotNull LocalHistoryCounter.Kind getKind() {
         throw new UnsupportedOperationException();
       }
     };

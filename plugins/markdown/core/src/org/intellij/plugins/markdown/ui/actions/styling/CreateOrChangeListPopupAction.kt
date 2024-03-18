@@ -13,7 +13,7 @@ internal class CreateOrChangeListPopupAction: AnAction(), Toggleable {
   private val actualGroup = CreateOrChangeListActionGroup()
 
   override fun actionPerformed(event: AnActionEvent) {
-    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val toolbar = object: ActionToolbarImpl(event.place, actualGroup, true) {
       override fun addNotify() {
         super.addNotify()

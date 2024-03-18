@@ -90,10 +90,10 @@ internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Co
   }
 }
 
-internal class ToggleableScrollBarAnimationBehaviorDecorator(private val decoratedBehavior: ScrollBarAnimationBehavior,
-                                                             trackAnimator: TwoWayAnimator,
-                                                             thumbAnimator: TwoWayAnimator) : ScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                        thumbAnimator) {
+internal open class ToggleableScrollBarAnimationBehaviorDecorator(private val decoratedBehavior: ScrollBarAnimationBehavior,
+                                                                  trackAnimator: TwoWayAnimator,
+                                                                  thumbAnimator: TwoWayAnimator) : ScrollBarAnimationBehavior(trackAnimator,
+                                                                                                                              thumbAnimator) {
   private var isOn: Boolean? = null
 
   override fun onToggle(isOn: Boolean?) {

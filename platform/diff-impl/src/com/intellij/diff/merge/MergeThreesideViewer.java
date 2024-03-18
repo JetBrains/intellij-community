@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -83,7 +83,7 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
 public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
-  @NotNull protected final MergeModelBase myModel;
+  @NotNull protected final MergeModelBase<TextMergeChange.State> myModel;
 
   @NotNull protected final ModifierProvider myModifierProvider;
   @NotNull protected final MyInnerDiffWorker myInnerDiffWorker;
@@ -151,6 +151,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected void onInit() {
     super.onInit();
     myModifierProvider.init();
+
+    for (EditorEx editor : getEditors()) {
+      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
+    }
   }
 
   @Override
@@ -296,17 +300,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     doRediff();
   }
 
-  protected boolean setInitialOutputContent() {
-    final Document baseDocument = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
+  protected boolean setInitialOutputContent(@NotNull CharSequence baseContent) {
     final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
 
     return DiffUtil.executeWriteCommand(outputDocument, getProject(), DiffBundle.message("message.init.merge.content.command"), () -> {
-      outputDocument.setText(baseDocument.getCharsSequence());
+      outputDocument.setText(baseContent);
 
       DiffUtil.putNonundoableOperation(getProject(), outputDocument);
 
       if (getTextSettings().isEnableLstGutterMarkersInMerge()) {
-        myLineStatusTracker.setBaseRevision(baseDocument.getCharsSequence());
+        myLineStatusTracker.setBaseRevision(baseContent);
         getEditor().getGutterComponentEx().setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW);
       }
     });
@@ -375,7 +378,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       FoldingModelSupport.Data foldingState = myFoldingModel.createState(lineFragments, lineOffsets, getFoldingModelSettings());
 
-      return () -> apply(lineFragments, conflictTypes, foldingState, ignorePolicy);
+      return () -> apply(ThreeSide.BASE.select(sequences), lineFragments, conflictTypes, foldingState, ignorePolicy);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -393,7 +396,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   @RequiresEdt
-  private void apply(@NotNull List<? extends MergeLineFragment> fragments,
+  private void apply(@NotNull CharSequence baseContent,
+                     @NotNull List<? extends MergeLineFragment> fragments,
                      @NotNull List<? extends MergeConflictType> conflictTypes,
                      @Nullable FoldingModelSupport.Data foldingState,
                      @NotNull IgnorePolicy ignorePolicy) {
@@ -402,7 +406,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     clearDiffPresentation();
     resetChangeCounters();
 
-    boolean success = setInitialOutputContent();
+    boolean success = setInitialOutputContent(baseContent);
     if (!success) {
       fragments = Collections.emptyList();
       conflictTypes = Collections.emptyList();

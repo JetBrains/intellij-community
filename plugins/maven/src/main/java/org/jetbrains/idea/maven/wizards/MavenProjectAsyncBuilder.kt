@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.application.ApplicationManager
@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,23 +37,28 @@ import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperD
 import org.jetbrains.idea.maven.utils.*
 import java.nio.file.Path
 
-internal class MavenProjectAsyncBuilder {
+class MavenProjectAsyncBuilder {
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (ApplicationManager.getApplication().isDispatchThread) {
       return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
-        commit(project, projectFile, modelsProvider)
+        commit(project, projectFile, modelsProvider, true)
       }
     }
     else {
       return runBlockingMaybeCancellable {
-        commit(project, projectFile, modelsProvider)
+        commit(project, projectFile, modelsProvider, true)
       }
     }
   }
 
+  suspend fun commit(project: Project, projectFile: VirtualFile) {
+    commit(project, projectFile, null, true)
+  }
+
   suspend fun commit(project: Project,
                      projectFile: VirtualFile,
-                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenActivityKey) {
+                     modelsProvider: IdeModifiableModelsProvider?,
+                     syncProject: Boolean): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -80,15 +85,27 @@ internal class MavenProjectAsyncBuilder {
       val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
       cs.launch {
         project.trackActivity(MavenActivityKey) {
-          doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
+          doCommit(project,
+                   importProjectFile,
+                   rootDirectoryPath,
+                   modelsProvider,
+                   previewModule,
+                   importingSettings,
+                   generalSettings,
+                   syncProject)
         }
       }
-      //blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
       return@trackActivity if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
-    return@trackActivity doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, null, importingSettings,
-                                               generalSettings)
+    return@trackActivity doCommit(project,
+                                  importProjectFile,
+                                  rootDirectoryPath,
+                                  modelsProvider,
+                                  null,
+                                  importingSettings,
+                                  generalSettings,
+                                  syncProject)
   }
 
   private suspend fun doCommit(project: Project,
@@ -97,25 +114,24 @@ internal class MavenProjectAsyncBuilder {
                                modelsProvider: IdeModifiableModelsProvider?,
                                previewModule: Module?,
                                importingSettings: MavenImportingSettings,
-                               generalSettings: MavenGeneralSettings): List<Module> {
+                               generalSettings: MavenGeneralSettings,
+                               syncProject: Boolean): List<Module> {
     MavenAsyncUtil.setupProjectSdk(project)
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
 
     val files: List<VirtualFile?> = withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), true) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          val indicator = ProgressManager.getGlobalProgressIndicator()
-          if (importProjectFile != null) {
-            return@coroutineToIndicator listOf(importProjectFile)
-          }
-          val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
-            FileUtil.toSystemIndependentName(rootDirectory.toString()))
-          if (virtualFile == null) {
-            return@coroutineToIndicator emptyList()
-          }
-          return@coroutineToIndicator FileFinder.findPomFiles(virtualFile.children, LookForNestedToggleAction.isSelected(), indicator)
+      coroutineToIndicator {
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        if (importProjectFile != null) {
+          return@coroutineToIndicator listOf(importProjectFile)
         }
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+          FileUtil.toSystemIndependentName(rootDirectory.toString()))
+        if (virtualFile == null) {
+          return@coroutineToIndicator emptyList()
+        }
+        return@coroutineToIndicator FileFinder.findPomFiles(virtualFile.children, LookForNestedToggleAction.isSelected(), indicator)
       }
     }
 
@@ -125,11 +141,8 @@ internal class MavenProjectAsyncBuilder {
     generalSettings.updateFromMavenConfig(files)
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          val indicator = ProgressManager.getGlobalProgressIndicator()
-          tree.updateAll(false, generalSettings, indicator)
-        }
+      reportRawProgress { reporter ->
+        tree.updateAll(false, generalSettings, reporter)
       }
     }
 
@@ -161,7 +174,7 @@ internal class MavenProjectAsyncBuilder {
     val manager = MavenProjectsManager.getInstance(project)
     manager.setIgnoredState(projects, false)
 
-    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule)
+    return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
   }
 
   private suspend fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {

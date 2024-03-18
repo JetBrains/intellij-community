@@ -146,17 +146,19 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private static void reportModelBuilderMessageToLogger(@NotNull Message message) {
-    if (message.getKind() == Message.Kind.INTERNAL) {
-      LOG.warn(
-        message.getGroup() + "\n" +
-        message.getTitle() + "\n" +
-        message.getText()
-      );
+    var text = message.getGroup() + "\n" +
+               message.getTitle() + "\n" +
+               message.getText();
+    if (message.isInternal() && message.getKind() == Message.Kind.ERROR) {
+      LOG.error(text, new Throwable());
+    }
+    else {
+      LOG.debug(text);
     }
   }
 
   private void reportModelBuilderMessageToListener(@NotNull Message message) {
-    if (message.getKind() != Message.Kind.INTERNAL) {
+    if (!message.isInternal()) {
       var messageEvent = getModelBuilderMessage(message);
       myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
     }

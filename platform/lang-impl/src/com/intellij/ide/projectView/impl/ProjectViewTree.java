@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -78,6 +79,9 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
       if (obj instanceof BasePsiNode<?> pvNode) {
         var file = pvNode.getVirtualFile();
         return file != null && !file.isDirectory(); // true means "don't expand", so we only auto-expand directories
+      }
+      else if (obj instanceof AbstractTreeNode<?> abstractTreeNode) {
+        return !abstractTreeNode.isAutoExpandAllowed();
       }
       else {
         return false;

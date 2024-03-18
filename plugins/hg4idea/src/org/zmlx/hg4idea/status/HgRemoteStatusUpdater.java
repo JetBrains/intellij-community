@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.status;
 
 import com.intellij.concurrency.JobScheduler;
@@ -102,16 +102,15 @@ public class HgRemoteStatusUpdater implements Disposable {
     status.setChanges(changesets.size(), new ChangesetFormatter(status, changesets));
   }
 
-  @NlsContexts.ProgressTitle
-  private static String getProgressTitle() {
+  private static @NlsContexts.ProgressTitle String getProgressTitle() {
     return HgBundle.message("hg4idea.changesets.checking.progress");
   }
 
   public static boolean isCheckingEnabled(@NotNull Project project) {
     HgVcs hgVcs = HgVcs.getInstance(project);
-    if (hgVcs == null) return false;
-    if (HgUtil.getRepositoryManager(project).getRepositories().isEmpty()) return false;
-    return hgVcs.getProjectSettings().isCheckIncomingOutgoing();
+    return hgVcs != null &&
+           !HgUtil.getRepositoryManager(project).getRepositories().isEmpty() &&
+           hgVcs.getProjectSettings().isCheckIncomingOutgoing();
   }
 
   private static final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {

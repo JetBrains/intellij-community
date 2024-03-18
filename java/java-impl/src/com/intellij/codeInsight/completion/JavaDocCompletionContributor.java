@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -54,7 +55,7 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Set<String> INLINE_TAGS_WITH_PARAMETER =
     Set.of("link", "linkplain", "code", "return", "literal", "value", "index", "summary");
 
@@ -460,7 +461,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     for (JavadocTagInfo info : infos) {
       String tagName = info.getName();
       if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-      if (isInline != info.isInline() && !(PsiUtil.isLanguageLevel16OrHigher(comment) && tagName.equals("return"))) continue;
+      if (isInline != info.isInline() && !(PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16) && tagName.equals("return")))
+        continue;
       if (addSpecialTags(ret, comment, tagName)) {
         ret.add(tagName);
       }

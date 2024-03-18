@@ -27,13 +27,13 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.10.12</version>
+    <version>1.10.14</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>https://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant</artifactId>
-  <version>1.10.12</version>
+  <version>1.10.14</version>
   <name>Apache Ant Core</name>
   <properties>
     <modules.exclude>org/apache/tools/ant/taskdefs/modules/</modules.exclude>
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant-launcher</artifactId>
-      <version>1.10.12</version>
+      <version>1.10.14</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -64,7 +64,7 @@
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
-      <version>2.12.0</version>
+      <version>2.12.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -160,7 +160,7 @@
             <exclude>org/apache/tools/ant/launch/</exclude>
             <exclude>org/apache/tools/ant/listener/CommonsLoggingListener*</exclude>
             <exclude>org/apache/tools/ant/listener/Log4jListener*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/email/MimeMailer*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/email/*MimeMailer*</exclude>
             <exclude>${modules.exclude}</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/NetRexxC*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/Xalan2TraceSupport*</exclude>

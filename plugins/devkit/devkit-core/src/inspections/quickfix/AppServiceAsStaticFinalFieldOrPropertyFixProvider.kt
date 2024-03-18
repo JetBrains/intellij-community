@@ -42,7 +42,7 @@ interface AppServiceAsStaticFinalFieldOrPropertyFixProvider {
 
 
 
-private class JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider : AppServiceAsStaticFinalFieldOrPropertyFixProvider {
+internal class JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider : AppServiceAsStaticFinalFieldOrPropertyFixProvider {
 
   override fun getFixes(sourcePsi: PsiElement): List<LocalQuickFix> {
     return if (sourcePsi is PsiField) listOf(JavaWrapInSupplierQuickFix(sourcePsi)) else emptyList()

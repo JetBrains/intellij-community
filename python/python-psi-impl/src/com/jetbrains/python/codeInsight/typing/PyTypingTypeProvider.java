@@ -4,7 +4,6 @@ package com.jetbrains.python.codeInsight.typing;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,6 +18,8 @@ import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -42,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
@@ -50,7 +50,7 @@ import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPIN
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
+public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
 
   public static final String TYPING = "typing";
 
@@ -118,7 +118,6 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
   public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("# *type: *ignore(\\[ *[^ ,\\]]+ *(, *[^ ,\\]]+ *)*\\])? *($|(#.*))",
                                                                     Pattern.CASE_INSENSITIVE);
 
@@ -301,8 +300,8 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     return null;
   }
 
-  public static boolean isGenerator(@NotNull final PyType type) {
-    return type instanceof PyCollectionType && GENERATOR.equals(((PyClassLikeType)type).getClassQName());
+  public static boolean isGenerator(@NotNull PyType type) {
+    return type instanceof PyCollectionType genericType && GENERATOR.equals(genericType.getClassQName());
   }
 
   @NotNull
@@ -321,7 +320,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
-    return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD &&
+    return func.getContainingClass() != null && func.getModifier() != PyAstFunction.Modifier.STATICMETHOD &&
            annotation.getParameterTypeList().getParameterTypes().size() < func.getParameterList().getParameters().length;
   }
 
@@ -576,11 +575,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
    */
   @Nullable
   public static String getTypeCommentValue(@NotNull String text) {
-    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-    if (m.matches()) {
-      return StringUtil.nullize(m.group(1).trim());
-    }
-    return null;
+    return PyUtilCore.getTypeCommentValue(text);
   }
 
   /**
@@ -590,14 +585,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
    */
   @Nullable
   public static TextRange getTypeCommentValueRange(@NotNull String text) {
-    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-    if (m.matches()) {
-      final String hint = getTypeCommentValue(text);
-      if (hint != null) {
-        return TextRange.from(m.start(1), hint.length());
-      }
-    }
-    return null;
+    return PyUtilCore.getTypeCommentValueRange(text);
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to record class" "true"
 class <caret>R {
   // third field
   static int third = 1;

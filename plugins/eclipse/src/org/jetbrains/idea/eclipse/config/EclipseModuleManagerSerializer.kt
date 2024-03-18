@@ -2,6 +2,7 @@
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
@@ -30,7 +31,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
     (entity as EclipseProjectPropertiesEntity.Builder).apply {
       componentTag.getChildren(LIBELEMENT).forEach {
-        eclipseUrls.add(virtualFileManager.fromUrl(it.getAttributeValue(VALUE_ATTR)!!))
+        eclipseUrls.add(virtualFileManager.getOrCreateFromUri(it.getAttributeValue(VALUE_ATTR)!!))
       }
       componentTag.getChildren(VARELEMENT).forEach {
         variablePaths = variablePaths.toMutableMap().also { map ->

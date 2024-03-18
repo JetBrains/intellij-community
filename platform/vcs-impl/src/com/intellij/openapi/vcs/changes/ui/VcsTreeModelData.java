@@ -19,7 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,17 +52,6 @@ public abstract class VcsTreeModelData {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
     return new IncludedUnderData(tree, getRoot(tree));
   }
-
-  /**
-   * @deprecated Prefer using {@link #allUnder(ChangesBrowserNode)} with non-ambiguous name.
-   */
-  @NotNull
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static VcsTreeModelData children(@NotNull ChangesBrowserNode<?> node) {
-    return allUnder(node);
-  }
-
 
   @NotNull
   public static VcsTreeModelData allUnderTag(@NotNull JTree tree, @NotNull Object tag) {

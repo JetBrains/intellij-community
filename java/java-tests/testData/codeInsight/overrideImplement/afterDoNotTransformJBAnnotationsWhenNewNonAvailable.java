@@ -3,6 +3,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,16 +47,16 @@ class M implements Map {
 
     @NotNull
     public Set keySet() {
-        return null;
+        return Collections.emptySet();
     }
 
     @NotNull
     public Collection values() {
-        return null;
+        return Collections.emptyList();
     }
 
     @NotNull
     public Set<Entry> entrySet() {
-        return null;
+        return Collections.emptySet();
     }
 }

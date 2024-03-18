@@ -113,7 +113,7 @@ public final class InitialScrollPositionSupport {
       if (myScrollToChange != null) return;
 
       ensureEditorSizeIsUpToDate(getEditors());
-      if (myShouldScroll) myShouldScroll = !doScrollToLine();
+      if (myShouldScroll) myShouldScroll = !doScrollToLine(true);
       if (myNavigationContext != null) return;
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
     }
@@ -124,7 +124,7 @@ public final class InitialScrollPositionSupport {
 
       ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
-      if (myShouldScroll) myShouldScroll = !doScrollToLine();
+      if (myShouldScroll) myShouldScroll = !doScrollToLine(false);
       if (myShouldScroll) myShouldScroll = !doScrollToContext();
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
       if (myShouldScroll) doScrollToFirstChange();
@@ -141,7 +141,7 @@ public final class InitialScrollPositionSupport {
     protected abstract boolean doScrollToContext();
 
     @RequiresEdt
-    protected abstract boolean doScrollToLine();
+    protected abstract boolean doScrollToLine(boolean onSlowRediff);
   }
 
   public static abstract class ThreesideInitialScrollHelper extends SideInitialScrollHelper {

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class NegativeIntConstantInLongContextInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class NegativeIntConstantInLongContextInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

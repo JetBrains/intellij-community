@@ -107,7 +107,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   }
 
   private void tweakControls(@NotNull Project project) {
-    CompilerOptionsFilter[] managers = CompilerOptionsFilter.EP_NAME.getExtensions();
+    List<CompilerOptionsFilter> managers = CompilerOptionsFilter.EP_NAME.getExtensionList();
     boolean showExternalBuildSetting = true;
     for (CompilerOptionsFilter manager : managers) {
       showExternalBuildSetting = manager.isAvailable(Setting.EXTERNAL_BUILD, project);

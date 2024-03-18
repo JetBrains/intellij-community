@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.fs
 import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.nio.ByteBuffer
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
@@ -22,6 +23,7 @@ interface IjentFileSystemApi {
   /**
    * The same [CoroutineScope] as in the corresponding [com.intellij.platform.ijent.IjentApi].
    */
+  @Deprecated("API should avoid exposing coroutine scopes")
   val coroutineScope: CoroutineScope
 
   /**
@@ -32,20 +34,26 @@ interface IjentFileSystemApi {
   /**
    * Returns `/` on Unix-like and disk labels on Windows.
    */
-  suspend fun getRootDirectories(): Collection<IjentPath>
-
-  // TODO
-  //suspend fun createTempDir(): IjentRemotePath
+  suspend fun getRootDirectories(): Collection<IjentPath.Absolute>
 
   /**
    * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
    */
-  suspend fun userHome(): IjentPath?
+  suspend fun userHome(): IjentPath.Absolute?
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
-  suspend fun listDirectory(path: IjentPath): IjentFsResult<Collection<String>, ListDirectoryError>
+  suspend fun listDirectory(path: IjentPath.Absolute): ListDirectory
+
+  @Suppress("unused")
+  sealed interface ListDirectory : IjentFsResult {
+    interface Ok : ListDirectory, IjentFsResult.Ok<Collection<String>>
+    sealed interface DoesNotExist : ListDirectory, IjentFsResult.Error
+    sealed interface PermissionDenied : ListDirectory, IjentFsResult.Error
+    sealed interface NotDirectory : ListDirectory, IjentFsResult.Error
+    sealed interface NotFile : ListDirectory, IjentFsResult.Error
+  }
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved regardless of [resolveSymlinks].
@@ -54,15 +62,23 @@ interface IjentFileSystemApi {
    * [resolveSymlinks] controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
-  suspend fun listDirectoryWithAttrs(path: IjentPath, resolveSymlinks: Boolean = true): IjentFsResult<FileInfo, ListDirectoryError>
+  suspend fun listDirectoryWithAttrs(
+    path: IjentPath.Absolute,
+    resolveSymlinks: Boolean = true,
+  ): ListDirectoryWithAttrs
 
-  sealed interface ListDirectoryError : IjentFsResultError {
-    data object NotDirectory : ListDirectoryError, IjentFsResultError
-    data class Generic(val generic: IjentFsResultError.Generic) : ListDirectoryError, IjentFsResultError by generic
+  @Suppress("unused")
+  sealed interface ListDirectoryWithAttrs : IjentFsResult {
+    interface Ok : ListDirectoryWithAttrs, IjentFsResult.Ok<Collection<FileInfo>>
+    sealed interface DoesNotExist : ListDirectoryWithAttrs, IjentFsResult.Error
+    sealed interface PermissionDenied : ListDirectoryWithAttrs, IjentFsResult.Error
+    sealed interface NotDirectory : ListDirectoryWithAttrs, IjentFsResult.Error
+    sealed interface NotFile : ListDirectoryWithAttrs, IjentFsResult.Error
   }
 
+  // TODO Interface
   data class FileInfo(
-    val path: IjentPath,
+    val path: IjentPath.Absolute,
     val fileType: Type,
     //val permissions: Permissions,  // TODO There are too many options for a good API. Let's add them as soon as they're needed.
   ) {
@@ -72,7 +88,7 @@ interface IjentFileSystemApi {
 
       sealed interface Symlink : Type {
         data object Unresolved : Symlink
-        data class Resolved(val result: IjentPath) : Symlink
+        data class Resolved(val result: IjentPath.Absolute) : Symlink
       }
 
       data object Other : Type
@@ -82,110 +98,143 @@ interface IjentFileSystemApi {
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
-  suspend fun canonicalize(path: IjentPath): IjentFsResult<IjentPath, IjentFsResultError.Generic>
+  suspend fun canonicalize(path: IjentPath.Absolute): Canonicalize
+
+  sealed interface Canonicalize : IjentFsResult {
+    interface Ok : Canonicalize, IjentFsResult.Ok<IjentPath.Absolute>
+    sealed interface DoesNotExist : Canonicalize, IjentFsResult.Error
+    sealed interface PermissionDenied : Canonicalize, IjentFsResult.Error
+    sealed interface NotDirectory : Canonicalize, IjentFsResult.Error
+    sealed interface NotFile : Canonicalize, IjentFsResult.Error
+  }
 
   /**
    * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [FileInfo.fileType] if [path] points on a symlink.
    */
-  suspend fun stat(path: IjentPath, resolveSymlinks: Boolean): IjentFsResult<FileInfo, IjentFsResultError.Generic>
+  suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): Stat
 
-  // TODO Is it needed?
-  // suspend fun fileHash(path: IjentRemotePath): RpcResult<Blob, IOError>
-
-  // TODO
-  //suspend fun setExecutable(path: IjentRemotePath, executable: Boolean): RpcResult<Unit, IOError>
-
-  // TODO
-  /**
-   * Succeeds only if new file was created
-   */
-  //suspend fun createFile(path: IjentRemotePath, byteStream: ReceiveChannel<Blob>? = null,
-  //                       completion: SendChannel<RpcResult<Unit, IOError>>)
-
-  // TODO
-  /**
-   * Recursively create a directory and all of its parent components if they are missing.
-   */
-  //suspend fun createDirectoryAll(path: IjentRemotePath): RpcResult<Unit, IOError>
-
-  // TODO
-  /**
-   * Delete a file or a directory recursively
-   */
-  //suspend fun delete(path: IjentRemotePath, recursive: Boolean): RpcResult<Unit, IOError>
-
-  // TODO It's canonicalize, isn't it?
-  //suspend fun readSymlink(path: IjentRemotePath): RpcResult<IjentRemotePath, IOError>
-
-  // TODO
-  /**
-   * Move/rename a file to a new location.
-   *
-   * The behaviour of the operation when the target file already exists is controlled
-   * by the openMode parameter.
-   * If OpenMode.New is specified, the operation will only succeed if target file
-   * doesn't exist. OpenMode.Existing will only succeed if the target file exists.
-   * OpenMode.Create will overwrite the file if it exists and create a new one if it doesn't.
-   */
-  //suspend fun moveFile(source: IjentRemotePath, target: IjentRemotePath, openMode: OpenMode): RpcResult<Unit, IOError>
+  sealed interface Stat : IjentFsResult {
+    interface Ok : Stat, IjentFsResult.Ok<FileInfo>
+    sealed interface DoesNotExist : Stat, IjentFsResult.Error
+    sealed interface PermissionDenied : Stat, IjentFsResult.Error
+    sealed interface NotDirectory : Stat, IjentFsResult.Error
+    sealed interface NotFile : Stat, IjentFsResult.Error
+  }
 
   /**
    * on Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
-  suspend fun sameFile(source: IjentPath, target: IjentPath): IjentFsResult<Boolean, SameFileError>
+  suspend fun sameFile(source: IjentPath.Absolute, target: IjentPath.Absolute): SameFile
 
-  data class SameFileError(val path: IjentFsResultError, val error: IjentFsResultError.Generic) : IjentFsResultError {
-    override fun toString(): String = "$path: $error"
+  sealed interface SameFile : IjentFsResult {
+    interface Ok : SameFile, IjentFsResult.Ok<Boolean>
+    sealed interface DoesNotExist : SameFile, IjentFsResult.Error
+    sealed interface PermissionDenied : SameFile, IjentFsResult.Error
+    sealed interface NotDirectory : SameFile, IjentFsResult.Error
+    sealed interface NotFile : SameFile, IjentFsResult.Error
   }
 
-  // TODO
-  ///**
-  // * Copy a file to a new location.
-  // *
-  // * The behaviour of the operation when the target file already exists is consistent
-  // * with `moveFile`
-  // *
-  // * @see moveFile
-  // */
-  //suspend fun copyFile(source: IjentRemotePath, target: IjentRemotePath, openMode: OpenMode): RpcResult<Unit, IOError>
+  suspend fun fileReader(path: IjentPath.Absolute): FileReader
 
-  // TODO
-  //suspend fun copyDirectory(source: IjentRemotePath, target: IjentRemotePath): RpcResult<Unit, IOError>
+  sealed interface FileReader : IjentFsResult {
+    interface Ok : FileReader, IjentFsResult.Ok<IjentOpenedFile.Reader>
+    sealed interface DoesNotExist : FileReader, IjentFsResult.Error
+    sealed interface PermissionDenied : FileReader, IjentFsResult.Error
+    sealed interface NotDirectory : FileReader, IjentFsResult.Error
+    sealed interface NotFile : FileReader, IjentFsResult.Error
+  }
 
-  // TODO
-  //suspend fun readFile(path: IjentRemotePath, byteStream: SendChannel<RpcResult<Blob, IOError>>): RpcResult<Unit, IOError>
+  /**
+   * If [append] is false, the file is erased.
+   */
+  suspend fun fileWriter(
+    path: IjentPath.Absolute,
+    append: Boolean = false,
+    creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE,
+  ): FileWriter
 
-  // TODO
-  //suspend fun readFileWithAttributes(path: IjentRemotePath,
-  //                                   byteStream: SendChannel<RpcResult<Blob, IOError>>): RpcResult<FileAttributes, IOError>
+  sealed interface FileWriter : IjentFsResult {
+    interface Ok : FileWriter, IjentFsResult.Ok<IjentOpenedFile.Writer>
+    sealed interface DoesNotExist : FileWriter, IjentFsResult.Error
+    sealed interface PermissionDenied : FileWriter, IjentFsResult.Error
+    sealed interface NotDirectory : FileWriter, IjentFsResult.Error
+    sealed interface NotFile : FileWriter, IjentFsResult.Error
+  }
 
-  // TODO
-  //suspend fun writeFile(path: IjentRemotePath,
-  //                      byteStream: ReceiveChannel<Blob>,
-  //                      expectedHash: Blob? = null,
-  //                      openMode: OpenMode = OpenMode.Existing,
-  //                      completion: SendChannel<RpcResult<FileHash, IOError>>)
-
-  // TODO
-  //suspend fun detectCharset(path: IjentRemotePath): RpcResult<DetectedCharset, IOError>
-}
-
-interface IjentFsResultError {
-  override fun toString(): String
-
-  sealed interface Generic : IjentFsResultError {
-    data object DoesNotExist : Generic
-
-    /**
-     * If IJent tries to list the directory "/root/foo/bar", [where] will point on "/root" as on the main problematic path.
-     *  TODO Implement that.
-     */
-    data class PermissionDenied(val where: IjentPath) : Generic
+  enum class FileWriterCreationMode {
+    ALLOW_CREATE, ONLY_CREATE, ONLY_OPEN_EXISTING,
   }
 }
 
-sealed interface IjentFsResult<T, E : IjentFsResultError> {
-  data class Ok<T, E : IjentFsResultError>(val result: T) : IjentFsResult<T, E>
-  data class Err<T, E : IjentFsResultError>(val error: E, val message: String) : IjentFsResult<T, E>
+sealed interface IjentOpenedFile {
+  val path: IjentPath.Absolute
+
+  @Throws(CloseException::class)
+  suspend fun close()
+
+  class CloseException(override val error: CloseError) : IjentFsResult.IjentFsIOException() {
+    sealed interface CloseError : IjentFsResult.ErrorBase {
+      sealed interface DoesNotExist : CloseError, IjentFsResult.Error
+      sealed interface PermissionDenied : CloseError, IjentFsResult.Error
+      sealed interface NotDirectory : CloseError, IjentFsResult.Error
+      sealed interface NotFile : CloseError, IjentFsResult.Error
+    }
+  }
+
+  fun tell(): Long
+
+  suspend fun seek(offset: Long, whence: SeekWhence): Seek
+
+  sealed interface Seek : IjentFsResult {
+    interface Ok : IjentFsResult.Ok<Long>, Seek
+    sealed interface DoesNotExist : Seek, IjentFsResult.Error
+    sealed interface PermissionDenied : Seek, IjentFsResult.Error
+    sealed interface NotDirectory : Seek, IjentFsResult.Error
+    sealed interface NotFile : Seek, IjentFsResult.Error
+
+    interface InvalidValue : Seek, IjentFsResult.Error
+  }
+
+  enum class SeekWhence {
+    START, CURRENT, END,
+  }
+
+  interface Reader : IjentOpenedFile {
+    suspend fun read(buf: ByteBuffer): Read
+
+    sealed interface Read : IjentFsResult {
+      interface Ok : Read, IjentFsResult.Ok<Int>
+      sealed interface DoesNotExist : Read, IjentFsResult.Error
+      sealed interface PermissionDenied : Read, IjentFsResult.Error
+      sealed interface NotDirectory : Read, IjentFsResult.Error
+      sealed interface NotFile : Read, IjentFsResult.Error
+    }
+  }
+
+  interface Writer : IjentOpenedFile {
+    suspend fun write(buf: ByteBuffer): Write
+
+    sealed interface Write : IjentFsResult {
+      interface Ok : Write, IjentFsResult.Ok<Int>
+      sealed interface DoesNotExist : Write, IjentFsResult.Error
+      sealed interface PermissionDenied : Write, IjentFsResult.Error
+      sealed interface NotDirectory : Write, IjentFsResult.Error
+      sealed interface NotFile : Write, IjentFsResult.Error
+    }
+
+    // There's no flush(). It's supposed that `write` flushes.
+
+    @Throws(TruncateException::class)
+    suspend fun truncate()
+
+    class TruncateException(override val error: TruncateError) : IjentFsResult.IjentFsIOException() {
+      sealed interface TruncateError : IjentFsResult.ErrorBase {
+        sealed interface DoesNotExist : TruncateError, IjentFsResult.Error
+        sealed interface PermissionDenied : TruncateError, IjentFsResult.Error
+        sealed interface NotDirectory : TruncateError, IjentFsResult.Error
+        sealed interface NotFile : TruncateError, IjentFsResult.Error
+      }
+    }
+  }
 }

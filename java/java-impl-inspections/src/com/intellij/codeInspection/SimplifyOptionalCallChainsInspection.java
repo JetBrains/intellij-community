@@ -10,6 +10,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -28,10 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -40,7 +38,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
-public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
   private static final CallMatcher OPTIONAL_GET =
@@ -102,14 +100,15 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    LanguageLevel level = PsiUtil.getLanguageLevel(holder.getFile());
-    if (level.isLessThan(LanguageLevel.JDK_1_8)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return new OptionalChainVisitor(level) {
+    return new OptionalChainVisitor(PsiUtil.getLanguageLevel(holder.getFile())) {
       @Override
       protected void handleSimplification(@NotNull PsiMethodCallExpression call, @NotNull OptionalSimplificationFix fix) {
         PsiElement element = call.getMethodExpression().getReferenceNameElement();

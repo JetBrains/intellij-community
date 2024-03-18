@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -18,7 +17,6 @@ import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getInstance
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -59,8 +57,9 @@ class CustomKindFileSetTest {
       assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).update {
-      val url = root.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    workspaceModel.update {
+      val url = root.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
       it.addEntity(IndexingTestEntity(listOf(url), emptyList(), NonPersistentEntitySource))
     }
 
@@ -77,7 +76,7 @@ class CustomKindFileSetTest {
       assertEquals(WorkspaceFileKind.CUSTOM, fileSet!!.kind)
     }
 
-    WorkspaceModel.getInstance(projectModel.project).update {
+    workspaceModel.update {
       it.removeEntity(it.entities(IndexingTestEntity::class.java).single())
     }
 

@@ -35,8 +35,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addApiDependency(string(dependency), sourceSet)
 
   override fun addApiDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isJavaLibraryPluginSupported(gradleVersion)) "api" else "compile"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("api", dependency, sourceSet)
   }
 
   override fun addCompileOnlyDependency(dependency: String, sourceSet: String?) =
@@ -49,16 +48,14 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addImplementationDependency(string(dependency), sourceSet)
 
   override fun addImplementationDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isImplementationScopeSupported(gradleVersion)) "implementation" else "compile"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("implementation", dependency, sourceSet)
   }
 
   override fun addRuntimeOnlyDependency(dependency: String, sourceSet: String?) =
     addRuntimeOnlyDependency(string(dependency), sourceSet)
 
   override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isRuntimeOnlyScopeSupported(gradleVersion)) "runtimeOnly" else "runtime"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("runtimeOnly", dependency, sourceSet)
   }
 
   override fun addTestImplementationDependency(dependency: String) =
@@ -111,10 +108,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withPlugin("java")
 
   override fun withJavaLibraryPlugin() =
-    if (isJavaLibraryPluginSupported(gradleVersion))
-      withPlugin("java-library")
-    else
-      withJavaPlugin()
+    withPlugin("java-library")
 
   override fun withIdeaPlugin() =
     withPlugin("idea")
@@ -167,15 +161,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     }
   }
 
-  override fun withKotlinTest() = apply {
-    withMavenCentral()
-    // version is inherited from the Kotlin plugin
-    addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
-    configureTestTask {
-      call("useJUnitPlatform")
-    }
-  }
-
   override fun withJUnit() = apply {
     when (isJunit5Supported(gradleVersion)) {
       true -> withJUnit5()
@@ -208,7 +193,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun targetCompatibility(level: String) = apply {
-    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+    if (gradleVersion.isGradleOlderThan("8.2")) {
       withPostfix {
         assign("targetCompatibility", level)
       }
@@ -221,7 +206,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun sourceCompatibility(level: String) = apply {
-    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+    if (gradleVersion.isGradleOlderThan("8.2")) {
       withPostfix {
         assign("sourceCompatibility", level)
       }

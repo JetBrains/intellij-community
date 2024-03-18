@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 @file:OptIn(ExperimentalCoroutinesApi::class, InternalCoroutinesApi::class)
 
@@ -29,8 +29,12 @@ fun isCoroutineDumpHeader(line: String): Boolean {
   return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
 }
 
-fun enableCoroutineDump() {
-  runCatching {
+fun isCoroutineDumpEnabled(): Boolean {
+  return DebugProbes.isInstalled
+}
+
+fun enableCoroutineDump(): Result<Unit> {
+  return runCatching {
     DebugProbes.enableCreationStackTraces = false
     DebugProbes.install()
   }
@@ -43,7 +47,7 @@ fun enableCoroutineDump() {
  */
 @JvmOverloads
 fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, deduplicateTrees: Boolean = true): String? {
-  if (!DebugProbes.isInstalled) {
+  if (!isCoroutineDumpEnabled()) {
     return null
   }
   val charset = StandardCharsets.UTF_8.name()
@@ -261,7 +265,7 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
     // see kotlinx.coroutines.AbstractCoroutine.nameString
     null
   }
-  else if (job.javaClass.name == "com.intellij.util.ChildScope") {
+  else if (job.javaClass.name == "com.intellij.platform.util.coroutines.ChildScope") {
     // ChildScope already renders the name in its `toString()`
     null
   }

@@ -270,6 +270,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
                                                 null);
   }
 
+  @Service(Service.Level.PROJECT)
   @State(name = "StructuralSearch", storages = @Storage("structuralSearch.xml"), category = SettingsCategory.CODE)
   private static final class ProjectConfigurationManagerState extends AbstractConfigurationManagerState {
     public static ProjectConfigurationManagerState getInstance(Project project) {

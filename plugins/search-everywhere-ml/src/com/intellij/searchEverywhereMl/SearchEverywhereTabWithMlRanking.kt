@@ -34,6 +34,7 @@ enum class SearchEverywhereTabWithMlRanking(val tabId: String) {
   ACTION(ActionSearchEverywhereContributor::class.java.simpleName),
   FILES(FileSearchEverywhereContributor::class.java.simpleName),
   CLASSES(ClassSearchEverywhereContributor::class.java.simpleName),
+  SYMBOLS(SymbolSearchEverywhereContributor::class.java.simpleName),
   ALL(ALL_CONTRIBUTORS_GROUP_ID);
 
 

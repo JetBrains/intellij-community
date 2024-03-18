@@ -251,7 +251,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       doTest(null);
       fail("Refactoring should not be performed");
     } catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\n" + JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.unnamed.class"), e.getMessage());
+      assertEquals("Cannot perform refactoring.\n" + JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.implicit.class"), e.getMessage());
     }
   }
 

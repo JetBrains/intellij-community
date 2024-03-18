@@ -34,11 +34,6 @@ public final class SynchronizedValueContainerImpl<Value> extends ValueContainerI
   }
 
   @Override
-  public boolean removeAssociatedValue(int inputId) {
-    return super.removeAssociatedValue(inputId);
-  }
-
-  @Override
   synchronized void removeValue(int inputId, Value value) {
     super.removeValue(inputId, value);
   }

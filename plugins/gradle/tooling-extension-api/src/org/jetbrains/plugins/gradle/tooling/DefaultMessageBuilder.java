@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.gradle.api.Project;
@@ -24,6 +23,8 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   private @Nullable Message.Kind myKind = null;
   private @Nullable Message.FilePosition myFilePosition = null;
   private @Nullable Project myProject = null;
+
+  private boolean myInternal = false;
 
   @Override
   public @NotNull MessageBuilder withTitle(String title) {
@@ -73,13 +74,19 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   }
 
   @Override
+  public @NotNull MessageBuilder withInternal(boolean isInternal) {
+    myInternal = isInternal;
+    return this;
+  }
+
+  @Override
   public @NotNull Message build() {
     String title = buildTitle();
     String text = buildText();
     String group = buildGroup();
     Message.Kind kind = buildKind();
     Message.FilePosition filePosition = buildFilePosition();
-    return new Message(title, text, group, kind, filePosition);
+    return new Message(title, text, group, kind, filePosition, myInternal);
   }
 
   private @NotNull String buildTitle() {
@@ -95,7 +102,7 @@ public final class DefaultMessageBuilder implements MessageBuilder {
       title = myGroup;
     }
     if (myProject != null) {
-      String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(myProject);
+      String projectDisplayName = myProject.getDisplayName();
       title = projectDisplayName + ": " + title;
     }
     return title;

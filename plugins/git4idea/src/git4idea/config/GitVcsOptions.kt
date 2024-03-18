@@ -50,10 +50,21 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("SHOW_RECENT_BRANCHES")
   var showRecentBranches by property(true)
 
+  @get:OptionTag("FILTER_BY_ACTION_IN_POPUP")
+  var filterByActionInPopup by property(true)
+  @get:OptionTag("FILTER_BY_REPOSITORY_IN_POPUP")
+  var filterByRepositoryInPopup by property(true)
+
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)
   @get:OptionTag("WARN_ABOUT_DETACHED_HEAD")
   var isWarnAboutDetachedHead by property(true)
+  @get:OptionTag("WARN_ABOUT_LARGE_FILES")
+  var isWarnAboutLargeFiles by property(true)
+  @get:OptionTag("WARN_ABOUT_LARGE_FILES_LIMIT_MB")
+  var warnAboutLargeFilesLimitMb by property(50)
+  @get:OptionTag("WARN_ABOUT_BAD_FILE_NAMES")
+  var isWarnAboutBadFileNames by property(true)
 
   @get:OptionTag("RESET_MODE")
   var resetMode by enum<GitResetMode>()

@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
@@ -46,9 +44,11 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
+import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -228,6 +228,16 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return root != null ? new VcsRoot(root.vcs, root.root) : null;
   }
 
+  @ApiStatus.Internal
+  public @NotNull List<VcsRoot> getVcsRootObjectsForDefaultMapping() {
+    List<NewMappings.MappedRoot> detectedRoots = ContainerUtil.filter(myMappings.getAllMappedRoots(), root -> {
+      AbstractVcs vcs = root.vcs;
+      return root.mapping.isDefaultMapping() &&
+             vcs != null && vcs.getCustomConvertor() == null;
+    });
+    return ContainerUtil.map(detectedRoots, root -> new VcsRoot(root.vcs, root.root));
+  }
+
   @TestOnly
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
@@ -245,7 +255,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public boolean checkVcsIsActive(AbstractVcs vcs) {
+  public boolean checkVcsIsActive(@NotNull AbstractVcs vcs) {
     return checkVcsIsActive(vcs.getName());
   }
 
@@ -491,7 +501,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs) {
+  public List<VirtualFile> getRootsUnderVcsWithoutFiltering(@NotNull AbstractVcs vcs) {
     return myMappings.getMappingsAsFilesUnderVcs(vcs);
   }
 
@@ -537,7 +547,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void notifyDirectoryMappingChanged() {
-    BackgroundTaskUtil.syncPublisher(myProject, VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    fireDirectoryMappingsChanged();
   }
 
   void readDirectoryMappings(@NotNull Element element) {
@@ -745,7 +755,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       if (myProject.isDisposed() || myProject.isDefault()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
-        VirtualFile vf = ChangesUtil.findValidParentAccurately(filePath);
+        VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {

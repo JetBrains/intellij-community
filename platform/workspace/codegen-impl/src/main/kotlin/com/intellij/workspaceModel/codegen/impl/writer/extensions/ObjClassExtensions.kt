@@ -30,6 +30,10 @@ internal val ObjClass<*>.isStandardInterface: Boolean
 internal val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
   get() = superTypes.filterIsInstance<ObjClass<*>>().flatMapTo(LinkedHashSet()) { it.allSuperClasses + listOf(it) }.toList()
 
+
+internal val ObjClass<*>.allFieldsWithOwnExtensions: List<ObjProperty<*, *>>
+  get() = allFieldsWithComputable + ownExtensions.filterNot { it.valueType.isEntityRef(it) }
+
 internal val ObjClass<*>.allFields: List<OwnProperty<*, *>>
   get() {
     val fieldsByName = LinkedHashMap<String, OwnProperty<*, *>>()

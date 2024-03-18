@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,8 @@ public class LightStringTemplatesHighlightingTest extends LightJavaCodeInsightFi
   }
 
   public void testStringTemplates() { doTest(); }
+  
+  public void testStringTemplatesJava22() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest()); }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

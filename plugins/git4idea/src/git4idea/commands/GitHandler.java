@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
@@ -58,6 +57,7 @@ public abstract class GitHandler {
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
+  private boolean myEnableInteractiveCallbacks = true;
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
@@ -370,16 +370,6 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
-  /**
-   * Use {@link #getExecutable()} and {@link GitExecutable#convertFilePath(File)}
-   *
-   * @deprecated Do not use, each ENV may have its own escaping rules.
-   */
-  @Deprecated(forRemoval = true)
-  public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
-    myCustomEnv.put(name, myExecutable.convertFilePath(file));
-  }
-
   public boolean containsCustomEnvironmentVariable(@NotNull @NonNls String key) {
     return myCustomEnv.containsKey(key);
   }
@@ -396,6 +386,20 @@ public abstract class GitHandler {
    */
   boolean isPreValidateExecutable() {
     return myPreValidateExecutable;
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public boolean isEnableInteractiveCallbacks() {
+    return myEnableInteractiveCallbacks;
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public void setEnableInteractiveCallbacks(boolean enableInteractiveCallbacks) {
+    myEnableInteractiveCallbacks = enableInteractiveCallbacks;
   }
 
   void runInCurrentThread() throws IOException {
@@ -486,14 +490,23 @@ public abstract class GitHandler {
     executionEnvironment.putAll(myCustomEnv);
     executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
 
-    // customizers take read locks, which could not be acquired under potemkin progress
-    if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
+    if (!shouldSuppressReadLocks()) {
       VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
         customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
       });
 
       executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
     }
+  }
+
+  /**
+   * Tasks executed under {@link PotemkinProgress#runInBackground} cannot take read lock.
+   */
+  protected static boolean shouldSuppressReadLocks() {
+    if (ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress) {
+      return !ApplicationManager.getApplication().isDispatchThread();
+    }
+    return false;
   }
 
   protected abstract Process startProcess() throws ExecutionException;
@@ -564,26 +577,6 @@ public abstract class GitHandler {
     finally {
       logTime();
     }
-  }
-
-  /**
-   * add error to the error list
-   *
-   * @param ex an error to add to the list
-   * @deprecated remove together with {@link GitHandlerUtil}
-   */
-  @Deprecated(forRemoval = true)
-  public void addError(VcsException ex) {
-    myErrors.add(ex);
-  }
-
-  /**
-   * @return unmodifiable list of errors.
-   * @deprecated remove together with {@link GitHandlerUtil}
-   */
-  @Deprecated(forRemoval = true)
-  public List<VcsException> errors() {
-    return Collections.unmodifiableList(myErrors);
   }
   //endregion
 }

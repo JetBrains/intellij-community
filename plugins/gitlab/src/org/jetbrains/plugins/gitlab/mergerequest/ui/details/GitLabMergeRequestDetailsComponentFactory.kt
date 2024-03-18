@@ -1,20 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +34,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
@@ -55,7 +58,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> {
-            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
+            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+              accountVm,
+              swingAction(GitLabBundle.message("merge.request.reload")) {
+                detailsLoadingVm.reloadData()
+              })
             val errorPanel = ErrorStatusPanelFactory.create(scope, flowOf(loadingState.exception), errorPresenter)
             CollaborationToolsUIUtil.moveToCenter(errorPanel)
           }
@@ -65,12 +72,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, GitLabMergeRequestActionPlaces.DETAILS_POPUP)
 
-              val changesModelState = detailsVm.changesVm.changeListVm.map { it.getOrNull() }
+              val changesModelState = detailsVm.changesVm.changeListVm.map { it.result?.getOrNull() }
                 .stateIn(this@bindContentIn, SharingStarted.Eagerly, null)
               DataManager.registerDataProvider(this) { dataId ->
                 when {
                   GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> detailsVm
-                  GitLabMergeRequestChangeListViewModel.DATA_KEY.`is`(dataId) -> changesModelState.value
+                  CodeReviewChangeListViewModel.DATA_KEY.`is`(dataId) -> changesModelState.value
                   else -> null
                 }
               }
@@ -94,6 +101,14 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val statusVm = detailsVm.statusVm
     val changesVm = detailsVm.changesVm
 
+    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
+
+    val title = CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
+                                                              htmlPaneFactory = { SimpleHtmlPane() })
+    val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
+      detailsVm.showTimeline()
+    }
+
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit ->
@@ -101,7 +116,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       })
       add(CodeReviewDetailsBranchComponentFactory.create(cs, branchesVm))
     }
-    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
     val layout = MigLayout(
       LC()
@@ -116,13 +130,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       isOpaque = true
       background = UIUtil.getListBackground()
 
-      add(CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
-                                                        htmlPaneFactory = { SimpleHtmlPane() }),
+
+      add(ReviewDetailsUIUtil.createTitlePanel(title, timelineLink),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
-      add(CodeReviewDetailsDescriptionComponentFactory.create(cs, detailsVm, actionGroup,
-                                                              showTimelineAction = { _ -> detailsVm.showTimeline() },
-                                                              htmlPaneFactory = { SimpleHtmlPane() }),
-          CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
@@ -137,7 +147,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().grow().shrinkPrioY(200))
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
-      add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
+      add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm),
           CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
     }
   }

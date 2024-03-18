@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * QuickFix to replace statement that has no effect with function call
  */
-public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
+public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -28,16 +28,15 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement expression = descriptor.getPsiElement();
-    if (expression != null && expression.isWritable() && expression instanceof PyReferenceExpression) {
-      final String expressionText = expression.getText();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyReferenceExpression) {
+      final String expressionText = element.getText();
       if (PyNames.PRINT.equals(expressionText))
-        replacePrint(expression);
+        replacePrint(element);
       else if (PyNames.EXEC.equals(expressionText))
-        replaceExec(expression);
+        replaceExec(element);
       else
-        expression.replace(PyElementGenerator.getInstance(project).createCallExpression(LanguageLevel.forElement(expression),
+        element.replace(PyElementGenerator.getInstance(project).createCallExpression(LanguageLevel.forElement(element),
                                                                                         expressionText));
     }
   }

@@ -8,11 +8,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.task.RunConfigurationTaskState
@@ -32,7 +34,11 @@ import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
@@ -42,9 +48,10 @@ import java.util.function.Function
  */
 @ApiStatus.Internal
 @Service(Level.PROJECT)
-internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : Disposable {
+internal class GradleConnectorService(project: Project) : Disposable {
   private val connectorsMap = ConcurrentHashMap<String, GradleProjectConnection>()
   private val cancellationTokens = ConcurrentCollectionFactory.createConcurrentSet<BuildCancellationToken>()
+  private val knownGradleUserHomes = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   @Volatile
   private var shutdownStarted = ThreeState.UNSURE
@@ -56,6 +63,19 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         super.start()
       }
     })
+
+    // Always search for Gradle connections in the default gradle user home
+    knownGradleUserHomes += ""
+    GradleSettings.getInstance(project).serviceDirectoryPath?.let {
+      knownGradleUserHomes += it
+    }
+
+    val listener = object : GradleSettingsListener {
+      override fun onServiceDirectoryPathChange(oldPath: String?, newPath: String?) {
+        newPath?.let { knownGradleUserHomes.add(it) }
+      }
+    }
+    project.messageBus.connect(this).subscribe(GradleSettingsListener.TOPIC, listener)
   }
 
   override fun dispose() {
@@ -69,12 +89,12 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     try {
       if (ProjectUtil.getOpenProjects().isEmpty()) {
         val gradleVersion_6_5 = GradleVersion.version("6.5")
-        val idleDaemons = GradleDaemonServices.getDaemonsStatus().filter {
-          it.status.toLowerCase() == "idle" &&
+        val idleDaemons = GradleDaemonServices.getDaemonsStatus(knownGradleUserHomes).filter {
+          it.status.lowercase(Locale.getDefault()) == "idle" &&
           GradleVersion.version(it.version) < gradleVersion_6_5
         }
         if (idleDaemons.isNotEmpty()) {
-          GradleDaemonServices.stopDaemons(idleDaemons)
+          GradleDaemonServices.stopDaemons(knownGradleUserHomes, idleDaemons)
         }
       }
     }
@@ -114,7 +134,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         }
       }
     }
-    GradleDaemonServices.gracefulStopDaemons()
+    GradleDaemonServices.gracefulStopDaemons(knownGradleUserHomes)
   }
 
   private fun getConnection(connectorParams: ConnectorParams,
@@ -223,28 +243,36 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         targetEnvironmentConfigurationProvider,
         executionSettings?.getUserData(RunConfigurationTaskState.KEY)
       )
-      val connectionService = getInstance(projectPath, taskId)
-      if (connectionService != null) {
-        val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
-        buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
-        try {
-          val connection = connectionService.getConnection(connectionParams, taskId, listener)
-          return if (connection is NonClosableConnection) {
-            function.apply(connection)
+      return ExternalSystemTelemetryUtil.computeWithSpan(GradleConstants.SYSTEM_ID, "GradleConnection") {
+        val connectionService = getInstance(projectPath, taskId)
+        if (connectionService != null) {
+          val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
+          buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
+          try {
+            val connection = connectionService.getConnection(connectionParams, taskId, listener)
+            return@computeWithSpan if (connection is NonClosableConnection) {
+              function.apply(connection)
+            }
+            else {
+              connection.use(function::apply)
+            }
           }
-          else {
-            connection.use(function::apply)
+          finally {
+            buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
           }
         }
-        finally {
-          buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
+        else {
+          val newConnector = createConnector(connectionParams, taskId, listener)
+          val connection = newConnector.connect()
+          return@computeWithSpan connection.use(function::apply)
         }
       }
-      else {
-        val newConnector = createConnector(connectionParams, taskId, listener)
-        val connection = newConnector.connect()
-        return connection.use(function::apply)
-      }
+    }
+
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun getKnownGradleUserHomes(project: Project): Set<String> {
+      return project.service<GradleConnectorService>().knownGradleUserHomes.toSet()
     }
 
     private fun createConnector(connectorParams: ConnectorParams,
@@ -278,7 +306,6 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       }
       else if (connectorParams.distributionType == DistributionType.WRAPPED) {
         if (connectorParams.wrapperPropertyFile != null) {
-          val gradleUserHomeLocalFile = localPathToGradleUserHome?.let { File(localPathToGradleUserHome) }
           DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile)
         }
       }
@@ -301,7 +328,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       }
       // do not spawn gradle daemons during test execution
       val app = ApplicationManager.getApplication()
-      val ttl = if (!USE_PRODUCTION_TTL_FOR_TESTS && app != null && app.isUnitTestMode) 10000 else connectorParams.ttlMs ?: -1
+      val ttl = if (!USE_PRODUCTION_TTL_FOR_TESTS && app != null && app.isUnitTestMode) 5000 else connectorParams.ttlMs ?: -1
       if (ttl > 0 && connector is DefaultGradleConnector) {
         connector.daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS)
       }

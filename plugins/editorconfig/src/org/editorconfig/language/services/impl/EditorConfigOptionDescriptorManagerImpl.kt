@@ -2,6 +2,7 @@
 package org.editorconfig.language.services.impl
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 
-class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorManager {
+class EditorConfigOptionDescriptorManagerImpl(project: Project) : EditorConfigOptionDescriptorManager {
   companion object {
     private val logger = Logger.getInstance(EditorConfigOptionDescriptorManager::class.java)
   }
@@ -40,18 +41,18 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
   private var cachedAllDumbDescriptors: Reference<List<EditorConfigOptionDescriptor>> = SoftReference(null)
 
   init {
-    loadDescriptors()
+    loadDescriptors(project)
   }
 
   @TestOnly
-  fun loadDescriptors() {
+  fun loadDescriptors(project: Project) {
     val start = System.currentTimeMillis()
     val fullySupportedDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
     val partiallySupportedDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
 
     fun loadDescriptors(provider: EditorConfigOptionDescriptorProvider) {
       val requiresFullSupport = provider.requiresFullSupport()
-      val loadedDescriptors = provider.getOptionDescriptors()
+      val loadedDescriptors = provider.getOptionDescriptors(project)
       val destination =
         if (requiresFullSupport) fullySupportedDescriptors
         else partiallySupportedDescriptors

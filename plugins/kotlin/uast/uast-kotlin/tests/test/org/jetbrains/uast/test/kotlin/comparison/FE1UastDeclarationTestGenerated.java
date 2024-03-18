@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin.comparison;
 
@@ -63,9 +63,19 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_accessors.kt");
     }
 
+    @TestMetadata("deprecatedHiddenProperty_constructor.kt")
+    public void testDeprecatedHiddenProperty_constructor() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_constructor.kt");
+    }
+
     @TestMetadata("deprecatedHiddenProperty_getter.kt")
     public void testDeprecatedHiddenProperty_getter() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_getter.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_interface.kt")
+    public void testDeprecatedHiddenProperty_interface() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_interface.kt");
     }
 
     @TestMetadata("deprecatedHiddenProperty_noAccesor.kt")
@@ -161,5 +171,10 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("suspendReturnsResult.kt")
     public void testSuspendReturnsResult() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/suspendReturnsResult.kt");
+    }
+
+    @TestMetadata("valueClass.kt")
+    public void testValueClass() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/valueClass.kt");
     }
 }

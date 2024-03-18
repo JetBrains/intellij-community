@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Heavy weight: creates project for each test method. Consider using {@link LightMultiFileTestCase} instead
@@ -47,7 +48,7 @@ public abstract class MultiFileTestCase extends JavaCodeInsightTestCase {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       if (myDoCompare) {
-        PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir);
+        compareResults(rootAfter, rootDir);
       }
     }
     catch (RuntimeException e) {
@@ -56,6 +57,10 @@ public abstract class MultiFileTestCase extends JavaCodeInsightTestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected void compareResults(VirtualFile rootAfter, VirtualFile rootDir) throws IOException {
+    PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir);
   }
 
   protected void prepareProject(VirtualFile rootDir) {

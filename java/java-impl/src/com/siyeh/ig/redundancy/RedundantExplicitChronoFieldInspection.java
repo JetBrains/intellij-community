@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.StringJoiner;
 
 
-public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLocalInspectionTool
+public final class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLocalInspectionTool
   implements CleanupLocalInspectionTool {
   private static final CallMatcher CAN_BE_SIMPLIFIED_MATCHERS = CallMatcher.anyOf(
     ChronoUtil.CHRONO_GET_MATCHERS,

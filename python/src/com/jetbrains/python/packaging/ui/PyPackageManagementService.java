@@ -37,6 +37,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+/**
+ * @deprecated for search in for packages and managing repositories use
+ * {@link com.jetbrains.python.packaging.management.PythonRepositoryManager}
+ * obtained through {@link com.jetbrains.python.packaging.management.PythonPackageManager}
+ */
+@Deprecated(forRemoval = true)
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
   @NonNls protected static final String TEXT_PREFIX = buildHtmlStylePrefix();

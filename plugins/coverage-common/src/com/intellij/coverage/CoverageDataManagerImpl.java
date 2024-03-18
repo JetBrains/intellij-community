@@ -30,11 +30,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -89,11 +91,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         List<RunConfiguration> configurations = runManager.getAllConfigurationsList();
         for (RunConfiguration configuration : configurations) {
           if (configuration instanceof RunConfigurationBase<?> runConfiguration) {
-            CoverageEnabledConfiguration coverageEnabledConfiguration =
-              runConfiguration.getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
-            if (coverageEnabledConfiguration != null && Objects.equals(coverageRunner.getId(), coverageEnabledConfiguration.getRunnerId())) {
-              coverageEnabledConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
-              runConfiguration.putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
+            var coverageConfiguration = CoverageEnabledConfiguration.getOrNull(runConfiguration);
+            if (coverageConfiguration != null) {
+              coverageConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
             }
           }
         }
@@ -123,8 +123,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public CoverageSuitesBundle getCurrentSuitesBundle() {
-    CoverageSuitesBundle openedSuite = CoverageViewManager.getInstance(myProject).getOpenedSuite();
-    if (openedSuite != null) return openedSuite;
+    CoverageViewManager manager = CoverageViewManager.getInstanceIfCreated(myProject);
+    if (manager != null) {
+      CoverageSuitesBundle openedSuite = manager.getOpenedSuite();
+      if (openedSuite != null) return openedSuite;
+    }
     return myActiveBundles.values().stream().findFirst().orElse(null);
   }
 
@@ -144,9 +147,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                         @NotNull CoverageRunner coverageRunner,
                                         boolean coverageByTestEnabled,
                                         boolean branchCoverage) {
-    return CoverageDataSuitesManager.getInstance(myProject)
-      .addSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled,
-                branchCoverage);
+    CoverageDataSuitesManager manager = CoverageDataSuitesManager.getInstance(myProject);
+    CoverageSuite suite = manager.createCoverageSuite(name, coverageRunner, fileProvider, lastCoverageTimeStamp);
+    if (suite != null) {
+      manager.addSuite(suite, suiteToMergeWith);
+    }
+    return suite;
   }
 
   /**
@@ -163,7 +169,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                                 @NotNull CoverageRunner coverageRunner,
                                                 @NotNull CoverageFileProvider fileProvider) {
     return CoverageDataSuitesManager.getInstance(myProject)
-      .addExternalCoverageSuite(coverageRunner, selectedFileName, fileProvider, timeStamp);
+      .addExternalCoverageSuite(selectedFileName, coverageRunner, fileProvider, timeStamp);
   }
 
   @Override
@@ -336,7 +342,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void triggerPresentationUpdate() {
     CoverageDataAnnotationsManager.getInstance(myProject).update();
-    UIUtil.invokeLaterIfNeeded(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       ProjectView.getInstance(myProject).refresh();
     });

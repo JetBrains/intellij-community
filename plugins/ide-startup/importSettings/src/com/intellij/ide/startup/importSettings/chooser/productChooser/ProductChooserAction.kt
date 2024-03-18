@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserItemAction
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
@@ -13,8 +13,8 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -28,8 +28,8 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
   abstract fun getChildren(e: AnActionEvent?): Array<AnAction>
 
-  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: (PageProvider) -> Unit): List<AnAction> {
-    return products.map { pr -> SettingChooserItemAction(pr, provider, callback) }
+  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, controller: ImportSettingsController): List<AnAction> {
+    return products.map { pr -> SettingChooserItemAction(pr, provider, controller) }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -46,9 +46,14 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
     if (ch.size == 1) {
       e.presentation.text = null
       e.presentation.icon = null
+      e.presentation.description = null
       ch.firstOrNull()?.let {
+        it.update(e)
         e.presentation.text = e.presentation.text ?: it.templateText
         e.presentation.icon = e.presentation.icon ?: it.templatePresentation.icon
+        e.presentation.getClientProperty(UiUtils.DESCRIPTION)?.let { descr ->
+          e.presentation.description =  descr
+        }
       }
       return
     }
@@ -62,7 +67,6 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
    /* JBPopupFactory.getInstance().createListPopup(step)*/
 
-
     val result = object : ListPopupImpl(null, step) {
       override fun getListElementRenderer(): ListCellRenderer<*> {
         return renderer
@@ -70,13 +74,12 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
       override fun createPopupComponent(content: JComponent?): JComponent {
         val popupComponent = super.createPopupComponent(content)
-        popupComponent.preferredWidth = JBUI.scale(UiUtils.DEFAULT_BUTTON_WIDTH)
+        popupComponent.preferredSize = Dimension(JBUI.scale(UiUtils.DEFAULT_BUTTON_WIDTH).coerceAtLeast(popupComponent.preferredSize.width), popupComponent.preferredSize.height)
 
         return popupComponent
       }
 
     }
-    result.setRequestFocus(false)
     return result
   }
 

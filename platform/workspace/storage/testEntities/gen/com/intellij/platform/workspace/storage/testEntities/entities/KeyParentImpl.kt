@@ -4,8 +4,6 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,10 +16,9 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
@@ -38,16 +35,25 @@ open class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent, Wor
   }
 
   override val keyField: String
-    get() = dataSource.keyField
+    get() {
+      readField("keyField")
+      return dataSource.keyField
+    }
 
   override val notKeyField: String
-    get() = dataSource.notKeyField
+    get() {
+      readField("notKeyField")
+      return dataSource.notKeyField
+    }
 
   override val children: List<KeyChild>
     get() = snapshot.extractOneToManyChildren<KeyChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -209,11 +215,13 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): KeyParent {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): KeyParent {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = KeyParentImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
   }

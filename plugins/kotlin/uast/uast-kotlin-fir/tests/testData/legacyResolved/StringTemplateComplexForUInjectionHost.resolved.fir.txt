@@ -6,11 +6,11 @@ UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> Kotlin_Light_Method: getCase4
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = repeat) -> FUN: repeat
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
-UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = println) -> Decompiled_Method: println
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Method: baz
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Method: baz
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Method: baz
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Method: baz
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = simpleForTemplate) -> Kotlin_Light_Method: simpleForTemplate
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = simpleForTemplate) -> Kotlin_Light_Method: simpleForTemplate
     ULocalVariable (name = trimA) -> UQualifiedReferenceExpression -> Decompiled_Method: trimIndent

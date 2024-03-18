@@ -26,7 +26,7 @@ import java.util.Arrays;
  */
 public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction> {
   private static final Logger LOG = Logger.getInstance(LineMarkerActionWrapper.class);
-  public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
+  public static final Key<Pair<PsiElement, DataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final SmartPsiElementPointer<PsiElement> myElement;
   private final AnAction myOrigin;
@@ -73,21 +73,6 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   @Override
-  public boolean isPopup() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).isPopup();
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     AnActionEvent wrapped = wrapEvent(e);
     myOrigin.update(wrapped);
@@ -102,7 +87,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   private @NotNull DataContext wrapContext(DataContext dataContext) {
-    Pair<PsiElement, MyDataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
+    Pair<PsiElement, DataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
     PsiElement element = myElement.getElement();
     if (pair == null || pair.first != element) {
       pair = Pair.pair(element, new MyDataContext(dataContext));

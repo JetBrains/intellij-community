@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jbr-api" type="repository">
-    <properties maven-id="com.jetbrains:jbr-api:17.1.9.0">
+    <properties maven-id="com.jetbrains:jbr-api:17.1.10.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/17.1.9.0/jbr-api-17.1.9.0.jar">
-          <sha256sum>e10be02f30a530ec6599d9570912b54d0e426b3c1ebd4902441d9d0b31785251</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/17.1.10.0/jbr-api-17.1.10.0.jar">
+          <sha256sum>f6b6f8d68bdd4bf5e9bd1565b59d239d2e9c073243abcf75ae93cd38809e56aa</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/17.1.9.0/jbr-api-17.1.9.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/17.1.10.0/jbr-api-17.1.10.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/17.1.9.0/jbr-api-17.1.9.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/17.1.10.0/jbr-api-17.1.10.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

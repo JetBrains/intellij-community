@@ -33,7 +33,7 @@ class BackgroundStepFactory(
   }
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, invokersFactory, project)
+    ActionsInterpretationStep(config, config.language, invokersFactory, project)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
@@ -56,7 +56,7 @@ class BackgroundStepFactory(
 
   override fun checkSdkConfiguredStep(): EvaluationStep = CheckProjectSdkStep(project, config.language)
 
-  override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep()
+  override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep(project)
 
   override fun featureSpecificSteps(): List<EvaluationStep> =
     feature.getEvaluationSteps(Language.resolve(config.language), config.strategy)

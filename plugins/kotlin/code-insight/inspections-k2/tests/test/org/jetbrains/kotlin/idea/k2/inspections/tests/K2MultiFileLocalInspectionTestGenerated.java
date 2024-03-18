@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
@@ -74,6 +74,19 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/jvmField")
+        public static class JvmField extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("jvmFieldTest.test")
+            public void testJvmFieldTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/jvmField/jvmFieldTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation")
         public static class PropertyWithJvmNameAnnotation extends AbstractK2MultiFileLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -83,6 +96,19 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
             @TestMetadata("propertyWithJvmNameAnnotation.test")
             public void testPropertyWithJvmNameAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/topLevelFunctionWithJvmName")
+        public static class TopLevelFunctionWithJvmName extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("topLevelFunctionWithJvmName.test")
+            public void testTopLevelFunctionWithJvmName() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/topLevelFunctionWithJvmName/topLevelFunctionWithJvmName.test");
             }
         }
     }

@@ -338,9 +338,9 @@ object IconLoader {
 
   @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
-    resolver: ImageDataLoader,
+    loader: ImageDataLoader,
   ) : com.intellij.ui.icons.CachedImageIcon(
-    resolver = resolver,
+    loader = loader,
     toolTip = null,
   )
 }
@@ -373,8 +373,8 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
     icon = iconCache.getIfPresent(key)
     if (icon == null) {
       icon = iconCache.get(key) { k ->
-        val resolver = ImageDataByPathResourceLoader(path = effectivePath, ownerClass = aClass, classLoader = k.second, strict = strict)
-        CachedImageIcon(resolver = resolver, toolTip = toolTip)
+        val loader = ImageDataByPathResourceLoader(path = effectivePath, ownerClass = aClass, classLoader = k.second, strict = strict)
+        CachedImageIcon(loader = loader, toolTip = toolTip)
       }
     }
   }

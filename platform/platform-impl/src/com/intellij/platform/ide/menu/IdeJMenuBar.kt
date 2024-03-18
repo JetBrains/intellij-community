@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
-import com.intellij.DynamicBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionMenu
@@ -15,6 +14,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.plaf.beg.IdeaMenuUI
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
@@ -200,7 +200,7 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
     }
   }
 
-  open suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: getAndWrapMainMenuActionGroup()
+  open suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: IdeMainMenuActionGroup()
 
   override fun getMenuCount(): Int {
     @Suppress("IfThenToElvis", "SENSELESS_COMPARISON")
@@ -215,7 +215,10 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
 
   internal open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
 
-  open fun onToggleFullScreen(isFullScreen: Boolean) {}
+  // it contradicts to our principle of avoiding EDT, but for the sake of simplicity and a reliable implementation, we do exclusion here,
+  // it is an internal method, and we do control all implementations
+  @RequiresEdt
+  internal open fun onToggleFullScreen(isFullScreen: Boolean) {}
 }
 
 private val LOG: Logger
@@ -228,7 +231,7 @@ internal fun doUpdateAppMenu() {
   }
 
   // 1. rename with localized
-  Menu.renameAppMenuItems(DynamicBundle(IdeJMenuBar::class.java, "messages.MacAppMenuBundle"))
+  Menu.renameAppMenuItems()
 
   //
   // 2. add custom new items in AppMenu
@@ -266,7 +269,9 @@ internal fun installAppMenuIfNeeded(frame: JFrame) {
 }
 
 private fun JMenu.isTryingToShowPopupMenu(): Boolean =
-  if (this is ActionMenu)
+  if (this is ActionMenu) {
     isTryingToShowPopupMenu
-  else
+  }
+  else {
     isPopupMenuVisible
+  }

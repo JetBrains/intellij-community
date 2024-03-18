@@ -19,6 +19,7 @@ public class TestMain {
     if (args.length > 0) {
       switch (args[0]) {
         case "dump-launch-parameters" -> dumpLaunchParameters(args);
+        case "print-env-var" -> printEnvironmentVariable(args);
         case "print-cwd" -> printCwd();
         case "async-profiler" -> asyncProfiler();
         case "exit-code" -> exitCode(args);
@@ -31,6 +32,7 @@ public class TestMain {
             "usage: " + TestMain.class.getName() + " [command [options ...]]\n" +
             "commands:\n" +
             "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
+            "  print-env-var [test-args ...] ENV_VAR_NAME\n" +
             "  print-cwd\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
@@ -40,6 +42,11 @@ public class TestMain {
         }
       }
     }
+  }
+
+  private static void printEnvironmentVariable(String[] args) {
+    String varName = args[args.length - 1];
+    System.out.println(varName + "=" + System.getenv(varName));
   }
 
   private static void dumpLaunchParameters(String[] args) throws IOException {

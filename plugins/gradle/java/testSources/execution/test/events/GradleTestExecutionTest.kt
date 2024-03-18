@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -48,7 +49,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test :additionalTest", isRunAsTest = true)
+      executeTasks(":test :additionalTest --continue", isRunAsTest = true)
       assertTestViewTree {
         assertNode("AppTest") {
           assertNode("test")
@@ -454,6 +455,9 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task execution order`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsOlderThan(gradleVersion, "7.6"){
+      "IDEA-340676 flaky test"
+    }
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -562,7 +566,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
-    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     testJavaProject(gradleVersion) {
       appendText("build.gradle", """
         |import java.util.concurrent.atomic.AtomicBoolean;
@@ -601,7 +604,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
-    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     val extension = object : GradleOperationHelperExtension {
       override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
       override fun prepareForExecution(id: ExternalSystemTaskId,
@@ -642,6 +644,61 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
                 assertNode("Test test1()(org.example.AppTest)")
               }
             }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test Gradle test distribution nodes are hidden by default`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "7.5")
+    testJunit5Project(gradleVersion) {
+      writeText("settings.gradle", """
+        plugins {
+            id "com.gradle.enterprise" version "3.15.1"
+        }
+
+        gradleEnterprise {
+            server = "https://something.com"
+        }
+
+        rootProject.name = '${project.name}'
+        include('lib')
+      """.trimIndent())
+      appendText("build.gradle", """
+        tasks.withType(Test).configureEach() {
+          distribution {
+              enabled = true
+              remoteExecutionPreferred = false
+              maxRemoteExecutors = 0
+          }
+        }
+      """.trimMargin())
+      writeText("src/test/java/org/example/AppTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class AppTest {
+        |   @Test public void testApp() {}
+        |}
+      """.trimMargin())
+      writeText("src/test/java/org/example/LibTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class LibTest {
+        |   @Test public void testLib() {}
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("Distributed Test Run :test") {
+          assertNode("AppTest") {
+            assertNode("testApp")
+          }
+          assertNode("LibTest") {
+            assertNode("testLib")
           }
         }
       }

@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandlerFactoryBase {
+public final class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandlerFactoryBase {
   @Nullable
   @Override
   public HighlightUsagesHandlerBase<PsiRecordComponent> createHighlightUsagesHandler(@NotNull Editor editor,

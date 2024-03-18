@@ -33,7 +33,7 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
   override fun updateRecentProjectsMenu() {
     recentProjectsMenu.removeAll()
     for (action in RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)) {
-      val menuItem = MenuItem((action as ReopenProjectAction).templatePresentation.text)
+      val menuItem = MenuItem((action as ReopenProjectAction).getProjectDisplayName())
       menuItem.addActionListener {
         // Newly opened project won't become an active window, if another application is currently active.
         // This is not what user expects, so we activate our application explicitly.

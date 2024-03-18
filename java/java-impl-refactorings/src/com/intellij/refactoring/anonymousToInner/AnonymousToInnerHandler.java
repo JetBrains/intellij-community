@@ -59,8 +59,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   @Override
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
-    if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
-      invoke(project, CommonDataKeys.EDITOR.getData(dataContext), (PsiAnonymousClass)elements[0]);
+    if (elements.length == 1 && elements[0] instanceof PsiClass aClass &&
+        (aClass instanceof PsiAnonymousClass || PsiUtil.isLocalClass(aClass))) {
+      invoke(project, CommonDataKeys.EDITOR.getData(dataContext), aClass);
     }
   }
 
@@ -109,8 +110,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
       }
 
       if (PsiUtil.isLocalClass(baseClass)) {
-        String message = JavaRefactoringBundle.message("error.not.supported.for.local",
-                                                       JavaRefactoringBundle.message("anonymousToInner.refactoring.name"));
+        String message = JavaRefactoringBundle.message("error.not.supported.for.local");
         showErrorMessage(editor, message);
         return;
       }
@@ -282,8 +282,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     }
   }
 
-  private void collectUsedVariables(final Map<PsiVariable, VariableInfo> variableInfoMap,
-                                    PsiElement scope) {
+  private void collectUsedVariables(final Map<PsiVariable, VariableInfo> variableInfoMap, PsiElement scope) {
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getQualifierExpression() == null) {
@@ -438,6 +437,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   private void setupModifiers(@NotNull PsiClass aClass) {
     if (!myTargetClass.isInterface()) {
       PsiUtil.setModifierProperty(aClass, PsiModifier.PRIVATE, true);
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isRecord()) {
+        // always implicitly static
+        return;
+      }
       PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(myAnonOrLocalClass, PsiModifierListOwner.class);
       if (owner != null && owner.hasModifierProperty(PsiModifier.STATIC) || myMakeStatic) {
         PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
@@ -754,11 +757,11 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
-    if (element instanceof PsiAnonymousClass anonymousClass) {
+    if (element instanceof PsiClass aClass) {
       myProject = project;
       myManager = PsiManager.getInstance(myProject);
-      myAnonOrLocalClass = anonymousClass;
-      myNewClassName = AnonymousToInnerDialog.suggestNewClassNames(anonymousClass)[0];
+      myAnonOrLocalClass = aClass;
+      myNewClassName = AnonymousToInnerDialog.suggestNewClassNames(aClass)[0];
       PsiElement targetContainer = findTargetContainer(myAnonOrLocalClass);
       if (targetContainer instanceof PsiClass) {
         myTargetClass = (PsiClass)targetContainer;

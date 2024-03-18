@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,6 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class InspectionDescriptionInfo {
-  private static final Logger LOG = Logger.getInstance(InspectionDescriptionInfo.class);
 
   private final String myFilename;
   private final PsiMethod myMethod;
@@ -81,8 +79,9 @@ public final class InspectionDescriptionInfo {
 
     if (filename == null) {
       final String className = psiClass.getName();
-      LOG.assertTrue(className != null, psiClass);
-      filename = InspectionProfileEntry.getShortName(className);
+      if (className != null) {
+        filename = InspectionProfileEntry.getShortName(className);
+      }
     }
 
     PsiFile descriptionFile = resolveInspectionDescriptionFile(module, filename);

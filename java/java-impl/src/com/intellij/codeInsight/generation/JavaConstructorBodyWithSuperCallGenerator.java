@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Objects;
 
-public class JavaConstructorBodyWithSuperCallGenerator implements ConstructorBodyGenerator {
+public final class JavaConstructorBodyWithSuperCallGenerator implements ConstructorBodyGenerator {
   @Override
   public void generateFieldInitialization(@NotNull StringBuilder buffer,
                                           PsiField @NotNull [] fields,

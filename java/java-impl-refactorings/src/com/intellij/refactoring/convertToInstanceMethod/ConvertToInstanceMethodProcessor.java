@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -156,7 +157,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     //check that method to call would be still accessible from the call places
     RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myTargetClass, myNewVisibility, methods, conflicts);
     //additionally check that body of method contains only accessible in the inheritors references
-    if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+    if (myTargetClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetClass)) {
       for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
           PsiClass targetClass = ((ImplementingClassUsageInfo)usage).getPsiClass();
@@ -239,7 +240,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     else {
       result = addMethodToClass(myTargetClass);
       final PsiModifierList modifierList = result.getModifierList();
-      final boolean markAsDefault = PsiUtil.isLanguageLevel8OrHigher(myTargetClass);
+      final boolean markAsDefault = PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetClass);
       if (markAsDefault) {
         modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
       }

@@ -163,7 +163,7 @@ public class TodoCheckinHandlerWorker {
       }
     }
     return Arrays.stream(items)
-      .filter(next -> filter == null || filter.contains(next.getPattern()))
+      .filter(next -> filter == null || (next.getPattern() != null && filter.contains(next.getPattern())))
       .map(p->new ByRange(p.getTextRange(), p))
       .distinct()
       .map(br -> br.item())

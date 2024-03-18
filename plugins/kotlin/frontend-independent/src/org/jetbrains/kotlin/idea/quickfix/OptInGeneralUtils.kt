@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
+// TODO: migrate from FqName to ClassId fully when the K1 plugin is dropped.
 abstract class OptInGeneralUtilsBase {
     data class CandidateData(val element: KtElement, val kind: AddAnnotationFix.Kind)
 
@@ -23,13 +24,13 @@ abstract class OptInGeneralUtilsBase {
         kind: AddAnnotationFix.Kind,
         applicableTargets: Set<KotlinTarget>,
         actualTargetList: List<KotlinTarget>,
-        annotationFqName: FqName,
         annotationClassId: ClassId,
         isOverrideError: Boolean
     ): AddAnnotationFix? {
         if (KtPsiUtil.isLocal(targetElement)) return null
         if (actualTargetList.none { it in applicableTargets }) return null
 
+        val annotationFqName = annotationClassId.asSingleFqName()
         return when {
             // When we are fixing a missing annotation on an overridden function, we should
             // propose to add a propagating annotation first, and in all other cases

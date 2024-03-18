@@ -3,6 +3,7 @@ package git4idea.log.command
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -54,7 +55,7 @@ class GitLogCommandFilterer(private val project: Project,
   }
 
   private fun prepareCommand(commandFilter: GitLogCommandFilter, commitCount: CommitCountStage): List<String> {
-    val command = commandFilter.command.split(" ").toMutableList()
+    val command = ParametersListUtil.parse(commandFilter.command, false, true).toMutableList()
     command.removeIf { it.startsWith("--pretty") }
     if (!commitCount.isAll() && !commandFilter.hasMaxCount()) {
       command.add(0, "$MAX_COUNT${commitCount.count}")

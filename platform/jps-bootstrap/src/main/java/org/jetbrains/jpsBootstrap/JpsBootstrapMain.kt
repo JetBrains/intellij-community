@@ -55,7 +55,6 @@ class JpsBootstrapMain(args: Array<String>?) {
   private var jarFileTarget: Path? = null
   private var mainArgsToRun: List<String>? = null
   private val additionalSystemProperties: Properties
-  private val additionalSystemPropertiesFromPropertiesFile: Properties
   private val onlyDownloadJdk: Boolean
   private val onlyPrepareArgfileForJar: Boolean
   private val debugOption: Boolean
@@ -94,15 +93,26 @@ class JpsBootstrapMain(args: Array<String>?) {
       javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET))
       jarFileTarget = cmdline.getOptionValue(OPT_JAR_TARGET)?.let { Path.of(it) }
     }
-    additionalSystemProperties = cmdline.getOptionProperties("D")
-    additionalSystemPropertiesFromPropertiesFile = Properties()
+
+    val systemPropertiesFromPropertiesFile = Properties()
     if (cmdline.hasOption(OPT_PROPERTIES_FILE)) {
       val propertiesFile = Path.of(cmdline.getOptionValue(OPT_PROPERTIES_FILE))
       Files.newBufferedReader(propertiesFile).use { reader ->
         info("Loading properties from $propertiesFile")
-        additionalSystemPropertiesFromPropertiesFile.load(reader)
+        systemPropertiesFromPropertiesFile.load(reader)
       }
     }
+
+    val cmdlineSystemProperties = cmdline.getOptionProperties("D")
+    val defaultSystemProperties = JpsBootstrapUtil.getDefaultSystemPropertiesIfMissing(
+      cmdlineSystemProperties,
+      systemPropertiesFromPropertiesFile,
+    )
+
+    additionalSystemProperties = Properties()
+    additionalSystemProperties.putAll(systemPropertiesFromPropertiesFile)
+    additionalSystemProperties.putAll(cmdlineSystemProperties)
+    additionalSystemProperties.putAll(defaultSystemProperties)
 
     val verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE)
     setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && verboseEnv.toBooleanChecked()))
@@ -110,7 +120,8 @@ class JpsBootstrapMain(args: Array<String>?) {
     val communityHomeString = System.getenv(COMMUNITY_HOME_ENV)
       ?: error("Please set $COMMUNITY_HOME_ENV environment variable")
     communityHome = BuildDependenciesCommunityRoot(Path.of(communityHomeString))
-    jpsBootstrapWorkDir = projectHome.resolve("build").resolve("jps-bootstrap-work")
+    jpsBootstrapWorkDir = System.getenv(JPS_BOOTSTRAP_WORKDIR)?.let { Path.of(it) }
+                          ?: projectHome.resolve("build").resolve("jps-bootstrap-work")
     info("Working directory: $jpsBootstrapWorkDir")
     Files.createDirectories(jpsBootstrapWorkDir)
     buildTargetXmx = if (cmdline.hasOption(OPT_BUILD_TARGET_XMX)) cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) else DEFAULT_BUILD_SCRIPT_XMX
@@ -138,10 +149,7 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   @Throws(Throwable::class)
   private fun main() {
-    JpsBootstrapUtil.loadJpsBuildsystemProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties,
-    )
+    JpsBootstrapUtil.loadJpsSystemProperties(additionalSystemProperties)
 
     val jdkHome = downloadJdk()
     if (onlyDownloadJdk) {
@@ -236,13 +244,13 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (underTeamCity) {
       systemProperties.putAll(JpsBootstrapUtil.teamCitySystemProperties)
     }
-    systemProperties.putAll(additionalSystemPropertiesFromPropertiesFile)
     systemProperties.putAll(additionalSystemProperties)
     systemProperties.putIfAbsent("file.encoding", "UTF-8") // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true")
 
     val args: MutableList<String> = ArrayList()
     args.add("-ea")
+    args.add("-XX:ReservedCodeCacheSize=512m")
     args.add("-Xmx$buildTargetXmx")
     if (debugOption) {
       args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005")
@@ -325,6 +333,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     private const val DEFAULT_BUILD_SCRIPT_XMX = "4g"
     private const val CLASSPATH_FILE_TARGET_ENV = "JPS_BOOTSTRAP_CLASSPATH_FILE_TARGET"
     private const val COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME"
+    private const val JPS_BOOTSTRAP_WORKDIR = "JPS_BOOTSTRAP_WORKDIR"
     private const val JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE"
     private val OPT_HELP = Option.builder("h").longOpt("help").build()
     private val OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build()

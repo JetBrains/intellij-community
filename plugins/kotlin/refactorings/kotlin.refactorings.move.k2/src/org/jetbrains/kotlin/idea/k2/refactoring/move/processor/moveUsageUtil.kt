@@ -1,11 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
@@ -27,7 +30,7 @@ import org.jetbrains.kotlin.psi.*
  *
  * fun fooBar() { }
  * ```
- * Will return `A`, `B`, `A#foo` and `fooBar`
+ * Will return `A`, `B`, `A#bar` and `fooBar`
  *
  * @see topLevelDeclarationsToUpdate
  */
@@ -77,25 +80,21 @@ internal val KtDeclarationContainer.topLevelDeclarationsToUpdate: List<KtNamedDe
  */
 internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
     get() {
+        val isClassMember = parent.parent is KtClass
         return when (this) {
-            is KtFunction -> !isLocal && !isInstanceAccessible
-            is KtProperty -> !isLocal && !isInstanceAccessible
+            is KtFunction -> !isLocal && !isClassMember
+            is KtProperty -> !isLocal && !isClassMember
             is KtClassOrObject -> true
             else -> false
         }
     }
-
-/**
- * @return whether a declaration is an instance method or property.
- */
-private val KtNamedDeclaration.isInstanceAccessible get() = parent.parent is KtClass
 
 internal fun KtDeclarationContainer.findUsages(
     searchInCommentsAndStrings: Boolean,
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    return allDeclarationsToUpdate.flatMap { it.findUsages(searchInCommentsAndStrings, searchForText, newPkgName) }
+    return topLevelDeclarationsToUpdate.flatMap { it.findUsages(searchInCommentsAndStrings, searchForText, newPkgName) }
 }
 
 /**
@@ -120,27 +119,40 @@ private fun KtNamedDeclaration.findNonCodeUsages(
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    val usages = mutableListOf<UsageInfo>()
-    val newName = FqName("${newPkgName.asString()}.$name")
-    TextOccurrencesUtil.findNonCodeUsages(
-        this,
-        resolveScope,
-        fqName?.asString(),
-        searchInCommentsAndStrings,
-        searchForText,
-        newName.asString(),
-        usages
-    )
-    return usages
+    return name?.let { elementName ->
+        val usages = mutableListOf<UsageInfo>()
+        fun addNonCodeUsages(oldFqn: String, newFqn: String) {
+            TextOccurrencesUtil.findNonCodeUsages(
+                this,
+                resolveScope,
+                oldFqn,
+                searchInCommentsAndStrings,
+                searchForText,
+                newFqn,
+                usages
+            )
+        }
+
+        fqName?.quoteIfNeeded()?.asString()?.let { currentName ->
+            val newName = "${newPkgName.asString()}.$elementName"
+            addNonCodeUsages(currentName, newName)
+        }
+
+        val currentJavaFacadeName = StringUtil.getQualifiedName(containingKtFile.javaFileFacadeFqName.asString(), elementName)
+        val newJavaFacadeName = StringUtil.getQualifiedName(
+            StringUtil.getQualifiedName(newPkgName.asString(), containingKtFile.javaFileFacadeFqName.shortName().asString()),
+            elementName
+        )
+        addNonCodeUsages(currentJavaFacadeName, newJavaFacadeName)
+        return usages
+    } ?: emptyList()
 }
 
 /**
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
  */
 internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-    for (usageInfo in usages.filterIsInstance<K2MoveRenameUsageInfo>()) {
-        usageInfo.referencedElement?.let { usageInfo.retarget(it) }
-    }
+    K2MoveRenameUsageInfo.retargetUsages(usages, oldToNewMap)
     val project = oldToNewMap.values.firstOrNull()?.project ?: return
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
 }

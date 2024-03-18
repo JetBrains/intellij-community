@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.kdoc
 
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.kotlin.idea.kdoc.KotlinDocExtractorFromJavaDoc
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -29,7 +29,7 @@ class KotlinDocExtractorFromJavaDocTest : KotlinLightCodeInsightFixtureTestCase(
         val extracted = extractor.getExternalDocInfoForElement(docUrl, javaDocPage)
 
         if (expectedResult != extracted) {
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 "Extracted information differs from expected",
                 expectedResult,
                 extracted,

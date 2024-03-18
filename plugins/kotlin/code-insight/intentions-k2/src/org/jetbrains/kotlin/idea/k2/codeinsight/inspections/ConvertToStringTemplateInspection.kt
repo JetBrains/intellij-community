@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
@@ -33,7 +33,7 @@ internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspe
     }
     class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
-    override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtBinaryExpression, context: Context, project: Project, updater: ModPsiUpdater) {
         context.replacement.element?.let { element.replaced(it) }
     }
 

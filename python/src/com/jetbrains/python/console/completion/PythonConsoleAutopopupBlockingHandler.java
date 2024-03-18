@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author oleg
  */
-public class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDelegate {
+public final class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDelegate {
 
   public static final Key<Object> REPL_KEY = new Key<>("python.repl.console.editor");
 

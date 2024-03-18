@@ -10,10 +10,7 @@ import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -196,7 +194,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensionList()) {
           AnAction action = converter.provide(description);
           if (action != null) {
-            options.add(new ActionWrapper(action, null, MatchMode.NAME, myModel));
+            options.add(createActionWrapper(action, null, MatchMode.NAME, myModel));
           }
         }
         options.add(description);
@@ -229,7 +227,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         if (mode == MatchMode.NONE) {
           return null;
         }
-        return new ActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
+        return createActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
       })
       .filter(Objects::nonNull);
     return processItems(pattern, MatchedValueType.ACTION, actionWrappers, consumer);
@@ -249,7 +247,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
           return null;
         }
         GroupMapping groupMapping = GroupMapping.createFromText(intentionText, false);
-        return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, myModel);
+        return createActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, myModel);
       })
       .filter(Objects::nonNull);
     return processItems(pattern, MatchedValueType.INTENTION, intentions, consumer);
@@ -257,7 +255,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @NotNull
   private ActionWrapper wrapAnAction(@NotNull AnAction action) {
-    return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, myModel);
+    return createActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, myModel);
   }
 
   private static final Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
@@ -294,5 +292,18 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
       .preferringStartMatches()
       .build();
+  }
+
+  public static @NotNull ActionWrapper createActionWrapper(@NotNull AnAction action,
+                                                           @Nullable GroupMapping groupMapping,
+                                                           @NotNull MatchMode mode, GotoActionModel model) {
+    Presentation presentation = ReadAction.nonBlocking(() -> {
+        if (groupMapping != null) {
+          groupMapping.updateBeforeShow(model.getUpdateSession());
+        }
+        return model.getUpdateSession().presentation(action);
+      })
+      .executeSynchronously();
+    return new ActionWrapper(action, groupMapping, mode, presentation);
   }
 }

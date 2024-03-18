@@ -17,6 +17,7 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
@@ -313,7 +314,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFunction[] methods = pyClass.getMethods();
     assertEquals(1, methods.length);
     final PyFunction.Modifier modifier = methods[0].getModifier();
-    assertEquals(PyFunction.Modifier.STATICMETHOD, modifier);
+    assertEquals(PyAstFunction.Modifier.STATICMETHOD, modifier);
     assertNotParsed(file);
   }
 
@@ -871,7 +872,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyFunction func = file.findTopLevelFunction("func");
     final PyFunctionStub funcStub = func.getStub();
-    assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
+    assertNull(funcStub.findChildStubByType(PyStubElementTypes.ANNOTATION));
   }
 
   // PY-26163

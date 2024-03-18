@@ -6,31 +6,35 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.tree.IElementType
+import com.jetbrains.python.psi.PyElementType
 import java.util.function.Function
 
 abstract class PyElementTypesFacade {
 
-  abstract val functionDeclaration: IStubElementType<*, *>
-  abstract val classDeclaration: IStubElementType<*, *>
-  abstract val parameterList: IStubElementType<*, *>
-  abstract val decoratorList: IStubElementType<*, *>
-  abstract val namedParameter: IStubElementType<*, *>
-  abstract val tupleParameter: IStubElementType<*, *>
-  abstract val slashParameter: IStubElementType<*, *>
-  abstract val singleStarParameter: IStubElementType<*, *>
-  abstract val decoratorCall: IStubElementType<*, *>
-  abstract val importElement: IStubElementType<*, *>
-  abstract val annotation: IStubElementType<*, *>
-  abstract val starImportElement: IStubElementType<*, *>
-  abstract val exceptPart: IStubElementType<*, *>
-  abstract val fromImportStatement: IStubElementType<*, *>
-  abstract val importStatement: IStubElementType<*, *>
-  abstract val targetExpression: IStubElementType<*, *>
-  abstract val typeParameter: IStubElementType<*, *>
-  abstract val typeParameterList: IStubElementType<*, *>
-  abstract val typeAliasStatement: IStubElementType<*, *>
+  // stubs on backend side
+  abstract val functionDeclaration: IElementType
+  abstract val classDeclaration: IElementType
+  abstract val parameterList: IElementType
+  abstract val decoratorList: IElementType
+  abstract val namedParameter: IElementType
+  abstract val tupleParameter: IElementType
+  abstract val slashParameter: IElementType
+  abstract val singleStarParameter: IElementType
+  abstract val decoratorCall: IElementType
+  abstract val importElement: IElementType
+  abstract val annotation: IElementType
+  abstract val starImportElement: IElementType
+  abstract val exceptPart: IElementType
+  abstract val fromImportStatement: IElementType
+  abstract val importStatement: IElementType
+  abstract val targetExpression: IElementType
+  abstract val typeParameter: IElementType
+  abstract val typeParameterList: IElementType
+  abstract val typeAliasStatement: IElementType
 
 
+  // constructors for non-stub elements
   abstract val argumentListConstructor: Function<in ASTNode, out PsiElement>
   abstract val printTargetConstructor: Function<in ASTNode, out PsiElement>
   abstract val decoratorConstructor: Function<in ASTNode, out PsiElement>

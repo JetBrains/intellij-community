@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.RegularFileProperty;
@@ -37,7 +38,8 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
@@ -51,19 +53,11 @@ import java.util.*;
  * This implementation should be moved or replaced with the similar model builder from the Gradle distribution.
  *
  * @author Vladislav.Soroka
- * @deprecated to be removed in 2019.1, use built-in 'org.gradle.tooling.model.cpp.CppComponent' available since Gradle 4.10
+ * @deprecated use built-in {@link org.gradle.tooling.model.cpp.CppComponent} available since Gradle 4.10
  */
 @Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class CppModelBuilder implements ModelBuilderService {
-  private static final boolean IS_51_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.1")) >= 0;
-  private static final boolean IS_410_OR_BETTER = IS_51_OR_BETTER ||
-                                                  GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.10")) >= 0;
-  private static final boolean IS_48_OR_BETTER = IS_410_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
-  private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.7")) >= 0;
-  private static final boolean IS_41_OR_BETTER = IS_47_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -73,7 +67,7 @@ public class CppModelBuilder implements ModelBuilderService {
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
-    if (!IS_41_OR_BETTER || IS_410_OR_BETTER) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
       return null;
     }
     PluginContainer pluginContainer = project.getPlugins();
@@ -146,7 +140,7 @@ public class CppModelBuilder implements ModelBuilderService {
             Set<File> systemIncludes = new LinkedHashSet<>();
             //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
             //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
-            if (IS_48_OR_BETTER) {
+            if (GradleVersionUtil.isCurrentGradleAtLeast("4.8")) {
               compileIncludePath.addAll(cppCompile.getIncludes().getFiles());
               systemIncludes.addAll(cppCompile.getSystemIncludes().getFiles());
             }
@@ -203,7 +197,7 @@ public class CppModelBuilder implements ModelBuilderService {
         ((DefaultProject)project).getServices().getAll(CompilerOutputFileNamingSchemeFactory.class).iterator();
       if (it.hasNext()) {
         CompilerOutputFileNamingSchemeFactory outputFileNamingSchemeFactory = it.next();
-        boolean isTargetWindows = IS_51_OR_BETTER
+        boolean isTargetWindows = GradleVersionUtil.isCurrentGradleAtLeast("5.1")
                                   ? cppBinary.getTargetPlatform().getTargetMachine().getOperatingSystemFamily().isWindows()
                                   : isWindowsOld(cppBinary.getTargetPlatform());
         String objectFileExtension = isTargetWindows ? ".obj" : ".o";
@@ -232,7 +226,7 @@ public class CppModelBuilder implements ModelBuilderService {
   private static File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
-    if (IS_47_OR_BETTER) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
       binaryFile = linkExecutable.getLinkedFile();
     }
     else {
@@ -258,7 +252,7 @@ public class CppModelBuilder implements ModelBuilderService {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
         ToolSearchResult toolSearchResult;
-        if (IS_410_OR_BETTER) {
+        if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
           toolSearchResult = toolProvider.locateTool(ToolType.CPP_COMPILER);
         }
         else {
@@ -310,7 +304,7 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
 
-    if (!IS_47_OR_BETTER) {
+    if (!GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
       project.getLogger().error(
         "[sync error] Unable to resolve compiler executable. " +
         "The project uses '" + GradleVersion.current() + "' try to update the gradle version");
@@ -321,12 +315,20 @@ public class CppModelBuilder implements ModelBuilderService {
     return null;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "C++ project import errors"
-    ).withDescription("Unable to import C++ project");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(this)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("C++ project import errors")
+      .withText("Unable to import C++ project")
+      .withException(exception)
+      .reportMessage(project);
   }
 
   @Nullable

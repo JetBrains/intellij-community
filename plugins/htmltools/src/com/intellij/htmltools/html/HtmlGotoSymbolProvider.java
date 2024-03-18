@@ -6,11 +6,10 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -20,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
   @Override
@@ -81,8 +82,10 @@ public final class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
 
         @Override
         public @Nullable String getLocationString() {
-          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
-          return psiFile != null ? "(" + SymbolPresentationUtil.getFilePathPresentation(psiFile) + ")" : null;
+          return Optional.ofNullable(ProjectUtil.guessProjectDir(myProject))
+            .map(projectDir -> VfsUtilCore.getRelativePath(myFile, projectDir, File.separatorChar))
+            .map(path -> "(" + path + ")")
+            .orElse(null);
         }
 
         @Override

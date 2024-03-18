@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -280,6 +281,7 @@ fun ProjectModelRule.createJavaModule(moduleName: String, content: ModuleContent
   val directorySpec = DirectorySpec(rootPath)
   ModuleContentBuilderImpl(module, directorySpec).content()
   directorySpec.generateTo(moduleRoot)
+  IndexingTestUtil.waitUntilIndexesAreReady(project)
   return module
 }
 

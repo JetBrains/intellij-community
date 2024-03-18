@@ -34,6 +34,7 @@ interface GHPRChangesService: Disposable {
 
   @CalledInAny
   fun createChangesProvider(progressIndicator: ProgressIndicator,
+                            id: GHPRIdentifier,
                             baseRef: String,
                             mergeBaseRef: String,
                             headRef: String,

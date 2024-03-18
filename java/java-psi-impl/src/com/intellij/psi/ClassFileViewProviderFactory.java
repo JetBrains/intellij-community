@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 
-public class ClassFileViewProviderFactory implements FileViewProviderFactory {
+public final class ClassFileViewProviderFactory implements FileViewProviderFactory {
   @Override
   public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile file,
                                                           Language language,

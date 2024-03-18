@@ -53,33 +53,11 @@ public final class StatisticsUploadAssistant {
   }
 
   private static boolean isForceCollectEnabled() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.forceLoggingAlwaysEnabled();
+    return StatisticsEventLogProviderUtil.forceLoggingAlwaysEnabled();
   }
 
   public static boolean isCollectAllowedOrForced() {
     return isCollectAllowed() || isForceCollectEnabled();
-  }
-
-  /**
-   * @deprecated see {@link ExternalEventLogSettings#isSendAllowedOverride()}
-   */
-  @Deprecated(since = "2023.1", forRemoval = true)
-  public static boolean getSendAllowedOverride() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    if (externalEventLogSettings != null)
-      return externalEventLogSettings.isSendAllowedOverride();
-    else
-      return false;
-  }
-
-  /**
-   * @deprecated see {@link ExternalEventLogSettings#isCollectAllowedOverride()}
-   * */
-  @Deprecated(since = "2023.1", forRemoval = true)
-  public static boolean getCollectAllowedOverride() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();
   }
 
   public static boolean isCollectionForceDisabled() {

@@ -147,7 +147,7 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  protected open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
+  internal open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
     return IdeRootPane(frame = frame, loadingState = loadingState)
   }
 

@@ -75,6 +75,7 @@ import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -318,10 +319,6 @@ public class ChangesViewManager implements ChangesViewEx,
   public boolean isAllowExcludeFromCommit() {
     if (myToolWindowPanel == null) return false;
     return myToolWindowPanel.isAllowExcludeFromCommit();
-  }
-
-  public static boolean isEditorPreview(@NotNull Project project) {
-    return EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable();
   }
 
   public void closeEditorPreview(boolean onlyIfEmpty) {
@@ -573,7 +570,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private void setDiffPreview() {
       if (myDisposed) return;
 
-      boolean isEditorPreview = isEditorPreview(myProject);
+      boolean isEditorPreview = true;
       boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
       //noinspection DoubleNegation
@@ -584,6 +581,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
+      //noinspection ConstantValue
       if (isEditorPreview) {
         myEditorChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, true);
         Disposer.register(this, myEditorChangeProcessor);
@@ -755,8 +753,9 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
+    private final Function0<Boolean> isAllowExcludeFromCommit = () -> isAllowExcludeFromCommit();
     private @NotNull Function<ChangeNodeDecorator, ChangeNodeDecorator> getChangeDecoratorProvider() {
-      return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, () -> isAllowExcludeFromCommit());
+      return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, isAllowExcludeFromCommit);
     }
 
     @Override
@@ -893,7 +892,7 @@ public class ChangesViewManager implements ChangesViewEx,
           }
         }
 
-        DefaultTreeModel treeModel = treeModelBuilder.build();
+        DefaultTreeModel treeModel = treeModelBuilder.build(true);
 
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.checkCanceled();

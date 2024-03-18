@@ -123,8 +123,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
 
     Editor editor = mySupplier.getEditor();
-    VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
+      VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
       LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
       for (ScrollRequestListener listener : myScrollRequestListeners) {
         listener.scrollRequested(logicalPosition, scrollType);
@@ -136,8 +136,27 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   private void scrollTo(@NotNull Point targetLocation, @NotNull ScrollType scrollType) {
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
     Rectangle viewRect = canceledThread == null ? getVisibleArea() : canceledThread.getTargetVisibleArea();
+
+    // the model knows nothing about the sticky panel rendering on top of the editor
+    // we should adjust target and view rectangle to avoid hidden caret by the sticky panel
+    targetLocation = stickyPanelAdjust(targetLocation, viewRect);
+
     Point p = calcOffsetsToScroll(targetLocation, scrollType, viewRect);
     scroll(p.x, p.y);
+  }
+
+  private @NotNull Point stickyPanelAdjust(@NotNull Point targetLocation, @NotNull Rectangle viewRect) {
+    if (mySupplier.getEditor() instanceof EditorImpl editor) {
+      var panel = editor.getStickyLinesPanel();
+      if (panel != null && editor.getSettings().areStickyLinesShown()) {
+        int height = panel.getHeight();
+        if (height > 0) {
+          viewRect.height -= height;
+          return new Point(targetLocation.x, targetLocation.y - height);
+        }
+      }
+    }
+    return targetLocation;
   }
 
   @Override

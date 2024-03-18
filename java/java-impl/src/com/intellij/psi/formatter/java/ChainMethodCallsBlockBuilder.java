@@ -46,6 +46,8 @@ class ChainMethodCallsBlockBuilder {
 
   private final FormattingMode myFormattingMode;
 
+  private static final int MANY_METHOD_CALLS_FACTOR = 3;
+
   ChainMethodCallsBlockBuilder(Alignment alignment,
                                       Wrap wrap,
                                       Indent indent,
@@ -70,7 +72,7 @@ class ChainMethodCallsBlockBuilder {
   }
 
   private List<Block> buildBlocksFrom(List<? extends ASTNode> nodes) {
-    List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
+    List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes, mySettings);
 
     Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), true);
     Wrap builderMethodWrap = Wrap.createWrap(WrapType.ALWAYS, true);
@@ -83,7 +85,7 @@ class ChainMethodCallsBlockBuilder {
     CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
-      if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk) || isComment(currentCallChunk)) {
+      if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk, mySettings) || isComment(currentCallChunk)) {
         if (chainedCallsAlignment == null) {
           chainedCallsAlignment = createCallChunkAlignment(i, methodCall);
         }
@@ -93,7 +95,7 @@ class ChainMethodCallsBlockBuilder {
       }
 
       Wrap currWrap = isMethodCall(currentCallChunk) && canWrap(i, methodCall)
-                      ? isBuilderMethod(currentCallChunk) ? builderMethodWrap : wrap
+                      ? isBuilderMethod(currentCallChunk, mySettings) ? builderMethodWrap : wrap
                       : null;
 
       blocks.add(builder.create(currentCallChunk.nodes,
@@ -107,7 +109,7 @@ class ChainMethodCallsBlockBuilder {
   private int getCommonIndentSize(@NotNull List<ChainedCallChunk> chunks) {
     String commonIndent = null;
     for (ChainedCallChunk chunk : chunks) {
-      if (isMethodCall(chunk) && isBuilderMethod(chunk)) {
+      if (isMethodCall(chunk) && isBuilderMethod(chunk, mySettings)) {
         String currIndent = chunk.getIndentString();
         if (currIndent != null) {
           if (commonIndent == null) {
@@ -140,9 +142,9 @@ class ChainMethodCallsBlockBuilder {
     return false;
   }
 
-  private boolean isBuilderMethod(@NotNull ChainedCallChunk chunk) {
+  private static boolean isBuilderMethod(@NotNull ChainedCallChunk chunk, CommonCodeStyleSettings settings) {
     String identifier = chunk.getIdentifier();
-    return identifier != null && mySettings.isBuilderMethod(identifier);
+    return identifier != null && settings.isBuilderMethod(identifier);
   }
 
   private boolean canWrap(int chunkIndex, @NotNull List<? extends ChainedCallChunk> methodCall) {
@@ -170,12 +172,12 @@ class ChainMethodCallsBlockBuilder {
   }
 
   @NotNull
-  private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
+  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes, CommonCodeStyleSettings settings) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();
     for (ASTNode node : nodes) {
-      if (JavaFormatterUtil.isStartOfCallChunk(mySettings, node) || node.getPsi() instanceof PsiComment) {
+      if (JavaFormatterUtil.isStartOfCallChunk(settings, node) || node.getPsi() instanceof PsiComment) {
         if (!current.isEmpty()) {
           result.add(new ChainedCallChunk(current));
         }
@@ -207,6 +209,19 @@ class ChainMethodCallsBlockBuilder {
       }
     }
     return false;
+  }
+
+  public static boolean isLongCallChain(List<ASTNode> nodes, CommonCodeStyleSettings settings) {
+    List<ChainedCallChunk> chunks = splitMethodCallOnChunksByDots(nodes, settings);
+
+    int methodCallCount = 0;
+
+    for (ChainedCallChunk chunk : chunks) {
+      if (isMethodCall(chunk) && !isBuilderMethod(chunk, settings) && !isComment(chunk)) {
+        methodCallCount++;
+      }
+    }
+    return methodCallCount >= MANY_METHOD_CALLS_FACTOR;
   }
 
 

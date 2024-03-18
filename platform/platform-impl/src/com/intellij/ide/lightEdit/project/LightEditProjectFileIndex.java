@@ -7,10 +7,12 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -89,6 +91,11 @@ final class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
     return false;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir) {
+    return Collections.emptyList();
   }
 
   @Override

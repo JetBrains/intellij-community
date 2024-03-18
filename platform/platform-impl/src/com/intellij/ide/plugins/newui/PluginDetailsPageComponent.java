@@ -36,6 +36,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.builder.HyperlinkEventAction;
+import com.intellij.ui.dsl.builder.UtilsKt;
 import com.intellij.ui.dsl.builder.components.DslLabel;
 import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.ui.scale.JBUIScale;
@@ -118,6 +119,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myHomePage;
   private LinkPanel myForumUrl;
   private LinkPanel myLicenseUrl;
+  private LinkPanel myPluginReportUrl;
   private VendorInfoPanel myVendorInfoPanel;
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
@@ -309,6 +311,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     };
     final DslLabel label = new DslLabel(DslLabelType.LABEL);
+    label.setMaxLineLength(UtilsKt.MAX_LINE_LENGTH_WORD_WRAP);
+    @NlsSafe String text = "<span>Foo</span>";
+    label.setText(text);
+    label.setMinimumSize(label.getPreferredSize());
     label.setText(IdeBundle.message("plugins.configurable.plugin.feedback"));
     label.setAction(action);
 
@@ -767,6 +773,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myForumUrl = new LinkPanel(infoPanel, false);
     mySourceCodeUrl = new LinkPanel(infoPanel, false);
     myLicenseUrl = new LinkPanel(infoPanel, false);
+    myPluginReportUrl = new LinkPanel(infoPanel, false);
 
     infoPanel.add(myVendorInfoPanel = new VendorInfoPanel());
     infoPanel.add(myRating = new JLabel());
@@ -919,6 +926,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
           });
         }
+        else if (!node.isConverted() && !myMarketplace) {
+          component.setInstalledPluginMarketplaceNode(node);
+        }
       }
       else if (!descriptor.isBundled() && component.getInstalledPluginMarketplaceNode() == null) {
         syncLoading = false;
@@ -1016,7 +1026,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myPlugin = pluginDescriptor;
     PluginManagementPolicy policy = PluginManagementPolicy.getInstance();
     myUpdateDescriptor = updateDescriptor != null && policy.canEnablePlugin(updateDescriptor) ? updateDescriptor : null;
-    myIsPluginCompatible = PluginManagerCore.INSTANCE.getIncompatiblePlatform(pluginDescriptor) == null;
+    myIsPluginCompatible = PluginManagerCore.INSTANCE.getIncompatibleOs(pluginDescriptor) == null;
     myIsPluginAvailable = myIsPluginCompatible && policy.canEnablePlugin(updateDescriptor);
     if (myMarketplace && myMultiTabs) {
       myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
@@ -1228,6 +1238,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       updateUrlComponent(myBugtrackerUrl, "plugins.configurable.bugtracker.url", pluginNode.getBugtrackerUrl());
       updateUrlComponent(myDocumentationUrl, "plugins.configurable.documentation.url", pluginNode.getDocumentationUrl());
       updateUrlComponent(mySourceCodeUrl, "plugins.configurable.source.code", pluginNode.getSourceCodeUrl());
+      updateUrlComponent(myPluginReportUrl, "plugins.configurable.report.marketplace.plugin", pluginNode.getReportPluginUrl());
 
       myVendorInfoPanel.show(pluginNode);
 
@@ -1375,7 +1386,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  public void updateButtons() {
+  public void updateAll() {
+    if (myPlugin != null) {
+      if (myIndicator != null) {
+        MyPluginModel.removeProgress(getDescriptorForActions(), myIndicator);
+        hideProgress(false, false);
+      }
+      showPluginImpl(myPlugin, myUpdateDescriptor);
+    }
+  }
+
+  private void updateButtons() {
     if (!myIsPluginAvailable) {
       myRestartButton.setVisible(false);
       myInstallButton.setVisible(false);
@@ -1594,6 +1615,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     }
 
+    updateNotifications();
     updateEnableForNameAndIcon();
     updateErrors();
     updateEnabledForProject();
@@ -1615,6 +1637,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (!showRestart && InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(getDescriptorForActions().getPluginId())) {
       myInstallButton.setVisible(true);
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+    }
+
+    if (!showRestart) {
+      updateNotifications();
     }
   }
 

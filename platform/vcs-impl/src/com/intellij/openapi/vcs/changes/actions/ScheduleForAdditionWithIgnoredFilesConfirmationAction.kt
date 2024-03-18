@@ -38,7 +38,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val browser = e.getData(ChangesBrowserBase.DATA_KEY)
 
     val changes = e.getData(VcsDataKeys.CHANGES)?.asSequence().orEmpty()

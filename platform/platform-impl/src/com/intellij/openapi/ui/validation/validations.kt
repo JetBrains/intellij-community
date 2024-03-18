@@ -20,7 +20,7 @@ val CHECK_NO_RESERVED_WORDS: DialogValidation.WithParameter<() -> String> = vali
 }
 
 private val namePattern = "[a-zA-Z\\d\\s_.-]*".toRegex()
-private val firstSymbolNamePattern = "[a-zA-Z_].*".toRegex()
+private val firstSymbolNamePattern = "[a-zA-Z\\d_].*".toRegex()
 val CHECK_NAME_FORMAT: DialogValidation.WithParameter<() -> String> = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.name.allowed.symbols")) {
   !namePattern.matches(it)
 } and validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.name.leading.symbols")) {
@@ -53,6 +53,7 @@ val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationEr
     }
 }
 
+private val firstSymbolGroupIdPattern = "[a-zA-Z_].*".toRegex()
 private val CHECK_GROUP_ID_FORMAT = validationErrorFor<String> { text ->
   if (text.startsWith('.') || text.endsWith('.')) {
     UIBundle.message("kotlin.dsl.validation.groupId.leading.trailing.dot")
@@ -62,7 +63,7 @@ private val CHECK_GROUP_ID_FORMAT = validationErrorFor<String> { text ->
   }
   else {
     text.split(".")
-      .find { !firstSymbolNamePattern.matches(it) }
+      .find { !firstSymbolGroupIdPattern.matches(it) }
       ?.let { UIBundle.message("kotlin.dsl.validation.groupId.part.allowed.symbols", it) }
   }
 }

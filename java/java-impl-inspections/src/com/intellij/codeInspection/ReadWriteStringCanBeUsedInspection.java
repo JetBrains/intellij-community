@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher FILES_WRITE = CallMatcher.staticCall("java.nio.file.Files", "write")
     .parameterTypes("java.nio.file.Path", "byte[]", "java.nio.file.OpenOption...");
   private static final CallMatcher FILES_READ_ALL_BYTES = CallMatcher.staticCall("java.nio.file.Files", "readAllBytes")

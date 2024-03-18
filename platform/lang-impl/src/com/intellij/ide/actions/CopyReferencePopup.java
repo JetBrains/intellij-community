@@ -29,6 +29,10 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
 
   @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setPerformGroup(true);
@@ -82,7 +86,7 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
           protected void customizeComponent(@NotNull JList<? extends PopupFactoryImpl.ActionItem> list,
                                             @NotNull PopupFactoryImpl.ActionItem actionItem,
                                             boolean isSelected) {
-            myButtonsSeparator.setVisible(false);
+            myButtonSeparator.setVisible(false);
             AnAction action = actionItem.getAction();
             Presentation presentation = factory.getPresentation(action);
             String qualifiedName = presentation.getClientProperty(CopyPathProvider.QUALIFIED_NAME);

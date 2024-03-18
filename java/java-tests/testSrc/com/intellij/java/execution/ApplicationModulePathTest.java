@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 
@@ -86,6 +87,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
     Sdk jdk9 = IdeaTestUtil.getMockJdk9();
     WriteAction.runAndWait(()-> ProjectJdkTable.getInstance().addJdk(jdk9, parentDisposable));
     ModuleRootModificationUtil.setModuleSdk(module, jdk9);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   protected static VirtualFile getContentRoot(String path) {

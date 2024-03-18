@@ -8,12 +8,14 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import java.net.http.HttpResponse
 
+@SinceGitLab("12.3")
 suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProjectCoordinates,
                                                           mrIid: String,
                                                           pagination: GraphQLRequestPagination? = null)
@@ -31,6 +33,26 @@ suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProject
 private class DiscussionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabDiscussionDTO>)
   : GraphQLConnectionDTO<GitLabDiscussionDTO>(pageInfo, nodes)
 
+@SinceGitLab("14.7")
+suspend fun GitLabApi.GraphQL.loadMergeRequestCommits(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  pagination: GraphQLRequestPagination? = null
+): GraphQLConnectionDTO<GitLabCommitDTO>? {
+  val parameters = pagination.orDefault().asParameters() + mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mriid" to mrIid
+  )
+  val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS) {
+    loadResponse<CommitConnection>(request, "project", "mergeRequest", "commits").body()
+  }
+}
+
+private class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
+  : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
+
+@SinceGitLab("13.1", note = "Different ID type until 13.6, should work")
 suspend fun GitLabApi.GraphQL.changeMergeRequestDiscussionResolve(
   discussionId: String,
   resolved: Boolean
@@ -50,6 +72,7 @@ private class ResolveResult(discussion: GitLabDiscussionDTO, errors: List<String
   override val value = discussion
 }
 
+@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
 suspend fun GitLabApi.GraphQL.updateNote(
   noteId: String,
   newText: String
@@ -64,6 +87,7 @@ suspend fun GitLabApi.GraphQL.updateNote(
   }
 }
 
+@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
 suspend fun GitLabApi.GraphQL.deleteNote(
   noteId: String
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<Unit>?> {
@@ -76,6 +100,7 @@ suspend fun GitLabApi.GraphQL.deleteNote(
   }
 }
 
+@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
 suspend fun GitLabApi.GraphQL.addNote(
   mergeRequestGid: String,
   body: String
@@ -90,6 +115,7 @@ suspend fun GitLabApi.GraphQL.addNote(
   }
 }
 
+@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
 suspend fun GitLabApi.GraphQL.addDiffNote(
   mergeRequestGid: String,
   position: GitLabDiffPositionInput,
@@ -113,6 +139,7 @@ private class CreateNoteResult(note: NoteHolder?, errors: List<String>?)
 
 private class NoteHolder(val discussion: GitLabDiscussionDTO)
 
+@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
 suspend fun GitLabApi.GraphQL.createReplyNote(
   mergeRequestGid: String,
   discussionId: String,

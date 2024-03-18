@@ -155,6 +155,12 @@ fun wrapULiteral(uElement: UExpression): UExpression {
   return uElement
 }
 
+
+val UInjectionHost.injectedReferences: Iterable<PsiReference>
+  get() {
+    return psiLanguageInjectionHost.injectedReferences
+  }
+
 /**
  * @return all references injected into this [ULiteralExpression]
  *
@@ -162,9 +168,13 @@ fun wrapULiteral(uElement: UExpression): UExpression {
  */
 val ULiteralExpression.injectedReferences: Iterable<PsiReference>
   get() {
-    val element = this.psiLanguageInjectionHost ?: return emptyList()
-    val references = element.references.asSequence()
-    val innerReferences = element.children.asSequence().flatMap { e -> e.references.asSequence() }
+    return psiLanguageInjectionHost?.injectedReferences ?: return emptyList()
+  }
+
+private val PsiLanguageInjectionHost.injectedReferences: Iterable<PsiReference>
+  get() {
+    val references = references.asSequence()
+    val innerReferences = children.asSequence().flatMap { e -> e.references.asSequence() }
     return (references + innerReferences).asIterable()
   }
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitStashUtils")
 
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,14 +15,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
@@ -38,12 +37,9 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.xml.util.XmlStringUtil
-import git4idea.GitCommit
-import git4idea.GitNotificationIdsHolder
+import git4idea.*
 import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
 import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
-import git4idea.GitStashUsageCollector
-import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
@@ -57,17 +53,18 @@ import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
+import git4idea.index.isStagingAreaAvailable
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashToolWindowEnabled
+import git4idea.stash.ui.isStashTabAvailable
 import git4idea.stash.ui.showStashes
+import git4idea.stash.ui.stashToolWindowRegistryOption
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.awt.Component
 import java.nio.charset.Charset
-import javax.swing.event.HyperlinkEvent
 
 private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
 
@@ -176,11 +173,13 @@ object GitStashOperations {
    * If there's a conflict, show the merge dialog, and if the conflicts get resolved, continue with other roots.
    */
   @JvmStatic
+  @JvmOverloads
   fun unstash(project: Project,
               rootAndRevisions: Map<VirtualFile, Hash?>,
               handlerProvider: (VirtualFile) -> GitLineHandler,
-              conflictResolver: GitConflictResolver): Boolean {
-    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash")).use {
+              conflictResolver: GitConflictResolver,
+              reportToLocalHistory: Boolean = true): Boolean {
+    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash"), if (reportToLocalHistory) GitActivity.Unstash else null).use {
       for ((root, hash) in rootAndRevisions) {
         val handler = handlerProvider(root)
 
@@ -251,9 +250,9 @@ object GitStashOperations {
   fun runStashInBackground(project: Project, roots: Collection<VirtualFile>, createHandler: (VirtualFile) -> GitLineHandler) {
     object : Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
       override fun run(indicator: ProgressIndicator) {
-        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("stash.action.name")).use { _ ->
+        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.stash"), GitActivity.Stash).use { _ ->
           val successfulRoots = linkedSetOf<VirtualFile>()
-          val failedRoots = linkedMapOf<VirtualFile, String>()
+          val failedRoots = linkedMapOf<VirtualFile, @NlsSafe String>()
           for (root in roots) {
             val activity = GitStashUsageCollector.logStashPush(project)
             val result = Git.getInstance().runCommand(createHandler(root))
@@ -285,8 +284,14 @@ object GitStashOperations {
 
   fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
     val actions = buildList {
-      if (isStashToolWindowEnabled(project)) {
+      if (isStashTabAvailable()) {
         add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project) })
+      }
+      else if (isStagingAreaAvailable(project)) {
+        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link")) {
+          stashToolWindowRegistryOption().setValue(true)
+          showStashes(project)
+        })
       }
     }
     val message = getSuccessMessage(project, successfulRoots, hasErrors)
@@ -312,18 +317,17 @@ private class UnstashConflictResolver(project: Project, private val stashInfo: S
   GitConflictResolver(project, setOf(stashInfo.root), makeParams(project, stashInfo)) {
 
   override fun notifyUnresolvedRemain() {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS,
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.message")
-    ) { _, event ->
-      if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        if (event.description == "resolve") {
+    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
+                          GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message"),
+                          NotificationType.WARNING)
+      .setDisplayId(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS)
+      .addAction(
+        NotificationAction.createSimple(GitBundle.messagePointer("unstash.dialog.unresolved.conflict.warning.resolve.conflicts.action"))
+        {
           UnstashConflictResolver(myProject, stashInfo).mergeNoProceedInBackground()
-        }
-      }
-    }
+        })
+      .notify(myProject)
   }
 
   companion object {

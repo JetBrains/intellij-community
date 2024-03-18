@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.fileActions.utils
 
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
@@ -17,7 +18,7 @@ internal object MarkdownFileEditorUtils {
     return when (editor) {
       is MarkdownEditorWithPreview -> editor.previewEditor as? MarkdownPreviewFileEditor
       is MarkdownPreviewFileEditor -> editor
-      else -> editor.getUserData(MarkdownEditorWithPreview.PARENT_SPLIT_EDITOR_KEY)?.previewEditor as? MarkdownPreviewFileEditor
+      else -> TextEditorWithPreview.getParentSplitEditor(editor)?.previewEditor as? MarkdownPreviewFileEditor
     }
   }
 
@@ -28,19 +29,6 @@ internal object MarkdownFileEditorUtils {
       return null
     }
     return editor
-  }
-
-  @JvmStatic
-  fun findMarkdownSplitEditor(editor: FileEditor): MarkdownEditorWithPreview? {
-    return when (editor) {
-      is MarkdownEditorWithPreview -> editor
-      else -> editor.getUserData(MarkdownEditorWithPreview.PARENT_SPLIT_EDITOR_KEY)
-    }
-  }
-
-  @JvmStatic
-  fun findMarkdownSplitEditor(project: Project, file: VirtualFile): MarkdownEditorWithPreview? {
-    return findEditor(project, file, ::findMarkdownSplitEditor)
   }
 
   private fun <T: FileEditor> findEditor(project: Project, file: VirtualFile, predicate: (FileEditor) -> T?): T? {

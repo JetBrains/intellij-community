@@ -70,7 +70,8 @@ internal class GHPRListPanelFactory(private val project: Project, private val li
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> listController
-          GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> if (list.isSelectionEmpty) null else list.selectedValue
+          GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> list.selectedValue?.prId
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> list.selectedValue?.url
           else -> null
         }
       }

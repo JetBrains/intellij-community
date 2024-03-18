@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -38,6 +39,7 @@ final class OutputFilesSink implements OutputFileConsumer {
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
   private final String myChunkName;
+  private final String myChunkOutputRootName;
   private final Set<File> mySuccessfullyCompiled = FileCollectionFactory.createCanonicalFileSet();
 
   OutputFilesSink(CompileContext context,
@@ -48,6 +50,7 @@ final class OutputFilesSink implements OutputFileConsumer {
     myOutputConsumer = outputConsumer;
     myMappingsCallback = callback;
     myChunkName = "[" +chunkName + "]";
+    myChunkOutputRootName = "$" + chunkName.replaceAll("\\\\s", "_");
   }
 
   @Override
@@ -96,7 +99,10 @@ final class OutputFilesSink implements OutputFileConsumer {
         // register in mappings any non-temp class file
         try {
           final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader, fileObject.isGenerated());
+          String fileName = JavaBuilderUtil.isDepGraphEnabled()?
+            myChunkOutputRootName + "/" + FileUtil.toSystemIndependentName(fileObject.getRelativePath()) :
+            FileUtil.toSystemIndependentName(fileObject.getFile().getPath());
+          myMappingsCallback.associate(fileName, sourcePaths, reader, fileObject.isGenerated());
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation

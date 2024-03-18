@@ -1,67 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.addSuppressed
 
-@ApiStatus.Internal
-class SaveResult {
-  companion object {
-    @JvmField
-    internal val EMPTY = SaveResult()
-  }
-
+internal class SaveResult {
   private var error: Throwable? = null
 
   @JvmField
-  internal val readonlyFiles: MutableList<SaveSessionAndFile> = mutableListOf()
-
-  @JvmField
-  internal var isChanged = false
+  val readonlyFiles: MutableList<SaveSessionAndFile> = mutableListOf()
 
   @Synchronized
-  internal fun addError(error: Throwable) {
-    val existingError = this.error
-    if (existingError == null) {
-      this.error = error
-    }
-    else {
-      existingError.addSuppressed(error)
-    }
+  fun addError(t: Throwable) {
+    error = addSuppressed(error, t)
   }
 
   @Synchronized
-  internal fun addReadOnlyFile(info: SaveSessionAndFile) {
+  fun addReadOnlyFile(info: SaveSessionAndFile) {
     readonlyFiles.add(info)
   }
 
   @Synchronized
-  internal fun appendTo(saveResult: SaveResult) {
-    if (this === EMPTY) {
-      return
-    }
-
-    synchronized(saveResult) {
-      if (error != null) {
-        if (saveResult.error == null) {
-          saveResult.error = error
-        }
-        else {
-          saveResult.error!!.addSuppressed(error)
-        }
-      }
-      saveResult.readonlyFiles.addAll(readonlyFiles)
-
-      if (isChanged) {
-        saveResult.isChanged = true
-      }
-    }
-  }
-
-  @Synchronized
-  internal fun throwIfErrored() {
+  fun rethrow() {
     error?.let {
       throw it
     }
   }
 }
+
+internal data class SaveSessionAndFile(@JvmField val session: SaveSession, @JvmField val file: VirtualFile)

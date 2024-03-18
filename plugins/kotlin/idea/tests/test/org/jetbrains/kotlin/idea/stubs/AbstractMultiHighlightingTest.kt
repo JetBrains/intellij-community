@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.ExpectedHighlightingData
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 
 abstract class AbstractMultiHighlightingTest : AbstractMultiModuleTest() {
 

@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class StringBufferToStringInConcatenationInspection extends BaseInspection {
+public final class StringBufferToStringInConcatenationInspection extends BaseInspection {
 
   @Override
   @NotNull

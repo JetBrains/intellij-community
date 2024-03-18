@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.openapi.components.service
@@ -9,7 +9,7 @@ import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import com.intellij.vcs.editor.GsonComplexPathSerializer
 import com.intellij.vcs.log.VcsLogFilterCollection
 
-class VcsLogVirtualFileSystem :
+internal class VcsLogVirtualFileSystem :
   ComplexPathVirtualFileSystem<VcsLogVirtualFileSystem.VcsLogComplexPath>(GsonComplexPathSerializer(VcsLogComplexPath::class.java)) {
 
   override fun findOrCreateFile(project: Project, path: VcsLogComplexPath): VirtualFile {
@@ -24,10 +24,10 @@ class VcsLogVirtualFileSystem :
     return DefaultVcsLogFile(pathId, filters)
   }
 
-  override fun getProtocol(): String = PROTOCOL
+  override fun getProtocol(): String = Holder.PROTOCOL
 
-  companion object {
-    private const val PROTOCOL = "vcs-log"
+  object Holder {
+    internal const val PROTOCOL = "vcs-log"
 
     @JvmStatic
     fun getInstance() = service<VirtualFileManager>().getFileSystem(PROTOCOL) as VcsLogVirtualFileSystem

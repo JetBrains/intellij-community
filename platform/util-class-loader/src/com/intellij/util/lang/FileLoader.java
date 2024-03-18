@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +116,7 @@ final class FileLoader implements Loader {
         boolean containsResources = false;
         for (Path file : dirStream) {
           String path = getRelativeResourcePath(file.toString(), rootDirAbsolutePathLength);
-          long nameHash = Xx3UnencodedString.hashUnencodedString(path);
+          long nameHash = Xxh3Impl.hash(path, CharSequenceAccess.INSTANCE, 0, path.length() * 2, 0);
           if (path.endsWith(ClasspathCache.CLASS_EXTENSION)) {
             nameHashes.add(nameHash);
             containsClasses = true;
@@ -425,7 +425,7 @@ final class FileLoader implements Loader {
 
       int lastIndex = name.length() - 1;
       int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
-      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, end));
+      return filter.mightContain(Xxh3Impl.hash(name, CharSequenceAccess.INSTANCE, 0, end * 2, 0));
     }
   }
 }

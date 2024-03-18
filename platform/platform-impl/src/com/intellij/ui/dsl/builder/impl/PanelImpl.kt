@@ -213,7 +213,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun buttonsGroup(@NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
+  override fun buttonsGroup(@NlsContexts.Label title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
     val result = ButtonsGroupImpl(this, _rows.size)
     rowsRanges.add(result)
 
@@ -221,7 +221,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     try {
       if (title != null) {
         val row = row {
-          @Suppress("DialogTitleCapitalization")
           label(title)
             .applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(bottom = false)) }
         }

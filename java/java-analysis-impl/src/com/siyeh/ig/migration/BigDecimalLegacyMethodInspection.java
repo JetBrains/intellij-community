@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class BigDecimalLegacyMethodInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class BigDecimalLegacyMethodInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

@@ -364,7 +364,7 @@ class B {}"""
     assertEquals("int", parameter.typeElement!!.text)
   }
 
-  fun testUnnamedFile() {
+  fun testImplicitFile() {
     val file = configureFile(
       """
         void myMethod() {
@@ -377,17 +377,17 @@ class B {}"""
         
         int field;
       """.trimIndent())
-    val unnamedClass = file.classes.single() as PsiUnnamedClass
-    TestCase.assertNull(unnamedClass.name)
-    val method = unnamedClass.methods.single()
+    val implicitClass = file.classes.single() as PsiImplicitClass
+    TestCase.assertNull(implicitClass.name)
+    val method = implicitClass.methods.single()
     TestCase.assertEquals("myMethod", method.name)
-    val aClass = unnamedClass.innerClasses.single()
+    val aClass = implicitClass.innerClasses.single()
     TestCase.assertEquals("A", aClass.name)
-    val field = unnamedClass.fields.single()
+    val field = implicitClass.fields.single()
     TestCase.assertEquals("field", field.name)
-    TestCase.assertEquals(CommonClassNames.JAVA_LANG_OBJECT, unnamedClass.superClass!!.qualifiedName)
-    TestCase.assertEquals("Object", unnamedClass.superClassType!!.name)
-    InheritanceUtil.isInheritor(unnamedClass, CommonClassNames.JAVA_LANG_OBJECT)
+    TestCase.assertEquals(CommonClassNames.JAVA_LANG_OBJECT, implicitClass.superClass!!.qualifiedName)
+    TestCase.assertEquals("Object", implicitClass.superClassType!!.name)
+    InheritanceUtil.isInheritor(implicitClass, CommonClassNames.JAVA_LANG_OBJECT)
   }
 
   private fun configureFile(@Language("JAVA") text: String): PsiJavaFile {

@@ -3,6 +3,7 @@ package com.intellij.notification
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Interface for a notification router.
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project
  * This interface defines a method for routing a notification to some notification manager
  * Implementations of this interface can be registered as extension points.
  */
+@ApiStatus.Internal
 interface NotificationRouter {
 
   /**

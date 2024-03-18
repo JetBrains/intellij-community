@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -167,7 +166,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
 
   public static @Nullable TailType getDefaultTailType(final char completionChar) {
     return switch (completionChar) {
-      case '.' -> new CharTailType('.', false);
+      case '.' -> TailTypes.charType('.', false);
       case ',' -> CommaTailType.INSTANCE;
       case ';' -> TailTypes.semicolonType();
       case '=' -> EqTailType.INSTANCE;

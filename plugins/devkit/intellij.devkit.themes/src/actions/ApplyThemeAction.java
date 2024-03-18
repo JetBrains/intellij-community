@@ -8,6 +8,7 @@ import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -145,7 +146,7 @@ final class ApplyThemeAction extends DumbAwareAction {
                                                                      @NotNull String relativePath) {
     String filename = new File(relativePath).getName();
     GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
-    Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(filename, moduleScope);
+    Collection<VirtualFile> filesByName = ReadAction.compute(() -> FilenameIndex.getVirtualFilesByName(filename, moduleScope));
     for (VirtualFile file : filesByName) {
       String path = file.getPath();
       if (path.endsWith(relativePath) || path.endsWith(relativePath.replaceAll("/", "\\"))) {

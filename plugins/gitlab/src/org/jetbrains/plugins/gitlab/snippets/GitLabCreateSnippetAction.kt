@@ -7,16 +7,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.util.GitLabBundle.messagePointer
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_OPEN_DIALOG
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 
-class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create.action.title"),
-                                                  messagePointer("snippet.create.action.description"),
-                                                  GitlabIcons.GitLabLogo) {
+class GitLabCreateSnippetAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
 
     val editor = e.getData(CommonDataKeys.EDITOR)
     val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
@@ -37,7 +34,8 @@ class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create
     val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
 
     e.presentation.isEnabledAndVisible =
-      project.service<GitLabProjectsManager>().knownRepositoriesState.value.isNotEmpty() &&
+      (project.service<GitLabProjectsManager>().knownRepositoriesState.value.isNotEmpty() ||
+       service<GitLabAccountManager>().accountsState.value.isNotEmpty()) &&
       project.service<GitLabSnippetService>().canCreateSnippet(editor, selectedFile, selectedFiles)
   }
 }

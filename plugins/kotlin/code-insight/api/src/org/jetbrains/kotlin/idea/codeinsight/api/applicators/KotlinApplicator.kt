@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.internal.statistic.ReportingClassSubstitutor
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
@@ -23,7 +23,8 @@ import kotlin.reflect.KClass
  * Uses some additional information from [INPUT] to apply the element
  */
 @FileModifier.SafeTypeForPreview
-sealed interface KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> : ReportingClassSubstitutor {
+sealed interface KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> :
+    ReportingClassSubstitutor {
 
     /**
      * Checks if applicator is applicable to specific element, can not use resolve inside
@@ -149,6 +150,7 @@ internal class BaseKotlinApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicat
     internal val isApplicableByPsi: (PSI) -> Boolean,
     internal val getActionName: (PSI, INPUT) -> @IntentionName String,
     internal val getFamilyName: () -> @IntentionFamilyName String,
+    internal val getStartInWriteAction: () -> Boolean = { true },
 ) : BaseKotlinApplicator<PSI, INPUT>() {
     override fun applyToImpl(psi: PSI, input: INPUT, project: Project, editor: Editor?) {
         applyTo.invoke(psi, input, project, editor)
@@ -165,6 +167,10 @@ internal class BaseKotlinApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicat
 
     override fun getSubstitutedClass(): Class<*> =
         reportingClass
+
+    override fun startInWriteAction(): Boolean {
+        return getStartInWriteAction()
+    }
 }
 
 internal class KotlinModCommandApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicatorInput>(
@@ -173,6 +179,7 @@ internal class KotlinModCommandApplicatorImpl<PSI : PsiElement, INPUT : KotlinAp
     internal val isApplicableByPsi: (PSI) -> Boolean,
     internal val getActionName: (PSI, INPUT) -> @IntentionName String,
     internal val getFamilyName: () -> @IntentionFamilyName String,
+    internal val getStartInWriteAction: () -> Boolean = { true },
 ) : KotlinModCommandApplicator<PSI, INPUT>() {
     override fun applyToImpl(psi: PSI, input: INPUT, context: ActionContext, updater: ModPsiUpdater) {
         applyTo.invoke(psi, input, context, updater)
@@ -190,13 +197,18 @@ internal class KotlinModCommandApplicatorImpl<PSI : PsiElement, INPUT : KotlinAp
 
     override fun getSubstitutedClass(): Class<*> =
         reportingClass
+
+    override fun startInWriteAction(): Boolean {
+        return getStartInWriteAction()
+    }
 }
 
 abstract class AbstractKotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> internal constructor(
     internal val reportingClass: Class<*>,
     internal var isApplicableByPsi: ((PSI) -> Boolean)? = null,
     internal var getActionName: ((PSI, INPUT) -> @IntentionName String)? = null,
-    internal var getFamilyName: (() -> @IntentionFamilyName String)? = null
+    internal var getFamilyName: (() -> @IntentionFamilyName String)? = null,
+    internal var getStartInWriteAction: () -> Boolean = { true },
 ) {
     fun familyName(getName: () -> @IntentionFamilyName String) {
         getFamilyName = getName
@@ -219,6 +231,10 @@ abstract class AbstractKotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinA
         this.isApplicableByPsi = isApplicable
     }
 
+    fun startInWriteAction(getStartInWriteAction: () -> Boolean) {
+        this.getStartInWriteAction = getStartInWriteAction
+    }
+
 }
 
 class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> internal constructor(
@@ -227,8 +243,9 @@ class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> i
     var applyTo: ((PSI, INPUT, Project, Editor?) -> Unit)? = null,
     isApplicableByPsi: ((PSI) -> Boolean)? = null,
     getActionName: ((PSI, INPUT) -> @IntentionName String)? = null,
-    getFamilyName: (() -> @IntentionFamilyName String)? = null
-): AbstractKotlinApplicatorBuilder<PSI, INPUT>(reportingClass, isApplicableByPsi, getActionName, getFamilyName) {
+    getFamilyName: (() -> @IntentionFamilyName String)? = null,
+    getStartInWriteAction: () -> Boolean = { true },
+): AbstractKotlinApplicatorBuilder<PSI, INPUT>(reportingClass, isApplicableByPsi, getActionName, getFamilyName, getStartInWriteAction) {
 
     @OptIn(PrivateForInline::class)
     fun applyToWithEditorRequired(doApply: (PSI, INPUT, Project, Editor) -> Unit) {
@@ -265,7 +282,8 @@ class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> i
             applyTo = applyTo,
             isApplicableByPsi = isApplicableByPsi,
             getActionName = getActionName,
-            getFamilyName = getFamilyName
+            getFamilyName = getFamilyName,
+            getStartInWriteAction = getStartInWriteAction
         )
     }
 }

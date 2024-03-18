@@ -36,16 +36,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   private ExternalAnnotator<?, ?> myExternalAnnotator;
 
   /**
-   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public AnnotationHolderImpl(@NotNull AnnotationSession session) {
-    this(session, false);
-    PluginException.reportDeprecatedUsage("AnnotationHolderImpl(AnnotationSession)", "Please use the AnnotationHolder passed to Annotator.annotate() instead");
-  }
-
-  /**
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided via {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
   @ApiStatus.Internal
@@ -206,11 +196,16 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @Override
   public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
-    return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+    return createBuilder(severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
   @Override
   public @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+    return createBuilder(severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+  }
+
+  @NotNull
+  protected B createBuilder(@NotNull HighlightSeverity severity, @Nls String message, PsiElement currentElement, Object currentAnnotator) {
+    return new B(this, severity, message, currentElement, currentAnnotator);
   }
 
   PsiElement myCurrentElement;

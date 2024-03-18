@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -33,11 +34,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
@@ -47,9 +48,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import java.time.Instant
@@ -334,7 +333,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
 
-      if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+      if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
         trimToSize(fileToIgnore = file, transferFocus = false)
       }
 
@@ -342,7 +341,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     owner.updateFileColorAsync(composite.file)
-    if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+    if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
       if (options.selectAsCurrent) {
         setSelectedComposite(composite, options.requestFocus)
       }
@@ -351,9 +350,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
   }
 
-  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite) {
+  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite, requestFocus: Boolean) {
     composite.selectedEditor?.selectNotify()
-    setSelectedComposite(composite = composite, focusEditor = true)
+    setSelectedComposite(composite = composite, focusEditor = requestFocus)
     updateTabsVisibility()
     owner.validate()
   }
@@ -636,7 +635,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         parent.revalidate()
         currentFocusComponent?.requestFocusInWindow()
       }
-      else -> throw IllegalStateException("Unknown container: $parent")
+      else -> LOG.error("Unknown container: $parent")
     }
     dispose()
   }
@@ -688,20 +687,46 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       IdeGlassPaneUtil.find(component).addPainter(component, painter, disposable)
     }
-    component.repaint()
-    component.isFocusable = true
-    component.grabFocus()
-    component.focusTraversalKeysEnabled = false
+
+    // editor size can change when we increase tool window size using mouse or due to some other reasons
+    // we need to adapt the painter size accordingly
+    val updatePainterSizeOnTabbedPaneResizeListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        painter.updateRectangleAndRepaint()
+      }
+    }
+    component.addComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
+
+    //Reminder about UI components hierarchy:
+    //    EditorsSplitters
+    //    |-- EditorTabs                    // `tabbedPane.component` OR `component`
+    //        |-- EditorWindowTopComponent  //
+    //            |-- EditorCompositePanel  // `tabbedPane.getSelectedComposite()`
+    //                |-- JPanel            // `componentToFocus`
+    //                    |-- PsiAwareTextEditorComponent
+    //
+    //assuming that it's safe to `!!`, if `showSplitChooser` is called, we expect that selected editor exists and it's not null
+    val editorComposite: EditorComposite = tabbedPane.getSelectedComposite()!!
+    val componentToFocus: JComponent = editorComposite.component.getComponent(0) as JComponent
+
+    componentToFocus.repaint()
+    componentToFocus.isFocusable = true
+    componentToFocus.grabFocus()
+    componentToFocus.focusTraversalKeysEnabled = false
+
     val focusAdapter = object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
-        component.removeFocusListener(this)
+        component.removeComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
+
+        componentToFocus.removeFocusListener(this)
         val splitterService = SplitterService.getInstance(project)
         if (splitterService.activeWindow == this@EditorWindow) {
           splitterService.stopSplitChooser(true)
         }
       }
     }
-    component.addFocusListener(focusAdapter)
+    componentToFocus.addFocusListener(focusAdapter)
+
     return object : SplitChooser {
       override val position: RelativePosition
         get() = painter.position
@@ -711,10 +736,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
 
       override fun dispose() {
+        component.removeComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
+
         painter.rectangle = null
-        component.removeFocusListener(focusAdapter)
-        component.isFocusable = false
-        component.repaint()
+        componentToFocus.removeFocusListener(focusAdapter)
+        componentToFocus.isFocusable = false
+        componentToFocus.repaint()
         Disposer.dispose(disposable)
       }
     }
@@ -852,12 +879,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
   fun isFilePinned(file: VirtualFile): Boolean {
-    return requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }.isPinned
+    return requireNotNull(getComposite(file)) { "file is not open: $file" }.isPinned
   }
 
   fun setFilePinned(file: VirtualFile, pinned: Boolean) {
-    val composite = requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }
-    setFilePinned(composite, pinned)
+    setFilePinned(composite = requireNotNull(getComposite(file)) { "file is not open: $file" }, pinned = pinned)
   }
 
   internal fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
@@ -1199,6 +1225,11 @@ private class MySplitPainter(
 
     showInfoPanel = false
     this.position = position
+
+    updateRectangleAndRepaint()
+  }
+
+  internal fun updateRectangleAndRepaint() {
     rectangle = null
     setNeedsRepaint(true)
     val r = tabbedPane.tabs.dropArea

@@ -6,9 +6,8 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.markdown.parser.LinkMap
-import java.net.URI
 
-internal class ReferenceLinksGeneratingProvider(private val linkMap: LinkMap, baseURI: URI?): LinkGeneratingProvider(baseURI) {
+internal class ReferenceLinksGeneratingProvider(private val linkMap: LinkMap): LinkGeneratingProvider() {
   override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
     val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL } ?: return null
     val linkInfo = linkMap.getLinkInfo(label.getTextInNode(text)) ?: return null

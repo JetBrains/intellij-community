@@ -25,7 +25,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantSubexpressionIntention extends MCIntention {
+public final class ConstantSubexpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

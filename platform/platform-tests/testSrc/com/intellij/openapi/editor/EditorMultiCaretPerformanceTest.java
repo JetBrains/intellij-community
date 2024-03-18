@@ -26,11 +26,11 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
     int charactersToType = 100;
     String initialText = StringUtil.repeat("<caret>\n", caretCount);
     initText(initialText);
-    PlatformTestUtil.startPerformanceTest("Typing with large number of carets", 100_000, () -> {
+    PlatformTestUtil.newPerformanceTest("Typing with large number of carets", () -> {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     checkResultByText(StringUtil.repeat(StringUtil.repeat("a", charactersToType) + "<caret>\n", caretCount));
   }
 
@@ -44,11 +44,11 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
         addFoldRegion(getEditor().getDocument().getLineStartOffset(i), getEditor().getDocument().getLineEndOffset(i), "...");
       }
     });
-    PlatformTestUtil.startPerformanceTest("Typing with large number of carets with a lot of fold regions", 150_000, () -> {
+    PlatformTestUtil.newPerformanceTest("Typing with large number of carets with a lot of fold regions", () -> {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount));
   }
 
@@ -57,11 +57,11 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
     int charactersToType = 100;
     String initialText = "<root>\n" + StringUtil.repeat("  <node><caret></node>\n", caretCount) + "</root>";
     init(initialText, StdFileTypes.XML);
-    PlatformTestUtil.startPerformanceTest("Typing in XML with large number of carets", 100_000, () -> {
+    PlatformTestUtil.newPerformanceTest("Typing in XML with large number of carets", () -> {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     checkResultByText("<root>\n" + StringUtil.repeat("  <node>" + StringUtil.repeat("a", charactersToType) + "<caret></node>\n", caretCount)
                       + "</root>");
   }

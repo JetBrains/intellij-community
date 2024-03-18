@@ -1,7 +1,7 @@
 package to
 
-import a.A
+import a.A.Companion.f
 
 fun g() {
-    A.f()
+    f()
 }

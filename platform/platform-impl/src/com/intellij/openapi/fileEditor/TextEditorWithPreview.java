@@ -9,11 +9,11 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -59,6 +59,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PR
  * @author Konstantin Bulenkov
  */
 public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
+  private static final Key<TextEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   protected final TextEditor myEditor;
   protected final FileEditor myPreview;
   private final @NotNull MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
@@ -81,6 +82,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myName = editorName;
     myDefaultLayout = ObjectUtils.notNull(getLayoutForFile(myEditor.getFile()), defaultLayout);
     myIsVerticalSplit = isVerticalSplit;
+    editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
+    preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor,
@@ -233,6 +236,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
         myLayout = compositeState.getSplitLayout();
         invalidateLayout();
       }
+      setVerticalSplit(compositeState.isVerticalSplit());
     }
   }
 
@@ -287,7 +291,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   @Override
   public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return new MyFileEditorState(myLayout, myEditor.getState(level), myPreview.getState(level));
+    return new MyFileEditorState(myLayout, myEditor.getState(level), myPreview.getState(level), isVerticalSplit());
   }
 
   @Override
@@ -328,11 +332,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     private final Layout mySplitLayout;
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
+    private final boolean myVerticalSplit;
 
-    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState, boolean verticalSplit) {
       mySplitLayout = layout;
       myFirstState = firstState;
       mySecondState = secondState;
+      myVerticalSplit = verticalSplit;
+    }
+
+    /**
+     * @deprecated Use {@link #MyFileEditorState(Layout, FileEditorState, FileEditorState, boolean)}
+     */
+    @Deprecated
+    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+      this(layout, firstState, secondState, false);
     }
 
     public @Nullable Layout getSplitLayout() {
@@ -345,6 +359,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     public @Nullable FileEditorState getSecondState() {
       return mySecondState;
+    }
+
+    public boolean isVerticalSplit() {
+      return myVerticalSplit;
     }
 
     @Override
@@ -467,15 +485,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   protected @NotNull ToggleAction getShowEditorAction() {
-    return new ChangeViewModeAction(Layout.SHOW_EDITOR);
-  }
-
-  protected @NotNull ToggleAction getShowPreviewAction() {
-    return new ChangeViewModeAction(Layout.SHOW_PREVIEW);
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.EditorOnly"));
   }
 
   protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
-    return new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW);
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.EditorAndPreview"));
+  }
+
+  protected @NotNull ToggleAction getShowPreviewAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.PreviewOnly"));
   }
 
   public enum Layout {
@@ -521,43 +539,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private final class ChangeViewModeAction extends ToggleAction implements DumbAware {
-    private final Layout myActionLayout;
-
-    ChangeViewModeAction(Layout layout) {
-      super(layout.getName(), layout.getName(), layout.getIcon(TextEditorWithPreview.this));
-      myActionLayout = layout;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myLayout == myActionLayout;
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state) {
-        setLayout(myActionLayout);
-      }
-      else {
-        if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
-          mySplitter.setOrientation(!myIsVerticalSplit);
-          myIsVerticalSplit = !myIsVerticalSplit;
-        }
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
-    }
-  }
-
   private static final class ConditionalActionGroup extends ActionGroup {
     private final AnAction[] myActions;
     private final Supplier<Boolean> myCondition;
@@ -569,7 +550,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      return myCondition.get() ? myActions : AnAction.EMPTY_ARRAY;
+      return myCondition.get() ? myActions : EMPTY_ARRAY;
     }
   }
 
@@ -613,6 +594,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   public static FileEditor @NotNull [] openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
     file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
     return FileEditorManager.getInstance(project).openFile(file, true);
+  }
+
+  public static TextEditorWithPreview getParentSplitEditor(@Nullable FileEditor fileEditor) {
+    return fileEditor instanceof TextEditorWithPreview ? (TextEditorWithPreview)fileEditor : PARENT_SPLIT_EDITOR_KEY.get(fileEditor);
   }
 
   private static final class MyEditorLayeredComponentWrapper extends JBLayeredPane {

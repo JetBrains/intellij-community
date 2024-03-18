@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseInspection {
+public final class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -48,7 +48,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
   }
 
   @Nullable
-  protected static PsiMethod getNoArgConstructor(PsiMethod[] constructors) {
+  private static PsiMethod getNoArgConstructor(PsiMethod[] constructors) {
     for (PsiMethod constructor : constructors) {
       final PsiParameterList parameterList = constructor.getParameterList();
       if (parameterList.isEmpty()) {

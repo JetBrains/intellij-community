@@ -6,10 +6,12 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
+@Service(Service.Level.PROJECT)
 class KotlinPluginDisposable : Disposable {
     @Volatile
     var disposed: Boolean = false

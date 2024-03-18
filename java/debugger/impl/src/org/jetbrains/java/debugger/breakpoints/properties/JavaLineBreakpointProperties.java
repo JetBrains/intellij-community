@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,12 +19,30 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
 
   private static final int COND_RET_CODE = -10;
 
+  /**
+   * Represents a position for breakpoint in the current method (not in lambda).
+   * @see #getLambdaOrdinal()
+   */
+  public static final int NO_LAMBDA = -1;
+
+  /**
+   * Encoded inline position for the case when we want to stop on the first statement on the line.
+   * @see #encodeInlinePosition
+   */
+  private static final int BASIC_LINE_POSITION = encodeInlinePosition(NO_LAMBDA, false);
+
+
   public static int encodeInlinePosition(int lambdaOrdinal, boolean conditionalReturn) {
     return !conditionalReturn
            ? lambdaOrdinal
            : COND_RET_CODE - lambdaOrdinal - 1;
   }
 
+  /**
+   * @return <code>null</code>, if it should suspend on all lambdas and basic line;<br>
+   * {@link #NO_LAMBDA}, if it should suspend only on the basic line;<br>
+   * positive value, if it should suspend inside the lambda with the ordinal
+   */
   @Transient
   public @Nullable Integer getLambdaOrdinal() {
     if (encodedInlinePosition == null) {
@@ -36,6 +56,29 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     return encodedInlinePosition != null && encodedInlinePosition <= COND_RET_CODE;
   }
 
+  /**
+   * @return true iff suspends on the basic line position (including 'all' variants)
+   */
+  public static boolean isLinePosition(Integer encodedInlinePosition) {
+    return encodedInlinePosition == null || encodedInlinePosition == BASIC_LINE_POSITION;
+  }
+
+  /**
+   * @see #isLinePosition(Integer)
+   */
+  public boolean isLinePosition() {
+    return isLinePosition(encodedInlinePosition);
+  }
+
+  public boolean isInLambda() {
+    Integer lambdaOrdinal = getLambdaOrdinal();
+    return lambdaOrdinal != null && lambdaOrdinal != NO_LAMBDA;
+  }
+
+  public boolean isLineAndLambdas() {
+    return encodedInlinePosition == null;
+  }
+
   @OptionTag("lambda-ordinal") // naming is a historic accident
   public @Nullable Integer getEncodedInlinePosition() {
     return encodedInlinePosition;
@@ -45,15 +88,6 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     encodedInlinePosition = inlinePositionEncoded;
   }
 
-  /**
-   * @deprecated this method is only for backward compatibility,
-   *             use {@link #setEncodedInlinePosition(Integer)}
-   */
-  @Deprecated(forRemoval = true)
-  public void setLambdaOrdinal(Integer lambdaOrdinal) {
-    setEncodedInlinePosition(lambdaOrdinal);
-  }
-
   @Override
   public void loadState(@NotNull JavaLineBreakpointProperties state) {
     super.loadState(state);
@@ -61,4 +95,23 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     encodedInlinePosition = state.encodedInlinePosition;
   }
 
+  @Nls
+  @NotNull
+  public static String getGeneralDescription(JavaLineBreakpointProperties props) {
+    // These properties are immutable, could not be changed after breakpoint creation, so we treat them specially,
+    // compared to other ones (e.g., WATCH_*** for JavaFieldBreakpointProperties).
+
+    if (props != null) {
+      if (props.isConditionalReturn()) {
+        return JavaDebuggerBundle.message("line.breakpoint.description.conditional.return");
+      }
+      if (props.isInLambda()) {
+        return JavaDebuggerBundle.message("line.breakpoint.description.lambda");
+      }
+      if (props.isLineAndLambdas()) {
+        return JavaDebuggerBundle.message("line.breakpoint.description.line.and.lambdas");
+      }
+    }
+    return JavaDebuggerBundle.message("line.breakpoint.description.basic.line");
+  }
 }

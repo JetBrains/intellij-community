@@ -57,7 +57,10 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-9107+")
+    /*
+    Waiting for compilerOptions API to come back
+     */
+    @PluginTargetVersions(pluginVersion = "2.0.0-dev+")
     @Test
     fun testSingleTargetConfiguration() {
         doTest()
@@ -100,7 +103,10 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-9107+")
+    /*
+    Waiting for compilerOptions API to come back
+    */
+    @PluginTargetVersions(pluginVersion = "2.0.0-dev+")
     @Test
     fun testCompilerOptionsInProjectAndTarget() {
         doTest()

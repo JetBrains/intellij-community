@@ -14,7 +14,11 @@ import org.jetbrains.kotlin.psi.KtFile
 abstract class AbstractKotlinModuleModificationEventTest<TRACKER : ModuleModificationEventTracker> : AbstractKotlinModificationEventTest<TRACKER>() {
     protected abstract fun constructTracker(module: KtModule): TRACKER
 
-    protected fun createTracker(module: KtModule): TRACKER = constructTracker(module).apply { initialize() }
+    /**
+     * Creates and initializes a tracker to track module modification events. The tracker will be disposed with the test root disposable and
+     * does not need to be disposed manually.
+     */
+    protected fun createTracker(module: KtModule): TRACKER = constructTracker(module).apply { initialize(testRootDisposable) }
 
     protected fun createTracker(module: Module): TRACKER = createTracker(module.productionSourceInfo!!.toKtModule())
 

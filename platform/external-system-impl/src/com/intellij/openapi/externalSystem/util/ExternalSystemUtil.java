@@ -19,6 +19,7 @@ import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -86,7 +87,9 @@ import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -322,7 +325,8 @@ public final class ExternalSystemUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         var activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
-          executeSync(externalProjectPath, importSpec, resolveProjectTask, indicator);
+          ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncProjectTask",
+                                                  (ignore) -> executeSync(externalProjectPath, importSpec, resolveProjectTask, indicator));
         }
         finally {
           activity.finished();
@@ -464,7 +468,9 @@ public final class ExternalSystemUtil {
       resolveProjectTask.execute(indicator, taskListener);
       var endTS = System.currentTimeMillis();
       LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
-      handleSyncResult(externalProjectPath, importSpec, resolveProjectTask, eventDispatcher, finishSyncEventSupplier);
+      ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncResultProcessing",
+                                              (ignore) -> handleSyncResult(externalProjectPath, importSpec, resolveProjectTask,
+                                                                         eventDispatcher, finishSyncEventSupplier));
     }
   }
 
@@ -869,67 +875,19 @@ public final class ExternalSystemUtil {
     ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, progressExecutionMode, new ExternalSystemTaskUnderProgress() {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        environment.putUserData(ExternalSystemRunnableState.PROGRESS_INDICATOR_KEY, indicator);
         indicator.setIndeterminate(true);
-        var targetDone = new Semaphore();
-        var result = new Ref<>(false);
-        var disposable = Disposer.newDisposable();
 
-        project.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-          @Override
-          public void processStartScheduled(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
-            if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-              targetDone.down();
-            }
-          }
-
-          @Override
-          public void processNotStarted(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
-            if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-              targetDone.up();
-            }
-          }
-
-          @Override
-          public void processTerminated(@NotNull String executorIdLocal,
-                                        @NotNull ExecutionEnvironment environmentLocal,
-                                        @NotNull ProcessHandler handler,
-                                        int exitCode) {
-            if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-              result.set(exitCode == 0);
-              targetDone.up();
-            }
-          }
-        });
-
-        try {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            try {
-              environment.getRunner().execute(environment);
-            }
-            catch (ExecutionException e) {
-              targetDone.up();
-              LOG.error(e);
-            }
-          }, ModalityState.defaultModalityState());
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          Disposer.dispose(disposable);
-          return;
-        }
-
-        targetDone.waitFor();
-        Disposer.dispose(disposable);
-
+        boolean result = waitForProcessExecution(project, environment, () -> environment.getRunner().execute(environment));
         if (callback != null) {
-          if (result.get()) {
+          if (result) {
             callback.onSuccess();
           }
           else {
             callback.onFailure();
           }
         }
-        if (!result.get()) {
+        if (!result) {
           ApplicationManager.getApplication().invokeLater(() -> {
             var window = ToolWindowManager.getInstance(project).getToolWindow(environment.getExecutor().getToolWindowId());
             if (window != null) {
@@ -1129,6 +1087,65 @@ public final class ExternalSystemUtil {
             || ApplicationManager.getApplication().isHeadlessEnvironment() && !PlatformUtils.isFleetBackend());
   }
 
+  @RequiresBackgroundThread
+  private static boolean waitForProcessExecution(
+    @NotNull Project project,
+    @NotNull ExecutionEnvironment environment,
+    @NotNull ThrowableRunnable<ExecutionException> runnable
+  ) {
+    try (var disposable = new AutoCloseableDisposable()) {
+      var targetDone = new Semaphore();
+      var result = new Ref<>(false);
+
+      var executorId = environment.getExecutor().getId();
+      project.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+        @Override
+        public void processStartScheduled(@NotNull String executorIdLocal, @NotNull ExecutionEnvironment environmentLocal) {
+          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            targetDone.down();
+          }
+        }
+
+        @Override
+        public void processNotStarted(@NotNull String executorIdLocal, @NotNull ExecutionEnvironment environmentLocal) {
+          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            targetDone.up();
+          }
+        }
+
+        @Override
+        public void processTerminated(
+          @NotNull String executorIdLocal,
+          @NotNull ExecutionEnvironment environmentLocal,
+          @NotNull ProcessHandler handler,
+          int exitCode
+        ) {
+          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            result.set(exitCode == 0);
+            targetDone.up();
+          }
+        }
+      });
+      try {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          try {
+            runnable.run();
+          }
+          catch (ExecutionException e) {
+            targetDone.up();
+            LOG.error(e);
+          }
+        }, ModalityState.defaultModalityState());
+      }
+      catch (Exception e) {
+        targetDone.up();
+        LOG.error(e);
+      }
+      targetDone.waitFor();
+      return result.get();
+    }
+  }
+
   private static final class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
 
@@ -1147,6 +1164,17 @@ public final class ExternalSystemUtil {
     @Override
     public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
       LOG.warn(errorMessage + "\n" + errorDetails);
+    }
+  }
+
+  private static class AutoCloseableDisposable implements AutoCloseable, Disposable {
+
+    @Override
+    public void dispose() { }
+
+    @Override
+    public void close() {
+      Disposer.dispose(this);
     }
   }
 }

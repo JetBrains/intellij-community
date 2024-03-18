@@ -18,12 +18,14 @@ package com.jetbrains.extensions
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.PyPsiFacade
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * @author Ilya.Kazakevich
+ * @deprecated moved to {@link com.jetbrains.python.extensions}
  */
-
-fun PsiFileSystemItem.getQName(): QualifiedName?  {
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Moved to com.jetbrains.python.extensions")
+fun PsiFileSystemItem.getQName(): QualifiedName? {
   val name = PyPsiFacade.getInstance(this.project).findShortestImportableName(this.virtualFile, this) ?: return null
   return QualifiedName.fromDottedString(name)
 }

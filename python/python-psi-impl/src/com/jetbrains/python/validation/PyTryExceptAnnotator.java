@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyTryExceptAnnotator extends PyAnnotator {
+public final class PyTryExceptAnnotator extends PyAnnotator {
   @Override
   public void visitPyTryExceptStatement(@NotNull PyTryExceptStatement node) {
     boolean haveStar = false;

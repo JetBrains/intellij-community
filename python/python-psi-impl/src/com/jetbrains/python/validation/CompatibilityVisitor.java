@@ -3,9 +3,10 @@ package com.jetbrains.python.validation;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.*;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * User : catherine
@@ -428,25 +426,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
     super.visitPyYieldExpression(node);
-
-    Optional
-      .ofNullable(ScopeUtil.getScopeOwner(node))
-      .map(owner -> PyUtil.as(owner, PyFunction.class))
-      .filter(function -> function.isAsync() && function.isAsyncAllowed())
-      .ifPresent(
-        function -> {
-          if (!node.isDelegating() &&
-              registerForLanguageLevel(LanguageLevel.PYTHON35) &&
-              myVersionsToProcess.contains(LanguageLevel.PYTHON35)) {
-            registerProblem(node, PyPsiBundle.message("INSP.compatibility.py35.does.not.support.yield.inside.async.functions"));
-          }
-        }
-      );
-
     if (!node.isDelegating()) {
       return;
     }
-
     registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.yield.from"),
                                    node);
@@ -662,37 +644,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
-    super.visitPyComprehensionElement(node);
-
-    if (registerForLanguageLevel(LanguageLevel.PYTHON35) && myVersionsToProcess.contains(LanguageLevel.PYTHON35)) {
-      Arrays
-        .stream(node.getNode().getChildren(TokenSet.create(PyTokenTypes.ASYNC_KEYWORD)))
-        .filter(Objects::nonNull)
-        .map(ASTNode::getPsi)
-        .forEach(element -> registerProblem(element,
-                                            PyPsiBundle.message("INSP.compatibility.py35.does.not.support.async.inside.comprehensions.and.generator.expressions")));
-
-      final Stream<PyPrefixExpression> resultPrefixExpressions = PsiTreeUtil
-        .collectElementsOfType(node.getResultExpression(), PyPrefixExpression.class)
-        .stream();
-
-      final Stream<PyPrefixExpression> ifComponentsPrefixExpressions = node.getIfComponents()
-        .stream()
-        .map(ifComponent -> PsiTreeUtil.collectElementsOfType(ifComponent.getTest(), PyPrefixExpression.class))
-        .flatMap(Collection::stream);
-
-      Stream.concat(resultPrefixExpressions, ifComponentsPrefixExpressions)
-        .filter(expression -> expression.getOperator() == PyTokenTypes.AWAIT_KEYWORD && expression.getOperand() != null)
-        .map(expression -> expression.getNode().findChildByType(PyTokenTypes.AWAIT_KEYWORD))
-        .filter(Objects::nonNull)
-        .map(ASTNode::getPsi)
-        .forEach(element -> registerProblem(element,
-                                            PyPsiBundle.message("INSP.compatibility.py35.does.not.support.await.inside.comprehensions")));
-    }
-  }
-
-  @Override
   public void visitPySlashParameter(@NotNull PySlashParameter node) {
     super.visitPySlashParameter(node);
 
@@ -875,19 +826,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  private static class ReplaceWithOldStyleUnionQuickFix implements LocalQuickFix {
+  private static class ReplaceWithOldStyleUnionQuickFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.replace.with.old.union.style");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiFile file = element.getContainingFile();
       if (file == null) return;
 
-      final PsiElement descriptorElement = descriptor.getPsiElement();
-      if (!(descriptorElement instanceof PyBinaryExpression expression)) return;
+      if (!(element instanceof PyBinaryExpression expression)) return;
 
       final List<String> types = collectUnionTypes(expression);
       final LanguageLevel languageLevel = LanguageLevel.forElement(file);
@@ -936,15 +886,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  private static class AddFromFutureImportAnnotationsQuickFix implements LocalQuickFix {
+  private static class AddFromFutureImportAnnotationsQuickFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.add.from.future.import.annotations");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiFile file = element.getContainingFile();
       AddImportHelper.addOrUpdateFromImportStatement(file, "__future__", "annotations", null, AddImportHelper.ImportPriority.FUTURE, null);
     }
   }

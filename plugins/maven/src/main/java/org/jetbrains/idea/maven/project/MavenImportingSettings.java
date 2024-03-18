@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
@@ -172,7 +173,12 @@ public class MavenImportingSettings implements Cloneable {
 
   @ApiStatus.Internal
   public boolean isWorkspaceImportEnabled() {
-    return useWorkspaceImport;
+    return useWorkspaceImport || !isNonWorkspaceImportAvailable();
+  }
+
+  @ApiStatus.Internal
+  public boolean isNonWorkspaceImportAvailable() {
+    return Registry.is("maven.legacy.import.available");
   }
 
   @ApiStatus.Internal

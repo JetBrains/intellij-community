@@ -21,6 +21,11 @@ public interface CodeConstants {
   int BYTECODE_JAVA_15 = 59;
   int BYTECODE_JAVA_16 = 60;
   int BYTECODE_JAVA_17 = 61;
+  int BYTECODE_JAVA_18 = 62;
+  int BYTECODE_JAVA_19 = 63;
+  int BYTECODE_JAVA_20 = 64;
+  int BYTECODE_JAVA_21 = 65;
+  int BYTECODE_JAVA_22 = 66;
 
   // ----------------------------------------------------------------------
   // VARIABLE TYPES

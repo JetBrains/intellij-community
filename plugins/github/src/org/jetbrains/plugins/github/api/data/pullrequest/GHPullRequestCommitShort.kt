@@ -4,5 +4,9 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 import org.jetbrains.plugins.github.api.data.GHCommitShort
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import java.util.*
 
-class GHPullRequestCommitShort(id: String, val commit: GHCommitShort, val url: String) : GHNode(id), GHPRTimelineItem
+data class GHPullRequestCommitShort(override val id: String, val commit: GHCommitShort, val url: String) : GHNode(id), GHPRTimelineItem {
+  override val createdAt: Date?
+    get() = null
+}

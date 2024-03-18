@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.google.common.collect.Lists;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.history.ActivityId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -53,6 +54,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -86,6 +88,7 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWith
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 
+@Service(Service.Level.PROJECT)
 @State(name = "ShelveChangesManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ShelveChangesManager implements PersistentStateComponent<Element> {
   public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf"; //NON-NLS
@@ -498,7 +501,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
     runWithSpan(myTracer, Shelve.RollbackAfterShelve.getName(), (__) -> {
       new RollbackWorker(myProject, operationName, modalContext)
-        .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
+        .doRollback(changes, true, null, VcsBundle.message("activity.name.shelve"), VcsActivity.Shelve, honorExcludedFromCommit);
     });
   }
 
@@ -661,6 +664,22 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                              @NlsContexts.Label String leftConflictTitle,
                                              @NlsContexts.Label String rightConflictTitle,
                                              boolean removeFilesFromShelf) {
+    return unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, systemOperation, reverse,
+                              leftConflictTitle, rightConflictTitle, removeFilesFromShelf, true);
+  }
+
+  @CalledInAny
+  public ApplyPatchStatus unshelveChangeList(final ShelvedChangeList changeList,
+                                             final @Nullable List<ShelvedChange> changes,
+                                             final @Nullable List<ShelvedBinaryFile> binaryFiles,
+                                             final @Nullable LocalChangeList targetChangeList,
+                                             final boolean showSuccessNotification,
+                                             final boolean systemOperation,
+                                             final boolean reverse,
+                                             @NlsContexts.Label String leftConflictTitle,
+                                             @NlsContexts.Label String rightConflictTitle,
+                                             boolean removeFilesFromShelf,
+                                             boolean reportLocalHistoryActivity) {
     List<FilePatch> remainingPatches = new ArrayList<>();
 
     CommitContext commitContext = new CommitContext();
@@ -686,9 +705,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
 
     VirtualFile baseDir = LocalFileSystem.getInstance().findFileByNioFile(ProjectKt.getStateStore(myProject).getProjectBasePath());
+    ActivityId activityId = reportLocalHistoryActivity ? VcsActivity.Unshelve : null;
     PatchApplier patchApplier = new PatchApplier(myProject, baseDir,
                                                  patches, targetChangeList, commitContext, reverse, leftConflictTitle,
-                                                 rightConflictTitle);
+                                                 rightConflictTitle, VcsBundle.message("activity.name.unshelve"), activityId);
     ApplyPatchStatus status = patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());

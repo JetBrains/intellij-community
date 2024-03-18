@@ -10,7 +10,7 @@ import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -57,11 +57,20 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
 
   val selectorVm: GHRepositoryAndAccountSelectorViewModel by lazy {
     val vm = GHRepositoryAndAccountSelectorViewModel(cs, repositoriesManager, accountManager, ::connect)
-    settings.selectedRepoAndAccount?.let { (repo, account) ->
-      with(vm) {
-        repoSelectionState.value = repo
-        accountSelectionState.value = account
-        submitSelection()
+    cs.launchNow {
+      repositoriesManager.knownRepositoriesState.collectLatest { repos ->
+        if (connectionManager.connectionState.value != null) {
+          return@collectLatest
+        }
+        val (url, account) = settings.selectedUrlAndAccount ?: return@collectLatest
+        val repo = repos.find {
+          it.remote.url == url
+        } ?: return@collectLatest
+        with(vm) {
+          repoSelectionState.value = repo
+          accountSelectionState.value = account
+          submitSelection()
+        }
       }
     }
 
@@ -83,13 +92,13 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
   private suspend fun connect(repo: GHGitRepositoryMapping, account: GithubAccount) {
     withContext(cs.coroutineContext) {
       connectionManager.openConnection(repo, account)
-      settings.selectedRepoAndAccount = repo to account
+      settings.selectedUrlAndAccount = repo.remote.url to account
     }
   }
 
   override val projectVm: StateFlow<GHPRToolWindowProjectViewModel?> by lazy {
     project.service<GHRepositoryConnectionManager>().connectionState
-      .mapScoped { ctx -> ctx?.let { GHPRToolWindowProjectViewModel(project, this, it) } }
+      .mapScoped { ctx -> ctx?.let { GHPRToolWindowProjectViewModel(project, this, this@GHPRToolWindowViewModel, it) } }
       .stateIn(cs, SharingStarted.Lazily, null)
   }
 
@@ -97,7 +106,7 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
 
   fun resetRemoteAndAccount() {
     cs.launch {
-      settings.selectedRepoAndAccount = null
+      settings.selectedUrlAndAccount = null
       connectionManager.closeConnection()
     }
   }
@@ -111,5 +120,10 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
       _activationRequests.emit(Unit)
       projectVm.filterNotNull().first().action()
     }
+  }
+
+  fun loginIfPossible() {
+    // init selector, so that auto-login is done automatically
+    selectorVm
   }
 }

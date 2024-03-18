@@ -21,7 +21,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 
 import javax.swing.*;
 import java.io.File;
@@ -216,7 +215,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
-    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding would be incorrect
+    assertEquals("JAVA", file.getFileType().getName()); // otherwise, the folding would be incorrect
     FileEditor[] editors = manager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
@@ -250,7 +249,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(), myFixture.getTestRootDisposable());
     VirtualFile createdFile = DumbModeTestUtils.computeInDumbModeSynchronously(getProject(), () -> {
-      VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+      VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
       FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
       return file;
@@ -275,7 +274,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testHideDefaultEditor() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
@@ -307,7 +306,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testHideOtherEditors() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());

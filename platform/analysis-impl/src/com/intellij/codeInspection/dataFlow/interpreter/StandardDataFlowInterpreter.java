@@ -22,10 +22,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Standard interpreter implementation
@@ -38,13 +35,14 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
    */
   public static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
   private static final Logger LOG = Logger.getInstance(StandardDataFlowInterpreter.class);
-  private final @NotNull ControlFlow myFlow;
+  final @NotNull ControlFlow myFlow;
   private final Instruction @NotNull [] myInstructions;
   private final @NotNull DfaListener myListener;
   private final @NotNull MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   private final @NotNull PsiElement myPsiAnchor;
   private final @NotNull DfaValueFactory myValueFactory;
   private final boolean myStopOnNull;
+  private final boolean myStopOnCast;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
 
@@ -55,12 +53,20 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   public StandardDataFlowInterpreter(@NotNull ControlFlow flow,
                                      @NotNull DfaListener listener,
                                      boolean stopOnNull) {
+    this(flow, listener, stopOnNull, false);
+  }
+
+  public StandardDataFlowInterpreter(@NotNull ControlFlow flow,
+                                     @NotNull DfaListener listener,
+                                     boolean stopOnNull, 
+                                     boolean stopOnCast) {
     myFlow = flow;
     myInstructions = flow.getInstructions();
     myListener = listener;
     myPsiAnchor = flow.getPsiAnchor();
     myValueFactory = flow.getFactory();
     myStopOnNull = stopOnNull;
+    myStopOnCast = stopOnCast;
   }
 
   @Override
@@ -344,6 +350,14 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
    */
   public boolean stopOnNull() {
     return myStopOnNull;
+  }
+
+  /**
+   * @return true if analysis should stop when impossible cast happens
+   * If false, the analysis will be continued
+   */
+  public boolean stopOnCast() {
+    return myStopOnCast;
   }
 
   private void reportDfaProblem(@Nullable DfaInstructionState lastInstructionState, @NotNull Throwable e) {

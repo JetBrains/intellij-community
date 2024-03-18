@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
@@ -8,12 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
-import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
@@ -36,8 +33,10 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   private lateinit var testDisposable: Disposable
 
-  override val project: Project get() = _project
-  override val module: Module get() = project.modules.single { it.name == project.name }
+  override val project: Project
+    get() = _project
+  override val module: Module
+    get() = project.modules.single { it.name == project.name }
 
   constructor(
     projectName: String,
@@ -63,12 +62,19 @@ internal class GradleProjectTestFixtureImpl private constructor(
     installGradleProjectReloadWatcher()
 
     _project = runBlocking { openProjectAsync(fileFixture.root) }
+    IndexingTestUtil.waitUntilIndexesAreReady(_project)
   }
 
   override fun tearDown() {
     runAll(
       { runBlocking { fileFixture.root.refreshAndAwait() } },
-      { runBlocking { project.closeProjectAsync() } },
+      {
+        runBlocking {
+          if (this@GradleProjectTestFixtureImpl::_project.isInitialized) {
+            _project.closeProjectAsync()
+          }
+        }
+      },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }

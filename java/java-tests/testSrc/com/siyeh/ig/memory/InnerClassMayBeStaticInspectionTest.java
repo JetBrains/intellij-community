@@ -30,6 +30,20 @@ public class InnerClassMayBeStaticInspectionTest extends LightJavaInspectionTest
     });
   }
 
+  public void testImplicitClassNoFix() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest();
+      checkQuickFixAll();
+    });
+  }
+
+  public void testNestedClassesImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest();
+      checkQuickFixAll();
+    });
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

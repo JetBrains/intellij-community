@@ -659,7 +659,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     }
     int end = injectedToHost(injected.getEndOffset(), true, true);
     if (end < start) {
-      end = injectedToHost(injected.getEndOffset(), false, true);
+      end = Math.max(start, injectedToHost(injected.getEndOffset(), false, true));
     }
     return new ProperTextRange(start, end);
   }

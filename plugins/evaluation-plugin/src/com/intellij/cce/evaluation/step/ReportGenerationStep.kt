@@ -122,16 +122,16 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     }.toMap()
     for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
-      var filePath = ""
-      var fileText = ""
+      var sessionsInfo: FileSessionsInfo? = null
       for (file in sessionFile.value) {
-        val sessionsInfo = sessionStorages[evaluationTitles.indexOf(file.evaluationType)].getSessions(file.path)
-        filePath = sessionsInfo.filePath
-        fileText = sessionsInfo.text
+        sessionsInfo = sessionStorages[evaluationTitles.indexOf(file.evaluationType)].getSessions(file.path)
         comparisonStorage.add(file.evaluationType, sessionsInfo.sessions)
       }
+      if (sessionsInfo == null) throw IllegalStateException("Sessions file doesn't exist")
       for (file in sessionFile.value) {
-        val sessionsEvaluation = FileSessionsInfo(filePath, fileText, comparisonStorage.get(file.evaluationType))
+        val sessionsEvaluation = FileSessionsInfo(
+          sessionsInfo.projectName, sessionsInfo.filePath, sessionsInfo.text, comparisonStorage.get(file.evaluationType)
+        )
         val metricsEvaluation = title2evaluator.getValue(file.evaluationType).evaluate(
           sessionsEvaluation.sessions)
         fileEvaluations.add(FileEvaluationInfo(sessionsEvaluation, metricsEvaluation, file.evaluationType))

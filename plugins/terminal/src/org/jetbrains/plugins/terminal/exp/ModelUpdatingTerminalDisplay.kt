@@ -9,9 +9,9 @@ import com.jediterm.terminal.TerminalDisplay
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalSelection
-import java.awt.Toolkit
 
-internal class ModelUpdatingTerminalDisplay(private val model: TerminalModel,
+internal class ModelUpdatingTerminalDisplay(private val alarmManager: TerminalAlarmManager,
+                                            private val model: TerminalModel,
                                             private val settings: JBTerminalSystemSettingsProviderBase) : TerminalDisplay {
 
   override fun setCursor(x: Int, y: Int) {
@@ -23,9 +23,7 @@ internal class ModelUpdatingTerminalDisplay(private val model: TerminalModel,
   }
 
   override fun beep() {
-    if (model.isCommandRunning && settings.audibleBell()) {
-      Toolkit.getDefaultToolkit().beep()
-    }
+    alarmManager.beep()
   }
 
   override fun onResize(newTermSize: TermSize, origin: RequestOrigin) {

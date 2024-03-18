@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.workspace.storage.metadata.StorageMetadata
 import com.intellij.platform.workspace.storage.metadata.extensions.metadataType
 
-private val LOG = logger<CacheMetadataComparator>()
+private val LOG = logger<TypesMetadataComparator>()
 
 internal class ComparisonsBuilder(private val log: MetadataComparatorLog) {
   internal var result: ComparisonResult = Equal
@@ -46,20 +46,7 @@ internal class ComparisonsBuilder(private val log: MetadataComparatorLog) {
       cache.allEquals { checker.areEquals(it, currentIterator.next()) }
     }
 
-  fun <T, K> compareSubset(metadataName: String, cacheSet: Iterable<T>, currentSet: Iterable<T>, checker: MetadataComparator<T>, keySelector: (T) -> K) =
-    updateResult(metadataName, cacheSet, currentSet) {
-      val keyToCurrent = currentSet.associateBy(keySelector)
-      cacheSet.allEquals { cache ->
-        val key = keySelector.invoke(cache)
-        val current = keyToCurrent[key] ?: return@allEquals createNotEqualResult(
-          "$key does not exist in the current version"
-        )
-
-        checker.areEquals(cache, current)
-      }
-    }
-
-  fun skipComparison(metadataName: String) {
+  private fun skipComparison(metadataName: String) {
     log.ignoreComparing(metadataName)
   }
 
@@ -85,14 +72,14 @@ internal class ComparisonsBuilder(private val log: MetadataComparatorLog) {
   }
 
 
-  private fun createNotEqualResult(metadataName: String, cache: Any?, current: Any?): NotEqual {
-    val notEqual = NotEqual()
+  private fun createNotEqualResult(metadataName: String, cache: Any?, current: Any?): NotEqualWithLog {
+    val notEqual = NotEqualWithLog()
     notEqual.log.logResult(metadataName, cache, current, notEqual)
     return notEqual
   }
 
-  private fun createNotEqualResult(cause: String): NotEqual {
-    val notEqual = NotEqual()
+  private fun createNotEqualResult(cause: String): NotEqualWithLog {
+    val notEqual = NotEqualWithLog()
     notEqual.log.comparisonResult(cause, notEqual)
     return notEqual
   }
@@ -121,22 +108,6 @@ internal class ComparisonsBuilder(private val log: MetadataComparatorLog) {
 }
 
 public object ComparisonUtil {
-  internal fun compareAndPrintToLog(areComparing: String, comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
-    val log = EntitiesComparatorLog.newInstance()
-    val comparisonsBuilder = ComparisonsBuilder(log)
-
-    log.startComparing(areComparing)
-    comparisonsBuilder.comparisons()
-    log.endComparing(areComparing, comparisonsBuilder.result)
-
-    logIfNotEqual(areComparing, comparisonsBuilder.result)
-
-    LOG.debug(log.printLog()) // Print to log
-
-    return comparisonsBuilder.result
-  }
-
-
   internal fun compareMetadata(cacheMetadata: StorageMetadata, cacheMetadataName: String,
                                currentMetadata: StorageMetadata, currentMetadataName: String,
                                comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
@@ -181,7 +152,7 @@ public object ComparisonUtil {
       return
     }
 
-    result as NotEqual
+    result as NotEqualWithLog
 
     result.log.startComparing(areComparing)
     result.log.endComparing(areComparing, result)

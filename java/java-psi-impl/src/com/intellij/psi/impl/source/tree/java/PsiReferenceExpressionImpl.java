@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -390,7 +391,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
 
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
+      if (JavaFeature.GENERICS.isSufficient(languageLevel)) {
         PsiSubstitutor substitutor = result.getSubstitutor();
         if (owner == null || !PsiUtil.isRawSubstitutor(owner, substitutor)) {
           PsiType substitutedType = substitutor.substitute(ret);
@@ -464,6 +465,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
+        if (element instanceof PsiField) {
+          PsiClass parentClass = PsiTreeUtil.getParentOfType(PsiReferenceExpressionImpl.this, PsiClass.class);
+          if (!PsiResolveHelper.getInstance(getProject())
+            .isAccessible((PsiField)element, PsiReferenceExpressionImpl.this, parentClass)) {
+            return true;
+          }
+        }
         boolean added = myVarNames.add(element.getName());
         return !PsiUtil.isJvmLocalVariable(element) || added;
       }
@@ -496,7 +504,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   private static boolean hasValidQualifier(@NotNull PsiMethod method, @NotNull PsiReferenceExpression ref, PsiElement scope) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_1_8)) {
+      if (!PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, ref)) {
         return false;
       }
 

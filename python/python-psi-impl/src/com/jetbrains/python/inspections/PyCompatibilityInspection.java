@@ -60,7 +60,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
  *
  * Inspection to detect code incompatibility with python versions
  */
-public class PyCompatibilityInspection extends PyInspection {
+public final class PyCompatibilityInspection extends PyInspection {
 
   @NotNull
   public static final List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
@@ -79,7 +79,7 @@ public class PyCompatibilityInspection extends PyInspection {
   @NotNull
   public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
     .of(LanguageLevel.values())
-    .filter(v -> v == LanguageLevel.PYTHON27 || v.isAtLeast(LanguageLevel.PYTHON35))
+    .filter(v -> v == LanguageLevel.PYTHON27 || v.isAtLeast(LanguageLevel.PYTHON37))
     .toImmutableList();
 
   @NotNull

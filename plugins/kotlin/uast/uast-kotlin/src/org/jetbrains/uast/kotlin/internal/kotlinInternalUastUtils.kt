@@ -561,7 +561,17 @@ private fun resolveDeserialized(
         }
         is ProtoBuf.Property -> {
             JvmProtoBufUtil.getJvmFieldSignature(proto, nameResolver, typeTable, false)
-                ?.let { signature -> psiClass.fields.firstOrNull { it.name == signature.name } }
+                ?.let { signature ->
+                    // property in companion object is actually materialized at the containing class.
+                    val containingClassIsCompanionObject =
+                        (descriptor.containingDeclaration as? DeserializedClassDescriptor)?.isCompanionObject == true
+                    val psiClassToLookup = if (containingClassIsCompanionObject) {
+                        psiClass.containingClass ?: psiClass
+                    } else {
+                        psiClass
+                    }
+                    psiClassToLookup.fields.firstOrNull { it.name == signature.name }
+                }
                 ?.let { return it }
 
             val propertySignature = proto.getExtensionOrNull(JvmProtoBuf.propertySignature)

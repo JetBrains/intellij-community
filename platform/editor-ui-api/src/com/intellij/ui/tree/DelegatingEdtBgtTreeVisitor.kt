@@ -6,21 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 @ApiStatus.Internal
-abstract class DelegatingEdtBgtTreeVisitor(private val delegate: TreeVisitor) : EdtBgtTreeVisitor {
+abstract class DelegatingEdtBgtTreeVisitor(private val delegate: TreeVisitor) : EdtBgtTreeVisitor() {
 
-  override fun visit(path: TreePath): TreeVisitor.Action {
-    if (visitThread() == TreeVisitor.VisitThread.EDT) { // everything is done on the EDT
-      EDT.assertIsEdt()
-      val preVisitResult = preVisitEDT(path)
-      if (preVisitResult != null) {
-        return preVisitResult
-      }
-      return postVisitEDT(path, delegate.visit(path))
-    }
-    else { // only the delegating part is done on the EDT, the rest is invoked directly
-      return delegate.visit(path)
-    }
-  }
+  override fun doVisit(path: TreePath): TreeVisitor.Action = delegate.visit(path)
 
   override fun visitThread(): TreeVisitor.VisitThread = delegate.visitThread()
 

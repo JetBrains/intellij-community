@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -30,10 +30,11 @@ import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
 import static git4idea.GitNotificationIdsHolder.UNSTASH_WITH_CONFLICTS;
+import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabAvailable;
+import static git4idea.stash.ui.GitStashContentProviderKt.showStashes;
 
 public class GitStashChangesSaver extends GitChangesSaver {
 
@@ -42,6 +43,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private final @NotNull GitRepositoryManager myRepositoryManager;
   private final @NotNull Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
+
+  private boolean myReportLocalHistoryActivity = true;
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -103,7 +106,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
         handler.addParameters("--index");
       }
       return handler;
-    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams), myReportLocalHistoryActivity);
     myProgressIndicator.setText(oldProgressTitle);
   }
 
@@ -114,7 +117,15 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
+    if (isStashTabAvailable()) {
+      showStashes(myProject);
+    } else {
+      GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
+    }
+  }
+
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myReportLocalHistoryActivity = reportLocalHistoryActivity;
   }
 
   @Override
@@ -146,24 +157,25 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        UNSTASH_WITH_CONFLICTS, GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.title"),
-        GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.message"),
-        new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              if (event.getDescription().equals("saver")) {
-                // we don't use #showSavedChanges to specify unmerged root first
-                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
-              }
-              else if (event.getDescription().equals("resolve")) {
-                mergeNoProceedInBackground();
-              }
+      VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+        .createNotification(GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.title"),
+                            GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.message"),
+                            NotificationType.WARNING)
+        .setDisplayId(UNSTASH_WITH_CONFLICTS)
+        .addAction(NotificationAction.createSimple(
+          GitBundle.messagePointer("stash.unstash.unresolved.conflict.warning.notification.show.stash.action"), () -> {
+            if (isStashTabAvailable()) {
+              showStashes(myProject);
+            } else {
+              // we don't use #showSavedChanges to specify unmerged root first
+              GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
             }
-          }
-        }
-      );
+          }))
+        .addAction(NotificationAction.createSimple(
+          GitBundle.messagePointer("stash.unstash.unresolved.conflict.warning.notification.resolve.conflicts.action"), () -> {
+            mergeNoProceedInBackground();
+          }))
+        .notify(myProject);
     }
   }
 

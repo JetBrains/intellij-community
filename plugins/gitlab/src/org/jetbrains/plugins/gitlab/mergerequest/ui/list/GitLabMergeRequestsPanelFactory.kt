@@ -6,7 +6,10 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListUtil.wrapWithLazy
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope

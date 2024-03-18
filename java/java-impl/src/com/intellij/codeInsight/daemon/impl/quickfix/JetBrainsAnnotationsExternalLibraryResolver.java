@@ -6,13 +6,13 @@ import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
+public final class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
   /**
    * Specifies version of jetbrains-annotations library which will be selected by default when user applies a quick fix on an unresolved annotation reference.
    * It must be equal to version of jetbrains-annotations library which is bundled with the IDE, the both should refer to version of the library
@@ -36,7 +36,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
 
   @NotNull
   public static ExternalLibraryDescriptor getAnnotationsLibraryDescriptor(@NotNull Module contextModule) {
-    boolean java8 = LanguageLevelUtil.getEffectiveLanguageLevel(contextModule).isAtLeast(LanguageLevel.JDK_1_8);
+    boolean java8 = JavaFeature.TYPE_ANNOTATIONS.isSufficient(LanguageLevelUtil.getEffectiveLanguageLevel(contextModule));
     return java8 ? JAVA8 : JAVA5;
   }
 

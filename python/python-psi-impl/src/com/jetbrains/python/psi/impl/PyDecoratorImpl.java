@@ -5,12 +5,12 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implements PyDecorator {
 
   public PyDecoratorImpl(ASTNode astNode) {
@@ -35,7 +33,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   public PyDecoratorImpl(PyDecoratorStub stub) {
-    super(stub, PyElementTypes.DECORATOR_CALL);
+    super(stub, PyStubElementTypes.DECORATOR_CALL);
   }
 
   @Override
@@ -48,19 +46,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
    */
   @Override
   public String getName() {
-    final QualifiedName qname = getQualifiedName();
-    return qname != null ? qname.getLastComponent() : null;
-  }
-
-  @Override
-  @Nullable
-  public final PyFunction getTarget() {
-    return PsiTreeUtil.getStubOrPsiParentOfType(this, PyFunction.class);
-  }
-
-  @Override
-  public @Nullable PyExpression getExpression() {
-    return findChildByClass(PyExpression.class);
+    return PyDecorator.super.getName();
   }
 
   @Override
@@ -86,12 +72,6 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   @Override
-  public PyArgumentList getArgumentList() {
-    final PyCallExpression callExpr = as(getExpression(), PyCallExpression.class);
-    return callExpr != null ? callExpr.getArgumentList() : null;
-  }
-
-  @Override
   @Nullable
   public QualifiedName getQualifiedName() {
     final PyDecoratorStub stub = getStub();
@@ -99,21 +79,8 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
       return stub.getQualifiedName();
     }
     else {
-      final PyReferenceExpression refExpr = as(getCallee(), PyReferenceExpression.class);
-      return refExpr != null ? refExpr.asQualifiedName() : null;
+      return PyDecorator.super.getQualifiedName();
     }
-  }
-
-  @Override
-  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return PyCallExpressionHelper.getReceiver(this, resolvedCallee);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getCallee() {
-    final PyExpression exprAfterAt = getExpression();
-    return exprAfterAt instanceof PyCallExpression ? ((PyCallExpression)exprAfterAt).getCallee() : exprAfterAt;
   }
 
   @NotNull

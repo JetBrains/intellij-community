@@ -23,9 +23,6 @@
     <registryKey key="search.everywhere.ml.typos.show.confidence"
                  description="Show confidence in Search Everywhere"
                  defaultValue="false"/>
-
-    <spellchecker.dictionary.runtimeDictionaryProvider
-      implementation="com.intellij.searchEverywhereMl.typos.models.RuntimeActionsDictionaryProvider"/>
   </extensions>
 
   <actions>

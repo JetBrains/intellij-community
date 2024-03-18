@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.lang.LighterAST
@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
+import com.intellij.psi.stubs.StubInconsistencyReporter
 import com.intellij.psi.stubs.StubTextInconsistencyException
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -74,7 +75,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
           }
         }
         ENUM_CONSTANT -> {
-          // We rely that enum constants go after ENUM_KEYWORD
+          // We rely on enum constants going after ENUM_KEYWORD
           isFinal = isFinal && LightTreeUtil.firstChildOfType(tree, child, ENUM_CONSTANT_INITIALIZER) == null
         }
         EXTENDS_LIST -> {
@@ -212,7 +213,7 @@ fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Runtim
                                            Attachment("psi.txt", psiMap.toString()))
   }
 
-  StubTextInconsistencyException.checkStubTextConsistency(file)
+  StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.CheckAfterExceptionInJava)
   val actualData = bindMethods(psiMap, file)[method]
   if (actualData != cachedData) {
     return RuntimeExceptionWithAttachments("Cache outdated",

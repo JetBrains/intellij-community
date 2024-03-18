@@ -48,6 +48,8 @@ public abstract class ValueContainer<Value> {
     boolean process(int id, V value) throws T;
   }
 
+  //TODO RC: .forEach() is synchronized, but .process() is not -- and they are otherwise identical. Why the difference?
+
   public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
     for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       Value value = valueIterator.next();

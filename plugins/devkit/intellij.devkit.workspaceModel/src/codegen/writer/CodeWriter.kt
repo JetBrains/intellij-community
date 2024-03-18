@@ -6,16 +6,18 @@ import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.devkit.workspaceModel.metaModel.impl.WorkspaceMetaModelProviderImpl
 import com.intellij.lang.ASTNode
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -27,13 +29,16 @@ import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.*
+import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.io.JsonUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.io.IOException
+import java.net.URL
 import java.util.*
+import java.util.jar.Manifest
 
 private val LOG = logger<CodeWriter>()
 
@@ -41,31 +46,45 @@ object CodeWriter {
   @RequiresEdt
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
     targetFolderGenerator: () -> VirtualFile?
   ) {
+    val sourceFilePerObjModule = HashMap<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
       if (it.extension == "kt") {
         val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
-        ktFile?.declarations?.filterIsInstance<KtClass>()?.filter { clazz -> clazz.name != null }?.associateByTo(ktClasses) { clazz ->
-          clazz.fqName!!.asString()
+
+        ktFile?.declarations?.filterIsInstance<KtClass>()?.filter { clazz -> clazz.name != null }?.forEach { clazz ->
+          val fqName = clazz.fqName!!.asString()
+          val objModuleName = fqName.replace(clazz.name!!, "").substringBeforeLast(".")
+
+          /* We find one virtual file for each module. This is necessary to find the relative path for the generated GeneratedObjModuleFile.
+          See [addGeneratedObjModuleFile] method */
+          sourceFilePerObjModule[objModuleName] = it
+          ktClasses[fqName] = clazz
         }
       }
       return@processFilesRecursively true
     }
     if (ktClasses.isEmpty()) return
+
     val classLoader = CodegenJarLoader.getInstance(project).getClassLoader()
     val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
     if (serviceLoader.isEmpty) error("Can't load generator")
+
+    val codeGenerator = serviceLoader.get()
+    if (!codegenApiVersionsAreCompatible(project, codeGenerator)) {
+      return
+    }
 
     CommandProcessor.getInstance().executeCommand(project, Runnable {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
-        val objModules = loadObjModules(ktClasses, module, processAbstractTypes, explicitApiEnabled)
-        val codeGenerator = serviceLoader.get()
-        val results = objModules.map { codeGenerator.generate(it) }
+        val objModules = loadObjModules(ktClasses, module, processAbstractTypes)
+
+        val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
         val generatedCode = results.flatMap { it.generatedCode }
         val problems = results.flatMap { it.problems }
         WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
@@ -89,16 +108,26 @@ object CodeWriter {
         val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
         val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
         val generatedFiles = ArrayList<KtFile>()
+
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
         indicator.isIndeterminate = false
+
         generatedCode.forEachIndexed { i, code ->
           indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
           when (code) {
             is ObjModuleFileGeneratedCode ->
-              addGeneratedObjModuleFile(code, generatedFiles, project, sourceFolder, genFolder, importsByFile, psiFactory)
+              addGeneratedObjModuleFile(
+                code, generatedFiles, project,
+                sourceFolder, genFolder,
+                sourceFilePerObjModule, importsByFile, psiFactory
+              )
             is ObjClassGeneratedCode ->
-              addGeneratedObjClassFile(code, generatedFiles, project, sourceFolder, genFolder, ktClasses,
-                                       importsByFile, topLevelDeclarations, psiFactory)
+              addGeneratedObjClassFile(
+                code, generatedFiles, project,
+                sourceFolder, genFolder,
+                ktClasses, importsByFile,
+                topLevelDeclarations, psiFactory
+              )
           }
         }
 
@@ -135,18 +164,83 @@ object CodeWriter {
     }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
   }
 
-  private fun loadObjModules(
-    ktClasses: HashMap<String, KtClass>, module: Module,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
-  ): List<CompiledObjModule> {
+  private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
+    val apiVersionInDevkit = getApiVersionFromJSON(CodeGenerator::class.java)
+    val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java)
+
+    if (apiVersionInDevkit == apiVersionFromDownloadedJar) {
+      return true
+    }
+
+    val message = if (apiVersionFromDownloadedJar == CodegenApiVersion.UNKNOWN_VERSION || apiVersionInDevkit > apiVersionFromDownloadedJar) {
+      DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.newer", apiVersionInDevkit, apiVersionFromDownloadedJar)
+    } else {
+      DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.older", apiVersionInDevkit, apiVersionFromDownloadedJar)
+    }
+
+    val groupId = DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions")
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup(groupId)
+      .createNotification(title = groupId, message, NotificationType.ERROR)
+      .notify(project)
+
+    return false
+  }
+
+  private fun getApiVersionFromJSON(clazz: Class<*>): String {
+    return getApiVersionFromJarFile(clazz, CodegenApiVersion.JSON_RELATIVE_PATH) { jsonPath ->
+      URL(jsonPath).openStream().reader().use { reader ->
+        val jsonReader = JsonReaderEx(reader.readText())
+        val objects = JsonUtil.nextObject(jsonReader)
+        objects[CodegenApiVersion.ATTRIBUTE_NAME] as? String
+      }
+    }
+  }
+
+  private fun getApiVersionFromManifest(clazz: Class<*>): String {
+    return getApiVersionFromJarFile(clazz, CodegenApiVersion.MANIFEST_RELATIVE_PATH) { manifestPath ->
+      URL(manifestPath).openStream().use {
+        val manifest = Manifest(it)
+        val attributes = manifest.mainAttributes
+        attributes.getValue(CodegenApiVersion.ATTRIBUTE_NAME)
+      }
+    }
+  }
+
+  private fun getApiVersionFromJarFile(clazz: Class<*>, relativePathToFile: String, readApiVersionFromFile: (String) -> String?): String {
+    val classPath = "${clazz.name.replace(".", "/")}.class"
+    val classAbsolutePath = clazz.getResource("${clazz.simpleName}.class")?.toString() // Absolute path is jar path + class path
+                            ?: error("Absolute path for the class $clazz was not found")
+
+    val fileAbsolutePath = classAbsolutePath.replace(classPath, relativePathToFile)
+
+    val apiVersion: String?
+    try {
+      apiVersion = readApiVersionFromFile(fileAbsolutePath)
+    } catch (e: IOException) {
+      LOG.info("Failed to read codegen-api version from file \"$fileAbsolutePath\": " + e.message)
+      return CodegenApiVersion.UNKNOWN_VERSION
+    }
+
+    return apiVersion ?: CodegenApiVersion.UNKNOWN_VERSION
+  }
+
+  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module, processAbstractTypes: Boolean): List<CompiledObjModule> {
     val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
 
     val metaModelProvider: WorkspaceMetaModelProvider = WorkspaceMetaModelProviderImpl(
-      explicitApiEnabled = explicitApiEnabled,
       processAbstractTypes = processAbstractTypes,
       module.project
     )
     return packages.map { metaModelProvider.getObjModule(it, module) }
+  }
+
+  private fun generate(codeGenerator: CodeGenerator, objModules: List<CompiledObjModule>,
+                       explicitApiEnabled: Boolean, isTestModule: Boolean): List<GenerationResult> {
+    val generatorSettings = GeneratorSettings(explicitApiEnabled = explicitApiEnabled, testModeEnabled = isTestModule)
+    val entitiesImplementations = objModules.map { codeGenerator.generateEntitiesImplementation(it, generatorSettings) }
+    val metadataStorageImplementation = codeGenerator.generateMetadataStoragesImplementation(objModules, generatorSettings)
+    return entitiesImplementations + metadataStorageImplementation
   }
 
   private fun removeGeneratedCode(ktClasses: Map<String, KtClass>, genFolder: VirtualFile) {
@@ -180,10 +274,12 @@ object CodeWriter {
 
   private fun addGeneratedObjModuleFile(code: ObjModuleFileGeneratedCode, generatedFiles: MutableList<KtFile>,
                                         project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile,
+                                        sourceFilePerObjModule: Map<String, VirtualFile>,
                                         importsByFile: MutableMap<KtFile, Imports>, psiFactory: KtPsiFactory) {
     val packageFqnName = code.objModuleName
-    val packageFolder = createPackageFolderIfMissing(sourceFolder, packageNameToPath(packageFqnName), genFolder)
-    val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
+
+    val sourceFile = sourceFilePerObjModule[packageFqnName]!!
+    val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
 
     val implImports = Imports(packageFqnName)
     val implFile = psiFactory.createFile("${code.fileName}.kt", implImports.findAndRemoveFqns(code.generatedCode))
@@ -216,9 +312,7 @@ object CodeWriter {
     val implementationClassText = code.implementationClass
     if (implementationClassText != null) {
       val sourceFile = apiClass.containingFile.virtualFile
-      val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
-      val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
-      val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
+      val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
       val implImports = Imports(apiFile.packageFqName.asString())
       val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
       copyHeaderComment(apiFile, implFile)
@@ -231,6 +325,12 @@ object CodeWriter {
       generatedFiles.add(addedFile)
       importsByFile[addedFile] = implImports
     }
+  }
+
+  private fun getPsiDirectory(project: Project, genFolder: VirtualFile, sourceFolder: VirtualFile, sourceFile: VirtualFile): PsiDirectory {
+    val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
+    val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
+    return PsiManager.getInstance(project).findDirectory(packageFolder)!!
   }
 
   private fun copyHeaderComment(apiFile: KtFile, implFile: KtFile) {
@@ -325,11 +425,6 @@ object CodeWriter {
     return generatedRegions
   }
 
-  private fun createPackageFolderIfMissing(sourceRoot: VirtualFile, packagePath: String, genFolder: VirtualFile): VirtualFile {
-    val relativePath = getRelativePathWithoutCommonPrefix(sourceRoot.path, packagePath)
-    return VfsUtil.createDirectoryIfMissing(genFolder, relativePath)
-  }
-
 
   private const val GENERATED_REGION_START = "//region generated code"
 
@@ -352,30 +447,18 @@ object CodeWriter {
     get() = extension == "kt" && GENERATED_FILES.contains(name)
 
 
-  private fun getRelativePathWithoutCommonPrefix(base: String, relative: String): String {
-    val basePath = Paths.get(FileUtil.normalize(base))
-    val relativePath = Paths.get(FileUtil.normalize(relative))
+  private object CodegenApiVersion {
+    const val JSON_RELATIVE_PATH = "codegen-api-metadata.json"
+    const val MANIFEST_RELATIVE_PATH = "META-INF/MANIFEST.MF"
 
-    for (i in 0 until basePath.nameCount) {
-      val basePathSuffix = basePath.subpathOrNull(i, basePath.nameCount)
-      if (basePathSuffix != null && relativePath.startsWith(basePathSuffix)) {
-        return relativePath.subpathOrNull(basePathSuffix.nameCount, relativePath.nameCount)?.toString() ?: ""
-      }
-    }
+    const val ATTRIBUTE_NAME = "Codegen-Api-Version"
 
-    return relative
+    const val UNKNOWN_VERSION = "unknown version"
   }
-
-  private fun Path.subpathOrNull(beginIndex: Int, endIndex: Int): Path? {
-    return if (beginIndex < endIndex) subpath(beginIndex, endIndex).addSeparator() else null
-  }
-
-  private fun Path.addSeparator(): Path = Paths.get("/${toString()}")
-
-  private fun packageNameToPath(packageName: String): String = "/${packageName.replace('.', '/')}"
 
   //Function was added because CodeStyleManager throws an exception for big MetadataStorageImpl files
   private fun Iterable<KtFile>.withoutBigFiles(): Iterable<KtFile> {
     return filterNot { it.name == GENERATED_METADATA_STORAGE_FILE }
   }
+
 }

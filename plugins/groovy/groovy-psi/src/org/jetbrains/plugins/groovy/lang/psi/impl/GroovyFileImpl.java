@@ -12,7 +12,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.proc
 /**
  * Implements all abstractions related to Groovy file
  */
-public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, PsiModifiableCodeBlock {
+public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private static final Logger LOG = Logger.getInstance(GroovyFileImpl.class);
 
@@ -349,16 +348,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   @Override
   public GrVariableDeclaration @NotNull [] getScriptDeclarations(boolean topLevelOnly) {
     return PsiImplUtilKt.getScriptDeclarations(this, topLevelOnly);
-  }
-
-  @Override
-  public boolean shouldChangeModificationCount(PsiElement place) {
-    if (!isContentsLoaded()) return true;
-    // 1. We actually should never get GrTypeDefinition as a parent, because it is a PsiClass,
-    //    and PsiClasses prevent to go up in a tree any further
-    // 2. If place is under a variable then @BaseScript or @Field may be changed,
-    //    which actually is a change in Java Structure
-    return !isScript() || PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, GrVariableDeclaration.class) != null;
   }
 
   @NotNull

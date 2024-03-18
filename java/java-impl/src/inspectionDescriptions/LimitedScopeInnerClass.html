@@ -6,10 +6,23 @@ Local classes are uncommon and may therefore be confusing.
   In addition, some code standards discourage the use of local classes.</p>
 <p><b>Example:</b></p>
 <pre><code>
-  void test() {
-    class Local { // local class
+  class Example {
+    void test() {
+      class Local { // here
+      }
+      new Local();
     }
-    new Local();
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Example {
+    void test() {
+      new Local();
+    }
+
+    private static class Local { // here
+    }
   }
 </code></pre>
 <!-- tooltip end -->

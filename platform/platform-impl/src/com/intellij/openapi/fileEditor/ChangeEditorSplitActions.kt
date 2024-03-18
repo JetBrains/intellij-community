@@ -40,8 +40,8 @@ abstract class ChangeEditorSplitAction(private val myVerticalSplit: Boolean) : D
   }
 }
 
-private fun AnActionEvent.getEditorWithPreview(): TextEditorWithPreview? {
-  return getData(PlatformCoreDataKeys.FILE_EDITOR) as? TextEditorWithPreview
+internal fun AnActionEvent.getEditorWithPreview(): TextEditorWithPreview? {
+  return TextEditorWithPreview.getParentSplitEditor(getData(PlatformCoreDataKeys.FILE_EDITOR))
 }
 
 class SplitVerticallyAction : ChangeEditorSplitAction(false)

@@ -19,16 +19,17 @@ package com.intellij.history.integration.ui.views;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.ui.models.DirectoryChangeModel;
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.NotNull;
 
 public final class DirectoryChange extends Change {
   private final DirectoryChangeModel myModel;
 
-  public DirectoryChange(DirectoryChangeModel m) {
+  public DirectoryChange(@NotNull DirectoryChangeModel m) {
     super(m.getContentRevision(0), m.getContentRevision(1));
     myModel = m;
   }
 
-  public DirectoryChangeModel getModel() {
+  public @NotNull DirectoryChangeModel getModel() {
     return myModel;
   }
 

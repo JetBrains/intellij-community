@@ -15,7 +15,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
+public final class NewStringBufferWithCharArgumentInspection extends BaseInspection {
 
   @Override
   @NotNull

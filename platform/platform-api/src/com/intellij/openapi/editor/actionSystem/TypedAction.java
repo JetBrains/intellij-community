@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.reporting.FreezeLogger;
 import com.intellij.util.SlowOperations;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public abstract class TypedAction {
       if (handler != null) {
         myHandler = handler;
       }
+      return Unit.INSTANCE;
     });
   }
 
@@ -100,6 +102,7 @@ public abstract class TypedAction {
       if (handler != null) {
         myRawHandler = handler;
       }
+      return Unit.INSTANCE;
     });
   }
 

@@ -27,6 +27,7 @@ class FileEditorManagerEvent @ApiStatus.ScheduledForRemoval @Deprecated("Use con
                                                                      newProvider = newEditorWithProvider?.provider)
 
   @Deprecated("Use constructor accepting {@link FileEditorWithProvider}")
+  @ApiStatus.ScheduledForRemoval
   constructor(manager: FileEditorManager,
               oldFile: VirtualFile?,
               oldEditor: FileEditor?,

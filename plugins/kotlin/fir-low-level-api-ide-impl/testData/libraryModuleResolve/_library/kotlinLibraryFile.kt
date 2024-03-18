@@ -22,3 +22,17 @@ enum class TopLevelEnum {
     ENTRY2,
     ENTRY3,
 }
+
+object TopLevelObject {
+    fun objectFunction() {}
+}
+
+class ClassWithImplicitConstructorAndCompanion {
+    companion object {
+
+    }
+}
+
+data class MyDataClass(val c: Int) {
+    val a: String get() = ""
+}

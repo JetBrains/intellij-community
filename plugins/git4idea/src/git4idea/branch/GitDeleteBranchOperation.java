@@ -40,7 +40,6 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static git4idea.GitNotificationIdsHolder.BRANCH_DELETION_ROLLBACK_ERROR;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -237,7 +236,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   private static @NotNull String formatBranchName(@NotNull String name) {
-    return bold(code(name));
+    return code(name);
   }
 
   /**

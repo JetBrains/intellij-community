@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyMetaClassCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyMetaClassCompletionContributor extends CompletionContributor implements DumbAware {
   public PyMetaClassCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns

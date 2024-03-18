@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableModelsProvider
 import com.intellij.openapi.roots.ModifiableRootModel
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
 import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import javax.swing.Icon
 
 abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
@@ -99,7 +100,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
         val isNewProject = module.project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
         if (isNewProject) {
             ProjectCodeStyleImporter.apply(module.project, KotlinStyleGuideCodeStyle.INSTANCE)
-            GradlePropertiesFileFacade.forProject(module.project).addCodeStyleProperty(KotlinStyleGuideCodeStyle.CODE_STYLE_SETTING)
+            GradlePropertiesFileFacade.forProject(module.project).addCodeStyleProperty(KotlinOfficialStyleGuide.CODE_STYLE_SETTING)
         }
 
         val projectCreationStats = WizardStatsService.ProjectCreationStats("Gradle", this.presentableName, "gradleKotlin")
@@ -145,8 +146,7 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
     }
 
     private fun addJvmTargetTask(buildScriptData: BuildScriptDataBuilder) {
-        val minGradleVersion = GradleVersion.version("5.0")
-        if (buildScriptData.gradleVersion >= minGradleVersion)
+        if (buildScriptData.gradleVersion.isGradleAtLeast("5.0"))
             buildScriptData
                 .addOther(
                     """

@@ -19,7 +19,7 @@ import javax.swing.UIManager
 /**
  * @author Konstantin Bulenkov
  */
-internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
+internal open class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
   companion object {
     val ICON_PADDING: Insets
       get() = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding()

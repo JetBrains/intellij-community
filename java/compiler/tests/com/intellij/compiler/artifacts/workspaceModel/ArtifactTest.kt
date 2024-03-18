@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
@@ -17,6 +17,7 @@ import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.elements.CompositePackagingElement
@@ -29,16 +30,15 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
 import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.*
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.workspaceModel.ide.getInstance
 import junit.framework.TestCase
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -136,11 +136,12 @@ class ArtifactTest : ArtifactsTestCase() {
     val file2 = createTempFile("file2.txt", null)
     addArtifact("a", TestPackagingElementBuilder.root(project).file(file1.systemIndependentPath).build())
     runWriteAction {
-      WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+      val workspaceModel = WorkspaceModel.getInstance(project)
+      workspaceModel.updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
         builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
-          filePath = VirtualFileUrlManager.getInstance(project).fromPath(file2.systemIndependentPath)
+          filePath = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUri(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
         }
       }
     }
@@ -557,7 +558,7 @@ class ArtifactTest : ArtifactsTestCase() {
       }
       val threads = List(10) {
         Callable {
-          rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+          rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).internal.entityStorage)
         }
       }
 
@@ -580,7 +581,7 @@ class ArtifactTest : ArtifactsTestCase() {
       }
       ArtifactsTestingState.testLevel = it + 1
       try {
-        rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+        rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).internal.entityStorage)
       } catch (e: IllegalStateException) {
         if (e.message?.contains("Exception on level") != true) {
           error("Unexpected exception")
@@ -732,7 +733,7 @@ class ArtifactTest : ArtifactsTestCase() {
     val artifactBridge = ArtifactManager.getInstance(project).artifacts[0]
 
     WorkspaceModel.getInstance(project).updateProjectModel {
-      it.removeEntity(artifactEntity.createReference<ArtifactEntity>().resolve(it)!!)
+      it.removeEntity(artifactEntity.createPointer<ArtifactEntity>().resolve(it)!!)
     }
 
     artifactBridge.rootElement.children

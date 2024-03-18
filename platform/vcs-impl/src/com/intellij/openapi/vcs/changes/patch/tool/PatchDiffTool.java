@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffToolType;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,12 @@ final class PatchDiffTool {
     @NotNull
     @Override
     public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
-      return new SideBySidePatchDiffViewer(context, (PatchDiffRequest)request);
+      PatchDiffRequest patchRequest = (PatchDiffRequest)request;
+      TextFilePatch patch = patchRequest.getPatch();
+      if (patch.isDeletedFile() || patch.isNewFile()) {
+        return new PatchDiffViewer(context, patchRequest);
+      }
+      return new SideBySidePatchDiffViewer(context, patchRequest);
     }
   }
 }

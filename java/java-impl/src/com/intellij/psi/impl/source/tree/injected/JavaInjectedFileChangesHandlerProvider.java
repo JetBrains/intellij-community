@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
+public final class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
 
   @Override
   public InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
@@ -54,8 +54,8 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
   private static boolean hasBlockLiterals(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       PsiLanguageInjectionHost host = shred.getHost();
-      if (!(host instanceof PsiLiteralExpression)) continue;
-      if (((PsiLiteralExpression)host).isTextBlock()) return true;
+      if (host instanceof PsiLiteralExpression && ((PsiLiteralExpression)host).isTextBlock()) return true;
+      if (host instanceof PsiFragment && ((PsiFragment)host).isTextBlock()) return true;
     }
     return false;
   }

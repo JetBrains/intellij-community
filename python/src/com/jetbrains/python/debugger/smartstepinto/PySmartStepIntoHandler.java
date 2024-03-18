@@ -101,7 +101,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
 
   /**
    * Find an expression within which we are going to search for smart step into variants.
-   *
+   * <p>
    * Note, that expressions can span multiple lines, e.g. for parenthesized expressions or argument lists.
    */
   @Nullable

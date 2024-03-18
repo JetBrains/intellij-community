@@ -7,14 +7,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -122,7 +120,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
-    if (release > LanguageLevel.HIGHEST.toJavaVersion().feature) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
+    if (release > LanguageLevel.HIGHEST.feature()) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
     if (release >= 11) return "https://docs.oracle.com/en/java/javase/" + release + "/docs/api/";
     if (release >= 6) return "https://docs.oracle.com/javase/" + release + "/docs/api/";
     if (release == 5) return "https://docs.oracle.com/javase/1.5.0/docs/api/";
@@ -239,7 +237,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     setupSdkPaths(sdk);
 
-    if (sdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length == 0) {
+    if (sdk.getRootProvider().getUrls(OrderRootType.CLASSES).length == 0) {
       String title = JavaBundle.message("sdk.cannot.create");
       String message = JavaBundle.message("sdk.java.no.classes", sdk.getHomePath());
       Messages.showMessageDialog(message, title, Messages.getErrorIcon());
@@ -251,27 +249,42 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    String homePath = sdk.getHomePath();
-    assert homePath != null : sdk;
-    Path jdkHome = Path.of(homePath);
-    SdkModificator sdkModificator = sdk.getSdkModificator();
+    Runnable sdkSetter = ()->{
+      String homePath = sdk.getHomePath();
+      assert homePath != null : sdk;
+      Path jdkHome = Path.of(homePath);
+      SdkModificator sdkModificator = sdk.getSdkModificator();
+      List<String> classes = findClasses(jdkHome, false);
+      Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
+      sdkModificator.removeRoots(OrderRootType.CLASSES);
+      previousRoots.removeAll(new HashSet<>(classes));
+      for (String url : classes) {
+        sdkModificator.addRoot(url, OrderRootType.CLASSES);
+      }
+      for (String url : previousRoots) {
+        sdkModificator.addRoot(url, OrderRootType.CLASSES);
+      }
 
-    List<String> classes = findClasses(jdkHome, false);
-    Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
-    sdkModificator.removeRoots(OrderRootType.CLASSES);
-    previousRoots.removeAll(new HashSet<>(classes));
-    for (String url : classes) {
-      sdkModificator.addRoot(url, OrderRootType.CLASSES);
-    }
-    for (String url : previousRoots) {
-      sdkModificator.addRoot(url, OrderRootType.CLASSES);
-    }
-
-    addSources(jdkHome, sdkModificator);
-    addDocs(jdkHome, sdkModificator, sdk);
-    attachJdkAnnotations(sdkModificator);
-
-    sdkModificator.commitChanges();
+      addSources(jdkHome, sdkModificator);
+      addDocs(jdkHome, sdkModificator, sdk);
+      attachJdkAnnotations(sdkModificator);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(() ->
+                                                             sdkModificator.commitChanges());
+      });
+    };
+    Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        //com.intellij.openapi.projectRoots.impl.UnknownMissingSdkFixLocal.applyLocalFix run everything in EDT,
+        //because some extensions need to show notifications
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          sdkSetter.run();
+          return null;
+        }, ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdk.getName()), false, null);
+      }
+      else {
+        sdkSetter.run();
+      }
   }
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
@@ -336,6 +349,7 @@ public final class JavaSdkImpl extends JavaSdk {
           modificator.removeRoot(root, annoType);
         }
         modificator.addRoot(root, annoType);
+        ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
       })
       .submit(AppExecutorUtil.getAppExecutorService())
       .then(file -> file != null);
@@ -445,12 +459,15 @@ public final class JavaSdkImpl extends JavaSdk {
     if (!Files.exists(jdkHomePath)) {
       throw new IllegalArgumentException(jdkHomePath.toAbsolutePath() + " doesn't exist");
     }
-    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
+
+    Sdk jdk = ProjectJdkTable.getInstance().createSdk(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
     if (JdkVersionDetector.isVersionString(jdkName)) {
       sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
+    } else {
+      sdkModificator.setVersionString(this.getVersionString(home));
     }
 
     addClasses(jdkHomePath, sdkModificator, isJre);
@@ -458,8 +475,7 @@ public final class JavaSdkImpl extends JavaSdk {
     addDocs(jdkHomePath, sdkModificator, null);
     attachJdkAnnotations(sdkModificator);
 
-    sdkModificator.commitChanges();
-
+    sdkModificator.applyChangesWithoutWriteAction();
     return jdk;
   }
 

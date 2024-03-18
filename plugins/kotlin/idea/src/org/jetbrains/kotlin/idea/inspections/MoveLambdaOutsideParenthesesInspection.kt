@@ -11,16 +11,14 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
-import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
-import org.jetbrains.kotlin.idea.core.isComplexCallWithLambdaArgument
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class MoveLambdaOutsideParenthesesInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(KtCallExpression::class.java) {
-    private val KtCallExpression.verb: String
-        get() = if (isComplexCallWithLambdaArgument()) KotlinBundle.message("text.can") else KotlinBundle.message("text.should")
 
     override fun inspectionHighlightType(element: KtCallExpression): ProblemHighlightType =
         if (element.isComplexCallWithLambdaArgument()) INFORMATION else GENERIC_ERROR_OR_WARNING
@@ -33,7 +31,8 @@ class MoveLambdaOutsideParenthesesInspection : AbstractApplicabilityBasedInspect
         }
     }
 
-    override fun inspectionText(element: KtCallExpression) = KotlinBundle.message("lambda.argument.0.be.moved.out", element.verb)
+    override fun inspectionText(element: KtCallExpression) = KotlinBundle.message("lambda.argument.0.be.moved.out",
+                                                                                  if (element.isComplexCallWithLambdaArgument()) 0 else 1)
 
     override fun inspectionHighlightRangeInElement(element: KtCallExpression) = element.getLastLambdaExpression()
         ?.getStrictParentOfType<KtValueArgument>()?.asElement()

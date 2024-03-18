@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 
-public class SmartCompletionContextType extends TemplateContextType {
+public final class SmartCompletionContextType extends TemplateContextType {
   public SmartCompletionContextType() {
     super("COMPLETION", JavaBundle.message("dialog.edit.template.checkbox.smart.type.completion"), JavaCodeContextType.Generic.class);
   }

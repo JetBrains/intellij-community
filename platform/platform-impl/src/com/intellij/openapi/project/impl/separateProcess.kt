@@ -2,9 +2,9 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.actions.OpenFileAction
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
@@ -29,18 +29,19 @@ import kotlin.io.path.exists
 
 const val PER_PROJECT_INSTANCE_TEST_SCRIPT: String = "test_script.txt"
 
-class SeparateProcessActionsCustomizer : ActionConfigurationCustomizer {
-  override fun customize(actionManager: ActionManager) {
-    if (!ProjectManagerEx.IS_CHILD_PROCESS) return
+private class SeparateProcessActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+  override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
+    if (!ProjectManagerEx.IS_CHILD_PROCESS) {
+      return
+    }
 
     // see com.jetbrains.thinclient.ThinClientActionsCustomizer
 
     // we don't remove this action in case some code uses it
-    actionManager.replaceAction("OpenFile", NewProjectActionDisabler())
-    val fileOpenGroup = actionManager.getAction("FileOpenGroup") as DefaultActionGroup
+    actionRegistrar.replaceAction("OpenFile", NewProjectActionDisabler())
+    val fileOpenGroup = actionRegistrar.getActionOrStub("FileOpenGroup") as DefaultActionGroup
     fileOpenGroup.removeAll()
-
-    actionManager.unregisterAction("RecentProjectListGroup")
+    actionRegistrar.unregisterAction("RecentProjectListGroup")
   }
 }
 

@@ -26,22 +26,22 @@ import java.awt.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ZoomOptions extends Cloneable {
-    @NonNls
-    String ATTR_PREFIX = "Editor.Zoom.";
-    @NonNls
-    String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
-    @NonNls
-    String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
+  @NonNls
+  String ATTR_PREFIX = "Editor.Zoom.";
+  @NonNls
+  String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
+  @NonNls
+  String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
 
-    Dimension DEFAULT_PREFFERED_SIZE = new Dimension(128, 128);
+  Dimension DEFAULT_PREFFERED_SIZE = new Dimension(128, 128);
 
-    default boolean isWheelZooming() {
-        return Registry.is("ide.images.wheel.zooming", true);
-    }
+  default boolean isWheelZooming() {
+    return Registry.is("ide.images.wheel.zooming", true);
+  }
 
-    default boolean isSmartZooming() {
-        return isWheelZooming();
-    }
+  default boolean isSmartZooming() {
+    return isWheelZooming();
+  }
 
   default Double getSmartZoomFactor(Rectangle imageSize, Dimension viewPort, int inset) {
     if (imageSize == null) return null;
@@ -69,9 +69,9 @@ public interface ZoomOptions extends Cloneable {
     return 1.0d;
   }
 
-    Dimension getPrefferedSize();
+  Dimension getPrefferedSize();
 
-    void inject(ZoomOptions options);
+  void inject(ZoomOptions options);
 
-    boolean setOption(String name, Object value);
+  boolean setOption(String name, Object value);
 }

@@ -102,6 +102,7 @@ object TemplateInlayUtil {
 
   @Deprecated("Use overload with JPanel",
               ReplaceWith("createNavigatableButtonWithPopup(templateState, inEditorOffset, presentation, panel as JPanel, templateElement, logStatisticsOnHide)"))
+  @ApiStatus.ScheduledForRemoval
   @JvmStatic
   fun createNavigatableButtonWithPopup(templateState: TemplateState,
                                        inEditorOffset: Int,
@@ -154,6 +155,9 @@ object TemplateInlayUtil {
           }
         })
         .createPopup()
+
+      Disposer.register(inlay, popup)
+
       DumbAwareAction
         .create {
           popup.cancel()

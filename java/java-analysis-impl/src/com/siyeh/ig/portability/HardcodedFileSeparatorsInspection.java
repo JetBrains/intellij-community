@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class HardcodedFileSeparatorsInspection extends BaseInspection {
+public final class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   private static final char BACKSLASH = '\\';
   private static final char SLASH = '/';

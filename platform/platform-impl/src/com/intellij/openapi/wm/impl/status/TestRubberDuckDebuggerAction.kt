@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import java.awt.Dimension
-import java.io.File
 
 /**
  * @author Konstantin Bulenkov
@@ -17,12 +16,10 @@ import java.io.File
 class TestRubberDuckDebuggerAction: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val bgColor = ColorUtil.toHtmlColor(EditorColorsManager.getInstance().globalScheme.defaultBackground)
-    val url = javaClass.getResource("RubberDuck.html")
-    val html = url?.toURI()?.let {
-      File(it).readText()
-        .replace("background-color:#ffffff;", "background-color:$bgColor;")
-    }
-    if (html == null) return
+    val url = TestRubberDuckDebuggerAction::class.java.getResource("RubberDuck.html")
+    if (url == null) return
+
+    val html = url.readText().replace("background-color:#ffffff;", "background-color:$bgColor;")
     val panel = JCEFHtmlPanel(null).apply{
       setHtml(html)
     }.component

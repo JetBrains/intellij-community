@@ -209,7 +209,6 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     }
 
     int length = name.length();
-    boolean isAscii = AsciiUtils.isAscii(name);
     int patternIndex = 0;
     for (int i = 0; i < length && patternIndex < myMeaningfulCharacters.length; ++i) {
       char c = name.charAt(i);
@@ -220,7 +219,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     if (patternIndex < myMinNameLength * 2) {
       return null;
     }
-
+    boolean isAscii = AsciiUtils.isAscii(name);
     return matchWildcards(name, 0, 0, isAscii);
   }
 
@@ -547,27 +546,13 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
       char pLower = toLowerCase[patternIndex];
       for (int i = fromIndex; i < name.length(); i++) {
         char c = name.charAt(i);
-        if (c == p || toUpperAscii(c) == pUpper || toLowerAscii(c) == pLower) {
+        if (c == pUpper || c == pLower) {
           return i;
         }
       }
       return -1;
     }
     return Strings.indexOfIgnoreCase(name, p, fromIndex);
-  }
-
-  private static char toUpperAscii(char c) {
-    if (c >= 'a' && c <= 'z') {
-      return (char)(c + ('A' - 'a'));
-    }
-    return c;
-  }
-
-  private static char toLowerAscii(char c) {
-    if (c >= 'A' && c <= 'Z') {
-      return (char)(c - ('A' - 'a'));
-    }
-    return c;
   }
 
   @Override

@@ -6,7 +6,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaWordBoundaryFilter extends WordBoundaryFilter {
+public final class JavaWordBoundaryFilter extends WordBoundaryFilter {
   @Override
   public boolean isWordBoundary(@NotNull IElementType previousTokenType, @NotNull IElementType tokenType) {
     if (previousTokenType == JavaTokenType.GT && tokenType == JavaTokenType.EQ) return false;

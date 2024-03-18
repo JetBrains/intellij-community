@@ -447,7 +447,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public Point getLocationOn(JComponent c) {
     Point location;
-    if (isRealPopup() && !myPopup.isDisposed()) {
+    if (isRealPopup() && myPopup != null && !myPopup.isDisposed()) {
       location = myPopup.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, c);
     }

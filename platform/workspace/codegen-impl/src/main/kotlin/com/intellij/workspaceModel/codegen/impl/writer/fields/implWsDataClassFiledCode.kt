@@ -1,16 +1,18 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.hasSetter
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isOverride
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.generatedCodeVisibilityModifier
 
-fun ObjProperty<*, *>.implWsDataFieldCode(type: ObjClass<*>): String {
-  return buildString {
+internal val ObjProperty<*, *>.implWsDataFieldCode: String
+  get() = buildString {
     if (hasSetter) {
       if (isOverride && name !in listOf("name", "entitySource")) append(implWsBlockingCodeOverride)
-      else append("${type.generatedCodeVisibilityModifier} $implWsDataBlockingCode")
+      else append("$generatedCodeVisibilityModifier $implWsDataBlockingCode")
     }
     else {
       val expression = when (val kind = valueKind) {
@@ -19,14 +21,14 @@ fun ObjProperty<*, *>.implWsDataFieldCode(type: ObjClass<*>): String {
         else -> error(kind)
       }
       if (expression.startsWith("=")) {
-        append("${type.generatedCodeVisibilityModifier} var $javaName: ${valueType.javaType} $expression")
+        append("$generatedCodeVisibilityModifier var $javaName: ${valueType.javaType} $expression")
       }
       else {
-        append("${type.generatedCodeVisibilityModifier} var $javaName: ${valueType.javaType} = $expression")
+        append("$generatedCodeVisibilityModifier var $javaName: ${valueType.javaType} = $expression")
       }
     }
   }
-}
+
 private val ObjProperty<*, *>.implWsDataBlockingCode: String
   get() = implWsDataBlockCode(valueType, name)
 

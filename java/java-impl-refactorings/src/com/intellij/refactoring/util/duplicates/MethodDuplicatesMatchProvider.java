@@ -58,7 +58,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
         }
       }
       else {
-        methodCallExpression.getArgumentList().add(factory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(parameter.getType()), parameter));
+        methodCallExpression.getArgumentList().add(factory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(parameter.getType(), true), parameter));
       }
     }
     if (needQualifier || needStaticQualifier || nameConflicts) {

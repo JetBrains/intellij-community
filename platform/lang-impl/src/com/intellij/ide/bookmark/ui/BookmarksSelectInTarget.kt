@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.SelectInContext
@@ -7,13 +7,14 @@ import com.intellij.ide.StandardTargetWeights.BOOKMARKS_WEIGHT
 import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore.isAncestor
 import com.intellij.openapi.wm.ToolWindowId.BOOKMARKS
 import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.annotations.Nls
 
-internal class BookmarksSelectInTarget(val project: Project) : SelectInTarget {
+internal class BookmarksSelectInTarget(val project: Project) : SelectInTarget, DumbAware {
   override fun toString(): @Nls String = message("select.in.target.name")
   override fun getToolWindowId(): String = BOOKMARKS
   override fun getWeight(): Float = BOOKMARKS_WEIGHT

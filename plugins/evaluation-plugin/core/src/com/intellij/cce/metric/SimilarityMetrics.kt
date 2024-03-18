@@ -27,7 +27,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
     var expected = 0.0
     for (session in sessions) {
       for (lookup in session.lookups) {
-        val expectedText = session.expectedText.substring(lookup.offset)
+        val expectedText = computeExpectedText(session, lookup)
         val currentExpected = computeExpected(lookup, expectedText)
         expected += currentExpected
         val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
@@ -39,6 +39,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
     totalExpected += expected
     return matched / expected
   }
+
+  open fun computeExpectedText(session: Session, lookup: Lookup) = session.expectedText.substring(lookup.offset)
 
   abstract fun computeSimilarity(lookup: Lookup, expectedText: String): Double?
 

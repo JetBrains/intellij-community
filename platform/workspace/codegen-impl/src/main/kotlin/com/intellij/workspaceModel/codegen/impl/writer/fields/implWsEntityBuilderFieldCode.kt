@@ -344,6 +344,12 @@ private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
                         indexLibraryRoots(value)
                     }
         """
+    this is ValueType.JvmClass && javaClassName == SdkRoot.decoded -> """
+                    val _diff = diff
+                    if (_diff != null) {
+                        indexSdkRoots(value)
+                    }
+        """
     else -> ""
   }
 }

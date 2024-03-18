@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class PythonASTFactory extends ASTFactory {
+public final class PythonASTFactory extends ASTFactory {
 
   @Nullable
   @Override

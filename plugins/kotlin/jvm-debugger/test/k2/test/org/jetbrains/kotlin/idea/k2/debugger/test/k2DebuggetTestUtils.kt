@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.k2.debugger.test
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.registerServiceInstance
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.caches.resolve.*
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution
 import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl
+import org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider
 import org.jetbrains.kotlin.idea.compiler.IdeModuleAnnotationsResolver
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
@@ -52,6 +54,14 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         project.registerServiceInstance(serviceInterface as Class<Any>, serviceInstance)
     }
 
+    val extensionArea = ApplicationManager.getApplication().extensionArea
+    extensionArea.registerExtensionPoint(ResolveOptimizingOptionsProvider.EP_NAME.name,
+                                         ResolveOptimizingOptionsProvider::class.java.name,
+                                         ExtensionPoint.Kind.INTERFACE,
+                                         true)
+    Disposer.register(disposable) {
+        extensionArea.unregisterExtensionPoint(ResolveOptimizingOptionsProvider.EP_NAME.name)
+    }
     return try {
         action()
     } finally {

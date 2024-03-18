@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class SubtypesMacro extends Macro {
+public final class SubtypesMacro extends Macro {
   private static final Logger LOG = Logger.getInstance(SubtypesMacro.class);
   @Override
   public String getName() {

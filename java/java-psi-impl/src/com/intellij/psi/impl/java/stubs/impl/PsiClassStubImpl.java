@@ -26,7 +26,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int LOCAL_CLASS_INNER = 0x200;
   private static final int HAS_DOC_COMMENT = 0x400;
   private static final int RECORD = 0x800;
-  private static final int UNNAMED = 0x1000;
+  private static final int IMPLICIT = 0x1000;
 
   private final @NotNull TypeInfo myTypeInfo;
   private final String myQualifiedName;
@@ -107,8 +107,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
-  public boolean isUnnamed() {
-    return BitUtil.isSet(myFlags, UNNAMED);
+  public boolean isImplicit() {
+    return BitUtil.isSet(myFlags, IMPLICIT);
   }
 
   @Override
@@ -120,8 +120,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
   }
 
-  public static boolean isUnnamed(final short flags) {
-    return BitUtil.isSet(flags, UNNAMED);
+  public static boolean isImplicit(final short flags) {
+    return BitUtil.isSet(flags, IMPLICIT);
   }
 
   @Override
@@ -199,7 +199,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                                 boolean localClassInner,
                                 boolean hasDocComment,
                                 boolean isRecord,
-                                boolean isUnnamed) {
+                                boolean isImplicit) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -213,7 +213,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
     if (isRecord) flags |= RECORD;
-    if (isUnnamed) flags |= UNNAMED;
+    if (isImplicit) flags |= IMPLICIT;
     return flags;
   }
 

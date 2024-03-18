@@ -3,6 +3,9 @@
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
+  <component name="BuildProcessPlugins">
+    <project-library name="devkit.runtime.module.repository.jps" />
+  </component>
   <component name="CompilerConfiguration">
     <option name="BUILD_PROCESS_HEAP_SIZE" value="2000" />
     <option name="BUILD_PROCESS_ADDITIONAL_VM_OPTIONS" value="-Dgroovyc.in.process=true -Dgroovyc.asm.resolving.only=false" />

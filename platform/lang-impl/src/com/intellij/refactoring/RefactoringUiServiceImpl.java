@@ -8,10 +8,8 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelPatch;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiCompiledFile;
@@ -54,11 +52,6 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
   @Override
   public void setStatusBarInfo(@NotNull Project project, @NotNull @StatusBarText String message) {
     StatusBarUtil.setStatusBarInfo(project, message);
-  }
-
-  @Override
-  public void displayPreview(Project project, ModelPatch patch) throws ProcessCanceledException {
-    new BaseRefactoringProcessorUi().displayPreview(project, patch);
   }
 
   @Override

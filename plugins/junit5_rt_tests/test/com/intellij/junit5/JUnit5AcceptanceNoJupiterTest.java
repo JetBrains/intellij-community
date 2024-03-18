@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RunInEdt(writeIntent = true)
@@ -43,12 +44,12 @@ public class JUnit5AcceptanceNoJupiterTest {
                                                    "@Testable\n" +
                                                    "class MyTests{}");
     assertTrue(JUnitUtil.isTestClass(customEngineTest));
-    assertTrue(TestFrameworks.detectFramework(customEngineTest) instanceof JUnit5Framework);
+    assertInstanceOf(JUnit5Framework.class, TestFrameworks.detectFramework(customEngineTest));
 
     PsiClass customEngineAnnotationOnSuper
       = myFixture.addClass(
       "class MyCustomClass extends MyTests{}");
     assertTrue(JUnitUtil.isTestClass(customEngineAnnotationOnSuper));
-    assertTrue(TestFrameworks.detectFramework(customEngineAnnotationOnSuper) instanceof JUnit5Framework);
+    assertInstanceOf(JUnit5Framework.class, TestFrameworks.detectFramework(customEngineAnnotationOnSuper));
   }
 }

@@ -40,5 +40,3 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: PUBLIC_STATIC
 // RESULT: 6: I
-
-// IGNORE_K2

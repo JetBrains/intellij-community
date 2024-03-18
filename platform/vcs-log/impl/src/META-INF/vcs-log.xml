@@ -10,6 +10,13 @@
     <extensionPoint name="vcsLogCommitStatusProvider"
                     interface="com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider"
                     dynamic="true"/>
+    <extensionPoint name="vcsLogFileHistoryHandler"
+                    interface="com.intellij.vcs.log.VcsLogFileHistoryHandler"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="fileHistoryPerformanceListener"
+                    interface="com.intellij.vcs.log.history.FileHistoryPerformanceListener"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -19,13 +26,13 @@
                         displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogSharedSettings"/>
+
+    <generalVcsSettingsExtension instance="com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.history.VcsDirectoryRenamesProvider"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
@@ -81,7 +88,7 @@
 
     <virtualFileSystem key="vcs-log" implementationClass="com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem"/>
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
-    <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
+    <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
   </extensions>
@@ -136,7 +143,6 @@
       <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction"
               id="Vcs.Log.MatchCaseAction"
               icon="AllIcons.Actions.MatchCase"/>
-      <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
       <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
               use-shortcut-of="Vcs.OpenRepositoryVersion"/>
       <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
@@ -250,7 +256,6 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <separator/>
-      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
@@ -300,7 +305,6 @@
       <reference id="Vcs.Log.ShowAllAffected"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <separator/>
-      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>

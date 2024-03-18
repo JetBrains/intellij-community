@@ -27,10 +27,7 @@ fun LookupElement.asSuggestion(): Suggestion {
   renderElement(presentation)
   val presentationText = "${presentation.itemText}${presentation.tailText ?: ""}" +
                          if (presentation.typeText != null) ": " + presentation.typeText else ""
-
-  val insertedText = if (lookupString.contains('>')) lookupString.replace(Regex("<.+>"), "")
-  else lookupString
-  return Suggestion(insertedText, presentationText, sourceFromPresentation(presentation))
+  return Suggestion(lookupString, presentationText, sourceFromPresentation(presentation))
 }
 
 fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionSource {

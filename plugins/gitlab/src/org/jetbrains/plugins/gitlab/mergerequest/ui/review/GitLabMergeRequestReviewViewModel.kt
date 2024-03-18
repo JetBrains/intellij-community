@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -11,13 +12,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
-interface GitLabMergeRequestReviewViewModel {
-  val discussionsViewOption: StateFlow<DiscussionsViewOption>
-
+interface GitLabMergeRequestReviewViewModel : CodeReviewDiscussionsViewModel {
   val submittableReview: StateFlow<GitLabMergeRequestSubmitReviewViewModel.SubmittableReview?>
   var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)?
-
-  fun setDiscussionsViewOption(viewOption: DiscussionsViewOption)
 
   /**
    * Request the start of a submission process
@@ -49,12 +46,12 @@ internal open class GitLabMergeRequestReviewViewModelBase(
   }
 
   override fun submitReview() {
+    val review = submittableReview.value ?: return
     cs.launch {
-      check(submittableReview.first() != null)
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser) {
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser, review) {
         ctx.cancel()
       }
       handler.invoke(vm)

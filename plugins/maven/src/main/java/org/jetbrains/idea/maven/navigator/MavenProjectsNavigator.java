@@ -45,9 +45,12 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.indices.IndexChangeProgressListener;
+import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -62,6 +65,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -244,6 +248,14 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
       }
     });
 
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+      MavenSystemIndicesManager.TOPIC, new IndexChangeProgressListener() {
+        @Override
+        public void indexStatusChanged(@NotNull MavenIndexUpdateState state) {
+          myStructure.updateRepositoryStatus(state);
+        }
+      });
+
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
       MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
@@ -409,8 +421,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     if (toolWindow == null) return;
 
     MavenUtil.invokeLater(myProject, () -> {
-      boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
+      List<String> files = MavenProjectsManager.getInstance(myProject).getState().originalFiles;
+      boolean hasMavenProjects = files != null && !files.isEmpty();
       if (toolWindow.isAvailable() != hasMavenProjects) {
+        MavenLog.LOG.info("Set MavenToolWindow availability: " + hasMavenProjects);
         toolWindow.setAvailable(hasMavenProjects);
         if (hasMavenProjects
             && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null) {
@@ -448,8 +462,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   private final class MyProjectsListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored,
-                                            @NotNull final List<MavenProject> unignored,
+    public void projectsIgnoredStateChanged(final List<? extends MavenProject> ignored,
+                                            final List<? extends MavenProject> unignored,
                                             boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
@@ -460,8 +474,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     }
 
     @Override
-    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-      scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
+    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
+      scheduleUpdateProjects(MavenUtil.collectFirsts(updated), new ArrayList<>(deleted));
     }
 
     @Override

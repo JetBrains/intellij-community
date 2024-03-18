@@ -24,6 +24,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,12 +36,17 @@ import java.util.List;
 
 public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfigurationBase<?>> extends FragmentedSettingsEditor<Settings> {
   private static final Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
-  private final RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
+  private final @Nullable RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
   private boolean myDefaultSettings;
 
-  protected RunConfigurationFragmentedEditor(Settings runConfiguration, RunConfigurationExtensionsManager extensionsManager) {
+  protected RunConfigurationFragmentedEditor(Settings runConfiguration, @Nullable RunConfigurationExtensionsManager extensionsManager) {
     super(runConfiguration);
+    //noinspection unchecked
     myExtensionsManager = extensionsManager;
+  }
+
+  protected RunConfigurationFragmentedEditor(Settings runConfiguration) {
+    this(runConfiguration, null);
   }
 
   public boolean isInplaceValidationSupported() {
@@ -59,9 +65,11 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   @Override
   protected final List<SettingsEditorFragment<Settings, ?>> createFragments() {
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(createRunFragments());
-    for (SettingsEditor<Settings> editor: myExtensionsManager.createFragments(mySettings)) {
-      if (editor instanceof SettingsEditorFragment<?, ?>) {
-        fragments.add((SettingsEditorFragment<Settings, ?>) editor);
+    if (myExtensionsManager != null) {
+      for (SettingsEditor<Settings> editor: myExtensionsManager.createFragments(mySettings)) {
+        if (editor instanceof SettingsEditorFragment<?, ?>) {
+          fragments.add((SettingsEditorFragment<Settings, ?>) editor);
+        }
       }
     }
     addRunnerSettingsEditors(fragments);

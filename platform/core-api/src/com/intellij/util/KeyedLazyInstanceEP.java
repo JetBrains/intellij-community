@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KeyedLazyInstanceEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
@@ -14,7 +15,7 @@ public class KeyedLazyInstanceEP<T> extends BaseKeyedLazyInstance<T> implements 
   public String implementationClass;
 
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return key;
   }
 

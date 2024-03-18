@@ -10,11 +10,13 @@ import com.intellij.find.FindBundle
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.list.createTargetPopup
 import com.intellij.usages.UsageTarget
 import org.jetbrains.annotations.ApiStatus
@@ -31,13 +33,13 @@ internal interface UsageVariantHandler {
 }
 
 internal fun findShowUsages(project: Project,
-                            dataContext: DataContext,
+                            editor: Editor?,
+                            popupPosition: RelativePoint,
                             allTargets: List<TargetVariant>,
                             @PopupTitle popupTitle: String,
                             handler: UsageVariantHandler) {
   when (allTargets.size) {
     0 -> {
-      val editor = dataContext.getData(CommonDataKeys.EDITOR)
       val message = FindBundle.message("find.no.usages.at.cursor.error")
       if (editor == null) {
         Messages.showMessageDialog(project, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon())
@@ -52,7 +54,7 @@ internal fun findShowUsages(project: Project,
     else -> {
       createTargetPopup(popupTitle, allTargets, TargetVariant::presentation) {
         it.handle(handler)
-      }.showInBestPositionFor(dataContext)
+      }.show(popupPosition)
     }
   }
 }

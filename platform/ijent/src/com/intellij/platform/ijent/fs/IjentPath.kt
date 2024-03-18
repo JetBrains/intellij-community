@@ -1,8 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
-import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.IjentExecFileProvider
+import com.intellij.platform.ijent.IjentExecFileProvider.SupportedPlatform.OS.*
+import com.intellij.platform.ijent.fs.IjentPath.Absolute.OS
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
+
+@ApiStatus.Experimental
+sealed interface IjentPathResult<P : IjentPath> {
+  data class Ok<P : IjentPath>(val path: P) : IjentPathResult<P>
+  data class Err<P : IjentPath>(val raw: String, val reason: String) : IjentPathResult<P>
+}
 
 /**
  * This interface deliberately mimics API of [java.nio.file.Path].
@@ -11,123 +20,222 @@ import org.jetbrains.annotations.ApiStatus
  * On Windows, the root may contain several '\'.
  *
  * It consists of all methods of nio.Path which don't require any I/O.
- *
- * There were no plan to have any other implementation except [IjentPathImpl]. They are split only to ease code reading.
  */
 @ApiStatus.Experimental
-interface IjentPath : Comparable<IjentPath>, Iterable<IjentPath> {
+sealed interface IjentPath {
   companion object {
     @JvmStatic
-    fun parse(ijentId: IjentId, isWindows: Boolean, raw: String): IjentPath =
-      IjentPathImpl.parse(ijentId, isWindows, raw)
+    fun parse(raw: String, os: Absolute.OS?): IjentPathResult<out IjentPath> =
+      when (val absoluteResult = Absolute.parse(raw, os)) {
+        is IjentPathResult.Ok -> absoluteResult
+        is IjentPathResult.Err -> Relative.parse(raw)
+      }
   }
 
-  val ijentId: IjentId
+  val fileName: String
 
-  val isWindows: Boolean
-
-  /** See [java.nio.file.Path.isAbsolute] */
-  val isAbsolute: Boolean
-
-  /** See [java.nio.file.Path.getRoot] */
-  val root: IjentPath?
-
-  /** See [java.nio.file.Path.getFileName] */
-  val fileName: IjentPath?
-
-  /** See [java.nio.file.Path.getParent] */
-  val parent: IjentPath?
-
-  /** See [java.nio.file.Path.getNameCount] */
+  /**
+   * Returns the number of elements in the path.
+   *
+   * ```kotlin
+   * IjentRelativePath.parse("", false).nameCount == 1
+   * IjentRelativePath.parse("a", false).nameCount == 1
+   * IjentRelativePath.parse("a/b/c", false).nameCount == 3
+   * ```
+   *
+   * ```kotlin
+   * IjentAbsolutePath.parse("C:\\", isWindows = true).nameCount == 0
+   * IjentAbsolutePath.parse("C:\\Users", isWindows = true).nameCount == 1
+   * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).nameCount == 2
+   * ```
+   *
+   * See [java.nio.file.Path.getNameCount]
+   */
   val nameCount: Int
 
-  /** See [java.nio.file.Path.getName] */
-  fun getName(index: Int): IjentPath
+  /**
+   * Returns a part of the path.
+   *
+   * This method tries to behave like [java.nio.file.Path.getName].
+   *
+   * ```kotlin
+   * IjentRelativePath.parse("", false).getName(0) == ""
+   * IjentRelativePath.parse("a", false).getName(0) == "a"
+   * IjentRelativePath.parse("a/b/c", false).getName(1) == "b"
+   * ```
+   *
+   * ```kotlin
+   * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).getName(0) == "Users"
+   * ```
+   */
+  fun getName(index: Int): Relative
 
-  /** See [java.nio.file.Path.subpath] */
-  fun subpath(beginIndex: Int, endIndex: Int): IjentPath
+  /**
+   * Return the parent path if it exists.
+   *
+   * ```kotlin
+   * IjentRelativePath.parse("", false).parent == null
+   * IjentRelativePath.parse("a", false).parent == null
+   * IjentRelativePath.parse("a/b/c", false).parent == IjentRelativePath.parse("a/b", false)
+   * ```
+   */
+  val parent: IjentPath?
 
-  /** See [java.nio.file.Path.startsWith] */
-  fun startsWith(other: IjentPath): Boolean
+  /**
+   * ```kotlin
+   * IjentRelativePath.parse("", false).endsWith(IjentRelativePath.parse("", false)) == true
+   * IjentRelativePath.parse("a", false).endsWith(IjentRelativePath.parse("", false)) == true
+   * IjentRelativePath.parse("a/b/c", false).endsWith(IjentRelativePath.parse("b/c", false)) == true
+   * IjentRelativePath.parse("a/b/cde", false).endsWith(IjentRelativePath.parse("b/c", false)) == false
+   * ```
+   */
+  fun endsWith(other: Relative): Boolean
 
-  /** See [java.nio.file.Path.startsWith] */
-  fun startsWith(other: String): Boolean
+  /**
+   * Concatenates two paths.
+   *
+   * ```kotlin
+   * IjentRelativePath.parse("abc/..", false).resolve(IjentRelativePath.parse("def", false)) == IjentRelativePath.parse("abc/../def", false)
+   * ```
+   *
+   * // TODO Wouldn't it be better to return different types for relative and absolute paths?
+   * It should fail in cases like Absolute("/").resolve(Relative("..")).
+   */
+  fun resolve(other: Relative): IjentPathResult<out IjentPath>
 
-  /** See [java.nio.file.Path.endsWith] */
-  fun endsWith(other: IjentPath): Boolean
+  /**
+   * ```kotlin
+   * IjentRelativePath.parse("", false).getChild("abc") == Ok(IjentRelativePath.parse("abc", false))
+   * IjentRelativePath.parse("abc", false).getChild("..") == Ok(IjentRelativePath.parse("abc/..", false))
+   * IjentRelativePath.parse("abc", false).getChild("x/y/z") == Err(...)
+   * IjentRelativePath.parse("abc", false).getChild("x\y\z") == Ok(IjentRelativePath.parse("abc/x\y\z", false))
+   * IjentRelativePath.parse("abc", true).getChild("x\y\z") == Err(...)
+   * IjentRelativePath.parse("abc", false).getChild("") == Err(...)
+   * ```
+   */
+  fun getChild(name: String): IjentPathResult<out IjentPath>
 
-  /** See [java.nio.file.Path.endsWith] */
-  fun endsWith(other: String): Boolean
-
-  /** See [java.nio.file.Path.normalize] */
-  fun normalize(): IjentPath
-
-  /** See [java.nio.file.Path.resolve] */
-  fun resolve(other: IjentPath): IjentPath
-
-  /** See [java.nio.file.Path.resolve] */
-  fun resolve(other: String): IjentPath
-
-  /** See [java.nio.file.Path.resolveSibling] */
-  fun resolveSibling(other: IjentPath): IjentPath =
-    parent?.resolve(other) ?: other
-
-  /** See [java.nio.file.Path.resolveSibling] */
-  fun resolveSibling(other: String): IjentPath
-
-  /** See [java.nio.file.Path.relativize] */
-  fun relativize(other: IjentPath): IjentPath {
-    TODO("Check if it ever possible to do that without any access to FS")
-  }
-
-  /** See [java.nio.file.Path.iterator] */
-  override fun iterator(): Iterator<IjentPath>
-
-  /** See [java.nio.file.Path.toString] */
   override fun toString(): String
 
-  /** TODO Describe the difference with [toString] */
-  fun toDebugString(): String = toString()
+  interface Relative : IjentPath, Comparable<Relative> {
+    companion object {
+      @JvmStatic
+      fun parse(raw: String): IjentPathResult<out Relative> =
+        ArrayListIjentRelativePath.parse(raw)
+
+      /**
+       * The parts of the path must not contain / or \.
+       */
+      @JvmStatic
+      fun build(vararg parts: String): IjentPathResult<out Relative> =
+        build(listOf(*parts))
+
+      /**
+       * The parts of the path must not contain / or \.
+       */
+      @JvmStatic
+      fun build(parts: List<String>): IjentPathResult<out Relative> =
+        ArrayListIjentRelativePath.build(parts)
+    }
+
+    override val parent: Relative?
+
+    /** See [java.nio.file.Path.startsWith] */
+    fun startsWith(other: Relative): Boolean
+
+    override fun resolve(other: Relative): IjentPathResult<out Relative>
+
+    override fun getChild(name: String): IjentPathResult<out Relative>
+
+    override fun compareTo(other: Relative): Int
+
+    /**
+     * Resolves special path elements like "." and ".." whenever it is possible.
+     *
+     * Does not perform any access to the file system.
+     *
+     * ```kotlin
+     * IjentRelativePath.parse("abc/./../def", false).normalize() == IjentRelativePath.parse("def", false)
+     * IjentRelativePath.parse("abc/../x/../../../def", false).normalize() == IjentRelativePath.parse("../../def", false)
+     * ```
+     */
+    fun normalize(): Relative
+  }
+
+  /**
+   * This interface deliberately mimics API of [java.nio.file.Path].
+   *
+   * On Unix, the first element of an absolute path is always '/'.
+   * On Windows, the root may contain several '\'.
+   *
+   * It consists of all methods of nio.Path which don't require any I/O.
+   */
+  interface Absolute : IjentPath, Comparable<Absolute> {
+    companion object {
+      @JvmStatic
+      fun parse(raw: String, os: OS?): IjentPathResult<out Absolute> =
+        ArrayListIjentAbsolutePath.parse(raw, os)
+
+      @JvmStatic
+      fun build(vararg parts: String): IjentPathResult<out Absolute> =
+        build(listOf(*parts), null)
+
+      @JvmStatic
+      fun build(parts: List<String>, os: OS?): IjentPathResult<out Absolute> =
+        ArrayListIjentAbsolutePath.build(parts, os)
+    }
+
+    enum class OS {
+      WINDOWS, UNIX
+    }
+
+    val os: OS
+
+    /** See [java.nio.file.Path.getRoot] */
+    val root: Absolute
+
+    /** See [java.nio.file.Path.getParent] */
+    override val parent: Absolute?
+
+    fun startsWith(other: Absolute): Boolean
+
+    /** See [java.nio.file.Path.normalize] */
+    fun normalize(): IjentPathResult<out Absolute>
+
+    /** See [java.nio.file.Path.resolve] */
+    override fun resolve(other: Relative): IjentPathResult<out Absolute>
+
+    /**
+     * See [java.nio.file.Path.relativize].
+     *
+     * ```kotlin
+     * IjentPathAbsolute.parse("C:\\foo\\bar\\baz", isWindows = true).relativize(IjentPathAbsolute.parse("C:\\foo\\oops", isWindows = true))
+     *   == IjentPathAbsolute.parse("..\..\oops", isWindows = true)
+     * ```
+     */
+    fun relativize(other: Absolute): IjentPathResult<out Relative>
+
+    override fun getChild(name: String): IjentPathResult<out Absolute>
+
+    fun scan(): Sequence<Absolute>
+
+    /** See [java.nio.file.Path.toString] */
+    override fun toString(): String
+
+    /** TODO Describe the difference with [toString] */
+    fun toDebugString(): String
+  }
 }
 
+@Throws(InvalidPathException::class)
+fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
+  when (this) {
+    is IjentPathResult.Ok -> path
+    is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
+  }
 
-//fun main() {
-//  if ("windows" in System.getProperty("os.name").lowercase()) {
-//    // C:\
-//    println(java.nio.file.Path.of("C:\\Users").root)
-//
-//    // null
-//    println(java.nio.file.Path.of("C:\\").parent)
-//
-//    // \\wsl.localhost\Ubuntu\
-//    println(java.nio.file.Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user").root)
-//
-//    // null
-//    println(java.nio.file.Path.of("\\\\wsl.localhost\\Ubuntu").parent)
-//
-//    // java.nio.file.InvalidPathException: UNC path is missing sharename: \\wsl.localhost
-//    println(java.nio.file.Path.of("\\\\wsl.localhost").parent)
-//  }
-//  else {
-//    // /
-//    println(java.nio.file.Path.of("/tmp").root)
-//
-//    // /
-//    println(java.nio.file.Path.of("/").root)
-//
-//    // null
-//    println(java.nio.file.Path.of("/").parent)
-//  }
-//
-//  // null
-//  println(java.nio.file.Path.of("").parent)
-//
-//  // null
-//  println(java.nio.file.Path.of("").root)
-//
-//  // ..
-//  println(java.nio.file.Path.of("abc").relativize(java.nio.file.Path.of("")))
-//
-//  // def
-//  println(java.nio.file.Path.of("").relativize(java.nio.file.Path.of("def")))
-//}
+val IjentExecFileProvider.SupportedPlatform.OS.pathOs: OS
+  get() = when (this) {
+    DARWIN, LINUX -> OS.UNIX
+    WINDOWS -> OS.WINDOWS
+  }

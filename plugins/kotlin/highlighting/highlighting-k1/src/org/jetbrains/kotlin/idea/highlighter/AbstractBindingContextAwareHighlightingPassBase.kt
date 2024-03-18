@@ -21,7 +21,7 @@ abstract class AbstractBindingContextAwareHighlightingPassBase(
     protected fun bindingContext(): BindingContext = bindingContext ?: error("bindingContext has to be acquired")
 
     protected open fun buildBindingContext(): BindingContext =
-        file.analyzeWithAllCompilerChecks().also { it.throwIfError() }.bindingContext
+        (file as KtFile).analyzeWithAllCompilerChecks().also { it.throwIfError() }.bindingContext
 
     override fun runAnnotatorWithContext(element: PsiElement, holder: HighlightInfoHolder) {
         bindingContext = buildBindingContext()

@@ -17,11 +17,11 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
@@ -109,7 +109,8 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new DumbAwareActionButton(JavaUiBundle.messagePointer("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
+      })
+      .addExtraAction(new DumbAwareAction(JavaUiBundle.messagePointer("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
@@ -126,12 +127,8 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final List<Object[]> removedItems = TableUtil.removeSelectedItems(myTable);
@@ -139,7 +136,8 @@ public class JavadocEditor extends ModuleElementsEditor {
             saveData();
           }
         }
-      }).setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
+      })
+      .setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
                              CommonBundle.message("button.remove")).createPanel();
 
     final JPanel mainPanel = new JPanel(new BorderLayout());

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean notNullQualifierOnly = true;
 

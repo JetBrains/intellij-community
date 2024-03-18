@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,50 @@ public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightJa
 
   public void testAbstractMethodOverridesAbstractMethod() {
     doTest();
+  }
+  
+  public void testFix() {
+    myFixture.addClass("""
+      /**
+       * @see Sub#run
+       */
+      abstract class Super {
+        abstract void run();
+      }
+      """);
+    myFixture.configureByText("Sub.java", """
+      /**
+       * @see Sub#run
+       */
+      abstract class Sub extends Super {
+        @Override abstract void run<caret>();
+      }
+      """);
+    IntentionAction intention = myFixture.findSingleIntention("Remove redundant abstract method declaration");
+    assertEquals(
+      """
+        /**
+         * @see Super#run
+         */
+        abstract class Sub extends Super {
+        }
+
+        ----------
+        /**
+         * @see Super#run
+         */
+        abstract class Super {
+          abstract void run();
+        }
+        """, myFixture.getIntentionPreviewText(intention));
+    myFixture.launchAction(intention);
+    myFixture.checkResult("""
+        /**
+         * @see Super#run
+         */
+        abstract class Sub extends Super {
+        }
+        """);
   }
 
   @Nullable

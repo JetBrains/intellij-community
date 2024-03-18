@@ -105,7 +105,7 @@ public class UserFilterPopupComponent
 
   private static class UserLogSpeedSearchPopup extends FlatSpeedSearchPopup {
     UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
-      super(null, actionGroup, dataContext, null, false);
+      super(null, actionGroup, dataContext, ActionPlaces.getPopupPlace("VCS.Log.UserWidget"), null, false);
       setMinimumSize(new JBDimension(200, 0));
     }
 

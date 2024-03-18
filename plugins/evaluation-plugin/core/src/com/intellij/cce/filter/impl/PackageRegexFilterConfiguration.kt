@@ -3,27 +3,23 @@ package com.intellij.cce.filter.impl
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
+import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
 import com.intellij.cce.core.PropertyAdapters
-import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterConfiguration
 
 class PackageRegexFilter(pattern: String) : EvaluationFilter {
   private val regex = Regex(pattern)
-  override fun shouldEvaluate(properties: TokenProperties): Boolean {
-    return PropertyAdapters.Jvm.adapt(properties)?.packageName?.matches(regex) ?: false
+  override fun shouldEvaluate(code: CodeToken): Boolean {
+    return PropertyAdapters.Jvm.adapt(code.properties)?.packageName?.matches(regex) ?: false
   }
 
   override fun toJson(): JsonElement = JsonPrimitive(regex.pattern)
 }
 
 class PackageRegexFilterConfiguration : EvaluationFilterConfiguration {
-  companion object {
-    const val id = "packageRegex"
-  }
-
-  override val id: String = PackageRegexFilterConfiguration.id
+  override val id: String = "packageRegex"
   override val description: String = "Filter out tokens by package name regex"
   override val hasUI: Boolean = true
 

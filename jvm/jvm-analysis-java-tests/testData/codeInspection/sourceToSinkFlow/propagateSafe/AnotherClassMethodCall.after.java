@@ -7,7 +7,8 @@ class Simple {
         sink(s);
     }
 
-    @Untainted String callAnother() {
+    @Untainted
+    String callAnother() {
         Another another = new Another();
         return ((another.foo()) + (another.foo()));
     }
@@ -22,7 +23,8 @@ class Simple {
 class Another {
   String x;
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
         return Simple.bar(x);
     }
 }

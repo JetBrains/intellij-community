@@ -37,7 +37,7 @@ public final class FileTypeExtensionPoint<T> extends BaseKeyedLazyInstance<T> im
   }
 
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return filetype;
   }
 }

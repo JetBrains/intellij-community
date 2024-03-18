@@ -20,7 +20,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.IntegrationTestCase;
-import com.intellij.history.integration.ui.models.SelectionCalculator;
+import com.intellij.history.integration.ui.models.RevisionSelectionCalculator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -123,7 +123,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
 
   private SelectionReverter createReverter(int from, int to) {
     List<Revision> rr = getRevisionsFor(f);
-    SelectionCalculator c = new SelectionCalculator(myGateway, rr, from, to);
+    RevisionSelectionCalculator c = new RevisionSelectionCalculator(myGateway, rr, from, to);
     Revision leftRev = rr.get(1);
     Entry entry = getRootEntry().getEntry(f.getPath());
 

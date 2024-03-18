@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveFromFutureImportQuickFix implements LocalQuickFix {
+public class MoveFromFutureImportQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -34,12 +34,11 @@ public class MoveFromFutureImportQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement problemElement = descriptor.getPsiElement();
-    final PsiFile psiFile = problemElement.getContainingFile();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PsiFile psiFile = element.getContainingFile();
     if (psiFile instanceof PyFile) {
-      AddImportHelper.addFromImportStatement(psiFile, (PyFromImportStatement)problemElement, AddImportHelper.ImportPriority.FUTURE, null);
-      problemElement.delete();
+      AddImportHelper.addFromImportStatement(psiFile, (PyFromImportStatement)element, AddImportHelper.ImportPriority.FUTURE, null);
+      element.delete();
     }
   }
 }

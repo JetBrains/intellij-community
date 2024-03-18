@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyStarArgument extends PyExpression {
-  boolean isKeyword();
+import com.jetbrains.python.ast.PyAstStarArgument;
+
+public interface PyStarArgument extends PyAstStarArgument, PyExpression {
 }

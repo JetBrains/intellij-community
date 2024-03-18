@@ -35,10 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new WeakenVisibilityFix();
   }
 
@@ -51,6 +51,14 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ProtectedMemberInFinalClassVisitor();
+  }
+
+  public static boolean canBePrivate(@NotNull PsiMember member, @NotNull PsiModifierList modifierList) {
+    final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
+    modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+    return ReferencesSearch.search(member, member.getUseScope()).allMatch(
+      reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
+                                                WeakenVisibilityFix.findAccessObjectClass(reference, member), null));
   }
 
   private static class WeakenVisibilityFix extends ModCommandBatchQuickFix {
@@ -76,11 +84,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
       if (!(grandParent instanceof PsiMember member)) return null;
       final PsiModifierList modifierList = member.getModifierList();
       if (modifierList == null) return null;
-      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-      final boolean canBePrivate = ReferencesSearch.search(member, member.getUseScope()).allMatch(
-        reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
-                                                  findAccessObjectClass(reference, member), null));
+      boolean canBePrivate = canBePrivate(member, modifierList);
       return new FixData(canBePrivate, updater.getWritable(modifierList));
     }
 

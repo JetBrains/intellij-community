@@ -1,15 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ChildContext;
-import com.intellij.util.concurrency.Propagation;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -25,7 +18,6 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   private volatile boolean myProcessed;
   private volatile boolean myRejected;
-  private final @Nullable ChildContext myChildContext;
 
   private final boolean myExecuteInWriteAction;
 
@@ -44,20 +36,16 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   }
 
   public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
-    this(
-      identity, executeInWriteAction, priority,
-      AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null
-    );
-  }
-
-  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @Nullable ChildContext childContext) {
-    super(
-      childContext == null ? new Object[]{identity}
-                           : new Object[]{identity, ThreadContext.getContextSkeleton(childContext.getContext())}
-    );
+    super(identity);
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;
-    myChildContext = childContext;
+  }
+
+  @SuppressWarnings("CopyConstructorMissesField")
+  Update(Update delegate) {
+    super();
+    myExecuteInWriteAction = delegate.myExecuteInWriteAction;
+    myPriority = delegate.myPriority;
   }
 
   public boolean isDisposed() {
@@ -89,33 +77,6 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     return myPriority;
   }
 
-  final boolean actuallyCanEat(Update update) {
-    ChildContext otherChildContext = update.myChildContext;
-    if (myChildContext == null && otherChildContext == null) {
-      return canEat(update);
-    }
-    else if (myChildContext != null && otherChildContext != null) {
-      var thisSkeleton = ThreadContext.getContextSkeleton(myChildContext.getContext());
-      var otherSkeleton = ThreadContext.getContextSkeleton(otherChildContext.getContext());
-      return thisSkeleton.equals(otherSkeleton) && canEat(update);
-    }
-    else {
-      return false;
-    }
-  }
-
-  final void runUpdate() {
-    if (myChildContext == null) {
-      run();
-    }
-    else {
-      try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-        myChildContext.runAsCoroutine(this);
-      }
-    }
-  }
-
-
   /**
    * Override this method and return {@code true} if this task is more generic than the passed {@code update}.
    * For example, if this task repaints the whole frame and the passed task repaints some component on the frame,
@@ -127,12 +88,6 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public void setRejected() {
     myRejected = true;
-    if (myChildContext != null) {
-      Job job = myChildContext.getJob();
-      if (job != null) {
-        job.cancel(null);
-      }
-    }
   }
 
   public boolean isRejected() {

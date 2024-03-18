@@ -8,7 +8,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.util.containers.ContainerUtil;
 
-public class PatternPackageSetParserExtension implements PackageSetParserExtension {
+public final class PatternPackageSetParserExtension implements PackageSetParserExtension {
 
   @Override
   public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {

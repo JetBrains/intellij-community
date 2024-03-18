@@ -63,6 +63,7 @@
         "pressedBackgroundColor": "#cce4f7",
         "pressedBorderColor": "#005499"
       },
+      "minimumSize": "72,22",
       "UI": "com.intellij.laf.win10.WinIntelliJButtonUI"
     },
 
@@ -74,6 +75,8 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "1,1,1,1",
       "disabledText": "#8a8a8a",
+      "iconSize": 13,
+      "textIconGap": 4,
       "UI": "com.intellij.laf.win10.WinIntelliJCheckBoxUI"
     },
 
@@ -467,6 +470,7 @@
       "disabledBackground": "#ededed",
       "focusedBorderColor": "#0784de",
       "hoverBorderColor": "#a1a1a1",
+      "minimumSize": "49,22",
       "UI": "com.intellij.laf.win10.WinIntelliJTextFieldUI"
     },
 

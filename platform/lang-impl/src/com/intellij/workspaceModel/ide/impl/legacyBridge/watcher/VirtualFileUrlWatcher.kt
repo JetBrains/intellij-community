@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -14,17 +14,18 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getInstance
 import kotlin.reflect.KClass
 
 open class VirtualFileUrlWatcher(val project: Project) {
-  private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
+  private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   internal var isInsideFilePointersUpdate: Boolean = false
     private set
 
   private val pointers = listOf(
     // Library roots
     LibraryRootFileWatcher(),
+    // Sdk roots
+    SdkRootFileWatcher(),
     // Library excluded roots
     EntityVirtualFileUrlWatcher(
       LibraryEntity::class, LibraryEntity.Builder::class,
@@ -90,7 +91,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
       isInsideFilePointersUpdate = true
       val entityWithVirtualFileUrl = mutableListOf<EntityWithVirtualFileUrl>()
       WorkspaceModel.getInstance(project).updateProjectModel("On VFS change") { diff ->
-        val oldFileUrl = virtualFileManager.fromUrl(oldUrl)
+        val oldFileUrl = virtualFileManager.getOrCreateFromUri(oldUrl)
         calculateAffectedEntities(diff, oldFileUrl, entityWithVirtualFileUrl)
         oldFileUrl.subTreeFileUrls.map { fileUrl -> calculateAffectedEntities(diff, fileUrl, entityWithVirtualFileUrl) }
         val result = entityWithVirtualFileUrl.filter { shouldUpdateThisEntity(it.entity) }.toList()
@@ -143,17 +144,17 @@ private class EntitySourceFileWatcher<T : EntitySource>(
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
                            diff: MutableEntityStorage) {
-    val entities = diff.entitiesBySource { it::class == entitySource }
-    for ((entitySource, mapOfEntities) in entities) {
+    val entitiesMap = diff.entitiesBySource { it::class == entitySource }.groupBy { it.entitySource }
+    for ((entitySource, entities) in entitiesMap) {
       @Suppress("UNCHECKED_CAST")
       val urlFromContainer = containerToUrl(entitySource as T)
       if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
 
-      val newVfsUrl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
+      val newVfsUrl = virtualFileManager.getOrCreateFromUri(newUrl + urlFromContainer.substring(oldUrl.length))
       val newEntitySource = createNewSource(entitySource, newVfsUrl)
 
-      mapOfEntities.values.flatten().forEach {
-        diff.modifyEntity(WorkspaceEntity.Builder::class.java, it) { this.entitySource = newEntitySource }
+      entities.forEach { entity ->
+        diff.modifyEntity(WorkspaceEntity.Builder::class.java, entity) { this.entitySource = newEntitySource }
       }
     }
   }
@@ -183,7 +184,7 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : WorkspaceEnti
       val savedUrl = existingVirtualFileUrl.url
       val newTrackedUrl = newUrl + savedUrl.substring(oldUrl.length)
 
-      val newContainer = virtualFileManager.fromUrl(newTrackedUrl)
+      val newContainer = virtualFileManager.getOrCreateFromUri(newTrackedUrl)
       @Suppress("UNCHECKED_CAST")
       entityWithVFU.entity as E
       diff.modifyEntity(modifiableEntityClass.java, entityWithVFU.entity) {
@@ -207,7 +208,7 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
                            diff: MutableEntityStorage) {
     entitiesWithVFU.filter { LibraryEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val oldVFU = entityWithVFU.virtualFileUrl
-      val newVFU = virtualFileManager.fromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
+      val newVFU = virtualFileManager.getOrCreateFromUri(newUrl + oldVFU.url.substring(oldUrl.length))
 
       entityWithVFU.entity as LibraryEntity
       val oldLibraryRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }
@@ -217,6 +218,36 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
         diff.modifyEntity(entityWithVFU.entity) {
           roots.remove(oldLibraryRoot)
           roots.add(newLibraryRoot)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * It's responsible for updating complex case than [VirtualFileUrl] contains not in the entity itself but in internal data class.
+ * This is about SdkMainEntity -> roots (SdkRoot) -> url (VirtualFileUrl).
+ */
+private class SdkRootFileWatcher : LegacyFileWatcher {
+  private val propertyName = SdkEntity::roots.name
+
+  override fun onVfsChange(oldUrl: String,
+                           newUrl: String,
+                           entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                           virtualFileManager: VirtualFileUrlManager,
+                           diff: MutableEntityStorage) {
+    entitiesWithVFU.filter { SdkEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
+      val oldVFU = entityWithVFU.virtualFileUrl
+      val newVFU = virtualFileManager.getOrCreateFromUri(newUrl + oldVFU.url.substring(oldUrl.length))
+
+      entityWithVFU.entity as SdkEntity
+      val oldSdkRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }
+                            ?: error("Incorrect state of the VFU index")
+      oldSdkRoots.forEach { oldSdkRoot ->
+        val newSdkRoot = SdkRoot(newVFU, oldSdkRoot.type)
+        diff.modifyEntity(entityWithVFU.entity) {
+          roots.remove(oldSdkRoot)
+          roots.add(newSdkRoot)
         }
       }
     }

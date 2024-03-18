@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +34,12 @@ public final class PyStructuredDocstringFormatter {
   public static PyDocumentationBuilder.DocstringFormatterRequest formatDocstring(@NotNull PsiElement element,
                                                                                  @NotNull PyDocumentationBuilder.DocstringFormatterRequest docstringFormatterRequest,
                                                                                  @NotNull List<String> flags) {
-    Module module = DocStringUtil.getModuleForElement(element);
+    Module module = DocStringParser.getModuleForElement(element);
     if (module == null) return new PyDocumentationBuilder.DocstringFormatterRequest();
 
     final String docstring = docstringFormatterRequest.getBody();
     final String preparedDocstring = PyIndentUtil.removeCommonIndent(docstring, true).trim();
-    final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
+    final DocStringFormat format = DocStringParser.guessDocStringFormat(preparedDocstring, element);
 
     if (format == DocStringFormat.PLAIN) {
       return null;

@@ -47,21 +47,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         LessonUtil.setEditorReadOnly(editor)
       }
 
-      highlightButtonById("Run", highlightInside = false, usePulsation = false)
-
-      task {
-        text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
-        text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
-        checkToolWindowState("Run", true)
-        test {
-          ideFrame {
-            highlightedArea.click()
-          }
-        }
-      }
-
-      text(LessonsBundle.message("run.configuration.no.run.configuration",
-                                 strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+      runFromToolbar()
 
       runTask()
 
@@ -160,7 +146,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         text(LessonsBundle.message("run.configuration.run.generated.configuration"))
         stateCheck {
-          RunConfigurationStartHistory.getInstance(project).history().firstOrNull()?.configuration?.name == demoWithParametersName
+          val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+          RunConfigurationStartHistory.getInstance(project).history().asSequence().mapNotNull { settings[it] }
+            .firstOrNull()?.configuration?.name == demoWithParametersName
         }
         restoreByUi(restoreId = dropDownTask)
         test {
@@ -208,6 +196,23 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
     }
 
   protected open fun LessonContext.addAnotherRunConfiguration() {}
+  protected open fun LessonContext.runFromToolbar() {
+    highlightButtonById("Run", highlightInside = false, usePulsation = false)
+
+    task {
+      text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
+      text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
+      checkToolWindowState("Run", true)
+      test {
+        ideFrame {
+          highlightedArea.click()
+        }
+      }
+    }
+
+    text(LessonsBundle.message("run.configuration.no.run.configuration",
+                               strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+  }
 
   protected abstract fun LessonContext.runTask()
 

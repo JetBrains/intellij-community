@@ -10,12 +10,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.ui.dsl.builder.AlignY
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
@@ -114,7 +109,7 @@ class KotlinPluginSwitchSearchOptionContributor : SearchableOptionContributor() 
         processor.addOptions(
             KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin"),
             null,
-            displayName,
+            KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin"),
             KotlinLanguageConfiguration.ID,
             displayName,
             false

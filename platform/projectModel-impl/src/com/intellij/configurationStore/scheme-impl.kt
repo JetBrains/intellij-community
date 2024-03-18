@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -67,11 +68,11 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
 
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
-  open fun isSchemeFile(name: CharSequence) = true
+  open fun isSchemeFile(name: CharSequence): Boolean = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long) = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long): Boolean = false
 
-  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME): Boolean = false
 }
 
 abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
@@ -127,6 +128,7 @@ fun wrapState(element: Element, project: Project): Element {
 
 class BundledSchemeEP {
   @Attribute("path")
+  @RequiredElement
   var path: String? = null
 }
 

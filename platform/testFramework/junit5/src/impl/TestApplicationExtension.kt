@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.testFramework.junit5.impl
 
 import com.intellij.ide.AppLifecycleListener
@@ -16,7 +18,6 @@ import java.util.concurrent.TimeUnit
 
 @TestOnly
 internal class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
-
   override fun beforeAll(context: ExtensionContext) {
     context.testApplication().getOrThrow()
   }
@@ -37,12 +38,12 @@ private fun ExtensionContext.testApplication(): Result<Unit> {
 
 @TestOnly
 private class TestApplicationResource(val initializationResult: Result<Unit>) : ExtensionContext.Store.CloseableResource {
-
   override fun close() {
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
       return
     }
+
     runBlocking {
       withTimeout(Duration.ofSeconds(20).toMillis()) {
         withContext(Dispatchers.EDT) {

@@ -7,7 +7,7 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaTodoIndexer extends LexerBasedTodoIndexer implements IdAndToDoScannerBasedOnFilterLexer {
+public final class JavaTodoIndexer extends LexerBasedTodoIndexer implements IdAndToDoScannerBasedOnFilterLexer {
   @NotNull
   @Override
   public Lexer createLexer(@NotNull OccurrenceConsumer consumer) {

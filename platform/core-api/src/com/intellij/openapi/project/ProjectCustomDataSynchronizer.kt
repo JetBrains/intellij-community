@@ -20,7 +20,7 @@ interface ProjectCustomDataSynchronizer<TData : Any> {
       ExtensionPointName.create("com.intellij.projectCustomDataSynchronizer")
   }
 
-  val id: String get() = javaClass.name
+  val id: String
 
   val dataType: KType
 
@@ -32,10 +32,9 @@ interface ProjectCustomDataSynchronizer<TData : Any> {
   /**
    * Called from the frontend side
    */
-  // TODO [A.Bukhonov] maybe make it suspend?
-  fun consumeValue(project: Project, value: TData)
+  suspend fun consumeValue(project: Project, value: TData)
 
-  fun consumeValueAny(project: Project, value: Any) {
+  suspend fun consumeValueAny(project: Project, value: Any) {
     @Suppress("UNCHECKED_CAST")
     consumeValue(project, value as TData)
   }

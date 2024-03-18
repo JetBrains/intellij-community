@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PySmartEnterProcessor extends SmartEnterProcessor {
+public final class PySmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(PySmartEnterProcessor.class);
   private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()
     .add(new PyStringLiteralFixer())

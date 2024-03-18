@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -26,6 +26,11 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
     @TestMetadata("builtinTypeStdlib.test")
     public void testBuiltinTypeStdlib() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/builtinTypeStdlib.test");
+    }
+
+    @TestMetadata("classInstance.test")
+    public void testClassInstance() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/classInstance.test");
     }
 
     @TestMetadata("explicitParameterInLambda.test")
@@ -91,6 +96,16 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
     @TestMetadata("thisInExtensionPropertyAccessor.test")
     public void testThisInExtensionPropertyAccessor() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/thisInExtensionPropertyAccessor.test");
+    }
+
+    @TestMetadata("typeAliasInstance.test")
+    public void testTypeAliasInstance() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/typeAliasInstance.test");
+    }
+
+    @TestMetadata("typeAliasType.test")
+    public void testTypeAliasType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/typeAliasType.test");
     }
 
     @TestMetadata("variableType.test")

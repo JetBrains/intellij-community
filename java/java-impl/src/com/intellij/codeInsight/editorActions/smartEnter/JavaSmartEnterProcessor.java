@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaSmartEnterProcessor extends AbstractBasicJavaSmartEnterProcessor {
+public final class JavaSmartEnterProcessor extends AbstractBasicJavaSmartEnterProcessor {
 
   private static final List<Fixer> ourFixers =
     List.of(

@@ -26,10 +26,8 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.with
 import com.intellij.util.ui.EmptyIcon
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,11 +69,12 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   private val iconCustomizations = HashMap<String, String?>()
   private val lock = Any()
 
+  // ordered map, do not use hash map
   @Volatile
-  private var idToName: PersistentMap<String, String>
+  private var idToName: LinkedHashMap<String, String>
 
   @Volatile
-  private var idToActionGroup = persistentHashMapOf<String, ActionGroup>()
+  private var idToActionGroup = java.util.Map.of<String, ActionGroup>()
   private val extGroupIds = HashSet<String>()
   private val actions = ArrayList<ActionUrl>()
   private var isFirstLoadState = true
@@ -100,7 +99,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     fillExtGroups(idToName, extGroupIds)
     EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
     idToName.putAll(additionalIdToName)
-    this.idToName = idToName.toPersistentMap()
+    this.idToName = idToName
   }
 
   companion object {
@@ -116,7 +115,9 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
 
       // Need to sync new items with global instance (if it has been created)
       val customActionSchema = serviceIfCreated<CustomActionsSchema>() ?: return
-      customActionSchema.idToName = customActionSchema.idToName.put(itemId, itemName)
+      customActionSchema.idToName = LinkedHashMap(customActionSchema.idToName).also {
+        it.put(itemId, itemName)
+      }
     }
 
     @JvmStatic
@@ -125,7 +126,9 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
 
       // Need to sync new items with global instance (if it has been created)
       val customActionSchema = serviceIfCreated<CustomActionsSchema>() ?: return
-      customActionSchema.idToName = customActionSchema.idToName.remove(itemId)
+      customActionSchema.idToName = LinkedHashMap(customActionSchema.idToName).also {
+        it.remove(itemId)
+      }
     }
 
     @JvmStatic
@@ -133,18 +136,17 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
     suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()
+  }
 
-    @JvmStatic
-    fun setCustomizationSchemaForCurrentProjects() {
-      // increment myModificationStamp clear children cache in CustomisedActionGroup
-      //  as a result do it *before* update all toolbars, menu bars and popups
-      getInstance().incrementModificationStamp()
-      val windowManager = WindowManagerEx.getInstanceEx()
-      for (project in ProjectManager.getInstance().openProjects) {
-        windowManager.getFrameHelper(project)?.updateView()
-      }
-      windowManager.getFrameHelper(null)?.updateView()
+  fun setCustomizationSchemaForCurrentProjects() {
+    // increment `modificationStamp` clear children cache in CustomisedActionGroup
+    // as a result do it *before* update all toolbars, menu bars and popups
+    incrementModificationStamp()
+    val windowManager = WindowManagerEx.getInstanceEx()
+    for (project in ProjectManager.getInstance().openProjects) {
+      windowManager.getFrameHelper(project)?.updateView()
     }
+    windowManager.getFrameHelper(null)?.updateView()
   }
 
   fun addAction(url: ActionUrl) {
@@ -171,7 +173,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
 
   fun copyFrom(result: CustomActionsSchema) {
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.clear()
+      idToActionGroup = java.util.Map.of()
       actions.clear()
       val ids = java.util.List.copyOf(iconCustomizations.keys)
       iconCustomizations.clear()
@@ -207,7 +209,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   override fun loadState(element: Element) {
     var reload: Boolean
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.clear()
+      idToActionGroup = java.util.Map.of()
       actions.clear()
       iconCustomizations.clear()
       var schElement = element
@@ -255,10 +257,6 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     }
   }
 
-  fun clearFirstLoadState() {
-    synchronized(lock) { isFirstLoadState = false }
-  }
-
   fun incrementModificationStamp() {
     modificationStamp++
   }
@@ -282,6 +280,10 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
 
   suspend fun getCorrectedActionAsync(id: String): ActionGroup? {
     val name = idToName.get(id) ?: return serviceAsync<ActionManager>().getAction(id) as? ActionGroup
+    return getCorrectedActionAsync(id, name)
+  }
+
+  suspend fun getCorrectedActionAsync(id: String, name: String): ActionGroup? {
     idToActionGroup.get(id)?.let {
       return it
     }
@@ -300,6 +302,11 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   }
 
   private fun getOrPut(id: String, actionGroup: ActionGroup, name: String): ActionGroup {
+    idToActionGroup.get(id)?.let {
+      return it
+    }
+
+    // compute out of lock
     // if a plugin is disabled
     val corrected = CustomizationUtil.correctActionGroup(/* group = */ actionGroup,
                                                          /* schema = */ this,
@@ -310,7 +317,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       idToActionGroup.get(id)?.let {
         return it
       }
-      idToActionGroup = idToActionGroup.put(id, corrected)
+      idToActionGroup = idToActionGroup.with(id, corrected)
     }
     return corrected
   }

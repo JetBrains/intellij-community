@@ -76,11 +76,14 @@
     <colorSettingsPage implementation="de.plushnikov.intellij.plugin.language.LombokConfigColorSettingsPage"/>
     <completion.contributor language="Lombok.Config"
                             implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCompletionContributor"/>
+
+    <completion.contributor language="JAVA" implementationClass="de.plushnikov.intellij.plugin.completion.LombokOnXCompletionContributorFilter" order="first"/>
     <lang.commenter language="Lombok.Config"
                     implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
 
     <custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
+    <java.error.fix errorCode="unhandled.exceptions" implementationClass="de.plushnikov.intellij.plugin.handler.AddSneakyThrowsAnnotationCommandAction"/>
 
     <implicit.resource.closer
       implementation="de.plushnikov.intellij.plugin.extension.LombokCleanUpImplicitResourceCloser"/>
@@ -144,6 +147,16 @@
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"
       key="inspection.deprecated.lombok.display.name" bundle="messages.LombokBundle"/>
+
+    <localInspection
+      language="JAVA"
+      groupPath="Java"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
+      shortName="StaticMethodImportLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.StaticMethodImportLombokInspection"
+      key="inspection.builder.static.import.name" bundle="messages.LombokBundle"/>
 
     <localInspection
       language="JAVA"
@@ -215,6 +228,12 @@
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <language>JAVA</language>
+      <className>de.plushnikov.intellij.plugin.intention.ReplaceSynchronizedWithLombokAction</className>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
+    </intentionAction>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
@@ -226,6 +245,11 @@
     <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
 
     <iconMapper mappingFile="LombokIconMappings.json"/>
+
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokSlf4jLogger"/>
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4j2Logger"/>
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4jLogger"/>
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokApacheCommonsLogger"/>
   </extensions>
 
   <projectListeners>

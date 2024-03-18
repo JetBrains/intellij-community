@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
+public final class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
   private String mySingleAnnotationName;
 
   @Override

@@ -1,71 +1,91 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.*
+import com.intellij.configurationStore.DataWriterFilter.ElementLevel
+import com.intellij.configurationStore.XmlElementStorage.XmlElementStorageSaveSessionProducer
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
-internal class ExternalModuleStorage(private val module: Module,
-                                     storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
-  private val manager = StreamProviderFactory.EP_NAME.getExtensions(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+internal class ExternalModuleStorage(private val module: Module, storageManager: StateStorageManager)
+  : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
+  override val controller: SettingsController?
+    get() = null
 
-  override fun loadLocalData() = manager.readModuleData(module.name)
+  private val manager: ExternalSystemStreamProviderFactory = findExternalSystemStreamProviderFactory(module.project)
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalModuleStorage>(states, this) {
-    override fun saveLocally(dataWriter: DataWriter?) {
-      manager.moduleStorage.write(module.name, dataWriter)
-    }
-  }
+  override fun loadLocalData(): Element? = manager.readModuleData(module.name)
+
+  override fun createSaveSession(states: StateMap): SaveSessionProducer =
+    ExternalStorageSaveSessionProducer(states, storage = this, manager.moduleStorage, module.name)
 }
 
-internal open class ExternalProjectStorage @JvmOverloads constructor(fileSpec: String,
-                                                                     project: Project,
-                                                                     storageManager: StateStorageManager,
-                                                                     rootElementName: String? = ProjectStateStorageManager.ROOT_TAG_NAME /* several components per file */) : XmlElementStorage(fileSpec,
-                                                                                                                                                                                                rootElementName,
-                                                                                                                                                                                                storageManager.macroSubstitutor,
-                                                                                                                                                                                                RoamingType.DISABLED) {
-  protected val manager = StreamProviderFactory.EP_NAME.getExtensions(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+internal open class ExternalProjectStorage(
+  fileSpec: String,
+  project: Project,
+  storageManager: StateStorageManager,
+  rootElementName: String?  // several components per file when not null
+) : XmlElementStorage(fileSpec, rootElementName, storageManager.macroSubstitutor, RoamingType.DISABLED) {
+  override val controller: SettingsController?
+    get() = null
 
-  override fun loadLocalData() = manager.fileStorage.read(fileSpec)
+  internal val manager: ExternalSystemStreamProviderFactory = findExternalSystemStreamProviderFactory(project)
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalProjectStorage>(states, this) {
-    override fun saveLocally(dataWriter: DataWriter?) {
-      manager.fileStorage.write(fileSpec, dataWriter)
-    }
-  }
+  override fun loadLocalData(): Element? = manager.fileStorage.read(fileSpec)
 
-  override fun toString(): String {
-    return "ExternalProjectStorage(fileSpec=$fileSpec)"
-  }
+  override fun createSaveSession(states: StateMap): SaveSessionProducer =
+    ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec)
+
+  override fun toString(): String = "ExternalProjectStorage(fileSpec=${fileSpec})"
 }
 
 // for libraries only for now - we use null rootElementName because the only component is expected (libraryTable)
-internal class ExternalProjectFilteringStorage(fileSpec: String,
-                                               project: Project,
-                                               storageManager: StateStorageManager,
-                                               private val componentName: String,
-                                               private val inProjectStorage: DirectoryBasedStorage) : ExternalProjectStorage(fileSpec, project, storageManager, rootElementName = null /* the only component per file */), ExternalStorageWithInternalPart {
-  private val filter = DataWriterFilter.requireAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE, DataWriterFilter.ElementLevel.FIRST)
+internal class ExternalProjectFilteringStorage(
+  fileSpec: String,
+  project: Project,
+  storageManager: StateStorageManager,
+  private val componentName: String,
+  override val internalStorage: DirectoryBasedStorage
+) : ExternalProjectStorage(fileSpec, project, storageManager, rootElementName = null), ExternalStorageWithInternalPart {
+  private val filter = object : DataWriterFilter {
+    private val elementOutputFilter = JDOMUtil.ElementOutputFilter { childElement, level ->
+      level != ElementLevel.FIRST.ordinal || childElement.getAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null
+    }
 
-  override val internalStorage: StateStorage
-    get() = inProjectStorage
+    override fun toElementFilter(): JDOMUtil.ElementOutputFilter = elementOutputFilter
 
-  override fun loadLocalData(): Element? {
-    val externalData = super.loadLocalData()
-    val internalData = inProjectStorage.getSerializedState(inProjectStorage.loadData(), null, componentName, true)
-    return JDOMUtil.merge(externalData, internalData)
+    override fun hasData(element: Element): Boolean = element.children.any { elementOutputFilter.accept(it, 1) }
   }
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalProjectStorage>(states, this) {
-    override fun saveLocally(dataWriter: DataWriter?) {
-      manager.fileStorage.write(fileSpec, dataWriter, filter)
-    }
+  override fun loadLocalData(): Element? =
+    JDOMUtil.merge(
+      super.loadLocalData(),
+      internalStorage.getSerializedState(internalStorage.loadData(), component = null, componentName, archive = true)
+    )
+
+  override fun createSaveSession(states: StateMap): SaveSessionProducer =
+    ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec, filter)
+}
+
+private fun findExternalSystemStreamProviderFactory(project: Project): ExternalSystemStreamProviderFactory =
+  StreamProviderFactory.EP_NAME.getExtensions(project)
+    .first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+
+private class ExternalStorageSaveSessionProducer(
+  states: StateMap,
+  storage: XmlElementStorage,
+  private val fileStorage: FileSystemExternalSystemStorage,
+  private val name: String,
+  private val filter: DataWriterFilter? = null
+) : XmlElementStorageSaveSessionProducer<XmlElementStorage>(states, storage) {
+  override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
+    fileStorage.write(name, dataWriter, filter)
   }
 }

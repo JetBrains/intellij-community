@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -27,14 +27,9 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,6 +62,8 @@ final class DirectoryLock {
 
   private static final Logger LOG = getLogger();
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
+  private static final long TIMEOUT_MS = Integer.getInteger("ij.dir.lock.timeout", 5_000);
+  private static final List<String> ACK_PACKET = List.of("<<ACK>>");
 
   private static Logger getLogger() {
     Logger logger = Logger.getInstance(DirectoryLock.class);
@@ -96,9 +93,7 @@ final class DirectoryLock {
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
       myRedirectedPortFile = baseDir.resolve(".ij_redirected_port_" + myPid + "_" + COUNT.incrementAndGet());
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("redirectedPortFile=" + myRedirectedPortFile);
-      }
+      if (LOG.isDebugEnabled()) LOG.debug("redirectedPortFile=" + myRedirectedPortFile);
     }
     else {
       myRedirectedPortFile = null;
@@ -107,7 +102,7 @@ final class DirectoryLock {
     myProcessor = processor;
   }
 
-  private static boolean areUdsSupported(@NotNull Path file) {
+  private static boolean areUdsSupported(Path file) {
     var fs = file.getFileSystem();
     if (fs.getClass().getModule() != Object.class.getModule()) {
       if (!System.getProperty("java.vm.vendor", "").contains("JetBrains") ||
@@ -166,10 +161,10 @@ final class DirectoryLock {
       throw new CannotActivateException(e);
     }
 
-    if (LOG.isDebugEnabled()) LOG.debug("Deleting " + myPortFile);
+    if (LOG.isDebugEnabled()) LOG.debug("deleting " + myPortFile);
     Files.deleteIfExists(myPortFile);
     if (myRedirectedPortFile != null) {
-      if (LOG.isDebugEnabled()) LOG.debug("Deleting " + myRedirectedPortFile);
+      if (LOG.isDebugEnabled()) LOG.debug("deleting " + myRedirectedPortFile);
       Files.deleteIfExists(myRedirectedPortFile);
     }
 
@@ -184,7 +179,7 @@ final class DirectoryLock {
     var serverChannel = myServerChannel;
     myServerChannel = null;
     if (serverChannel != null) {
-      if (LOG.isDebugEnabled()) LOG.debug("Cleaning up");
+      if (LOG.isDebugEnabled()) LOG.debug("cleaning up");
       Suppressions.runSuppressing(
         () -> serverChannel.close(),
         () -> {
@@ -202,7 +197,10 @@ final class DirectoryLock {
   }
 
   private CliResult tryConnect(List<String> args, Path currentDirectory) throws IOException {
-    try (var socketChannel = SocketChannel.open(myFallbackMode ? StandardProtocolFamily.INET : StandardProtocolFamily.UNIX)) {
+    var pf = myFallbackMode ? StandardProtocolFamily.INET : StandardProtocolFamily.UNIX;
+    try (var socketChannel = SocketChannel.open(pf); var selector = Selector.open()) {
+      socketChannel.configureBlocking(false);
+
       SocketAddress address;
       if (myFallbackMode) {
         var port = 0;
@@ -218,7 +216,13 @@ final class DirectoryLock {
       }
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + address);
-      socketChannel.connect(address);
+      socketChannel.register(selector, SelectionKey.OP_CONNECT);
+      if (!socketChannel.connect(address)) {
+        if (selector.select(TIMEOUT_MS) == 0) throw timeoutException(address, "connection failed");
+        socketChannel.finishConnect();
+      }
+      LOG.debug("... connected");
+      socketChannel.register(selector, SelectionKey.OP_READ);
 
       allowActivation();
 
@@ -227,12 +231,22 @@ final class DirectoryLock {
       request.addAll(args);
       sendLines(socketChannel, request);
 
-      var response = readLines(socketChannel);
+      if (selector.select(TIMEOUT_MS) == 0) throw timeoutException(address, "no response");
+      var ack = receiveLines(socketChannel);
+      if (!ack.equals(ACK_PACKET)) throw new IOException(BootstrapBundle.message("bootstrap.error.malformed.response", ack));
+
+      var response = receiveLines(socketChannel);
       if (response.size() != 2) throw new IOException(BootstrapBundle.message("bootstrap.error.malformed.response", response));
       var exitCode = Integer.parseInt(response.get(0));
       var message = response.get(1);
       return new CliResult(exitCode, message.isEmpty() ? null : message);
     }
+  }
+
+  private static SocketTimeoutException timeoutException(SocketAddress address, String reason) {
+    var e = new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
+    e.addSuppressed(new Exception(reason));
+    return e;
   }
 
   private void allowActivation() {
@@ -299,13 +313,14 @@ final class DirectoryLock {
             var otherPid = Long.parseLong(Files.readString(lockFile));
             var handle = ProcessHandle.of(otherPid).orElse(null);
             if (handle != null) {
-              var command = handle.info().command().orElse("");
-              if (command.contains("java") || command.contains(ApplicationNamesInfo.getInstance().getScriptName())) {
+              var command = Path.of(handle.info().command().orElse(""));
+              if (command.endsWith(SystemInfoRt.isWindows ? "java.exe" : "java") ||
+                  command.endsWith(ApplicationNamesInfo.getInstance().getScriptName() + (SystemInfoRt.isWindows ? "64.exe" : ""))) {
                 throw new IllegalStateException(BootstrapBundle.message("bootstrap.error.still.running", command, Long.toString(otherPid), lockFile), e);
               }
             }
           }
-          catch (NumberFormatException ignored) { }
+          catch (NumberFormatException | InvalidPathException ignored) { }
           Files.deleteIfExists(lockFile);
         }
         catch (IOException ex) {
@@ -323,6 +338,7 @@ final class DirectoryLock {
     while (true) {
       try {
         var socketChannel = serverChannel.accept();
+        if (LOG.isDebugEnabled()) LOG.debug("accepted connection " + socketChannel);
         ProcessIOExecutorService.INSTANCE.execute(() -> handleConnection(socketChannel));
       }
       catch (ClosedChannelException e) { break; }
@@ -335,7 +351,9 @@ final class DirectoryLock {
 
   private void handleConnection(SocketChannel socketChannel) {
     try (socketChannel) {
-      var request = readLines(socketChannel);
+      var request = receiveLines(socketChannel);
+
+      sendLines(socketChannel, ACK_PACKET);
 
       CliResult result;
       try {
@@ -373,38 +391,45 @@ final class DirectoryLock {
 
     buffer.putShort(4, (short)buffer.position());
 
+    if (LOG.isDebugEnabled()) LOG.debug("sending: " + lines + ", bytes:" + buffer.position());
     buffer.flip();
     while (buffer.hasRemaining()) {
       socketChannel.write(buffer);
     }
   }
 
-  private static List<String> readLines(SocketChannel socketChannel) throws IOException {
+  private static List<String> receiveLines(SocketChannel socketChannel) throws IOException {
     var buffer = ByteBuffer.allocate(BUFFER_LENGTH);
 
+    buffer.limit(HEADER_LENGTH);
     while (buffer.position() < HEADER_LENGTH) {
       if (socketChannel.read(buffer) < 0) {
         throw new EOFException("Expected " + HEADER_LENGTH + " bytes, got " + buffer.position());
       }
     }
+    var marker = buffer.getInt(0);
+    if (marker != MARKER) throw new StreamCorruptedException("Invalid marker: 0x" + Integer.toHexString(marker));
     var length = buffer.getShort(4);
+    if (LOG.isDebugEnabled()) LOG.debug("receiving: " + length + " bytes");
+    buffer.limit(length);
     while (buffer.position() < length) {
       if (socketChannel.read(buffer) < 0) {
         throw new EOFException("Expected " + length + " bytes, got " + buffer.position());
       }
     }
 
-    buffer.flip();
-    var marker = buffer.getInt();
-    if (marker != MARKER) throw new StreamCorruptedException("Invalid marker: 0x" + Integer.toHexString(marker));
-    buffer.getShort();
-
+    buffer.position(HEADER_LENGTH);
     var lines = new ArrayList<String>();
     while (buffer.hasRemaining()) {
-      length = buffer.getShort();
-      var bytes = new byte[length];
-      buffer.get(bytes);
-      lines.add(new String(bytes, StandardCharsets.UTF_8));
+      var lineLength = buffer.getShort();
+      if (lineLength > 0) {
+        var bytes = new byte[lineLength];
+        buffer.get(bytes);
+        lines.add(new String(bytes, StandardCharsets.UTF_8));
+      }
+      else {
+        lines.add("");
+      }
     }
     return lines;
   }

@@ -5,10 +5,8 @@ import com.intellij.PathJavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActionTestCase {
@@ -199,15 +197,6 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     configureByFile("/codeInsight/enterAction/SCR1647.java");
     performAction();
     checkResultByFile(null, "/codeInsight/enterAction/SCR1647_after.java", false);
-  }
-
-  public void testPerformance() {
-    configureByFile("/codeInsight/enterAction/Performance.java");
-    PlatformTestUtil.startPerformanceTest("enter in " + getFile(), 100, () -> {
-      performAction();
-      deleteLine();
-      caretUp();
-    }).assertTiming();
   }
 
   public void testComment() throws Exception {
@@ -1775,14 +1764,6 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
-  public void testEnterPerformanceAfterDeepTree() {
-    configureFromFileText("a.java", ("class Foo {\n" +
-                                     "  {\n" +
-                                     "    u." +
-                                     StringUtil.repeat("\n      a('b').c(new Some()).", 500)) + "<caret>\n" +
-                                    "      x(); } }");
-    PlatformTestUtil.startPerformanceTest("enter", 1500, this::performAction).assertTiming();
-  }
 
   public void testIdea181263() {
     doTextTest(

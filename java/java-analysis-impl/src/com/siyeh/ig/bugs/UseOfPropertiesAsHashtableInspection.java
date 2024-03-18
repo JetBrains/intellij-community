@@ -34,7 +34,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfPropertiesAsHashtableInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UseOfPropertiesAsHashtableInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

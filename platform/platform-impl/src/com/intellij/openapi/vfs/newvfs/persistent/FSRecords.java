@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -315,7 +315,10 @@ public final class FSRecords {
     implOrFail().scheduleRebuild(diagnosticMessage, null);
   }
 
-  /** @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
+  /**
+   * @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches
+   * TODO RC: currently only third-party plugins keep using it
+   */
   @ApiStatus.Obsolete
   @Deprecated
   public static void invalidateCaches() {

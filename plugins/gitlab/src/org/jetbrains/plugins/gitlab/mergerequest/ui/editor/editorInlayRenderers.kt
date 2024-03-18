@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -20,6 +21,16 @@ class GitLabMergeRequestDiscussionInlayRenderer internal constructor(cs: Corouti
                                                                      place: GitLabStatistics.MergeRequestNoteActionPlace)
   : CodeReviewComponentInlayRenderer(
   GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, vm, place)
+)
+
+@ApiStatus.Internal
+class GitLabMergeRequestDraftNoteInlayRenderer internal constructor(cs: CoroutineScope,
+                                                                    project: Project,
+                                                                    vm: GitLabNoteViewModel,
+                                                                    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                                                    place: GitLabStatistics.MergeRequestNoteActionPlace)
+  : CodeReviewComponentInlayRenderer(
+  GitLabMergeRequestDiffInlayComponentsFactory.createDraftNote(project, cs, avatarIconsProvider, vm, place)
 )
 
 @ApiStatus.Internal

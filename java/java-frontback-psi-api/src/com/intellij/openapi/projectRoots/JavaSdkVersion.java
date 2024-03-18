@@ -36,7 +36,8 @@ public enum JavaSdkVersion {
   JDK_19(LanguageLevel.JDK_19),
   JDK_20(LanguageLevel.JDK_20),
   JDK_21(LanguageLevel.JDK_21),
-  JDK_22(LanguageLevel.JDK_X);
+  JDK_22(LanguageLevel.JDK_22),
+  JDK_23(LanguageLevel.JDK_X);
 
   private final LanguageLevel myMaxLanguageLevel;
 
@@ -65,7 +66,7 @@ public enum JavaSdkVersion {
     if (languageLevel == LanguageLevel.JDK_X) {
       return values[values.length - 1];
     }
-    int feature = languageLevel.toJavaVersion().feature;
+    int feature = languageLevel.feature();
     if (feature < values.length) {
       return values[feature];
     }

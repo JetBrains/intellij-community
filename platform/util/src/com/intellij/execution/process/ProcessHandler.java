@@ -114,8 +114,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    * Destroys the process if {@link #isStartNotified()} returns {@code true},
    * or postpones the action until {@link #startNotify()} is called.
    *
-   * <p>It changes the process handler's state and {@link #isProcessTerminating} becomes true. This method may return without waiting for
-   * the process termination. Upon the completion of the process termination, {@link #isProcessTerminated} becomes true.
+   * <p>It changes the process handler's state - {@link #isProcessTerminating} becomes true.
+   * The method may perform potentially time-consuming operation, so it should be executed
+   * on a background thread without the read action. This method may return without waiting
+   * for the process termination.
+   * <p>Upon the process termination, {@link #isProcessTerminated} becomes true.
    */
   public void destroyProcess() {
     myAfterStartNotifiedRunner.execute(() -> {
@@ -247,7 +250,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
@@ -262,7 +265,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
@@ -277,7 +280,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
@@ -292,7 +295,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.*
 
 internal class RemoveSingleExpressionStringTemplateInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtStringTemplateExpression, RemoveSingleExpressionStringTemplateInspection.Context>() {
+  AbstractKotlinApplicableInspectionWithContext<KtStringTemplateExpression, RemoveSingleExpressionStringTemplateInspection.Context>() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -45,7 +45,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         return Context(type?.isString == true && !type.isMarkedNullable)
     }
 
-    override fun apply(element: KtStringTemplateExpression, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtStringTemplateExpression, context: Context, project: Project, updater: ModPsiUpdater) {
         // Note that we do not reuse the result of `stringTemplateExpression.singleExpressionOrNull()`
         // from `getInputProvider()` method because PsiElement may become invalidated between read actions
         // e.g., it may be reparsed and recreated and old reference will become stale and invalid.

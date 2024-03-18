@@ -5,7 +5,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +17,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 
 public final class SequencedCollectionMethodCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_GET_REMOVE = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "get", "remove")
@@ -29,10 +30,12 @@ public final class SequencedCollectionMethodCanBeUsedInspection extends Abstract
     .parameterCount(0);
 
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.SEQUENCED_COLLECTIONS);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (PsiUtil.getLanguageLevel(holder.getFile()).isLessThan(LanguageLevel.JDK_21)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

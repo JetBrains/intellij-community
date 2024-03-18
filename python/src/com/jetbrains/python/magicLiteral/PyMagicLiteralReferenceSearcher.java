@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * <strong>Install it</strong> as "referencesSearch" !
  * @author Ilya.Kazakevich
  */
-class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>  {
+final class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>  {
 
   @Override
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {

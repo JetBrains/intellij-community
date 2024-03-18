@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -114,7 +114,7 @@ impl DefaultLaunchConfiguration {
         Ok(config)
     }
 
-    /// Extracts a base name (i.e. a name without the extension and architecture suffix)
+    /// Extracts a base name (i.e., a name without the extension and architecture suffix)
     /// from a relative path to the VM options file.
     ///
     /// Example: `"bin/idea64.exe.vmoptions"` (Windows), `"bin/idea.vmoptions"` (macOS),
@@ -154,7 +154,7 @@ impl DefaultLaunchConfiguration {
         }
     }
 
-    /// Locates the Java runtime and returns a path tpo the standard launcher (`bin/java` or `bin\\java.exe`).
+    /// Locates the Java runtime and returns a path to the standard launcher (`bin/java` or `bin\\java.exe`).
     /// The lookup sequence is described in the [support article](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
     fn locate_runtime(&self) -> Result<PathBuf> {
         debug!("[1] Looking for runtime at product-specific environment variable");
@@ -231,8 +231,8 @@ impl DefaultLaunchConfiguration {
     /// When `<product>_VM_OPTIONS` environment variable points to an existing file, only its content is used;
     /// otherwise, the launcher merges the distribution and user-specific files.
     ///
-    /// Distribution options come first, so users have can override default options with their own ones.
-    /// This works, because JVM processes arguments in first-to-last, so the last one wins.
+    /// Distribution options come first, so users can override default options with their own ones.
+    /// This works because JVM processes arguments first-to-last, so the last one wins.
     /// The only exception is setting a garbage collector, so when a user sets one,
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {

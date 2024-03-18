@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyDeprecationInspection extends PyInspection {
+public final class PyDeprecationInspection extends PyInspection {
 
   @NotNull
   @Override

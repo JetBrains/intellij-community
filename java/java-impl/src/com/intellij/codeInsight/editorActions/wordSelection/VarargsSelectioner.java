@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class VarargsSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class VarargsSelectioner extends AbstractBasicBackBasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiExpressionList;

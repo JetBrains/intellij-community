@@ -42,7 +42,7 @@ internal sealed class SyncAction(private val syncType: SyncType) : DumbAwareActi
 
 private suspend fun syncAndNotify(syncType: SyncType, project: Project?) {
   try {
-    val message = if (icsManager.syncManager.sync(syncType, project)) {
+    val message = if (icsManager.syncManager.sync(syncType)) {
       icsMessage("sync.done.message")
     }
     else {

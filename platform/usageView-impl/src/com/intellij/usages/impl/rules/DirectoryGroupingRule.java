@@ -171,11 +171,6 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }

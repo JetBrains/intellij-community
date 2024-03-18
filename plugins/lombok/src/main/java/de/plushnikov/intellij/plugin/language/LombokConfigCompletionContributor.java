@@ -38,7 +38,8 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES.getConfigKey(),
       ConfigKey.TOSTRING_ONLY_EXPLICITLY_INCLUDED.getConfigKey(),
       ConfigKey.FIELDDEFAULTS_FINAL.getConfigKey(), ConfigKey.FIELDDEFAULTS_PRIVATE.getConfigKey(),
-      ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE.getConfigKey());
+      ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE.getConfigKey(),
+      ConfigKey.ADD_LOMBOK_GENERATED_ANNOTATION.getConfigKey());
 
     final Collection<String> flagUsageOptions = Set.of(
       "lombok.accessors.flagUsage", "lombok.allArgsConstructor.flagUsage", "lombok.anyConstructor.flagUsage",

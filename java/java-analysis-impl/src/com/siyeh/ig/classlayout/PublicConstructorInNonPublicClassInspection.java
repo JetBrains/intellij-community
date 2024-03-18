@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PublicConstructorInNonPublicClassInspection extends BaseInspection {
+public final class PublicConstructorInNonPublicClassInspection extends BaseInspection {
 
   @Override
   @NotNull

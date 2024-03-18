@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.*
-import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -69,7 +68,6 @@ class KotlinBytecodeToolWindow(
     private val enableAssertions: JCheckBox
     private val decompile: JButton
     private val jvmTargets: JComboBox<String>
-    private val ir: JCheckBox?
 
     private inner class UpdateBytecodeToolWindowTask : LongRunningReadTask<Location, BytecodeGenerationResult>(this) {
         override fun prepareRequestInfo(): Location? {
@@ -123,10 +121,7 @@ class KotlinBytecodeToolWindow(
             }
 
             configuration.put(JVMConfigurationKeys.JVM_TARGET, JvmTarget.fromString(jvmTargets.selectedItem as String)!!)
-
-            if (isK2Plugin() || ir != null && ir.isSelected) {
-                configuration.put(JVMConfigurationKeys.IR, true)
-            }
+            configuration.put(JVMConfigurationKeys.IR, true)
 
             configuration.languageVersionSettings = ktFile.languageVersionSettings
 
@@ -190,8 +185,6 @@ class KotlinBytecodeToolWindow(
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
 
-        ir = if (!isK2Plugin()) JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), false) else null
-
         setText(DEFAULT_TEXT)
         initOptionsPanel()
         registerTasksToUpdateToolWindow()
@@ -215,10 +208,6 @@ class KotlinBytecodeToolWindow(
             add(enableInline)
             add(enableOptimization)
             add(enableAssertions)
-
-            if (!isK2Plugin()) {
-                add(ir)
-            }
 
             add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
             add(jvmTargets)
@@ -250,7 +239,7 @@ class KotlinBytecodeToolWindow(
             Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }
         ).start()
 
-        listOfNotNull(enableInline, enableOptimization, enableAssertions, ir).forEach { checkBox ->
+        listOfNotNull(enableInline, enableOptimization, enableAssertions).forEach { checkBox ->
             checkBox.addActionListener {
                 updateToolWindowOnOptionChange()
             }

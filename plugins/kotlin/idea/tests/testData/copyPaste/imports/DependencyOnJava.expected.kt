@@ -1,10 +1,12 @@
 package to
 
 import java.JavaClass
+import java.JavaClass.NestedClass
+import java.JavaClass.staticMethod
 
 fun f(c: JavaClass) {
-    JavaClass.staticMethod()
+    staticMethod()
     c.method()
     c.InnerClass()
-    JavaClass.NestedClass()
+    NestedClass()
 }

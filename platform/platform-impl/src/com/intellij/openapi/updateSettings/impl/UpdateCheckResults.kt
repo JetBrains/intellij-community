@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.externalComponents.ExternalComponentSource
@@ -16,8 +16,7 @@ class UpdateChain internal constructor(
 
 @ApiStatus.Internal
 sealed class PlatformUpdates {
-
-  object Empty : PlatformUpdates()
+  data object Empty : PlatformUpdates()
 
   data class Loaded @JvmOverloads internal constructor(
     val newBuild: BuildInfo,
@@ -41,7 +40,6 @@ data class PluginUpdates @JvmOverloads internal constructor(
   val allDisabled: Collection<PluginDownloader> = emptyList(),
   val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
 ) {
-
   val all: List<PluginDownloader> by lazy {
     allEnabled + allDisabled
   }

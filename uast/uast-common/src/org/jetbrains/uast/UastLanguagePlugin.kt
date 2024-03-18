@@ -100,8 +100,8 @@ interface UastLanguagePlugin {
     fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
       if (uElement !is UExpression) return null
       val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
-      val argumentSourcePsi = wrapULiteral(uElement).sourcePsi
-      return uAnnotation to (name ?: uAnnotation.attributeValues.find { wrapULiteral(it.expression).sourcePsi === argumentSourcePsi }?.name)
+      val argumentSourcePsi = uElement.sourcePsi
+      return uAnnotation to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === argumentSourcePsi }?.name)
     }
 
     tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {

@@ -16,29 +16,23 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestFiles
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
@@ -108,7 +102,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     private fun createTestFile(testFile: TestFile): VirtualFile {
         return runWriteAction {
             val vFile = myFixture.tempDirFixture.createFile(testFile.path)
-            vFile.charset = CharsetToolkit.UTF8_CHARSET
+            vFile.charset = StandardCharsets.UTF_8
             VfsUtil.saveText(vFile, testFile.content)
             vFile
         }
@@ -131,8 +125,14 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             }
         )
 
-        val afterFile = subFiles.firstOrNull { file -> file.path.contains(".after") }
-        val beforeFile = subFiles.firstOrNull { file -> file.path.contains(".before") }!!
+        fun firstFileWith(subStringInName: String) = subFiles.firstOrNull { file -> file.path.contains(subStringInName) }
+
+        val afterFile = if (isFirPlugin) {
+            firstFileWith(".after.fir") ?: firstFileWith(".after")
+        } else {
+            firstFileWith(".after")
+        }
+        val beforeFile = firstFileWith(".before")!!
 
         subFiles.remove(beforeFile)
         if (afterFile != null) {
@@ -188,8 +188,6 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     } else {
                         TestCase.assertNull(".after file should not exist", afterFile)
                     }
-                } catch (e: ComparisonFailure) {
-                    throw e
                 } catch (e: AssertionError) {
                     throw e
                 } catch (e: Throwable) {
@@ -201,8 +199,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
     }
 
-    private fun doTest(beforeFileName: String) {
-        val mainFile = File(beforeFileName)
+    private fun doTest(beforeFilePath: String) {
+        val mainFile = File(beforeFilePath)
         val originalFileText = FileUtil.loadFile(mainFile, true)
         val mainFileDir = mainFile.parentFile!!
 
@@ -239,17 +237,28 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         file,
                         editor,
                         actionShouldBeAvailable,
-                        beforeFileName,
+                        beforeFilePath,
                         this::availableActions,
                         myFixture::doHighlighting,
                         checkAvailableActionsAreExpected = this::checkAvailableActionsAreExpected
                     )
 
                     if (actionShouldBeAvailable) {
-                        val afterFilePath = beforeFileName.replace(".before.Main.", ".after.")
+                        fun replaceBeforeFileName(beforeFilePath: String, newValue: String) = beforeFilePath.replace(".before.Main.", newValue)
+
+                        val afterFilePathToken = if (isFirPlugin) {
+                            val afterFirFilePath = replaceBeforeFileName(beforeFilePath, ".after.fir.")
+                            if (FileUtil.exists(afterFirFilePath)) ".after.fir."
+                            else ".after."
+                        } else {
+                            ".after."
+                        }
+
+                        val afterFilePath = replaceBeforeFileName(beforeFilePath, afterFilePathToken)
                         try {
-                            myFixture.checkResultByFile(mainFile.name.replace(".before.Main.", ".after."))
-                        } catch (e: ComparisonFailure) {
+                            myFixture.checkResultByFile(replaceBeforeFileName(mainFile.name, afterFilePathToken))
+                        } catch (e: AssertionError) {
+                            if (e !is FileComparisonData) throw e
                             KotlinTestUtils.assertEqualsToFile(File(afterFilePath), editor)
                         }
 
@@ -263,8 +272,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                                 )
                             ) continue
 
-                            val extraFileFullPath = beforeFileName.replace(myFixture.file.name, fileName)
-                            val afterFile = File(extraFileFullPath.replace(".before.", ".after."))
+                            val extraFileFullPath = beforeFilePath.replace(myFixture.file.name, fileName)
+                            val afterFile = File(extraFileFullPath.replace(".before.", afterFilePathToken))
                             if (afterFile.exists()) {
                                 KotlinTestUtils.assertEqualsToFile(afterFile, file.text)
                             } else {
@@ -272,8 +281,6 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                             }
                         }
                     }
-                } catch (e: ComparisonFailure) {
-                    throw e
                 } catch (e: AssertionError) {
                     throw e
                 } catch (e: Throwable) {

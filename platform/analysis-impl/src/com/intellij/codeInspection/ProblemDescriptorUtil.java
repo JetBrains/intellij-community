@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -168,8 +169,10 @@ public final class ProblemDescriptorUtil {
 
   @Contract(pure = true)
   public static @NotNull String unescapeTags(@NotNull String message) {
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
+    if (!XmlStringUtil.isWrappedInHtml(message)) {
+      message = StringUtil.replace(message, "<code>", "'");
+      message = StringUtil.replace(message, "</code>", "'");
+    }
     message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) :
               !XmlStringUtil.isWrappedInHtml(message) ? StringUtil.unescapeXmlEntities(message) : message;
     return message;
@@ -246,7 +249,7 @@ public final class ProblemDescriptorUtil {
       int startOffset = annotation.getStartOffset();
       int endOffset = annotation.getEndOffset();
 
-      String message = annotation.getMessage();
+      String message = StringUtil.notNullize(annotation.getMessage());
       boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
 
@@ -315,12 +318,9 @@ public final class ProblemDescriptorUtil {
     LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
     int i = 0;
     for (Annotation.QuickFixInfo fixInfo : fixInfos) {
-      IntentionAction intentionAction = fixInfo.quickFix;
-      final LocalQuickFix fix;
-      if (intentionAction instanceof LocalQuickFix) {
-        fix = (LocalQuickFix)intentionAction;
-      }
-      else {
+      LocalQuickFix fix = fixInfo.localQuickFix;
+      if (fix == null) {
+        IntentionAction intentionAction = fixInfo.quickFix;
         LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
         if (lqf == null) {
           lqf = new ExternalAnnotatorInspectionVisitor.LocalQuickFixBackedByIntentionAction(intentionAction);
@@ -337,10 +337,7 @@ public final class ProblemDescriptorUtil {
     List<LocalQuickFix> quickFixes = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, range) -> {
       IntentionAction intention = descriptor.getAction();
-      LocalQuickFix fix =
-        intention instanceof LocalQuickFix ? (LocalQuickFix)intention :
-        intention instanceof LocalQuickFixAsIntentionAdapter ?
-        ((LocalQuickFixAsIntentionAdapter)intention).getFix() : null;
+      LocalQuickFix fix = intention instanceof LocalQuickFix localFix ? localFix : QuickFixWrapper.unwrap(intention);
       if (fix != null) {
         quickFixes.add(fix);
       }

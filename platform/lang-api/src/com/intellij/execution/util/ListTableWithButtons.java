@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
@@ -16,10 +17,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Observable;
+import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class ListTableWithButtons<T> extends Observable {
@@ -168,7 +166,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       if (!isUpDownSupported()) {
         myDecorator.disableUpDownActions();
       }
-      myDecorator.addExtraActions(createExtraActions());
+      myDecorator.addExtraActions(createExtraToolbarActions());
       myPanel = myDecorator.createPanel();
       configureToolbarButtons(myPanel);
     }
@@ -238,10 +236,17 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean isEmpty(T element);
 
+  protected AnAction @NotNull [] createExtraToolbarActions() {
+    AnActionButton[] actions = createExtraActions();
+    if (actions.length == 0) return AnAction.EMPTY_ARRAY;
+    return Arrays.copyOf(actions, actions.length, AnAction[].class);
+  }
+
+  /** @deprecated override {@link #createExtraToolbarActions()} instead */
+  @Deprecated(forRemoval = true)
   protected AnActionButton @NotNull [] createExtraActions() {
     return new AnActionButton[0];
   }
-
 
   protected @NotNull List<T> getSelection() {
     int[] selection = myTableView.getComponent().getSelectedRows();

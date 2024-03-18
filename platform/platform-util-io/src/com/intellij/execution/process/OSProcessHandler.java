@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance(OSProcessHandler.class);
@@ -220,21 +222,9 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * Kills the whole process tree asynchronously.
-   * As a potentially time-consuming operation, it's executed asynchronously on a pooled thread.
-   *
-   * @param process Process
+   * Kills the whole process tree synchronously.
    */
   protected void killProcessTree(final @NotNull Process process) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      killProcessTreeSync(process);
-    }
-    else {
-      executeTask(() -> killProcessTreeSync(process));
-    }
-  }
-
-  private void killProcessTreeSync(@NotNull Process process) {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessUtil.killProcessTree(process);
     if (!destroyed) {
@@ -285,6 +275,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       commandLine.putUserData(DELETE_FILES_ON_TERMINATION, set);
     }
     set.add(fileToDelete);
+  }
+
+  @Override
+  public @NotNull Future<?> executeTask(@NotNull Runnable task) {
+    return super.executeTask(ClientId.decorateRunnable(task)); // todo move client id propagation logic to ProcessIOExecutorService
   }
 
   public static class Silent extends OSProcessHandler {

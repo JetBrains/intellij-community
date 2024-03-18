@@ -19,7 +19,10 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointDescriptor;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -46,16 +49,15 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-
 
 public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
@@ -94,7 +96,7 @@ public class CoreApplicationEnvironment {
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
     registerApplicationService(VirtualFileManager.class, new VirtualFileManagerImpl(fs));
 
-    //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
+    // fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
@@ -160,6 +162,7 @@ public class CoreApplicationEnvironment {
     return myParentDisposable;
   }
 
+  @SuppressWarnings("unused")
   public <T> void registerApplicationComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
     registerComponentInstance(application.getPicoContainer(), interfaceClass, implementation);
     if (implementation instanceof Disposable) {
@@ -175,7 +178,7 @@ public class CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, definition.getFileNodeType().getLanguage(), definition);
   }
 
-  public static <T> void registerComponentInstance(@NotNull MutablePicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {
+  public static <T> void registerComponentInstance(@NotNull DefaultPicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
   }
@@ -188,18 +191,17 @@ public class CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, language, parserDefinition);
   }
 
-  public <T> void addExplicitExtension(final @NotNull FileTypeExtension<T> instance, final @NotNull FileType fileType, final @NotNull T object) {
+  public <T> void addExplicitExtension(@NotNull FileTypeExtension<T> instance, @NotNull FileType fileType, @NotNull T object) {
     instance.addExplicitExtension(fileType, object, myParentDisposable);
   }
 
-  public <T> void addExplicitExtension(final @NotNull ClassExtension<T> instance, final @NotNull Class aClass, final @NotNull T object) {
+  public <T> void addExplicitExtension(@NotNull ClassExtension<T> instance, @NotNull Class<?> aClass, @NotNull T object) {
     instance.addExplicitExtension(aClass, object, myParentDisposable);
   }
 
-  public <T> void addExtension(@NotNull ExtensionPointName<T> name, final @NotNull T extension) {
-    final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
+  public <T> void addExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
     //noinspection TestOnlyProblems
-    extensionPoint.registerExtension(extension, myParentDisposable);
+    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name).registerExtension(extension, myParentDisposable);
   }
 
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
@@ -218,18 +220,20 @@ public class CoreApplicationEnvironment {
                                                  boolean isDynamic) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers()) ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
+      //noinspection TestOnlyProblems
       area.registerExtensionPoint(name, aClass.getName(), kind, isDynamic);
     }
   }
 
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(Extensions.getRootArea(), extensionPointName.getName(), aClass);
+    registerExtensionPoint(ApplicationManager.getApplication().getExtensionArea(), extensionPointName.getName(), aClass);
   }
 
   public static <T> void registerApplicationDynamicExtensionPoint(@NotNull String extensionPointName, @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass, true);
+    registerExtensionPoint(ApplicationManager.getApplication().getExtensionArea(), extensionPointName, aClass, true);
   }
 
+  @SuppressWarnings("unused")
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
     if (descriptor == null) {
@@ -239,10 +243,10 @@ public class CoreApplicationEnvironment {
 
     List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
     ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
-    if (extensionPoints != null) {
+    if (!extensionPoints.isEmpty()) {
       areaImpl.registerExtensionPoints(extensionPoints, descriptor);
     }
-    descriptor.registerExtensions(areaImpl.extensionPoints, descriptor.appContainerDescriptor, null);
+    descriptor.registerExtensions(areaImpl.getNameToPointMap(), descriptor.appContainerDescriptor, null);
   }
 
   public @NotNull CoreLocalFileSystem getLocalFileSystem() {
@@ -253,6 +257,7 @@ public class CoreApplicationEnvironment {
     return myJarFileSystem;
   }
 
+  @SuppressWarnings("unused")
   public @Nullable VirtualFileSystem getJrtFileSystem() {
     return myJrtFileSystem;
   }

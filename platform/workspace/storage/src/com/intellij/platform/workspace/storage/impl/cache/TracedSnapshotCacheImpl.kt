@@ -1,107 +1,245 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.cache
 
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.query.CellOrchestra
-import com.intellij.platform.workspace.storage.impl.query.compile
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache.Companion.LOG_QUEUE_MAX_SIZE
+import com.intellij.platform.workspace.storage.impl.query.*
+import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
-import com.intellij.platform.workspace.storage.trace.ReadTrace
-import com.intellij.platform.workspace.storage.trace.ReadTracker
-import com.intellij.platform.workspace.storage.trace.toTraces
-import java.util.concurrent.ConcurrentHashMap
+import com.intellij.platform.workspace.storage.query.compile
+import com.intellij.platform.workspace.storage.query.trackDiff
+import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
+import org.jetbrains.annotations.TestOnly
+import java.util.*
 
-internal class EntityStorageCacheImpl : EntityStorageCache {
-  private lateinit var storage: EntityStorage
-  private val readLock = Any()
-  private val values: ConcurrentHashMap<StorageQuery<*>, CellOrchestra> = ConcurrentHashMap()
+internal data class CellUpdateInfo(
+  val chainId: QueryId,
+  val cellId: CellId,
+  val updateType: UpdateType,
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
 
-  override fun init(storage: EntityStorage) {
-    this.storage = storage
+    other as CellUpdateInfo
+
+    if (chainId != other.chainId) return false
+    if (cellId != other.cellId) return false
+    if (updateType != other.updateType) return false
+
+    return true
   }
 
-  override fun <T> cached(query: StorageQuery<T>): T {
-    val existingCell = values[query]
-    if (existingCell != null) {
-      return existingCell.data()
-    }
-
-    synchronized(readLock) {
-      val doubleCheckCell = values[query]
-      if (doubleCheckCell != null) {
-        return doubleCheckCell.data()
-      }
-
-      val emptyCellOrchestra = compile(query)
-      val newOrchestra = emptyCellOrchestra.snapshotInput(storage.toSnapshot())
-      values[query] = newOrchestra
-      return newOrchestra.data()
-    }
-  }
-
-  override fun isEmpty(): Boolean {
-    return values.isEmpty()
+  override fun hashCode(): Int {
+    var result = chainId.hashCode()
+    result = 31 * result + cellId.hashCode()
+    result = 31 * result + updateType.hashCode()
+    return result
   }
 }
 
+internal sealed interface UpdateType {
+  data object DIFF : UpdateType
+  data class RECALCULATE(val match: Match) : UpdateType {
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as RECALCULATE
+
+      return match == other.match
+    }
+
+    override fun hashCode(): Int {
+      return match.hashCode()
+    }
+  }
+}
+
+internal class PropagationResult<T>(
+  val newCell: Cell<T>,
+  val matchList: MatchList,
+  val subscriptions: List<Pair<ReadTraceHashSet, UpdateType>>,
+)
+
 @OptIn(EntityStorageInstrumentationApi::class)
 internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
+  private val lock = Any()
 
-  private lateinit var snapshot: EntityStorageSnapshotInstrumentation
+  private val queryIdToChain: HashMap<QueryId, CellChain> = HashMap()
+  private val queryIdToTraceIndex: HashMap<QueryId, ReadTraceIndex<CellUpdateInfo>> = HashMap()
 
-  private val readLock = Any()
-  private val values: ConcurrentHashMap<StorageQuery<*>, CellOrchestra> = ConcurrentHashMap()
-  private val readTraces: ConcurrentHashMap<StorageQuery<*>, Set<ReadTrace>> = ConcurrentHashMap()
+  private val changeQueue: MutableMap<QueryId, MutableList<EntityStorageChange>> = HashMap()
 
-  override fun pullCache(from: TracedSnapshotCache, changes: Map<Class<*>, List<EntityChange<*>>>) {
-    if (from !is TracedSnapshotCacheImpl) return
-    this.values.putAll(from.values)
-    this.readTraces.putAll(from.readTraces)
-    val newTraces = changes.toTraces()
-    from.readTraces.forEach { (query, trace) ->
-      if (trace.intersect(newTraces).isNotEmpty()) {
-        val existingCells = this.values[query]!!
+  /**
+   * Flag indicating that this cache is now pulled from the other snapshot. During this pull, executing cache queries is not allowed
+   *   because the cache structures are not ready and have unknown state.
+   * We can't call for [cached] during [pullingCache] anyway because [pullingCache] is called in a controlled manner,
+   *   still this flag exists to catch bugs in implementation or after refactorings.
+   */
+  private var pullingCache = false
+  internal var shuffleEntities: Long = -1L
 
-        val readTrace = mutableSetOf<ReadTrace>()
-        val trackedSnapshot = ReadTracker(snapshot) { readTrace.add(it) }
+  override fun pullCache(
+    newSnapshot: ImmutableEntityStorage,
+    from: TracedSnapshotCache,
+    changes: EntityStorageChange,
+  ) {
+    try {
+      pullingCache = true
+      check(from is TracedSnapshotCacheImpl)
 
-        val newOrchestra = existingCells.changeInput(trackedSnapshot, changes)
+      // Do not perform changes in [from] cache while we copy state to the new cache
+      synchronized(from.lock) {
+        from.queryIdToTraceIndex.forEach { (chainId, index) ->
+          val newIndex = ReadTraceIndex<CellUpdateInfo>()
+          newIndex.pull(index)
+          this.queryIdToTraceIndex[chainId] = newIndex
+        }
+        this.queryIdToChain.putAll(from.queryIdToChain)
+        this.changeQueue.putAll(from.changeQueue.mapValues { ArrayList(it.value) })
+        this.shuffleEntities = from.shuffleEntities
 
-
-        this.values[query] = newOrchestra
-
-        // TODO: This should be improved! We need to keep the track on the actual traces.
-        // Perfectly the left part of the plus should not exist.
-        this.readTraces[query] = (this.readTraces[query] ?: emptySet()) + readTrace.toSet()
+        val cachesToRemove = ArrayList<QueryId>()
+        this.queryIdToChain.keys.forEach { chainId ->
+          val changesQueue = this.changeQueue.getOrPut(chainId) { ArrayList() }
+          val expectedNewChangelogSize = changesQueue.sumOf { it.size } + changes.size
+          if (expectedNewChangelogSize > LOG_QUEUE_MAX_SIZE) {
+            @Suppress("TestOnlyProblems")
+            if (CacheResetTracker.enabled) {
+              CacheResetTracker.cacheReset = true
+            }
+            cachesToRemove += chainId
+          }
+          else {
+            changesQueue.add(changes)
+          }
+        }
+        cachesToRemove.forEach { removeCache(it) }
       }
+    }
+    finally {
+      pullingCache = false
     }
   }
 
-  override fun initSnapshot(snapshot: EntityStorageSnapshotInstrumentation) {
-    this.snapshot = snapshot
+  private fun removeCache(queryId: QueryId) {
+    queryIdToChain.remove(queryId)
+    queryIdToTraceIndex.remove(queryId)
+    changeQueue.remove(queryId)
   }
 
-  override fun <T> cached(query: StorageQuery<T>): T {
-    val existingCell = values[query]
-    if (existingCell != null) {
-      return existingCell.data()
+  private fun updateCellIndex(chainId: QueryId,
+                              changes: EntityStorageChange,
+                              newSnapshot: ImmutableEntityStorageInstrumentation,
+                              prevStorage: ImmutableEntityStorageInstrumentation?): Boolean {
+    val cellIndex = queryIdToTraceIndex.getValue(chainId)
+    val newTraces = changes.createTraces(newSnapshot)
+
+    val updatedCells = HashMap<CellId, MatchSet>()
+    var cellsUpdated = false
+    cellIndex.get(newTraces).maybeShuffled().firstDiffThenRecalculate().forEach { updateRequest ->
+      cellsUpdated = true
+      val cells = queryIdToChain[updateRequest.chainId] ?: error("Unindexed cell")
+      val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, prevStorage, updateRequest, changes, updateRequest.cellId,
+                                                                 updatedCells)
+      tracesAndModifiedCells.forEach { (traces, updateRequest) ->
+        cellIndex.set(traces, updateRequest)
+      }
+      this.queryIdToChain[newChain.id] = newChain
+    }
+    return cellsUpdated
+  }
+
+  private fun Collection<CellUpdateInfo>.firstDiffThenRecalculate(): List<CellUpdateInfo> {
+    val (diff, recalculate) = this.partition { it.updateType == UpdateType.DIFF }
+    return diff + recalculate
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> cached(query: StorageQuery<T>,
+                          snapshot: ImmutableEntityStorageInstrumentation,
+                          prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<T> {
+    check(!pullingCache) {
+      "It's not allowed to request query when the cache is pulled from other snapshot"
     }
 
-    synchronized(readLock) {
-      val doubleCheckCell = values[query]
-      if (doubleCheckCell != null) {
-        return doubleCheckCell.data()
+    val lastCell = getUpdatedLastCell(query, snapshot, prevStorage)
+    return CachedValue(lastCell.cacheProcessStatus, lastCell.value.data() as T)
+  }
+
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun <T> diff(query: CollectionQuery<T>,
+                        snapshot: ImmutableEntityStorageInstrumentation,
+                        prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<Diff<T>> {
+    require(query !is CollectionQuery.TrackDiff<*>)
+
+    val queryWithDiffTracker = query.trackDiff()
+
+    val lastCell = getUpdatedLastCell(queryWithDiffTracker, snapshot, prevStorage)
+    check(lastCell.value is DiffCollectorCell<*>)
+
+    val diff = DiffImpl(lastCell.value.addedData as List<T>, lastCell.value.removedData as List<T>)
+    return CachedValue(lastCell.cacheProcessStatus, diff)
+  }
+
+  private fun <T> getUpdatedLastCell(query: StorageQuery<T>,
+                                     snapshot: ImmutableEntityStorageInstrumentation,
+                                     prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<Cell<*>> {
+    val queryId = query.queryId
+
+    val changes = changeQueue[queryId]
+    val cellChain = queryIdToChain[queryId]
+    if (cellChain != null && (changes == null || changes.size == 0)) {
+      return CachedValue(CacheHit, cellChain.last())
+    }
+
+    synchronized(lock) {
+      val doubleCheckChanges = changeQueue[queryId]
+      val doubleCheckChain = queryIdToChain[queryId]
+      if (doubleCheckChain != null && (doubleCheckChanges == null || doubleCheckChanges.size == 0)) {
+        return CachedValue(CacheHitInSynchronized, doubleCheckChain.last())
       }
 
-      val emptyCellOrchestra = compile(query)
-      val readTrace = mutableSetOf<ReadTrace>()
-      val trackedSnapshot = ReadTracker(snapshot) { readTrace.add(it) }
-      val newOrchestra = emptyCellOrchestra.snapshotInput(trackedSnapshot)
-      values[query] = newOrchestra
-      readTraces[query] = readTrace.toSet()
-      return newOrchestra.data()
+      if (doubleCheckChanges != null && doubleCheckChanges.size > 0) {
+        val collapsedChangelog = doubleCheckChanges.collapse()
+        val recalculated = updateCellIndex(queryId, collapsedChangelog, snapshot, prevStorage)
+        changeQueue.remove(queryId)
+        val status = if (recalculated) IncrementalUpdate else CacheHitNotAffectedByChanges
+        return CachedValue(status, queryIdToChain[queryId]!!.last())
+      }
+
+      val emptyCellChain = query.compile()
+      val chainWithTraces = emptyCellChain.snapshotInput(snapshot)
+      val (newChain, traces) = chainWithTraces
+      queryIdToTraceIndex.getOrPut(newChain.id) { ReadTraceIndex() }.also { index ->
+        traces.forEach { (trace, updateRequest) ->
+          index.set(trace, updateRequest)
+        }
+      }
+      queryIdToChain[newChain.id] = newChain
+      return CachedValue(Initialization, newChain.last())
     }
+  }
+
+  @TestOnly
+  internal fun getChangeQueue() = changeQueue
+  @TestOnly
+  internal fun getQueryIdToChain() = queryIdToChain
+  @TestOnly
+  internal fun getQueryIdToTraceIndex() = queryIdToTraceIndex
+
+  /**
+   * Shuffle collection if the field [shuffleEntities] is not -1 (set in tests)
+   */
+  private fun <E> Collection<E>.maybeShuffled(): Collection<E> {
+    if (shuffleEntities != -1L && this.size > 1) {
+      return this.shuffled(Random(shuffleEntities))
+    }
+    return this
   }
 }

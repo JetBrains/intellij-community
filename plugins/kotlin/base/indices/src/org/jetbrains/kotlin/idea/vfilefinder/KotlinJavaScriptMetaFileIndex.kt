@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
+import org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.metadata.js.JsProtoBuf
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.JsMetadataVersion

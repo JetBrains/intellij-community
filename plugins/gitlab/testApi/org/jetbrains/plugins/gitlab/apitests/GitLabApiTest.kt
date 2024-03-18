@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.apitests
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
 import com.intellij.openapi.components.service
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.junit.jupiter.api.Assertions.*
@@ -34,11 +36,11 @@ import kotlin.random.Random
  */
 class GitLabApiTest : GitLabApiTestCase() {
   @Test
-  fun `REST getMergeRequestCommits works as expected`() = runTest {
+  fun `REST loadMergeRequestCommits works as expected`() = runTest {
     checkVersion(after(v(9, 0)))
 
     requiresAuthentication { api ->
-      val commits = api.rest.getMergeRequestCommits(glTest1Coordinates, "2").body()
+      val commits = api.rest.loadMergeRequestCommits(api.getMergeRequestCommitsURI(glTest1Coordinates, "2")).body()
 
       assertEquals(glTest1Mr2CommitShortShas, commits.map { it.shortId })
     }
@@ -277,7 +279,7 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(13, 1)))
 
     requiresAuthentication { api ->
-      val mrs = api.graphQL.findMergeRequestsByBranch(glTest1Coordinates, "changes-on-b").body()
+      val mrs = api.graphQL.findMergeRequestsByBranch(glTest1Coordinates, GitLabMergeRequestState.ALL, "changes-on-b").body()
 
       assertNotNull(mrs)
       assertEquals(listOf("3"), mrs!!.nodes.map { it.iid })
@@ -289,15 +291,15 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(13, 2)))
 
     requiresAuthentication { api ->
-      val events = GitLabETagUpdatableListLoader(getMergeRequestStateEventsUri(glTest1Coordinates, "1")
-      ) { uri, eTag ->
+      val refreshRequest = MutableSharedFlow<Unit>()
+      val events = GitLabETagUpdatableListLoader(getMergeRequestStateEventsUri(glTest1Coordinates, "1"), refreshRequest) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.batches.first()
+      }.events.first()
 
       assertNotNull(events)
-      assertEquals(listOf(1), events.map { it.id })
+      assertEquals(listOf(1), events.map { l -> l.map { it.id } })
     }
   }
 
@@ -306,15 +308,15 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(11, 4)))
 
     requiresAuthentication { api ->
-      val events = GitLabETagUpdatableListLoader(getMergeRequestLabelEventsUri(glTest1Coordinates, "1")
-      ) { uri, eTag ->
+      val refreshRequest = MutableSharedFlow<Unit>()
+      val events = GitLabETagUpdatableListLoader(getMergeRequestLabelEventsUri(glTest1Coordinates, "1"), refreshRequest) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.batches.first()
+      }.events.first()
 
       assertNotNull(events)
-      assertEquals(listOf(3, 4, 5), events.map { it.id })
+      assertEquals(Result.success(listOf(3, 4, 5)), events.map { l -> l.map { it.id } })
     }
   }
 
@@ -323,15 +325,15 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(13, 1)))
 
     requiresAuthentication { api ->
-      val events = GitLabETagUpdatableListLoader(getMergeRequestMilestoneEventsUri(glTest1Coordinates, "1")
-      ) { uri, eTag ->
+      val refreshRequest = MutableSharedFlow<Unit>()
+      val events = GitLabETagUpdatableListLoader(getMergeRequestMilestoneEventsUri(glTest1Coordinates, "1"), refreshRequest) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.batches.first()
+      }.events.first()
 
       assertNotNull(events)
-      assertEquals(listOf(3, 4), events.map { it.id })
+      assertEquals(listOf(3, 4), events.map { l -> l.map { it.id } })
     }
   }
 
@@ -359,18 +361,15 @@ class GitLabApiTest : GitLabApiTestCase() {
       api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       var mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       assertNotNull(mr)
-      assertEquals(true, mr?.approved)
 
       api.rest.mergeRequestUnApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       assertNotNull(mr)
-      assertEquals(false, mr?.approved)
 
       // Do it one more time to confirm the MR wasn't already approved before the first approve
       api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       assertNotNull(mr)
-      assertEquals(true, mr?.approved)
     }
   }
 

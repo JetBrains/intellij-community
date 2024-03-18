@@ -16,12 +16,8 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.FileEditorManagerTestCase
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestActionEvent
-import com.intellij.testFramework.TestDataProvider
+import com.intellij.testFramework.*
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
@@ -246,6 +242,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         myFixture.openFileInEditor(scratchVirtualFile)
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+        IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
 
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch file")
@@ -278,8 +275,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     protected fun launchAction(action: AnAction) {
         val e = getActionEvent(action)
-        Assert.assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true))
-        Assert.assertTrue(e.presentation.isEnabled && e.presentation.isVisible)
+        ActionUtil.performDumbAwareUpdate(action, e, false)
+        Assert.assertTrue(e.presentation.isEnabledAndVisible)
         ActionUtil.performActionDumbAwareWithCallbacks(action, e)
     }
 

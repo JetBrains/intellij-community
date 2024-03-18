@@ -45,33 +45,24 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
             // testframework has been provided on `allowSlowOperations=false` state
             return null
         }
-        val testFramework =
-            calculatedTestFrameworkValue?.let { cachedValue ->
-                val name = cachedValue.upToDateOrNull?.get() ?: return@let null
-                TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
-            }
-                ?: KotlinPsiBasedTestFramework.findTestFramework(declaration, !allowSlowOperations)
-                ?: run {
-                    declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
-                    return null
-                }
-        declaration.putUserData(
-            TEST_FRAMEWORK_NAME_KEY,
-            CachedValuesManager.getManager(declaration.project).createCachedValue {
+        val testFramework = calculatedTestFrameworkValue?.let { cachedValue ->
+            val name = cachedValue.upToDateOrNull?.get() ?: return@let null
+            TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
+        } ?: KotlinPsiBasedTestFramework.findTestFramework(declaration, !allowSlowOperations)
+        return if (testFramework != null) {
+            declaration.putUserData(TEST_FRAMEWORK_NAME_KEY, CachedValuesManager.getManager(declaration.project).createCachedValue {
                 CachedValueProvider.Result.create(
-                  testFramework.name,
-                  OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                    testFramework.name,
+                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
                 )
-            }
-        )
-        val urls = calculateUrls(declaration)
-
-        return if (urls != null) {
-            KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration)
-        } else if (allowSlowOperations) {
-            testIconProvider.getGenericTestIcon(declaration, emptyList())
+            })
+            val urls = calculateUrls(declaration)
+            if (urls != null) KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration) else null
         } else {
-            null
+            declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
+            if (allowSlowOperations) {
+                testIconProvider.getGenericTestIcon(declaration, emptyList())
+            } else null
         }
     }
 

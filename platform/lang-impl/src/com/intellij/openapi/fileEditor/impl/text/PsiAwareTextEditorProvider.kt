@@ -24,9 +24,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createAsyncEditorLoader
-import com.intellij.openapi.fileEditor.impl.text.foldingGrave.MarkupCacheInvalidator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -61,7 +59,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     return coroutineScope {
       val markupCacheInvalidated = async(CoroutineName("markup cache invalidation")) {
-        serviceAsync<MarkupCacheInvalidator>().cleanCacheIfNeeded()
+        serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
       }
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
@@ -139,9 +137,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     // foldings
     val child = element.getChild(FOLDING_ELEMENT)
     if (child != null) {
-      val document = FileDocumentManager.getInstance().getCachedDocument(file)
+      val document = if (AsyncEditorLoader.isOpenedInBulk(file)) null else FileDocumentManager.getInstance().getCachedDocument(file)
       if (document == null) {
-        state.setDelayedFoldState(MyDelayedFoldingState(project, file, child))
+        state.setDelayedFoldState(PsiAwareTextEditorDelayedFoldingState(project = project, file = file, state = child))
       }
       else {
         state.foldingState = CodeFoldingManager.getInstance(project).readFoldingState(child, document)
@@ -151,7 +149,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override fun writeState(state: FileEditorState, project: Project, element: Element) {
-    super<TextEditorProvider>.writeState(state, project, element)
+    super<TextEditorProvider>.writeState(state = state, project = project, element = element)
 
     state as TextEditorState
 
@@ -159,8 +157,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     val foldingState = state.foldingState
     if (foldingState == null) {
       val delayedProducer = state.delayedFoldState
-      if (delayedProducer is MyDelayedFoldingState) {
-        element.addContent(delayedProducer.serializedState)
+      if (delayedProducer is PsiAwareTextEditorDelayedFoldingState) {
+        element.addContent(delayedProducer.cloneSerializedState())
       }
     }
     else {
@@ -217,18 +215,15 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 }
 
-private class MyDelayedFoldingState(private val project: Project,
-                                    private val file: VirtualFile,
-                                    state: Element) : Supplier<CodeFoldingState?> {
-  private val _serializedState: Element = JDOMUtil.internElement(state)
-
+private class PsiAwareTextEditorDelayedFoldingState(private val project: Project,
+                                                    private val file: VirtualFile,
+                                                    private val state: Element) : Supplier<CodeFoldingState?> {
   override fun get(): CodeFoldingState? {
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
-    return CodeFoldingManager.getInstance(project).readFoldingState(_serializedState, document)
+    return CodeFoldingManager.getInstance(project).readFoldingState(state, document)
   }
 
-  val serializedState: Element
-    get() = _serializedState.clone()
+  fun cloneSerializedState(): Element = state.clone()
 }
 
 private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {

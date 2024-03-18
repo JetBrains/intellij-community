@@ -8,7 +8,7 @@ project.consumer.androidTest
 project.consumer.commonMain
 
 project.consumer.commonTest
-    fqName: null
+    fqName: test.useCommonTest
     name: Consumer_commonTest_usagesKt.useCommonTest
     type: Gradle
     tasks: [:consumer:cleanTestDebugUnitTest, :consumer:testDebugUnitTest, --tests, "test.Consumer_commonTest_usagesKt.useCommonTest"]

@@ -23,6 +23,13 @@ fun test() {
         return v.n + a(1) - b(2)
     }
 
+    fun <U: A> foo(u: U): Long {
+        fun x(a: Int): Int = a + 1
+        fun y(a: Int): Int = a - 1
+
+        return u.n + x(1) - y(2)
+    }
+
     fun a(p: Int): Int = p + 1
     fun b(q: Int): Int = q - 1
 

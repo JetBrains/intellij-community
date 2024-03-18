@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class NakedNotifyInspection extends BaseInspection {
+public final class NakedNotifyInspection extends BaseInspection {
 
   @Override
   @NotNull

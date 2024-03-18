@@ -13,10 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 
-/**
- * Used for Rider
- * TODO should be removed in 232
- */
 class RunToolbarRollbackToPrevious : DumbAwareAction() {
   companion object {
 
@@ -24,9 +20,6 @@ class RunToolbarRollbackToPrevious : DumbAwareAction() {
     private const val INCLUSION_NAVBAR_STATE = "ide.widget.toolbar.first.inclusion.navbar.state"
     private const val INCLUSION_TOOLBAR_STATE = "ide.widget.toolbar.first.inclusion.toolbar.state"
 
-    /**
-     * Used for Rider
-     */
     fun saveDataIfNeeded(isFirstSessionForNewUser: Boolean) {
       val properties = PropertiesComponent.getInstance()
 
@@ -42,10 +35,6 @@ class RunToolbarRollbackToPrevious : DumbAwareAction() {
     }
 
     private var hideListenerDisposable: Disposable? = null
-
-    /**
-     * Used for Rider
-     */
 
     fun addHideActionHelper() {
       assert(hideListenerDisposable == null)

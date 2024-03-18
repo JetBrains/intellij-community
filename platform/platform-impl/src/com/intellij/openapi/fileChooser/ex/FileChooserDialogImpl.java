@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -69,7 +70,7 @@ import java.util.*;
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
   public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
 
-  private final FileChooserDescriptor myChooserDescriptor;
+  protected final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
   private Project myProject;
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
@@ -123,19 +124,18 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     show();
 
+    FileChooserUsageCollector.log(this, myChooserDescriptor, myChosenFiles);
     return myChosenFiles;
-  }
-
-  @Override
-  public VirtualFile @NotNull [] choose(final @Nullable VirtualFile toSelect, final @Nullable Project project) {
-    return toSelect == null ? choose(project) : choose(project, toSelect);
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
     init();
     restoreSelection(toSelect);
+
     show();
+
+    FileChooserUsageCollector.log(this, myChooserDescriptor, myChosenFiles);
     if (myChosenFiles.length > 0) {
       callback.consume(Arrays.asList(myChosenFiles));
     }
@@ -147,7 +147,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected void restoreSelection(@Nullable VirtualFile toSelect) {
     VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect);
     if (file != null && file.isValid()) {
-      myPathTextField.setText(VfsUtil.getReadableUrl(file), true, () ->
+      myPathTextField.setText(getPresentableUrl(file), true, () ->
         selectInTree(new VirtualFile[]{file}, false, false));
     }
   }
@@ -194,6 +194,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return label;
   }
 
+  @NotNull
+  protected FileLookup.Finder createFinder() {
+    return new LocalFsFinder();
+  }
+
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new MyPanel();
@@ -238,7 +243,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     JTextField pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
     FileLookup.LookupFilter filter =
       f -> myChooserDescriptor.isFileVisible(((LocalFsFinder.VfsFile)f).getFile(), myFileSystemTree.areHiddensShown());
-    myPathTextField = new FileTextFieldImpl(pathEditor, new LocalFsFinder(), filter, FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
+    myPathTextField = new FileTextFieldImpl(pathEditor, createFinder(), filter, FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
       @Override
       protected void onTextChanged(String newValue) {
         myUiUpdater.cancelAllUpdates();
@@ -529,6 +534,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     updateTextFieldShowing();
   }
 
+  @NotNull
+  @NlsSafe
+  protected String getPresentableUrl(@NotNull VirtualFile virtualFile) {
+    return VfsUtil.getReadableUrl(virtualFile);
+  }
+
   private void updateTextFieldShowing() {
     myTextFieldAction.update();
     myNorthPanel.remove(myPath);
@@ -555,12 +566,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     String text = "";
     if (!selection.isEmpty()) {
-      text = VfsUtil.getReadableUrl(selection.get(0));
+      text = getPresentableUrl(selection.get(0));
     }
     else {
       final List<VirtualFile> roots = myChooserDescriptor.getRoots();
       if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        text = VfsUtil.getReadableUrl(roots.get(0));
+        text = getPresentableUrl(roots.get(0));
       }
     }
     if (text.isEmpty()) return;

@@ -46,10 +46,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
+import java.util.*;
 
 import static git4idea.push.GitPushTarget.findRemote;
 import static java.util.stream.Collectors.toList;
@@ -86,7 +84,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private boolean myEventFromRemoteChooser;
 
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
-    this(support, repository, support.getSource(repository), defaultTarget);
+    this(support, repository, Objects.requireNonNull(support.getSource(repository)), defaultTarget);
   }
 
   public GitPushTargetPanel(@NotNull GitPushSupport support,

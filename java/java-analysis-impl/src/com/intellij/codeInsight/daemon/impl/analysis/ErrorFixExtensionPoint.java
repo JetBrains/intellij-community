@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +65,7 @@ public final class ErrorFixExtensionPoint implements PluginAware {
   private static Map<String, List<ErrorFixExtensionPoint>> getCodeToFixMap() {
     Map<String, List<ErrorFixExtensionPoint>> map = ourCodeToFix;
     if (map == null) {
-      ourCodeToFix = map = StreamEx.of(ERROR_FIX_EXTENSION_POINT.getExtensions()).groupingBy(fix -> fix.errorCode);
+      ourCodeToFix = map = StreamEx.of(ERROR_FIX_EXTENSION_POINT.getExtensionList()).groupingBy(fix -> fix.errorCode);
     }
     return map;
   }
@@ -72,7 +73,7 @@ public final class ErrorFixExtensionPoint implements PluginAware {
   public static void registerFixes(@NotNull HighlightInfo.Builder info,
                                             @NotNull PsiElement context,
                                             @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String code) {
-    List<ErrorFixExtensionPoint> fixes = getCodeToFixMap().get(code);
+    List<ErrorFixExtensionPoint> fixes = getCodeToFixMap().getOrDefault(code, Collections.emptyList());
     for (ErrorFixExtensionPoint fix : fixes) {
       IntentionAction action = fix.instantiate(context).asIntention();
       info.registerFix(action, null, null, null, null);

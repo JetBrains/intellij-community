@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.RegExp;
@@ -46,10 +47,10 @@ class LambdaAndExplicitMethodPair {
     new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_LONG, "orElseGet", "orElse", 0, "long"),
     new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_DOUBLE, "orElseGet", "orElse", 0, "double"),
     new LambdaAndExplicitMethodPair(OptionalUtil.GUAVA_OPTIONAL, "or", "*", 0, "T"),
-    new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNull", "*", 1, JAVA_LANG_STRING),
-    new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNullElseGet", "requireNonNullElse", 1, "T"),
-    new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(?!Timeout).*|fail", "*", -1, JAVA_LANG_STRING),
-    new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(True|False)", "*", 0, JAVA_LANG_STRING),
+    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNull", "*", 1, JAVA_LANG_STRING),
+    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNullElseGet", "requireNonNullElse", 1, "T"),
+    new LambdaAndExplicitMethodPair(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert(?!Timeout).*|fail", "*", -1, JAVA_LANG_STRING),
+    new LambdaAndExplicitMethodPair(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert(True|False)", "*", 0, JAVA_LANG_STRING),
     new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_ARRAYS, "setAll", "fill", 1, null, "i")
   };
   private final @NotNull String myClass;

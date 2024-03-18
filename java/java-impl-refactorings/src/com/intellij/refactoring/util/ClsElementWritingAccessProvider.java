@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-public class ClsElementWritingAccessProvider extends WritingAccessProvider {
+public final class ClsElementWritingAccessProvider extends WritingAccessProvider {
   @NotNull
   @Override
   public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {

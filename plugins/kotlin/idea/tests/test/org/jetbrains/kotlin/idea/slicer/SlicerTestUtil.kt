@@ -11,7 +11,7 @@ import com.intellij.slicer.*
 import com.intellij.ui.JBColor
 import com.intellij.usages.TextChunk
 import com.intellij.util.FontUtil
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.Font

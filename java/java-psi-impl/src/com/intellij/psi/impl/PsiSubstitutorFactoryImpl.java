@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 @ApiStatus.Internal
-public class PsiSubstitutorFactoryImpl extends PsiSubstitutorFactory {
+public final class PsiSubstitutorFactoryImpl extends PsiSubstitutorFactory {
   @NotNull
   @Override
   protected PsiSubstitutor createSubstitutor(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {

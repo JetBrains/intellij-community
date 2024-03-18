@@ -1,20 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.async
 
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.childScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+
+inline fun <reified T> T.classAsCoroutineName() = CoroutineName(T::class.java.name)
+inline fun <reified T> classAsCoroutineName() = CoroutineName(T::class.java.name)
 
 /**
  * Prefer creating a service to supply a parent scope
@@ -62,7 +70,7 @@ fun CoroutineScope.nestedDisposable(): Disposable {
 fun CoroutineScope.cancelledWith(disposable: Disposable): CoroutineScope = apply {
   val job = coroutineContext[Job]
   requireNotNull(job) { "Coroutine scope without a parent job $this" }
-  job.cancelOnDispose(disposable)
+  job.cancelOnDispose(disposable, false)
 }
 
 fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
@@ -128,16 +136,63 @@ fun <T, M> StateFlow<T>.mapState(
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> {
-  return transformLatest { newValue ->
-    coroutineScope {
-      emit(mapper(newValue))
-      awaitCancellation()
-    }
+fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> = DerivedStateFlow(map(mapper)) { mapper(value) }
+
+@ApiStatus.Experimental
+fun <T1, T2, R> StateFlow<T1>.combineState(other: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
+  DerivedStateFlow(combine(other, combiner)) { combiner(value, other.value) }
+
+/**
+ * Special state flow which value is supplied by [valueSupplier] and collection is delegated to [source]
+ *
+ * [valueSupplier] should NEVER THROW to avoid contract violation
+ *
+ *
+ * https://github.com/Kotlin/kotlinx.coroutines/issues/2631#issuecomment-870565860
+ */
+private class DerivedStateFlow<T>(
+  private val source: Flow<T>,
+  private val valueSupplier: () -> T
+) : StateFlow<T> {
+
+  override val value: T get() = valueSupplier()
+  override val replayCache: List<T> get() = listOf(value)
+
+  @InternalCoroutinesApi
+  override suspend fun collect(collector: FlowCollector<T>): Nothing {
+    coroutineScope { source.distinctUntilChanged().stateIn(this).collect(collector) }
   }
 }
+
+@ApiStatus.Experimental
+fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(mapper)
+
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
+  flow {
+    coroutineScope {
+      var lastScope: CoroutineScope? = null
+      val breaker = MutableSharedFlow<R>(1)
+      try {
+        launchNow {
+          collect { state ->
+            lastScope?.cancelAndJoinSilently()
+            lastScope = childScope().apply {
+              launchNow {
+                val result = mapper(state)
+                breaker.emit(result)
+              }
+            }
+          }
+        }
+        breaker.collect(this@flow)
+      }
+      finally {
+        lastScope?.cancelAndJoinSilently()
+      }
+    }
+  }
 
 /**
  * Performs mapping only if the source value is not null
@@ -154,30 +209,11 @@ fun <T, R> Flow<T?>.mapNullableLatest(mapper: suspend (T) -> R): Flow<R?> = mapL
   if (it != null) mapper(it) else null
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> {
-  return transformLatest { newValue ->
-    if (newValue == null) {
-      emit(null)
-    }
-    else coroutineScope {
-      emit(mapper(newValue))
-      awaitCancellation()
-    }
-  }
-}
+fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> = mapScoped2 { if (it == null) null else mapper(it) }
 
 @ApiStatus.Experimental
-suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Unit) {
-  collectLatest { state ->
-    coroutineScope {
-      val nestedScope = this
-      collector(nestedScope, state)
-      awaitCancellation()
-    }
-  }
-}
+suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit) = mapScoped2(block).collect()
 
 @ApiStatus.Experimental
 suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev: T, current: T) -> Unit) {
@@ -192,6 +228,18 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
 fun <T> Flow<T>.withInitial(initial: T): Flow<T> = flow {
   emit(initial)
   emitAll(this@withInitial)
+}
+
+/**
+ * In principle, it is an analogue of [stateIn] with [SharingStarted.Eagerly],
+ * with a notable difference being that a [defaultValue] may never be emitted if a value is already available in the source flow
+ */
+fun <T> Flow<T>.stateInNow(cs: CoroutineScope, defaultValue: T): StateFlow<T> {
+  val result = MutableStateFlow(defaultValue)
+  cs.launchNow {
+    collect(result)
+  }
+  return result.asStateFlow()
 }
 
 /**
@@ -217,50 +265,105 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
                                                    valueExtractor: CoroutineScope.(T) -> V,
                                                    destroy: suspend V.() -> Unit,
                                                    update: (suspend V.(T) -> Unit)? = null)
-  : Flow<Map<K, V>> = channelFlow {
-  val cs = this
-  var initial = true
-  var prevResult = createLinkedMap<K, V>(hashingStrategy)
-
-  collect { items ->
-    var hasStructureChanges = false
-    val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
-      items.mapTo(it, keyExtractor)
-    }
-
-    // remove missing
-    val iter = prevResult.iterator()
-    while (iter.hasNext()) {
-      val (key, exisingResult) = iter.next()
-      if (!newItemsSet.contains(key)) {
-        iter.remove()
-        hasStructureChanges = true
-        exisingResult.destroy()
+  : Flow<Map<K, V>> = flow {
+  coroutineScope {
+    val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
+    launchNow {
+      collect { items ->
+        container.update(items)
       }
     }
-
-    val result = createLinkedMap<K, V>(hashingStrategy)
-    // add new or update existing
-    for (item in items) {
-      val itemKey = keyExtractor(item)
-      val existing = prevResult[itemKey]
-      if (existing == null) {
-        result[itemKey] = valueExtractor(cs.childScope(), item)
-        hasStructureChanges = true
-      }
-      else {
-        if (update != null) existing.update(item)
-        result[itemKey] = existing
-      }
-    }
-
-    prevResult = result
-    if (hasStructureChanges || initial) {
-      initial = false
-      send(result)
+    container.mappingState.collect {
+      emit(it)
     }
   }
-  awaitClose()
+}
+
+/**
+ * Allows mapping a collection of items [T] to scoped (coroutine scope bound) values [V]
+ * An intermittent key [K] is used to uniquely identify items
+ *
+ * @param cs parent scope for value scopes
+ * @param keyExtractor should be a quick-to-run function extracting a key from item
+ * @param hashingStrategy strategy used to compare keys
+ * @param mapper factory function to create a value from item
+ * @param destroy destructor function to destroy a value
+ * @param update function used to update value if a new item is supplied for the existing key
+ */
+class MappingScopedItemsContainer<T, K, V>(
+  private val cs: CoroutineScope,
+  private val keyExtractor: (T) -> K,
+  private val hashingStrategy: HashingStrategy<K>,
+  private val mapper: CoroutineScope.(T) -> V,
+  private val destroy: suspend V.() -> Unit,
+  private val update: (suspend V.(T) -> Unit)? = null
+) {
+  private val _mappingState = MutableStateFlow<Map<K, ScopingWrapper<V>>>(emptyMap())
+  val mappingState: StateFlow<Map<K, V>> = _mappingState.mapState { it.mapValues { (_, value) -> value.value } }
+  private val mapGuard = Mutex()
+
+  suspend fun update(items: Iterable<T>) = mapGuard.withLock {
+    withContext(NonCancellable) {
+      val currentMap = _mappingState.value
+      var hasStructureChanges = false
+      val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
+        items.mapTo(it, keyExtractor)
+      }
+
+      val result = createLinkedMap<K, ScopingWrapper<V>>(hashingStrategy)
+      // destroy missing
+      for ((key, scopedValue) in currentMap) {
+        if (!newItemsSet.contains(key)) {
+          hasStructureChanges = true
+          scopedValue.value.destroy()
+          scopedValue.cancel()
+        }
+        else {
+          result[key] = scopedValue
+        }
+      }
+
+      // add new or update existing
+      for (item in items) {
+        val itemKey = keyExtractor(item)
+        val existing = result[itemKey]
+        if (existing == null) {
+          val valueScope = cs.childScope()
+          result[itemKey] = ScopingWrapper(valueScope, mapper(valueScope, item))
+          hasStructureChanges = true
+        }
+        else {
+          // if not inferring nullability fsr
+          update?.let { existing.value.it(item) }
+          result[itemKey] = existing
+        }
+      }
+
+      if (hasStructureChanges) {
+        _mappingState.value = result
+      }
+    }
+  }
+
+  suspend fun addIfAbsent(item: T): V = mapGuard.withLock {
+    withContext(NonCancellable) {
+      val key = keyExtractor(item)
+      _mappingState.value[key]?.value ?: _mappingState.updateAndGet {
+        val valueScope = cs.childScope()
+        val newValue = ScopingWrapper(valueScope, mapper(valueScope, item))
+        it + (key to newValue)
+      }[key]!!.value
+    }
+  }
+
+  companion object {
+    fun <T, V> byIdentity(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V) =
+      MappingScopedItemsContainer(cs, { it }, HashingStrategy.identity(), mapper, {})
+  }
+}
+
+private data class ScopingWrapper<T>(val scope: CoroutineScope, val value: T) {
+  suspend fun cancel() = scope.cancelAndJoinSilently()
 }
 
 private fun <T, R> createLinkedMap(hashingStrategy: HashingStrategy<T>): MutableMap<T, R> =
@@ -273,16 +376,8 @@ private fun <T, R> createLinkedMap(hashingStrategy: HashingStrategy<T>): Mutable
  */
 private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingStrategy<T>,
                                                       mapper: CoroutineScope.(T) -> R,
-                                                      update: (suspend R.(T) -> Unit)? = null): Flow<Map<T, ScopingWrapper<R>>> {
-  val updater: (suspend ScopingWrapper<R>.(T) -> Unit)? = if (update != null) {
-    { value.update(it) }
-  }
-  else null
-  return associateCachingBy({ it }, hashingStrategy, { ScopingWrapper(this, mapper(it)) }, { cancel() }, updater)
-}
-
-private data class ScopingWrapper<T>(val scope: CoroutineScope, val value: T) {
-  suspend fun cancel() = scope.cancelAndJoinSilently()
+                                                      update: (suspend R.(T) -> Unit)? = null): Flow<Map<T, R>> {
+  return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
 fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
@@ -297,13 +392,13 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
 fun <T, R> Flow<Iterable<T>>.mapDataToModel(sourceIdentifier: (T) -> Any,
                                             mapper: CoroutineScope.(T) -> R,
                                             update: (suspend R.(T) -> Unit)): Flow<List<R>> =
-  associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.mapTo(mutableListOf()) { it.value } }
+  associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.toList() }
 
 /**
  * Create a list of view models from models
  */
 fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
-  associateCaching(HashingStrategy.identity(), mapper).map { it.values.mapTo(mutableListOf()) { it.value } }
+  associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 
@@ -316,6 +411,147 @@ fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> {
   return transform {
     result.addAll(it)
     emit(result.toList())
+  }
+}
+
+/**
+ * Hack class to wrap any type to ensure equality checking is done through referential equality only.
+ */
+private class ReferentiallyComparedValue<T : Any>(val value: T) {
+  override fun equals(other: Any?): Boolean =
+    value === other
+
+  override fun hashCode(): Int =
+    System.identityHashCode(value)
+}
+
+/**
+ * Transforms a flow of consecutive successes. The flow is reset when a failure is encountered if [resetOnFailure] is `true`.
+ * This means that, if [resetOnFailure] is `true`, the [transformer] block is called once for every series of consecutive
+ * successes. If it is `false`, the [transformer] block is called only once with a flow that receives every success value.
+ *
+ * This acts as a replacement of consecutive `asResultFlow` and `throwFailure` and avoids that exceptions cancel the flow.
+ */
+@JvmName("transformConsecutiveResultSuccesses")
+fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
+  resetOnFailure: Boolean = true,
+  transformer: suspend Flow<T>.() -> Flow<R>
+): Flow<Result<R>> =
+  channelFlow {
+    val successFlows = MutableStateFlow(ReferentiallyComparedValue(MutableSharedFlow<T>(1)))
+
+    launchNow {
+      successFlows
+        .collectLatest { successes ->
+          successes.value
+            .transformer()
+            .collect {
+              send(Result.success(it))
+            }
+        }
+    }
+
+    collect {
+      it.fold(
+        onSuccess = { v -> successFlows.value.value.emit(v) },
+        onFailure = { ex ->
+          if (resetOnFailure) {
+            successFlows.value = ReferentiallyComparedValue(MutableSharedFlow(1))
+          }
+          send(Result.failure(ex))
+        }
+      )
+    }
+  }
+
+/**
+ * Transforms a flow of consecutive successes. The flow is reset when a failure is encountered if [resetOnFailure] is `true`.
+ * This means that, if [resetOnFailure] is `true`, the [transformer] block is called once for every series of consecutive
+ * successes. If it is `false`, the [transformer] block is called only once with a flow that receives every success value.
+ */
+fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
+  resetOnFailure: Boolean = true,
+  transformer: suspend Flow<T>.() -> Flow<R>
+): Flow<ComputedResult<R>> =
+  channelFlow {
+    val successFlows = MutableStateFlow(ReferentiallyComparedValue(MutableSharedFlow<T>(1)))
+
+    launchNow {
+      successFlows
+        .collectLatest { successes ->
+          successes.value
+            .transformer()
+            .collect {
+              send(ComputedResult.success(it))
+            }
+        }
+    }
+
+    collect {
+      it.result?.fold(
+        onSuccess = { v -> successFlows.value.value.emit(v) },
+        onFailure = { ex ->
+          if (resetOnFailure) {
+            successFlows.value = ReferentiallyComparedValue(MutableSharedFlow(1))
+          }
+          send(ComputedResult.failure(ex))
+        }
+      )
+    }
+  }
+
+/**
+ * Transforms the flow of some computation requests to a flow of computation states of this request
+ * Will not emit "loading" state if the computation was completed before handling its state
+ */
+@JvmName("futureComputationState")
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T> Flow<CompletableFuture<T>>.computationState(): Flow<ComputedResult<T>> =
+  transformLatest { request ->
+    if (!request.isDone) {
+      emit(ComputedResult.loading())
+    }
+    try {
+      val value = request.asDeferred().await()
+      emit(ComputedResult.success(value))
+    }
+    catch (e: Exception) {
+      if (!CompletableFutureUtil.isCancellation(e)) {
+        emit(ComputedResult.failure(e))
+      }
+    }
+  }
+
+/**
+ * Transforms the flow of some computation requests to a flow of computation states of this request
+ * Will not emit "loading" state if the computation was completed before handling its state
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
+  transformLatest { request ->
+    if (!request.isCompleted) {
+      emit(ComputedResult.loading())
+    }
+    try {
+      val value = request.await()
+      emit(ComputedResult.success(value))
+    }
+    catch (e: Exception) {
+      if (e !is CancellationException) {
+        emit(ComputedResult.failure(e))
+      }
+    }
+  }
+
+/**
+ * Maps the flow of requests to a flow of successfully computed values
+ */
+fun <T> Flow<CompletableFuture<T>>.values(): Flow<T> = mapNotNull {
+  try {
+    it.asDeferred().await()
+  }
+  catch (_: Throwable) {
+    null
   }
 }
 
@@ -354,5 +590,18 @@ suspend fun Job.cancelAndJoinSilently() {
     job.cancelAndJoin()
   }
   catch (ignored: Exception) {
+  }
+}
+
+/**
+ * Await the deferred value and cancel if the waiting was canceled
+ */
+suspend fun <T> Deferred<T>.awaitCancelling(): T {
+  return try {
+    await()
+  }
+  catch (ce: CancellationException) {
+    if (!isCompleted) cancel()
+    throw ce
   }
 }

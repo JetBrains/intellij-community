@@ -6,18 +6,12 @@ test.java.file
       IDENTIFIER
     WHITE_SPACE
     INSTANCEOF_KEYWORD
+    ERROR_ELEMENT
+      <empty list>
+  WHITE_SPACE
+  ERROR_ELEMENT
+    LPARENTH
+    IDENTIFIER
     WHITE_SPACE
-    PARENTHESIZED_PATTERN
-      LPARENTH
-      TYPE_TEST_PATTERN
-        PATTERN_VARIABLE
-          MODIFIER_LIST
-            <empty list>
-          TYPE
-            JAVA_CODE_REFERENCE
-              IDENTIFIER
-              REFERENCE_PARAMETER_LIST
-                <empty list>
-          WHITE_SPACE
-          IDENTIFIER
-      RPARENTH
+    IDENTIFIER
+    RPARENTH

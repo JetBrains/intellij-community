@@ -44,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Helps to specify type  in annotations in python3
  */
-public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
+public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   @Override
   @NotNull
   public String getFamilyName() {

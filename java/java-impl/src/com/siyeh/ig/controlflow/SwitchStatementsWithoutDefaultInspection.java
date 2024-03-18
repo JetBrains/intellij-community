@@ -35,7 +35,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlight
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
   /**
    * This option covers not only enums, but sealed classes as well

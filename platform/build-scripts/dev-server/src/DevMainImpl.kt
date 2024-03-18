@@ -1,11 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused")
+@file:Suppress("unused", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:JvmName("DevMainImpl")
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
-import com.intellij.util.childScope
+import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
+import com.intellij.util.SystemProperties
+import com.intellij.platform.util.coroutines.childScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -15,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
-import org.jetbrains.intellij.build.TracerProviderManager
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.traceManagerInitializer
 import java.io.File
@@ -30,7 +30,7 @@ fun buildDevMain(): Collection<Path> {
   var newClassPath: Collection<Path>? = null
   runBlocking(Dispatchers.Default) {
     val batchSpanProcessorScope = childScope()
-    val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = listOf(ConsoleSpanExporter()))
+    val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = java.util.List.of(ConsoleSpanExporter()))
 
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(spanProcessor)
@@ -43,9 +43,8 @@ fun buildDevMain(): Collection<Path> {
           .setTracerProvider(tracerProvider)
           .build()
         val tracer = openTelemetry.getTracer("build-script")
-        TracerProviderManager.tracerProvider = tracerProvider
         BuildDependenciesDownloader.TRACER = tracer
-        tracer
+        tracer to spanProcessor
       }
 
       buildProductInProcess(BuildRequest(
@@ -61,6 +60,7 @@ fun buildDevMain(): Collection<Path> {
             System.setProperty(name, value)
           }
         },
+        generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
       ))
     }
     finally {

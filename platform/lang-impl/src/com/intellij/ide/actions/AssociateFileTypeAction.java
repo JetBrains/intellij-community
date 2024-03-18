@@ -14,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
 public final class AssociateFileTypeAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (file == null) return;
     FileTypeChooser.associateFileType(file.getName());
   }
 

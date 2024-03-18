@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
+public final class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
   public ConvertCompareToToEqualsIntention() {
     super(PsiBinaryExpression.class);
   }
@@ -38,7 +38,7 @@ public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction
     text.append("equals(").append(argument.getText()).append(')');
     final PsiExpression newExpression = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(text.toString(), null);
     final PsiElement result = compareToResult.getBinaryExpression().replace(newExpression);
-    updater.moveTo(result.getTextOffset() + result.getTextLength());
+    updater.moveCaretTo(result.getTextOffset() + result.getTextLength());
   }
 
   @Override

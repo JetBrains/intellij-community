@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.launch
@@ -31,7 +31,7 @@ internal class ServiceViewStartupActivity private constructor() : ProjectActivit
     else {
       // init manager to check availability on background thread and register tool window
       ToolWindowManager.getInstance(project).invokeLater {
-        (project as ProjectEx).coroutineScope.launch { ServiceViewManager.getInstance(project) }
+        (project as ComponentManagerEx).getCoroutineScope().launch { ServiceViewManager.getInstance(project) }
       }
     }
   }

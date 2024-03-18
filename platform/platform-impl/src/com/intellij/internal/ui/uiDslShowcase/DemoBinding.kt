@@ -48,7 +48,7 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
         .bindIntText(model::intTextField)
     }
     row("comboBox:") {
-      comboBox(Color.values().toList())
+      comboBox(Color.entries)
         .bindItem(model::comboBoxColor.toNullableProperty())
     }
     row("slider:") {
@@ -59,8 +59,8 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
       spinner(0..100)
         .bindIntValue(model::spinner)
     }
-    buttonsGroup(title = "radioButton:") {
-      for (value in Color.values()) {
+    buttonsGroup("radioButton:") {
+      for (value in Color.entries) {
         row {
           radioButton(value.name, value)
         }

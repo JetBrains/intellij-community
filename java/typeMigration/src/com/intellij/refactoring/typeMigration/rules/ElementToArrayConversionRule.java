@@ -10,7 +10,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ElementToArrayConversionRule extends TypeConversionRule {
+public final class ElementToArrayConversionRule extends TypeConversionRule {
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from, PsiType to, PsiMember member, PsiExpression context,
                                                      TypeMigrationLabeler labeler) {

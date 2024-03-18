@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JavaNextParameterHandler extends EditorActionHandler {
+public final class JavaNextParameterHandler extends EditorActionHandler {
   private final EditorActionHandler myDelegate;
 
   public JavaNextParameterHandler(EditorActionHandler delegate) {

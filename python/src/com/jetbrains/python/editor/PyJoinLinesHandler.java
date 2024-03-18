@@ -29,7 +29,7 @@ import java.util.List;
  * <li>second line is 'class' or 'def': fail.</li>
  * </ul>
  */
-public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
+public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private final static Joiner[] JOINERS = {
     new OpenBracketJoiner(),
     new CloseBracketJoiner(),

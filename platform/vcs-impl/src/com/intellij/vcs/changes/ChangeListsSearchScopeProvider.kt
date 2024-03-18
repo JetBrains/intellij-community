@@ -3,8 +3,10 @@ package com.intellij.vcs.changes
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.displayUrlRelativeToProject
 import com.intellij.openapi.vcs.VcsBundle
@@ -33,9 +35,12 @@ class ChangeListsSearchScopeProvider : SearchScopeProvider {
 
     val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
                   ?: (
-                    if (ApplicationManager.getApplication().isDispatchThread)
+                    if (ApplicationManager.getApplication().isDispatchThread) {
                       FileEditorManager.getInstance(project).selectedTextEditor
-                    else null)
+                    }
+                    else {
+                      (dataContext.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR) as? TextEditor?)?.editor
+                    })
                     ?.let { PsiDocumentManager.getInstance(project).getPsiFile(it.document) }
 
     if (psiFile != null) {

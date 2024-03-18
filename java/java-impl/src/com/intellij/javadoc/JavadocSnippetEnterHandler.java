@@ -25,7 +25,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapter {
+public final class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapter {
 
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,

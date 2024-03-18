@@ -8,7 +8,8 @@ class Simple {
       sink(alias);
     }
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
       return "foo";
     }
 

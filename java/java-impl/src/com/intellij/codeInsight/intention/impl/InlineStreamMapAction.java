@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(InlineStreamMapAction.class.getName());
   public static final class Holder {
     private static final Set<String> MAP_METHODS =

@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
-public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
+public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   private static final Logger LOG = Logger.getInstance(JavaDirectoryServiceImpl.class);
 
   @Override

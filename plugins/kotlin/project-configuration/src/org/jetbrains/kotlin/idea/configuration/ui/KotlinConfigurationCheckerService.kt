@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
@@ -8,14 +8,14 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportProgress
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -90,16 +90,15 @@ class KotlinConfigurationCheckerService(private val project: Project) {
         }
 
         val writeActionContinuations = mutableListOf<() -> Unit>()
-        for ((index, module) in ktModules.withIndex()) {
-            progressStep(
-                endFraction = (index + 1.0) / ktModules.size,
-                text = KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings.0.module", module.name),
-            ) {
-                readAction {
-                    if (module.isDisposed) {
-                        return@readAction
+        reportProgress(ktModules.size) { reporter ->
+            ktModules.forEach { module ->
+                reporter.itemStep(KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings.0.module", module.name)) {
+                    readAction {
+                        if (module.isDisposed) {
+                            return@readAction
+                        }
+                        getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
                     }
-                    getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
                 }
             }
         }

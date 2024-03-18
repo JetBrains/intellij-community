@@ -7,9 +7,7 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.*
-import javax.accessibility.Accessible
-import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
+import javax.accessibility.*
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
@@ -84,8 +82,16 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
         override fun getAccessibleParent(): Accessible? = parent as? Accessible
 
         override fun getAccessibleName(): String? {
-          checkBox.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
-          return checkBox.accessibleContext.accessibleName
+          if (checkBox.isVisible) {
+            // AccessibleThreeStateCheckBox getter is overridden
+            checkBox.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
+            return checkBox.accessibleContext.accessibleName
+          }
+          else {
+            // AccessibleThreeStateCheckBox.getAccessibleName adds state description of the checkbox (e.g. "not checked") to the name,
+            // which we don't need if it's not visible.
+            return textRenderer.accessibleContext.accessibleName
+          }
         }
 
         override fun getAccessibleRole(): AccessibleRole {
@@ -93,6 +99,18 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
           // or otherwise NVDA will read out the entire tree path, causing confusion.
           return AccessibleRole.LABEL
         }
+
+        override fun getAccessibleStateSet(): AccessibleStateSet {
+          return if (checkBox.isVisible) {
+            checkBox.accessibleContext.accessibleStateSet
+          }
+          else {
+            textRenderer.accessibleContext.accessibleStateSet
+          }
+        }
+
+        // Don't use accessible value from checkbox because it adds an unnecessary "0" or "1" text to the announcement in NVDA.
+        override fun getAccessibleValue(): AccessibleValue? = null
       }
     }
     return accessibleContext

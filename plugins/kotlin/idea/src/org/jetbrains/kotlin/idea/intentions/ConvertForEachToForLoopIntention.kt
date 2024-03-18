@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.builtins.StandardNames
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -33,6 +33,8 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         if (!isForEach && !isForEachIndexed) return false
 
         val data = extractData(element) ?: return false
+        if (data.expressionToReplace is KtSafeQualifiedExpression && data.receiver !is KtNameReferenceExpression) return false
+
         val valueParameterSize = data.functionLiteral.valueParameters.size
         if (isForEach && valueParameterSize > 1 || isForEachIndexed && valueParameterSize != 2) return false
         if (data.functionLiteral.bodyExpression == null) return false

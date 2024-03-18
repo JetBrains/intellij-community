@@ -1,5 +1,5 @@
 // IGNORE_K2
-
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 <symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</symbolName> class <symbolName textAttributesKey="KOTLIN_ANNOTATION">Anno</symbolName>
 typealias <symbolName textAttributesKey="KOTLIN_ANNOTATION">AnnoAlias</symbolName> = <symbolName textAttributesKey="KOTLIN_ANNOTATION">Anno</symbolName>
 <symbolName textAttributesKey="KOTLIN_ANNOTATION">@Anno</symbolName> fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">annoUsage</symbolName>() {}

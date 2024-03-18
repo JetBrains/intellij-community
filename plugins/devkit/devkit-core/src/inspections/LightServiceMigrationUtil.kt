@@ -12,8 +12,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.siyeh.ig.callMatcher.CallMatcher
-import org.jetbrains.annotations.Nls
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
@@ -46,14 +44,6 @@ private fun hasDisallowedAttributes(extension: Extension): Boolean {
     if (attribute != null && DomUtil.hasXml(attribute)) return true
   }
   return false
-}
-
-@Nls(capitalization = Nls.Capitalization.Sentence)
-internal fun getMessage(level: Service.Level): String {
-  return when (level) {
-    Service.Level.APP -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
-    Service.Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
-  }
 }
 
 internal fun isVersion193OrHigher(element: DomElement): Boolean {

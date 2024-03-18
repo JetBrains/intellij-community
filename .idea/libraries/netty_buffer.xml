@@ -1,23 +1,23 @@
 <component name="libraryTable">
   <library name="netty-buffer" type="repository">
-    <properties maven-id="io.netty:netty-buffer:4.1.99.Final">
+    <properties maven-id="io.netty:netty-buffer:4.1.106.Final">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.99.Final/netty-buffer-4.1.99.Final.jar">
-          <sha256sum>a144d6807e51ab451f6c9b2acd5b729f1a10bb6c192890403f5df73c9b10ee3e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.106.Final/netty-buffer-4.1.106.Final.jar">
+          <sha256sum>d5067bdbe476d63cb43293822832a749a7c38a38c1c516107c73d257c39bed21</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.99.Final/netty-common-4.1.99.Final.jar">
-          <sha256sum>65fb8f86768f458703f98a5e04cb543d9bf360c0dcc83396cf6c09be51f9f534</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.106.Final/netty-common-4.1.106.Final.jar">
+          <sha256sum>5ffbe01bd845617a916de3613010d5fda57c5eb694147d38d04f791e9834d5c3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.99.Final/netty-buffer-4.1.99.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.99.Final/netty-common-4.1.99.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.106.Final/netty-buffer-4.1.106.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.106.Final/netty-common-4.1.106.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.99.Final/netty-buffer-4.1.99.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.99.Final/netty-common-4.1.99.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.106.Final/netty-buffer-4.1.106.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.106.Final/netty-common-4.1.106.Final-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

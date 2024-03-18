@@ -52,11 +52,6 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     return new JpsJavaFxArtifactProperties(myState);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsJavaFxArtifactProperties modified) {
-    copyState(modified.myState);
-  }
-
   public static class MyState {
     private String myTitle;
     private String myVendor;

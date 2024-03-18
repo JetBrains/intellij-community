@@ -12,7 +12,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
     override val languagePlugin: UastLanguagePlugin
         get() = firKotlinUastPlugin
 
-    private var forceUInjectionHost = Registry.`is`("kotlin.fir.uast.force.uinjectionhost", false)
+    private var forceUInjectionHost = Registry.`is`("kotlin.fir.uast.force.uinjectionhost", true)
         @TestOnly
         set(value) {
             field = value

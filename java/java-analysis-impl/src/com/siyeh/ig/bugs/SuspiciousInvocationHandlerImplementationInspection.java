@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SuspiciousInvocationHandlerImplementationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousInvocationHandlerImplementationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String HANDLER_CLASS = "java.lang.reflect.InvocationHandler";
   private static final String[] HANDLER_ARGUMENT_TYPES =
     {CommonClassNames.JAVA_LANG_OBJECT, "java.lang.reflect.Method", CommonClassNames.JAVA_LANG_OBJECT + "[]"};

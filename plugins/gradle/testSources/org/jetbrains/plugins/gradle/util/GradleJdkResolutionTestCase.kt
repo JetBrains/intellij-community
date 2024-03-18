@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkNo
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase
 import com.intellij.openapi.externalSystem.service.execution.nonblockingResolveSdkBySdkName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
@@ -24,9 +25,9 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
 
   lateinit var gradleVersion: GradleVersion
 
-  lateinit var earliestSdk: TestSdk
-  lateinit var latestSdk: TestSdk
-  lateinit var unsupportedSdk: TestSdk
+  lateinit var earliestSdk: Sdk
+  lateinit var latestSdk: Sdk
+  lateinit var unsupportedSdk: Sdk
 
   override fun setUp() {
     super.setUp()
@@ -46,11 +47,11 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     environment.variables(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY to null)
   }
 
-  fun assertGradleJvmSuggestion(expected: TestSdk, expectsSdkRegistration: Boolean = false) {
+  fun assertGradleJvmSuggestion(expected: Sdk, expectsSdkRegistration: Boolean = false) {
     assertGradleJvmSuggestion({ expected }, expectsSdkRegistration)
   }
 
-  fun assertGradleJvmSuggestion(expected: () -> TestSdk, expectsSdkRegistration: Boolean = false) {
+  fun assertGradleJvmSuggestion(expected: () -> Sdk, expectsSdkRegistration: Boolean = false) {
     val lazyExpected by lazy { expected() }
 
     assertNewlyRegisteredSdks({ if (expectsSdkRegistration) lazyExpected else null }) {
@@ -79,7 +80,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     return projectSettings.gradleJvm
   }
 
-  fun withGradleLinkedProject(java: TestSdk?, action: () -> Unit) {
+  fun withGradleLinkedProject(java: Sdk?, action: () -> Unit) {
     val settings = GradleSettings.getInstance(project)
     val externalProjectPath = createUniqueTempDirectory()
     val projectSettings = GradleProjectSettings().apply {
@@ -95,11 +96,11 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     }
   }
 
-  fun assertGradleProperties(java: TestSdk?) {
+  fun assertGradleProperties(java: Sdk?) {
     assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
   }
 
-  fun assertGradleLocalProperties(java: TestSdk?) {
+  fun assertGradleLocalProperties(java: Sdk?) {
     assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile))
   }
 
@@ -122,7 +123,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
       return path
     }
 
-    fun withGradleProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
+    fun withGradleProperties(parentDirectory: String, java: Sdk?, action: () -> Unit) {
       val propertiesPath = FileUtil.join(parentDirectory, GRADLE_PROPERTIES_FILE_NAME)
       createProperties(propertiesPath) {
         java?.let { setProperty(GRADLE_JAVA_HOME_PROPERTY, it.homePath) }
@@ -131,7 +132,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
       FileUtil.delete(File(propertiesPath))
     }
 
-    fun withGradleLocalProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
+    fun withGradleLocalProperties(parentDirectory: String, java: Sdk?, action: () -> Unit) {
       val propertiesPath = FileUtil.join(parentDirectory, GRADLE_CACHE_DIR_NAME, GRADLE_LOCAL_PROPERTIES_FILE_NAME)
       createProperties(propertiesPath) {
         java?.let { setProperty(GRADLE_LOCAL_JAVA_HOME_PROPERTY, it.homePath) }

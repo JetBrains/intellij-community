@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryBreakInspection extends BaseInspection {
+public final class UnnecessaryBreakInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.SourceDirectorySet
@@ -9,7 +10,6 @@ import org.gradle.api.internal.FactoryNamedDomainObjectContainer
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.getSourceSetName
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinPluginWrapper
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinProjectExtensionClass
@@ -69,7 +69,7 @@ private fun Task.getPureKotlinSourceRoots(sourceSet: String, disambiguationClass
 }
 
 private fun getJavaSourceRoot(project: Project, sourceSet: String): Set<File>? {
-    val javaSourceSet: SourceSet? = if (GradleVersion.version(project.gradle.gradleVersion) >= GradleVersion.version("8.2")) {
+    val javaSourceSet: SourceSet? = if (GradleVersionUtil.isGradleAtLeast(project.gradle.gradleVersion, "8.2")) {
         project.extensions.getByType<JavaPluginExtension>(JavaPluginExtension::class.java).sourceSets.asMap[sourceSet] as SourceSet
     } else {
         project.convention.getPlugin<JavaPluginConvention>(JavaPluginConvention::class.java).sourceSets.asMap[sourceSet]

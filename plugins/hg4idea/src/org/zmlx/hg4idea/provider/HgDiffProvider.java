@@ -119,10 +119,9 @@ public class HgDiffProvider implements DiffProvider {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
-                                                  @NotNull VcsRevisionNumber revNum) throws VcsException {
+  public @NotNull Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                           @NotNull VcsRevisionNumber revNum) throws VcsException {
 
     final HgRepository repo = HgUtil.getRepositoryManager(project).getRepositoryForFile(fileOrDir);
     if (repo == null) {

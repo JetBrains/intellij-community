@@ -7,9 +7,10 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowView
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import javax.swing.JComponent
 
-internal interface GHPRReviewFlowViewModel : CodeReviewFlowViewModel<GHPullRequestRequestedReviewer> {
+internal interface GHPRReviewFlowViewModel : CodeReviewFlowViewModel<GHPullRequestRequestedReviewer>, GHPRReviewViewModel {
   val isBusy: Flow<Boolean>
   val requestedReviewers: Flow<List<GHPullRequestRequestedReviewer>>
   val reviewState: Flow<ReviewState>

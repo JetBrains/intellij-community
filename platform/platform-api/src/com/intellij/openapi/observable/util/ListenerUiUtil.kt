@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.PopupMenuListenerAdapter
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.table.TableView
@@ -101,6 +102,10 @@ fun TableViewModel<*>.whenTableChanged(parentDisposable: Disposable? = null, lis
 
 fun TextFieldWithBrowseButton.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
   textField.whenTextChanged(parentDisposable, listener)
+}
+
+fun SearchTextField.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
+  textEditor.whenTextChanged(parentDisposable, listener)
 }
 
 fun JTextComponent.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
@@ -219,6 +224,11 @@ fun <T> JComboBox<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null
 @Experimental
 fun TextFieldWithBrowseButton.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit) {
   textField.whenTextChangedFromUi(parentDisposable, listener)
+}
+
+@Experimental
+fun SearchTextField.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit) {
+  textEditor.whenTextChangedFromUi(parentDisposable, listener)
 }
 
 @Experimental

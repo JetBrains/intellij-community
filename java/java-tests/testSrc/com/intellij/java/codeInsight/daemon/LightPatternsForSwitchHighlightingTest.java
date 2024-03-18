@@ -40,47 +40,39 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testPatternsInSwitchIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
-  }
-
-  public void testPatternsInSwitchIn20Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testMismatchedDeconstructionIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testIllegalFallthroughIn20Java() {
-    //there are no changes in 20->21
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
+  
   public void testIllegalFallthroughIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testUnconditionalDestructuringAndDefaultIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessForDirectClassesIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessWithConcreteSealedClassesIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessForEnumsWithSealedClassesIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
-  }
-
-  public void testSwitchExhaustivenessIn20Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessWithSealedIntersection(){
@@ -88,7 +80,7 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testSwitchExhaustivenessWithGenericsIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
   
   public void testSwitchSeveralPatternsUnnamed() {
@@ -96,11 +88,11 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testSwitchDominanceIn21Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testPatternMatchingInSwitchJava21() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
   public void testPatternMatchingWithGuard() {
@@ -122,12 +114,8 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
-  public void testEffectivelyFinal() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
-  }
-
   public void testEffectivelyFinal21() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+    doTest();
   }
 
 

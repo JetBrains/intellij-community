@@ -19,7 +19,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
 
-public class JvmMethodNameReferenceInjector extends ReferenceInjector {
+public final class JvmMethodNameReferenceInjector extends ReferenceInjector {
   @Override
   public @NotNull String getId() {
     return "jvm-method-name";

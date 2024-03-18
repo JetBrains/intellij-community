@@ -15,58 +15,23 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+/**
+ * @deprecated Use MavenSyncConsole instead
+ */
+@Deprecated
 public class BTWMavenConsole extends MavenConsole {
 
   private final Project myProject;
 
-  public BTWMavenConsole(Project project, MavenExecutionOptions.LoggingLevel outputLevel, boolean printStrackTrace) {
-    super(outputLevel, printStrackTrace);
+  public BTWMavenConsole(Project project, MavenExecutionOptions.LoggingLevel outputLevel) {
+    super(outputLevel);
     myProject = project;
-  }
-
-  @Override
-  public boolean canPause() {
-    return false;
-  }
-
-  @Override
-  public boolean isOutputPaused() {
-    return false;
-  }
-
-  @Override
-  public void setOutputPaused(boolean outputPaused) {
-  }
-
-  @Override
-  public void attachToProcess(ProcessHandler processHandler) {
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        sendToSyncConsole(event.getText(), ProcessOutputType.isStdout(outputType));
-      }
-
-      @Override
-      public void processTerminated(@NotNull ProcessEvent event) {
-        if (event.getExitCode() != 0) {
-          final String text = "PROCESS TERMINATED: " + event.getExitCode();
-          sendToSyncConsole(text, false);
-        }
-      }
-    });
   }
 
   @Override

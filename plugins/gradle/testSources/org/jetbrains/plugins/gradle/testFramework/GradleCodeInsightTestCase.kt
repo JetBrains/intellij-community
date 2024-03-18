@@ -112,10 +112,7 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   fun getDistributionContainerFqn(): String {
-    return when {
-      isGradleAtLeast("3.5") -> "org.gradle.api.NamedDomainObjectContainer<org.gradle.api.distribution.Distribution>"
-      else -> "org.gradle.api.distribution.internal.DefaultDistributionContainer"
-    }
+    return "org.gradle.api.NamedDomainObjectContainer<org.gradle.api.distribution.Distribution>"
   }
 
   fun getExtraPropertiesExtensionFqn(): String {

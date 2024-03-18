@@ -14,13 +14,13 @@ import org.junit.runner.RunWith;
 @RunWith(Parameterized.class)
 public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTestCase implements FileBasedTestCaseHelperEx {
   @Override
-  public String getRelativeBasePath() {
+  public @NotNull String getRelativeBasePath() {
     return getBasePath();
   }
 
   @Nullable
   @Override
-  public String getFileSuffix(String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     if (!fileName.startsWith(BEFORE_PREFIX)) return null;
     return fileName.substring(BEFORE_PREFIX.length());
   }

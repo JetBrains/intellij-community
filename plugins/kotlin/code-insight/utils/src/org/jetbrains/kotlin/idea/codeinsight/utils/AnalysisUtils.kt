@@ -3,11 +3,15 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 fun KtDotQualifiedExpression.isToString(): Boolean {
@@ -38,4 +42,16 @@ fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KtCallableSymbol -> callableIdIfNonLocal?.asSingleFqName()
     is KtClassLikeSymbol -> classIdIfNonLocal?.asSingleFqName()
     else -> null
+}
+
+context(KtAnalysisSession)
+fun KtCallExpression.isArrayOfFunction(): Boolean {
+    val functionNames = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
+            ArrayFqNames.ARRAY_OF_FUNCTION +
+            ArrayFqNames.EMPTY_ARRAY
+
+    val call = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal ?: return false
+
+    return call.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
+            functionNames.contains(call.callableName)
 }

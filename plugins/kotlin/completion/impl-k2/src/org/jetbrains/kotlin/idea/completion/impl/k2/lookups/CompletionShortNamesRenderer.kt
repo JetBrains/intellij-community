@@ -10,28 +10,35 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
     context(KtAnalysisSession)
-fun renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
+    fun renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
         return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
     }
 
     context(KtAnalysisSession)
-fun renderVariable(variable: KtVariableLikeSignature<*>): String {
+    fun renderFunctionalTypeParameters(functionalType: KtFunctionalType): String =
+        functionalType.parameterTypes.joinToString(separator = ", ", prefix = "(", postfix = ")") {
+            it.render(rendererVerbose, position = Variance.INVARIANT)
+        }
+
+    context(KtAnalysisSession)
+    fun renderVariable(variable: KtVariableLikeSignature<*>): String {
         return renderReceiver(variable)
     }
 
     context(KtAnalysisSession)
-private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
+    private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
         return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
     context(KtAnalysisSession)
-private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
+    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
         }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"

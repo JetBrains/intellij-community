@@ -2,6 +2,8 @@
 // LIBRARY_JAR_FILE: someTestLib.jar
 package testing
 
+import junit.framework.Test
+import junit.framework.TestSuite
 import junit.framework.TestCase
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -26,11 +28,11 @@ class NotATest4 {
     fun testMe() {}
 }
 
-class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest1</lineMarker>: TestCase() {
+class <lineMarker descr="Run Test">SessionTest1</lineMarker>: TestCase() {
 
 }
 
-class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest2</lineMarker>: TestCase() {
+class <lineMarker descr="Run Test">SessionTest2</lineMarker>: TestCase() {
 
     override fun <lineMarker descr="Overrides function in TestCase (junit.framework) Press ... to navigate">setUp</lineMarker>() {
         super.setUp()
@@ -41,8 +43,8 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
     }
 }
 
-class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest</lineMarker>: TestCase() {
-    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() {
+class <lineMarker descr="Run Test">SessionTest</lineMarker>: TestCase() {
+    fun <lineMarker descr="Run Test">testSessionCreateDelete</lineMarker>() {
 
     }
 
@@ -62,7 +64,7 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
     }
 }
 
-abstract class <lineMarker>AbstractFoo</lineMarker>: TestCase() {
+abstract class <lineMarker descr="Is subclassed by FooCase in AbstractFoo (testing) Press ... to navigate"><lineMarker descr="Run Test">AbstractFoo</lineMarker></lineMarker>: TestCase() {
     inner class FooCase : AbstractFoo() {
         fun testFoo() {
 
@@ -94,4 +96,20 @@ data class TestUserSession(val userId: String, val cart: List<String>)
 // binary class from someTestLib.jar
 class <lineMarker descr="Run Test">SomeTestClassImpl</lineMarker>: AbstractSomeTestClass() {
 
+}
+
+object <lineMarker descr="Run Test">TestObjectWithSuite</lineMarker> {
+    @JvmStatic
+    fun suite(): Test {
+        return TestSuite()
+    }
+}
+
+class <lineMarker descr="Run Test">TestClassWithSuite</lineMarker> {
+    companion object {
+        @JvmStatic
+        fun suite(): Test {
+            return TestSuite()
+        }
+    }
 }

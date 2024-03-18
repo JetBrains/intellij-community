@@ -9,7 +9,7 @@ class ExtensionDescriptor(@JvmField val implementation: String?,
                           @JvmField val os: Os?,
                           @JvmField val orderId: String?,
                           @JvmField val order: LoadingOrder,
-                          @JvmField var element: XmlElement?,
+                          @JvmField val element: XmlElement?,
                           @JvmField val hasExtraAttributes: Boolean) {
   @Suppress("EnumEntryName")
   enum class Os {

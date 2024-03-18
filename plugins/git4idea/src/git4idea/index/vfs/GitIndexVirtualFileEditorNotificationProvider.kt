@@ -3,6 +3,7 @@ package git4idea.index.vfs
 
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -11,7 +12,7 @@ import git4idea.i18n.GitBundle
 import java.util.function.Function
 import javax.swing.JComponent
 
-private class GitIndexVirtualFileEditorNotificationProvider : EditorNotificationProvider {
+private class GitIndexVirtualFileEditorNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file !is GitIndexVirtualFile) {
       return null

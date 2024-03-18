@@ -1,18 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings.HintsState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
 @State(name = "DeclarativeInlayHintsSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<DeclarativeInlayHintsSettings.HintsState>(
-  HintsState()) {
+class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<HintsState>(HintsState()) {
 
   class HintsState : BaseState() {
     // Format: providerId + # + optionId
-    var disabledOptions: MutableSet<String> by stringSet()
+    var enabledOptions: MutableMap<String, Boolean> by map()
     var providerIdToEnabled: MutableMap<String, Boolean> by map()
   }
 
@@ -28,8 +28,8 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<Declarative
    */
   @RequiresReadLock
   fun isOptionEnabled(optionId: String, providerId: String): Boolean? {
-    if (getSerializedId(providerId, optionId) in state.disabledOptions) return false
-    return null
+    val serializedId = getSerializedId(providerId, optionId)
+    return state.enabledOptions[serializedId]
   }
 
   private fun getSerializedId(providerId: String, optionId: String) = "$providerId#$optionId"
@@ -37,13 +37,8 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<Declarative
   @RequiresWriteLock
   fun setOptionEnabled(optionId: String, providerId: String, isEnabled: Boolean) {
     val serializedId = getSerializedId(providerId, optionId)
-    val areSame = state.disabledOptions.contains(serializedId) != isEnabled
-    if (!isEnabled) {
-      state.disabledOptions.add(serializedId)
-    } else {
-      state.disabledOptions.remove(serializedId)
-    }
-    if (!areSame) {
+    val previousState = state.enabledOptions.put(serializedId, isEnabled)
+    if (previousState != isEnabled) {
       state.intIncrementModificationCount()
     }
   }
@@ -54,9 +49,9 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<Declarative
   }
 
   @RequiresWriteLock
-  fun setProviderEnabled(providerId: String, value: Boolean) {
-    val previousState = state.providerIdToEnabled.put(providerId, value)
-    if (previousState != value) {
+  fun setProviderEnabled(providerId: String, isEnabled: Boolean) {
+    val previousState = state.providerIdToEnabled.put(providerId, isEnabled)
+    if (previousState != isEnabled) {
       state.intIncrementModificationCount()
     }
   }

@@ -29,8 +29,8 @@ import java.util.*
 
 class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {
   fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
-    val psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE) as PsiJavaFile
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    val psiFile = e.getData(CommonDataKeys.PSI_FILE) as? PsiJavaFile ?: return
     val project = psiFile.project
     val element = psiFile.findElementAt(editor.caretModel.offset)
     val psiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: run {

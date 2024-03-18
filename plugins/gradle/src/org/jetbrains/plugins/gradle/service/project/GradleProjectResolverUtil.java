@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -183,7 +184,7 @@ public final class GradleProjectResolverUtil {
     Boolean isSupported = IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.get(project);
     if (isSupported == null) {
       String gradleVersion = resolverCtx.getProjectGradleVersion();
-      isSupported = gradleVersion != null && GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("6.8")) >= 0;
+      isSupported = gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.8");
       IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.set(project, isSupported);
     }
     return isSupported;
@@ -318,15 +319,6 @@ public final class GradleProjectResolverUtil {
     return externalProjectId.substring(i + 1);
   }
 
-  /**
-   * @deprecated Use getGradleIdentityPathOrNull instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static String getGradlePath(final Module module) {
-    return getGradleIdentityPathOrNull(module);
-  }
-
   @Nullable
   public static String getGradleIdentityPathOrNull(final Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
@@ -352,13 +344,18 @@ public final class GradleProjectResolverUtil {
     return scope != null ? DependencyScope.valueOf(scope) : DependencyScope.COMPILE;
   }
 
+  @NotNull
+  private static DependencyScope getMergedDependencyScope(@Nullable String scope1, @Nullable String scope2) {
+    return DependencyScope.coveringUseCasesOf(getDependencyScope(scope1), getDependencyScope(scope2));
+  }
+
   public static void attachGradleSdkSources(@NotNull final IdeaModule gradleModule,
                                             @Nullable final File libFile,
                                             @NotNull final LibraryData library,
                                             @NotNull final ProjectResolverContext resolverCtx) {
     if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
-    final BuildScriptClasspathModel buildScriptClasspathModel =
-      resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final GradleBuildScriptClasspathModel buildScriptClasspathModel =
+      resolverCtx.getExtraProject(gradleModule, GradleBuildScriptClasspathModel.class);
     if (buildScriptClasspathModel == null) return;
     final File gradleHomeDir = buildScriptClasspathModel.getGradleHomeDir();
     if (gradleHomeDir == null) return;
@@ -393,12 +390,10 @@ public final class GradleProjectResolverUtil {
     if (libOrPluginsFile != null && "lib".equals(libOrPluginsFile.getName()) && libOrPluginsFile.getParentFile() != null) {
       File srcDir = new File(libOrPluginsFile.getParentFile(), "src");
 
-      if (gradleVersion.compareTo(GradleVersion.version("1.9")) >= 0) {
-        int endIndex = libFile.getName().indexOf(gradleVersion.getVersion());
-        if (endIndex != -1) {
-          String srcDirChild = libFile.getName().substring("gradle-".length(), endIndex - 1);
-          srcDir = new File(srcDir, srcDirChild);
-        }
+      int endIndex = libFile.getName().indexOf(gradleVersion.getVersion());
+      if (endIndex != -1) {
+        String srcDirChild = libFile.getName().substring("gradle-".length(), endIndex - 1);
+        srcDir = new File(srcDir, srcDirChild);
       }
 
       if (srcDir.isDirectory()) {
@@ -566,21 +561,21 @@ public final class GradleProjectResolverUtil {
         if (dependency instanceof ExternalLibraryDependency libDependency) {
           if (seenDependency instanceof ExternalLibraryDependency seenLibDependency &&
               !FileUtil.filesEqual(seenLibDependency.getFile(), libDependency.getFile())) {
-            DefaultExternalMultiLibraryDependency mergedDependency = new DefaultExternalMultiLibraryDependency(libDependency);
-            mergedDependency.addArtifactsFrom(seenLibDependency);
-            dependencyMap.put(dependency.getId(), mergedDependency);
+            DefaultExternalMultiLibraryDependency mergedDependency = new DefaultExternalMultiLibraryDependency(seenLibDependency);
+            mergedDependency.setScope(getMergedDependencyScope(mergedDependency.getScope(), libDependency.getScope()).name());
+            mergedDependency.addArtifactsFrom(libDependency);
+            dependencyMap.put(key, mergedDependency);
             continue;
           }
           else if (seenDependency instanceof DefaultExternalMultiLibraryDependency mergedDependency) {
+            mergedDependency.setScope(getMergedDependencyScope(mergedDependency.getScope(), libDependency.getScope()).name());
             mergedDependency.addArtifactsFrom(libDependency);
             continue;
           }
         }
 
-        DependencyScope prevScope =
-          seenDependency.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(seenDependency.getScope());
-        DependencyScope currentScope =
-          dependency.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(dependency.getScope());
+        DependencyScope prevScope = getDependencyScope(seenDependency.getScope());
+        DependencyScope currentScope = getDependencyScope(dependency.getScope());
 
         if (prevScope.isForProductionCompile()) continue;
         if (prevScope.isForProductionRuntime() && currentScope.isForProductionRuntime()) continue;
@@ -936,16 +931,6 @@ public final class GradleProjectResolverUtil {
 
   private static final Key<Map<String, DataNode<LibraryData>>> LIBRARIES_BY_NAME_CACHE =
     Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
-
-  /**
-   * @deprecated use {@link GradleProjectResolverUtil#linkProjectLibrary(DataNode, LibraryData)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
-                                                        @Nullable DataNode<ProjectData> ideProject,
-                                                        @NotNull final LibraryData library) {
-    return linkProjectLibrary(ideProject, library);
-  }
 
   public static boolean linkProjectLibrary(
     @Nullable DataNode<ProjectData> ideProject,

@@ -6,7 +6,7 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.tools.fragmented.LineNumberConvertor
-import com.intellij.diff.tools.simple.AlignedDiffModel
+import com.intellij.diff.tools.simple.AlignableChange
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.*
@@ -162,7 +162,7 @@ class PatchChangeBuilder {
                     val appliedToLines: LineRange?,
                     val status: HunkStatus) : Hunk(patchDeletionRange, patchInsertionRange)
 
-  class PatchSideChange(val range: Range) : AlignedDiffModel.AlignableChange {
+  class PatchSideChange(val range: Range) : AlignableChange {
     override val diffType: TextDiffType get() = DiffUtil.getDiffType(range)
     override fun getStartLine(side: Side): Int = side.select(range.start1, range.start2)
     override fun getEndLine(side: Side): Int = side.select(range.end1, range.end2)

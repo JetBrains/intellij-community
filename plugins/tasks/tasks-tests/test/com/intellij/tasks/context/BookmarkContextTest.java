@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.context;
 
 import com.intellij.ide.bookmark.BookmarkType;
@@ -14,7 +14,7 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
   public void testBookmarks() {
     Document document = configureFromFileText("foo.txt", "\n");
     BookmarksManager bookmarksManager = BookmarksManager.getInstance(getProject());
-    bookmarksManager.add(LineBookmarkProvider.find(getProject()).createBookmark(getVFile(), 0), BookmarkType.DEFAULT);
+    bookmarksManager.add(LineBookmarkProvider.Util.find(getProject()).createBookmark(getVFile(), 0), BookmarkType.DEFAULT);
     assertEquals(1, bookmarksManager.getBookmarks().size());
 
     Element element = new Element("foo");

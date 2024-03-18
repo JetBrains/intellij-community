@@ -30,6 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * created at Nov 13, 2001
@@ -41,6 +45,8 @@ public class PsiElementRenameHandler implements RenameHandler {
   private static final ExtensionPointName<Condition<? super PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
 
   public static final DataKey<String> DEFAULT_NAME = DataKey.create("DEFAULT_NAME");
+  
+  public static final DataKey<List<String>> NAME_SUGGESTIONS = DataKey.create("renameNameSuggestions");
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, @NotNull DataContext dataContext) {
@@ -59,7 +65,9 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = InjectedLanguageUtilBase.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
-    invoke(element, project, nameSuggestionContext, editor, shouldCheckInProject());
+    boolean checkInProject = shouldCheckInProject();
+    List<String> suggestedNames = requireNonNullElse(NAME_SUGGESTIONS.getData(dataContext), List.of());
+    invoke(element, project, nameSuggestionContext, suggestedNames, editor, checkInProject);
   }
 
   @Override
@@ -86,7 +94,20 @@ public class PsiElementRenameHandler implements RenameHandler {
     invoke(element, project, nameSuggestionContext, editor, true);
   }
 
-  public static void invoke(@NotNull PsiElement element, @NotNull Project project, PsiElement nameSuggestionContext, @Nullable Editor editor, boolean checkInProject) {
+  public static void invoke(@NotNull PsiElement element,
+                            @NotNull Project project,
+                            PsiElement nameSuggestionContext,
+                            @Nullable Editor editor,
+                            boolean checkInProject) {
+    invoke(element, project, nameSuggestionContext, List.of(), editor, checkInProject);
+  }
+
+  private static void invoke(@NotNull PsiElement element,
+                             @NotNull Project project,
+                             PsiElement nameSuggestionContext,
+                             @NotNull List<String> suggestedNames,
+                             @Nullable Editor editor,
+                             boolean checkInProject) {
     if (!canRename(project, editor, element)) {
       return;
     }
@@ -104,7 +125,8 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
     }
 
-    rename(element, project, nameSuggestionContext, editor);
+    var processor = RenamePsiElementProcessorBase.forPsiElement(element);
+    rename(element, project, nameSuggestionContext, suggestedNames, editor, null, processor);
   }
 
   public static boolean canRename(@NotNull Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
@@ -166,10 +188,21 @@ public class PsiElementRenameHandler implements RenameHandler {
                             Editor editor,
                             String defaultName,
                             RenamePsiElementProcessorBase processor) {
+    rename(element, project, nameSuggestionContext, List.of(), editor, defaultName, processor);
+  }
+
+  private static void rename(@NotNull PsiElement element,
+                             @NotNull Project project,
+                             PsiElement nameSuggestionContext,
+                             @NotNull Collection<String> suggestedNames, 
+                             Editor editor,
+                             String defaultName,
+                             RenamePsiElementProcessorBase processor) {
     PsiElement substituted = processor.substituteElementToRename(element, editor);
     if (substituted == null || !canRename(project, editor, substituted)) return;
 
     RenameRefactoringDialog dialog = processor.createDialog(project, substituted, nameSuggestionContext, editor);
+    dialog.addSuggestedNames(suggestedNames);
 
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
       String[] strings = dialog.getSuggestedNames();

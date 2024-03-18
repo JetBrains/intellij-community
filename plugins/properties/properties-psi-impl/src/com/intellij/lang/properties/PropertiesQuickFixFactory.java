@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public abstract class PropertiesQuickFixFactory {
 
   public abstract LocalQuickFix createCreatePropertyFix(PsiElement element, String key, List<PropertiesFile> files);
 
-  public abstract IntentionAction createRemovePropertyFix(Property property);
+  public abstract IntentionAction createRemovePropertyFix(@NotNull Property property);
 
-  public abstract LocalQuickFix createRemovePropertyLocalFix();
+  public abstract LocalQuickFix createRemovePropertyLocalFix(@NotNull Property property);
 }

@@ -60,7 +60,7 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
         LanguageLevelUtil.getCustomLanguageLevel(it) ?: projectLanguageLevel
       }
       languageLevels.mapTo(metrics) {
-        moduleLanguageLevel.metric(it.toJavaVersion().feature, it.isPreview)
+        moduleLanguageLevel.metric(it.feature(), it.isPreview)
       }
     }
 

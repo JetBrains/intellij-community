@@ -19,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-public class MaskedAssertionInspection extends BaseInspection {
+public final class MaskedAssertionInspection extends BaseInspection {
 
   @Override
   protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {

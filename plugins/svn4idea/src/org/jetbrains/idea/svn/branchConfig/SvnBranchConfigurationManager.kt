@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.branchConfig
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
@@ -23,6 +24,7 @@ import java.util.*
 
 private val LOG = logger<SvnBranchConfigurationManager>()
 
+@Service(Service.Level.PROJECT)
 @State(name = "SvnBranchConfigurationManager")
 internal class SvnBranchConfigurationManager(private val project: Project) : PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
   private val branchesLoader = ProgressManagerQueue(project, message("progress.title.svn.branches.preloader"))

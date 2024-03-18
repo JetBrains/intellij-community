@@ -36,7 +36,7 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
               }
             },
             "ee": {
-              "type": "object"
+              "type": "object",
               "example": {
                 "ff": {
                   "gg": 12345

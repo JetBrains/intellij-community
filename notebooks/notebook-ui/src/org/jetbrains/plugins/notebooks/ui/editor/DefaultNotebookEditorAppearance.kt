@@ -105,4 +105,6 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
   override fun shouldShowCellLineNumbers(): Boolean = true
 
   override fun shouldShowExecutionCounts(): Boolean = true
+
+  override fun shouldShowOutExecutionCounts(): Boolean = false
 }

@@ -1,18 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.UIDefaults
 
-@Internal
+@Experimental
 interface UIThemeLookAndFeelInfo  {
   val id: String
 
   @get:NlsSafe
   val name: String
+
+  val author: String?
 
   val isDark: Boolean
 
@@ -47,3 +52,17 @@ class UIThemeExportableBean(
 
   val icons: Map<String, String>,
 )
+
+@Internal
+fun EditorColorsScheme.isDefaultForTheme(theme: UIThemeLookAndFeelInfo?): Boolean =
+  (theme?.editorSchemeId ?: defaultNonLaFSchemeName()) == Scheme.getBaseName(name)
+
+val UIThemeLookAndFeelInfo.defaultSchemeName: String @Internal get() = editorSchemeId ?: defaultNonLaFSchemeName(isDark)
+private fun defaultNonLaFSchemeName() = defaultNonLaFSchemeName(StartupUiUtil.isDarkTheme)
+@Internal
+fun defaultNonLaFSchemeName(dark: Boolean): String = if (dark) "Darcula" else EditorColorsScheme.DEFAULT_SCHEME_NAME
+
+val UIThemeLookAndFeelInfo.isThemeFromPlugin: Boolean @Internal get() {
+  val pluginClassLoader = providerClassLoader as? PluginAwareClassLoader
+  return pluginClassLoader?.pluginDescriptor?.isBundled == false
+}

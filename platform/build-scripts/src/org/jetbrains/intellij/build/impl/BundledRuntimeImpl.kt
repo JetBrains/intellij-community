@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -28,7 +28,6 @@ class BundledRuntimeImpl : BundledRuntime {
   private val error: (String) -> Unit
   private val info: (String) -> Unit
 
-  // Used in Rider codebase
   constructor(
     options: BuildOptions,
     paths: BuildPaths,
@@ -67,7 +66,7 @@ class BundledRuntimeImpl : BundledRuntime {
     }
 
   override val build: String
-    get() = dependenciesProperties.property("runtimeBuild")
+    get() = System.getenv("JBR_DEV_SERVER_VERSION") ?: dependenciesProperties.property("runtimeBuild")
 
   override suspend fun getHomeForCurrentOsAndArch(): Path {
     val os = OsFamily.currentOs
@@ -175,7 +174,7 @@ private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
     .setAttribute("archive", archive.toString())
     .setAttribute("os", os.osName)
     .setAttribute("destination", destinationDir.toString())
-    .use {
+    .useWithoutActiveScope {
       NioFiles.deleteRecursively(destinationDir)
       unTar(archive, destinationDir)
       fixPermissions(destinationDir, os == OsFamily.WINDOWS)

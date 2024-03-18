@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hints.VcsCodeVisionCurlyBracketLanguageContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.siyeh.ipp.psiutils.ErrorUtil
-import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector
 import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

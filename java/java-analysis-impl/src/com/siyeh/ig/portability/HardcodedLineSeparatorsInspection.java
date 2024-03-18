@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class HardcodedLineSeparatorsInspection extends BaseInspection {
+public final class HardcodedLineSeparatorsInspection extends BaseInspection {
 
   @Override
   @NotNull

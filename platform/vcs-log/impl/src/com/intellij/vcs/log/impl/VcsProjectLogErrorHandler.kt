@@ -61,7 +61,7 @@ internal suspend fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager) {
   recreateLog(logManager = logManager, invalidateCaches = true)
 }
 
-private suspend fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean) {
+internal suspend fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean) {
   val storageIds = logManager.storageIds()
   thisLogger().assertTrue(storageIds.isNotEmpty())
 

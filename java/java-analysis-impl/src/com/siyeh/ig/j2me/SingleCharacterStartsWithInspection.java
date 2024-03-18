@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SingleCharacterStartsWithInspection extends BaseInspection {
+public final class SingleCharacterStartsWithInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -11,9 +11,11 @@ import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
 import com.intellij.ui.win.WinPathChooserDialog;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,56 +27,39 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
   public @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
                                                       @Nullable Project project,
                                                       @Nullable Component parent) {
-    if (ClientFileChooserFactory.useNativeMacChooser(descriptor)) {
-      return new MacPathChooserDialog(descriptor, parent, project);
-    }
-    else if (ClientFileChooserFactory.useNativeWinChooser(descriptor)) {
-      return new WinPathChooserDialog(descriptor, parent, project);
-    }
-    else if (ClientFileChooserFactory.useNewChooser(descriptor)) {
-      return new NewFileChooserDialogImpl(descriptor, parent, project);
-    }
-    else if (parent != null) {
-      return new FileChooserDialogImpl(descriptor, parent, project);
-    }
-    else {
-      return new FileChooserDialogImpl(descriptor, project);
-    }
+    var chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
+    return chooser != null ? (FileChooserDialog)chooser :
+           useNewChooser(descriptor) ? new NewFileChooserDialogImpl(descriptor, parent, project) :
+           parent != null ? new FileChooserDialogImpl(descriptor, parent, project) :
+           new FileChooserDialogImpl(descriptor, project);
   }
 
   @Override
   public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
                                                       @Nullable Project project,
                                                       @Nullable Component parent) {
-    PathChooserDialog chooser = ClientFileChooserFactory.createNativePathChooserIfEnabled(descriptor, project, parent);
-    if (chooser != null) {
-      return chooser;
-    }
-    else if (ClientFileChooserFactory.useNewChooser(descriptor)) {
-      return new NewFileChooserDialogImpl(descriptor, parent, project);
-    }
-    else if (parent != null) {
-      return new FileChooserDialogImpl(descriptor, parent, project);
-    }
-    else {
-      return new FileChooserDialogImpl(descriptor, project);
-    }
+    var chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
+    return chooser != null ? chooser :
+           useNewChooser(descriptor) ? new NewFileChooserDialogImpl(descriptor, parent, project) :
+           parent != null ? new FileChooserDialogImpl(descriptor, parent, project) :
+           new FileChooserDialogImpl(descriptor, project);
   }
 
   @Override
   public @NotNull FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
     return new FileTextFieldImpl(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(descriptor, showHidden),
-                                 ClientFileChooserFactory.getMacroMap(), parent);
+                                 FileChooserFactoryImpl.getMacroMap(), parent);
   }
 
   @Override
+  @SuppressWarnings("ResultOfObjectAllocationIgnored")
   public void installFileCompletion(@NotNull JTextField field,
                                     @NotNull FileChooserDescriptor descriptor,
                                     boolean showHidden,
                                     @Nullable Disposable parent) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       new FileTextFieldImpl(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(descriptor, showHidden),
-                            ClientFileChooserFactory.getMacroMap(), parent);
+                            FileChooserFactoryImpl.getMacroMap(), parent);
     }
   }
 
@@ -88,5 +73,30 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
   public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
     return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog", true)
            ? new MacFileSaverDialog(descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
+  }
+
+  static @Nullable PathChooserDialog createNativePathChooserIfEnabled(@NotNull FileChooserDescriptor descriptor,
+                                                                      @Nullable Project project,
+                                                                      @Nullable Component parent) {
+    return useNativeMacChooser(descriptor) ? new MacPathChooserDialog(descriptor, parent, project) :
+           useNativeWinChooser(descriptor) ? new WinPathChooserDialog(descriptor, parent, project) :
+           null;
+  }
+
+  private static boolean useNativeMacChooser(FileChooserDescriptor descriptor) {
+    return SystemInfo.isMac &&
+           SystemInfo.isJetBrainsJvm &&
+           !descriptor.isForcedToUseIdeaFileChooser() &&
+           Registry.is("ide.mac.file.chooser.native", true);
+  }
+
+  private static boolean useNativeWinChooser(FileChooserDescriptor descriptor) {
+    return SystemInfo.isWindows &&
+           !descriptor.isForcedToUseIdeaFileChooser() &&
+           Registry.is("ide.win.file.chooser.native", false);
+  }
+
+  private static boolean useNewChooser(FileChooserDescriptor descriptor) {
+    return Registry.is("ide.ui.new.file.chooser") && ContainerUtil.and(descriptor.getRoots(), VirtualFile::isInLocalFileSystem);
   }
 }

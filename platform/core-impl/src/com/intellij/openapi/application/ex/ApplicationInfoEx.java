@@ -47,6 +47,13 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract boolean isPreview();
 
   /**
+   * Returns the full IDE's product code (as used in build numbers) if this application is a frontend variant (JetBrains Client) of it.
+   * Otherwise, returns {@code null}.
+   */
+  @ApiStatus.Internal
+  public abstract @Nullable String getFullIdeProductCode();
+
+  /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getDownloadPageUrl()} instead
    */
   @ApiStatus.ScheduledForRemoval
@@ -133,8 +140,18 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Deprecated
   public abstract boolean isShowWhatsNewOnUpdate();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getKeyboardShortcutsPdfUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract @Nullable String getWinKeymapUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getKeyboardShortcutsPdfUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract @Nullable String getMacKeymapUrl();
 
   public interface UpdateUrls {

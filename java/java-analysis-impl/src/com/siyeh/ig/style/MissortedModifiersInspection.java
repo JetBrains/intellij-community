@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MissortedModifiersInspection extends BaseInspection implements CleanupLocalInspectionTool{
+public final class MissortedModifiersInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   /**
    * @noinspection PublicField

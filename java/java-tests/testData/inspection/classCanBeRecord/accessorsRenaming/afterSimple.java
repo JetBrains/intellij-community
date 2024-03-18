@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to record class" "true"
 record R(int first, String second, int... third, boolean fourth) {
 
     private int getFirst() {

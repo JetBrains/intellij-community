@@ -1,16 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.*;
 
-public interface SelectInTarget {
-  ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<>("com.intellij.selectInTarget");
+public interface SelectInTarget extends PossiblyDumbAware {
+  @ApiStatus.Internal
+  ProjectExtensionPointName<SelectInTarget> EP_NAME = new ProjectExtensionPointName<>("com.intellij.selectInTarget");
 
+  @CalledInAny
   @Override
-  @Nls String toString();
+  @Nls
+  String toString();
 
   /**
    * This should be called in an read action
@@ -31,6 +33,7 @@ public interface SelectInTarget {
 
   /**
    * Weight is used to provide an order in SelectIn popup. Lesser weights come first.
+   *
    * @return weight of this particular target.
    */
   default float getWeight() {

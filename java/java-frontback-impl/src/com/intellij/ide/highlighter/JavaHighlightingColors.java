@@ -54,7 +54,7 @@ public final class JavaHighlightingColors {
   public static final TextAttributesKey CONSTRUCTOR_DECLARATION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CONSTRUCTOR_DECLARATION_ATTRIBUTES", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
   public static final TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANNOTATION_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.METADATA);
   public static final TextAttributesKey ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.METADATA);
-  public static final TextAttributesKey ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES", DefaultLanguageHighlighterColors.METADATA);
+  public static final TextAttributesKey MISSORTED_IMPORTS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MISSORTED_IMPORTS_ATTRIBUTES");
 
   //visibility
   public static final TextAttributesKey PUBLIC_REFERENCE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PUBLIC_REFERENCE", (TextAttributesKey)null);

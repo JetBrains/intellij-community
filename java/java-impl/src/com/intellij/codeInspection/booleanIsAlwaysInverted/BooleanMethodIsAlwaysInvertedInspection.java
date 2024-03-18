@@ -25,7 +25,7 @@ import org.jetbrains.uast.UMethod;
 
 import java.util.Collection;
 
-public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInspectionTool {
+public final class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
 
   @NotNull
@@ -91,7 +91,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     return null;
   }
 
-  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement identifier, boolean onTheFly) {
+  ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement identifier, boolean onTheFly) {
     final InvertBooleanDelegate invertBooleanDelegate = InvertBooleanDelegate.findInvertBooleanDelegate(identifier.getParent());
     return manager.createProblemDescriptor(identifier,
                                            JavaBundle.message("boolean.method.is.always.inverted.problem.descriptor"),

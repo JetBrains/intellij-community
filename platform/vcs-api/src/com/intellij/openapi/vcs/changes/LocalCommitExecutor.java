@@ -26,6 +26,6 @@ public abstract class LocalCommitExecutor implements CommitExecutor, HelpIdProvi
   /**
    * @deprecated Use {@link CommitExecutor#LOCAL_COMMIT_EXECUTOR} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final ProjectExtensionPointName<CommitExecutor> LOCAL_COMMIT_EXECUTOR = CommitExecutor.LOCAL_COMMIT_EXECUTOR;
 }

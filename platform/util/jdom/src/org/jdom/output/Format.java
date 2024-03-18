@@ -54,7 +54,6 @@
 
 package org.jdom.output;
 
-import org.jdom.IllegalDataException;
 import org.jdom.Verifier;
 
 import java.nio.charset.Charset;
@@ -299,212 +298,6 @@ public final class Format implements Cloneable {
     return str.substring(left, right + 1);
   }
 
-  /**
-   * This will take the three pre-defined entities in XML 1.0 ('&lt;', '&gt;',
-   * and '&amp;' - used specifically in XML elements) as well as CR/NL, tabs,
-   * and Quote characters which require escaping inside Attribute values and
-   * converts their character representation to the appropriate entity
-   * reference suitable for XML attribute content. Further, some special
-   * characters (e.g. characters that are not valid in the current encoding)
-   * are converted to escaped representations.
-   * <p>
-   *
-   * @param strategy The EscapeStrategy to query.
-   * @param value    <code>String</code> Attribute value to escape.
-   * @return The value appropriately escaped.
-   * @throws IllegalDataException if an entity can not be escaped
-   */
-  public static String escapeAttribute(EscapeStrategy strategy, String value) {
-    final int len = value.length();
-    int idx = 0;
-
-    checkloop:
-    while (idx < len) {
-      final char ch = value.charAt(idx);
-      if (ch == '<' || ch == '>' || ch == '&' || ch == '\r' || ch == '\n'
-          || ch == '"' || ch == '\t' || strategy.shouldEscape(ch)) {
-        break checkloop;
-      }
-      idx++;
-    }
-
-    if (idx == len) {
-      return value;
-    }
-
-    char highsurrogate = 0;
-    final StringBuilder sb = new StringBuilder(len + 5);
-    sb.append(value, 0, idx);
-    while (idx < len) {
-      final char ch = value.charAt(idx++);
-      if (highsurrogate > 0) {
-        if (!Verifier.isLowSurrogate(ch)) {
-          throw new IllegalDataException(
-            "Could not decode surrogate pair 0x" +
-            Integer.toHexString(highsurrogate) + " / 0x"
-            + Integer.toHexString(ch));
-        }
-        int chp = Verifier.decodeSurrogatePair(highsurrogate, ch);
-        sb.append("&#x");
-        sb.append(Integer.toHexString(chp));
-        sb.append(';');
-        highsurrogate = 0;
-        continue;
-      }
-      switch (ch) {
-        case '<':
-          sb.append("&lt;");
-          break;
-        case '>':
-          sb.append("&gt;");
-          break;
-        case '&':
-          sb.append("&amp;");
-          break;
-        case '\r':
-          sb.append("&#xD;");
-          break;
-        case '"':
-          sb.append("&quot;");
-          break;
-        case '\t':
-          sb.append("&#x9;");
-          break;
-        case '\n':
-          sb.append("&#xA;");
-          break;
-        default:
-
-          if (strategy.shouldEscape(ch)) {
-            // make sure what we are escaping is not the
-            // beginning of a multi-byte character.
-            if (Verifier.isHighSurrogate(ch)) {
-              // this is a the high of a surrogate pair
-              highsurrogate = ch;
-            }
-            else {
-              sb.append("&#x");
-              sb.append(Integer.toHexString(ch));
-              sb.append(';');
-            }
-          }
-          else {
-            sb.append(ch);
-          }
-          break;
-      }
-    }
-    if (highsurrogate > 0) {
-      throw new IllegalDataException("Surrogate pair 0x" +
-                                     Integer.toHexString(highsurrogate) + "truncated");
-    }
-
-    return sb.toString();
-  }
-
-
-  /**
-   * This will take the three pre-defined entities in XML 1.0 ('&lt;', '&gt;',
-   * and '&amp;' - used specifically in XML elements) and convert their
-   * character representation to the appropriate entity reference, suitable
-   * for XML element content. Further, some special characters (e.g.
-   * characters that are not valid in the current encoding) are converted to
-   * escaped representations. If the eol parameter is not null, then any
-   * internal newlines will be replaced with the specified eol sequence.
-   *
-   * @param strategy The EscapeStrategy
-   * @param eol      The End-Of-Line sequence to be used (maybe null).
-   * @param value    The String to escape
-   * @return The input value escaped.
-   * @throws IllegalDataException if an entity can not be escaped
-   * @since JDOM2
-   */
-  public static String escapeText(final EscapeStrategy strategy,
-                                  final String eol, final String value) {
-    final int right = value.length();
-    int idx = 0;
-    checkloop:
-    while (idx < right) {
-      final char ch = value.charAt(idx);
-      if (ch == '<' || ch == '>' || ch == '&' || ch == '\r' || ch == '\n'
-          || strategy.shouldEscape(ch)) {
-        break checkloop;
-      }
-      idx++;
-    }
-
-    if (idx == right) {
-      // no escape needed.
-      return value;
-    }
-
-    StringBuilder sb = new StringBuilder();
-    if (idx > 0) {
-      sb.append(value, 0, idx);
-    }
-    char highsurrogate = 0;
-    while (idx < right) {
-      final char ch = value.charAt(idx++);
-      if (highsurrogate > 0) {
-        if (!Verifier.isLowSurrogate(ch)) {
-          throw new IllegalDataException(
-            "Could not decode surrogate pair 0x" +
-            Integer.toHexString(highsurrogate) + " / 0x"
-            + Integer.toHexString(ch));
-        }
-        int chp = Verifier.decodeSurrogatePair(highsurrogate, ch);
-        sb.append("&#x").append(Integer.toHexString(chp)).append(";");
-        highsurrogate = 0;
-        continue;
-      }
-      switch (ch) {
-        case '<':
-          sb.append("&lt;");
-          break;
-        case '>':
-          sb.append("&gt;");
-          break;
-        case '&':
-          sb.append("&amp;");
-          break;
-        case '\r':
-          sb.append("&#xD;");
-          break;
-        case '\n':
-          if (eol != null) {
-            sb.append(eol);
-          }
-          else {
-            sb.append('\n');
-          }
-          break;
-        default:
-
-          if (strategy.shouldEscape(ch)) {
-            // make sure what we are escaping is not the
-            // beginning of a multi-byte character.
-            if (Verifier.isHighSurrogate(ch)) {
-              // this is a the high of a surrogate pair
-              highsurrogate = ch;
-            }
-            else {
-              sb.append("&#x").append(Integer.toHexString(ch)).append(";");
-            }
-          }
-          else {
-            sb.append(ch);
-          }
-          break;
-      }
-    }
-    if (highsurrogate > 0) {
-      throw new IllegalDataException("Surrogate pair 0x" +
-                                     Integer.toHexString(highsurrogate) + "truncated");
-    }
-
-    return sb.toString();
-  }
-
   private static EscapeStrategy chooseStrategy(String encoding) {
     if ("UTF-8".equalsIgnoreCase(encoding) ||
         "UTF-16".equalsIgnoreCase(encoding)) {
@@ -535,7 +328,7 @@ public final class Format implements Cloneable {
 
 
   /**
-   * standard value to indent by, if we are indenting
+   * standard value to indent by if we are indenting
    */
   private static final String STANDARD_INDENT = "  ";
 
@@ -550,7 +343,7 @@ public final class Format implements Cloneable {
   private static final String STANDARD_ENCODING = "UTF-8";
 
   /**
-   * The default indent is no spaces (as original document)
+   * The default indent is no spaces (as an original document)
    */
   String indent = null;
 
@@ -598,7 +391,7 @@ public final class Format implements Cloneable {
   EscapeStrategy escapeStrategy = DEFAULT_ESCAPE_STRATEGY;
 
   /**
-   * Creates a new Format instance with default (raw) behavior.
+   * Creates a new Format instance with defaulted (raw) behavior.
    */
   private Format() {
     setEncoding(STANDARD_ENCODING);
@@ -698,37 +491,6 @@ public final class Format implements Cloneable {
   public boolean getExpandEmptyElements() {
     return expandEmptyElements;
   }
-
-  /**
-   * This will set whether JAXP TrAX processing instructions for
-   * disabling/enabling output escaping are ignored.  Disabling
-   * output escaping allows using XML text as element content and
-   * outputing it verbatim, i&#46;e&#46; as element children would be.
-   * <p>
-   * When processed, these processing instructions are removed from
-   * the generated XML text and control whether the element text
-   * content is output verbatim or with escaping of the pre-defined
-   * entities in XML 1.0.  The text to be output verbatim shall be
-   * surrounded by the
-   * <code>&lt;?javax.xml.transform.disable-output-escaping ?&gt;</code>
-   * and <code>&lt;?javax.xml.transform.enable-output-escaping ?&gt;</code>
-   * PIs.</p>
-   * <p>
-   * When ignored, the processing instructions are present in the
-   * generated XML text and the pre-defined entities in XML 1.0 are
-   * escaped.
-   * <p>
-   * Default: <code>false</code>.</p>
-   *
-   * @param ignoreTrAXEscapingPIs <code>boolean</code> indicating
-   *                              whether or not TrAX ouput escaping PIs are ignored.
-   * @see javax.xml.transform.Result#PI_ENABLE_OUTPUT_ESCAPING
-   * @see javax.xml.transform.Result#PI_DISABLE_OUTPUT_ESCAPING
-   */
-  public void setIgnoreTrAXEscapingPIs(boolean ignoreTrAXEscapingPIs) {
-    this.ignoreTrAXEscapingPIs = ignoreTrAXEscapingPIs;
-  }
-
   /**
    * Returns whether JAXP TrAX processing instructions for
    * disabling/enabling output escaping are ignored.
@@ -763,7 +525,7 @@ public final class Format implements Cloneable {
   /**
    * This will set the indent <code>String</code> to use; this
    * is usually a <code>String</code> of empty spaces. If you pass
-   * the empty string (""), then no indentation will happen but newlines
+   * the empty string (""), then no indentation will happen, but newlines
    * will still be generated.  Passing null will result in no indentation
    * and no newlines generated.  Default: none (null)
    *
@@ -822,7 +584,7 @@ public final class Format implements Cloneable {
   }
 
   /**
-   * Class to signify how text should be handled on output.  The following
+   * Class to signify how a text should be handled on output.  The following
    * table provides details.
    *
    * <table>
@@ -876,10 +638,10 @@ public final class Format implements Cloneable {
    *   </tr>
    * </table>
    * <p>
-   * In most cases textual content is aligned with the surrounding tags
+   * In most cases, textual content is aligned with the surrounding tags
    * (after the appropriate text mode is applied). In the case where the only
    * content between the start and end tags is textual, the start tag, text,
-   * and end tag are all printed on the same line. If the document being
+   * and end tag are all printed on the same line. If the document
    * output already has whitespace, it's wise to turn on TRIM mode so the
    * pre-existing whitespace can be trimmed before adding new whitespace.
    * <p>
@@ -887,7 +649,7 @@ public final class Format implements Cloneable {
    * all formating is turned off (actually, the TextMode is set to
    * {@link #PRESERVE} until the element and its contents have been printed.
    * If a nested element contains another xml:space with the value "default"
-   * formatting is turned back on  for the child element and then off for the
+   * formatting is turned back on for the child element and then off for the
    * remainder of the parent element.
    *
    * @since JDOM2

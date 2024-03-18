@@ -133,7 +133,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiWhileStatement::class.java,
     PsiYieldStatement::class.java,
     PsiRecordComponent::class.java,
-    PsiRecordHeader::class.java
+    PsiRecordHeader::class.java,
+    PsiUnnamedPattern::class.java,
+    PsiTypeTestPattern::class.java,
+    PsiDeconstructionPattern::class.java,
+    PsiPatternVariable::class.java
   ),
   UAnnotation::class.java to classSetOf<PsiElement>(
     PsiAnnotation::class.java
@@ -232,7 +236,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiResourceVariable::class.java,
     PsiTypeParameter::class.java,
     PsiRecordComponent::class.java,
-    PsiRecordHeader::class.java
+    PsiRecordHeader::class.java,
+    PsiPatternVariable::class.java
   ),
   UDeclarationEx::class.java to classSetOf<PsiElement>(
     PsiAnnotationMethod::class.java,
@@ -248,7 +253,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiResourceVariable::class.java,
     PsiTypeParameter::class.java,
     PsiRecordComponent::class.java,
-    PsiRecordHeader::class.java
+    PsiRecordHeader::class.java,
+    PsiPatternVariable::class.java
   ),
   UDeclarationsExpression::class.java to classSetOf<PsiElement>(
     PsiDeclarationStatement::class.java,
@@ -332,7 +338,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiWhileStatement::class.java,
     PsiYieldStatement::class.java,
     PsiRecordComponent::class.java,
-    PsiRecordHeader::class.java
+    PsiRecordHeader::class.java,
+    PsiUnnamedPattern::class.java,
+    PsiTypeTestPattern::class.java,
+    PsiDeconstructionPattern::class.java,
+    PsiPatternVariable::class.java
   ),
   UElementWithLocation::class.java to classSetOf<PsiElement>(
     //PsiExpressionStatement::class.java,
@@ -343,6 +353,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
   ),
   UEnumConstantEx::class.java to classSetOf<PsiElement>(
     PsiEnumConstant::class.java
+  ),
+  UPatternExpression::class.java to classSetOf<PsiElement>(
+    PsiUnnamedPattern::class.java,
+    PsiTypeTestPattern::class.java,
+    PsiDeconstructionPattern::class.java
   ),
   UExpression::class.java to classSetOf<PsiElement>(
     PsiAnnotatedJavaCodeReferenceElement::class.java,
@@ -397,7 +412,10 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiTypeCastExpression::class.java,
     PsiTypeElement::class.java,
     PsiWhileStatement::class.java,
-    PsiYieldStatement::class.java
+    PsiYieldStatement::class.java,
+    PsiUnnamedPattern::class.java,
+    PsiTypeTestPattern::class.java,
+    PsiDeconstructionPattern::class.java
   ),
   UExpressionList::class.java to classSetOf<PsiElement>(
   ),
@@ -511,13 +529,15 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiParameter::class.java,
     PsiPatternVariable::class.java,
     LightRecordField::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiPatternVariable::class.java
   ),
   UParameterEx::class.java to classSetOf<PsiElement>(
     PsiParameter::class.java,
     PsiPatternVariable::class.java,
     LightRecordField::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiPatternVariable::class.java
   ),
   UParenthesizedExpression::class.java to classSetOf<PsiElement>(
     //PsiExpressionStatement::class.java,
@@ -623,7 +643,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiParameter::class.java,
     PsiPatternVariable::class.java,
     PsiResourceVariable::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiPatternVariable::class.java
   ),
   UVariableEx::class.java to classSetOf<PsiElement>(
     PsiEnumConstant::class.java,
@@ -632,7 +653,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiParameter::class.java,
     PsiPatternVariable::class.java,
     PsiResourceVariable::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiPatternVariable::class.java
   ),
   UWhileExpression::class.java to classSetOf<PsiElement>(
     PsiWhileStatement::class.java

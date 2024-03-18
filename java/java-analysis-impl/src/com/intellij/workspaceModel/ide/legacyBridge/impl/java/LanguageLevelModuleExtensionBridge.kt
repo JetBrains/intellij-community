@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -15,9 +15,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 
-class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
-                                                             private val entityStorage: VersionedEntityStorage,
-                                                             private val diff: MutableEntityStorage?) : LanguageLevelModuleExtensionImpl(), ModuleExtensionBridge {
+internal class LanguageLevelModuleExtensionBridge private constructor(
+  private val module: ModuleBridge,
+  private val entityStorage: VersionedEntityStorage,
+  private val diff: MutableEntityStorage?,
+) : LanguageLevelModuleExtensionImpl(), ModuleExtensionBridge {
   private var changed = false
   private val moduleEntity
     get() = module.findModuleEntity(entityStorage.current)
@@ -32,7 +34,8 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
       }
     }
     else if (languageLevel != null) {
-      diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true, excludeOutput = true,
+      diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                              excludeOutput = true,
                                               entitySource = moduleEntity.entitySource) {
         languageLevelId = languageLevel.name
         module = moduleEntity
@@ -56,7 +59,7 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: MutableEntityStorage?): LanguageLevelModuleExtensionBridge {
-      return LanguageLevelModuleExtensionBridge(module, entityStorage, diff)
+      return LanguageLevelModuleExtensionBridge(module = module, entityStorage = entityStorage, diff = diff)
     }
   }
 }

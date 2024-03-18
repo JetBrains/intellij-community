@@ -18,37 +18,50 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 @ApiStatus.Internal
 class GradleResourceFilterModelBuilder {
 
-  @CompileDynamic
-  static List<List> getFilters(Project project, ModelBuilderContext context, String taskName) {
-    def includes = []
-    def excludes = []
-    def filterReaders = [] as List<ExternalFilter>
+  static Set<String> getIncludes(Project project, String taskName) {
     def filterableTask = project.tasks.findByName(taskName)
     if (filterableTask instanceof PatternFilterable) {
-      includes += filterableTask.includes
-      excludes += filterableTask.excludes
+      return filterableTask.includes
     }
+    return new LinkedHashSet<String>()
+  }
 
+  static Set<String> getExcludes(Project project, String taskName) {
+    def filterableTask = project.tasks.findByName(taskName)
+    if (filterableTask instanceof PatternFilterable) {
+      return filterableTask.excludes
+    }
+    return new LinkedHashSet<String>()
+  }
+
+  @CompileDynamic
+  static List<DefaultExternalFilter> getFilters(Project project, ModelBuilderContext context, String taskName) {
+    def filterReaders = new ArrayList<DefaultExternalFilter>()
     if (System.getProperty('idea.disable.gradle.resource.filtering', 'false').toBoolean()) {
-      return [includes, excludes, filterReaders]
+      return filterReaders
     }
-
+    def filterableTask = project.tasks.findByName(taskName)
     if (filterableTask instanceof ContentFilterable && filterableTask.metaClass.respondsTo(filterableTask, "getMainSpec")) {
       //noinspection GrUnresolvedAccess
       def properties = filterableTask.getMainSpec().properties
-      def copyActions = properties?.allCopyActions ?: properties?.copyActions
-      copyActions?.each { Action<? super FileCopyDetails> action ->
+      if (properties == null) {
+        return filterReaders
+      }
+      def copyActions = properties.allCopyActions ?: properties.copyActions
+      if (copyActions == null) {
+        return filterReaders
+      }
+      copyActions.each { Action<? super FileCopyDetails> action ->
         def filter = getFilter(project, context, action)
         if (filter != null) {
-          filterReaders << filter
+          filterReaders.add(filter)
         }
       }
     }
-
-    return [includes, excludes, filterReaders]
+    return filterReaders
   }
 
-  private static ExternalFilter getFilter(Project project, ModelBuilderContext context, Action<? super FileCopyDetails> action) {
+  private static DefaultExternalFilter getFilter(Project project, ModelBuilderContext context, Action<? super FileCopyDetails> action) {
     try {
       if ('RenamingCopyAction' == action.class.simpleName) {
         return getRenamingCopyFilter(action)
@@ -73,7 +86,7 @@ class GradleResourceFilterModelBuilder {
   }
 
   @CompileDynamic
-  private static ExternalFilter getCommonFilter(Action<? super FileCopyDetails> action) {
+  private static DefaultExternalFilter getCommonFilter(Action<? super FileCopyDetails> action) {
     def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
     if (filterClass == null) {
       throw new IllegalArgumentException("Unsupported action found: " + action.class.name)
@@ -96,12 +109,14 @@ class GradleResourceFilterModelBuilder {
   }
 
   @CompileDynamic
-  private static ExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
+  private static DefaultExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
     assert 'RenamingCopyAction' == action.class.simpleName
 
-    def pattern = action.transformer.matcher?.pattern()?.pattern() ?:
-                  action.transformer.pattern?.pattern()
-    def replacement = action.transformer.replacement
+    //noinspection GrUnresolvedAccess
+    def transformer = action.transformer
+    def pattern = transformer.matcher?.pattern()?.pattern() ?:
+                  transformer.pattern?.pattern()
+    def replacement = transformer.replacement
 
     def filter = new DefaultExternalFilter()
     filter.filterType = 'RenamingCopyFilter'

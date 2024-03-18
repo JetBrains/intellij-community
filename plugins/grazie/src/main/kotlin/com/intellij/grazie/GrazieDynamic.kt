@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.DynamicBundle
 import com.intellij.grazie.jlanguage.Lang
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.delete
 import com.intellij.util.lang.UrlClassLoader
+import org.jetbrains.annotations.ApiStatus
 import org.languagetool.Language
 import org.languagetool.Languages
 import java.io.InputStream
@@ -128,7 +129,7 @@ object GrazieDynamic : DynamicPluginListener {
   fun getResourceBundle(baseName: String, locale: Locale): ResourceBundle {
     return forClassLoader {
       try {
-        ResourceBundle.getBundle(baseName, locale, it).takeIf { bundle -> bundle.locale.language == locale.language }
+        DynamicBundle.getResourceBundle(GrazieBundle::class.java.classLoader, baseName)
       }
       catch (e: MissingResourceException) {
         null

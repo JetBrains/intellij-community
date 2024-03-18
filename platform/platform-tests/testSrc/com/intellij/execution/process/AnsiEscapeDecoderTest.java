@@ -287,14 +287,14 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
 
     //noinspection CodeBlock2Expr
     withProcessHandlerFrom(testProcess, handler -> {
-      PlatformTestUtil.startPerformanceTest("ansi color", 8_500, () -> {
+      PlatformTestUtil.newPerformanceTest("ansi color", () -> {
         for (int i = 0; i < 2_000_000; i++) {
           handler.notifyTextAvailable(i + "Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n",
                                       ProcessOutputTypes.STDOUT);
           handler.notifyTextAvailable(i + "Plain\u001B[32mGreen\u001B[39mNormal\u001B[1A\u001B[2K\u001B[31mRed\u001B[39m\n",
                                       ProcessOutputTypes.SYSTEM);
         }
-      }).assertTiming();
+      }).start();
     });
   }
 

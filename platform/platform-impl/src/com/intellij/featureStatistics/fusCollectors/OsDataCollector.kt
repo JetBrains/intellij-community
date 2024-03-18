@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
-import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
+import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexpReference
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
@@ -39,13 +39,13 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("system.os", 16)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
-  private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
+  private val OS_TZ = StringValidatedByRegexpReference("time_zone", "time_zone")
   private val OS_SHELL = String("shell", SHELLS)
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
   @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi", "ScheduledForRemovalWithVersion")
-  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
-  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
+  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexpReference("value", "time_zone"))  // backward compatibility
+  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexpReference("release", "version"), EventFields.Boolean("wsl"))
   private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
 
   override fun getGroup(): EventLogGroup = GROUP

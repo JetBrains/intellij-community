@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -15,6 +15,8 @@ abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT :
      * Provides some context for [apply] given some [element] and [diagnostic].
      *
      * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext.prepareContext
+     *
+     * @param element a physical PSI
      */
     context(KtAnalysisSession)
     abstract fun prepareContextByDiagnostic(element: ELEMENT, diagnostic: DIAGNOSTIC): CONTEXT?

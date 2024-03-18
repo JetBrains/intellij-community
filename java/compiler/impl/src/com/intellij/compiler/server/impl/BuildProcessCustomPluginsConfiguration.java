@@ -18,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,11 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
 
   public List<String> getProjectLibraries() {
     return myState.myProjectLibraries;
+  }
+
+  @TestOnly
+  public void addProjectLibrary(@NotNull String libraryName) {
+    myState.myProjectLibraries.add(libraryName);
   }
 
   @NotNull

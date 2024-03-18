@@ -23,8 +23,10 @@ public final class OpenRepositoryVersionAction extends AnAction implements DumbA
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
+    if (changes == null) return;
     openRepositoryVersion(project, changes);
   }
 

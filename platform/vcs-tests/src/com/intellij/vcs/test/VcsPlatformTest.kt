@@ -187,12 +187,12 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
 
-  protected fun assertSuccessfulNotification(title: String, message: String): Notification {
-    return assertHasNotification(NotificationType.INFORMATION, title, message, vcsNotifier.notifications)
+  protected fun assertSuccessfulNotification(title: String = "", message: String, actions: List<String>? = null): Notification {
+    return assertHasNotification(NotificationType.INFORMATION, title, message, actions, vcsNotifier.notifications)
   }
 
-  protected fun assertSuccessfulNotification(message: String): Notification {
-    return assertSuccessfulNotification("", message)
+  protected fun assertSuccessfulNotification(message: String, actions: List<String>? = null): Notification {
+    return assertSuccessfulNotification("", message, actions)
   }
 
   protected fun assertWarningNotification(title: String, message: String): Notification {

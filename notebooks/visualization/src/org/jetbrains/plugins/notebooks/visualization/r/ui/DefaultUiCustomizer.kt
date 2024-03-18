@@ -7,9 +7,9 @@ import com.intellij.util.ui.UIUtil
 import org.intellij.images.editor.ImageEditor
 import org.intellij.images.editor.impl.ImageEditorImpl
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsPanel
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ToolbarPane
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.buildProgressStatusComponent
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.JupyterProgressStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -26,7 +26,7 @@ class DefaultUiCustomizer : UiCustomizer {
   override fun getTextOutputBackground(editor: Editor) = UIUtil.getPanelBackground()
 
   override fun buildInlayProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Editor): JComponent? {
-    return buildProgressStatusComponent(progressStatus, editor)
+    return JupyterProgressStatus.buildProgressStatusComponent(progressStatus, editor)
   }
 
   override val showUpdateCellSeparator: Boolean = true

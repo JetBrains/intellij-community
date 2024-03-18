@@ -125,7 +125,9 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private void importUnambiguousImports() {
     ThreadingAssertions.assertEventDispatchThread();
-    if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
+      if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
+    }
     for (BooleanSupplier autoImportAction : autoImportActions) {
       autoImportAction.getAsBoolean();
     }
@@ -134,8 +136,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static boolean mayAutoImportNow(@NotNull PsiFile psiFile, boolean isInContent,
                                          @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile, isInContent,
-                                                                                                          extensionsAllowToChangeFileSilently)) &&
+           (ApplicationManager.getApplication().isUnitTestMode() ||
+            DaemonListeners.canChangeFileSilently(psiFile, isInContent, extensionsAllowToChangeFileSilently)) &&
            isInModelessContext(psiFile.getProject());
   }
 
@@ -148,7 +150,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
     if (templateFile == null) return false;
-    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(), importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
+    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(),
+                                importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
   private static @NotNull List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,

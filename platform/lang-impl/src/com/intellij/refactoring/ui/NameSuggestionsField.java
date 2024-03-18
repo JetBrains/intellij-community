@@ -43,7 +43,7 @@ public class NameSuggestionsField extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
-    final ComboBox comboBox = new ComboBox(myComboBoxModel,-1);
+    final ComboBox<String> comboBox = new ComboBox<>(myComboBoxModel,-1);
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
@@ -56,17 +56,28 @@ public class NameSuggestionsField extends JPanel {
   public NameSuggestionsField(String[] nameSuggestions, Project project, FileType fileType) {
     super(new BorderLayout());
     myProject = project;
-    if (nameSuggestions == null || nameSuggestions.length <= 1) {
+    if (nameSuggestions == null || nameSuggestions.length <= 1 && !forceCombobox()) {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
+      myComboBoxModel = null;
     }
     else {
-      final ComboBox combobox = new ComboBox(nameSuggestions);
+      myComboBoxModel = new MyComboBoxModel();
+      myComboBoxModel.setSuggestions(nameSuggestions);
+      final ComboBox<String> combobox = new ComboBox<>(myComboBoxModel);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;
     }
     add(myComponent, BorderLayout.CENTER);
-    myComboBoxModel = null;
+  }
+
+  /**
+   * @return whether combobox must be used even if there are no initial suggestions.
+   * Subclasses may override this method and return true 
+   * if they may add suggestions later via {@link #setSuggestions(String[])}.
+   */
+  protected boolean forceCombobox() {
+    return false;
   }
 
   public NameSuggestionsField(final String[] suggestedNames, final Project project, final FileType fileType, @Nullable final Editor editor) {
@@ -129,11 +140,10 @@ public class NameSuggestionsField extends JPanel {
 
   public void setSuggestions(final String[] suggestions) {
     if(myComboBoxModel == null) return;
-    JComboBox comboBox = (JComboBox) myComponent;
+    JComboBox<String> comboBox = (JComboBox<String>) myComponent;
     final String oldSelectedItem = (String)comboBox.getSelectedItem();
     final String oldItemFromTextField = (String) comboBox.getEditor().getItem();
-    final boolean shouldUpdateTextField =
-      oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.trim().length() == 0;
+    final boolean shouldUpdateTextField = oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.isBlank();
     myComboBoxModel.setSuggestions(suggestions);
     if(suggestions.length > 0 && shouldUpdateTextField) {
       if (oldSelectedItem != null) {

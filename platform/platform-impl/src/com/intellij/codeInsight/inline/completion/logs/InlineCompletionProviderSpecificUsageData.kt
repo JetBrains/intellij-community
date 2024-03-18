@@ -20,6 +20,18 @@ interface InlineCompletionProviderSpecificUsageData {
    */
   fun getAdditionalInvocationUsageData(descriptor: InvocationDescriptor): List<EventPair<*>> = emptyList()
 
+  /**
+   * Collecting usage data potentially can be used not only for logging,
+   * so in case you want to collect data, but not log it, override this function.
+   */
+  fun skipLogging() = false
+
+  /**
+   * Can be useful for getting specific usage data using:
+   *    EP_NAME.findByIdOrFromInstance("some_id") { it.getId() }
+   */
+  fun getId(): String
+
   companion object {
     val EP_NAME: ExtensionPointName<InlineCompletionProviderSpecificUsageData> = create("com.intellij.inline.completion.usage.data")
   }

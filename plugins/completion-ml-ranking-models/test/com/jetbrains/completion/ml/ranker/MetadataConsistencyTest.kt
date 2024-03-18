@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.completion.ml.ranker
 
 import org.junit.Test
@@ -45,4 +45,13 @@ class MetadataConsistencyTest {
 
   @Test
   fun testCidrMetadata() = ExperimentCidrMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testHTMLMetadata() = ExperimentalHTMLMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testCSSMetadata() = ExperimentalCSSMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testShMetadata() = ExperimentalShMLRankingProvider().assertModelMetadataConsistent()
 }

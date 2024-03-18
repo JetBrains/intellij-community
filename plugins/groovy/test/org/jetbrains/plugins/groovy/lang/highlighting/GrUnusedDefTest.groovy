@@ -157,4 +157,15 @@ class <caret><warning descr="Class Aaaa is unused">Aaaa</warning> {}
 class <caret>Aaaa {}
 '''
   }
+
+  void 'test safe delete preview with single class in file'() {
+    doTestHighlighting '''\
+class <caret><warning descr="Class Aaaa is unused">Aaaa</warning> {}
+'''
+    def action = fixture.findSingleIntention 'Safe delete \'Aaaa\''
+    def actualPreview = fixture.getIntentionPreviewText(action)
+
+    assertEquals('''\
+''', actualPreview)
+  }
 }

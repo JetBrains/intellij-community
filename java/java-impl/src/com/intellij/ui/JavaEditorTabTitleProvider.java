@@ -12,7 +12,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaEditorTabTitleProvider implements EditorTabTitleProvider {
+public final class JavaEditorTabTitleProvider implements EditorTabTitleProvider {
   @Override
   public @NlsContexts.TabTitle @Nullable String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();

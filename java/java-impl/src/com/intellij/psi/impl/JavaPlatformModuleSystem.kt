@@ -1,26 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.JavaErrorBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
+import com.intellij.psi.JavaModuleSystem.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
@@ -40,58 +42,63 @@ private val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
 internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
-  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
-    checkAccess(targetPackageName, targetFile?.originalFile, place, quick = true) == null
+  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean {
+    return getProblem(targetPackageName, targetFile, place, true, this::isExported) == null
+  }
 
-  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? =
-    checkAccess(targetPackageName, targetFile?.originalFile, place, quick = false)
+  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? {
+    return getProblem(targetPackageName, targetFile, place, false) { use, _, target, _, _ -> JavaModuleGraphUtil.reads(use, target) }
+  }
 
-  private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {
-    val useFile = place.containingFile?.originalFile
-    if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      val useVFile = useFile.virtualFile
-      val index = ProjectFileIndex.getInstance(useFile.project)
-      if (useVFile == null || !index.isInLibrarySource(useVFile)) {
-        if (targetFile != null && targetFile.isPhysical) {
-          return checkAccess(targetFile, useFile, targetPackageName, quick)
-        }
-        else if (useVFile != null) {
-          val target = JavaPsiFacade.getInstance(useFile.project).findPackage(targetPackageName)
-          if (target != null) {
-            val module = index.getModuleForFile(useVFile)
-            if (module != null) {
-              val test = index.isInTestSourceContent(useVFile)
-              val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
-              val dirs = target.getDirectories(moduleScope)
-              if (dirs.isEmpty()) {
-                if (target.getFiles(moduleScope).isEmpty()) {
-                  return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("package.not.found", target.qualifiedName))
-                }
-                else {
-                  return null
-                }
-              }
-              val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
-              return when {
-                error == null -> null
-                dirs.size == 1 -> error
-                dirs.asSequence().drop(1).any { checkAccess(it, useFile, target.qualifiedName, true) == null } -> null
-                else -> error
-              }
-            }
-          }
-        }
+  private fun isExported(useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) : Boolean {
+    if(!targetModule.isPhysical || JavaModuleGraphUtil.exports(targetModule, packageName, useModule)) return true
+    if (module == null) return false
+    return inAddedExports(module, targetModule.name, packageName, useModuleName)
+  }
+
+  private fun getProblem(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean,
+                         isAccessible: (useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) -> Boolean): ErrorWithFixes? {
+    val originalTargetFile = targetFile?.originalFile
+    val useFile = place.containingFile?.originalFile ?: return null
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, useFile)) return null
+
+    val useVFile = useFile.virtualFile
+    val index = ProjectFileIndex.getInstance(useFile.project)
+    if (useVFile != null && index.isInLibrarySource(useVFile)) return null
+    if (originalTargetFile != null && originalTargetFile.isPhysical) {
+      return checkAccess(originalTargetFile, useFile, targetPackageName, quick, isAccessible)
+    }
+    if (useVFile == null) return null
+
+    val target = JavaPsiFacade.getInstance(useFile.project).findPackage(targetPackageName) ?: return null
+    val module = index.getModuleForFile(useVFile) ?: return null
+    val test = index.isInTestSourceContent(useVFile)
+    val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
+    val dirs = target.getDirectories(moduleScope)
+    if (dirs.isEmpty()) {
+      return if (target.getFiles(moduleScope).isEmpty()) {
+        ErrorWithFixes(JavaErrorBundle.message("package.not.found", target.qualifiedName))
+      }
+      else {
+        null
       }
     }
 
-    return null
+    val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick, isAccessible) ?: return null
+    return when {
+      dirs.size == 1 -> error
+      dirs.asSequence().drop(1).any { checkAccess(it, useFile, target.qualifiedName, true, isAccessible) == null } -> null
+      else -> error
+    }
   }
 
   private val ERR = ErrorWithFixes("-")
 
-  private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
+  private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean,
+                          isAccessible: (useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) -> Boolean): ErrorWithFixes? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
     val useModule = JavaModuleGraphUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
+    val module = place.virtualFile?.let { ProjectFileIndex.getInstance(place.project).getModuleForFile(it) }
 
     if (targetModule != null) {
       if (targetModule == useModule) {
@@ -99,12 +106,12 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
 
       val targetName = targetModule.name
-      val useName = useModule?.name ?: "ALL-UNNAMED"
-      val module = place.virtualFile?.let { ProjectFileIndex.getInstance(place.project).getModuleForFile(it) }
+      val useName = useModule?.name ?: ALL_UNNAMED
 
       if (useModule == null) {
         val origin = targetModule.containingFile?.virtualFile
-        if (origin == null || module == null || ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry) {
+        if (origin == null || module == null ||
+            ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry) {
           return null  // a target is not on the mandatory module path
         }
 
@@ -115,24 +122,26 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
           val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
             JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
           }
-          if (root != null && !JavaModuleGraphUtil.reads(root, targetModule)) {
+          if (root != null && !isAccessible(root, packageName, targetModule, useName, module)) {
             return if (quick) ERR
             else ErrorWithFixes(
               JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-              listOf(AddModulesOptionFix(module, targetName)))
+              listOf(AddModulesOptionFix(module, targetName).asIntention()))
           }
         }
       }
 
-      if (!(targetModule is LightJavaModule ||
-            JavaModuleGraphUtil.exports(targetModule, packageName, useModule) ||
-            module != null && inAddedExports(module, targetName, packageName, useName) ||
-            module != null && isPatchedModule(targetName, module, place))) {
+      if (targetModule !is LightJavaModule &&
+          !JavaModuleGraphUtil.exports(targetModule, packageName, useModule) &&
+          (module == null || !inAddedExports(module, targetName, packageName, useName)) &&
+          (module == null || !isPatchedModule(targetName, module, place))) {
         if (quick) return ERR
         val fixes = when {
           packageName.isEmpty() -> emptyList()
-          targetModule is PsiCompiledElement && module != null -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
-          targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName).asIntention())
+          targetModule is PsiCompiledElement && module != null ->
+            listOf(AddExportsOptionFix(module, targetName, packageName, useName).asIntention())
+          targetModule !is PsiCompiledElement && useModule != null ->
+            listOf(AddExportsDirectiveFix(targetModule, packageName, useName).asIntention())
           else -> emptyList()
         }
         return when (useModule) {
@@ -142,7 +151,8 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
 
       if (useModule != null &&
-          !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule)) &&
+          targetName != PsiJavaModule.JAVA_BASE &&
+          !isAccessible(useModule, packageName, targetModule, useName, module) &&
           !inAddedReads(useModule, targetModule)) {
         return when {
           quick -> ERR
@@ -155,9 +165,9 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
     else if (useModule != null) {
       val autoModule = detectAutomaticModule(target)
-      if ((autoModule == null) || ((!JavaModuleGraphUtil.reads(useModule, autoModule) && !inAddedReads(useModule, null)) &&
+      if ((autoModule == null) || ((!isAccessible(useModule, packageName, autoModule, useModule.name, module) && !inAddedReads(useModule, null)) &&
                                    !inSameMultiReleaseModule(place, target))
-        ) {
+      ) {
         return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
       }
     }
@@ -207,7 +217,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
-    return JavaCompilerConfigurationProxy.optionValues(options, "--add-exports")
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_EXPORTS_OPTION)
       .filter { it.startsWith(prefix) }
       .map { it.substring(prefix.length) }
       .flatMap { it.splitToSequence(",") }
@@ -216,66 +226,64 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-    return JavaCompilerConfigurationProxy.optionValues(options, "--add-modules")
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_MODULES_OPTION)
       .flatMap { it.splitToSequence(",") }
-      .any { it == moduleName || it == "ALL-SYSTEM" || it == "ALL-MODULE-PATH" }
+      .any { it == moduleName || it == ALL_SYSTEM || it == ALL_MODULE_PATH }
   }
 
   private fun inAddedReads(fromJavaModule: PsiJavaModule, toJavaModule: PsiJavaModule?): Boolean {
     val fromModule = ModuleUtilCore.findModuleForPsiElement(fromJavaModule) ?: return false
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(fromModule.project, fromModule)
-    return JavaCompilerConfigurationProxy.optionValues(options, "--add-reads")
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_READS_OPTION)
       .flatMap { it.splitToSequence(",") }
       .any {
         val (optFromModuleName, optToModuleName) = it.split("=").apply { it.first() to it.last() }
         fromJavaModule.name == optFromModuleName &&
-        (toJavaModule?.name == optToModuleName || (optToModuleName == "ALL-UNNAMED" && isUnnamedModule(toJavaModule)))
+        (toJavaModule?.name == optToModuleName || (optToModuleName == ALL_UNNAMED && isUnnamedModule(toJavaModule)))
       }
   }
 
   private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
 
-  private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
-    @NonNls override fun getFamilyName() = "Fix compiler option" // not visible
+  private abstract class CompilerOptionFix(private val module: Module) : ModCommandAction {
+    @NonNls
+    override fun getFamilyName() = "Fix compiler option" // not visible
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
-
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-      if (isAvailable(project, editor, file)) {
-        val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module).toMutableList()
-        update(options)
-        JavaCompilerConfigurationProxy.setAdditionalOptions(module.project, module, options)
-        PsiManager.getInstance(project).dropPsiCaches()
-        DaemonCodeAnalyzer.getInstance(project).restart()
-      }
+    override fun getPresentation(context: ActionContext): Presentation? {
+      if (module.isDisposed) return null
+      return Presentation.of(getText())
     }
 
-    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-      val origOptions = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-      val options = origOptions.toMutableList()
-      update(options)
-      return IntentionPreviewInfo.addListOption(options, JavaBundle.message("compiler.options")) { opt -> !origOptions.contains(opt) }
+    override fun perform(context: ActionContext): ModCommand {
+      return ModCommand.updateOptionList(context.file, "JavaCompilerConfiguration.additionalOptions", ::update)
     }
 
     protected abstract fun update(options: MutableList<String>)
 
-    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
-
-    override fun startInWriteAction() = true
+    @IntentionName
+    protected abstract fun getText(): String
   }
 
-  private class AddExportsOptionFix(module: Module, targetName: String, packageName: String, private val useName: String) : CompilerOptionFix(module) {
+  private class AddExportsOptionFix(module: Module,
+                                    targetName: String,
+                                    packageName: String,
+                                    private val useName: String) : CompilerOptionFix(module) {
     private val qualifier = "${targetName}/${packageName}"
 
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports ${qualifier}=${useName}")
+    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "${ADD_EXPORTS_OPTION} ${qualifier}=${useName}")
 
     override fun update(options: MutableList<String>) {
-      var idx = -1; var candidate = -1; var offset = 0
-      val prefix = "--add-exports"
+      var idx = -1
+      var candidate = -1
+      var offset = 0
       for ((i, option) in options.withIndex()) {
-        if (option.startsWith(prefix)) {
-          if (option.length == prefix.length) { candidate = i + 1 ; offset = 0 }
-          else if (option[prefix.length] == '=') { candidate = i; offset = prefix.length + 1 }
+        if (option.startsWith(ADD_EXPORTS_OPTION)) {
+          if (option.length == ADD_EXPORTS_OPTION.length) {
+            candidate = i + 1; offset = 0
+          }
+          else if (option[ADD_EXPORTS_OPTION.length] == '=') {
+            candidate = i; offset = ADD_EXPORTS_OPTION.length + 1
+          }
         }
         if (i == candidate && option.startsWith(qualifier, offset)) {
           val qualifierEnd = qualifier.length + offset
@@ -285,26 +293,25 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
       when (idx) {
-        -1 -> options += listOf(prefix, "${qualifier}=${useName}")
+        -1 -> options += listOf(ADD_EXPORTS_OPTION, "${qualifier}=${useName}")
         else -> options[idx] = "${options[idx].trimEnd(',')},${useName}"
       }
     }
   }
 
   private class AddModulesOptionFix(module: Module, private val moduleName: String) : CompilerOptionFix(module) {
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-modules ${moduleName}")
+    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "${ADD_MODULES_OPTION} ${moduleName}")
 
     override fun update(options: MutableList<String>) {
       var idx = -1
-      val prefix = "--add-modules"
       for ((i, option) in options.withIndex()) {
-        if (option.startsWith(prefix)) {
-          if (option.length == prefix.length) idx = i + 1
-          else if (option[prefix.length] == '=') idx = i
+        if (option.startsWith(ADD_MODULES_OPTION)) {
+          if (option.length == ADD_MODULES_OPTION.length) idx = i + 1
+          else if (option[ADD_MODULES_OPTION.length] == '=') idx = i
         }
       }
       when (idx) {
-        -1 -> options += listOf(prefix, moduleName)
+        -1 -> options += listOf(ADD_MODULES_OPTION, moduleName)
         options.size -> options += moduleName
         else -> {
           val value = options[idx]
@@ -313,5 +320,4 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
     }
   }
-
 }

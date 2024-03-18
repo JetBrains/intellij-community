@@ -35,7 +35,7 @@ class MavenPackagingCompletionTest : MavenDomTestCase() {
                        <packaging><caret></packaging>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin")
+    assertCompletionVariants(projectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin")
   }
 
   @Test

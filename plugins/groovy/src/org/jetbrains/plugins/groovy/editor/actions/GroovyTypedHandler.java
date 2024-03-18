@@ -74,6 +74,10 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
       });
     }
 
+    if (c == '.' && file instanceof GroovyFile) {
+      autoPopupMemberLookup(project, editor, null);
+    }
+
     return Result.CONTINUE;
   }
 

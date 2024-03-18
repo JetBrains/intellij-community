@@ -73,7 +73,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
         }
       }
       this.packagesEnabledByDefault = packagesEnabledByDefault
-      defaultWebTypesScope = DefaultWebTypesScope(this)
+      defaultWebTypesScope = DefaultWebTypesScope(this, project)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -93,13 +93,14 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
   }
 
-  private class DefaultWebTypesScope(private val state: State) : WebTypesScopeBase() {
+  private class DefaultWebTypesScope(private val state: State, private val project: Project) : WebTypesScopeBase() {
     init {
       for (entry in state.packagesEnabledByDefault) {
         state.versionsRegistry.get(entry.key, entry.value)?.let { (pluginDescriptor, webTypes) ->
           addWebTypes(webTypes, WebTypesJsonOriginImpl(
             webTypes = webTypes,
             typeSupport = WebTypesSymbolTypeSupportFactory.get(webTypes),
+            project = project,
             iconLoader = WebTypesEmbeddedIconLoader(pluginDescriptor)::loadIcon,
             version = null
           ))

@@ -21,7 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.classmetrics.CyclomaticComplexityVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class CyclomaticComplexityInspection extends MethodMetricInspection {
+public final class CyclomaticComplexityInspection extends MethodMetricInspection {
 
   @Override
   @NotNull

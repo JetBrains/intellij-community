@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class PublicStaticArrayFieldInspection extends BaseInspection {
+public final class PublicStaticArrayFieldInspection extends BaseInspection {
 
   @Override
   @NotNull

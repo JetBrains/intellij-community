@@ -10,12 +10,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
@@ -388,16 +388,10 @@ open class AttachToProcessDialog(
     }
   }
 
-  private inner class RefreshActionButton : AnActionButton(null, AllIcons.Actions.Refresh), DumbAware {
+  private inner class RefreshActionButton : DumbAwareAction("", null, AllIcons.Actions.Refresh), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       updateProcesses()
     }
-
-    override fun updateButton(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = true
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
 
   private inner class DebuggerFilterComboBox : ComboBoxAction(), RightAlignedToolbarAction, DumbAware {

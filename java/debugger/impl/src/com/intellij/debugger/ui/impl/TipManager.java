@@ -28,7 +28,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class TipManager implements Disposable, PopupMenuListener {
   private volatile boolean myIsDisposed = false;
   private boolean myPopupShown;

@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadStopSuspendResumeInspection extends BaseInspection {
+public final class ThreadStopSuspendResumeInspection extends BaseInspection {
 
   @Override
   @NotNull

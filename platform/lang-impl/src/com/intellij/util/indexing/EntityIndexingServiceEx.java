@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -32,7 +32,7 @@ public interface EntityIndexingServiceEx extends EntityIndexingService {
   RootsChangeRescanningInfo createWorkspaceChangedEventInfo(@NotNull List<EntityChange<?>> changes);
 
   @NotNull
-  RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityReference<WorkspaceEntity>> references);
+  RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityPointer<WorkspaceEntity>> references);
 
   boolean shouldCauseRescan(@Nullable WorkspaceEntity oldEntity, @Nullable WorkspaceEntity newEntity, @NotNull Project project);
 
@@ -40,7 +40,7 @@ public interface EntityIndexingServiceEx extends EntityIndexingService {
   @NotNull
   Collection<IndexableFilesIterator> createIteratorsForOrigins(@NotNull Project project,
                                                                @NotNull EntityStorage entityStorage,
-                                                               @NotNull Collection<EntityReference<?>> entityReferences,
+                                                               @NotNull Collection<EntityPointer<?>> entityPointers,
                                                                @NotNull Collection<Sdk> sdks,
                                                                @NotNull Collection<LibraryId> libraryIds,
                                                                @NotNull Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders,

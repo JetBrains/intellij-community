@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class LineBreakpoint
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.*;
@@ -280,7 +282,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0 ? className.substring(0, dollarIndex) : className;
-    return ReadAction.compute(() -> {
+    return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
       final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Found " + classes.length + " classes " + topLevelClassName + " in scope " + scope);
@@ -329,9 +331,20 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     return getDisplayInfoInternal(true, -1);
   }
 
+  private int getColumnNumberOrZero() {
+    var type = getXBreakpointType();
+    if (type == null) return 0;
+    var xBreakpoint = getXBreakpoint();
+    if (!(xBreakpoint instanceof XLineBreakpoint<P>)) return 0;
+    final int column = type.getColumn(((XLineBreakpoint<JavaLineBreakpointProperties>)xBreakpoint));
+    if (column <= 0) return 0;
+    return column + 1;
+  }
+
   private @NlsContexts.Label String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     if (isValid()) {
       final int lineNumber = getLineIndex() + 1;
+      final int columnNumber = getColumnNumberOrZero();
       String className = getClassName();
       final boolean hasClassInfo = className != null && !className.isEmpty();
       final String methodName = getMethodName();
@@ -372,9 +385,19 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         if (showPackageInfo && packageName != null) {
           info.append(" (").append(packageName).append(")");
         }
-        return JavaDebuggerBundle.message("line.breakpoint.display.name.with.class.or.method", lineNumber, info.toString());
+        if (columnNumber > 0) {
+          return JavaDebuggerBundle.message("line.breakpoint.display.name.with.column.and.class.or.method",
+                                            lineNumber, columnNumber, info.toString());
+        } else {
+          return JavaDebuggerBundle.message("line.breakpoint.display.name.with.class.or.method",
+                                            lineNumber, info.toString());
+        }
       }
-      return JavaDebuggerBundle.message("line.breakpoint.display.name", lineNumber);
+      if (columnNumber > 0) {
+        return JavaDebuggerBundle.message("line.breakpoint.display.name.with.column", lineNumber, columnNumber);
+      } else {
+        return JavaDebuggerBundle.message("line.breakpoint.display.name", lineNumber);
+      }
     }
     return JavaDebuggerBundle.message("status.breakpoint.invalid");
   }

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloade
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 @get:ApiStatus.Internal
 val isRunningFromSources: Boolean by lazy {
@@ -36,7 +38,7 @@ object KotlinPluginLayout {
         get() = kotlincProvider.value
 
     /**
-     * Location of the JPS plugin and all its dependencies jars
+     * Location of the JPS plugin and all its dependency jars
      */
     val jpsPluginClasspath: List<File>
         get() = jpsPluginClasspathProvider.value
@@ -92,23 +94,17 @@ object KotlinPluginLayout {
                 listOf(jpsPluginArtifact.toFile())
             }
         } else {
-            val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
-                ?.let { File(it) }
+            val kotlinPluginRoot = getPluginDistDirByClass(KotlinPluginLayout::class.java)
                 ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
 
-            check(jarInsideLib.extension == "jar") { "$jarInsideLib should be jar file" }
-
-            val kotlinPluginRoot = jarInsideLib
-                .parentFile
-                .also { check(it.name == "lib") { "$it should be lib directory" } }
-                .parentFile
-
-            fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
+            fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }.toFile()
 
             kotlincProvider = lazy { resolve("kotlinc") }
             jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
         }
 
-        assert(standaloneCompilerVersion <= ideCompilerVersion)
+        check(standaloneCompilerVersion <= ideCompilerVersion) {
+            "standaloneCompilerVersion: $standaloneCompilerVersion, ideCompilerVersion: $ideCompilerVersion"
+        }
     }
 }

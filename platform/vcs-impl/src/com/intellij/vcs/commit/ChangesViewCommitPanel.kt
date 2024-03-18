@@ -208,8 +208,6 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    if (!ChangesViewManager.isEditorPreview(project)) return
-
     ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       changesViewManager.closeEditorPreview(true)
     }

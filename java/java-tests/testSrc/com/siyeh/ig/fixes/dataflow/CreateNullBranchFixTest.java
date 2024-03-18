@@ -21,7 +21,7 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_20_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_21);
   }
 
   public void testNoDefault() {

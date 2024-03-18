@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+@Service(Service.Level.PROJECT)
 public final class PyDebugValueExecutionService {
   @Nullable private ExecutorService myAsyncValuesExecutorService;
   @NotNull private final List<PyFrameAccessor> myFrameAccessors;

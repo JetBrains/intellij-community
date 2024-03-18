@@ -27,12 +27,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
@@ -139,6 +140,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myBalloon.dispose()
     scheduledTasksScope.cancel("On dispose of DumbService", ProcessCanceledException())
     myTaskQueue.disposePendingTasks()
+    mySyncDumbTaskRunner.disposePendingTasks()
   }
 
   override fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
@@ -181,6 +183,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
     blockingContext { // because we need correct modality
       application.invokeAndWait {
+        // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
+        // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
         incrementDumbCounter(trace = Throwable())
       }
     }
@@ -188,13 +192,18 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       return block()
     }
     finally {
-      decrementDumbCounter()
+      withContext(Dispatchers.EDT) {
+        blockingContext {
+          decrementDumbCounter()
+        }
+      }
       LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
     }
   }
 
   // We cannot make this function `suspend`, because we have a contract that if dumb task is queued from EDT, dumb service becomes dumb
   // immediately. DumbService.queue is blocking method at the moment.
+  @RequiresBlockingContext
   private fun incrementDumbCounter(trace: Throwable) {
     ThreadingAssertions.assertEventDispatchThread()
     if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
@@ -212,20 +221,22 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
   }
 
-  private suspend fun decrementDumbCounter() {
+  // this method is not suspend for the sake of symmetry: incrementDumbCounter is not suspend as of now
+  @RequiresBlockingContext
+  private fun decrementDumbCounter() {
+    ThreadingAssertions.assertEventDispatchThread()
+
     // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
     // Otherwise, decrement the counter under write action because this will change dumb state
     if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
-      withContext(Dispatchers.EDT) {
-        val exitDumb = writeAction {
-          val new = myState.updateAndGet { it.decrementDumbCounter() }
-          return@writeAction new.isSmart
-        }
-        if (exitDumb) {
-          LOG.info("exit dumb mode [${project.name}]")
-          dumbModeStartTrace = null
-          publishDumbModeChangedEvent()
-        }
+      val exitDumb = application.runWriteAction(Computable {
+        val new = myState.updateAndGet { it.decrementDumbCounter() }
+        return@Computable new.isSmart
+      })
+      if (exitDumb) {
+        LOG.info("exit dumb mode [${project.name}]")
+        dumbModeStartTrace = null
+        publishDumbModeChangedEvent()
       }
     }
   }
@@ -308,14 +319,18 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     invokeLaterOnEdtInScheduledTasksScope {
       dumbModeCounterWillBeDecrementedFromOnFinish = true
       myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
-        scope.launch(modality.asContextElement()) {
-          decrementDumbCounter()
+        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+          blockingContext {
+            decrementDumbCounter()
+          }
         }
       })
     }.invokeOnCompletion {
       if (!dumbModeCounterWillBeDecrementedFromOnFinish) {
-        scope.launch(modality.asContextElement()) {
-          decrementDumbCounter()
+        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+          blockingContext {
+            decrementDumbCounter()
+          }
         }
       }
     }
@@ -383,7 +398,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
       // (we only wait for currently running task to terminate).
       myGuiDumbTaskRunner.cancelAllTasks()
-      while (myGuiDumbTaskRunner.isRunning.value && !myProject.isDisposed) {
+      mySyncDumbTaskRunner.cancelAllTasks()
+      while ((myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value) && !myProject.isDisposed) {
         PingProgress.interactWithEdtProgress()
         LockSupport.parkNanos(50000000)
       }
@@ -397,10 +413,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun waitForSmartMode() {
-    waitForSmartMode(Long.MAX_VALUE)
+    waitForSmartMode(null)
   }
 
-  fun waitForSmartMode(milliseconds: Long): Boolean {
+  fun waitForSmartMode(milliseconds: Long?): Boolean {
     if (ALWAYS_SMART) return true
     val application = ApplicationManager.getApplication()
     if (application.isReadAccessAllowed) {
@@ -424,7 +440,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       catch (ignored: InterruptedException) {
       }
       ProgressManager.checkCanceled()
-      if (startTime + milliseconds < System.currentTimeMillis()) return false
+      if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) return false
     }
     return true
   }
@@ -556,6 +572,17 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     fun tryIncrementDumbCounter(): DumbState = if (incrementWillChangeDumbState) this else incrementDumbCounter()
     fun tryDecrementDumbCounter(): DumbState = if (decrementWillChangeDumbState) this else decrementDumbCounter()
     val isSmart: Boolean get() = !isDumb
+  }
+
+  @TestOnly
+  suspend fun waitUntilFinished() {
+    myGuiDumbTaskRunner.waitUntilFinished()
+    mySyncDumbTaskRunner.isRunning.first { !it }
+  }
+
+  @TestOnly
+  fun isRunning(): Boolean {
+    return myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
   }
 
   companion object {

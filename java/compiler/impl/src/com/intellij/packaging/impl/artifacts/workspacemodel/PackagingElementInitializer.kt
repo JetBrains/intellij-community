@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.packaging.elements.ElementInitializer
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
@@ -24,7 +24,7 @@ object PackagingElementInitializer : ElementInitializer {
 private fun versionedEntityStorageOnStorage(storage: EntityStorage): VersionedEntityStorage {
   return when (storage) {
     is MutableEntityStorage -> VersionedEntityStorageOnBuilder(storage)
-    is EntityStorageSnapshot -> VersionedEntityStorageOnSnapshot(storage)
+    is ImmutableEntityStorage -> VersionedEntityStorageOnSnapshot(storage)
     else -> error("There is no versioned entity storage on ${storage::class}")
   }
 }

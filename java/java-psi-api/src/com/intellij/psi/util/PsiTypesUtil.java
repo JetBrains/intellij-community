@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -75,42 +76,84 @@ public final class PsiTypesUtil {
     }
   }
 
+  /**
+   * @param type type to get default value for (null, 0, or false)
+   * @return a string representing an expression for default value of a given type
+   */
   @NotNull
-  public static String getDefaultValueOfType(PsiType type) {
+  public static String getDefaultValueOfType(@Nullable PsiType type) {
     return getDefaultValueOfType(type, false);
   }
 
+  /**
+   * @param type type to return default value for
+   * @param customDefaultValues if true, non-null values for object types could be returned that represent an absent value 
+   *                            for a specific type (e.g., empty string, empty list, etc.) 
+   * @return a string representing an expression for default value of a given type
+   */
   @NotNull
-  public static String getDefaultValueOfType(PsiType type, boolean customDefaultValues) {
-    if (type instanceof PsiArrayType) {
-      int count = type.getArrayDimensions() - 1;
-      PsiType componentType = type.getDeepComponentType();
-
-      if (componentType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)componentType;
-        if (classType.resolve() instanceof PsiTypeParameter) {
-          return PsiKeyword.NULL;
-        }
-      }
-
-      PsiType erasedComponentType = TypeConversionUtil.erasure(componentType);
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(PsiKeyword.NEW);
-      buffer.append(" ");
-      buffer.append(erasedComponentType.getCanonicalText());
-      buffer.append("[0]");
-      for (int i = 0; i < count; i++) {
-        buffer.append("[]");
-      }
-      return buffer.toString();
-    }
+  public static String getDefaultValueOfType(@Nullable PsiType type, boolean customDefaultValues) {
     if (type instanceof PsiPrimitiveType) {
       return PsiTypes.booleanType().equals(type) ? PsiKeyword.FALSE : "0";
     }
     if (customDefaultValues) {
-      PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
-      if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_OPTIONAL)) {
-        return CommonClassNames.JAVA_UTIL_OPTIONAL + ".empty()";
+      if (type instanceof PsiArrayType) {
+        int count = type.getArrayDimensions() - 1;
+        PsiType componentType = type.getDeepComponentType();
+
+        if (componentType instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)componentType;
+          if (classType.resolve() instanceof PsiTypeParameter) {
+            return PsiKeyword.NULL;
+          }
+        }
+
+        PsiType erasedComponentType = TypeConversionUtil.erasure(componentType);
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(PsiKeyword.NEW);
+        buffer.append(" ");
+        buffer.append(erasedComponentType.getCanonicalText());
+        buffer.append("[0]");
+        for (int i = 0; i < count; i++) {
+          buffer.append("[]");
+        }
+        return buffer.toString();
+      }
+
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (psiClass != null) {
+        String typeText = psiClass.getQualifiedName();
+        if (typeText != null) {
+          switch (typeText) {
+            case CommonClassNames.JAVA_UTIL_OPTIONAL:
+            case "java.util.OptionalInt":
+            case "java.util.OptionalLong":
+            case "java.util.OptionalDouble":
+            case CommonClassNames.JAVA_UTIL_STREAM_STREAM:
+            case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM:
+            case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM:
+            case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM:
+              return typeText + ".empty()";
+            case CommonClassNames.JAVA_LANG_STRING:
+              return "\"\"";
+            case CommonClassNames.JAVA_LANG_INTEGER:
+            case CommonClassNames.JAVA_LANG_LONG:
+            case CommonClassNames.JAVA_LANG_SHORT:
+            case CommonClassNames.JAVA_LANG_BYTE:
+              return "0";
+            case CommonClassNames.JAVA_LANG_FLOAT:
+              return "0f";
+            case CommonClassNames.JAVA_LANG_DOUBLE:
+              return "0.0";
+            case CommonClassNames.JAVA_UTIL_SET:
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.Set.of()" : "java.util.Collections.emptySet()";
+            case CommonClassNames.JAVA_UTIL_COLLECTION:
+            case CommonClassNames.JAVA_UTIL_LIST:
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.List.of()" : "java.util.Collections.emptyList()";
+            case CommonClassNames.JAVA_UTIL_MAP:
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.Map.of()" : "java.util.Collections.emptyMap()";
+          }
+        }
       }
     }
     return PsiKeyword.NULL;
@@ -185,7 +228,7 @@ public final class PsiTypesUtil {
                                                       @NotNull Condition<? super IElementType> condition,
                                                       @NotNull LanguageLevel languageLevel) {
     //JLS3 15.8.2
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && isGetClass(method)) {
+    if (JavaFeature.GENERICS.isSufficient(languageLevel) && isGetClass(method)) {
       PsiExpression qualifier = methodExpression.getQualifierExpression();
       PsiType qualifierType = null;
       final Project project = call.getProject();

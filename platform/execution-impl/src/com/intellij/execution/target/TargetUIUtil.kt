@@ -19,7 +19,7 @@ import java.util.function.Supplier
  * See [BrowsableTargetEnvironmentType.createBrowser]
  */
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use overloaded method with Kotlin UI DSL 2 API")
+@Deprecated("Use overloaded method with Kotlin UI DSL 2 API", level = DeprecationLevel.HIDDEN)
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,
                                     targetSupplier: Supplier<out TargetEnvironmentConfiguration>,

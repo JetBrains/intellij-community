@@ -1,14 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import com.intellij.facet.FacetManager
+import com.intellij.facet.impl.ui.FacetEditorImpl
+import com.intellij.facet.mock.MockFacetEditorContext
+import com.intellij.facet.ui.FacetEditorContext
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
+import org.jetbrains.kotlin.idea.workspaceModel.deserializeExternalSystemTestRunTask
 
 class KotlinFacetBridgeTest : KotlinFacetTestCase() {
     fun testSimpleKotlinFacetCreate() {
         getKotlinFacet()
         checkStorageForEntityAndFacet()
+    }
+
+    fun testEditorTabConfigurationOnFacetCreation() {
+        val facet = getKotlinFacet()
+        val editorContext: FacetEditorContext = MockFacetEditorContext(getKotlinFacet())
+        FacetEditorImpl(editorContext, facet.configuration).let {
+            it.getComponent()
+            it.reset()
+            assertNotNull(it.component)
+        }
     }
 
     fun testFacetRenameAndRemove() {
@@ -61,6 +76,16 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         fireFacetChangedAndValidateKotlinFacet(mainFacet)
     }
 
+    fun testCreateFacetExternalSystemProjectId() {
+        val mainFacet = getKotlinFacet()
+        checkStorageForEntityAndFacet()
+
+        mainFacet.configuration.settings.externalSystemRunTasks =
+            listOf(ExternalSystemTestRunTask("taskName", "externalSystemProjectId", "targetName", "kotlinPlatformId"))
+
+        fireFacetChangedAndValidateKotlinFacet(mainFacet)
+    }
+
     private fun fireFacetChangedAndValidateKotlinFacet(mainFacet: KotlinFacet) {
         val allFacets = FacetManager.getInstance(myModule).allFacets
         assertSize(1, allFacets)
@@ -96,23 +121,10 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         assertTrue(
             "isHmppEnabled differs. Entity: ${entity.isHmppEnabled}, facet: ${facet.configuration.settings.isHmppEnabled}",
             entity.isHmppEnabled == facet.configuration.settings.isHmppEnabled
-        ) //// source roots
-        //val facetSourceRoots = facet.externalSource.also { println(it) }
-        //val entitySourceRoots = entity.sourceRoots.also { println(it) }
-        //val allModuleSourceRoots = entity.module.sourceRoots.map { it.url.url }.also { println(it) }
-        //val entitySourceRootsValid = facetSourceRoots == entitySourceRoots
-        //val allModuleSourceRootsValid = facetSourceRoots == allModuleSourceRoots && entitySourceRoots.isEmpty()
-        //val sourceRootsValid = entitySourceRootsValid || allModuleSourceRootsValid
-        //assertTrue("Invalid source roots", sourceRootsValid)
-
-        // web roots
-        //val facetWebRoots = facet.webRoots.map { WebRootData(it.directoryUrl, it.relativePath) }
-        //val entityWebRoots = entity.webRoots
-        //assertEquals(facetWebRoots, entityWebRoots)
-
-        // //config files
-        //val facetConfigFiles = facet.descriptorsContainer.configFiles.map { ConfigFileItem(it.info.metaData.id, it.url) }
-        //val entityConfigFiles = entity.configFileItems
-        //assertEquals(facetConfigFiles.size, entityConfigFiles.size)
+        )
+        assertTrue(
+            "externalSystemRunTasks differs. Entity: ${entity.externalSystemRunTasks}, facet: ${facet.configuration.settings.externalSystemRunTasks}",
+            entity.externalSystemRunTasks.map { deserializeExternalSystemTestRunTask(it) } == facet.configuration.settings.externalSystemRunTasks
+        )
     }
 }

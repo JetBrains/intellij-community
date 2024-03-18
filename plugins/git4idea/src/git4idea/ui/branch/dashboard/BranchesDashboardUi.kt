@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -46,13 +45,13 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
+import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.repo.GitRepository
@@ -82,7 +81,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(filteringTree.component, true)
-  private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this)
   private val branchesTreeWithLogPanel = simplePanel()
   private val mainPanel = simplePanel().apply { DataManager.registerDataProvider(this, uiController) }
   private val branchesSearchFieldPanel = simplePanel()
@@ -158,7 +157,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
                                                                   logUi.filterUi.textFilterComponent.focusedComponent)
   }
 
-  private val showBranches get() = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
+  private val showBranches get() = logUi.properties[SHOW_GIT_BRANCHES_LOG_PROPERTY]
 
   init {
     initMainUi()
@@ -200,7 +199,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
         border = createBorder(JBColor.border(), SideBorder.RIGHT)
         addActionListener {
           if (logUi.properties.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY)) {
-            logUi.properties.set(SHOW_GIT_BRANCHES_LOG_PROPERTY, true)
+            logUi.properties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = true
           }
         }
       }
@@ -257,7 +256,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   private fun createFocusFilterFieldAction(searchField: Component) {
     DumbAwareAction.create { e ->
-      val project = e.getRequiredData(CommonDataKeys.PROJECT)
+      val project = e.getData(CommonDataKeys.PROJECT) ?: return@create
       if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(filteringTree.component) != null) {
         IdeFocusManager.getInstance(project).requestFocus(searchField, true)
       }
@@ -368,7 +367,7 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
 
   override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties,
                                filterUi: VcsLogFilterUiEx, isEditorDiffPreview: Boolean) =
-    MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this)
+    MainFrame(logData, this, uiProperties, filterUi, myColorManager, isEditorDiffPreview, this)
       .apply {
         isFocusCycleRoot = false
         focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree

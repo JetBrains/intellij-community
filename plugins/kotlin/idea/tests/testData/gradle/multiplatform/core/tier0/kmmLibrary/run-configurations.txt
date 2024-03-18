@@ -4,7 +4,7 @@ project
 project.commonMain
 
 project.commonTest
-    fqName: null
+    fqName: kmmApplication.use
     name: CommonTest_usagesKt.use
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "kmmApplication.CommonTest_usagesKt.use"]
@@ -28,7 +28,7 @@ project.iosX64Test
 project.jvmMain
 
 project.jvmTest
-    fqName: null
+    fqName: kmmApplication.use
     name: JvmTest_usagesKt.use
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "kmmApplication.JvmTest_usagesKt.use"]

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
@@ -33,6 +19,7 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
@@ -101,6 +88,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   protected void onInit() {
     super.onInit();
     installEditorListeners();
+
+    for (EditorEx editor : getEditors()) {
+      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
+    }
   }
 
   @Override
@@ -280,6 +271,9 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @RequiresEdt
   protected void scrollToLine(@NotNull Side side, int line) {
+    LineCol otherCol = transferPosition(side, new LineCol(line));
+    DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
+
     DiffUtil.scrollEditor(getEditor(side), line, false);
     setCurrentSide(side);
   }
@@ -375,6 +369,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   }
 
   protected abstract class MyInitialScrollPositionHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {
+    private boolean myShouldUpdateCaretAfterRediff = false;
+
     @NotNull
     @Override
     protected List<? extends Editor> getEditors() {
@@ -387,11 +383,29 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
 
       scrollToLine(myScrollToLine.first, myScrollToLine.second);
+      myShouldUpdateCaretAfterRediff = onSlowRediff; // move other caret to correct position when we know it
+
       return true;
+    }
+
+    @Override
+    public void onRediff() {
+      super.onRediff();
+
+      if (myShouldUpdateCaretAfterRediff && myScrollToLine != null) {
+        myShouldUpdateCaretAfterRediff = false;
+        Side currentSide = getCurrentSide();
+        Side side = myScrollToLine.first;
+        int line = myScrollToLine.second;
+        if (currentSide == side) {
+          LineCol otherCol = transferPosition(side, new LineCol(line));
+          DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
+        }
+      }
     }
   }
 }

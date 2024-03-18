@@ -25,7 +25,6 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -116,17 +115,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
       myRootIndex = rootIndex = new RootIndex(myProject);
     }
     return rootIndex;
-  }
-
-  @Override
-  public @NotNull DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
-    return new DirectoryInfo() {
-
-      @Override
-      public @Nullable VirtualFile getContentRoot() {
-        return myWorkspaceFileIndex.getContentFileSetRoot(file, true);
-      }
-    };
   }
 
   @Override

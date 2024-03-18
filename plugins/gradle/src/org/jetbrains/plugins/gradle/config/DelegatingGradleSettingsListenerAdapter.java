@@ -31,32 +31,4 @@ public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalS
   public DelegatingGradleSettingsListenerAdapter(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> delegate) {
     super(delegate);
   }
-
-  @Override
-  public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) {
-  }
-
-  @Override
-  public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
-  }
-
-  @Override
-  public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
-  }
-
-  @Override
-  public void onGradleJvmChange(@Nullable String oldGradleJvm, @Nullable String newGradleJvm, @NotNull String linkedProjectPath) {
-  }
-
-  @Override
-  public void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) {
-  }
-
-  @Override
-  public void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) {
-  }
-
-  @Override
-  public void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath) {
-  }
 }

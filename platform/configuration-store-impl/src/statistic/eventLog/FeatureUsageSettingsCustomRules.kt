@@ -5,7 +5,24 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.REJECTED
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.ComposerValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
+
+class SettingsValueValidatorFactory : CustomValidationRuleFactory {
+  override fun createValidator(contextData: EventGroupContextData): SettingsValueValidator {
+    return SettingsValueValidator(contextData)
+  }
+
+  override fun getRuleId(): String {
+    return SettingsValueValidator.RULE_ID
+  }
+
+  override fun getRuleClass(): Class<*> {
+  return SettingsValueValidator::class.java
+  }
+}
 
 class SettingsComponentNameValidator : CustomValidationRule() {
   override fun getRuleId(): String = "component_name"
@@ -26,10 +43,20 @@ class SettingsComponentNameValidator : CustomValidationRule() {
   }
 }
 
-class SettingsValueValidator : CustomValidationRule() {
-  override fun getRuleId(): String = "setting_value"
+class SettingsValueValidator(contextData: EventGroupContextData) : CustomValidationRule() {
+  private val composerValidationRule = ComposerValidationRule(
+    listOf(contextData.getEnumValidationRule("boolean"),
+           contextData.getRegexpValidationRule("integer"),
+           contextData.getRegexpValidationRule("float")))
+  companion object {
+    const val RULE_ID = "setting_value"
+  }
+
+  override fun getRuleId(): String = RULE_ID
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    if  (composerValidationRule.doValidate(data, context) == ACCEPTED)
+      return ACCEPTED
     val componentName = context.eventData["component"] as? String ?: return REJECTED
     val optionName = context.eventData["name"] as? String ?: return REJECTED
     if (!isComponentNameWhitelisted(componentName) || !isComponentOptionNameWhitelisted(optionName)) return REJECTED

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -23,10 +24,12 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author Bas Leijdekkers
  */
-public class OptionalContainsCollectionInspection extends BaseInspection {
+public final class OptionalContainsCollectionInspection extends BaseInspection {
 
   @NotNull
   @Override
@@ -34,6 +37,11 @@ public class OptionalContainsCollectionInspection extends BaseInspection {
     final PsiType type = (PsiType)infos[0];
     return InspectionGadgetsBundle.message(
       type instanceof PsiArrayType ? "optional.contains.array.problem.descriptor" : "optional.contains.collection.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
   @Override

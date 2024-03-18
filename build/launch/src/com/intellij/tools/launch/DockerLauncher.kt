@@ -71,6 +71,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     // **** RW ****
     val writeable = listOf(paths.logFolder,
+                           paths.tempFolder,
                            paths.configFolder,
                            paths.systemFolder,
                            paths.communityRootFolder.resolve("build/download") // quiche lib
@@ -85,6 +86,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     // **** RO ****
     dockerCmd.addReadonly(paths.javaHomeFolder)
     dockerCmd.addReadonly(paths.outputRootFolder)
+
+    // Required to ultimate root detection
+    dockerCmd.addReadonly(paths.ultimateRootMarker)
 
     // jars
     dockerCmd.addReadonly(paths.communityBinFolder)

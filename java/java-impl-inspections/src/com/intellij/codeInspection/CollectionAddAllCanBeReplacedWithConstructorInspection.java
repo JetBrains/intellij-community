@@ -112,14 +112,14 @@ public final class CollectionAddAllCanBeReplacedWithConstructorInspection extend
         return switch (name) {
           case "java.util.TreeSet", "java.util.concurrent.ConcurrentSkipListSet" ->
             // If declared arg type inherits SortedSet, the (SortedSet) copy constructor will be invoked, which inherits the comparator
-            InheritanceUtil.isInheritor(argType, "java.util.SortedSet");
+            InheritanceUtil.isInheritor(argType, CommonClassNames.JAVA_UTIL_SORTED_SET);
           case "java.util.TreeMap", "java.util.concurrent.ConcurrentSkipListMap" ->
             // If declared arg type inherits SortedMap, the (SortedMap) copy constructor will be invoked, which inherits the comparator
-            InheritanceUtil.isInheritor(argType, "java.util.SortedMap");
+            InheritanceUtil.isInheritor(argType, CommonClassNames.JAVA_UTIL_SORTED_MAP);
           case "java.util.PriorityQueue", "java.util.concurrent.PriorityBlockingQueue" -> {
             // Here even (Collection) copy constructor inherits the comparator using runtime type checks, so we should be more conservative
             TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(args[0]));
-            PsiClassType sortedSet = JavaPsiFacade.getElementFactory(holder.getProject()).createTypeByFQClassName("java.util.SortedSet");
+            PsiClassType sortedSet = JavaPsiFacade.getElementFactory(holder.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SORTED_SET);
             yield constraint.meet(TypeConstraints.instanceOf(sortedSet)) != TypeConstraints.BOTTOM ||
                   constraint.meet(TypeConstraints.instanceOf(type)) != TypeConstraints.BOTTOM;
           }

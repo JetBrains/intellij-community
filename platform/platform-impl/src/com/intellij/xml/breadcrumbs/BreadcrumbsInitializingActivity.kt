@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
@@ -8,11 +8,15 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -118,7 +122,7 @@ fun reinitBreadcrumbComponent(fileEditor: TextEditor, fileEditorManager: FileEdi
   val forcedShown = BreadcrumbsForceShownSettings.getForcedShown(editor)
   val editorIsValid = fileEditor.isValid
   val clientId = ClientEditorManager.getClientId(editor) ?: ClientId.localId
-  project.coroutineScope.launch(Dispatchers.Default + clientId.asContextElement()) {
+  (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default + clientId.asContextElement()) {
     val isSuitable = readAction {
       isSuitable(project, file, forcedShown, editorIsValid)
     }

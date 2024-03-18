@@ -47,7 +47,7 @@ import java.util.Objects;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean ignoreChainedIf = false;
   public boolean ignoreAssertStatements = false;

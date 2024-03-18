@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -95,11 +96,21 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+      // return default value to avoid unnecessary save
+      DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ApplicationManager.getApplication().getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+      if (daemonCodeAnalyzerSettings != null) {
+        daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+      }
       Project project = getProject();
       if (project != null) {
-        ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+        StartupManager startupManager = project.getServiceIfCreated(StartupManager.class);
+        if (startupManager != null) {
+          ((StartupManagerImpl)startupManager).checkCleared();
+        }
+        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
+        if (daemonCodeAnalyzer != null) {
+          ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).cleanupAfterTest();
+        }
       }
     }
     catch (Throwable e) {

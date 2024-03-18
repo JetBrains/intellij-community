@@ -5,7 +5,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import java.util.*
 
-class GHPRReviewUnrequestedEvent(override val actor: GHActor?,
-                                 override val createdAt: Date,
-                                 val requestedReviewer: GHPullRequestRequestedReviewer?)
+data class GHPRReviewUnrequestedEvent(override val actor: GHActor?,
+                                      override val createdAt: Date,
+                                      val requestedReviewer: GHPullRequestRequestedReviewer?)
   : GHPRTimelineEvent.Simple

@@ -19,6 +19,7 @@ import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
+import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
@@ -55,6 +56,8 @@ private val LOG: Logger
   get() = logger<ImageUtil>()
 
 private val cleaners = CopyOnWriteArrayList<() -> Unit>()
+
+internal const val FILE_SCHEME_PREFIX = "file:/"
 
 internal fun registerIconCacheCleaner(cleaner: () -> Unit) {
   cleaners.add(cleaner)
@@ -140,11 +143,12 @@ fun getMenuBarIcon(icon: Icon, dark: Boolean): Icon {
   }
 }
 
-internal fun convertImage(image: Image,
-                          filters: List<ImageFilter>,
-                          scaleContext: ScaleContext,
-                          isUpScaleNeeded: Boolean,
-                          imageScale: Float): Image {
+@Internal
+fun convertImage(image: Image,
+                 filters: List<ImageFilter>,
+                 scaleContext: ScaleContext,
+                 isUpScaleNeeded: Boolean,
+                 imageScale: Float): Image {
   var result = image
   if (isUpScaleNeeded) {
     var scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
@@ -187,12 +191,12 @@ fun filterImage(image: Image, filters: List<ImageFilter>): Image {
 @Internal
 fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, resourceClass: Class<*>? = null): BufferedImage? {
   val data = getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader) ?: return null
-  return loadPng(stream = ByteArrayInputStream(data))
+  return loadRasterImage(stream = ByteArrayInputStream(data))
 }
 
 @Internal
 internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
-  assert(resourceClass != null || classLoader != null || path.startsWith("file://"))
+  assert(resourceClass != null || classLoader != null || path.startsWith(FILE_SCHEME_PREFIX))
   if (classLoader != null) {
     val isAbsolute = path.startsWith('/')
     val data = ResourceUtil.getResourceAsBytes(if (isAbsolute) path.substring(1) else path, classLoader, true)
@@ -202,7 +206,7 @@ internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader
   }
 
   resourceClass?.getResourceAsStream(path)?.use { stream -> return stream.readAllBytes() }
-  if (path.startsWith("file:/")) {
+  if (path.startsWith(FILE_SCHEME_PREFIX)) {
     val nioPath = Path.of(URI.create(path))
     try {
       return Files.readAllBytes(nioPath)
@@ -218,18 +222,19 @@ internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader
 }
 
 @Internal
-fun loadPng(stream: InputStream): BufferedImage {
+fun loadRasterImage(stream: InputStream): BufferedImage {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   var image: BufferedImage
-  val reader = ImageIO.getImageReadersByFormatName("png").next()
-  try {
-    MemoryCacheImageInputStream(stream).use { imageInputStream ->
+  MemoryCacheImageInputStream(stream).use { imageInputStream ->
+    val reader = ImageIO.getImageReaders(imageInputStream).takeIf { it.hasNext() }?.next()
+                 ?: ImageIO.getImageReadersByFormatName("png").next()
+    try {
       reader.setInput(imageInputStream, true, true)
       image = reader.read(0, null)
     }
-  }
-  finally {
-    reader.dispose()
+    finally {
+      reader.dispose()
+    }
   }
   if (start != -1L) {
     IconLoadMeasurer.pngDecoding.end(start)
@@ -276,7 +281,7 @@ internal fun loadCustomIcon(url: URL): Image? {
 
 @Internal
 fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassLoader): BufferedImage? {
-  val descriptors = createImageDescriptorList(path = requestedPath, isDark = false, pixScale = scale)
+  val descriptors = createImageDescriptorList(path = requestedPath, isDark = false, isStroke = false, pixScale = scale)
   for (descriptor in descriptors) {
     try {
       val dotIndex = requestedPath.lastIndexOf('.')
@@ -288,7 +293,7 @@ fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassL
         return renderSvg(data = data, scale = descriptor.scale)
       }
       else {
-        val image = loadPng(stream = ByteArrayInputStream(data))
+        val image = loadRasterImage(stream = ByteArrayInputStream(data))
         // compensate the image original scale
         val effectiveScale = if (descriptor.scale > 1) scale / descriptor.scale else scale
         return doScaleImage(image = image, scale = effectiveScale.toDouble()) as BufferedImage
@@ -318,23 +323,6 @@ internal fun doScaleImage(image: Image, scale: Double): Image {
   // because ultra quality performs a few more passes when scaling, which introduces blurriness
   // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
   return Scalr.resize(ImageUtil.toBufferedImage(image, false), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, null)
-}
-
-@Internal
-fun loadImageFromStream(stream: InputStream,
-                        path: String?,
-                        scale: Float,
-                        isDark: Boolean,
-                        useSvg: Boolean): Image {
-  stream.use {
-    if (useSvg) {
-      val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = false)
-      return loadSvg(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
-    }
-    else {
-      return loadPng(stream = stream)
-    }
-  }
 }
 
 @Internal

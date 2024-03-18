@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnumerationCanBeIterationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class EnumerationCanBeIterationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   static final int KEEP_NOTHING = 0;
   static final int KEEP_INITIALIZATION = 1;

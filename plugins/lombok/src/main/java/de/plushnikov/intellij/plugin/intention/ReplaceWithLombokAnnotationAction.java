@@ -1,20 +1,20 @@
 package de.plushnikov.intellij.plugin.intention;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -25,30 +25,27 @@ import java.util.stream.Stream;
  */
 public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAction {
 
-  public ReplaceWithLombokAnnotationAction() {
-    super();
-    setText(LombokBundle.message("intention.name.replace.with.lombok"));
-  }
-
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    boolean parentAvailable = super.isAvailable(project, editor, element);
-    if (!parentAvailable || !(element instanceof PsiIdentifier)) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (super.getPresentation(context, element) == null) return null;
+    if (!(element instanceof PsiIdentifier)) return null;
 
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiField.class, PsiMethod.class);
+    boolean available = false;
     if (parent instanceof PsiField) {
-      return Stream.of(findGetterMethodToReplace((PsiField)parent), findSetterMethodToReplace((PsiField)parent))
+      available = Stream.of(findGetterMethodToReplace((PsiField)parent), findSetterMethodToReplace((PsiField)parent))
         .anyMatch(Optional::isPresent);
     }
     else if (parent instanceof PsiMethod) {
-      return Stream.of(findAnchorFieldForGetter((PsiMethod)parent), findAnchorFieldForSetter((PsiMethod)parent))
+      available = Stream.of(findAnchorFieldForGetter((PsiMethod)parent), findAnchorFieldForSetter((PsiMethod)parent))
         .anyMatch(Optional::isPresent);
     }
-    return false;
+    if (!available) return null;
+    return Presentation.of(LombokBundle.message("intention.name.replace.with.lombok"));
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiClass.class, PsiMethod.class);
 
     if (parent instanceof PsiField) {
@@ -207,10 +204,8 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
     }
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return LombokBundle.message("replace.with.annotations.lombok");
   }
 }

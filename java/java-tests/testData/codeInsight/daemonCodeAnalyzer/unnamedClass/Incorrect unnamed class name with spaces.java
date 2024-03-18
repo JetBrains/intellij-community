@@ -1,1 +1,0 @@
-<error descr="Unnamed class's file name is not a valid identifier">void main() {}</error>

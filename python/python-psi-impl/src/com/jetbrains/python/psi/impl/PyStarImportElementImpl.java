@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -44,7 +45,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   }
 
   public PyStarImportElementImpl(final PyStarImportElementStub stub) {
-    super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
+    super(stub, PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override

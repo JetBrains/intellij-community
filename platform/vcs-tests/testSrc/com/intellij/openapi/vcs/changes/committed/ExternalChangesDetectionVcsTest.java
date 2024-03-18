@@ -26,6 +26,8 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertTrue;
+
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
@@ -80,11 +82,11 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     f.createNewFile();
     final VirtualFile vf = myLFS.refreshAndFindFileByIoFile(f);
     myChangeListManager.ensureUpToDate();
-    myChangeListManager.getUnversionedFiles().contains(vf);
+    assertTrue(myChangeListManager.getUnversionedFiles().contains(vf));
     FileUtil.delete(f);
     myWorkingCopyDir.refresh(false, true);
     myChangeListManager.ensureUpToDate();
-    myChangeListManager.getUnversionedFiles().isEmpty();
+    assertTrue(myChangeListManager.getUnversionedFiles().isEmpty());
   }
 
   @Test
@@ -101,7 +103,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     for (VirtualFile unversionedFile : unversionedFiles) {
       if (VfsUtilCore.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
         ++cnt;
-        Assert.assertTrue(pattern.matcher(unversionedFile.getName()).matches());
+        assertTrue(pattern.matcher(unversionedFile.getName()).matches());
       }
     }
     Assert.assertEquals(100, cnt);

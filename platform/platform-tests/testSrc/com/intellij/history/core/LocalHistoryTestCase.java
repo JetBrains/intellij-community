@@ -3,6 +3,7 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.*;
+import com.intellij.history.core.revisions.CurrentRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.TestContent;
 import com.intellij.history.core.tree.Entry;
@@ -15,6 +16,8 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -24,6 +27,7 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -32,10 +36,10 @@ public abstract class LocalHistoryTestCase extends Assert {
   @Rule
   public TestRule watcher = TestLoggerFactory.createTestWatcher();
 
-  private static long myCurrentId = 0;
+  private long myCurrentId = 0;
   private static IdeaProjectTestFixture fixture; // to initialize FSRecords
 
-  public static long nextId() {
+  public long nextId() {
     return myCurrentId++;
   }
 
@@ -128,6 +132,14 @@ public abstract class LocalHistoryTestCase extends Assert {
     return new DeleteChange(nextId(), path, e);
   }
 
+  public @NotNull PutLabelChange putLabel(@NotNull String name, @NotNull String projectId) {
+    return new PutLabelChange(nextId(), name, projectId);
+  }
+
+  public @NotNull PutSystemLabelChange putSystemLabel(@NotNull String name, @NotNull String projectId) {
+    return new PutSystemLabelChange(nextId(), name, projectId, -1);
+  }
+
   public <T extends StructuralChange> T add(LocalHistoryFacade vcs, T change) {
     vcs.beginChangeSet();
     vcs.addChangeInTests(change);
@@ -153,14 +165,19 @@ public abstract class LocalHistoryTestCase extends Assert {
     return facade.getChangeListInTests().getChangesInTests().get(0);
   }
 
-  public static List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
-    return new RevisionsCollector(facade, root, path, projectId, pattern).getResult();
+  public static @NotNull List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
+    CurrentRevision currentRevision = new CurrentRevision(root, path);
+    List<Revision> revisions = RevisionsCollector.collect(facade, root, path, projectId, pattern);
+    return ContainerUtil.concat(Arrays.asList(currentRevision), revisions);
   }
 
-  public static List<ChangeSet> collectChanges(LocalHistoryFacade facade, String path, String projectId, String pattern) {
-    ChangeCollectingVisitor v = new ChangeCollectingVisitor(path, projectId, pattern);
-    facade.accept(v);
-    return v.getChanges();
+  public static @NotNull List<ChangeSet> collectChanges(LocalHistoryFacade facade, String path, String projectId, String pattern) {
+    List<ChangeSet> result = new ArrayList<>();
+    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, pattern, changeSet -> {
+      result.add(changeSet);
+      return Unit.INSTANCE;
+    });
+    return result;
   }
 
   @SafeVarargs
@@ -173,15 +190,15 @@ public abstract class LocalHistoryTestCase extends Assert {
     return Arrays.asList(objects);
   }
 
-  protected static ChangeSet cs(Change... changes) {
+  protected ChangeSet cs(Change... changes) {
     return cs(null, changes);
   }
 
-  protected static ChangeSet cs(String name, Change... changes) {
+  protected ChangeSet cs(String name, Change... changes) {
     return cs(0, name, changes);
   }
 
-  protected static ChangeSet cs(long timestamp, String name, Change... changes) {
+  protected ChangeSet cs(long timestamp, String name, Change... changes) {
     ChangeSet result = new ChangeSet(nextId(), timestamp);
     result.setName(name);
     for (Change each : changes) {

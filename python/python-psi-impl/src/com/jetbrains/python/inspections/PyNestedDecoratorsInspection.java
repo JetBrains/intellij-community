@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * Checks nested decorators, especially whatever comes after @classmethod.
  * <br/>
  */
-public class PyNestedDecoratorsInspection extends PyInspection {
+public final class PyNestedDecoratorsInspection extends PyInspection {
 
   @NotNull
   @Override

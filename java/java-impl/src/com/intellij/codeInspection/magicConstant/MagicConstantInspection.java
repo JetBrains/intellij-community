@@ -217,10 +217,6 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         .onSuccess(success -> {
           // daemon will restart automatically
           if (success) {
-            SdkModificator modificator = sdk.getSdkModificator();
-            modificator.commitChanges();
-          }
-          if (success) {
             ReadAction.nonBlocking(() -> {
                 // check if we really attached the necessary annotations, to avoid IDEA-247322
                 return getJDKToAnnotate(project) == null;

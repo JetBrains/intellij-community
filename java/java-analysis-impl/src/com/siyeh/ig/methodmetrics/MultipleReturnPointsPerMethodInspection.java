@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class MultipleReturnPointsPerMethodInspection
+public final class MultipleReturnPointsPerMethodInspection
   extends MethodMetricInspection {
 
   @SuppressWarnings({"PublicField"})

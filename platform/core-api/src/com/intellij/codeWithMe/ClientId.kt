@@ -20,7 +20,6 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -421,6 +420,8 @@ private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
 private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken> {
 
   override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
+
+  override fun toString(): String = clientId.toString()
 
   override fun updateThreadContext(context: CoroutineContext): AccessToken {
     return ClientId.withClientId(clientId)

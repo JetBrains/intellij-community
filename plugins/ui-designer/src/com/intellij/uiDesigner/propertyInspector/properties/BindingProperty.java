@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.CommonBundle;
@@ -54,12 +54,12 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>() {
     @Override
-    protected void customize(@NotNull final @NlsSafe String value) {
+    protected void customize(final @NotNull @NlsSafe String value) {
       setText(value);
     }
   };
   private final BindingEditor myEditor;
-  @NonNls private static final String PREFIX_HTML = "<html>";
+  private static final @NonNls String PREFIX_HTML = "<html>";
 
   public BindingProperty(final Project project){
     super(null, "field name");
@@ -72,8 +72,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<String> getRenderer(){
+  public @NotNull PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 
@@ -88,7 +87,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    if (value.length() > 0 && !PsiNameHelper.getInstance(component.getProject()).isIdentifier(value)) {
+    if (!value.isEmpty() && !PsiNameHelper.getInstance(component.getProject()).isIdentifier(value)) {
       throw new Exception("Value '" + value + "' is not a valid identifier");
     }
 
@@ -97,7 +96,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     // Check that binding remains unique
 
-    if (value.length() > 0) {
+    if (!value.isEmpty()) {
       if (!FormEditingUtil.isBindingUnique(component, value, root)) {
         throw new Exception(UIDesignerBundle.message("error.binding.not.unique"));
       }
@@ -125,7 +124,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (classToBind == null) return;
 
     final Project project = root.getProject();
-    if (newName.length() == 0) {
+    if (newName.isEmpty()) {
       checkRemoveUnusedField(root, oldName, FormEditingUtil.getNextSaveUndoGroupId(project));
       return;
     }
@@ -200,8 +199,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     return selection.size() == 1;
   }
 
-  @Nullable
-  public static PsiField findBoundField(@NotNull final RadRootContainer root, final String fieldName) {
+  public static @Nullable PsiField findBoundField(final @NotNull RadRootContainer root, final String fieldName) {
     final Project project = root.getProject();
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
@@ -305,13 +303,12 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
   }
 
-  @Nullable
-  public static String suggestBindingFromText(final RadComponent component, String text) {
+  public static @Nullable String suggestBindingFromText(final RadComponent component, String text) {
     if (StringUtil.startsWithIgnoreCase(text, PREFIX_HTML)) {
       text = Pattern.compile("<.+?>").matcher(text).replaceAll("");
     }
     ArrayList<String> words = new ArrayList<>(StringUtil.getWordsIn(text));
-    if (words.size() > 0) {
+    if (!words.isEmpty()) {
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
       for(int i=1; i<words.size() && i < 4; i++) {
         nameBuilder.append(StringUtil.capitalize(words.get(i)));

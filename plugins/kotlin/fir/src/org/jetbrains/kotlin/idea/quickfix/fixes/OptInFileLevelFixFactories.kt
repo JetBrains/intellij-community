@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
-object OptInFileLevelFixFactories {
+internal object OptInFileLevelFixFactories {
     val optInFileLevelFixFactories =
         diagnosticFixFactories(
             KtFirDiagnostic.OptInUsage::class,
@@ -24,13 +24,16 @@ object OptInFileLevelFixFactories {
             KtFirDiagnostic.OptInOverrideError::class
         ) { diagnostic ->
             val element = diagnostic.psi.findParentOfType<KtElement>() ?: return@diagnosticFixFactories emptyList()
-            val optInMarkerFqName = OptInFixUtils.optInMarkerFqName(diagnostic) ?: return@diagnosticFixFactories emptyList()
+            val optInMarkerClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return@diagnosticFixFactories emptyList()
             val optInFqName = OptInFixUtils.optInFqName() ?: return@diagnosticFixFactories emptyList()
             val containingFile = element.containingKtFile
+            val annotationSymbol = OptInFixUtils.findAnnotation(optInMarkerClassId) ?: return@diagnosticFixFactories emptyList()
+
+            if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return@diagnosticFixFactories emptyList()
 
             return@diagnosticFixFactories listOf(
                 UseOptInFileAnnotationFix(
-                    containingFile, optInFqName, optInMarkerFqName,
+                    containingFile, optInFqName, optInMarkerClassId.asSingleFqName(),
                     findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
                 )
             )

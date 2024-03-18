@@ -47,21 +47,10 @@ public final class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> impleme
   @Override
   public void addUrl(@NotNull String url) {
     myUrls.add(url);
-    fireElementChanged();
   }
 
   @Override
   public void removeUrl(@NotNull String url) {
     myUrls.remove(url);
-    fireElementChanged();
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsUrlListImpl modified) {
-    if (!myUrls.equals(modified.myUrls)) {
-      myUrls.clear();
-      myUrls.addAll(modified.myUrls);
-      fireElementChanged();
-    }
   }
 }

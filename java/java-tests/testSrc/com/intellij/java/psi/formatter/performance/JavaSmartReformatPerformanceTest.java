@@ -7,15 +7,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
-
-import java.util.Collections;
-import java.util.List;
 
 public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest {
   public void testSmartReformatPerformanceInLargeFile_AsUsedInPostponedFormatting() {
@@ -42,8 +38,11 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
     };
 
     PlatformTestUtil
-      .startPerformanceTest("smart reformat on big file", 500, test)
+      .newPerformanceTest("smart reformat on big file", test)
       .setup(setup)
-      .assertTiming();
+      .warmupIterations(50)
+      .attempts(100)
+      .start();
+    // attempt.min.ms varies below the measurement threshold
   }
 }

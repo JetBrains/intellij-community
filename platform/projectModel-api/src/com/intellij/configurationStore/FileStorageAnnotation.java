@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.RoamingType;
@@ -77,9 +77,8 @@ public class FileStorageAnnotation implements Storage {
     return mySplitterClass;
   }
 
-  @NotNull
   @Override
-  public Class<? extends Annotation> annotationType() {
+  public @NotNull Class<? extends Annotation> annotationType() {
     throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
   }
 }

@@ -29,13 +29,6 @@ public abstract class DirectoryIndex {
     return project.getService(DirectoryIndex.class);
   }
 
-  /**
-   * @deprecated this is an internal obsolete method, other methods from {@link com.intellij.openapi.roots.ProjectFileIndex} should be used instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public abstract DirectoryInfo getInfoForFile(@NotNull VirtualFile file);
-
   @NotNull
   public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);

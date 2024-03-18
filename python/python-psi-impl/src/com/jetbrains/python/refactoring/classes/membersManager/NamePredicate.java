@@ -18,7 +18,7 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.intellij.navigation.NavigationItem;
-import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 

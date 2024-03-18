@@ -4,25 +4,31 @@ package org.jetbrains.kotlin.onboarding
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 
 class OnboardingFeedbackDialog(
     project: Project?,
     forTest: Boolean
-) : BlockBasedFeedbackDialog<CommonFeedbackSystemData>(project, forTest) {
+) : BlockBasedFeedbackDialog<OnboardingFeedbackDialog.OnboardingFeedbackSystemData>(project, forTest) {
 
     /** Increase the additional number when feedback format is changed */
     override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
     override val myFeedbackReportId: String = "kotlin_onboarding"
 
-    override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-        CommonFeedbackSystemData.getCurrentData()
+    override val mySystemInfoData: OnboardingFeedbackSystemData by lazy {
+        val kotlinTracker = KotlinNewUserTracker.getInstance()
+        OnboardingFeedbackSystemData(kotlinTracker.isNewKtUser(), kotlinTracker.isNewIdeaUser(), CommonFeedbackSystemData.getCurrentData())
     }
 
     override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-        showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+        showNewUIFeedbackSystemInfoDialog(myProject, mySystemInfoData)
     }
 
     override val myTitle: String = FeedbackBundle.message("dialog.top.title")
@@ -59,5 +65,43 @@ class OnboardingFeedbackDialog(
                 "notification.thanks.feedback.content"
             )
         ).notify(myProject)
+    }
+
+
+    @Serializable
+    data class OnboardingFeedbackSystemData(
+        val isNewKotlinUser: Boolean,
+        val isNewIdeaUser: Boolean,
+        val commonSystemInfo: CommonFeedbackSystemData
+    ) : SystemDataJsonSerializable {
+        override fun toString(): String {
+            return buildString {
+                appendLine(FeedbackBundle.message("dialog.system.info.isNewKotlinUser"))
+                appendLine()
+                appendLine(if (isNewKotlinUser) "True" else "False")
+                appendLine()
+                appendLine(FeedbackBundle.message("dialog.system.info.isNewIdeUser"))
+                appendLine()
+                appendLine(if (isNewIdeaUser) "True" else "False")
+                appendLine()
+                commonSystemInfo.toString()
+            }
+        }
+
+        override fun serializeToJson(json: Json): JsonElement {
+            return json.encodeToJsonElement(this)
+        }
+    }
+
+    private fun showNewUIFeedbackSystemInfoDialog(
+        project: Project?,
+        systemInfoData: OnboardingFeedbackSystemData
+    ) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
+        row(FeedbackBundle.message("dialog.system.info.isNewKotlinUser")) {
+            label(if (systemInfoData.isNewKotlinUser) "True" else "False") //NON-NLS
+        }
+        row(FeedbackBundle.message("dialog.system.info.isNewIdeUser")) {
+            label(if (systemInfoData.isNewIdeaUser) "True" else "False") //NON-NLS
+        }
     }
 }

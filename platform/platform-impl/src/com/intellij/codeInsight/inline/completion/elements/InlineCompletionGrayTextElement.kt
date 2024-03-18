@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
@@ -25,6 +26,11 @@ class InlineCompletionGrayTextElement(override val text: String) : InlineComplet
 
     override fun isVisible(): Boolean = suffixInlay != null || blockInlay != null
 
+    /**
+     * Temporal workaround for an internal plugin. **Should not be used.**
+     */
+    @ApiStatus.Internal
+    @ApiStatus.Experimental
     protected open fun getText(): String = element.text
 
     override fun render(editor: Editor, offset: Int) {
@@ -59,7 +65,7 @@ class InlineCompletionGrayTextElement(override val text: String) : InlineComplet
       editor.forceLeanLeft()
 
       val line = lines.first()
-      if (line.isBlank()) {
+      if (line.isEmpty()) {
         suffixInlay = editor.inlayModel.addInlineElement(editor.caretModel.offset, object : EditorCustomElementRenderer {
           override fun calcWidthInPixels(inlay: Inlay<*>) = 1
           override fun calcHeightInPixels(inlay: Inlay<*>) = 1

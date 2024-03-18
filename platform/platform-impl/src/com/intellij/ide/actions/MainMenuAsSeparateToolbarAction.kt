@@ -26,7 +26,7 @@ class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware, ActionRemoteB
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     var restartNeeded = false
 
-    if (SystemInfoRt.isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       val result = Messages.showYesNoCancelDialog(
         IdeBundle.message("dialog.message.restarted.to.apply.changes",
                           ApplicationNamesInfo.getInstance().fullProductName),
@@ -58,7 +58,7 @@ class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware, ActionRemoteB
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI() && (SystemInfo.isWindows || SystemInfo.isXWindow)
+    e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI() && !SystemInfo.isMac
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

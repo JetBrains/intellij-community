@@ -178,17 +178,17 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     }
   }
 
-  private Promise<Void> linkGradleProjectIfNeeded(@NotNull Project project,
-                                                  @NotNull PlaybackContext context,
-                                                  @NotNull GradleSettings gradleSettings) {
+  public static Promise<Void> linkGradleProjectIfNeeded(@NotNull Project project,
+                                                        @NotNull PlaybackContext context,
+                                                        @NotNull GradleSettings gradleSettings) {
     if (gradleSettings.getLinkedProjectsSettings().isEmpty()) {
       VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
       assert projectDir != null;
       VirtualFile[] children = projectDir.getChildren();
       boolean isGradleProject = ContainerUtil.exists(children, file -> GradleConstants.KNOWN_GRADLE_FILES.contains(file.getName()));
       if (!isGradleProject) {
-        context.error("Unable to find Gradle project at " + projectDir.getPath(), getLine());
-        context.message("Files found at the path: " + Arrays.toString(ContainerUtil.map2Array(children, VirtualFile::getName)), getLine());
+        context.error("Unable to find Gradle project at " + projectDir.getPath(), 0);
+        context.message("Files found at the path: " + Arrays.toString(ContainerUtil.map2Array(children, VirtualFile::getName)), 0);
         return Promises.rejectedPromise();
       }
       else {

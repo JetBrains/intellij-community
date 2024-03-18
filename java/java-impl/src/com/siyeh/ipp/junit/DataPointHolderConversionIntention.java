@@ -22,7 +22,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Dmitry Batkovich
  */
-public class DataPointHolderConversionIntention extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class DataPointHolderConversionIntention extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final String THEORIES_PACKAGE = "org.junit.experimental.theories";
   private static final String DATA_POINT_FQN = THEORIES_PACKAGE + ".DataPoint";
   private static final String DATA_POINTS_FQN = THEORIES_PACKAGE + ".DataPoints";

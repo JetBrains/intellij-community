@@ -39,7 +39,7 @@ import java.util.Arrays;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ReturnNullInspection extends BaseInspection {
+public final class ReturnNullInspection extends BaseInspection {
 
   private static final CallMatcher.Simple MAP_COMPUTE =
     CallMatcher.instanceCall("java.util.Map", "compute", "computeIfPresent", "computeIfAbsent");

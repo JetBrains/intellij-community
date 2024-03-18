@@ -7,6 +7,7 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
+import kotlinx.serialization.json.JsonObject
 
 class DemoFeedbackDialogWithEmail(
   project: Project?,
@@ -49,11 +50,19 @@ class DemoFeedbackDialogWithEmail(
                          CheckBoxItemData(DemoFeedbackBundle.message("dialog.checkbox.item.${it}.label"),
                                           "checkbox_${it}")
                        }, "checkbox_group")
-      .addOtherTextField(),
+      .addOtherTextField().requireAnswer(),
     TextAreaBlock(DemoFeedbackBundle.message("dialog.textarea.label"), "textarea")
   )
 
   init {
     init()
+  }
+
+  override fun computeZendeskTicketTags(collectedData: JsonObject): List<String> {
+    return listOf("demo_tag_1", "demo_tag_2")
+  }
+
+  override fun shouldAutoCloseZendeskTicket(): Boolean {
+    return true
   }
 }

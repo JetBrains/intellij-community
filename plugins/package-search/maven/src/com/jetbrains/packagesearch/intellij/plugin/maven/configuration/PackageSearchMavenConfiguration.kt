@@ -16,16 +16,13 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.maven.configuration
 
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 
+@Service(Service.Level.PROJECT)
 @State(
     name = "PackageSearchMavenConfiguration",
     storages = [(Storage(PackageSearchGeneralConfiguration.StorageFileName))],

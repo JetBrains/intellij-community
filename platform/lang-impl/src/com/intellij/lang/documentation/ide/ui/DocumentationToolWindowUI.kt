@@ -28,6 +28,7 @@ internal class DocumentationToolWindowUI(
 
   val contentComponent: JComponent = JPanel(BorderLayout()).also { panel: JPanel ->
     panel.add(ui.scrollPane, BorderLayout.CENTER)
+    panel.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
   }
 
   val editorPane: DocumentationEditorPane get() = ui.editorPane

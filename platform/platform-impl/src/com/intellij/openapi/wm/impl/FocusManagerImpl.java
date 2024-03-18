@@ -90,6 +90,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         }
       }
     });
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(event -> {
+      if (FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+        FOCUS_REQUESTS_LOG.debug(event.getPropertyName() + "=" + event.getNewValue());
+      }
+    });
   }
 
   @Override

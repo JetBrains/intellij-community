@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.DataManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
@@ -19,6 +20,8 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -26,23 +29,28 @@ import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
 import java.util.stream.Stream
+import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 class SavedPatchesTree(project: Project,
                        private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
+                       private val isProviderVisible: (SavedPatchesProvider<*>) -> Boolean,
                        parentDisposable: Disposable) : AsyncChangesTree(project, false, false, false) {
   internal val speedSearch: SpeedSearchSupply
   override val changesTreeModel: AsyncChangesTreeModel = SavedPatchesTreeModel()
 
+  internal val visibleProvidersList get() = savedPatchesProviders.filter { isProviderVisible(it) }
+
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
     setCellRenderer(MyTreeRenderer(nodeRenderer))
+    putClientProperty(RenderingHelper.SHRINK_LONG_SELECTION, true)
+    putClientProperty(RenderingHelper.SHRINK_LONG_RENDERER, true)
 
     treeStateStrategy = SavedPatchesTreeStateStrategy
     isScrollToSelection = false
@@ -62,7 +70,13 @@ class SavedPatchesTree(project: Project,
       isEnabled
     }
 
-    savedPatchesProviders.forEach { provider -> provider.subscribeToPatchesListChanges(parentDisposable, ::rebuildTree) }
+    savedPatchesProviders.forEach { provider ->
+      provider.subscribeToPatchesListChanges(parentDisposable) {
+        if (isProviderVisible(provider)) rebuildTree()
+      }
+    }
+
+    Disposer.register(parentDisposable) { shutdown() }
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
@@ -71,7 +85,7 @@ class SavedPatchesTree(project: Project,
 
   override fun getData(dataId: String): Any? {
     val selectedObjects = selectedPatchObjects()
-    val data = savedPatchesProviders.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
+    val data = visibleProvidersList.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
     if (data != null) return data
     if (CommonDataKeys.PROJECT.`is`(dataId)) return myProject
     return super.getData(dataId)
@@ -85,11 +99,18 @@ class SavedPatchesTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
+  internal fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
+    if (!isProviderVisible(provider)) return
+    val tagNode = VcsTreeModelData.findTagNode(this, provider.tag) ?: root
+    expandPath(TreeUtil.getPathFromRoot(tagNode))
+  }
+
   private inner class SavedPatchesTreeModel : SimpleAsyncChangesTreeModel() {
     override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
       val modelBuilder = TreeModelBuilder(project, grouping)
-      if (savedPatchesProviders.any { !it.isEmpty() }) {
-        savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
+      val visibleProviders = visibleProvidersList
+      if (visibleProviders.any { !it.isEmpty() }) {
+        visibleProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder, visibleProviders.size > 1) }
       }
       return modelBuilder.build()
     }
@@ -121,11 +142,10 @@ class SavedPatchesTree(project: Project,
   }
 
   private class MyTreeRenderer(renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
-    private var painter: SavedPatchesProvider.PatchObject.Painter? = null
+    private val labelWrapper = Wrapper()
 
-    override fun paint(g: Graphics) {
-      super.paint(g)
-      painter?.paint(g as Graphics2D)
+    init {
+      add(labelWrapper, BorderLayout.EAST)
     }
 
     override fun getTreeCellRendererComponent(tree: JTree,
@@ -137,7 +157,7 @@ class SavedPatchesTree(project: Project,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
       val node = value as ChangesBrowserNode<*>
-      painter = customizePainter(tree as ChangesTree, node, row, selected)
+      labelWrapper.setContent(getLabelComponent(tree as ChangesTree, node, row, selected))
       val speedSearch = SpeedSearchSupply.getSupply(tree)
       if (speedSearch != null) {
         val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*>
@@ -151,16 +171,9 @@ class SavedPatchesTree(project: Project,
       return rendererComponent
     }
 
-    private fun customizePainter(tree: ChangesTree,
-                                 node: ChangesBrowserNode<*>,
-                                 row: Int,
-                                 selected: Boolean): SavedPatchesProvider.PatchObject.Painter? {
-      if (tree.expandableItemsHandler.expandedItems.contains(row)) {
-        return null
-      }
-
+    private fun getLabelComponent(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): JComponent? {
       val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*> ?: return null
-      return patchObject.createPainter(tree, this, row, selected)
+      return patchObject.getLabelComponent(tree, row, selected)
     }
   }
 

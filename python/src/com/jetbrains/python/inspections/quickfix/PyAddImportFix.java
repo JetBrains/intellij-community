@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-public class PyAddImportFix implements LocalQuickFix {
+public class PyAddImportFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   private final String myImportToAdd;
   /**
@@ -49,10 +49,8 @@ public class PyAddImportFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    PsiElement element = descriptor.getPsiElement();
-    if (element == null) return;
     PsiFile file = element.getContainingFile();
     final PyImportStatementBase statement =
       generator.createFromText(LanguageLevel.forElement(file), PyImportStatementBase.class, myImportToAdd);

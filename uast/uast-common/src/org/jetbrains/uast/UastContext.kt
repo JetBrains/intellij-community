@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.containers.CollectionFactory
@@ -15,6 +16,7 @@ import org.jetbrains.uast.util.ClassSetsWrapper
 import org.jetbrains.uast.util.emptyClassSet
 import java.util.*
 
+@Service(Service.Level.PROJECT)
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
   fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastFacade.findPlugin(element)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -7,7 +7,9 @@ import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -27,20 +29,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.AfterEachCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
-import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.*
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 open class ProjectModelRule : TestRule {
   val baseProjectDir: TempDirectory = TempDirectory()
@@ -76,21 +75,26 @@ open class ProjectModelRule : TestRule {
     val manager = moduleManager
     return runWriteActionAndWait {
       manager.newModule(imlFile, EmptyModuleType.EMPTY_MODULE)
+    }.also {
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
   }
 
   fun createModule(name: String, moduleModel: ModifiableModuleModel): Module {
-    return moduleModel.newModule(generateImlPath(name), EmptyModuleType.EMPTY_MODULE)
+    return moduleModel.newModule(generateImlPath(name), EmptyModuleType.EMPTY_MODULE).also {
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+    }
   }
 
   fun addSourceRoot(module: Module, relativePath: String, rootType: JpsModuleSourceRootType<*>): VirtualFile {
     val srcRoot = baseProjectDir.newVirtualDirectory("${module.name}/$relativePath")
     ModuleRootModificationUtil.updateModel(module) { model ->
-      val contentRootUrl = VfsUtil.pathToUrl(projectRootDir.resolve(module.name).systemIndependentPath)
+      val contentRootUrl = VfsUtil.pathToUrl(projectRootDir.resolve(module.name).invariantSeparatorsPathString)
       val contentEntry = model.contentEntries.find { it.url == contentRootUrl } ?: model.addContentEntry(contentRootUrl)
       require(contentEntry.sourceFolders.none { it.url == srcRoot.url }) { "Source folder $srcRoot already exists" }
       contentEntry.addSourceFolder(srcRoot, rootType)
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     return srcRoot
   }
 
@@ -99,6 +103,7 @@ open class ProjectModelRule : TestRule {
   fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
     val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
     modifySdk(sdk, setup)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     return sdk
   }
 
@@ -108,8 +113,15 @@ open class ProjectModelRule : TestRule {
       setup(sdkModificator)
     }
     finally {
-      sdkModificator.commitChanges()
+      val application = ApplicationManager.getApplication()
+      val runnable = { sdkModificator.commitChanges() }
+      if (application.isDispatchThread) {
+        runWriteAction(runnable)
+      } else {
+        application.invokeAndWait { runWriteAction(runnable) }
+      }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   fun addSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
@@ -122,6 +134,7 @@ open class ProjectModelRule : TestRule {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
@@ -133,6 +146,7 @@ open class ProjectModelRule : TestRule {
     ModuleRootModificationUtil.updateModel(module) { model ->
       library.set(addLibrary(name, model.moduleLibraryTable, setup))
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     return library.get()
   }
 
@@ -148,6 +162,7 @@ open class ProjectModelRule : TestRule {
     if (libraryTable.tableLevel !in setOf(LibraryTableImplUtil.MODULE_LEVEL, LibraryTablesRegistrar.PROJECT_LEVEL)) {
       disposeOnTearDown(library)
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     return library
   }
 
@@ -182,22 +197,26 @@ open class ProjectModelRule : TestRule {
     val model = library.modifiableModel as LibraryEx.ModifiableModelEx
     action(model)
     runWriteActionAndWait { model.commit() }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   fun renameModule(module: Module, newName: String) {
     val model = runReadAction { moduleManager.getModifiableModel() }
     model.renameModule(module, newName)
     runWriteActionAndWait { model.commit() }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   fun removeModule(module: Module) {
     runWriteActionAndWait { moduleManager.disposeModule(module) }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   fun setUnloadedModules(vararg moduleName: String) {
     runUnderModalProgressIfIsEdt {
       moduleManager.setUnloadedModules(moduleName.toList())
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C = type.createDefaultConfiguration()): F {
@@ -206,11 +225,13 @@ open class ProjectModelRule : TestRule {
     val facet = facetManager.createFacet(type, type.defaultFacetName, configuration, null)
     model.addFacet(facet)
     runWriteActionAndWait { model.commit() }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     return facet
   }
 
   fun removeFacet(facet: Facet<*>) {
     FacetUtil.deleteFacet(facet)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   protected fun setUp(methodName: String) {

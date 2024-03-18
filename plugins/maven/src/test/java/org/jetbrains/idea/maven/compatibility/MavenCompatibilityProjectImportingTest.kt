@@ -45,11 +45,11 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
   @Before
   fun before() {
-    myWrapperTestFixture = MavenWrapperTestFixture(myProject, myMavenVersion)
+    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
     myWrapperTestFixture!!.setUp()
 
 
-    val helper = MavenCustomRepositoryHelper(myDir, "local1")
+    val helper = MavenCustomRepositoryHelper(dir, "local1")
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
   }
@@ -63,7 +63,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   @Test
   fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking {
     assumeVersionAtLeast("3.1.0")
-    val helper = MavenCustomRepositoryHelper(myDir, "plugins")
+    val helper = MavenCustomRepositoryHelper(dir, "plugins")
     repositoryPath = helper.getTestDataPath("plugins")
     mavenGeneralSettings.isWorkOffline = true
 
@@ -82,7 +82,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    doImportProjects(java.util.List.of(myProjectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     val projects = projectsTree.projects
     assertEquals(1, projects.size)
@@ -159,8 +159,8 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
 
-  private fun assertCorrectVersion() {
-    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path).mavenDistribution.version)
+  private suspend fun assertCorrectVersion() {
+    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.version)
   }
 
   @Test
@@ -224,7 +224,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </modules>
                     """.trimIndent())
 
-    waitForReadingCompletion()
     assertModules("project", mn("project", "module1"))
 
     assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.0")
@@ -267,7 +266,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </modules>
                     """.trimIndent())
 
-    waitForReadingCompletion()
     assertModules("project", mn("project", "module1"))
 
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0")
@@ -304,7 +302,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     <module>module1</module>
                     </modules>
                     """.trimIndent())
-    waitForReadingCompletion()
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:2.0")
   }
 
@@ -335,7 +332,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                             <revision>1.0-SNAPSHOT</revision>
                         </properties>
                     """.trimIndent())
-    waitForReadingCompletion()
 
     assertModules("project", mn("project", "module1"))
   }
@@ -384,7 +380,8 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
     @get:Parameterized.Parameters(name = "with Maven-{0}")
     val mavenVersions: List<Array<String>>
       get() = listOf(
-        arrayOf("4.0.0-alpha-8"),
+        arrayOf("4.0.0-alpha-12"),
+        arrayOf("3.9.6"),
         arrayOf("3.9.5"),
         arrayOf("3.9.4"),
         arrayOf("3.9.3"),

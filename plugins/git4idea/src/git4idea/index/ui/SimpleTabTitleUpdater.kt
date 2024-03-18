@@ -45,6 +45,7 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
   }
 
   private fun updatePresentation() {
+    if (disposableFlag.isDisposed) return
     val tab = getTab() ?: return
 
     tab.displayName = getDisplayName()

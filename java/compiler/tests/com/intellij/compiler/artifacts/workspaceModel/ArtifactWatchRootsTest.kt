@@ -8,6 +8,7 @@ import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
@@ -15,7 +16,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import com.intellij.workspaceModel.ide.getInstance
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -29,10 +29,12 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
       testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")
     }
 
-    val outputVirtualUrl = VirtualFileUrlManager.getInstance(project).fromPath(outputDir.path)
-    val fileVirtualUrl = VirtualFileUrlManager.getInstance(project).fromPath(file.path)
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+    val outputVirtualUrl = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(outputDir.path))
+    val fileVirtualUrl = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(file.path))
     runWriteAction {
-      WorkspaceModel.getInstance(project).updateProjectModel {
+      workspaceModel.updateProjectModel {
         val fileCopy = it addEntity FileCopyPackagingElementEntity(fileVirtualUrl, MySource)
         val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
           children = listOf(fileCopy)
@@ -48,7 +50,7 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
       file.rename(this, "AnotherName")
     }
 
-    val artifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).single()
+    val artifactEntity = workspaceModel.currentSnapshot.entities(ArtifactEntity::class.java).single()
     val copyElement = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
     assertEquals("AnotherName", copyElement.filePath.fileName)
   }

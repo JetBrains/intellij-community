@@ -23,6 +23,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.DiffTitleHandler;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
@@ -59,7 +60,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   protected void onInit() {
     super.onInit();
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-    myContentPanel.setTitle(createTitle());
+    DiffTitleHandler.createHandler(() -> createTitle(), myContentPanel, myRequest, this);
   }
 
   @Override
@@ -86,7 +87,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   @Nullable
   protected JComponent createTitle() {
     List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(this, myRequest);
-    return mySide.select(simpleTitles);
+    return getSide().select(simpleTitles);
   }
 
   //

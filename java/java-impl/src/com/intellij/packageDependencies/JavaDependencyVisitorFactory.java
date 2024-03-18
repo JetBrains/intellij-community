@@ -20,7 +20,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
+public final class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
   @NotNull
   @Override
   public PsiElementVisitor getVisitor(@NotNull DependenciesBuilder.DependencyProcessor processor, @NotNull VisitorOptions options) {

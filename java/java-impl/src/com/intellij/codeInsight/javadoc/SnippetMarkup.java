@@ -238,7 +238,7 @@ public class SnippetMarkup {
   public record WholeLine() implements Selector {
     @Override
     public @NotNull List<TextRange> ranges(String string) {
-      return List.of(TextRange.create(0, string.length()));
+      return List.of(TextRange.create(0, string.endsWith("\n") ? string.length() - 1 : string.length()));
     }
   }
 
@@ -502,7 +502,7 @@ public class SnippetMarkup {
     if (prev.content().isBlank() && !prev.content().isEmpty()) {
       prev = new PlainText(TextRange.from(text.range().getEndOffset(), 0), "");
     }
-    if (hasColon) {
+    if (hasColon || (!prev.content().isEmpty() && ContainerUtil.and(markupNodes, mn -> mn instanceof EndRegion))) {
       markupNodes.add(0, prev);
     }
     else {

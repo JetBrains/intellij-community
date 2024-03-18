@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.application.Application;
@@ -7,7 +7,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.CompareWithLocalDialog;
+import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitReference;
 import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -15,10 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 class GitBrancherImpl implements GitBrancher {
 
@@ -169,7 +172,36 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<? extends GitRepository> repositories) {
+  public void showDiff(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends GitRepository> repositories) {
+    String dialogTitle = GitBundle.message("git.log.diff.handler.changes.between.revisions.title",
+                                           branchName, otherBranchName);
+    CompareWithLocalDialog.showChanges(myProject, dialogTitle, CompareWithLocalDialog.LocalContent.NONE, () -> {
+      List<Change> changes = new ArrayList<>();
+      for (GitRepository repository : repositories) {
+        VirtualFile root = repository.getRoot();
+        changes.addAll(GitChangeUtils.getDiff(myProject, root, branchName, otherBranchName,
+                                              Collections.singleton(VcsUtil.getFilePath(root))));
+      }
+      return changes;
+    });
+  }
+
+  @Override
+  public void merge(@NotNull GitReference reference,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends @NotNull GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).merge(reference, deleteOnMerge, repositories);
+      }
+    }.runInBackground();
+  }
+
+  @Override
+  public void merge(@NotNull String branchName,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", branchName), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {

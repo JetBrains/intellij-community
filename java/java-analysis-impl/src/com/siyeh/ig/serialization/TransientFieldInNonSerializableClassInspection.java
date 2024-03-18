@@ -27,7 +27,7 @@ import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TransientFieldInNonSerializableClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class TransientFieldInNonSerializableClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

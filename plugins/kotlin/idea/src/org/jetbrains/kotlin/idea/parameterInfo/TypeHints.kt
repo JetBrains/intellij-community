@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoOption
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
@@ -30,16 +31,16 @@ import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
-fun providePropertyTypeHint(elem: PsiElement): List<InlayInfoDetails> {
+fun providePropertyTypeHint(elem: PsiElement, inlayInfoOption: InlayInfoOption): List<InlayInfoDetails> {
     (elem as? KtCallableDeclaration)?.let { property ->
         property.nameIdentifier?.let { ident ->
-            provideTypeHint(property, ident.endOffset)?.let { return listOf(it) }
+            provideTypeHint(property, ident.endOffset, inlayInfoOption)?.let { return listOf(it) }
         }
     }
     return emptyList()
 }
 
-fun provideTypeHint(element: KtCallableDeclaration, offset: Int): InlayInfoDetails? {
+fun provideTypeHint(element: KtCallableDeclaration, offset: Int, inlayInfoOption: InlayInfoOption): InlayInfoDetails? {
     var type: KotlinType = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(element).unwrap()
     if (type.containsError()) return null
     val declarationDescriptor = type.constructor.declarationDescriptor
@@ -86,7 +87,7 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): InlayInfoDetai
             text = "", offset = offset,
             isShowOnlyIfExistedBefore = false, isFilterByBlacklist = true, relatesToPrecedingText = true
         )
-        return InlayInfoDetails(inlayInfo, listOf(TextInlayInfoDetail(prefix)) + renderedType)
+        return InlayInfoDetails(inlayInfo, listOf(TextInlayInfoDetail(prefix)) + renderedType, inlayInfoOption)
     } else {
         null
     }

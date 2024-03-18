@@ -36,7 +36,7 @@ class KotlinGradleSourceSetDataServiceTest : KotlinGradleImportingTestCase() {
     @TargetVersions("7.6+")
     fun testSingleFacetPerModule() {
         configureByFiles()
-        // This means a single module is imported (project) rather than one per source set
+        // This means a single module called project is imported rather than one per source set
         currentExternalProjectSettings.isResolveModulePerSourceSet = false
         importProject()
         assertDoesNotThrow {

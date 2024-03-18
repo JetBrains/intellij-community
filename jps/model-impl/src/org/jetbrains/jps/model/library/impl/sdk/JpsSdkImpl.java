@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.library.impl.sdk;
 
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -10,6 +9,8 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+
+import java.util.Objects;
 
 public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsSdkImpl<P>> implements JpsSdk<P> {
   private final JpsSdkType<P> mySdkType;
@@ -59,13 +60,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   }
 
   @Override
-  public void applyChanges(@NotNull JpsSdkImpl<P> modified) {
-    super.applyChanges(modified);
-    setHomePath(modified.getHomePath());
-    setVersionString(modified.getVersionString());
-  }
-
-  @Override
   public String getHomePath() {
     return myHomePath;
   }
@@ -74,7 +68,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   public void setHomePath(String homePath) {
     if (!Objects.equals(myHomePath, homePath)) {
       myHomePath = homePath;
-      fireElementChanged();
     }
   }
 
@@ -87,7 +80,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   public void setVersionString(String versionString) {
     if (!Objects.equals(myVersionString, versionString)) {
       myVersionString = versionString;
-      fireElementChanged();
     }
   }
 }

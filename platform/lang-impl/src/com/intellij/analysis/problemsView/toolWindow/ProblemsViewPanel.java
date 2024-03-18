@@ -214,11 +214,11 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), "ProblemsView.ToolWindow.TreePopup");
+    PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), ActionPlaces.PROBLEMS_VIEW_POPUP);
     myTreeExpander = new DefaultTreeExpander(myTree);
 
     JComponent centerComponent = createCenterComponent();
-    myToolbar = getToolbar();
+    myToolbar = createToolbar();
     myToolbar.setTargetComponent(centerComponent);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
     myPanel = new JPanel(new BorderLayout());
@@ -483,9 +483,9 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return "ProblemsView.ToolWindow.Toolbar";
   }
 
-  protected ActionToolbar getToolbar() {
+  protected @NotNull ActionToolbar createToolbar() {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(getToolbarActionGroupId());
-    return ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.PROBLEMS_VIEW_TOOLBAR, group, false);
   }
 
   protected @NotNull Comparator<Node> createComparator() {

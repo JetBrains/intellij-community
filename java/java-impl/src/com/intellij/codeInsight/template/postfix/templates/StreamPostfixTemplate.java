@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
-public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
+public class StreamPostfixTemplate extends StringBasedPostfixTemplate implements DumbAware {
   private static final Condition<PsiElement> IS_SUPPORTED_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 

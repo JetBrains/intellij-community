@@ -9,10 +9,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,21 +24,23 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   private final static Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
+
     boolean isO1Static = o1.hasModifierProperty(PsiModifier.STATIC);
     boolean isO2Static = o2.hasModifierProperty(PsiModifier.STATIC);
+    int o1Parameters = o1.getParameterList().getParametersCount();
+    int o2Parameters = o2.getParameterList().getParametersCount();
 
+    boolean is22PreviewOrLater = PsiUtil.getLanguageLevel(o1).isAtLeast(LanguageLevel.JDK_22_PREVIEW);
+
+    if (is22PreviewOrLater) {
+      return Integer.compare(o2Parameters, o1Parameters);
+    }
+
+    //only for java 21 preview
     if(isO1Static == isO2Static) {
-      int o1Parameters = o1.getParameterList().getParametersCount();
-      int o2Parameters = o2.getParameterList().getParametersCount();
-
-      if (o1Parameters == o2Parameters) {
-        return 0;
-      } else {
-        return Integer.compare(o2Parameters, o1Parameters);
-      }
+      return Integer.compare(o2Parameters, o1Parameters);
     } else if(isO1Static) {
       return -1;
     } else {
@@ -55,13 +59,18 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiClass aClass) {
       if (PsiMethodUtil.findMainInClass(aClass) == null) return null;
+      if (PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) return null;
     }
     else if (parent instanceof PsiMethod method) {
       if (!"main".equals(method.getName()) || !PsiMethodUtil.isMainMethod(method)) return null;
       PsiClass containingClass = method.getContainingClass();
-      if (!(containingClass instanceof PsiUnnamedClass) && PsiTreeUtil.getParentOfType(containingClass, PsiUnnamedClass.class) != null) return null;
+      if (!(containingClass instanceof PsiImplicitClass) && PsiTreeUtil.getParentOfType(containingClass, PsiImplicitClass.class) != null) return null;
       if (containingClass == null || PsiUtil.isLocalOrAnonymousClass(containingClass)) return null;
-      if (containingClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) return null;
+      PsiMethod[] constructors = containingClass.getConstructors();
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
+        return null;
+      }
+      if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC)) return null;
       Optional<PsiMethod> mainMethod =
         Arrays.stream(containingClass.getMethods())
           .filter(m -> "main".equals(m.getName()) && PsiMethodUtil.isMainMethod(m))

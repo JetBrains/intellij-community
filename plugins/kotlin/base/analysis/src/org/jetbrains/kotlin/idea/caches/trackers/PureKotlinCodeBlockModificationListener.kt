@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
@@ -29,7 +30,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
+@Service(Service.Level.PROJECT)
 class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable {
+
+    private val outOfCodeBlockModificationTrackerImpl = SimpleModificationTracker()
+    val outOfCodeBlockModificationTracker: ModificationTracker = outOfCodeBlockModificationTrackerImpl
+
     companion object {
         fun getInstance(project: Project): PureKotlinCodeBlockModificationListener = project.service()
 
@@ -298,6 +304,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
     private fun didChangeKotlinCode(ktFile: KtFile, physical: Boolean) {
         if (physical) {
+            outOfCodeBlockModificationTrackerImpl.incModificationCount()
             KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
             KotlinModuleOutOfCodeBlockModificationTracker.getUpdaterInstance(project).onKotlinPhysicalFileOutOfBlockChange(ktFile, true)
         }

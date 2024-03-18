@@ -1,37 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 
-class GrReplaceReturnWithYield : IntentionAction {
-  override fun startInWriteAction(): Boolean {
-    return true
-  }
-
-  override fun getText(): String = GroovyBundle.message("intention.name.replace", "return", "yield")
-
+class GrReplaceReturnWithYield : PsiUpdateModCommandAction<GrReturnStatement>(GrReturnStatement::class.java) {
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.replace.keywords")
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    editor ?: return false
-    file ?: return false
-    file.findElementAt(editor.caretModel.offset)?.parentOfType<GrReturnStatement>() ?: return false
-    return true
+  override fun getPresentation(context: ActionContext, element: GrReturnStatement): Presentation {
+    return Presentation.of(GroovyBundle.message("intention.name.replace", "return", "yield"))
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    editor ?: return
-    file ?: return
-    val elementUnderCaret = file.findElementAt(editor.caretModel.offset)?.parentOfType<GrReturnStatement>() ?: return
+  override fun invoke(context: ActionContext, elementUnderCaret: GrReturnStatement, updater: ModPsiUpdater) {
     val returnWord = elementUnderCaret.returnWord
-    editor.document.replaceString(returnWord.startOffset, returnWord.endOffset, "yield")
+    elementUnderCaret.containingFile.viewProvider.document.replaceString(returnWord.startOffset, returnWord.endOffset, "yield")
   }
 }

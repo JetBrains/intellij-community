@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -42,16 +43,18 @@ public final class HighlightNamesUtil {
     boolean isStaticallyImported = false;
 
     if (!isDeclaration) {
-      isStaticallyImported = isStaticallyImported(elementToHighlight);
-      if (isCalledOnThis(elementToHighlight)) {
-        PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
-        PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
-        while (enclosingClass != null) {
-          isInherited = enclosingClass.isInheritor(containingClass, true);
-          if (isInherited) break;
-          enclosingClass = PsiTreeUtil.getParentOfType(enclosingClass, PsiClass.class, true);
+      try {
+        isStaticallyImported = isStaticallyImported(elementToHighlight);
+        if (isCalledOnThis(elementToHighlight)) {
+          PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
+          PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
+          while (enclosingClass != null) {
+            isInherited = enclosingClass.isInheritor(containingClass, true);
+            if (isInherited) break;
+            enclosingClass = PsiTreeUtil.getParentOfType(enclosingClass, PsiClass.class, true);
+          }
         }
-      }
+      } catch (IndexNotReadyException ignored) { }
     }
 
     LOG.assertTrue(methodOrClass instanceof PsiMethod || !isDeclaration);
@@ -236,6 +239,9 @@ public final class HighlightNamesUtil {
       PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME;
     }
+    if (aClass == null && element.getParent() instanceof PsiAnnotation) {
+      return JavaHighlightInfoTypes.ANNOTATION_NAME;
+    }
     // use class by default
     return JavaHighlightInfoTypes.CLASS_NAME;
   }
@@ -321,7 +327,7 @@ public final class HighlightNamesUtil {
     return textRange.getStartOffset();
   }
 
-  static @NotNull HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
+  static @NotNull HighlightInfo highlightPackage(@Nullable PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
     PsiElement referenceNameElement = elementToHighlight.getReferenceNameElement();
     TextRange range;
     if (referenceNameElement == null) {

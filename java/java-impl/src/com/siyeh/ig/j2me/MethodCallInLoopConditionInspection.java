@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodCallInLoopConditionInspection extends BaseInspection {
+public final class MethodCallInLoopConditionInspection extends BaseInspection {
 
   public boolean ignoreIterationMethods = true;
 

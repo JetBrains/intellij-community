@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -23,14 +22,15 @@ import com.intellij.vcs.log.graph.utils.NormalEdge;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
+import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asNormalEdge;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getNotNullNodeIndex;
 
 public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElement> {
-  @NotNull private final NotNullFunction<? super Integer, Integer> myLayoutIndexGetter;
+  @NotNull private final Function<? super Integer, @NotNull Integer> myLayoutIndexGetter;
 
-  public GraphElementComparatorByLayoutIndex(@NotNull NotNullFunction<? super Integer, Integer> layoutIndexGetter) {
+  public GraphElementComparatorByLayoutIndex(@NotNull Function<? super Integer, @NotNull Integer> layoutIndexGetter) {
     myLayoutIndexGetter = layoutIndexGetter;
   }
 
@@ -86,6 +86,6 @@ public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElem
   }
 
   private int getLayoutIndex(int nodeIndex) {
-    return myLayoutIndexGetter.fun(nodeIndex);
+    return myLayoutIndexGetter.apply(nodeIndex);
   }
 }

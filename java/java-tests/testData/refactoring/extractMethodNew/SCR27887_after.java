@@ -37,8 +37,7 @@ public class SCR27887 {
         return included.size();
     }
 
-    @NotNull
-    private RefObjectUList newMethod(ZippingXMLGeneratorFactory genFac) {
+    private @NotNull RefObjectUList newMethod(ZippingXMLGeneratorFactory genFac) {
         RefObjectUList included = makeIncludedSet();
         if (!included.isEmpty()) {
             ScatteringDocBuilder docBuilder = new MyDocBuilder(repository, included);

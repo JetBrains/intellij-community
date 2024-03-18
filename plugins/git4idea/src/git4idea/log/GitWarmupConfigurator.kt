@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.ide.CommandLineProgressReporterElement
@@ -8,10 +8,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.isIndexingEnabled
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
-import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import com.intellij.vcs.log.util.VcsLogUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
@@ -25,7 +25,7 @@ class GitWarmupConfigurator : WarmupConfigurator {
 
   override suspend fun runWarmup(project: Project): Boolean {
     val logger = coroutineContext[CommandLineProgressReporterElement.Key]?.reporter
-    if (!VcsLogData.isIndexSwitchedOnInRegistry() || !VcsLogSharedSettings.isIndexSwitchedOn(project)) {
+    if (!project.isIndexingEnabled) {
       logger?.reportMessage(1, "Indexing of git log is disabled")
       return false
     }
@@ -37,7 +37,8 @@ class GitWarmupConfigurator : WarmupConfigurator {
       return false
     }
 
-    val manager = VcsLogManager(project, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders, false) { _, throwable ->
+    val manager = VcsLogManager(project, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders,
+                                "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", false, true) { _, throwable ->
       logger?.reportMessage(1, throwable.stackTraceToString())
     }
     blockingContextScope {

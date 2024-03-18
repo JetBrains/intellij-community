@@ -23,7 +23,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 
-public class AbstractClassNamingConvention extends NamingConvention<PsiClass> {
+public final class AbstractClassNamingConvention extends NamingConvention<PsiClass> {
   public static final @NonNls String ABSTRACT_CLASS_NAMING_CONVENTION_SHORT_NAME = "AbstractClassNamingConvention";
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;

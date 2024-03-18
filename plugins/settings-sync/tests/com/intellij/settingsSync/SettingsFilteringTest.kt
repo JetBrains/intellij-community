@@ -10,10 +10,10 @@ import com.intellij.testFramework.LightPlatformTestCase
 class SettingsFilteringTest : LightPlatformTestCase() {
 
   fun `test editor settings sync enabled via Code category` () {
-    assertTrue(isSyncEnabled("editor.xml", RoamingType.DEFAULT))
+    assertTrue(isSyncCategoryEnabled("editor.xml"))
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, false)
     try {
-      assertFalse(isSyncEnabled("editor.xml", RoamingType.DEFAULT))
+      assertFalse(isSyncCategoryEnabled("editor.xml"))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, true)
@@ -21,13 +21,13 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   }
 
   fun `test color scheme sync enabled via UI category` () {
-    if (!isSyncEnabled("colors/my_scheme.icls", RoamingType.DEFAULT)) {
+    if (!isSyncCategoryEnabled("colors/my_scheme.icls")) {
       EditorColorsManagerImpl() // ensure that color scheme manager is initialized and registered
     }
-    assertTrue(isSyncEnabled("colors/my_scheme.icls", RoamingType.DEFAULT))
+    assertTrue(isSyncCategoryEnabled("colors/my_scheme.icls"))
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
-      assertFalse(isSyncEnabled("colors/my_scheme.icls", RoamingType.DEFAULT))
+      assertFalse(isSyncCategoryEnabled("colors/my_scheme.icls"))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, true)
@@ -35,10 +35,10 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   }
 
   fun `test passing the whole scheme storage directory`() {
-    assertTrue(isSyncEnabled("keymaps", RoamingType.DEFAULT))
+    assertTrue(isSyncCategoryEnabled("keymaps"))
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
     try {
-      assertFalse(isSyncEnabled("keymaps", RoamingType.DEFAULT))
+      assertFalse(isSyncCategoryEnabled("keymaps"))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, true)
@@ -46,10 +46,10 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   }
 
   fun `test font sync enabled via subcategory` () {
-    assertTrue(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
+    assertTrue(isSyncCategoryEnabled("editor-font.xml"))
     SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID, false)
     try {
-      assertFalse(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
+      assertFalse(isSyncCategoryEnabled("editor-font.xml"))
     }
     finally {
       SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID, true)
@@ -59,10 +59,10 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   fun `test keymap settings enabled via Keymap category` () {
     val osPrefix = getPerOsSettingsStorageFolderName() + "/"
     val fileSpec = osPrefix + "keymap.xml"
-    assertTrue(isSyncEnabled(fileSpec, RoamingType.PER_OS))
+    assertTrue(isSyncCategoryEnabled(fileSpec))
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
     try {
-      assertFalse(isSyncEnabled(fileSpec, RoamingType.PER_OS))
+      assertFalse(isSyncCategoryEnabled(fileSpec))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, true)
@@ -70,6 +70,6 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   }
 
   fun `test settings sync settings always synchronized` () {
-    assertTrue(isSyncEnabled("settingsSync.xml", RoamingType.DEFAULT))
+    assertTrue(isSyncCategoryEnabled("settingsSync.xml"))
   }
 }

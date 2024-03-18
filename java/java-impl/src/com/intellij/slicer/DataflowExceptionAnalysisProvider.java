@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvider {
+public final class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvider {
   private final Project myProject;
 
   public DataflowExceptionAnalysisProvider(Project project) {

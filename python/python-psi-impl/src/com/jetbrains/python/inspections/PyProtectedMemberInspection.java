@@ -47,7 +47,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * protected member (i.e. class member with a name beginning with an underscore)
  * is access outside the class or a descendant of the class where it's defined.
  */
-public class PyProtectedMemberInspection extends PyInspection {
+public final class PyProtectedMemberInspection extends PyInspection {
   public boolean ignoreTestFunctions = true;
   public boolean ignoreAnnotations = false;
 

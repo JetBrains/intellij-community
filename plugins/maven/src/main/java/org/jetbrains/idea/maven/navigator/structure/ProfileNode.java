@@ -106,13 +106,23 @@ class ProfileNode extends MavenSimpleNode {
     return getNavigatable(profiles);
   }
 
+  private record ProfileWithName(MavenDomProfile profile, String name) {
+  }
+
   private static Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
     if (profiles.size() > 1) {
+      var profileUrls = new ArrayList<ProfileWithName>();
+      for (var profile : profiles) {
+        var element = profile.getXmlElement();
+        if (null != element) {
+          profileUrls.add(new ProfileWithName(profile, getPresentableUrl(element)));
+        }
+      }
       return new NavigatableAdapter() {
         @Override
         public void navigate(final boolean requestFocus) {
           JBPopupFactory.getInstance()
-            .createPopupChooserBuilder(profiles)
+            .createPopupChooserBuilder(profileUrls)
             .setRenderer(new DefaultListCellRenderer() {
               @Override
               public Component getListCellRendererComponent(JList list,
@@ -121,18 +131,13 @@ class ProfileNode extends MavenSimpleNode {
                                                             boolean isSelected,
                                                             boolean cellHasFocus) {
                 Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
-                XmlElement xmlElement = mavenDomProfile.getXmlElement();
-                if (xmlElement != null) {
-                  String url = getPresentableUrl(xmlElement);
-                  setText(url);
-                }
+                setText(((ProfileWithName)value).name);
                 return result;
               }
             })
             .setTitle(message("maven.notification.choose.file.to.open"))
             .setItemChosenCallback((value) -> {
-              final Navigatable navigatable = getNavigatable(value);
+              final Navigatable navigatable = getNavigatable(value.profile);
               if (navigatable != null) navigatable.navigate(requestFocus);
             }).createPopup().showInFocusCenter();
         }
@@ -144,7 +149,7 @@ class ProfileNode extends MavenSimpleNode {
   }
 
   @NlsSafe
-  private static @NotNull String getPresentableUrl(XmlElement xmlElement) {
+  private static @NotNull String getPresentableUrl(@NotNull XmlElement xmlElement) {
     return ReadAction.nonBlocking(() -> xmlElement.getContainingFile().getVirtualFile().getPresentableUrl()).executeSynchronously();
   }
 

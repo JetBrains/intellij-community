@@ -13,7 +13,9 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -22,6 +24,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
@@ -32,9 +35,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
-class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
-                                      private val holder: HighlightInfoHolder) : KtVisitorVoid() {
+class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
     private val enabled: Boolean
     private val deadCodeKey: HighlightDisplayKey?
     private val deadCodeInspection: LocalInspectionTool?
@@ -66,26 +67,22 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
             registerLocalReferences(dividedElements.inside())
             registerLocalReferences(dividedElements.outside())
-
-            val declarationVisitor = object : KtVisitorVoid() {
-                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                    handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
-                }
-            }
             // highlight visible symbols first
-            for (declaration in dividedElements.inside()) {
-                declaration.accept(declarationVisitor)
-            }
-            for (declaration in dividedElements.outside()) {
-                declaration.accept(declarationVisitor)
-            }
+            collectAndHighlightNamedElements(dividedElements.inside(), holder)
+            collectAndHighlightNamedElements(dividedElements.outside(), holder)
             true
         }
     }
 
+    context(KtAnalysisSession)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                if (expression.parent is KtValueArgumentName) {
+                    // usage of parameter in form of named argument is not counted
+                    return
+                }
+
                 val symbol = expression.mainReference.resolveToSymbol()
                 if (symbol is KtLocalVariableSymbol || symbol is KtValueParameterSymbol || symbol is KtKotlinPropertySymbol) {
                     refHolder.registerLocalRef(symbol.psi, expression)
@@ -130,12 +127,25 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
         }
     }
 
-    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-        if (enabled) {
-            handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
+    private fun collectAndHighlightNamedElements(psiElements: List<PsiElement>, holder: HighlightInfoHolder) {
+        val namedElements: MutableList<KtNamedDeclaration> = mutableListOf()
+        val namedElementVisitor = object : KtVisitorVoid() {
+            override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                namedElements.add(declaration)
+            }
+        }
+        for (declaration in psiElements) {
+            declaration.accept(namedElementVisitor)
+        }
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(namedElements, ProgressManager.getGlobalProgressIndicator()) { declaration ->
+            analyze(declaration) {
+                handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
+            }
+            true
         }
     }
 
+    context(KtAnalysisSession)
     private fun handleDeclaration(declaration: KtNamedDeclaration,
                                   deadCodeInspection: LocalInspectionTool,
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,
@@ -150,12 +160,16 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
             return
         }
         val nameIdentifier = declaration.nameIdentifier
-        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
+        val problemPsiElement =
+            if (mustBeLocallyReferenced
+                && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
+                && declaration !is KtClass // look globally for private classes too, since they could be referenced from some fancy .xml
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
-            (KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { javaInspection.isEntryPoint(it) } ?: return)
+            KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
         }
+        if (problemPsiElement == null) return
         val description = declaration.describe() ?: return
         val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
@@ -190,13 +204,21 @@ class KotlinRefsHolder {
 class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
     @Nls
     private val name: String =
-      KotlinBaseHighlightingBundle.message("safe.delete.text", declaration.name ?: declaration.text)
+        KotlinBaseHighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
+
+    private fun KtNamedDeclaration.toNameKey(): String =
+        when (this) {
+            is KtPrimaryConstructor -> "safe.delete.primary.ctor.text.0"
+            is KtSecondaryConstructor -> "safe.delete.secondary.ctor.text.0"
+            is KtParameter -> "safe.delete.parameter.text.0"
+            else -> "safe.delete.text.0"
+        }
 
     override fun getText(): @IntentionName String {
        return name
     }
 
-    override fun getFamilyName() = KotlinBaseHighlightingBundle.message("safe.delete.family")
+    override fun getFamilyName(): String = KotlinBaseHighlightingBundle.message("safe.delete.family")
 
     override fun startInWriteAction(): Boolean = false
 

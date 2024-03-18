@@ -15,12 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -28,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author Max Medvedev
  */
-public abstract class GrChangeMemberVisibilityModifierBase extends Intention {
+public abstract class GrChangeMemberVisibilityModifierBase extends GrPsiUpdateIntention {
   private final String myModifier;
 
   public GrChangeMemberVisibilityModifierBase(String modifier) {
@@ -36,7 +35,7 @@ public abstract class GrChangeMemberVisibilityModifierBase extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof GrMember)) return;
 

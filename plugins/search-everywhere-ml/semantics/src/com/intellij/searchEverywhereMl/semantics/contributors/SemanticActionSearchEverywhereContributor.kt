@@ -12,24 +12,21 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -38,7 +35,7 @@ import javax.swing.ListCellRenderer
 
 /**
  * Contributor that adds semantic search functionality when searching for actions in Search Everywhere.
- * For search logic refer to [SemanticActionsProvider].
+ * For search logic refer to [com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider].
  * For indexing logic refer to [com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage].
  * Delegates rendering and data retrieval functionality to [ActionSearchEverywhereContributor].
  * Can work with two types of action providers: server-based and local
@@ -75,8 +72,10 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     // We wrap the progressIndicator here to make sure we don't run standard search under the same indicator
-    ProgressManager.getInstance().executeProcessUnderProgress(
-      { fetchElementsConcurrently(pattern, SensitiveProgressWrapper(progressIndicator), consumer) }, progressIndicator)
+    ProgressManager.getInstance().runProcess(
+      { fetchElementsConcurrently(pattern, SensitiveProgressWrapper(progressIndicator), consumer) },
+      progressIndicator
+    )
   }
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
@@ -97,61 +96,57 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                                          progressIndicator: ProgressIndicator,
                                          consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     runBlockingCancellable {
+      model.buildGroupMappings()
       runUpdateSessionForActionSearch(model.updateSession) { presentationProvider ->
         val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
         val mutex = Mutex()
 
-        val itemsProvider = SemanticSearchSettings.getInstance().run {
+        val itemsProvider = SearchEverywhereSemanticSettings.getInstance().run {
           if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model, presentationProvider)
           else LocalSemanticActionsProvider(model, presentationProvider)
         }
         itemsProvider.includeDisabledActions = myDisabledActions
 
         val standardSearchJob = launch {
-          val descriptorFlow = channelFlow {
-            coroutineToIndicator {
-              defaultFetchElements(pattern, progressIndicator) {
-                val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
-                launch {
-                  send(mutex.withLock { prepareDescriptor() })
-                }
-                true
-              }
+          doFetchItems(this, presentationProvider, pattern) {
+            val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
+            val descriptor = mutex.withLock { prepareDescriptor() }
+            blockingContext {
+              consumer.process(descriptor)
             }
-          }.cancellable()
-
-          descriptorFlow.takeWhile {
-            blockingContext { consumer.process(it) }
-          }.collect {}
+          }
         }
 
         val searchStart = System.nanoTime()
         launch {
           var foundItemsCount = 0
-          val cachedDescriptors = mutableListOf<FoundItemDescriptor<MatchedValue>>()
+          val cachedMatches = mutableListOf<ScoredText>()
 
-          val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
+          val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
+          if (semanticMatches.isEmpty()) return@launch
           standardSearchJob.join()
           for (priority in ORDERED_PRIORITIES) {
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
-            else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
+            else cachedMatches.filter { it.findPriority() == priority }.iterator()
 
             while (iterator.hasNext()) {
               ensureActive()
-              val descriptor = iterator.next()
-              if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
-                cachedDescriptors.add(descriptor)
+              val match = iterator.next()
+              if (priority == DescriptorPriority.HIGH && match.findPriority() != priority) {
+                cachedMatches.add(match)
                 continue
               }
 
-              val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
-              mutex.withLock { prepareDescriptor() }?.let {
-                blockingContext { consumer.process(it) }
-                foundItemsCount++
+              for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
+                val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
+                mutex.withLock { prepareDescriptor() }?.let {
+                  blockingContext { consumer.process(it) }
+                  foundItemsCount++
+                }
+                if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) return@launch
               }
-              if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
             }
-            if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) break
+            if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) return@launch
           }
         }
       }
@@ -195,8 +190,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
     super.fetchWeightedElements(pattern, progressIndicator, consumer)
   }
 
-  override fun FoundItemDescriptor<MatchedValue>.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { item.similarityScore!! > priorityThresholds[it]!! }
+  override fun ScoredText.findPriority(): DescriptorPriority {
+    return ORDERED_PRIORITIES.first { similarity > priorityThresholds[it]!! }
   }
 
   override fun syncSearchSettings() {
@@ -206,7 +201,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   companion object {
     private val logger = Logger.getInstance(SemanticActionSearchEverywhereContributor::class.java)
 
-    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.35, 0.25, 0.2)).toMap()
+    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.68, 0.5, 0.4)).toMap()
     private const val DESIRED_RESULTS_COUNT = 10
 
     private fun extractAction(item: Any): AnAction? {

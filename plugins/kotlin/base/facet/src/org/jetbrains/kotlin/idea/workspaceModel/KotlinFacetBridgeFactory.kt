@@ -11,16 +11,14 @@ object KotlinFacetBridgeFactory {
     val kotlinFacetBridgeEnabled: Boolean
         get() = Registry.`is`("workspace.model.kotlin.facet.bridge", false)
 
-    fun createFacetConfiguration(/*metaDataProvider: ConfigFileMetaDataProvider*/): KotlinFacetConfiguration {
+    fun createFacetConfiguration(): KotlinFacetConfiguration {
         return if (kotlinFacetBridgeEnabled) KotlinFacetConfigurationBridge() else KotlinFacetConfigurationImpl()
     }
 
     fun createKotlinFacet(
-        /*facetType: KotlinFacetType,*/
         module: Module,
         name: String,
         configuration: KotlinFacetConfiguration,
-        /*underlyingFacet: Facet<FacetConfiguration>?*/
     ): KotlinFacet {
         return if (kotlinFacetBridgeEnabled) {
             KotlinFacetBridge(module, name, configuration)

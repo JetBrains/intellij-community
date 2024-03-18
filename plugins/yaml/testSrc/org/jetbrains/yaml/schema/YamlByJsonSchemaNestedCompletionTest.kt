@@ -4,7 +4,7 @@ package org.jetbrains.yaml.schema
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.jetbrains.jsonSchema.impl.*
-import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsRootTree
+import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
 import org.intellij.lang.annotations.Language
 
 class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
@@ -82,11 +82,11 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
         }
       }
     """.trimIndent())
-      .withConfiguration {
-        buildNestedCompletionsRootTree {
+      .withConfiguration(
+        buildNestedCompletionsTree {
           isolated("one") {}
         }
-      }
+      )
       .appliedToYamlFile("""
         <caret>
       """.trimIndent())
@@ -116,13 +116,13 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
         }
       }
     """.trimIndent())
-      .withConfiguration {
-        buildNestedCompletionsRootTree {
+      .withConfiguration(
+        buildNestedCompletionsTree {
           isolated("one@(foo|bar)".toRegex()) {
             open("two")
           }
         }
-      }
+      )
       .appliedToYamlFile("""
         one@foo:
           <caret>
@@ -172,15 +172,15 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
         }
       }
     """.trimIndent())
-      .withConfiguration {
-        buildNestedCompletionsRootTree {
+      .withConfiguration(
+        buildNestedCompletionsTree {
           open("one") {
             isolated("two") {
               open("three")
             }
           }
         }
-      }
+      )
       .appliedToYamlFile("""
         <caret>
       """.trimIndent())
@@ -209,20 +209,21 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
   }
 
   private fun JsonSchemaYamlSetup.hasCompletionVariantsAtCaret(vararg expectedVariants: String): JsonSchemaSetup {
-    testBySchema(
-      schemaSetup.schemaJson,
-      yaml,
-      "yaml",
-      { it.apply(schemaSetup.configurator) },
-      { it.renderedText()!! },
-      *expectedVariants,
-    )
-
+    testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
+      testBySchema(
+        schemaSetup.schemaJson,
+        yaml,
+        "yaml",
+        { it.renderedText()!! },
+        *expectedVariants,
+      )
+    }
     return schemaSetup
   }
 }
 
 internal data class JsonSchemaYamlSetup(val schemaSetup: JsonSchemaSetup, @Language("YAML") val yaml: String)
+
 internal fun JsonSchemaSetup.appliedToYamlFile(@Language("YAML") yaml: String) = JsonSchemaYamlSetup(this, yaml)
 
 private fun LookupElement.renderedText(): String? =

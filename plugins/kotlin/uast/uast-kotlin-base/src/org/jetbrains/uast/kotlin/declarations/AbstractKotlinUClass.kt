@@ -16,6 +16,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightAccessor
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightDefaultAccessor
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightDefaultAccessorForConstructorParameter
 import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal
@@ -87,7 +88,9 @@ abstract class AbstractKotlinUClass(
         }
 
         val ktDeclarations: List<KtDeclaration> = run ktDeclarations@{
-            ktClass?.let { return@ktDeclarations it.declarations }
+            ktClass?.let { ktClass ->
+                return@ktDeclarations ktClass.primaryConstructorParameters + ktClass.declarations
+            }
             (javaPsi as? KtLightClassForFacade)?.let { facade ->
                 return@ktDeclarations facade.files.flatMap { file -> file.declarations }
             }
@@ -102,6 +105,22 @@ abstract class AbstractKotlinUClass(
             .flatMapTo(result) { ktDeclaration ->
                 // [KtDeclaration] that doesn't have a corresponding LC element for some reason.
                 when (ktDeclaration) {
+                    is KtParameter -> {
+                        // properties from constructor parameters
+                        if (ktDeclaration.annotationEntries.any { it.isDeprecated() } ||
+                            baseResolveProviderService.hasTypeForValueClassInSignature(ktDeclaration)
+                        ) {
+                            val fakeAccessors = if (ktDeclaration.hasValOrVar()) {
+                                listOfNotNull(
+                                    UastFakeSourceLightDefaultAccessorForConstructorParameter(ktDeclaration, javaPsi, isSetter = false),
+                                    if (ktDeclaration.isMutable)
+                                        UastFakeSourceLightDefaultAccessorForConstructorParameter(ktDeclaration, javaPsi, isSetter = true)
+                                    else null,
+                                )
+                            } else emptyList()
+                            fakeAccessors.mapNotNull { convert(it) as? UMethod }
+                        } else emptyList()
+                    }
                     is KtProperty -> {
                         // properties that are deprecated-hidden (property itself or accessors)
                         val (maybeFakeGetter, maybeFakeSetter) =
@@ -127,41 +146,64 @@ abstract class AbstractKotlinUClass(
     private fun PropertyAccessorsPsiMethods.fakeAccessors(property: KtProperty): Pair<PsiMethod?, PsiMethod?>? {
         val (needsFakeGetter, needsFakeSetter) = needsFakeAccessors(property)
         if (!needsFakeGetter && !needsFakeSetter) return null
-        val ktLightClass = getContainingLightClass(property) ?: return null
         val maybeFakeGetter = if (needsFakeGetter) {
-            property.getter?.let { UastFakeSourceLightAccessor(it, ktLightClass) }
-                ?: UastFakeSourceLightDefaultAccessor(property, ktLightClass, isSetter = false)
+            property.getter?.let { UastFakeSourceLightAccessor(it, javaPsi) }
+                ?: UastFakeSourceLightDefaultAccessor(property, javaPsi, isSetter = false)
         } else null
         val maybeFakeSetter = if (needsFakeSetter) {
-            property.setter?.let { UastFakeSourceLightAccessor(it, ktLightClass) }
-                ?: UastFakeSourceLightDefaultAccessor(property, ktLightClass, isSetter = true)
+            property.setter?.let { UastFakeSourceLightAccessor(it, javaPsi) }
+                ?: UastFakeSourceLightDefaultAccessor(property, javaPsi, isSetter = true)
         } else null
         return maybeFakeGetter to maybeFakeSetter
     }
 
-    private fun PropertyAccessorsPsiMethods.needsFakeAccessors(property: KtProperty): Pair<Boolean, Boolean> {
-        if (property.annotationEntries.isEmpty()) return false to false
+    private fun PropertyAccessorsPsiMethods.needsFakeAccessors(property: KtProperty): NeedFakeAccessors {
+
+        fun needsFakeGetter() = getter == null
+
+        fun needsFakeSetter() = property.isVar && setter == null
+
+        // In K2/SLC, declarations whose signature has value class are not modeled.
+        if (baseResolveProviderService.hasTypeForValueClassInSignature(property)) {
+            return NeedFakeAccessors(needsFakeGetter(), needsFakeSetter())
+        }
+
+        // Deprecated
+        if (property.annotationEntries.isEmpty()) return NeedFakeAccessors.none()
         var (needsFakeGetter, needsFakeSetter) = false to false
         for (entry in property.annotationEntries) {
-            if (baseResolveProviderService.qualifiedAnnotationName(entry)?.endsWith("Deprecated") != true) {
+            if (!entry.isDeprecated()) {
                 continue
             }
             // Instead of checking attribute value for deprecation level, use if LC generates accessors or not.
             when (entry.useSiteTarget?.getAnnotationUseSiteTarget()) {
                 AnnotationUseSiteTarget.PROPERTY_GETTER -> {
-                    needsFakeGetter = getter == null
+                    needsFakeGetter = needsFakeGetter()
                 }
                 AnnotationUseSiteTarget.PROPERTY_SETTER -> {
-                    needsFakeSetter = property.isVar && setter == null
+                    needsFakeSetter = needsFakeSetter()
                 }
                 null -> {
-                    needsFakeGetter = getter == null
-                    needsFakeSetter = property.isVar && setter == null
+                    needsFakeGetter = needsFakeGetter()
+                    needsFakeSetter = needsFakeSetter()
                 }
                 else -> {}
             }
         }
-        return needsFakeGetter to needsFakeSetter
+        return NeedFakeAccessors(needsFakeGetter, needsFakeSetter)
+    }
+
+    private data class NeedFakeAccessors(
+        val needGetter: Boolean,
+        val needSetter: Boolean,
+    ) {
+        companion object {
+            fun none(): NeedFakeAccessors = NeedFakeAccessors(false, false)
+        }
+    }
+
+    private fun KtAnnotationEntry.isDeprecated(): Boolean {
+        return baseResolveProviderService.qualifiedAnnotationName(this)?.endsWith("Deprecated") == true
     }
 
     override fun accept(visitor: UastVisitor) {

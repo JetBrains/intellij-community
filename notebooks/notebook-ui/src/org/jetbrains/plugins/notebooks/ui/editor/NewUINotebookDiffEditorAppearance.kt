@@ -17,6 +17,7 @@ object NewUINotebookDiffEditorAppearance: NotebookEditorAppearance,
   override fun getCaretRowColor(scheme: EditorColorsScheme): Color? = scheme.getColor(CARET_ROW_COLOR_NEW_UI)
   override fun shouldShowCellLineNumbers(): Boolean = false
   override fun shouldShowExecutionCounts(): Boolean = false  // not needed for DIFF -> execution does not reach it
+  override fun shouldShowOutExecutionCounts(): Boolean = false
 }
 
 

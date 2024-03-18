@@ -4,7 +4,9 @@ package com.jetbrains.python.testing
 import com.intellij.psi.*
 import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.*
 import junit.framework.TestCase
 
@@ -12,6 +14,8 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   companion object {
     const val TESTS_SUBDIR = "/testPytestFixtureResolving"
+    const val STR_TYPE_NAME = "str"
+    const val STR_TYPE_DICT = "dict[$STR_TYPE_NAME, $STR_TYPE_NAME]"
 
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
@@ -32,7 +36,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val IMPORT_TEST = "/import_test.py"
     const val IMPORT_TEST_ANOTHER_FIXTURE_FILE = "another_fixture.py"
 
-    const val COMPLEX_STRUCTURE_TEST_DIR_NAME = "test_complex_structure"
+    const val COMPLEX_STRUCTURE_TEST_DIR_NAME = "testComplexStructure"
     const val COMPLEX_STRUCTURE_TEST_DIR = "/$COMPLEX_STRUCTURE_TEST_DIR_NAME"
     const val COMPLEX_STRUCTURE_TEST_ROOT_FILE = "test_root.py"
     const val COMPLEX_STRUCTURE_TEST_ROOT = "/$COMPLEX_STRUCTURE_TEST_ROOT_FILE"
@@ -80,6 +84,19 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val IMPORT_WITH_WILDCARD_FIXTURES_DIR = "fixtures_dir"
     const val IMPORT_WITH_WILDCARD_FIXTURES_FILE = "fixtures.py"
     const val IMPORT_WITH_WILDCARD_TEST_FILE = "/test_one.py"
+
+    private const val PY_COLLECTION_TYPE_DIR_NAME = "testPyCollectionType"
+    const val ITERATED_DIR = "/$PY_COLLECTION_TYPE_DIR_NAME/test_iterated"
+    const val TEST_GENERATOR = "/test_generator.py"
+    const val TEST_ITERABLE = "/test_iterable.py"
+    const val TEST_ITERATOR = "/test_iterator.py"
+
+    const val ASYNC_DIR = "/$PY_COLLECTION_TYPE_DIR_NAME/test_async"
+    const val TEST_ASYNC_FUNCTION = "/test_async_function.py"
+    const val TEST_ASYNC_GENERATOR = "/test_async_generator.py"
+    const val TEST_ASYNC_ITERABLE = "/test_async_iterable.py"
+    const val TEST_ASYNC_ITERATOR = "/test_async_iterator.py"
+
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -104,6 +121,19 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     val reference = getCaretReference(IMPORT_TEST_DIR, fileName)
     PythonCommonTestCase.assertInstanceOf(reference, PsiPolyVariantReference::class.java)
     return (reference as PsiPolyVariantReference).multiResolve(false)
+  }
+
+  private fun getCaretElement(dirName: String, fileName: String): PsiElement? {
+    val psiFile = myFixture.configureByFile(dirName + fileName)
+    return psiFile.findElementAt(myFixture.caretOffset)
+  }
+
+  private fun assertCorrectType(dirName: String, fileName: String, typeName: String = STR_TYPE_NAME) {
+    val resolve = getResolve(dirName, fileName) as PyNamedParameter
+    val element = getCaretElement(dirName, fileName)
+    TestCase.assertNotNull(element)
+    val context = TypeEvalContext.codeAnalysis(element!!.project, element.containingFile)
+    assertType(typeName, resolve, context)
   }
 
   private fun assertCorrectFile(dirName: String, fileName: String, expectedFileName: String?, expectedDirName: String? = null) {
@@ -271,5 +301,33 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   fun testImportWithWildCardFromFile() {
     val testDir = IMPORT_WITH_WILDCARD_DIR + IMPORT_WITH_WILDCARD_FROM_FILE_DIR
     assertCorrectFile(testDir, IMPORT_WITH_WILDCARD_TEST_FILE, IMPORT_WITH_WILDCARD_FIXTURES_FILE, IMPORT_WITH_WILDCARD_FIXTURES_DIR)
+  }
+
+  fun testGenerator() {
+    assertCorrectType(ITERATED_DIR, TEST_GENERATOR, STR_TYPE_NAME)
+  }
+
+  fun testIterable() {
+    assertCorrectType(ITERATED_DIR, TEST_ITERABLE)
+  }
+
+  fun testIterator() {
+    assertCorrectType(ITERATED_DIR, TEST_ITERATOR)
+  }
+
+  fun testAsyncGenerator() {
+    assertCorrectType(ASYNC_DIR, TEST_ASYNC_GENERATOR, STR_TYPE_NAME)
+  }
+
+  fun testAsyncIterable() {
+    assertCorrectType(ASYNC_DIR, TEST_ASYNC_ITERABLE)
+  }
+
+  fun testAsyncIterator() {
+    assertCorrectType(ASYNC_DIR, TEST_ASYNC_ITERATOR)
+  }
+
+  fun testAsyncFunction() {
+    assertCorrectType(ASYNC_DIR, TEST_ASYNC_FUNCTION, STR_TYPE_DICT)
   }
 }

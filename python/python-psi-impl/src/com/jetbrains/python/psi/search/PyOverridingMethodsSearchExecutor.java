@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
+public final class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final PyOverridingMethodsSearch.SearchParameters queryParameters,
                          @NotNull final Processor<? super PyFunction> consumer) {

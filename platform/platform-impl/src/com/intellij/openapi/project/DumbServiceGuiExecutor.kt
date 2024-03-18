@@ -12,6 +12,8 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.io.storage.HeavyProcessLatch
+import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
 @VisibleForTesting
@@ -53,5 +55,10 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks")) {
       super.runSingleTask(task, activity)
     }
+  }
+
+  @TestOnly
+  internal suspend fun waitUntilFinished() {
+    isRunning.first { !it }
   }
 }

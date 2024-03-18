@@ -42,7 +42,7 @@ public class NullityInferrer {
   private final boolean myAnnotateLocalVariables;
   private final SmartPointerManager myPointerManager;
 
-  public NullityInferrer(boolean annotateLocalVariables, Project project) {
+  public NullityInferrer(boolean annotateLocalVariables, @NotNull Project project) {
     myAnnotateLocalVariables = annotateLocalVariables;
     myPointerManager = SmartPointerManager.getInstance(project);
   }
@@ -76,9 +76,13 @@ public class NullityInferrer {
         return false;
       }
     }
-    else if (!variable.hasModifierProperty(PsiModifier.FINAL) || variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection) {
+    else if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
+    else if (variable instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiCatchSection) {
+      return false;
+    }
+
     final Query<PsiReference> references = ReferencesSearch.search(variable);
     for (final PsiReference reference : references) {
       final PsiElement element = reference.getElement();
@@ -89,11 +93,13 @@ public class NullityInferrer {
       if (!(parent instanceof PsiAssignmentExpression assignment)) {
         continue;
       }
+
       if (assignment.getLExpression().equals(element) &&
           !expressionIsNeverNull(assignment.getRExpression())) {
         return false;
       }
     }
+
     return true;
   }
 
@@ -102,6 +108,7 @@ public class NullityInferrer {
     if (initializer != null && expressionIsSometimesNull(initializer)) {
       return true;
     }
+
     final Query<PsiReference> references = ReferencesSearch.search(variable);
     for (final PsiReference reference : references) {
       final PsiElement element = reference.getElement();
@@ -112,10 +119,12 @@ public class NullityInferrer {
       if (!(parent instanceof PsiAssignmentExpression assignment)) {
         continue;
       }
+
       if (assignment.getLExpression().equals(element) && expressionIsSometimesNull(assignment.getRExpression())) {
         return true;
       }
     }
+
     return false;
   }
 
@@ -132,7 +141,7 @@ public class NullityInferrer {
   }
 
   @TestOnly
-  public void apply(final Project project) {
+  public void apply(final @NotNull Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
       annotateNullable(project, manager, pointer.getElement());
@@ -153,26 +162,28 @@ public class NullityInferrer {
                                      JavaBundle.message("dialog.title.infer.nullity.results")));
   }
 
-  private static void annotateNotNull(Project project,
-                                      NullableNotNullManager manager,
-                                      final PsiModifierListOwner element) {
-    if (element != null) {
-      if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) return;
-      invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
+  private static boolean annotateNotNull(@NotNull Project project,
+                                         @NotNull NullableNotNullManager manager,
+                                         final @Nullable PsiModifierListOwner element) {
+    if (element == null ||
+        element instanceof PsiField field && field.hasInitializer() && field.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
     }
+    invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
+    return true;
   }
 
-  private static void annotateNullable(Project project,
-                                       NullableNotNullManager manager,
-                                       final PsiModifierListOwner element) {
-    if (element != null) {
-      invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
-    }
+  private static boolean annotateNullable(@NotNull Project project,
+                                          @NotNull NullableNotNullManager manager,
+                                          final @Nullable PsiModifierListOwner element) {
+    if (element == null) return false;
+    invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
+    return true;
   }
 
-  private static void invoke(final Project project,
-                             final PsiModifierListOwner element,
-                             final String fqn, final String toRemove) {
+  private static void invoke(final @NotNull Project project,
+                             final @NotNull PsiModifierListOwner element,
+                             final @NotNull String fqn, final @NotNull String toRemove) {
     new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
   }
 
@@ -180,39 +191,49 @@ public class NullityInferrer {
     return myNotNullSet.size() + myNullableSet.size();
   }
 
-  public static void apply(Project project, NullableNotNullManager manager, UsageInfo info) {
+  public static boolean apply(@NotNull Project project, @NotNull NullableNotNullManager manager, UsageInfo info) {
     if (info instanceof NullableUsageInfo) {
-      annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
-    } else if (info instanceof NotNullUsageInfo) {
-      annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
+      return annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
     }
-  }
-
-  private boolean shouldIgnore(PsiModifierListOwner element) {
-    if (!myAnnotateLocalVariables){
-      if (element instanceof PsiLocalVariable) return true;
-      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiForeachStatement) return true;
+    if (info instanceof NotNullUsageInfo) {
+      return annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
     }
     return false;
   }
 
-  private void registerNullableAnnotation(@NotNull PsiModifierListOwner method) {
-    registerAnnotation(method, true);
+  private boolean shouldIgnore(@NotNull PsiModifierListOwner element) {
+    if (myAnnotateLocalVariables) return false;
+    if (element instanceof PsiLocalVariable) return true;
+    if (element instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiForeachStatement) return true;
+    return false;
   }
 
-  private void registerNotNullAnnotation(@NotNull PsiModifierListOwner method) {
-    registerAnnotation(method, false);
+  private void registerNullableAnnotation(@NotNull PsiModifierListOwner declaration) {
+    registerAnnotation(declaration, true);
   }
 
-  private void registerAnnotation(@NotNull PsiModifierListOwner method, boolean isNullable) {
-    final SmartPsiElementPointer<PsiModifierListOwner> methodPointer = myPointerManager.createSmartPsiElementPointer(method);
+  private void registerNotNullAnnotation(@NotNull PsiModifierListOwner declaration) {
+    registerAnnotation(declaration, false);
+  }
+
+  private void registerAnnotation(@NotNull PsiModifierListOwner declaration, boolean isNullable) {
+    final SmartPsiElementPointer<PsiModifierListOwner> declarationPointer = myPointerManager.createSmartPsiElementPointer(declaration);
     if (isNullable) {
-      myNullableSet.add(methodPointer);
+      myNullableSet.add(declarationPointer);
     }
     else {
-      myNotNullSet.add(methodPointer);
+      myNotNullSet.add(declarationPointer);
     }
     numAnnotationsAdded++;
+  }
+
+  private void registerAnnotationByNullAssignmentStatus(PsiVariable variable) {
+    if (variableNeverAssignedNull(variable)) {
+      registerNotNullAnnotation(variable);
+    }
+    else if (variableSometimesAssignedNull(variable)) {
+      registerNullableAnnotation(variable);
+    }
   }
 
   private static final class NullableUsageInfo extends UsageInfo {
@@ -227,12 +248,12 @@ public class NullityInferrer {
     }
   }
 
-  void collect(List<? super UsageInfo> usages) {
+  void collect(@NotNull List<? super UsageInfo> usages) {
     collect(usages, true);
     collect(usages, false);
   }
 
-  private void collect(List<? super UsageInfo> usages, boolean nullable) {
+  private void collect(@NotNull List<? super UsageInfo> usages, boolean nullable) {
     final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
       ReadAction.run(() -> {
@@ -270,7 +291,7 @@ public class NullityInferrer {
     return myNotNullSet.contains(pointer) || myNullableSet.contains(pointer);
   }
 
-  private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor{
+  private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -278,6 +299,7 @@ public class NullityInferrer {
       if (method.isConstructor() || method.getReturnType() instanceof PsiPrimitiveType) {
         return;
       }
+
       final Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(method).findAll();
       for (final PsiMethod overridingMethod : overridingMethods) {
         if (isNullable(overridingMethod)) {
@@ -285,47 +307,39 @@ public class NullityInferrer {
           return;
         }
       }
+
       final NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
       if (!manager.isNotNull(method, false) && manager.isNotNull(method, true)) {
         registerNotNullAnnotation(method);
         return;
       }
+
       if (hasNullability(method)) {
         return;
       }
 
       Nullability nullability = DfaUtil.inferMethodNullability(method);
-      if (nullability == Nullability.NULLABLE) {
-        registerNullableAnnotation(method);
-        return;
-      }
+      switch (nullability) {
+        case NULLABLE -> registerNullableAnnotation(method);
 
-      if (nullability == Nullability.NOT_NULL) {
-        for (final PsiMethod overridingMethod : overridingMethods) {
-          if (!isNotNull(overridingMethod)) {
-            return;
+        case NOT_NULL -> {
+          for (final PsiMethod overridingMethod : overridingMethods) {
+            if (!isNotNull(overridingMethod)) {
+              return;
+            }
           }
+          registerNotNullAnnotation(method);
         }
-        //and check that all the submethods are not nullable
-        registerNotNullAnnotation(method);
       }
     }
-
 
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      if (variable.getType() instanceof PsiPrimitiveType ||
-          isNotNull(variable) || isNullable(variable)) {
+      if (variable.getType() instanceof PsiPrimitiveType || hasNullability(variable)) {
         return;
       }
-
-      if (variableNeverAssignedNull(variable)) {
-        registerNotNullAnnotation(variable);
-      }
-      if (variableSometimesAssignedNull(variable)) {
-        registerNullableAnnotation(variable);
-      }
+      registerAnnotationByNullAssignmentStatus(variable);
     }
 
     @Override
@@ -334,6 +348,7 @@ public class NullityInferrer {
       if (parameter.getType() instanceof PsiPrimitiveType || hasNullability(parameter)) {
         return;
       }
+
       final PsiElement grandParent = parameter.getDeclarationScope();
       if (grandParent instanceof PsiMethod method) {
         if (method.getBody() != null) {
@@ -341,6 +356,7 @@ public class NullityInferrer {
             registerNotNullAnnotation(parameter);
             return;
           }
+
           for (PsiReferenceExpression expr : VariableAccessUtils.getVariableReferences(parameter, method)) {
             final PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
             if (processParameter(parameter, expr, parent)) return;
@@ -368,17 +384,13 @@ public class NullityInferrer {
         }
       }
       else {
-        if (variableNeverAssignedNull(parameter)) {
-          registerNotNullAnnotation(parameter);
-        }
-        if (variableSometimesAssignedNull(parameter)) {
-          registerNullableAnnotation(parameter);
-        }
+        registerAnnotationByNullAssignmentStatus(parameter);
       }
     }
 
-    private boolean processParameter(PsiParameter parameter, PsiReferenceExpression expr, PsiElement parent) {
+    private boolean processParameter(@NotNull PsiParameter parameter, @NotNull PsiReferenceExpression expr, PsiElement parent) {
       if (PsiUtil.isAccessedForWriting(expr)) return true;
+
       if (parent instanceof PsiBinaryExpression binOp) {
         PsiExpression opposite = null;
         final PsiExpression lOperand = binOp.getLOperand();
@@ -389,6 +401,7 @@ public class NullityInferrer {
         else if (rOperand == expr) {
           opposite = lOperand;
         }
+
         if (opposite != null && opposite.getType() == PsiTypes.nullType()) {
           if (DfaPsiUtil.isAssertionEffectively(binOp, binOp.getOperationTokenType() == JavaTokenType.NE)) {
             registerNotNullAnnotation(parameter);
@@ -425,7 +438,8 @@ public class NullityInferrer {
           registerNotNullAnnotation(parameter);
           return true;
         }
-      } else if (parent instanceof PsiForeachStatement forEach) {
+      }
+      else if (parent instanceof PsiForeachStatement forEach) {
         if (forEach.getIteratedValue() == expr) {
           registerNotNullAnnotation(parameter);
           return true;
@@ -457,26 +471,17 @@ public class NullityInferrer {
           }
         }
       }
+
       return false;
     }
 
     @Override
     public void visitField(@NotNull PsiField field) {
       super.visitField(field);
-      if (field instanceof PsiEnumConstant) {
+      if (field instanceof PsiEnumConstant || field.getType() instanceof PsiPrimitiveType || hasNullability(field)) {
         return;
       }
-      if (field.getType() instanceof PsiPrimitiveType ||
-          isNotNull(field) || isNullable(field)) {
-        return;
-      }
-
-      if (variableNeverAssignedNull(field)) {
-        registerNotNullAnnotation(field);
-      }
-      if (variableSometimesAssignedNull(field)) {
-        registerNullableAnnotation(field);
-      }
+      registerAnnotationByNullAssignmentStatus(field);
     }
   }
 }

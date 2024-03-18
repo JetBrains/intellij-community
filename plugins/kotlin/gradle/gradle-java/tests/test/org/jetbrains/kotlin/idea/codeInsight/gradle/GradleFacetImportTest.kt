@@ -70,7 +70,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            assertEquals("-Xdump-declarations-to=tmp", compilerSettings!!.additionalArguments)
+            assertEquals("-Xjava-source-roots=tmp", compilerSettings!!.additionalArguments)
         }
 
         with(testFacetSettings) {
@@ -81,7 +81,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
-                "-Xdump-declarations-to=tmpTest",
+                "-Xjava-source-roots=tmpTest",
                 compilerSettings!!.additionalArguments
             )
         }
@@ -127,7 +127,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.3", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            assertEquals("-Xdump-declarations-to=tmp", compilerSettings!!.additionalArguments)
+            assertEquals("-Xjava-source-roots=tmp", compilerSettings!!.additionalArguments)
         }
 
         with(facetSettings("project.myTest")) {
@@ -135,7 +135,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.0", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            assertEquals("-Xdump-declarations-to=tmpTest", compilerSettings!!.additionalArguments)
+            assertEquals("-Xjava-source-roots=tmpTest", compilerSettings!!.additionalArguments)
         }
 
         assertAllModulesConfigured()

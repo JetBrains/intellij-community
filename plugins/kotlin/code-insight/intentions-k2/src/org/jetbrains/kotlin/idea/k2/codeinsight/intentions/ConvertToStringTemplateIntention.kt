@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
  * Example: "a" + 1 + 'b' + foo + 2.3f + bar -> "a1b${foo}2.3f{bar}"
  */
 internal class ConvertToStringTemplateIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtBinaryExpression, ConvertToStringTemplateIntention.Context>(
+    AbstractKotlinModCommandWithContext<KtBinaryExpression, ConvertToStringTemplateIntention.Context>(
         KtBinaryExpression::class
     ) {
 
@@ -37,8 +37,13 @@ internal class ConvertToStringTemplateIntention :
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
-    override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {
-        context.replacement.element?.let { element.replaced(it) }
+    override fun apply(element: KtBinaryExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+        context.analyzeContext.replacement.element?.let { element.replaced(updater.getWritable(it)) }
+    }
+
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtBinaryExpression): Boolean {
+        return isFirstStringPlusExpressionWithoutNewLineInOperands(element)
     }
 
     /**

@@ -11,12 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.write
+import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -26,7 +26,6 @@ import java.nio.file.Path
 
 class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
   override fun runInDispatchThread() = false
-
   private var myDir: Path? = null
 
   private val isWorkspaceImport: Boolean
@@ -37,7 +36,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
       ThrowableRunnable {
         super.tearDown()
       },
-      ThrowableRunnable { MavenServerManager.getInstance().shutdown(true) }
+      ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() }
     ).run()
   }
 
@@ -61,17 +60,14 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val module = withContext(Dispatchers.EDT) {
       importProjectFrom(pom2.getPath(), null, provider)
     }
+
     val project2 = module.getProject()
     importMaven(project2, pom2)
-    MavenIndicesManager.getInstance(project2).updateIndicesListSync()
-    MavenIndicesManager.getInstance(myProject).updateIndicesListSync()
+    MavenIndicesManager.getInstance(project2).updateIndexList()
+    MavenIndicesManager.getInstance(myProject).updateIndexList()
+    MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted();
 
-    val firstIndices = MavenIndicesManager.getInstance(myProject).getIndex()
-    val secondIndices = MavenIndicesManager.getInstance(project2).getIndex()
-    Assertions.assertThat(firstIndices.indices).hasSize(2)
-    Assertions.assertThat(secondIndices.indices).hasSize(2)
-    assertSame(firstIndices.localIndex, secondIndices.localIndex)
-    assertSame(firstIndices.remoteIndices[0], secondIndices.remoteIndices[0])
+    TestCase.assertEquals(1, MavenSystemIndicesManager.getInstance().getAllGavIndices().size)
   }
 
   private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {
@@ -86,6 +82,6 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val manager = MavenProjectsManager.getInstance(project)
     manager.initForTests()
     manager.addManagedFiles(listOf(file))
-    manager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+    manager.updateAllMavenProjects(MavenSyncSpec.full("MavenMultiProjectImportTest"))
   }
 }

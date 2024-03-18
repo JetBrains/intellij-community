@@ -13,6 +13,9 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
@@ -24,12 +27,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
-import com.intellij.openapi.progress.CeProcessCanceledException
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
-import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -40,6 +39,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.ide.menu.MacNativeActionMenuItem
 import com.intellij.platform.ide.menu.createMacNativeActionMenu
@@ -53,6 +53,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.*
+import com.intellij.util.ui.update.UiNotifyConnector
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
@@ -69,6 +70,8 @@ import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -127,7 +130,7 @@ private var lastFailedFastTrackCount = 0
  *    A progress icon is shown while expecting the results.
  *
  * 3. Blocking with the ability to unblock via [Utils.runUpdateSessionForInputEvent].
- *    It is only used in **keyborard, mouse, and gesture shortcuts** processing.
+ *    It is only used in **keyboard, mouse, and gesture shortcuts** processing.
  *    It fully blocks the UI while it chooses the action to invoke because the user expects actions
  *    to perform on the exact UI state at the time shortcut is pressed.
  *    In case of a long wait, [PotemkinOverlayProgress] is shown with the ability to cancel the shortcut.
@@ -201,6 +204,16 @@ object Utils {
     }
   }
 
+  /**
+   * Computing fields from data context might be slow and cause freezes.
+   * To avoid it, we report only those fields which were already computed
+   * in [AnAction.update] or [AnAction.actionPerformed]
+   */
+  @JvmStatic
+  fun getCachedDataContext(dataContext: DataContext): DataContext {
+    return DataContext { dataId: String? -> getRawDataIfCached(dataContext, dataId!!) }
+  }
+
   @JvmStatic
   fun getRawDataIfCached(dataContext: DataContext, dataId: String): Any? = when (dataContext) {
     is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId)
@@ -240,8 +253,8 @@ object Utils {
                              place: String,
                              isToolbarAction: Boolean,
                              fastTrack: Boolean): CancellablePromise<List<AnAction>> {
-    return ApplicationManager.getApplication().coroutineScope.async(
-      Dispatchers.EDT + ModalityState.any().asContextElement() + ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
+    return service<CoreUiCoroutineScopeHolder>().coroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement() +
+                                                                      ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
       expandActionGroupSuspend(group, presentationFactory, context, place, isToolbarAction, fastTrack)
     }.asCompletableFuture().asCancellablePromise()
   }
@@ -267,10 +280,8 @@ object Utils {
       else Dispatchers.EDT[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
-      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
-        updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
-          updater.expandActionGroup(group, group is CompactActionGroup)
-        }
+      updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
+        updater.expandActionGroup(group, group is CompactActionGroup)
       }
     }
     if (fastTrackTime > 0) {
@@ -345,10 +356,8 @@ object Utils {
     try {
       val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
       val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
-      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
-        updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
-          updater.expandActionGroup(group, group is CompactActionGroup)
-        }
+      updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
+        updater.expandActionGroup(group, group is CompactActionGroup)
       }
     }
     finally {
@@ -357,15 +366,44 @@ object Utils {
     }
   }
 
-  @JvmStatic
+  fun <T> computeWithProgressIcon(dataContext: DataContext,
+                                  place: String,
+                                  task: suspend () -> T): T {
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val loadingIconPoint = if (component == null) null
+    else JBPopupFactory.getInstance().guessBestPopupLocation(dataContext)
+    return computeWithProgressIcon(loadingIconPoint, component, place, task)
+  }
+
+  fun <T> computeWithProgressIcon(loadingIconPoint: RelativePoint?,
+                                  component: Component?,
+                                  place: String,
+                                  task: suspend () -> T): T = runBlockingForActionExpand(CoroutineName("computeWithProgressIcon")) {
+    val mainJob = coroutineContext.job
+    val loopJob = launch {
+      runEdtLoop(mainJob, null, component, null)
+    }
+    val progressJob = if (loadingIconPoint == null) null
+    else launch {
+      addLoadingIcon(loadingIconPoint, place)
+    }
+    try {
+      task()
+    }
+    finally {
+      progressJob?.cancel()
+      loopJob.cancel()
+    }
+  }
+
   fun fillPopupMenu(group: ActionGroup,
                     component: JComponent,
                     presentationFactory: PresentationFactory,
                     context: DataContext,
                     place: String,
                     progressPoint: RelativePoint?) {
-    fillMenu(group, component, null, !UISettings.getInstance().disableMnemonics,
-             presentationFactory, context, place, false, false, progressPoint, null)
+    fillMenu(group, component, null, !UISettings.getInstance().disableMnemonics, presentationFactory, context, place,
+             false, false, progressPoint, null)
   }
 
   internal fun fillMenu(group: ActionGroup,
@@ -543,7 +581,9 @@ object Utils {
         action is ActionGroup && !isSubmenuSuppressed(presentation) -> createMacNativeActionMenu(
           context, place, action, presentationFactory, enableMnemonics, frame, useDarkIcons)
         else -> MacNativeActionMenuItem(
-          action, place, context, enableMnemonics, checked, useDarkIcons, presentation).menuItemPeer
+          action, place, context, enableMnemonics, checked, useDarkIcons).apply {
+          updateFromPresentation(presentation)
+        }.menuItemPeer
       }
       // null peer means `null`
       nativePeer.add(peer)
@@ -585,10 +625,12 @@ object Utils {
 
   private fun reportInvisibleMenuItem(action: AnAction, place: String) {
     val operationName = operationName(action, null, place)
-    LOG.error("Invisible menu item for $operationName")
+    LOG.error("Invisible menu item for $operationName" +
+              ". Most probably caused by async presentation updates that must be avoided")
   }
 
-  private fun reportEmptyTextMenuItem(action: AnAction, place: String) {
+  @JvmStatic
+  fun reportEmptyTextMenuItem(action: AnAction, place: String) {
     val operationName = operationName(action, null, place)
     var message = "Empty menu item text for $operationName"
     if (action.getTemplatePresentation().text.isNullOrEmpty()) {
@@ -680,10 +722,15 @@ object Utils {
     val asyncDataContext = createAsyncDataContext(dataContext)
     checkAsyncDataContext(asyncDataContext, place)
     val actionGroup = DefaultActionGroup(actions.toList())
-    ApplicationManager.getApplication().coroutineScope.async(
-      Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement(),
+                                                               CoroutineStart.UNDISPATCHED) {
       try {
-        expandActionGroupSuspend(actionGroup, presentationFactory, asyncDataContext, place, false, true)
+        expandActionGroupSuspend(group = actionGroup,
+                                 presentationFactory = presentationFactory,
+                                 dataContext = asyncDataContext,
+                                 place = place,
+                                 isToolbarAction = false,
+                                 fastTrack = true)
         onUpdate.run()
       }
       finally {
@@ -780,6 +827,22 @@ object Utils {
     return true
   }
 
+  @JvmStatic
+  fun showPopupElapsedMillisIfConfigured(startNanos: Long, comp: Component) {
+    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) return
+    UiNotifyConnector.doWhenFirstShown(comp) {
+      UIUtil.getWindow(comp)?.addWindowListener(object : WindowAdapter() {
+        override fun windowOpened(e: WindowEvent) {
+          e.window.removeWindowListener(this)
+          val time = TimeoutUtil.getDurationMillis(startNanos)
+          @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
+          Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
+                       NotificationType.INFORMATION).notify(null)
+        }
+      })
+    }
+  }
+
   /**
    * Mark the `component` to be treated like a modal context (or not) when it cannot be deduced implicitly from UI hierarchy.
    * @param isModalContext `null` to clear a mark, to set a new one otherwise.
@@ -804,6 +867,18 @@ object Utils {
     val actionUpdater = ActionUpdater(PresentationFactory(), e.dataContext, e.place,
                                       e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher)
     e.updateSession = actionUpdater.asUpdateSession()
+  }
+
+  @Suppress("DEPRECATION", "removal")
+  suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
+                                              actionFilter: (AnAction) -> Boolean,
+                                              block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
+    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
+    val updater = ActionUpdater(factory, e.dataContext, e.place, e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher, actionFilter)
+    e.updateSession = updater.asUpdateSession()
+    updater.runUpdateSession(updaterContext(e.place, 0, e.isFromContextMenu, e.isFromActionToolbar)) {
+      block(e.updateSession as SuspendingUpdateSession)
+    }
   }
 
   fun <R> runWithInputEventEdtDispatcher(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
@@ -853,7 +928,7 @@ object Utils {
                                                 factory: PresentationFactory,
                                                 function: suspend (List<AnAction>,
                                                                    suspend (AnAction) -> Presentation,
-                                                                   Map<Presentation, AnActionEvent>) -> T): T? = withContext(
+                                                                   Map<Presentation, AnActionEvent>) -> T): T = withContext(
     CoroutineName("runUpdateSessionForInputEvent")) {
     checkAsyncDataContext(dataContext, place)
     val start = System.nanoTime()
@@ -866,9 +941,12 @@ object Utils {
     }
     cancelAllUpdates("'$place' invoked")
 
-    val rearranged = rearrangeByPromoters(actions, dataContext)
     val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
-      function(rearranged, actionUpdater::presentation, events)
+      ActionUpdaterInterceptor.runUpdateSessionForInputEvent(actions, place, dataContext, actionUpdater.asUpdateSession()) { promoted ->
+        val rearranged = if (promoted.isNotEmpty()) promoted
+        else rearrangeByPromoters(actions, dataContext)
+        function(rearranged, actionUpdater::presentation, events)
+      }
     }
     actionUpdater.applyPresentationChanges()
     val elapsed = TimeoutUtil.getDurationMillis(start)
@@ -897,17 +975,14 @@ object Utils {
   }
 }
 
+@ApiStatus.Internal
 suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
   val frozenContext = Utils.freezeDataContext(dataContext, null)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
-      service<ActionUpdaterInterceptor>().rearrangeByPromoters(actions, frozenContext) {
-        withContext(shortcutUpdateDispatcher) {
-          readActionUndispatchedForActionExpand {
-            val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
-            rearrangeByPromotersImpl(actions, frozenContext, promoters)
-          }
-        }
+      readActionUndispatchedForActionExpand {
+        val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
+        rearrangeByPromotersImpl(actions, frozenContext, promoters)
       }
     }
     catch (ex: CancellationException) {
@@ -989,6 +1064,8 @@ private class PotemkinElement(val potemkin: PotemkinOverlayProgress) : ThreadCon
   override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
     oldState.finish()
   }
+
+  override fun toString(): String = "PotemkinElement@" + potemkin.hashCode()
 }
 
 private fun updaterContext(place: String, fastTrackTime: Int, isContextMenu: Boolean, isToolbarAction: Boolean): CoroutineContext {
@@ -1006,20 +1083,18 @@ suspend fun runEdtLoop(mainJob: Job, expire: (() -> Boolean)?, contextComponent:
   val window: Window? = if (contextComponent == null) null else SwingUtilities.getWindowAncestor(contextComponent)
   ourExpandActionGroupImplEDTLoopLevel++
   try {
-    resetThreadContext().use {
-      ThreadingAssertions.assertEventDispatchThread()
-      while (true) {
-        // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
-        // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
-        // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
-        val event = queue.getNextEvent()
-        queue.dispatchEvent(event)
-        if (isCancellingExpandEvent(event, window, menuItem) || // TODO can we push back and unwind here?
-            expire?.invoke() == true) {
-          mainJob.cancel()
-        }
-        yield()
+    ThreadingAssertions.assertEventDispatchThread()
+    while (true) {
+      // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
+      // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
+      // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
+      val event = queue.getNextEvent()
+      queue.dispatchEvent(event)
+      if (isCancellingExpandEvent(event, window, menuItem) || // TODO can we push back and unwind here?
+          expire?.invoke() == true) {
+        mainJob.cancel()
       }
+      yield()
     }
   }
   finally {
@@ -1114,6 +1189,23 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
 }
 
 // to avoid platform assertions
-internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline block: () -> R): R =
-  if (!EDT.isCurrentThreadEdt()) readActionUndispatched(block)
-  else blockingContext { ReadAction.compute<R, Throwable> { block() } }
+internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline block: () -> R): R {
+  if (!EDT.isCurrentThreadEdt()) {
+    return readActionUndispatched(block)
+  }
+  else {
+    return blockingContext { ApplicationManager.getApplication().runReadAction<R, Throwable> { block() } }
+  }
+}
+
+@ApiStatus.Internal
+interface SuspendingUpdateSession: UpdateSession {
+  suspend fun presentationSuspend(action: AnAction): Presentation
+  suspend fun childrenSuspend(actionGroup: ActionGroup): List<AnAction>
+  suspend fun expandSuspend(action: ActionGroup): List<AnAction>
+
+  fun <T : Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T
+
+  fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
+  fun dropCaches(predicate: (Any) -> Boolean)
+}

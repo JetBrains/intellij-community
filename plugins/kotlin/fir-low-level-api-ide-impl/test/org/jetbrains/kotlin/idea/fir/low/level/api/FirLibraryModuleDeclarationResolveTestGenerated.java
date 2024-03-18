@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.low.level.api;
 
@@ -26,6 +26,16 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
     @TestMetadata("annotationArgs.kt")
     public void testAnnotationArgs() throws Exception {
         runTest("testData/libraryModuleResolve/annotationArgs.kt");
+    }
+
+    @TestMetadata("companionObject.kt")
+    public void testCompanionObject() throws Exception {
+        runTest("testData/libraryModuleResolve/companionObject.kt");
+    }
+
+    @TestMetadata("dataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("testData/libraryModuleResolve/dataClass.kt");
     }
 
     @TestMetadata("enumEntry.kt")
@@ -71,6 +81,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
     @TestMetadata("memberProperty.kt")
     public void testMemberProperty() throws Exception {
         runTest("testData/libraryModuleResolve/memberProperty.kt");
+    }
+
+    @TestMetadata("object.kt")
+    public void testObject() throws Exception {
+        runTest("testData/libraryModuleResolve/object.kt");
     }
 
     @TestMetadata("requireCall.kt")

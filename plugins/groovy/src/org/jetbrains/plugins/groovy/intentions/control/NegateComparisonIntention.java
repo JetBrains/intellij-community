@@ -1,23 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.control;
 
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 
-public class NegateComparisonIntention extends MutablyNamedIntention {
+public class NegateComparisonIntention extends GrPsiUpdateIntention {
   @Override
-  protected @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
+  public @NotNull String getText(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression) element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     final String comparison = ComparisonUtils.getStringForComparison(tokenType);
@@ -33,10 +31,8 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
-      throws IncorrectOperationException {
-    final GrBinaryExpression exp =
-        (GrBinaryExpression) element;
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+    final GrBinaryExpression exp = (GrBinaryExpression) element;
     final IElementType tokenType = exp.getOperationTokenType();
 
     final GrExpression lhs = exp.getLeftOperand();

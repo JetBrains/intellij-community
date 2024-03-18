@@ -68,7 +68,7 @@ class PythonRankingAwarePackageNameComparator : Comparator<String> {
     return when {
       rank1 != null && rank2 == null -> -1
       rank1 == null && rank2 != null -> 1
-      rank1 != null && rank2 != null -> rank2 - rank1
+      rank1 != null && rank2 != null && rank1 != rank2 -> rank2 - rank1
       else -> String.CASE_INSENSITIVE_ORDER.compare(name1, name2)
     }
   }

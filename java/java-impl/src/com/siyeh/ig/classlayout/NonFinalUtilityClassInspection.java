@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class NonFinalUtilityClassInspection extends BaseInspection {
+public final class NonFinalUtilityClassInspection extends BaseInspection {
 
   @Nullable
   @Override

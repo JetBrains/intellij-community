@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DoubleCheckedLockingInspection extends BaseInspection {
+public final class DoubleCheckedLockingInspection extends BaseInspection {
 
   /**
    * Preserved for serialization compatibility

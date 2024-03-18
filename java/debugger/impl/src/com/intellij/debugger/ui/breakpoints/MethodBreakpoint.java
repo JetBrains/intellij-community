@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -38,7 +38,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -70,16 +70,11 @@ import java.util.function.BiConsumer;
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
   protected @Nullable JVMName mySignature;
-  protected boolean myIsStatic;
 
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
   protected MethodBreakpoint(@NotNull Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
-  }
-
-  public boolean isStatic() {
-    return myIsStatic;
   }
 
   @Override
@@ -92,6 +87,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return super.isValid() && getMethodName() != null;
   }
 
+  @RequiresBackgroundThread
   @Override
   public void reload() {
     super.reload();
@@ -101,21 +97,18 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
     SourcePosition sourcePosition = getSourcePosition();
     if (sourcePosition != null) {
-      SlowOperations.allowSlowOperations(() -> {
-        MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
-        if (descriptor != null) {
-          setMethodName(descriptor.methodName);
-          mySignature = descriptor.methodSignature;
-          myIsStatic = descriptor.isStatic;
+      MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
+      if (descriptor != null) {
+        setMethodName(descriptor.methodName);
+        mySignature = descriptor.methodSignature;
+        if (descriptor.isStatic) {
+          setInstanceFiltersEnabled(false);
         }
-      });
+      }
     }
     PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
       getProperties().myClassPattern = psiClass.getQualifiedName();
-    }
-    if (myIsStatic) {
-      setInstanceFiltersEnabled(false);
     }
   }
 

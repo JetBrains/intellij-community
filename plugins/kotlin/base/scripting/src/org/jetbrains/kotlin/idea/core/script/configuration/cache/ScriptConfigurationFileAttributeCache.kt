@@ -113,11 +113,15 @@ internal class ScriptConfigurationSnapshotFile : AbstractFileGistService<ScriptC
     write = DataOutput::writeObject
 ) {
     companion object {
+        private const val UNSUPPORTED_FILE_EXT = ".gradle.kts"
+
         operator fun get(project: Project, file: VirtualFile): ScriptConfigurationSnapshotForFS? {
+            if (file.path.endsWith(UNSUPPORTED_FILE_EXT)) return null
             return project.service<ScriptConfigurationSnapshotFile>()[file]
         }
 
         operator fun set(project: Project, file: VirtualFile, newValue: ScriptConfigurationSnapshotForFS?) {
+            if (file.path.endsWith(UNSUPPORTED_FILE_EXT)) return
             project.service<ScriptConfigurationSnapshotFile>()[file] = newValue
         }
     }

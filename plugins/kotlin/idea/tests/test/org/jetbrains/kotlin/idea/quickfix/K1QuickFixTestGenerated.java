@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -3150,6 +3150,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
         }
 
+        @TestMetadata("changeParameterType.kt")
+        public void testChangeParameterType() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeParameterType.kt");
+        }
+
         @TestMetadata("complexHierarchy.kt")
         public void testComplexHierarchy() throws Exception {
             runTest("testData/quickfix/changeSignature/complexHierarchy.kt");
@@ -3195,11 +3200,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/removeFunctionFirstParameter.kt");
         }
 
-        @TestMetadata("removeFunctionLastLambdaParameter.kt")
-        public void testRemoveFunctionLastLambdaParameter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeFunctionLastLambdaParameter.kt");
-        }
-
         @TestMetadata("removeFunctionSecondParameter1.kt")
         public void testRemoveFunctionSecondParameter1() throws Exception {
             runTest("testData/quickfix/changeSignature/removeFunctionSecondParameter1.kt");
@@ -3210,14 +3210,14 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/removeFunctionSecondParameter2.kt");
         }
 
+        @TestMetadata("removeLibraryClassParameter.kt")
+        public void testRemoveLibraryClassParameter() throws Exception {
+            runTest("testData/quickfix/changeSignature/removeLibraryClassParameter.kt");
+        }
+
         @TestMetadata("removeNamedParameter.kt")
         public void testRemoveNamedParameter() throws Exception {
             runTest("testData/quickfix/changeSignature/removeNamedParameter.kt");
-        }
-
-        @TestMetadata("removeParameterFromExtension.kt")
-        public void testRemoveParameterFromExtension() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeParameterFromExtension.kt");
         }
 
         @TestMetadata("removeParameterFromFakeOverride.kt")
@@ -3228,116 +3228,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("removeParameterNotAvailableForBuiltins.kt")
         public void testRemoveParameterNotAvailableForBuiltins() throws Exception {
             runTest("testData/quickfix/changeSignature/removeParameterNotAvailableForBuiltins.kt");
-        }
-
-        @TestMetadata("removeUnusedConstructorParameterWithUsage.kt")
-        public void testRemoveUnusedConstructorParameterWithUsage() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedConstructorParameterWithUsage.kt");
-        }
-
-        @TestMetadata("removeUnusedExtensionParameter.kt")
-        public void testRemoveUnusedExtensionParameter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedExtensionParameter.kt");
-        }
-
-        @TestMetadata("removeUnusedInternalConstructorParameter.kt")
-        public void testRemoveUnusedInternalConstructorParameter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedInternalConstructorParameter.kt");
-        }
-
-        @TestMetadata("removeUnusedParameter.kt")
-        public void testRemoveUnusedParameter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameter.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterOfPropertySetter.kt")
-        public void testRemoveUnusedParameterOfPropertySetter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterOfPropertySetter.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithComments.kt")
-        public void testRemoveUnusedParameterWithComments() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithComments.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithComments2.kt")
-        public void testRemoveUnusedParameterWithComments2() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithComments2.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithComments3.kt")
-        public void testRemoveUnusedParameterWithComments3() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithComments3.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithComments4.kt")
-        public void testRemoveUnusedParameterWithComments4() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithComments4.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithLongQualifier.kt")
-        public void testRemoveUnusedParameterWithLongQualifier() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithLongQualifier.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter.kt")
-        public void testRemoveUnusedParameterWithTypeParameter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter2.kt")
-        public void testRemoveUnusedParameterWithTypeParameter2() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter2.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter3.kt")
-        public void testRemoveUnusedParameterWithTypeParameter3() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter3.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter4.kt")
-        public void testRemoveUnusedParameterWithTypeParameter4() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter4.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter5.kt")
-        public void testRemoveUnusedParameterWithTypeParameter5() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter5.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter6.kt")
-        public void testRemoveUnusedParameterWithTypeParameter6() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter6.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameter7.kt")
-        public void testRemoveUnusedParameterWithTypeParameter7() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameter7.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameterAndTypeConstraint.kt")
-        public void testRemoveUnusedParameterWithTypeParameterAndTypeConstraint() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameterAndTypeConstraint.kt");
-        }
-
-        @TestMetadata("removeUnusedParameterWithTypeParameterAndTypeConstraint2.kt")
-        public void testRemoveUnusedParameterWithTypeParameterAndTypeConstraint2() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedParameterWithTypeParameterAndTypeConstraint2.kt");
-        }
-
-        @TestMetadata("removeUnusedPrimaryConstructorParameter.kt")
-        public void testRemoveUnusedPrimaryConstructorParameter() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedPrimaryConstructorParameter.kt");
-        }
-
-        @TestMetadata("removeUnusedPrimaryConstructorParameter2.kt")
-        public void testRemoveUnusedPrimaryConstructorParameter2() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedPrimaryConstructorParameter2.kt");
-        }
-
-        @TestMetadata("removeUnusedPrimaryConstructorParameterWithComments.kt")
-        public void testRemoveUnusedPrimaryConstructorParameterWithComments() throws Exception {
-            runTest("testData/quickfix/changeSignature/removeUnusedPrimaryConstructorParameterWithComments.kt");
         }
     }
 
@@ -4937,6 +4827,69 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/extension")
+                public static class Extension extends AbstractK1QuickFixTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("approximateAnonymousObjectRuntime.kt")
+                    public void testApproximateAnonymousObjectRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/approximateAnonymousObjectRuntime.kt");
+                    }
+
+                    @TestMetadata("approximateLocalClassRuntime.kt")
+                    public void testApproximateLocalClassRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/approximateLocalClassRuntime.kt");
+                    }
+
+                    @TestMetadata("brokenPsi.kt")
+                    public void testBrokenPsi() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/brokenPsi.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnClassNoClassObject.kt")
+                    public void testExtensionFunOnClassNoClassObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnClassNoClassObject.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnClassNoClassObject2.kt")
+                    public void testExtensionFunOnClassNoClassObject2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnClassNoClassObject2.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnInterface.kt")
+                    public void testExtensionFunOnInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterface.kt");
+                    }
+
+                    @TestMetadata("extensionRefInImport.kt")
+                    public void testExtensionRefInImport() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionRefInImport.kt");
+                    }
+
+                    @TestMetadata("funOnLibObject.kt")
+                    public void testFunOnLibObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/funOnLibObject.kt");
+                    }
+
+                    @TestMetadata("funOnLibType.kt")
+                    public void testFunOnLibType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/funOnLibType.kt");
+                    }
+
+                    @TestMetadata("functionalTypeInReceiver.kt")
+                    public void testFunctionalTypeInReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/functionalTypeInReceiver.kt");
+                    }
+
+                    @TestMetadata("nullableReceiver.kt")
+                    public void testNullableReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/nullableReceiver.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/extensionByExtensionReceiver")
                 public static class ExtensionByExtensionReceiver extends AbstractK1QuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
@@ -4966,6 +4919,362 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("notExtensionCallable.kt")
                     public void testNotExtensionCallable() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extensionByExtensionReceiver/notExtensionCallable.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/member")
+                public static class Member extends AbstractK1QuickFixTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("brokenPsi2.kt")
+                    public void testBrokenPsi2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/brokenPsi2.kt");
+                    }
+
+                    @TestMetadata("callWithLambdaArg.kt")
+                    public void testCallWithLambdaArg() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/callWithLambdaArg.kt");
+                    }
+
+                    @TestMetadata("callWithLambdaArgOnly.kt")
+                    public void testCallWithLambdaArgOnly() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/callWithLambdaArgOnly.kt");
+                    }
+
+                    @TestMetadata("doNotStripPrefix.kt")
+                    public void testDoNotStripPrefix() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/doNotStripPrefix.kt");
+                    }
+
+                    @TestMetadata("funExtraArgs.kt")
+                    public void testFunExtraArgs() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funExtraArgs.kt");
+                    }
+
+                    @TestMetadata("funMissingArgs.kt")
+                    public void testFunMissingArgs() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funMissingArgs.kt");
+                    }
+
+                    @TestMetadata("funOnClassNoClassObject.kt")
+                    public void testFunOnClassNoClassObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnClassNoClassObject.kt");
+                    }
+
+                    @TestMetadata("funOnClassNoClassObject2.kt")
+                    public void testFunOnClassNoClassObject2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnClassNoClassObject2.kt");
+                    }
+
+                    @TestMetadata("funOnClassObject.kt")
+                    public void testFunOnClassObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnClassObject.kt");
+                    }
+
+                    @TestMetadata("funOnEnumClass.kt")
+                    public void testFunOnEnumClass() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnEnumClass.kt");
+                    }
+
+                    @TestMetadata("funOnEnumClass2.kt")
+                    public void testFunOnEnumClass2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnEnumClass2.kt");
+                    }
+
+                    @TestMetadata("funOnInterface.kt")
+                    public void testFunOnInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnInterface.kt");
+                    }
+
+                    @TestMetadata("funOnUserObject.kt")
+                    public void testFunOnUserObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnUserObject.kt");
+                    }
+
+                    @TestMetadata("funOnUserType.kt")
+                    public void testFunOnUserType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnUserType.kt");
+                    }
+
+                    @TestMetadata("funOnUserTypeWithDeclarations.kt")
+                    public void testFunOnUserTypeWithDeclarations() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnUserTypeWithDeclarations.kt");
+                    }
+
+                    @TestMetadata("funOnUserTypeWithTypeParams.kt")
+                    public void testFunOnUserTypeWithTypeParams() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnUserTypeWithTypeParams.kt");
+                    }
+
+                    @TestMetadata("funWithExplicitParamNamesOnUserType.kt")
+                    public void testFunWithExplicitParamNamesOnUserType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funWithExplicitParamNamesOnUserType.kt");
+                    }
+
+                    @TestMetadata("funWithNullableParamType.kt")
+                    public void testFunWithNullableParamType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funWithNullableParamType.kt");
+                    }
+
+                    @TestMetadata("funWithNullableType.kt")
+                    public void testFunWithNullableType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funWithNullableType.kt");
+                    }
+
+                    @TestMetadata("funWithNullableTypeParameter.kt")
+                    public void testFunWithNullableTypeParameter() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funWithNullableTypeParameter.kt");
+                    }
+
+                    @TestMetadata("inconsistentTypes.kt")
+                    public void testInconsistentTypes() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/inconsistentTypes.kt");
+                    }
+
+                    @TestMetadata("propertyOnUserType.kt")
+                    public void testPropertyOnUserType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/propertyOnUserType.kt");
+                    }
+
+                    @TestMetadata("qualifiedCallInStringTemplateRuntime.kt")
+                    public void testQualifiedCallInStringTemplateRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/qualifiedCallInStringTemplateRuntime.kt");
+                    }
+
+                    @TestMetadata("receiverWithSmartCast.kt")
+                    public void testReceiverWithSmartCast() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/receiverWithSmartCast.kt");
+                    }
+
+                    @TestMetadata("stripPrefix.kt")
+                    public void testStripPrefix() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/stripPrefix.kt");
+                    }
+
+                    @TestMetadata("thisInClass.kt")
+                    public void testThisInClass() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/thisInClass.kt");
+                    }
+
+                    @TestMetadata("thisInExtension.kt")
+                    public void testThisInExtension() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/thisInExtension.kt");
+                    }
+
+                    @TestMetadata("thisInNestedClass1.kt")
+                    public void testThisInNestedClass1() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/thisInNestedClass1.kt");
+                    }
+
+                    @TestMetadata("thisInNestedClass2.kt")
+                    public void testThisInNestedClass2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/thisInNestedClass2.kt");
+                    }
+
+                    @TestMetadata("unknownType.kt")
+                    public void testUnknownType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/unknownType.kt");
+                    }
+
+                    @TestMetadata("unresolvedSupertype.kt")
+                    public void testUnresolvedSupertype() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/unresolvedSupertype.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/simple")
+                public static class Simple extends AbstractK1QuickFixTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("argumentTypeMismatch.kt")
+                    public void testArgumentTypeMismatch() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/argumentTypeMismatch.kt");
+                    }
+
+                    @TestMetadata("binaryOperationInCall.kt")
+                    public void testBinaryOperationInCall() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/binaryOperationInCall.kt");
+                    }
+
+                    @TestMetadata("callInAnnotationEntry.kt")
+                    public void testCallInAnnotationEntry() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/callInAnnotationEntry.kt");
+                    }
+
+                    @TestMetadata("callInStringTemplateRuntime.kt")
+                    public void testCallInStringTemplateRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/callInStringTemplateRuntime.kt");
+                    }
+
+                    @TestMetadata("callWithClassLiteral.kt")
+                    public void testCallWithClassLiteral() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/callWithClassLiteral.kt");
+                    }
+
+                    @TestMetadata("funInInlineInternalFun.kt")
+                    public void testFunInInlineInternalFun() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/funInInlineInternalFun.kt");
+                    }
+
+                    @TestMetadata("funInInlinePrivateFun.kt")
+                    public void testFunInInlinePrivateFun() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/funInInlinePrivateFun.kt");
+                    }
+
+                    @TestMetadata("funInInlineProtectedFun.kt")
+                    public void testFunInInlineProtectedFun() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/funInInlineProtectedFun.kt");
+                    }
+
+                    @TestMetadata("funInInlinePublicFun.kt")
+                    public void testFunInInlinePublicFun() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/funInInlinePublicFun.kt");
+                    }
+
+                    @TestMetadata("funPlacement.kt")
+                    public void testFunPlacement() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/funPlacement.kt");
+                    }
+
+                    @TestMetadata("funWithPackageName.kt")
+                    public void testFunWithPackageName() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/funWithPackageName.kt");
+                    }
+
+                    @TestMetadata("functionalType.kt")
+                    public void testFunctionalType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/functionalType.kt");
+                    }
+
+                    @TestMetadata("inAnonymousFunBlockWithExpectedType.kt")
+                    public void testInAnonymousFunBlockWithExpectedType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inAnonymousFunBlockWithExpectedType.kt");
+                    }
+
+                    @TestMetadata("inAnonymousFunExprWithExpectedType.kt")
+                    public void testInAnonymousFunExprWithExpectedType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inAnonymousFunExprWithExpectedType.kt");
+                    }
+
+                    @TestMetadata("inLambda.kt")
+                    public void testInLambda() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambda.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType.kt")
+                    public void testInLambdaWithExpectedType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType2.kt")
+                    public void testInLambdaWithExpectedType2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType2.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType3.kt")
+                    public void testInLambdaWithExpectedType3() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType3.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType4.kt")
+                    public void testInLambdaWithExpectedType4() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType4.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType5.kt")
+                    public void testInLambdaWithExpectedType5() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType5.kt");
+                    }
+
+                    @TestMetadata("insideIfCondition.kt")
+                    public void testInsideIfCondition() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/insideIfCondition.kt");
+                    }
+
+                    @TestMetadata("insideIfConditionWithNegation.kt")
+                    public void testInsideIfConditionWithNegation() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/insideIfConditionWithNegation.kt");
+                    }
+
+                    @TestMetadata("kt10983.kt")
+                    public void testKt10983() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/kt10983.kt");
+                    }
+
+                    @TestMetadata("localFunNoReceiver.kt")
+                    public void testLocalFunNoReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/localFunNoReceiver.kt");
+                    }
+
+                    @TestMetadata("memberFunNoReceiver.kt")
+                    public void testMemberFunNoReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberFunNoReceiver.kt");
+                    }
+
+                    @TestMetadata("memberValDelegateRuntime.kt")
+                    public void testMemberValDelegateRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberValDelegateRuntime.kt");
+                    }
+
+                    @TestMetadata("memberVarDelegateRuntime.kt")
+                    public void testMemberVarDelegateRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberVarDelegateRuntime.kt");
+                    }
+
+                    @TestMetadata("notExactArgument.kt")
+                    public void testNotExactArgument() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/notExactArgument.kt");
+                    }
+
+                    @TestMetadata("objectMemberFunNoReceiver.kt")
+                    public void testObjectMemberFunNoReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/objectMemberFunNoReceiver.kt");
+                    }
+
+                    @TestMetadata("privateForMembers.kt")
+                    public void testPrivateForMembers() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/privateForMembers.kt");
+                    }
+
+                    @TestMetadata("refInImport.kt")
+                    public void testRefInImport() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/refInImport.kt");
+                    }
+
+                    @TestMetadata("smartCastWithIs.kt")
+                    public void testSmartCastWithIs() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/smartCastWithIs.kt");
+                    }
+
+                    @TestMetadata("smartCastWithNullCheck.kt")
+                    public void testSmartCastWithNullCheck() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/smartCastWithNullCheck.kt");
+                    }
+
+                    @TestMetadata("topLevelFunNoReceiver.kt")
+                    public void testTopLevelFunNoReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunNoReceiver.kt");
+                    }
+
+                    @TestMetadata("topLevelFunPlacement.kt")
+                    public void testTopLevelFunPlacement() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunPlacement.kt");
+                    }
+
+                    @TestMetadata("unaryOperationInCall.kt")
+                    public void testUnaryOperationInCall() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/unaryOperationInCall.kt");
+                    }
+
+                    @TestMetadata("unitFun.kt")
+                    public void testUnitFun() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/unitFun.kt");
                     }
                 }
 
@@ -5044,409 +5353,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("noReceiverPartialSubstitution.kt")
                     public void testNoReceiverPartialSubstitution() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/noReceiverPartialSubstitution.kt");
-                    }
-                }
-
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
-                public static class Uncategorized extends AbstractK1QuickFixTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                    }
-
-                    @TestMetadata("approximateAnonymousObjectRuntime.kt")
-                    public void testApproximateAnonymousObjectRuntime() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/approximateAnonymousObjectRuntime.kt");
-                    }
-
-                    @TestMetadata("approximateLocalClassRuntime.kt")
-                    public void testApproximateLocalClassRuntime() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/approximateLocalClassRuntime.kt");
-                    }
-
-                    @TestMetadata("argumentTypeMismatch.kt")
-                    public void testArgumentTypeMismatch() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/argumentTypeMismatch.kt");
-                    }
-
-                    @TestMetadata("binaryOperationInCall.kt")
-                    public void testBinaryOperationInCall() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/binaryOperationInCall.kt");
-                    }
-
-                    @TestMetadata("brokenPsi.kt")
-                    public void testBrokenPsi() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/brokenPsi.kt");
-                    }
-
-                    @TestMetadata("brokenPsi2.kt")
-                    public void testBrokenPsi2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/brokenPsi2.kt");
-                    }
-
-                    @TestMetadata("callInAnnotationEntry.kt")
-                    public void testCallInAnnotationEntry() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/callInAnnotationEntry.kt");
-                    }
-
-                    @TestMetadata("callInStringTemplateRuntime.kt")
-                    public void testCallInStringTemplateRuntime() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/callInStringTemplateRuntime.kt");
-                    }
-
-                    @TestMetadata("callWithClassLiteral.kt")
-                    public void testCallWithClassLiteral() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/callWithClassLiteral.kt");
-                    }
-
-                    @TestMetadata("callWithLambdaArg.kt")
-                    public void testCallWithLambdaArg() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/callWithLambdaArg.kt");
-                    }
-
-                    @TestMetadata("callWithLambdaArgOnly.kt")
-                    public void testCallWithLambdaArgOnly() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/callWithLambdaArgOnly.kt");
-                    }
-
-                    @TestMetadata("doNotStripPrefix.kt")
-                    public void testDoNotStripPrefix() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/doNotStripPrefix.kt");
-                    }
-
-                    @TestMetadata("extensionFunOnClassNoClassObject.kt")
-                    public void testExtensionFunOnClassNoClassObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnClassNoClassObject.kt");
-                    }
-
-                    @TestMetadata("extensionFunOnClassNoClassObject2.kt")
-                    public void testExtensionFunOnClassNoClassObject2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnClassNoClassObject2.kt");
-                    }
-
-                    @TestMetadata("extensionFunOnInterface.kt")
-                    public void testExtensionFunOnInterface() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnInterface.kt");
-                    }
-
-                    @TestMetadata("extensionRefInImport.kt")
-                    public void testExtensionRefInImport() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionRefInImport.kt");
-                    }
-
-                    @TestMetadata("funExtraArgs.kt")
-                    public void testFunExtraArgs() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funExtraArgs.kt");
-                    }
-
-                    @TestMetadata("funInInlineInternalFun.kt")
-                    public void testFunInInlineInternalFun() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funInInlineInternalFun.kt");
-                    }
-
-                    @TestMetadata("funInInlinePrivateFun.kt")
-                    public void testFunInInlinePrivateFun() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funInInlinePrivateFun.kt");
-                    }
-
-                    @TestMetadata("funInInlineProtectedFun.kt")
-                    public void testFunInInlineProtectedFun() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funInInlineProtectedFun.kt");
-                    }
-
-                    @TestMetadata("funInInlinePublicFun.kt")
-                    public void testFunInInlinePublicFun() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funInInlinePublicFun.kt");
-                    }
-
-                    @TestMetadata("funMissingArgs.kt")
-                    public void testFunMissingArgs() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funMissingArgs.kt");
-                    }
-
-                    @TestMetadata("funOnClassNoClassObject.kt")
-                    public void testFunOnClassNoClassObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnClassNoClassObject.kt");
-                    }
-
-                    @TestMetadata("funOnClassNoClassObject2.kt")
-                    public void testFunOnClassNoClassObject2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnClassNoClassObject2.kt");
-                    }
-
-                    @TestMetadata("funOnClassObject.kt")
-                    public void testFunOnClassObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnClassObject.kt");
-                    }
-
-                    @TestMetadata("funOnEnumClass.kt")
-                    public void testFunOnEnumClass() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnEnumClass.kt");
-                    }
-
-                    @TestMetadata("funOnEnumClass2.kt")
-                    public void testFunOnEnumClass2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnEnumClass2.kt");
-                    }
-
-                    @TestMetadata("funOnInterface.kt")
-                    public void testFunOnInterface() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnInterface.kt");
-                    }
-
-                    @TestMetadata("funOnLibObject.kt")
-                    public void testFunOnLibObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnLibObject.kt");
-                    }
-
-                    @TestMetadata("funOnLibType.kt")
-                    public void testFunOnLibType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnLibType.kt");
-                    }
-
-                    @TestMetadata("funOnUserObject.kt")
-                    public void testFunOnUserObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnUserObject.kt");
-                    }
-
-                    @TestMetadata("funOnUserType.kt")
-                    public void testFunOnUserType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnUserType.kt");
-                    }
-
-                    @TestMetadata("funOnUserTypeWithDeclarations.kt")
-                    public void testFunOnUserTypeWithDeclarations() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnUserTypeWithDeclarations.kt");
-                    }
-
-                    @TestMetadata("funOnUserTypeWithTypeParams.kt")
-                    public void testFunOnUserTypeWithTypeParams() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnUserTypeWithTypeParams.kt");
-                    }
-
-                    @TestMetadata("funPlacement.kt")
-                    public void testFunPlacement() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funPlacement.kt");
-                    }
-
-                    @TestMetadata("funWithExplicitParamNamesOnUserType.kt")
-                    public void testFunWithExplicitParamNamesOnUserType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funWithExplicitParamNamesOnUserType.kt");
-                    }
-
-                    @TestMetadata("funWithNullableParamType.kt")
-                    public void testFunWithNullableParamType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funWithNullableParamType.kt");
-                    }
-
-                    @TestMetadata("funWithNullableType.kt")
-                    public void testFunWithNullableType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funWithNullableType.kt");
-                    }
-
-                    @TestMetadata("funWithNullableTypeParameter.kt")
-                    public void testFunWithNullableTypeParameter() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funWithNullableTypeParameter.kt");
-                    }
-
-                    @TestMetadata("funWithPackageName.kt")
-                    public void testFunWithPackageName() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funWithPackageName.kt");
-                    }
-
-                    @TestMetadata("functionalType.kt")
-                    public void testFunctionalType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/functionalType.kt");
-                    }
-
-                    @TestMetadata("functionalTypeInReceiver.kt")
-                    public void testFunctionalTypeInReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/functionalTypeInReceiver.kt");
-                    }
-
-                    @TestMetadata("inAnonymousFunBlockWithExpectedType.kt")
-                    public void testInAnonymousFunBlockWithExpectedType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inAnonymousFunBlockWithExpectedType.kt");
-                    }
-
-                    @TestMetadata("inAnonymousFunExprWithExpectedType.kt")
-                    public void testInAnonymousFunExprWithExpectedType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inAnonymousFunExprWithExpectedType.kt");
-                    }
-
-                    @TestMetadata("inLambda.kt")
-                    public void testInLambda() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambda.kt");
-                    }
-
-                    @TestMetadata("inLambdaWithExpectedType.kt")
-                    public void testInLambdaWithExpectedType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType.kt");
-                    }
-
-                    @TestMetadata("inLambdaWithExpectedType2.kt")
-                    public void testInLambdaWithExpectedType2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType2.kt");
-                    }
-
-                    @TestMetadata("inLambdaWithExpectedType3.kt")
-                    public void testInLambdaWithExpectedType3() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType3.kt");
-                    }
-
-                    @TestMetadata("inLambdaWithExpectedType4.kt")
-                    public void testInLambdaWithExpectedType4() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType4.kt");
-                    }
-
-                    @TestMetadata("inLambdaWithExpectedType5.kt")
-                    public void testInLambdaWithExpectedType5() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType5.kt");
-                    }
-
-                    @TestMetadata("inconsistentTypes.kt")
-                    public void testInconsistentTypes() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/inconsistentTypes.kt");
-                    }
-
-                    @TestMetadata("insideIfCondition.kt")
-                    public void testInsideIfCondition() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/insideIfCondition.kt");
-                    }
-
-                    @TestMetadata("insideIfConditionWithNegation.kt")
-                    public void testInsideIfConditionWithNegation() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/insideIfConditionWithNegation.kt");
-                    }
-
-                    @TestMetadata("kt10983.kt")
-                    public void testKt10983() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/kt10983.kt");
-                    }
-
-                    @TestMetadata("localFunNoReceiver.kt")
-                    public void testLocalFunNoReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/localFunNoReceiver.kt");
-                    }
-
-                    @TestMetadata("memberFunNoReceiver.kt")
-                    public void testMemberFunNoReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/memberFunNoReceiver.kt");
-                    }
-
-                    @TestMetadata("memberValDelegateRuntime.kt")
-                    public void testMemberValDelegateRuntime() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/memberValDelegateRuntime.kt");
-                    }
-
-                    @TestMetadata("memberVarDelegateRuntime.kt")
-                    public void testMemberVarDelegateRuntime() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/memberVarDelegateRuntime.kt");
-                    }
-
-                    @TestMetadata("notExactArgument.kt")
-                    public void testNotExactArgument() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/notExactArgument.kt");
-                    }
-
-                    @TestMetadata("nullableReceiver.kt")
-                    public void testNullableReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/nullableReceiver.kt");
-                    }
-
-                    @TestMetadata("objectMemberFunNoReceiver.kt")
-                    public void testObjectMemberFunNoReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/objectMemberFunNoReceiver.kt");
-                    }
-
-                    @TestMetadata("privateForMembers.kt")
-                    public void testPrivateForMembers() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/privateForMembers.kt");
-                    }
-
-                    @TestMetadata("propertyOnUserType.kt")
-                    public void testPropertyOnUserType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/propertyOnUserType.kt");
-                    }
-
-                    @TestMetadata("qualifiedCallInStringTemplateRuntime.kt")
-                    public void testQualifiedCallInStringTemplateRuntime() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/qualifiedCallInStringTemplateRuntime.kt");
-                    }
-
-                    @TestMetadata("receiverWithSmartCast.kt")
-                    public void testReceiverWithSmartCast() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/receiverWithSmartCast.kt");
-                    }
-
-                    @TestMetadata("refInImport.kt")
-                    public void testRefInImport() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/refInImport.kt");
-                    }
-
-                    @TestMetadata("smartCastWithIs.kt")
-                    public void testSmartCastWithIs() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/smartCastWithIs.kt");
-                    }
-
-                    @TestMetadata("smartCastWithNullCheck.kt")
-                    public void testSmartCastWithNullCheck() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/smartCastWithNullCheck.kt");
-                    }
-
-                    @TestMetadata("stripPrefix.kt")
-                    public void testStripPrefix() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/stripPrefix.kt");
-                    }
-
-                    @TestMetadata("thisInClass.kt")
-                    public void testThisInClass() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/thisInClass.kt");
-                    }
-
-                    @TestMetadata("thisInExtension.kt")
-                    public void testThisInExtension() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/thisInExtension.kt");
-                    }
-
-                    @TestMetadata("thisInNestedClass1.kt")
-                    public void testThisInNestedClass1() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/thisInNestedClass1.kt");
-                    }
-
-                    @TestMetadata("thisInNestedClass2.kt")
-                    public void testThisInNestedClass2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/thisInNestedClass2.kt");
-                    }
-
-                    @TestMetadata("topLevelFunNoReceiver.kt")
-                    public void testTopLevelFunNoReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/topLevelFunNoReceiver.kt");
-                    }
-
-                    @TestMetadata("topLevelFunPlacement.kt")
-                    public void testTopLevelFunPlacement() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/topLevelFunPlacement.kt");
-                    }
-
-                    @TestMetadata("unaryOperationInCall.kt")
-                    public void testUnaryOperationInCall() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/unaryOperationInCall.kt");
-                    }
-
-                    @TestMetadata("unitFun.kt")
-                    public void testUnitFun() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/unitFun.kt");
-                    }
-
-                    @TestMetadata("unknownType.kt")
-                    public void testUnknownType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/unknownType.kt");
-                    }
-
-                    @TestMetadata("unresolvedSupertype.kt")
-                    public void testUnresolvedSupertype() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/unresolvedSupertype.kt");
                     }
                 }
             }
@@ -11422,6 +11328,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/hasOptInAnnotationForClass2.kt");
             }
 
+            @TestMetadata("invisibleAnnotation.kt")
+            public void testInvisibleAnnotation() throws Exception {
+                runTest("testData/quickfix/optIn/invisibleAnnotation.kt");
+            }
+
+            @TestMetadata("invisibleAnnotationFir.kt")
+            public void testInvisibleAnnotationFir() throws Exception {
+                runTest("testData/quickfix/optIn/invisibleAnnotationFir.kt");
+            }
+
             @TestMetadata("localFunction.kt")
             public void testLocalFunction() throws Exception {
                 runTest("testData/quickfix/optIn/localFunction.kt");
@@ -13068,6 +12984,134 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("usedVarAsAlias.kt")
         public void testUsedVarAsAlias() throws Exception {
             runTest("testData/quickfix/removeUnused/usedVarAsAlias.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/removeUnusedParameter")
+    public static class RemoveUnusedParameter extends AbstractK1QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("removeFunctionLastLambdaParameter.kt")
+        public void testRemoveFunctionLastLambdaParameter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeFunctionLastLambdaParameter.kt");
+        }
+
+        @TestMetadata("removeParameterFromExtension.kt")
+        public void testRemoveParameterFromExtension() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeParameterFromExtension.kt");
+        }
+
+        @TestMetadata("removeUnusedConstructorParameterWithUsage.kt")
+        public void testRemoveUnusedConstructorParameterWithUsage() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedConstructorParameterWithUsage.kt");
+        }
+
+        @TestMetadata("removeUnusedExtensionParameter.kt")
+        public void testRemoveUnusedExtensionParameter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedExtensionParameter.kt");
+        }
+
+        @TestMetadata("removeUnusedInternalConstructorParameter.kt")
+        public void testRemoveUnusedInternalConstructorParameter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedInternalConstructorParameter.kt");
+        }
+
+        @TestMetadata("removeUnusedParameter.kt")
+        public void testRemoveUnusedParameter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameter.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterOfPropertySetter.kt")
+        public void testRemoveUnusedParameterOfPropertySetter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterOfPropertySetter.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithComments.kt")
+        public void testRemoveUnusedParameterWithComments() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithComments.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithComments2.kt")
+        public void testRemoveUnusedParameterWithComments2() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithComments2.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithComments3.kt")
+        public void testRemoveUnusedParameterWithComments3() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithComments3.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithComments4.kt")
+        public void testRemoveUnusedParameterWithComments4() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithComments4.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithLongQualifier.kt")
+        public void testRemoveUnusedParameterWithLongQualifier() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithLongQualifier.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter.kt")
+        public void testRemoveUnusedParameterWithTypeParameter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter2.kt")
+        public void testRemoveUnusedParameterWithTypeParameter2() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter2.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter3.kt")
+        public void testRemoveUnusedParameterWithTypeParameter3() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter3.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter4.kt")
+        public void testRemoveUnusedParameterWithTypeParameter4() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter4.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter5.kt")
+        public void testRemoveUnusedParameterWithTypeParameter5() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter5.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter6.kt")
+        public void testRemoveUnusedParameterWithTypeParameter6() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter6.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameter7.kt")
+        public void testRemoveUnusedParameterWithTypeParameter7() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameter7.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameterAndTypeConstraint.kt")
+        public void testRemoveUnusedParameterWithTypeParameterAndTypeConstraint() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameterAndTypeConstraint.kt");
+        }
+
+        @TestMetadata("removeUnusedParameterWithTypeParameterAndTypeConstraint2.kt")
+        public void testRemoveUnusedParameterWithTypeParameterAndTypeConstraint2() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedParameterWithTypeParameterAndTypeConstraint2.kt");
+        }
+
+        @TestMetadata("removeUnusedPrimaryConstructorParameter.kt")
+        public void testRemoveUnusedPrimaryConstructorParameter() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedPrimaryConstructorParameter.kt");
+        }
+
+        @TestMetadata("removeUnusedPrimaryConstructorParameter2.kt")
+        public void testRemoveUnusedPrimaryConstructorParameter2() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedPrimaryConstructorParameter2.kt");
+        }
+
+        @TestMetadata("removeUnusedPrimaryConstructorParameterWithComments.kt")
+        public void testRemoveUnusedPrimaryConstructorParameterWithComments() throws Exception {
+            runTest("testData/quickfix/removeUnusedParameter/removeUnusedPrimaryConstructorParameterWithComments.kt");
         }
     }
 
@@ -15018,6 +15062,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/suppress/inspections/codeStructure/constructorSuppressedOnFile.kt");
                 }
 
+                @TestMetadata("emptyClassSuppressOnClass.kt")
+                public void testEmptyClassSuppressOnClass() throws Exception {
+                    runTest("testData/quickfix/suppress/inspections/codeStructure/emptyClassSuppressOnClass.kt");
+                }
+
+                @TestMetadata("emptyClassSuppressOnFile.kt")
+                public void testEmptyClassSuppressOnFile() throws Exception {
+                    runTest("testData/quickfix/suppress/inspections/codeStructure/emptyClassSuppressOnFile.kt");
+                }
+
                 @TestMetadata("enumEntrySuppressedOnClass.kt")
                 public void testEnumEntrySuppressedOnClass() throws Exception {
                     runTest("testData/quickfix/suppress/inspections/codeStructure/enumEntrySuppressedOnClass.kt");
@@ -16840,6 +16894,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/functionReflectType.kt");
             }
 
+            @TestMetadata("functionReflectTypeFir.kt")
+            public void testFunctionReflectTypeFir() throws Exception {
+                runTest("testData/quickfix/typeMismatch/functionReflectTypeFir.kt");
+            }
+
             @TestMetadata("functionType.kt")
             public void testFunctionType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/functionType.kt");
@@ -17897,6 +17956,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("elseNotLastInWhen.kt")
         public void testElseNotLastInWhen() throws Exception {
             runTest("testData/quickfix/when/elseNotLastInWhen.kt");
+        }
+
+        @TestMetadata("localSealedClassInheritorExhaustive.kt")
+        public void testLocalSealedClassInheritorExhaustive() throws Exception {
+            runTest("testData/quickfix/when/localSealedClassInheritorExhaustive.kt");
         }
 
         @TestMetadata("noElseInWhenWithBranches.kt")

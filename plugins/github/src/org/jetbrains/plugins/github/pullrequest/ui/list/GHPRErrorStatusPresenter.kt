@@ -15,7 +15,7 @@ class GHPRErrorStatusPresenter(
   project: Project,
   account: GithubAccount,
   resetRunnable: () -> Unit
-) : ErrorStatusPresenter<Throwable> {
+) : ErrorStatusPresenter.Text<Throwable> {
   private val errorHandler = GHApiLoadingErrorHandler(project, account, resetRunnable)
 
   override fun getErrorTitle(error: Throwable): @Nls String = GithubBundle.message("pull.request.list.cannot.load")

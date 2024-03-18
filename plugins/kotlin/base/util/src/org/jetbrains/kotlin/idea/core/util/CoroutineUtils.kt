@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineDispatcher
@@ -33,6 +34,7 @@ object EDT : CoroutineDispatcher() {
 val Project.cancelOnDisposal: Job
     get() = this.service<ProjectJob>().sharedJob
 
+@Service(Service.Level.PROJECT)
 internal class ProjectJob(project: Project) : Disposable {
     internal val sharedJob: Job = Job()
 

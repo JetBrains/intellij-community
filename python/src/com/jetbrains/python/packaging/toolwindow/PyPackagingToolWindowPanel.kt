@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
@@ -31,7 +31,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBFont
@@ -39,12 +38,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
 import com.jetbrains.python.sdk.pythonSdk
-import icons.PythonIcons
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
@@ -71,7 +70,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
   }
 
   private val searchTextField: SearchTextField
-  private val searchAlarm: Alarm
+  private val searchAlarm: SingleAlarm
   private val installButton: JBOptionButton
   private val uninstallAction: JComponent
   private val progressBar: JProgressBar

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateAdapter {
+public final class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateAdapter {
 
   private final JavadocHelper myHelper = JavadocHelper.getInstance();
 

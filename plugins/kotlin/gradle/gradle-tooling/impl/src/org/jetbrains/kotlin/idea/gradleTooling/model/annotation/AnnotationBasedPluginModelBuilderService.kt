@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.gradleTooling.model.annotation
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import java.io.Serializable
 
 interface DumpedPluginModel {
@@ -45,9 +46,14 @@ abstract class AnnotationBasedPluginModelBuilderService<T : AnnotationBasedPlugi
     abstract val modelClass: Class<T>
     abstract fun createModel(annotations: List<String>, presets: List<String>, extension: Any?): T
 
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-            .withDescription("Unable to build $gradlePluginNames plugin configuration")
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build $gradlePluginNames plugin configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     override fun canBuild(modelName: String?): Boolean = modelName == modelClass.name

@@ -657,7 +657,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private static BalloonListener getBalloonListener() {
-    return ApplicationManager.getApplication().getMessageBus().syncPublisher(BalloonListener.getTOPIC());
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(BalloonListener.TOPIC);
   }
 
   public AbstractPosition getPosition() {

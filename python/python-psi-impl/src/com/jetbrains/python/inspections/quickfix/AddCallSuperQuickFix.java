@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +29,7 @@ import java.util.*;
  * <p/>
  * User: catherine
  */
-public class AddCallSuperQuickFix implements LocalQuickFix {
+public class AddCallSuperQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -38,8 +38,8 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (problemFunction == null) return;
     final StringBuilder superCall = new StringBuilder();
     final PyClass klass = problemFunction.getContainingClass();
@@ -86,6 +86,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     PyPsiRefactoringUtil.addElementToStatementList(callSuperStatement, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
   }
+
 
   @NotNull
   private static String getSelfParameterName(@NotNull ParametersInfo info) {

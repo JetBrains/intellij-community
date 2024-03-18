@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.module.ModuleManager
@@ -202,7 +203,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
 
   override fun doOKAction() {
     val unloadedModuleNames = unloadedModulesTree.getAllModules().map { it.name }
-    project.coroutineScope.launch {
+    (project as ComponentManagerEx).getCoroutineScope().launch {
       ModuleManager.getInstance(project).setUnloadedModules(unloadedModuleNames)
     }
     super.doOKAction()

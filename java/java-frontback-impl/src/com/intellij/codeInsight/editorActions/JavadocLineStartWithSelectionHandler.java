@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class JavadocLineStartWithSelectionHandler extends JavadocLineStartHandler {
+public final class JavadocLineStartWithSelectionHandler extends JavadocLineStartHandler {
   public JavadocLineStartWithSelectionHandler(EditorActionHandler originalHandler) {
     super(originalHandler, true);
   }

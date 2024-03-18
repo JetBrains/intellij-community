@@ -43,7 +43,7 @@ import java.util.*;
  *
  * Inspection to detect situations, where instance attribute is defined outside __init__ function.
  */
-public class PyAttributeOutsideInitInspection extends PyInspection {
+public final class PyAttributeOutsideInitInspection extends PyInspection {
 
   @NotNull
   @Override

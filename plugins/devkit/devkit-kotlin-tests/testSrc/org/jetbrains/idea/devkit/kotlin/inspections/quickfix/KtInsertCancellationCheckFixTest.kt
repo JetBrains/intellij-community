@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/insertCancellationCheckFix")
 class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestBase() {
@@ -27,7 +26,9 @@ class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestB
   }
 
   private val fixName = DevKitBundle.message("inspection.insert.cancellation.check.fix.message")
-  
+
+  // loops:
+
   fun testBlockDoWhileLoop() {
     doTest(fixName)
   }
@@ -85,6 +86,20 @@ class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestB
   }
 
   fun testSuspendingWhileLoop() {
+    doTest(fixName)
+  }
+
+  // loop methods:
+
+  fun testBlockIterableForEachMethod() {
+    doTest(fixName)
+  }
+
+  fun testEmptyIteratorForEachRemainingMethod() {
+    doTest(fixName)
+  }
+
+  fun testSuspendingMapForMethod() {
     doTest(fixName)
   }
 

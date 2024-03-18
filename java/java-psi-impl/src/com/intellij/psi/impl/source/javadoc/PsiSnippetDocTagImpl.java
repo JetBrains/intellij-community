@@ -65,7 +65,6 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    super.accept(visitor);
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitSnippetTag(this);
     }

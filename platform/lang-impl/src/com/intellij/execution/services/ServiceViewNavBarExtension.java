@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
-import com.intellij.ide.navbar.impl.DefaultNavBarItem;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -33,11 +32,8 @@ public final class ServiceViewNavBarExtension extends AbstractNavBarModelExtensi
   }
 
   private static Object unwrapNavBarItem(Object item) {
-    if (item instanceof DefaultNavBarItem<?> defaultNavBarItem) {
-      Object data = defaultNavBarItem.getData();
-      if (data instanceof ServiceModel.ServiceViewItem serviceViewItem) {
-        return serviceViewItem.getValue();
-      }
+    if (item instanceof ServiceViewNavBarItem serviceItem) {
+      return serviceItem.getItem().getValue();
     }
     return item;
   }

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.platform.util.progress.impl.ProgressState
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.ExpectedState
+import com.intellij.platform.util.progress.progressReporterTest
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
@@ -79,33 +79,20 @@ class CoroutineToIndicatorTest : CancellationTest() {
   }
 
   @Test
-  fun `fails if context reporter is not raw`() {
-    assertLogThrows<IllegalStateException> {
-      progressReporterTest {
-        coroutineToIndicator {
-          fail()
-        }
-      }
-    }
-  }
-
-  @Test
   fun `delegates reporting to context reporter`() {
     progressReporterTest(
-      ProgressState(text = "Hello", details = null, fraction = -1.0),
-      ProgressState(text = "Hello", details = "World", fraction = -1.0),
-      ProgressState(text = "Hello", details = "World", fraction = 0.42),
-      ProgressState(text = null, details = "World", fraction = 0.42),
-      ProgressState(text = null, details = "World", fraction = -1.0),
+      ExpectedState(text = "Hello", details = null, fraction = null),
+      ExpectedState(text = "Hello", details = "World", fraction = null),
+      ExpectedState(text = "Hello", details = "World", fraction = 0.42),
+      ExpectedState(text = null, details = "World", fraction = 0.42),
+      ExpectedState(text = null, details = "World", fraction = null),
     ) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          ProgressManager.progress("Hello", "World")
-          val indicator = ProgressManager.getInstance().progressIndicator
-          indicator.fraction = 0.42
-          indicator.text = null
-          indicator.isIndeterminate = true
-        }
+      coroutineToIndicator {
+        ProgressManager.progress("Hello", "World")
+        val indicator = ProgressManager.getInstance().progressIndicator
+        indicator.fraction = 0.42
+        indicator.text = null
+        indicator.isIndeterminate = true
       }
     }
   }

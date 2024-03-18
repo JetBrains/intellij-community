@@ -15,15 +15,14 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstDocStringOwner;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyDocStringOwner extends PyElement {
-  @Nullable
-  String getDocStringValue();
-
+public interface PyDocStringOwner extends PyAstDocStringOwner, PyElement {
   @Nullable
   StructuredDocString getStructuredDocString();
 
+  @Override
   @Nullable
   PyStringLiteralExpression getDocStringExpression();
 }

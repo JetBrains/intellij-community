@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class SystemOutErrInspection extends BaseInspection {
+public final class SystemOutErrInspection extends BaseInspection {
 
   @Nullable
   @Override

@@ -78,6 +78,10 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       writer.writeNumberField("elementTypeCount", allTypes.size)
     }
 
+    writer.obj("jvm") {
+      val bootstrapTime = (StartUpMeasurer.getStartTimeUnixNanoDiff() + StartUpMeasurer.getStartTime()) / 1_000_000
+      writer.writeNumberField("loadingTime", bootstrapTime - ManagementFactory.getRuntimeMXBean().startTime)
+    }
     writeServiceStats(writer)
     writeIcons(writer)
   }

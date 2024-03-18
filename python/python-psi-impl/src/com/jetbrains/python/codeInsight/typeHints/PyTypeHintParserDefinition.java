@@ -10,7 +10,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
-public class PyTypeHintParserDefinition extends PythonParserDefinition {
+public final class PyTypeHintParserDefinition extends PythonParserDefinition {
 
   @NotNull
   @Override

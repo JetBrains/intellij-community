@@ -4,15 +4,15 @@
     { "name": "L2" }
   ],
   "modules" : [
-    { "name": "A", "dependsOn": ["B", "C", "H"] },
-    { "name": "B", "dependsOn": ["D", "E"] },
-    { "name": "C", "dependsOn": ["F", "G"] },
-    { "name": "D", "dependsOn": ["L1"] },
-    { "name": "E", "dependsOn": ["L1"] },
-    { "name": "F", "dependsOn": ["L2"] },
-    { "name": "G", "dependsOn": ["L2"] },
-    { "name": "H", "dependsOn": ["I"] },
-    { "name": "I", "dependsOn": ["L1"] }
+    { "name": "A", "dependencies": ["B", "C", "H"] },
+    { "name": "B", "dependencies": ["D", "E"] },
+    { "name": "C", "dependencies": ["F", "G"] },
+    { "name": "D", "dependencies": ["L1"] },
+    { "name": "E", "dependencies": ["L1"] },
+    { "name": "F", "dependencies": ["L2"] },
+    { "name": "G", "dependencies": ["L2"] },
+    { "name": "H", "dependencies": ["I"] },
+    { "name": "I", "dependencies": ["L1"] }
   ],
   "targets": [
     {

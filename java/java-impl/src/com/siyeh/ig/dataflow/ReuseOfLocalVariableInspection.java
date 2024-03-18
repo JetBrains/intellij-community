@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public class ReuseOfLocalVariableInspection extends BaseInspection {
+public final class ReuseOfLocalVariableInspection extends BaseInspection {
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
     return new ReuseOfLocalVariableFix();

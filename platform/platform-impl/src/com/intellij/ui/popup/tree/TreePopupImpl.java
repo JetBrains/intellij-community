@@ -272,11 +272,6 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         }
       }
     }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-    }
-
   }
 
   private void toggleExpansion(TreePath path) {

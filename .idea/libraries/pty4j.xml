@@ -1,15 +1,16 @@
 <component name="libraryTable">
   <library name="pty4j" type="repository">
-    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.13">
+    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.25">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.13/pty4j-0.12.13.jar">
-          <sha256sum>8cae0b647c734dcd3ed5974bb596518f351d752e335a60084fcebab5da108c0d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.25/pty4j-0.12.25.jar">
+          <sha256sum>8901c361476df4f908a20d6990621c12249f7486ee91371906a28fd133c09324</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar">
           <sha256sum>31c048a86057e07272429aa26e90713edbde96af9747362f27470d8e86a398a3</sha256sum>
         </artifact>
       </verification>
       <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="net.java.dev.jna:jna" />
@@ -17,12 +18,12 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.13/pty4j-0.12.13.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.25/pty4j-0.12.25.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.13/pty4j-0.12.13-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.25/pty4j-0.12.25-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1-sources.jar!/" />
     </SOURCES>
   </library>

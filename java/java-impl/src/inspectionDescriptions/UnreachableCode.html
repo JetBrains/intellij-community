@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports the code which is never reached according to data flow analysis. 
+It can be the result of previous always-true or always-false condition, unreachable loop body or 
+catch section. Usually (though not always) unreachable code is a consequence of a previous warning,
+so check inspection warnings form "Nullability and data flow problems", "Constant values", or
+"Redundant operation on empty container" to better understand the cause.
+<p>Example:</p>
+<pre><code>
+  void finishApplication() {
+    System.exit(0);
+    System.out.println("Application is terminated"); // Unreachable code
+  }
+</code></pre>
+<p><small>New in 2024.1</small></p>
+</body>
+</html>

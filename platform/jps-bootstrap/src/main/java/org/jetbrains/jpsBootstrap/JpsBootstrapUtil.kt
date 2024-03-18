@@ -3,6 +3,7 @@ package org.jetbrains.jpsBootstrap
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
+import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,11 +53,9 @@ object JpsBootstrapUtil {
   /**
    * Load JPS-consumed system properties from [existingProperties] and set them using [System.setProperty] if not set yet.
    */
-  fun loadJpsBuildsystemProperties(vararg existingProperties: Properties) {
-    val merged = Properties()
-    existingProperties.forEach(merged::putAll)
+  fun loadJpsSystemProperties(existingProperties: Properties) {
 
-    val propertiesToCopy = merged.stringPropertyNames()
+    val propertiesToCopy = existingProperties.stringPropertyNames()
       .filter { name -> name.startsWith("org.jetbrains.jps.incremental.dependencies.resolution.") }
       .toMutableList()
 
@@ -65,12 +64,33 @@ object JpsBootstrapUtil {
 
     propertiesToCopy.forEach { name ->
       if (System.getProperty(name) == null) {
-        val p = merged.getProperty(name)
+        val p = existingProperties.getProperty(name)
         if (p != null) {
           System.setProperty(name, p)
         }
       }
     }
+  }
+
+  fun getDefaultSystemPropertiesIfMissing(vararg existingProperties: Properties): Properties {
+    val merged = Properties()
+    existingProperties.forEach(merged::putAll)
+
+    val defaults = Properties().apply {
+      setProperty(DependencyResolvingBuilder.RESOLUTION_RETRY_ENABLED_PROPERTY, "true")
+      setProperty(DependencyResolvingBuilder.RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, "10")
+      setProperty(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY, "4")
+      setProperty(DependencyResolvingBuilder.RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_PROPERTY, "true")
+    }
+
+    val result = Properties()
+    defaults.stringPropertyNames().forEach { name ->
+      if (merged.getProperty(name) == null) {
+        result.setProperty(name, defaults.getProperty(name))
+      }
+    }
+
+    return result
   }
 
   fun <T> executeTasksInParallel(tasks: List<Callable<T>>): List<T> {

@@ -55,7 +55,7 @@ public class RemoveAssignmentFix extends ModCommandQuickFix {
     else {
       subActions = List.of(new DeleteElementFix(parentExpr));
     }
-    return new ModChooseAction(JavaBundle.message("inspection.unused.assignment.remove.assignment.quickfix.title"), subActions);
+    return ModCommand.chooseAction(JavaBundle.message("inspection.unused.assignment.remove.assignment.quickfix.title"), subActions);
   }
 
   PsiAssignmentExpression getAssignment(@NotNull ProblemDescriptor descriptor) {

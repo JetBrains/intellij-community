@@ -20,6 +20,8 @@ import javax.swing.*;
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
  *
+ * Each file type must be a singleton, which generally implies its constructor must be private
+ * and the only instance is stored in the static final field.
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
  */

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 
-class GHSuggestedChange(
+internal class GHSuggestedChange(
   val commentBody: String,
   private val patchHunk: PatchHunk,
   val filePath: String,
@@ -25,12 +25,15 @@ class GHSuggestedChange(
 
   fun cutSuggestedChangeContent(): List<String> {
     return commentBody.lines()
-      .dropWhile { !it.startsWith("```suggestion") }
+      .dropWhile { !it.startsWith(SUGGESTION_BLOCK_START) }
       .drop(1)
-      .takeWhile { !it.startsWith("```") }
+      .takeWhile { !it.startsWith(SUGGESTION_BLOCK_END) }
   }
 
   companion object {
-    fun containsSuggestedChange(markdownText: String): Boolean = markdownText.lines().any { it.startsWith("```suggestion") }
+    const val SUGGESTION_BLOCK_START = "```suggestion"
+    const val SUGGESTION_BLOCK_END = "```"
+
+    fun containsSuggestedChange(markdownText: String): Boolean = markdownText.lines().any { it.startsWith(SUGGESTION_BLOCK_START) }
   }
 }

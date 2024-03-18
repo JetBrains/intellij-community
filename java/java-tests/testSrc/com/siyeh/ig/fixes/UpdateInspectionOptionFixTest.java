@@ -29,17 +29,18 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
     myFixture.configureByText("Test.java", "class X {}");
     Java8MapApiInspection inspection = new Java8MapApiInspection();
     myFixture.enableInspections(inspection);
-    ModCommand command = ModCommand.updateOption(myFixture.getFile(), inspection, tool -> {
+    ModCommand command = ModCommand.updateInspectionOption(myFixture.getFile(), inspection, tool -> {
       tool.mySuggestMapComputeIfAbsent = false;
       tool.mySuggestMapGetOrDefault = false;
     });
-    assertEquals("ModUpdateInspectionOptions[inspectionShortName=Java8MapApi, " +
-                 "options=[ModifiedInspectionOption[bindId=mySuggestMapComputeIfAbsent, oldValue=true, newValue=false], " +
-                 "ModifiedInspectionOption[bindId=mySuggestMapGetOrDefault, oldValue=true, newValue=false]]]", command.toString());
+    assertEquals("""
+                   ModUpdateSystemOptions[options=[\
+                   ModifiedOption[bindId=currentProfile.Java8MapApi.options.mySuggestMapComputeIfAbsent, oldValue=true, newValue=false], \
+                   ModifiedOption[bindId=currentProfile.Java8MapApi.options.mySuggestMapGetOrDefault, oldValue=true, newValue=false]]]""", command.toString());
     IntentionPreviewInfo preview = IntentionPreviewUtils.getModCommandPreview(command, myFixture.getActionContext());
     assertTrue(preview instanceof IntentionPreviewInfo.Html);
-    assertEquals("Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.computeIfAbsent</td></tr></table>" +
-                 "Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.getOrDefault</td></tr></table>",
+    assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.computeIfAbsent</td></tr></table>" +
+                 "Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.getOrDefault</td></tr></table>",
                  ((IntentionPreviewInfo.Html)preview).content().toString());
   }
   
@@ -50,7 +51,7 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
     UpdateInspectionOptionFix fix = new UpdateInspectionOptionFix(inspection, "mySuggestMapComputeIfAbsent", "Update", false);
     IntentionPreviewInfo info = fix.generatePreview(myFixture.getActionContext());
     assertTrue(info instanceof IntentionPreviewInfo.Html);
-    assertEquals("Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td>" +
+    assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td>" +
                  "<td>Suggest conversion to Map.computeIfAbsent</td></tr></table>", ((IntentionPreviewInfo.Html)info).content().toString());
     assertTrue(((Java8MapApiInspection)InspectionProfileManager.getInstance(getProject()).getCurrentProfile()
       .getUnwrappedTool("Java8MapApi", myFixture.getFile())).mySuggestMapComputeIfAbsent);

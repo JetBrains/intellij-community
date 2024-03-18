@@ -8,9 +8,7 @@ import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.DescriptionAwareSchemeActions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -253,8 +251,9 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     final boolean isProjectLevel = selectedProfile.isProjectLevel() ^ modifyLevel;
 
     BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myAppProfileManager;
-    InspectionProfileImpl inspectionProfile =
-      new InspectionProfileImpl(newName, InspectionToolRegistrar.getInstance(), profileManager);
+    InspectionToolsSupplier inspectionsRegistrar = isProjectLevel ? ProjectInspectionToolRegistrar.getInstance(project)
+                                                                  : InspectionToolRegistrar.getInstance();
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, inspectionsRegistrar, profileManager);
 
     inspectionProfile.copyFrom(selectedProfile);
     inspectionProfile.setName(newName);

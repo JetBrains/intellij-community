@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.9.22-release-704">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.9.23-release-779">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.22-release-704/kotlin-jps-plugin-tests-for-ide-1.9.22-release-704.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.23-release-779/kotlin-jps-plugin-tests-for-ide-1.9.23-release-779.jar">
           <sha256sum>d8a156f8996c7d3c46c4591e14a950b9f0ed495c579e5eb53835efc1ddc91025</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.22-release-704/kotlin-jps-plugin-tests-for-ide-1.9.22-release-704.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.23-release-779/kotlin-jps-plugin-tests-for-ide-1.9.23-release-779.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.22-release-704/kotlin-jps-plugin-tests-for-ide-1.9.22-release-704-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.9.23-release-779/kotlin-jps-plugin-tests-for-ide-1.9.23-release-779-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

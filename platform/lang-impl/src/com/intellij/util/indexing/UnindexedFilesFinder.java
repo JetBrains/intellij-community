@@ -20,8 +20,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
-import com.intellij.util.indexing.projectFilter.FileAddStatus;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +30,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
   private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", true);
@@ -41,7 +40,7 @@ final class UnindexedFilesFinder {
   private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
   private final @Nullable Predicate<? super IndexedFile> myForceReindexingTrigger;
-  private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
+  private final FilesFilterScanningHandler myFilterHandler;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
   private final ScanningRequestToken indexingRequest;
@@ -142,7 +141,9 @@ final class UnindexedFilesFinder {
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
-                       @Nullable VirtualFile root, ScanningRequestToken indexingRequest) {
+                       @Nullable VirtualFile root,
+                       ScanningRequestToken indexingRequest,
+                       @NotNull FilesFilterScanningHandler filterHandler) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
@@ -156,7 +157,7 @@ final class UnindexedFilesFinder {
 
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
 
-    myIndexableFilesFilterHolder = fileBasedIndex.getIndexableFilesFilterHolder();
+    myFilterHandler = filterHandler;
     this.indexingRequest = indexingRequest;
   }
 
@@ -172,7 +173,7 @@ final class UnindexedFilesFinder {
 
     if (TRUST_INDEXING_FLAG) {
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
-        myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
+        myFilterHandler.addFileId(myProject, FileBasedIndex.getFileId(file));
         return new UnindexedFileStatusBuilder(applicationMode).build();
       }
     }
@@ -189,24 +190,22 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject) == FileAddStatus.ADDED;
+      myFilterHandler.addFileId(myProject, inputId);
 
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         boolean wasInvalidated = false;
-        if (fileWereJustAdded) {
-          List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
-          for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
-            for (ID<?, ?> id : ids) {
-              if (myFileBasedIndex.needsFileContentLoading(id)) {
-                long nowTime = System.nanoTime();
-                try {
-                  if (!processor.processUpToDateFile(indexedFile, inputId, id)) {
-                    wasInvalidated = true;
-                  }
+        List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
+        for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
+          for (ID<?, ?> id : ids) {
+            if (myFileBasedIndex.needsFileContentLoading(id)) {
+              long nowTime = System.nanoTime();
+              try {
+                if (!processor.processUpToDateFile(indexedFile, inputId, id)) {
+                  wasInvalidated = true;
                 }
-                finally {
-                  fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
-                }
+              }
+              finally {
+                fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
               }
             }
           }

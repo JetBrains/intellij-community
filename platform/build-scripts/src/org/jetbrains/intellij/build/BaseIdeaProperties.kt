@@ -1,15 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
 
-import kotlinx.collections.immutable.*
+import com.intellij.util.containers.withAll
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
-private val BASE_CLASS_VERSIONS = persistentHashMapOf(
+private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(hashMapOf(
   "" to "17",
   "lib/idea_rt.jar" to "1.7",
   "lib/forms_rt.jar" to "1.7",
@@ -27,7 +30,7 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
-)
+))
 
 /**
  * Default bundled plugins for all editions of IntelliJ IDEA.
@@ -61,7 +64,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.vcs.git",
   "intellij.vcs.svn",
   "intellij.vcs.hg",
-  "intellij.vcs.github",
   "intellij.vcs.gitlab",
   "intellij.groovy",
   "intellij.junit",
@@ -93,7 +95,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.turboComplete",
 )
 
-val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
+val CE_CLASS_VERSIONS: Map<String, String> = BASE_CLASS_VERSIONS.withAll(hashMapOf(
   "plugins/java/lib/jshell-frontend.jar" to "9",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
   "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
@@ -109,10 +111,9 @@ val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layo
                       "intellij.platform.testFramework.impl",
                       "intellij.tools.testsBootstrap",
                       "intellij.java.rt")) {
-    layout.withModule(name, "testFramework.jar")
+    layout.withModule(name, TEST_FRAMEWORK_JAR)
   }
 }
-
 
 /**
  * Base class for all editions of IntelliJ IDEA
@@ -170,7 +171,5 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     )
     additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
     modulesToCompileTests = persistentListOf("intellij.platform.jps.build.tests")
-
-    isAntRequired = true
   }
 }

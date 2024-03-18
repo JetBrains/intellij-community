@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstCallable;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -27,11 +28,12 @@ import java.util.Map;
 /**
  * Something that can be called, passed parameters to, and return something back.
  */
-public interface PyCallable extends PyTypedElement, PyQualifiedNameOwner {
+public interface PyCallable extends PyAstCallable, PyTypedElement, PyQualifiedNameOwner {
 
   /**
    * @return a list of parameters passed to this callable, possibly empty.
    */
+  @Override
   @NotNull
   PyParameterList getParameterList();
 
@@ -68,6 +70,7 @@ public interface PyCallable extends PyTypedElement, PyQualifiedNameOwner {
   /**
    * @return a methods returns itself, non-method callables return null.
    */
+  @Override
   @Nullable
   PyFunction asMethod();
 }

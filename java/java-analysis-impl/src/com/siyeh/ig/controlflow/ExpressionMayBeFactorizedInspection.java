@@ -25,7 +25,7 @@ import static com.intellij.psi.JavaTokenType.*;
 /**
  * @author Fabrice TIERCELIN
  */
-public class ExpressionMayBeFactorizedInspection extends BaseInspection {
+public final class ExpressionMayBeFactorizedInspection extends BaseInspection {
 
   @NotNull
   @Override

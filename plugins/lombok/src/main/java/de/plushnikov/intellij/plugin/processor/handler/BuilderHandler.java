@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -71,6 +72,45 @@ public class BuilderHandler {
   private static final String JACKSON_DATABIND_ANNOTATION_JSON_POJOBUILDER = "com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder";
 
   private static final String BUILDER_TEMP_VAR = "builder";
+
+  public static Map<String, List<List<PsiType>>> getExistingMethodsWithParameterTypes(@NotNull PsiClass psiClass) {
+    return PsiClassUtil.collectClassMethodsIntern(psiClass).stream()
+      .filter(psiMethod -> !psiMethod.hasAnnotation(LombokClassNames.TOLERATE))
+      .collect(Collectors.groupingBy(PsiMethod::getName,
+                                     Collectors.mapping(BuilderHandler::getMethodParameterTypes, Collectors.toList())));
+  }
+
+  public static boolean matchMethodWithParams(@NotNull Map<String, List<List<PsiType>>> existingMethodsWithTypes,
+                                              @NotNull String methodName,
+                                              @NotNull List<PsiType> methodParameterTypes) {
+    final List<List<PsiType>> existingMethodWithTypes = existingMethodsWithTypes.getOrDefault(methodName, Collections.emptyList());
+    if (!existingMethodWithTypes.isEmpty()) {
+      final int typesCount = methodParameterTypes.size();
+      final List<List<PsiType>> existingMethodsTypes = ContainerUtil.filter(existingMethodWithTypes, types -> types.size() == typesCount);
+      if (!existingMethodsTypes.isEmpty()) {
+        //check params
+        for (List<PsiType> existingMethodTypes : existingMethodsTypes) {
+          boolean allParameterTypesMatched = true;
+
+          for (int i = 0; i < typesCount; i++) {
+            if (!PsiTypesUtil.compareTypes(existingMethodTypes.get(i), methodParameterTypes.get(i), true)) {
+              allParameterTypesMatched = false;
+              break;
+            }
+          }
+
+          if (allParameterTypesMatched) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static List<PsiType> getMethodParameterTypes(@NotNull PsiMethod psiMethod) {
+    return ContainerUtil.map(psiMethod.getParameterList().getParameters(), PsiParameter::getType);
+  }
 
   PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -177,7 +217,7 @@ public class BuilderHandler {
 
   public boolean validate(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemSink problemSink) {
     final PsiClass psiClass = psiMethod.getContainingClass();
-    boolean result = null != psiClass;
+    boolean result = null!=psiClass && validateAnnotationOnRightType(psiClass, problemSink);
     if (result) {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiMethod);
 
@@ -460,7 +500,8 @@ public class BuilderHandler {
     final String toBuilderMethodCalls = builderInfos.stream()
       .map(BuilderInfo::renderToBuilderCallWithPrependLogic)
       .filter(Predicate.not(StringUtil::isEmpty))
-      .collect(Collectors.joining(".", ".", ""));
+      .collect(() -> new StringJoiner(".", ".", "").setEmptyValue(""), StringJoiner::add, StringJoiner::merge)
+      .toString();
 
     final String toBuilderAppendStatements = builderInfos.stream()
       .map(BuilderInfo::renderToBuilderAppendStatement)
@@ -557,9 +598,9 @@ public class BuilderHandler {
 
       final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, psiMethod, thisPsiClass);
       // create builder methods
-      builderInfos.stream()
-        .map(BuilderInfo::renderBuilderMethods)
-        .forEach(psiMethods::addAll);
+      for (BuilderInfo info : builderInfos) {
+        psiMethods.addAll(info.renderBuilderMethods(Collections.emptyMap()));
+      }
 
       // create 'build' method
       final String buildMethodName = getBuildMethodName(psiAnnotation);

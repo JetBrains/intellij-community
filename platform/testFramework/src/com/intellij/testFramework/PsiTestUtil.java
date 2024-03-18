@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubInconsistencyReporter;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +58,7 @@ public final class PsiTestUtil {
     filesToDelete.add(dir);
     VirtualFile vDir = HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
     return vDir;
   }
 
@@ -68,6 +70,7 @@ public final class PsiTestUtil {
       }
       model.setSdk(jdk);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   @NotNull
@@ -79,6 +82,7 @@ public final class PsiTestUtil {
   public static SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testSource) {
     Ref<SourceFolder> result = Ref.create();
     ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testSource)));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     return result.get();
   }
 
@@ -86,6 +90,7 @@ public final class PsiTestUtil {
   public static SourceFolder addResourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testResource) {
     Ref<SourceFolder> result = Ref.create();
     ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testResource? JavaResourceRootType.TEST_RESOURCE: JavaResourceRootType.RESOURCE)));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     return result.get();
   }
 
@@ -117,6 +122,7 @@ public final class PsiTestUtil {
       }
       result.set(entry.addSourceFolder(vDir, rootType, properties));
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     return result.get();
   }
 
@@ -130,6 +136,7 @@ public final class PsiTestUtil {
 
   public static ContentEntry addContentRoot(@NotNull Module module, @NotNull VirtualFile vDir) {
     ModuleRootModificationUtil.updateModel(module, model -> model.addContentEntry(vDir));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
@@ -144,6 +151,7 @@ public final class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> ApplicationManager.getApplication().runReadAction(() -> {
       findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
     }));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   @NotNull
@@ -165,6 +173,7 @@ public final class PsiTestUtil {
       ContentEntry entry = ContainerUtil.find(model.getContentEntries(), object -> contentRoot.equals(object.getFile()));
       model.removeContentEntry(assertEntryFound(model, contentRoot, entry));
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void removeSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
@@ -177,6 +186,7 @@ public final class PsiTestUtil {
         }
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void removeExcludedRoot(@NotNull Module module, @NotNull VirtualFile root) {
@@ -184,6 +194,7 @@ public final class PsiTestUtil {
       ContentEntry entry = findContentEntryWithAssertion(model, root);
       entry.removeExcludeFolder(root.getUrl());
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void checkErrorElements(@NotNull PsiElement element) {
@@ -289,6 +300,7 @@ public final class PsiTestUtil {
    */
   public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(model, libName, libPath, jarArr));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   /**
@@ -298,6 +310,8 @@ public final class PsiTestUtil {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
     Disposer.register(parent, () -> removeLibrary(module, ref.get()));
+
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void removeLibrary(@NotNull Module module, @NotNull Library library) {
@@ -313,6 +327,8 @@ public final class PsiTestUtil {
       model.removeLibrary(library);
       model.commit();
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   /**
@@ -355,6 +371,9 @@ public final class PsiTestUtil {
     Ref<Library> result = Ref.create();
     ModuleRootModificationUtil.updateModel(
       module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList(), Collections.emptyList())));
+
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+
     return result.get();
   }
 
@@ -366,7 +385,7 @@ public final class PsiTestUtil {
                                            @NotNull List<? extends VirtualFile> javaDocs,
                                            @NotNull List<? extends VirtualFile> externalAnnotationsRoots) {
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
-    return WriteAction.computeAndWait(() -> {
+    Library lib = WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();
       try {
@@ -398,6 +417,10 @@ public final class PsiTestUtil {
       model.rearrangeOrderEntries(orderEntries);
       return library;
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(model.getProject());
+
+    return lib;
   }
 
   /**
@@ -467,11 +490,12 @@ public final class PsiTestUtil {
       sourceUrls.add(parentUrl + sourceRoot);
     }
     ModuleRootModificationUtil.addModuleLibrary(module, libName, classesUrls, sourceUrls);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   @NotNull
   public static Module addModule(@NotNull Project project, @NotNull ModuleType type, @NotNull String name, @NotNull VirtualFile root) {
-    return WriteCommandAction.writeCommandAction(project).compute(() -> {
+    Module module = WriteCommandAction.writeCommandAction(project).compute(() -> {
       String moduleName;
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
       try {
@@ -497,6 +521,8 @@ public final class PsiTestUtil {
       }
       return dep;
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
   public static void setCompilerOutputPath(@NotNull Module module, @NotNull String url, boolean forTests) {
@@ -510,14 +536,17 @@ public final class PsiTestUtil {
         extension.setCompilerOutputPath(url);
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void setExcludeCompileOutput(@NotNull Module module, boolean exclude) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void setJavadocUrls(@NotNull Module module, String @NotNull ... urls) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   @NotNull
@@ -533,12 +562,15 @@ public final class PsiTestUtil {
   public static Sdk addRootsToJdk(@NotNull Sdk sdk,
                                   @NotNull OrderRootType rootType,
                                   VirtualFile @NotNull ... roots) {
-    return modifyJdkRoots(sdk, sdkModificator -> {
+    Sdk res = modifyJdkRoots(sdk, sdkModificator -> {
       for (VirtualFile root : roots) {
         sdkModificator.setName(sdkModificator.getName() + "+" + root.getPath());
         sdkModificator.addRoot(root, rootType);
       }
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    return res;
   }
 
   @NotNull
@@ -546,20 +578,22 @@ public final class PsiTestUtil {
   public static Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
     Sdk clone;
     try {
-      clone = (Sdk)sdk.clone();
+      clone = sdk.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
     modifier.accept(sdkModificator);
-    sdkModificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return clone;
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
     try {
-      StubTextInconsistencyException.checkStubTextConsistency(file);
+      StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.ForTests);
     }
     catch (StubTextInconsistencyException e) {
       compareStubTexts(e);

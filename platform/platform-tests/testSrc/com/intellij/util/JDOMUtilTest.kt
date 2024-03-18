@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -340,6 +340,6 @@ internal class JDOMUtilTest {
   }
 
   private fun assertElementText(actual: Element, expected: String) {
-    assertThat(JDOMUtil.createOutputter("").outputString(actual)).isEqualTo(expected)
+    assertThat(JDOMUtil.writeElement(actual)).isEqualTo(expected)
   }
 }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectsRequireNonNullIntention extends MCIntention {
+public final class ObjectsRequireNonNullIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Nikolay.Tropin
  */
-public class JavaSourcePositionHighlighter extends SourcePositionHighlighter implements DumbAware {
+public final class JavaSourcePositionHighlighter extends SourcePositionHighlighter implements DumbAware {
   @Override
   public TextRange getHighlightRange(SourcePosition sourcePosition) {
     TextRange range = getHighlightRangeInternal(sourcePosition);

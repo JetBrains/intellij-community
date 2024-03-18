@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push
 
-import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vcs.Executor.cd
@@ -56,7 +55,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
   fun `test try push from all roots even if one fails`() {
     // fail in the first repo
     git.onPush {
-      if (it == ultimate) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>())
+      if (it == ultimate) GitCommandResult.error("Failed to push to origin")
       else null
     }
 

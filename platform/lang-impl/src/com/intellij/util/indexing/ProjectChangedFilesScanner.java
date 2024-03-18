@@ -3,9 +3,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.diagnostic.ChangedFilesDuringIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -20,9 +20,9 @@ final class ProjectChangedFilesScanner {
     myProject = project;
   }
 
-  public Collection<VirtualFile> scan(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
+  public Collection<FileIndexingRequest> scan(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
     long refreshedFilesCalcDuration = System.nanoTime();
-    Collection<VirtualFile> files = Collections.emptyList();
+    Collection<FileIndexingRequest> files = Collections.emptyList();
     try {
       FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
       files = fileBasedIndex.getFilesToUpdate(myProject);

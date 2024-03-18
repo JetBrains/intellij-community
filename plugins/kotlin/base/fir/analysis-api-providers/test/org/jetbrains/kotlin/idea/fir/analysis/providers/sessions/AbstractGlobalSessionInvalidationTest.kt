@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ModulesByName
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ProjectLibrariesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
 
 /**
  * Checks that *all* sessions for all modules in the test project structure are invalidated after publishing a global module state

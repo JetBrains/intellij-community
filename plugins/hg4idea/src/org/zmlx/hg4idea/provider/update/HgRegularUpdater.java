@@ -44,9 +44,9 @@ import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 
-  @NotNull private final Project project;
-  @NotNull private final VirtualFile repoRoot;
-  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
+  private final @NotNull Project project;
+  private final @NotNull VirtualFile repoRoot;
+  private final @NotNull HgUpdateConfigurationSettings updateConfiguration;
   private static final Logger LOG = Logger.getInstance(HgRegularUpdater.class);
 
   public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {

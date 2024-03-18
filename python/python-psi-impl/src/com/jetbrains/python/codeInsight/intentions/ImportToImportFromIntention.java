@@ -33,7 +33,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <i>NOTE: currently we only check usage of module name in the same file. For re-exported module names this is not sufficient.</i>
  * <br>
  */
-public class ImportToImportFromIntention extends PyBaseIntentionAction {
+public final class ImportToImportFromIntention extends PyBaseIntentionAction {
 
   private static class IntentionState {
     private String myModuleName = null;

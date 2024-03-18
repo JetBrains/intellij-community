@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
@@ -56,7 +57,7 @@ fun <T : Any> buildGradleModel(
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> {
     val connector = GradleConnector.newConnector()
-    connector.useDistribution(AbstractModelBuilderTest.DistributionLocator().getDistributionFor(gradleVersion))
+    connector.useDistribution(GradleUtil.getWrapperDistributionUri(gradleVersion))
     connector.forProjectDirectory(projectPath)
 
     (connector as DefaultGradleConnector).daemonMaxIdleTime(

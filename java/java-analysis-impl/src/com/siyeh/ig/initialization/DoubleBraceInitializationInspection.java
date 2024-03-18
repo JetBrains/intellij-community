@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleBraceInitializationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class DoubleBraceInitializationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -36,13 +36,15 @@ public final class VFileCreateEvent extends VFileEvent {
   }
 
   @ApiStatus.Internal
-  public VFileCreateEvent(Object requestor,
-                          @NotNull VirtualFile parent,
-                          @NotNull String childName,
-                          boolean isDirectory,
-                          @Nullable("null means should read from the created file") FileAttributes attributes,
-                          @Nullable String symlinkTarget,
-                          ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children) {
+  public VFileCreateEvent(
+    Object requestor,
+    @NotNull VirtualFile parent,
+    @NotNull String childName,
+    boolean isDirectory,
+    @Nullable("null means should read from the created file") FileAttributes attributes,
+    @Nullable String symlinkTarget,
+    ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children
+  ) {
     super(requestor);
     myParent = parent;
     myDirectory = isDirectory;

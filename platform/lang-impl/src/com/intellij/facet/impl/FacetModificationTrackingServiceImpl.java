@@ -7,11 +7,10 @@ import com.intellij.facet.FacetManagerListener;
 import com.intellij.facet.FacetModificationTrackingService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.ModificationTrackerListener;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,13 +20,22 @@ final class FacetModificationTrackingServiceImpl extends FacetModificationTracki
   private final ConcurrentMap<Facet<?>, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
     new ConcurrentHashMap<>();
 
-  FacetModificationTrackingServiceImpl(Module module) {
-    module.getProject().getMessageBus().connect(module).subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener(module));
+  FacetModificationTrackingServiceImpl(@NotNull Project project) {
+    project.getMessageBus().connect().subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener(project));
   }
 
   @Override
   public @NotNull ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet) {
     return getFacetInfo(facet).first;
+  }
+
+  @Override
+  public void incFacetModificationTracker() {
+    myModificationsTrackers.forEach((facet, pair) -> {
+      pair.first.incModificationCount();
+      //noinspection unchecked
+      pair.second.getMulticaster().modificationCountChanged(facet);
+    });
   }
 
   private Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> getFacetInfo(final Facet<?> facet) {
@@ -42,39 +50,31 @@ final class FacetModificationTrackingServiceImpl extends FacetModificationTracki
 
   @Override
   public void incFacetModificationTracker(final @NotNull Facet<?> facet) {
-    final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
-    pair.first.incModificationCount();
-    //noinspection unchecked
-    pair.second.getMulticaster().modificationCountChanged(facet);
-  }
-
-  @Override
-  public <T extends Facet<?>> void addModificationTrackerListener(final T facet, final ModificationTrackerListener<? super T> listener, final Disposable parent) {
-    getFacetInfo(facet).second.addListener(listener, parent);
-  }
-
-  @Override
-  public void removeModificationTrackerListener(final Facet<?> facet, final ModificationTrackerListener<?> listener) {
-    getFacetInfo(facet).second.removeListener(listener);
+    final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
+    if (pair != null) {
+      pair.first.incModificationCount();
+      //noinspection unchecked
+      pair.second.getMulticaster().modificationCountChanged(facet);
+    }
   }
 
   private final class FacetModificationTrackingListener implements FacetManagerListener {
-    private final Module module;
+    private final Project myProject;
 
-    FacetModificationTrackingListener(Module module) {
-      this.module = module;
+    FacetModificationTrackingListener(@NotNull Project project) {
+      myProject = project;
     }
 
     @Override
     public void facetConfigurationChanged(@NotNull Facet facet) {
-      if (module == facet.getModule()) {
+      if (myProject == facet.getModule().getProject()) {
         incFacetModificationTracker(facet);
       }
     }
 
     @Override
     public void facetRemoved(@NotNull Facet facet) {
-      if (module == facet.getModule()) {
+      if (myProject == facet.getModule().getProject()) {
         myModificationsTrackers.remove(facet);
       }
     }

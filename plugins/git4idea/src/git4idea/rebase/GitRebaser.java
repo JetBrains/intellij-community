@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.history.ActivityId;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,49 +10,51 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitActivity;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
-public class GitRebaser {
+public final class GitRebaser {
 
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
 
   private final @NotNull Project myProject;
   private final @NotNull Git myGit;
-  private final @NotNull GitVcs myVcs;
   private final @NotNull ProgressIndicator myProgressIndicator;
-
-  private final @NotNull List<GitRebaseUtils.CommitInfo> mySkippedCommits;
 
   public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
     myGit = git;
     myProgressIndicator = progressIndicator;
-    myVcs = GitVcs.getInstance(project);
-    mySkippedCommits = new ArrayList<>();
   }
 
-  public GitUpdateResult rebase(@NotNull VirtualFile root,
-                                @NotNull List<String> parameters) {
-    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE);
+  public GitUpdateResult rebase(@NotNull VirtualFile root, @NotNull List<String> parameters) {
+    return rebase(root, parameters, GitActivity.Rebase);
+  }
+
+  @ApiStatus.Internal
+  public GitUpdateResult rebase(@NotNull VirtualFile root, @NotNull List<String> parameters, @Nullable ActivityId activityId) {
+    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE, GitImpl.REBASE_CONFIG_PARAMS);
     rebaseHandler.setStdoutSuppressed(false);
     rebaseHandler.addParameters(parameters);
 
@@ -63,14 +66,17 @@ public class GitRebaser {
     rebaseHandler.addLineListener(localChangesDetector);
     rebaseHandler.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
-      String oldText = myProgressIndicator.getText();
-      myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
-      GitCommandResult result = myGit.runCommand(rebaseHandler);
-      myProgressIndicator.setText(oldText);
-      return result.success() ?
-             GitUpdateResult.SUCCESS :
-             handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"), activityId)) {
+      GitRebaseEditorHandler editor = GitRebaseUtils.createRebaseEditor(myProject, root, false);
+      try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rebaseHandler, editor)) {
+        String oldText = myProgressIndicator.getText();
+        myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
+        GitCommandResult result = myGit.runCommand(rebaseHandler);
+        myProgressIndicator.setText(oldText);
+        return result.success() ?
+               GitUpdateResult.SUCCESS :
+               handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
+      }
     }
     catch (ProcessCanceledException pce) {
       return GitUpdateResult.CANCEL;
@@ -117,7 +123,7 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<? extends VirtualFile> rebasingRoots) {
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"), GitActivity.Rebase)) {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {
         success &= continueRebase(root);
@@ -129,7 +135,7 @@ public class GitRebaser {
   // start operation may be "--continue" or "--skip" depending on the situation.
   private boolean continueRebase(final @NotNull VirtualFile root, boolean skip) {
     LOG.info(String.format("continueRebase in %s, skip: %s", root, skip));
-    final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE, GitImpl.REBASE_CONFIG_PARAMS);
     rh.setStdoutSuppressed(false);
     rh.addParameters(skip ? "--skip" : "--continue");
 
@@ -137,8 +143,7 @@ public class GitRebaser {
     rh.addLineListener(rebaseConflictDetector);
     rh.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
-    // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
-    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
+    GitRebaseEditorHandler editor = GitRebaseUtils.createRebaseEditor(myProject, root, false);
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
       String oldText = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
@@ -154,19 +159,6 @@ public class GitRebaser {
   }
 
   /**
-   * @return Roots which have unfinished rebase process. May be empty.
-   */
-  public @NotNull Collection<VirtualFile> getRebasingRoots() {
-    final Collection<VirtualFile> rebasingRoots = new HashSet<>();
-    for (VirtualFile root : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)) {
-      if (GitRebaseUtils.isRebaseInTheProgress(myProject, root)) {
-        rebasingRoots.add(root);
-      }
-    }
-    return rebasingRoots;
-  }
-
-  /**
    * @return true if the failure situation was resolved successfully, false if we failed to resolve the problem.
    */
   private boolean handleRebaseContinueFailure(final VirtualFile root,
@@ -174,18 +166,7 @@ public class GitRebaser {
                                               @NotNull GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, Collections.singleton(root), makeParams(myProject)) {
-        @Override
-        protected boolean proceedIfNothingToMerge() {
-          notifyUnresolvedRemain();
-          return false;
-        }
-
-        @Override
-        protected boolean proceedAfterAllMerged() {
-          return continueRebase(root);
-        }
-      }.merge();
+      return new GitRebaser.ResumeConflictResolver(myProject, root, this).merge();
     }
     else if (rebaseConflictDetector.isNoChangeError()) {
       LOG.info("handleRebaseFailure no changes error detected");
@@ -200,9 +181,7 @@ public class GitRebaser {
           return continueRebase(root);
         }
         else {
-          GitRebaseUtils.CommitInfo commit = GitRebaseUtils.getCurrentRebaseCommit(myProject, root);
-          LOG.info("no changes confirmed. Skipping commit " + commit);
-          mySkippedCommits.add(commit);
+          LOG.info("no changes confirmed. Skipping commit " + GitRebaseUtils.getCurrentRebaseCommit(myProject, root));
           return skipCommitAndContinue(root);
         }
       }
@@ -260,23 +239,6 @@ public class GitRebaser {
       .setErrorNotificationAdditionalDescription(GitBundle.message("rebase.update.project.conflict.error.notification.description"));
   }
 
-  public static class TrivialEditor implements GitRebaseEditorHandler {
-    @Override
-    public int editCommits(@NotNull File file) {
-      return 0;
-    }
-
-    @Override
-    public boolean wasCommitListEditorCancelled() {
-      return false;
-    }
-
-    @Override
-    public boolean wasUnstructuredEditorCancelled() {
-      return false;
-    }
-  }
-
   public @NotNull GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler,
                                                       @NotNull VirtualFile root,
                                                       @NotNull GitCommandResult result,
@@ -285,7 +247,7 @@ public class GitRebaser {
                                                       @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      final boolean allMerged = new GitRebaser.ConflictResolver(myProject, myGit, root, this).merge();
+      final boolean allMerged = new RebaserConflictResolver(myProject, root, this).merge();
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     }
     else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
@@ -315,11 +277,11 @@ public class GitRebaser {
     }
   }
 
-  public static class ConflictResolver extends GitConflictResolver {
+  private static class RebaserConflictResolver extends GitConflictResolver {
     private final @NotNull GitRebaser myRebaser;
     private final @NotNull VirtualFile myRoot;
 
-    public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
+    private RebaserConflictResolver(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
       super(project, Collections.singleton(root), makeParams(project));
       myRebaser = rebaser;
       myRoot = root;
@@ -328,6 +290,28 @@ public class GitRebaser {
     @Override
     protected boolean proceedIfNothingToMerge() {
       return myRebaser.continueRebase(myRoot);
+    }
+
+    @Override
+    protected boolean proceedAfterAllMerged() {
+      return myRebaser.continueRebase(myRoot);
+    }
+  }
+
+  private static class ResumeConflictResolver extends GitConflictResolver {
+    private final @NotNull GitRebaser myRebaser;
+    private final @NotNull VirtualFile myRoot;
+
+    private ResumeConflictResolver(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
+      super(project, Collections.singleton(root), makeParams(project));
+      myRebaser = rebaser;
+      myRoot = root;
+    }
+
+    @Override
+    protected boolean proceedIfNothingToMerge() {
+      notifyUnresolvedRemain();
+      return false;
     }
 
     @Override

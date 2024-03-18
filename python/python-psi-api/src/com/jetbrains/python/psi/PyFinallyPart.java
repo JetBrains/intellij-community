@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstFinallyPart;
+
 /**
  * The 'finally' part.
  * @see PyTryPart
  */
-public interface PyFinallyPart extends PyStatementPart {
+public interface PyFinallyPart extends PyAstFinallyPart, PyStatementPart {
 }

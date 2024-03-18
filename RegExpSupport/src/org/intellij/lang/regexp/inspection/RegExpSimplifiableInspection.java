@@ -3,6 +3,9 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -166,7 +169,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       };
     }
 
-    private static class RegExpSimplifiableFix implements LocalQuickFix {
+    private static class RegExpSimplifiableFix extends ModCommandQuickFix {
       private final String myExpression;
       private final boolean myDelete;
 
@@ -192,12 +195,13 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         if (!(element instanceof RegExpElement)) {
-          return;
+          return ModCommand.nop();
         }
-        RegExpReplacementUtil.replaceInContext(element, myDelete ? "" : myExpression, descriptor.getTextRangeInElement());
+        return ModCommand.psiUpdate(element, e ->
+          RegExpReplacementUtil.replaceInContext(e, myDelete ? "" : myExpression, descriptor.getTextRangeInElement()));
       }
     }
   }

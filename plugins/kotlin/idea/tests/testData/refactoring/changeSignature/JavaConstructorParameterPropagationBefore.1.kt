@@ -3,7 +3,7 @@ open class C: A() {
 }
 
 open class D: A {
-    constructor(): super()
+    constructor() : super()
     constructor(b: Boolean)
 }
 

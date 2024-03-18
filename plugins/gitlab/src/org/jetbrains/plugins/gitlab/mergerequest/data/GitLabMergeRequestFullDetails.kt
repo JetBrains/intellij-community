@@ -28,9 +28,11 @@ data class GitLabMergeRequestFullDetails(
   val approvedBy: List<GitLabUserDTO>,
   val targetBranch: String,
   val sourceBranch: String,
-  val isApproved: Boolean,
+  val approvalsRequired: Int,
   val conflicts: Boolean,
-  val commits: List<GitLabCommit>,
+  val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
+  val onlyAllowMergeIfPipelineSucceeds: Boolean,
+  val allowMergeOnSkippedPipeline: Boolean,
   val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
@@ -39,11 +41,7 @@ data class GitLabMergeRequestFullDetails(
 ) {
 
   companion object {
-    /**
-     * @param backupCommits The list of commits in case the DTO contains no such list
-     * (solution for compatibility issues with GitLab <=14.7
-     */
-    fun fromGraphQL(dto: GitLabMergeRequestDTO, backupCommits: List<GitLabCommitRestDTO>) = GitLabMergeRequestFullDetails(
+    fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
       iid = dto.iid,
       title = dto.title,
       createdAt = dto.createdAt,
@@ -61,10 +59,11 @@ data class GitLabMergeRequestFullDetails(
       approvedBy = dto.approvedBy,
       targetBranch = dto.targetBranch,
       sourceBranch = dto.sourceBranch,
-      isApproved = dto.approved ?: true,
+      approvalsRequired = dto.approvalsRequired ?: 0,
       conflicts = dto.conflicts,
-      commits = dto.commits?.map(GitLabCommit.Companion::fromGraphQLDTO)
-                ?: backupCommits.map(GitLabCommit.Companion::fromRestDTO),
+      onlyAllowMergeIfAllDiscussionsAreResolved = dto.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved,
+      onlyAllowMergeIfPipelineSucceeds = dto.targetProject.onlyAllowMergeIfPipelineSucceeds,
+      allowMergeOnSkippedPipeline = dto.targetProject.allowMergeOnSkippedPipeline,
       diffRefs = dto.diffRefs,
       headPipeline = dto.headPipeline,
       userPermissions = dto.userPermissions,

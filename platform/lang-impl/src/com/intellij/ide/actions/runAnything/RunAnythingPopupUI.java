@@ -21,6 +21,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -193,7 +194,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
-          RunAnythingUsageCollector.Companion.triggerMoreStatistics(myProject, group, model.getClass());
+          RunAnythingUsageCollector.triggerMoreStatistics(myProject, group, model.getClass());
           RunAnythingSearchListModel listModel = (RunAnythingSearchListModel)myResultsList.getModel();
           myCurrentWorker = insert(group, listModel, getDataContext(), getSearchPattern(), index, -1);
           myCurrentWorker.doWhenProcessed(() -> {
@@ -207,7 +208,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
+      RunAnythingUsageCollector.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
                                                                         myShiftIsPressed, myAltIsPressed);
     }
     RunAnythingUtil.executeMatched(getDataContext(), pattern);
@@ -797,7 +798,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
     toolbar.setTargetComponent(mySearchField);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
 

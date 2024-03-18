@@ -43,7 +43,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
   }
 
 
-  private val settings = CodeVisionSettings.instance()
+  private val settings = CodeVisionSettings.getInstance()
   private val uiData by lazy {
     var positionComboBox: ComboBox<CodeVisionAnchorKind>? = null
     val panel = panel {

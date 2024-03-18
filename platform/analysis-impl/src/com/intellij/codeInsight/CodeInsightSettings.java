@@ -55,7 +55,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
-  public static final UINumericRange JAVADOC_INFO_DELAY_RANGE = new UINumericRange(1000, 0, 5000);
+  public static final UINumericRange JAVADOC_INFO_DELAY_RANGE = new UINumericRange(500, 0, 5000);
   public static final UINumericRange PARAMETER_INFO_DELAY_RANGE = new UINumericRange(1000, 0, 5000);
 
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;

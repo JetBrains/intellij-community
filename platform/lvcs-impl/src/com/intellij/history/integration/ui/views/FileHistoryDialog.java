@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
@@ -47,7 +48,7 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -78,7 +79,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected void addExtraToolbar(JPanel toolBarPanel) {
+  protected void addExtraToolbar(@NotNull JPanel toolBarPanel) {
     mySearchTextArea = new SearchTextArea(new JTextArea(), true);
     mySearchTextArea.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     new NextOccurenceAction(true).registerCustomShortcutSet(Utils.shortcutSetOf(ContainerUtil.concat(
@@ -125,9 +126,10 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @RequiresEdt
-  private void applyFilterText(@Nullable String filter, LoadingDecorator decorator) {
+  private void applyFilterText(@Nullable String filter, @NotNull LoadingDecorator decorator) {
     decorator.stopLoading();
-    if (myFilterFuture != null) {
+    boolean hasPreviousSearch = myFilterFuture != null;
+    if (hasPreviousSearch) {
       myFilterFuture.cancel(true);
       myFilterFuture = null;
     }
@@ -135,19 +137,19 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       applyFilteredRevisions(null);
     }
     else {
+      if (!hasPreviousSearch) LocalHistoryCounter.INSTANCE.logFilterUsed(myModel.getKind());
+
       decorator.startLoading(false);
       updateEditorSearch();
       myFilterFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Set<Long> revisions = new HashSet<>();
         FileHistoryDialogModel model = myModel;
+        Set<Long> revisions;
         if (model != null) {
-          model.processContents((r, c) -> {
-            if (Thread.currentThread().isInterrupted()) return false;
-            if (c != null && StringUtil.containsIgnoreCase(c, filter)) {
-              revisions.add(r.getChangeSetId());
-            }
-            return true;
+          revisions = LocalHistoryCounter.INSTANCE.logFilter(myProject, myModel.getKind(), () -> {
+            return model.filterContents(filter);
           });
+        } else {
+          revisions = Collections.emptySet();
         }
         decorator.stopLoading();
         UIUtil.invokeLaterIfNeeded(() -> applyFilteredRevisions(revisions));
@@ -213,7 +215,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected Runnable doUpdateDiffs(final FileHistoryDialogModel model) {
+  protected Runnable doUpdateDiffs(final @NotNull FileHistoryDialogModel model) {
     final FileDifferenceModel diffModel = model.getDifferenceModel();
     return () -> myDiffPanel.setRequest(createDifference(diffModel));
   }

@@ -5,8 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenBuildHelperPluginTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun testCompletion() = runBlocking {
     importProjectAsync(
@@ -99,6 +98,6 @@ class MavenBuildHelperPluginTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "someNewProperty1", "someNewProperty2")
+    assertCompletionVariants(projectPom, "someNewProperty1", "someNewProperty2")
   }
 }

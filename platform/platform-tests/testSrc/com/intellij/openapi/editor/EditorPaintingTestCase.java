@@ -18,8 +18,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.RunAll;
@@ -261,8 +261,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     if (expectedResultsFile == null) {
       expectedResultsFile = saveTmpImage(expectedImage, "expected");
     }
-    throw new FileComparisonFailure(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
-                                    expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
+    throw new FileComparisonFailedError(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
+                                        expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
   private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {

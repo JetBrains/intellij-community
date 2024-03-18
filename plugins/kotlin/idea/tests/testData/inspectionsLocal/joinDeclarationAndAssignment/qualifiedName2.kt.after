@@ -1,0 +1,6 @@
+// IS_APPLICABLE: true
+package pack
+
+object Foo {
+    val prop: Boolean = true
+}

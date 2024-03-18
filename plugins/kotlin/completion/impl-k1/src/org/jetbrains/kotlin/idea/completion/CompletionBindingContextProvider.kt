@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.lang.ref.SoftReference
 import java.util.*
 
+@Service(Service.Level.PROJECT)
 class CompletionBindingContextProvider(project: Project) {
     private val LOG = Logger.getInstance(CompletionBindingContextProvider::class.java)
 
@@ -41,7 +43,7 @@ class CompletionBindingContextProvider(project: Project) {
     companion object {
         fun getInstance(project: Project): CompletionBindingContextProvider = project.service()
 
-        var ENABLED = false
+        var ENABLED = true
     }
 
     private class CompletionData(

@@ -65,6 +65,16 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
       "FindUsageSingularBuilder.builder().clearBars", "findUsageBuilder.getBars");
   }
 
+  public void testFindUsageDelegateField() {
+    final Collection<UsageInfo> usages = loadTestClass();
+    assertUsages(usages, "ctx.getId");
+  }
+
+  public void testFindUsageDelegateMethod() {
+    final Collection<UsageInfo> usages = loadTestClass();
+    assertUsages(usages, "classA.foo");
+  }
+
   public void testFieldUsages() {
     myFixture.configureByFile(getTestName(false) + ".java");
     PsiClass aClass = myFixture.findClass("Apple");

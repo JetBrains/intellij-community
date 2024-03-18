@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implement to contribute a JSON-adapter for your language. This allows to run JSON Schemas on non JSON languages.
@@ -29,5 +30,5 @@ public interface JsonLikePsiWalkerFactory {
   boolean handles(@NotNull PsiElement element);
 
   @NotNull
-  JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject);
+  JsonLikePsiWalker create(@Nullable JsonSchemaObject schemaObject);
 }

@@ -401,6 +401,12 @@ public class PyQuickFixTest extends PyTestCase {
                      PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true);
   }
 
+  public void testUnresolvedRefCreateAsyncFunction() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
+                                                PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true));
+  }
+
   public void testUnresolvedRefNoCreateFunction() {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.configureByFile("UnresolvedRefNoCreateFunction.py");

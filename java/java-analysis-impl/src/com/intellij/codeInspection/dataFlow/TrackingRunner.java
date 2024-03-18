@@ -323,7 +323,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return myTarget == null ? null : myTarget.getRange();
     }
 
-    public String render(Document doc, CauseItem parent) {
+    public @Nls String render(Document doc, CauseItem parent) {
       String title = null;
       Segment range = getTargetSegment();
       if (range != null) {

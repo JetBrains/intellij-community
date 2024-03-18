@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -59,7 +60,7 @@ final class HttpVirtualFileImpl extends HttpVirtualFile {
             if (fileTypeChanged) {
               FileContentUtilCore.reparseFiles(thisHttpFile);
             }
-          });
+          }, ModalityState.nonModal());
         }
       });
 

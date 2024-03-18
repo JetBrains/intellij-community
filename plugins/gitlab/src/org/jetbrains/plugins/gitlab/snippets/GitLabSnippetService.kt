@@ -16,7 +16,8 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asSafely
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
+import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
@@ -102,7 +104,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
       async(Dispatchers.Main) {
         val (account, token) = GitLabLoginUtil.logInViaToken(project, null) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
-        } ?: return@async false
+        }.asSafely<LoginResult.Success>() ?: return@async false
 
         accountManager.updateAccount(account, token)
         true
@@ -119,14 +121,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
       async(Dispatchers.Main) {
-        val token = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
+        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
-        }
+        }.asSafely<LoginResult.Success>() ?: return@async null
 
-        token?.let {
-          accountManager.updateAccount(result.account, it)
-          apiManager.getClient(result.account.server, it)
-        }
+        accountManager.updateAccount(result.account, loginResult.token)
+        apiManager.getClient(result.account.server, loginResult.token)
       }.await()
     }
   }
@@ -203,11 +203,13 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
 
     logSnippetActionExecuted(project, CREATE_CREATED)
 
+    if (data.isOpenInBrowser) return
+
     VcsNotifier.getInstance(project)
       .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
                        message("snippet.create.action.success.title"),
                        HtmlChunk.link(url, message("snippet.create.action.success.description")).toString())
-      .setListener(NotificationListener.URL_OPENING_LISTENER)
+      .setListener(NotificationListener.UrlOpeningListener(false))
   }
 
   /**
@@ -237,7 +239,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                                  files: List<VirtualFile>): GitLabCreateSnippetResult? =
     coroutineScope {
       val availablePathHandlingModes =
-        PathHandlingMode.values().filter {
+        PathHandlingMode.entries.filter {
           val extractor = getFileNameExtractor(project, files, it)
           files.map { file -> extractor(file) }.toSet().size == files.size // Check that there are no duplicates when mapped
         }

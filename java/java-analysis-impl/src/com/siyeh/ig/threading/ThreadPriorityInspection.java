@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadPriorityInspection extends BaseInspection {
+public final class ThreadPriorityInspection extends BaseInspection {
 
   @Override
   @NotNull

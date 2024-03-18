@@ -720,6 +720,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   @Override
+  public boolean shouldHide() {
+    return myDescriptor.shouldHide();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

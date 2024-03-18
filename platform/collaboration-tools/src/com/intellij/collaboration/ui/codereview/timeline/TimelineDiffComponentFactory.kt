@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.bindChildIn
@@ -31,13 +32,13 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.PathUtil
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -178,8 +179,13 @@ object TimelineDiffComponentFactory {
         lineCursorWidth = 1
       }
     }
-    cs.awaitCancellationAndInvoke {
-      editorFactory.releaseEditor(editor)
+    cs.launchNow {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
     }
     return editor
   }
@@ -216,12 +222,12 @@ object TimelineDiffComponentFactory {
 
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      add(cs.createFileNameComponent(filePath, expandCollapseButton, fileNameClickListener))
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
       }
 
+      add(cs.createFileNameComponent(filePath, expandCollapseButton, fileNameClickListener))
       bindChildIn(cs, collapseVm.collapsed.distinctUntilChanged()) { collapsed ->
         if (collapsed) return@bindChildIn null
         diffComponentFactory().apply {
@@ -231,7 +237,24 @@ object TimelineDiffComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createFileNameComponent(filePath: String, expandCollapseButton: JComponent,
+  fun createDiffWithHeader(cs: CoroutineScope,
+                           filePath: @NlsSafe String,
+                           fileNameClickListener: Flow<ActionListener?>,
+                           diffComponent: JComponent): JComponent {
+    return RoundedPanel(ListLayout.vertical(0), 8).apply {
+      background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
+      }
+
+      add(cs.createFileNameComponent(filePath, null, fileNameClickListener))
+      add(diffComponent.apply {
+        border = IdeBorderFactory.createBorder(SideBorder.TOP)
+      })
+    }
+  }
+
+  private fun CoroutineScope.createFileNameComponent(filePath: String, expandCollapseButton: JComponent?,
                                                      nameClickListener: Flow<ActionListener?>): JComponent {
     val name = PathUtil.getFileName(filePath)
     val path = PathUtil.getParentPath(filePath)
@@ -264,7 +287,9 @@ object TimelineDiffComponentFactory {
         foreground = UIUtil.getContextHelpForeground()
       }, CC().minWidth("0"))
 
-      add(expandCollapseButton, CC().hideMode(3).gapLeft("10:push"))
+      if (expandCollapseButton != null) {
+        add(expandCollapseButton, CC().hideMode(3).gapLeft("10:push"))
+      }
     }
   }
 }

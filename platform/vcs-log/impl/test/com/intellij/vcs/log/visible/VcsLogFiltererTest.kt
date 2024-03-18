@@ -297,7 +297,7 @@ class VcsLogFiltererTest {
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
       return object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int): VcsFullCommitDetails {
+        override fun getCachedDataOrPlaceholder(row: Int): VcsFullCommitDetails {
           throw UnsupportedOperationException()
         }
 
@@ -307,7 +307,7 @@ class VcsLogFiltererTest {
                                      indicator: ProgressIndicator?) {
         }
 
-        override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {
+        override fun getCachedData(hash: Int): VcsFullCommitDetails? {
           return null
         }
       }

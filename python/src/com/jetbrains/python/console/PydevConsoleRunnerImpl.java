@@ -78,6 +78,8 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider;
@@ -86,7 +88,6 @@ import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -247,8 +248,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     outputActions.add(Separator.create());
     outputActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory()); // Console History
     outputActions.add(new ConsoleCopyOutputAction(myConsoleView)); // Copy Console Output
-    outputActions.add(Separator.create());
-    outputActions.add(PyConsoleUtil.createPrintAction(myConsoleView)); // Print
     toolbarActions.add(outputActions);
     // Actions without icons
     actions.add(PyConsoleUtil.createInterruptAction(myConsoleView));
@@ -1276,7 +1275,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
     return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonIcons.Python.Python, null, true,
+      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonPsiApiIcons.Python, null, true,
                              new XDebugProcessStarter() {
                                @Override
                                @NotNull

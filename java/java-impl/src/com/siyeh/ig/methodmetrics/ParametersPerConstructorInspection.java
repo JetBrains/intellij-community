@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ParametersPerConstructorInspection extends MethodMetricInspection {
+public final class ParametersPerConstructorInspection extends MethodMetricInspection {
 
   @SuppressWarnings("PublicField") public Scope ignoreScope = Scope.NONE;
 

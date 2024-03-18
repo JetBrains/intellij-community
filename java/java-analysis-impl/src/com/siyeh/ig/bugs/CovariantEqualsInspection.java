@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class CovariantEqualsInspection extends BaseInspection {
+public final class CovariantEqualsInspection extends BaseInspection {
 
   @Override
   @NotNull

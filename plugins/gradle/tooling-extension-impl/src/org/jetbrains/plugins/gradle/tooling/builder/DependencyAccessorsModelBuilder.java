@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.initialization.DependenciesAccessors;
 import org.gradle.internal.service.ServiceLookupException;
 import org.gradle.internal.service.UnknownServiceException;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.DefaultDependencyAccessorsModel;
 import org.jetbrains.plugins.gradle.model.DependencyAccessorsModel;
@@ -29,7 +29,7 @@ public class DependencyAccessorsModelBuilder implements ModelBuilderService {
 
   @Override
   public Object buildAll(String modelName, Project project) {
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("7.0")) >= 0 && project instanceof ProjectInternal) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("7.0") && project instanceof ProjectInternal) {
       try {
         DependenciesAccessors accessors = ((ProjectInternal)project).getServices().get(DependenciesAccessors.class);
         List<String> sources = accessors.getSources().getAsFiles().stream().map(Objects::toString).collect(Collectors.toList());

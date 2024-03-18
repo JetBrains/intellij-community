@@ -10,11 +10,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.USuperExpression
+import org.jetbrains.uast.getContainingUMethod
 
 private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.canonicalName!!
 
@@ -43,8 +46,27 @@ class OverrideOnlyInspection : LocalInspectionTool() {
     private fun isOverrideOnlyMethod(method: PsiMethod) =
       method.hasAnnotation(ANNOTATION_NAME) || method.containingClass?.hasAnnotation(ANNOTATION_NAME) == true
 
+    private fun isInsideOverridenOnlyMethod(sourceNode: UElement, target: PsiMethod): Boolean = sourceNode.getContainingUMethod()?.let {
+      val psiMethod = it.javaPsi as? PsiMethod ?: return false
+      MethodSignatureUtil.areSignaturesEqual(psiMethod, target)
+    } ?: false
+
+    private fun isSuperCall(qualifier: UExpression?) = qualifier is USuperExpression
+
+    private fun isDelegateCall(qualifier: UExpression?, target: PsiMethod) = qualifier?.let {
+      val methodClassName = target.containingClass?.qualifiedName ?: return@let false
+      it.getExpressionType()?.isInheritorOf(methodClassName)
+    } ?: false
+
+    private fun isSuperOrDelegateCall(sourceNode: UElement, target: PsiMethod, qualifier: UExpression?): Boolean {
+      if (!isInsideOverridenOnlyMethod(sourceNode, target)) return false
+
+      return isSuperCall(qualifier) || isDelegateCall(qualifier, target)
+    }
+
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
-      if (target is PsiMethod && isOverrideOnlyMethod(target) && isLibraryElement(target)) {
+      if (target is PsiMethod && isOverrideOnlyMethod(target) && isLibraryElement(target)
+          && !isSuperOrDelegateCall(sourceNode, target, qualifier)) {
         val elementToHighlight = sourceNode.sourcePsi ?: return
         val methodName = HighlightMessageUtil.getSymbolName(target) ?: return
         val description = JvmAnalysisBundle.message("jvm.inspections.api.override.only.description", methodName)

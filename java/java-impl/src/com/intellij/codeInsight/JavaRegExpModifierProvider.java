@@ -23,7 +23,7 @@ import org.intellij.lang.regexp.RegExpModifierProvider;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaRegExpModifierProvider implements RegExpModifierProvider {
+public final class JavaRegExpModifierProvider implements RegExpModifierProvider {
   @Override
   public int getFlags(PsiElement elementInHost, PsiFile regexp) {
     final PsiExpressionList list = PsiTreeUtil.getParentOfType(elementInHost, PsiExpressionList.class);

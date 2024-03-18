@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * @author Bas Leijdekkers
  */
-public class NonStaticInnerClassInSecureContextElementMerger extends InspectionElementsMergerBase {
+public final class NonStaticInnerClassInSecureContextElementMerger extends InspectionElementsMergerBase {
   @Override
   public @NotNull String getMergedToolName() {
     return "PrivateMemberAccessBetweenOuterAndInnerClass";

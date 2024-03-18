@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings.Ko
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@Service(Service.Level.PROJECT)
 @State(
     name = "KotlinScriptingSettings",
     storages = [
@@ -25,6 +26,8 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
     var suppressDefinitionsCheck = false
 
     var showSupportWarning = true
+
+    var showK2SupportWarning = true
 
     var decideOnRemainingInSourceRootLater = false
 
@@ -44,6 +47,10 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
             definitionsRootElement.setAttribute(SUPPORT_WARNING_ATTR, "false")
         }
 
+        if (!showK2SupportWarning) { // only non-default value should be stored to avoid unnecessary files under .idea/ dir
+            definitionsRootElement.setAttribute(K2_SUPPORT_WARNING_ATTR, "false")
+        }
+
         if (scriptDefinitions.isEmpty()) {
             return definitionsRootElement
         }
@@ -58,6 +65,8 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
     override fun loadState(state: Element) {
         showSupportWarning = state.getAttributeValue(SUPPORT_WARNING_ATTR)?.toBoolean() ?: true
 
+        showK2SupportWarning = state.getAttributeValue(K2_SUPPORT_WARNING_ATTR)?.toBoolean() ?: true
+
         state.getOptionTag(KotlinScriptingSettings::suppressDefinitionsCheck.name)?.let {
             suppressDefinitionsCheck = it
         }
@@ -69,7 +78,7 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
 
         if (scriptDefinitionsList.isNotEmpty()) {
             executeOnPooledThread {
-                ScriptDefinitionsManager.getInstance(project).reorderScriptDefinitions()
+                ScriptDefinitionsManager.getInstance(project).reorderDefinitions()
             }
         }
     }
@@ -179,5 +188,6 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
 
         private const val SCRIPT_DEFINITION_TAG = "scriptDefinition"
         private const val SUPPORT_WARNING_ATTR = "supportWarning"
+        private const val K2_SUPPORT_WARNING_ATTR = "k2SupportWarning"
     }
 }

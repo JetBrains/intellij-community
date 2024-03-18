@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyMoveFileHandler extends MoveFileHandler {
+public final class PyMoveFileHandler extends MoveFileHandler {
   private static final Key<String> ORIGINAL_FILE_LOCATION = Key.create("PY_ORIGINAL_FILE_LOCATION");
 
   @Override

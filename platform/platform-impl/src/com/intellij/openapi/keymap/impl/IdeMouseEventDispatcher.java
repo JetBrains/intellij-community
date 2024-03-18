@@ -23,7 +23,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -149,7 +148,7 @@ public final class IdeMouseEventDispatcher {
           resetPopupTrigger(e);
         }
       }
-      else if (SystemInfo.isXWindow) {
+      else if (SystemInfo.isUnix && !SystemInfo.isMac) {
         // we can do better than silly triggering popup on everything but left click
         resetPopupTrigger(e);
       }

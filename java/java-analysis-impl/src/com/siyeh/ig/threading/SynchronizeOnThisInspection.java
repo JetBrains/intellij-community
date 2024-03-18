@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SynchronizeOnThisInspection extends BaseInspection {
+public final class SynchronizeOnThisInspection extends BaseInspection {
 
   @Override
   @NotNull

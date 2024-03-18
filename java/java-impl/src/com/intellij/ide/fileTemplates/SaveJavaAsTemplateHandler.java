@@ -9,7 +9,7 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.Nullable;
 
 
-public class SaveJavaAsTemplateHandler implements SaveFileAsTemplateHandler {
+public final class SaveJavaAsTemplateHandler implements SaveFileAsTemplateHandler {
   @Override
   @Nullable
   public String getTemplateText(final PsiFile psiFile, String fileText, String nameWithoutExtension) {

@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.util.JavaCoroutines;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Service
 public final class ToolManager extends BaseToolManager<Tool> {
@@ -15,10 +19,13 @@ public final class ToolManager extends BaseToolManager<Tool> {
     super(SchemeManagerFactory.getInstance(), "tools", ToolsBundle.message("tools.settings"));
   }
 
-  static final class MyActionTuner implements ActionConfigurationCustomizer {
+  static final class MyActionTuner implements ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
     @Override
-    public void customize(@NotNull ActionManager manager) {
-      getInstance().registerActions(manager);
+    public @Nullable Object customize(@NotNull ActionRuntimeRegistrar actionRegistrar, @NotNull Continuation<? super Unit> $completion) {
+      return JavaCoroutines.suspendJava(jc -> {
+        getInstance().registerActions(actionRegistrar);
+        jc.resume(Unit.INSTANCE);
+      }, $completion);
     }
   }
 

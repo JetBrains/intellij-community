@@ -251,7 +251,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
           LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
           if (languageLevel.isPreview()) {
             parameters.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
-            parameters.add("--source", String.valueOf(languageLevel.toJavaVersion().feature));
+            parameters.add("--source", String.valueOf(languageLevel.feature()));
             break;
           }
         }

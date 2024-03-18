@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InstantiatingObjectToGetClassObjectInspection
+public final class InstantiatingObjectToGetClassObjectInspection
   extends BaseInspection {
 
   @Override

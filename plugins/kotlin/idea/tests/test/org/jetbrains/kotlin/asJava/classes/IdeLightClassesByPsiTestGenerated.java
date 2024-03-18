@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes;
 
@@ -176,6 +176,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
         }
 
+        @TestMetadata("annotationWithVaragArguments.kt")
+        public void testAnnotationWithVaragArguments() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithVaragArguments.kt"));
+        }
+
         @TestMetadata("annotations.kt")
         public void testAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotations.kt"));
@@ -244,6 +249,31 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
         @TestMetadata("delegatingToInterfaces.kt")
         public void testDelegatingToInterfaces() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatingToInterfaces.kt"));
+        }
+
+        @TestMetadata("deprecatedHiddenProperty_accessors.kt")
+        public void testDeprecatedHiddenProperty_accessors() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_accessors.kt"));
+        }
+
+        @TestMetadata("deprecatedHiddenProperty_getter.kt")
+        public void testDeprecatedHiddenProperty_getter() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_getter.kt"));
+        }
+
+        @TestMetadata("deprecatedHiddenProperty_interface.kt")
+        public void testDeprecatedHiddenProperty_interface() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_interface.kt"));
+        }
+
+        @TestMetadata("deprecatedHiddenProperty_noAccessor.kt")
+        public void testDeprecatedHiddenProperty_noAccessor() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_noAccessor.kt"));
+        }
+
+        @TestMetadata("deprecatedHiddenProperty_setter.kt")
+        public void testDeprecatedHiddenProperty_setter() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_setter.kt"));
         }
 
         @TestMetadata("dollarsInNameLocal.kt")

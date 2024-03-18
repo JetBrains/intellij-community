@@ -84,6 +84,26 @@
       }
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 60,
+        "borderColor": "#777",
+        "borderWidth": 1
+      },
+      "Block": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 100,
+        "borderColor": "#777",
+        "borderWidth": 1,
+        "EditorPane": {
+          "borderColor": "#777",
+          "backgroundColor": "#000000",
+          "backgroundOpacity": 100
+        }
+      }
+    },
+
     "ComboPopup.border": "1,1,1,1,E6E6E6",
 
     "CompletionPopup":  {
@@ -477,13 +497,22 @@
       "Badge.newLessonForeground": "#000000"
     },
 
+    "GotItTooltip": {
+      "codeBackground": "#000000",
+      "shortcutBackground": "#000000",
+      "shortcutBorderColor": "#1AEBFF"
+    },
+
     "Tooltip.Learning": {
       "background": "#000080",
       "borderColor": "#FFFFFF",
       "spanBackground": "#1AEBFF",
       "spanForeground": "#000000",
       "foreground": "#FFFFFF",
-      "stepNumberForeground": "#FFFFFF"
+      "stepNumberForeground": "#FFFFFF",
+      "secondaryActionForeground": "#FFFFFF",
+      "iconFillColor": "#35538F",
+      "iconBorderColor": "#FFFFFF"
     },
 
     "WelcomeScreen": {

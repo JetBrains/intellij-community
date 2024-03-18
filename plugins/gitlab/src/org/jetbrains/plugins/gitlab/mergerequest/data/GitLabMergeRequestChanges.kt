@@ -8,19 +8,23 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
-import git4idea.changes.GitBranchComparisonResultImpl
 import git4idea.changes.GitCommitShaWithPatches
+import git4idea.changes.filePath
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -31,7 +35,7 @@ interface GitLabMergeRequestChanges {
   /**
    * List of merge request commits
    */
-  val commits: List<GitLabCommit>
+  val commits: Deferred<List<GitLabCommit>>
 
   /**
    * Load and parse changes diffs
@@ -44,12 +48,18 @@ interface GitLabMergeRequestChanges {
   suspend fun ensureAllRevisionsFetched()
 }
 
+fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRepository, filePath: FilePath): String? {
+  val relativePath = VcsFileUtil.relativePath(gitRepository.root, filePath)
+  return commits.lastOrNull { commit -> commit.patches.any { it.filePath == relativePath } }?.sha
+}
+
 private val LOG = logger<GitLabMergeRequestChanges>()
 
 class GitLabMergeRequestChangesImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   private val projectMapping: GitLabProjectMapping,
   private val mergeRequestDetails: GitLabMergeRequestFullDetails
 ) : GitLabMergeRequestChanges {
@@ -58,10 +68,23 @@ class GitLabMergeRequestChangesImpl(
 
   private val glProject = projectMapping.repository
 
-  override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
+  override val commits: Deferred<List<GitLabCommit>> = cs.async {
+    if (glMetadata != null && glMetadata.version < GitLabVersion(14, 7)) {
+      val initialURI = api.getMergeRequestCommitsURI(glProject, mergeRequestDetails.iid)
+      return@async ApiPageUtil.createPagesFlowByLinkHeader(initialURI) { uri -> api.rest.loadMergeRequestCommits(uri) }
+        .map { it.body() ?: emptyList() }
+        .foldToList(GitLabCommit.Companion::fromRestDTO)
+        .asReversed()
+    }
+
+    ApiPageUtil.createGQLPagesFlow { pagination -> api.graphQL.loadMergeRequestCommits(glProject, mergeRequestDetails.iid, pagination) }
+      .map { page -> page.nodes }
+      .foldToList(GitLabCommit.Companion::fromGraphQLDTO)
+      .asReversed()
+  }
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
-    loadChanges(commits)
+    loadChanges(commits.await())
   }
 
   override suspend fun getParsedChanges(): GitBranchComparisonResult = parsedChanges.await()
@@ -97,11 +120,11 @@ class GitLabMergeRequestChangesImpl(
         }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
       }
     }
-    return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
+    return GitBranchComparisonResult.create(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
 
   override suspend fun ensureAllRevisionsFetched() {
-    val revsToCheck = commits.map { it.sha }.toMutableList()
+    val revsToCheck = commits.await().map { it.sha }.toMutableList()
     mergeRequestDetails.diffRefs?.baseSha?.also {
       revsToCheck.add(it)
     }

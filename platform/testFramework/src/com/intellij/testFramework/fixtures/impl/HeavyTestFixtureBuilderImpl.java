@@ -66,6 +66,7 @@ final class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjec
   private static void loadClassConstants(@NotNull Class<?> builderClass) {
     try {
       for (Field field : builderClass.getFields()) {
+        //noinspection ResultOfMethodCallIgnored
         field.get(null);
       }
     }

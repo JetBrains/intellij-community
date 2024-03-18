@@ -7,6 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -19,20 +21,23 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+import java.util.Set;
+
+public final class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher PREDICATE_TEST = CallMatcher.instanceCall(
     CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterTypes("T");
   private static final CallMatcher MATCHER_FIND = CallMatcher.instanceCall("java.util.regex.Matcher", "find").parameterCount(0);
   private static final CallMatcher MATCHER_MATCHES = CallMatcher.instanceCall("java.util.regex.Matcher", "matches").parameterCount(0);
   private static final CallMatcher PATTERN_MATCHER = CallMatcher.instanceCall("java.util.regex.Pattern", "matcher").parameterCount(1);
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    boolean java11 = PsiUtil.isLanguageLevel11OrHigher(holder.getFile());
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    boolean java11 = PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_11);
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {

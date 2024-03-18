@@ -419,7 +419,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       size.width += icons.values().stream().mapToInt(h -> h.extension.getPreferredSpace()).sum();
 
       size.height = Math.max(size.height, getMinimumHeight(size.height));
-      size.width = Math.max(size.width, DarculaUIUtil.MINIMUM_WIDTH.get());
+      size.width = Math.max(size.width, JBUI.CurrentTheme.TextField.minimumSize().width);
     }
   }
 

@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hints.presentation.InputHandler
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -10,6 +13,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.LightweightHint
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.BitUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.GraphicsUtil
@@ -24,8 +29,6 @@ import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
-import kotlin.math.max
-import kotlin.math.min
 
 internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakpointImpl<*>?,
                                              private val variant: XLineBreakpointType<*>.XLineBreakpointVariant?) : EditorCustomElementRenderer, InputHandler {
@@ -41,16 +44,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   // but InputHandler's methods do not have it.
   lateinit var inlay: Inlay<InlineBreakpointInlayRenderer>
 
-  var hovered = false
-    set(hovered) {
-      val wasHovered = field
-      field = hovered
-      (inlay.editor as? EditorEx)?.setCustomCursor(InlineBreakpointInlayRenderer::class.java,
-                                                   if (hovered) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else null)
-      if (wasHovered != hovered) {
-        inlay.repaint()
-      }
-    }
+  var tooltipHint: LightweightHint? = null
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val colorsScheme = inlay.editor.colorsScheme
@@ -69,22 +63,15 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     val component = inlay.editor.component
 
     val baseIcon: Icon
-    var alpha: Float
+    val alpha: Float
     if (breakpoint != null) {
       baseIcon = breakpoint.icon
       alpha = 1f
     }
     else {
       baseIcon = variant!!.type.enabledIcon
-
-      // FIXME[inline-bp]: do we need to rename the property?
-      alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f)
-      alpha = max(0f, min(alpha, 1f))
-      if (hovered) {
-        // Slightly increase visibility (e.g. 0.5 -> 0.625).
-        // FIXME[inline-bp]: ask Yulia Zozulya if we really need it?
-        alpha = (3 * alpha + 1) / 4
-      }
+      // We use the same transparency as a breakpoint candidate in gutter.
+      alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f).coerceIn(0f, 1f)
     }
 
     // FIXME[inline-bp]: introduce option to make inline icons slightly smaller than gutter ones
@@ -109,10 +96,12 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   private fun invokePopupIfNeeded(event: MouseEvent) {
     if (event.isPopupTrigger) {
       if (breakpoint != null) {
-        val bounds = inlay.bounds ?: return
-        val center = Point(bounds.centerX.toInt(), bounds.centerY.toInt())
+        val center = centerPosition() ?: return
+        val component = inlay.editor.contentComponent
         DebuggerUIUtil.showXBreakpointEditorBalloon(
-          breakpoint.project, center, inlay.editor.contentComponent, false, breakpoint)
+          breakpoint.project,
+          center.getPoint(component), component,
+          false, breakpoint)
       }
       else {
         // FIXME[inline-bp]: show context like in gutter (XDebugger.Hover.Breakpoint.Context.Menu),
@@ -165,36 +154,61 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
         // FIXME[inline-bp]: is it ok to keep variant so long or should we obtain fresh variants and find similar one?
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
         val line = editor.document.getLineNumber(offset)
-        breakpointManager.addLineBreakpoint(variant!!.type as XLineBreakpointType<XBreakpointProperties<*>>,
-                                            file.url, line,
-                                            variant.createProperties(),
-                                            false)
+        XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
       }
       ClickAction.ENABLE_DISABLE -> {
         breakpoint!!.isEnabled = !breakpoint.isEnabled
       }
       ClickAction.REMOVE -> {
-        if (XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)) {
-          // FIXME[inline-bp]: it's a dirty hack to render inlay as "hovered" just after we clicked on set breakpoint
-          //       The problem is that after breakpoint removal we currently recreate all inlays and new ones would not be "hovered".
-          //       So we manually propagate this property to future inlay at the same position.
-          //       Otherwise there will be flickering:
-          //       transparent -> (move mouse) -> hovered -> (click) -> set -> (click) -> transparent -> (move mouse 1px) -> hovered
-          //                                                                              ^^^^^^^^^^^ this is bad
-          //       One day we would keep old inlays and this hack would gone.
-          for (newInlay in editor.inlayModel.getInlineElementsInRange(offset, offset, InlineBreakpointInlayRenderer::class.java)) {
-            newInlay.renderer.hovered = true
-          }
-        }
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)
       }
     }
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
-    hovered = true
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+    showTooltip()
   }
 
   override fun mouseExited() {
-    hovered = false
+    setCursor(null)
+    hideTooltip()
   }
+
+  private fun setCursor(cursor: Cursor?) =
+    (inlay.editor as? EditorEx)?.setCustomCursor(InlineBreakpointInlayRenderer::class.java, cursor)
+
+  private fun showTooltip() {
+    if (tooltipHint?.isVisible == true) return
+    if (!inlay.editor.contentComponent.isShowing) return
+
+    val text = breakpoint?.description ?: variant!!.tooltipDescription
+    val hint = LightweightHint(HintUtil.createInformationLabel(text))
+
+    // Location policy: mimic gutter tooltip by pointing it to the center of an icon, but show it above the line.
+    val constraint = HintManager.ABOVE
+    val point = centerPosition() ?: return
+
+    val hintPoint = HintManagerImpl.getHintPosition(hint, inlay.editor, point, constraint)
+
+    val hintHint = HintManagerImpl.createHintHint(inlay.editor, hintPoint, hint, constraint)
+      .setContentActive(false)
+      .setPositionChangeShift(0, 0) // this tooltip points to the center of the icon, so no need to shift anything
+
+    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or HintManager.HIDE_BY_SCROLLING
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, inlay.editor, hintPoint, flags, 0, false, hintHint)
+
+    tooltipHint = hint
+  }
+
+  private fun hideTooltip() {
+    tooltipHint?.hide()
+    tooltipHint = null
+  }
+
+  private fun centerPosition(): RelativePoint? {
+    val bounds = inlay.bounds ?: return null
+    return RelativePoint(inlay.editor.contentComponent, Point(bounds.centerX.toInt(), bounds.centerY.toInt()))
+  }
+
 }

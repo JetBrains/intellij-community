@@ -7,7 +7,7 @@ import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRepository
@@ -54,6 +54,15 @@ internal class GitLabMergeRequestBranchesViewModel(
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(mapping, details)
     }
     GitLabStatistics.logMrActionExecuted(gitRepository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
+  }
+
+  override val canShowInLog: Boolean = true
+  override fun fetchAndShowInLog() {
+    cs.launch {
+      val details = mergeRequest.details.first()
+      GitLabMergeRequestBranchUtil.fetchAndShowRemoteBranchInLog(mapping, details)
+    }
+    GitLabStatistics.logMrActionExecuted(gitRepository.project, GitLabStatistics.MergeRequestAction.SHOW_BRANCH_IN_LOG)
   }
 
   override fun showBranches() {

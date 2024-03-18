@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
@@ -34,7 +34,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
 
   public boolean reportNotAnnotatedInterfaces = true;
@@ -62,6 +62,11 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     return pane(
       checkbox("reportNotAnnotatedInterfaces",
                JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
   }
 
   @NotNull
@@ -208,7 +213,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                      boolean acceptParameterizedFunctionTypes,
                                      boolean reportNotAnnotatedInterfaces,
                                      @NotNull Set<String> ignoredRuntimeAnnotations) {
-    if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, aClass)) {
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
       final PsiClass baseClass = resolveResult.getElement();

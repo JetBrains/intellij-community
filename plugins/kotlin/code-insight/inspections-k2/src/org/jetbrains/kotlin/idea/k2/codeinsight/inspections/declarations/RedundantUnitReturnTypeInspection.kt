@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class RedundantUnitReturnTypeInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(),
-    CleanupLocalInspectionTool {
+  AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(),
+  CleanupLocalInspectionTool {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -36,8 +36,7 @@ internal class RedundantUnitReturnTypeInspection :
     override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
 
     override fun isApplicableByPsi(element: KtNamedFunction): Boolean {
-        val function = element as? KtNamedFunction ?: return false
-        return function.hasBlockBody() && function.typeReference != null
+        return element.hasBlockBody() && element.typeReference != null
     }
 
     context(KtAnalysisSession)
@@ -46,7 +45,7 @@ internal class RedundantUnitReturnTypeInspection :
         else -> null
     }
 
-    override fun apply(element: KtNamedFunction, context: TypeInfo, project: Project, editor: Editor?) {
-        updateType(element, context, project, editor)
+    override fun apply(element: KtNamedFunction, context: TypeInfo, project: Project, updater: ModPsiUpdater) {
+        updateType(element, context, project, updater = updater)
     }
 }

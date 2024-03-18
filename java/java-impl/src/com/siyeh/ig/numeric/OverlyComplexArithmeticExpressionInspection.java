@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
+public final class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
 
   private static final TokenSet arithmeticTokens =
     TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC);

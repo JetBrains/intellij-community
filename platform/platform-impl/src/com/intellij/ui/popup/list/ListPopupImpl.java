@@ -29,6 +29,7 @@ import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.async.AsyncPopupWaiter;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -255,11 +256,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   @Override
-  protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    return super.createPopup(parent, step, parentValue);
-  }
-
-  @Override
   protected JComponent createContent() {
     myMouseMotionListener = new MyMouseMotionListener();
     myMouseListener = new MyMouseListener();
@@ -268,6 +264,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
     myList.setVisibleRowCount(DEFAULT_MAX_ROW_COUNT);
+    getSpeedSearch().installSupplyTo(myList, false);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
@@ -339,7 +336,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList;
   }
 
- protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
+  protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
     return new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED);
   }
 
@@ -502,7 +499,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         nextStep = listStep.onChosen(selectedValue, handleFinalChoices);
       }
     }
-    return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+
+    Object parentValue = selectedValues.length == 1 ? selectedValue : null;
+
+    if (nextStep == PopupStep.FINAL_CHOICE &&
+        parentValue instanceof PopupFactoryImpl.ActionItem actionItem &&
+        actionItem.isKeepPopupOpen()) {
+      ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      if (actionPopupStep != null && actionPopupStep.isSelectable(actionItem)) {
+        actionPopupStep.updateStepItems(getList());
+        return false;
+      }
+    }
+
+    return handleNextStep(nextStep, parentValue, e);
   }
 
   protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {

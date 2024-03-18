@@ -14,9 +14,9 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM1
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM1
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
@@ -77,10 +77,10 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
             transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
         )
 
-        if (resolveModule.testRoot != null) {
+        resolveModule.testRoot?.let { testRoot ->
             addRoot(
                 ideaModule,
-                resolveModule.testRoot,
+                testRoot,
                 isTestRoot = true,
                 transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
             )

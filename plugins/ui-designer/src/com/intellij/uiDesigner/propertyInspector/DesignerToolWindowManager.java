@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
@@ -44,8 +44,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     return project.getService(DesignerToolWindowManager.class);
   }
 
-  @Nullable
-  public GuiEditor getActiveFormEditor() {
+  public @Nullable GuiEditor getActiveFormEditor() {
     return (GuiEditor)getActiveDesigner();
   }
 
@@ -107,9 +106,8 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
                          null);
   }
 
-  @NotNull
   @Override
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "UIDesignerToolWindowManager";
   }
 }

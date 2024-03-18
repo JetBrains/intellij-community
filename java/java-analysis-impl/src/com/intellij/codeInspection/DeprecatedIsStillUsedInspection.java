@@ -14,7 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
+public final class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,

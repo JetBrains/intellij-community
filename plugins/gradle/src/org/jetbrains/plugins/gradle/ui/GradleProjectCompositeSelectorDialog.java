@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -160,7 +160,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class SelectAllButton extends AnActionButton {
+  private class SelectAllButton extends DumbAwareAction {
     SelectAllButton() {
       super(GradleBundle.messagePointer("gradle.settings.composite.select.all"), AllIcons.Actions.Selectall);
     }
@@ -170,14 +170,9 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
       walkTree(node -> node.setChecked(true));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
   }
 
-  private class UnselectAllButton extends AnActionButton {
+  private class UnselectAllButton extends DumbAwareAction {
     UnselectAllButton() {
       super(GradleBundle.messagePointer("gradle.settings.composite.unselect.all"), AllIcons.Actions.Unselectall);
     }
@@ -186,11 +181,6 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(false));
       ((DefaultTreeModel)myTree.getModel()).reload();
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
   }
 }

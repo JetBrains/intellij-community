@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -131,6 +131,7 @@ public class MavenUtil {
   public static final String BIN_DIR = "bin";
   public static final String CONF_DIR = "conf";
   public static final String M2_CONF_FILE = "m2.conf";
+  public static final String MVN_FILE = "mvn";
   public static final String REPOSITORY_DIR = "repository";
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
@@ -612,10 +613,15 @@ public class MavenUtil {
     return handler;
   }
 
+  /**
+   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
+   * use {@link MavenUtil#getMavenHomeFile(org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
+   */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
+      //noinspection HardCodedStringLiteral
       return MavenUtil.getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
     }
 
@@ -798,7 +804,13 @@ public class MavenUtil {
 
   public static boolean isValidMavenHome(@Nullable File home) {
     if (home == null) return false;
-    return getMavenConfFile(home).exists();
+    try {
+      String[] list = new File(home, BIN_DIR).list();
+      if (list == null) return false;
+      Set<String> set = Set.of(list);
+      return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE);
+    } catch (Exception ignored) {}
+    return false;
   }
 
   public static File getMavenConfFile(File mavenHome) {
@@ -849,7 +861,7 @@ public class MavenUtil {
   private static String getMavenLibVersion(final File file) {
     WSLDistribution distribution = WslPath.getDistributionByWindowsUncPath(file.getPath());
     File fileToRead = Optional.ofNullable(distribution)
-      .map(it -> distribution.getWslPath(file.getPath()))
+      .map(it -> distribution.getWslPath(file.toPath()))
       .map(it -> distribution.resolveSymlink(it))
       .map(it -> distribution.getWindowsPath(it))
       .map(it -> new File(it))
@@ -910,11 +922,17 @@ public class MavenUtil {
     return new File(SystemProperties.getUserHome(), DOT_M2_DIR);
   }
 
+  /**
+   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
+   * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
+   * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
+   */
   @NotNull
   @Deprecated(forRemoval = true)
   public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
                                             @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
+    //noinspection HardCodedStringLiteral
     MavenHomeType type = resolveMavenHomeType(overriddenMavenHome);
     if (type instanceof StaticResolvedMavenHomeType st) {
       return resolveLocalRepository(overriddenLocalRepository, st, overriddenUserSettingsFile);
@@ -1240,7 +1258,7 @@ public class MavenUtil {
    * @param wait      if true, then maven server(s) restarted synchronously
    * @param condition only connectors satisfied for this predicate will be restarted
    */
-  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<@NotNull MavenServerConnector> condition) {
     MavenServerManager.getInstance().restartMavenConnectors(project, wait, condition);
   }
 
@@ -1593,7 +1611,12 @@ public class MavenUtil {
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new InvalidJavaHomeException(javaHome);
       }
-      return JavaSdk.getInstance().createJdk("", javaHome);
+      try {
+        return JavaSdk.getInstance().createJdk("", javaHome);
+      }
+      catch (IllegalArgumentException e) {
+        throw new InvalidJavaHomeException(javaHome);
+      }
     }
 
     Sdk projectJdk = getSdkByExactName(name);
@@ -1711,6 +1734,11 @@ public class MavenUtil {
     return unrecoverable == null;
   }
 
+  @ApiStatus.Internal
+  public static boolean shouldKeepPreviousResolutionResults(Collection<MavenProjectProblem> readingProblems) {
+    return !shouldResetDependenciesAndFolders(readingProblems);
+  }
+
   public static @Nullable VirtualFile getEffectiveSuperPom(Project project, @NotNull String workingDir) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir);
     MavenHomeType type = MavenProjectsManager.getInstance(project).getGeneralSettings().getMavenHomeType();
@@ -1725,5 +1753,13 @@ public class MavenUtil {
 
   public static MavenProjectModelReadHelper createModelReadHelper(Project project) {
     return new MavenProjectModelServerModelReadHelper(project);
+  }
+
+  public static Collection<File> collectClasspath(Collection<Class<?>> classes) {
+    var result = new ArrayList<File>();
+    for (Class<?> c : classes) {
+      result.add(new File(PathUtil.getJarPathForClass(c)));
+    }
+    return result;
   }
 }

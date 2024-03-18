@@ -6,8 +6,10 @@ import com.intellij.ide.projectWizard.NewProjectWizardTestCase
 import com.intellij.ide.wizard.Step
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,6 +22,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeOpenedProjectsIfFail
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.function.Consumer
 
 abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
@@ -95,5 +99,13 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
       ApplicationManager.getApplication().replaceService(NewProjectWizardFactory::class.java, factory, disposable)
       return action()
     }
+  }
+
+  suspend fun waitForProjectCreation(createProject: () -> Project): Project {
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createProject() } }
+  }
+
+  suspend fun waitForModuleCreation(createModule: () -> Module): Module {
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createModule() } }
   }
 }

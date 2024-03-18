@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -83,10 +84,12 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     assertError("");
 
     ModuleRootModificationUtil.addModuleLibrary(myModule, myFastUtilJar.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     myValidatorsManager.validate();
     assertError("junit");
 
     ModuleRootModificationUtil.addModuleLibrary(myModule, myJUnitJar.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     myValidatorsManager.validate();
     validator.onFacetInitialized(createFacet());
 

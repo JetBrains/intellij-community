@@ -75,7 +75,7 @@ class ProgressIndicatorUtilsTest : BasePlatformTestCase() {
     }
     catch (e: ExecutionException) {
       //expect: RejectedExecutionException
-      //        wrapped into ProcessCancelledException,
+      //        wrapped into ProcessCanceledException,
       //        wrapped into ExecutionException
       assertInstanceOf(e.cause, ProcessCanceledException::class.java)
       assertInstanceOf(e.cause?.cause, RejectedExecutionException::class.java)

@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
@@ -27,9 +29,11 @@ class ImlSerializationTest {
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
+  private val externalMappingKey = ExternalMappingKey.create<Any>("test.my.index")
+
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
   }
 
   @Test
@@ -47,7 +51,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 3_500)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("version2" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
+    assertTrue("version7" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
                "This assertion is a reminder. Have you updated the serializer? Update the serialization version!")
   }
 
@@ -62,7 +66,7 @@ class ImlSerializationTest {
     val builder = MutableEntityStorage.create()
     val entity = SampleEntity2("Test", true, Source)
     builder.addEntity(entity)
-    val index = builder.getMutableExternalMapping<String>("test.my.index")
+    val index = builder.getMutableExternalMapping(externalMappingKey)
     index.addMapping(entity, "Hello")
 
     serializationRoundTrip(builder)
@@ -88,7 +92,8 @@ class ImlSerializationTest {
     val storage = storageBuilder.toSnapshot()
     val byteArray: ByteArray
     val timeMillis = measureTimeMillis {
-      byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      val res = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      byteArray = res.first
       println("Serialized size: ${byteArray.size}")
     }
     println("Time: $timeMillis ms")

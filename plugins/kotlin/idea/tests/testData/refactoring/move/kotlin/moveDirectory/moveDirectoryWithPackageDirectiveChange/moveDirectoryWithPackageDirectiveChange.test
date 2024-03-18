@@ -3,5 +3,6 @@
   "type": "MOVE_DIRECTORY_WITH_CLASSES",
   "sourceDir": "p1/p",
   "targetDir": "p2",
+  "enabledInK1": "true",
   "enabledInK2": "false"
 }

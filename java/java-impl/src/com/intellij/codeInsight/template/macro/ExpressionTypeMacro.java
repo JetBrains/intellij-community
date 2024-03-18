@@ -22,7 +22,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExpressionTypeMacro extends Macro {
+public final class ExpressionTypeMacro extends Macro {
   @Override
   public String getName() {
     return "expressionType";

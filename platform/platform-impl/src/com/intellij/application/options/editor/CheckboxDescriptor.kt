@@ -51,6 +51,7 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
 }
 
 @ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
   return checkBox(ui.name, ui.getter, ui.setter, ui.comment)

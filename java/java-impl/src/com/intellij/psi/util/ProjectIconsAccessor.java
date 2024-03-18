@@ -12,12 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
-import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
@@ -58,8 +60,23 @@ public final class ProjectIconsAccessor {
     final List<FileReference> refs = new ArrayList<>();
     initializerElement.accept(new AbstractUastVisitor() {
       @Override
+      public boolean visitPolyadicExpression(@NotNull UPolyadicExpression node) {
+        if (!(node instanceof UInjectionHost uInjectionHost)) return true;
+        processInjectionHost(uInjectionHost);
+        super.visitPolyadicExpression(node);
+        return true;
+      }
+
+      @Override
       public boolean visitLiteralExpression(@NotNull ULiteralExpression node) {
-        PsiElement psi = UastLiteralUtils.getSourceInjectionHost(node);
+        if (!(node instanceof UInjectionHost uInjectionHost)) return true;
+        processInjectionHost(uInjectionHost);
+        super.visitLiteralExpression(node);
+        return true;
+      }
+
+      private void processInjectionHost(@NotNull UInjectionHost node) {
+        PsiElement psi = node.getSourcePsi();
         if (psi != null) {
           for (PsiReference ref : psi.getReferences()) {
             if (ref instanceof FileReference) {
@@ -67,8 +84,6 @@ public final class ProjectIconsAccessor {
             }
           }
         }
-        super.visitLiteralExpression(node);
-        return true;
       }
     });
 
@@ -145,6 +160,10 @@ public final class ProjectIconsAccessor {
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {
     if (useIconLoader) {
       return IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
+    }
+    if (StringUtil.equalsIgnoreCase(file.getExtension(), "svg")) {
+      var svg = SVGLoader.load(file.getInputStream(), 1.0f);
+      return new ImageIcon(svg);
     }
     return new ImageIcon(file.contentsToByteArray());
   }

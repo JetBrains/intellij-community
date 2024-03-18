@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -45,7 +45,6 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -79,7 +78,7 @@ final class FileTypeDetectionService implements Disposable {
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
   private boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Executor reDetectExecutor;
+  private final CoroutineDispatcherBackedExecutor reDetectExecutor;
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
   private volatile FileAttribute autoDetectedAttribute;
@@ -98,12 +97,12 @@ final class FileTypeDetectionService implements Disposable {
 
     FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
       cachedDetectFileBufferSize = -1;
-      onDetectorsChange();
+      onDetectorListChange();
     }, this);
 
     List<String> prevDetectors = PropertiesComponent.getInstance().getList(FILE_TYPE_DETECTORS_PROPERTY);
-    if (!Objects.equals(prevDetectors, getDetectorsString())) {
-      onDetectorsChange();
+    if (!Objects.equals(prevDetectors, getDetectorListString())) {
+      onDetectorListChange();
     }
     reDetectExecutor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("FileTypeManager Redetect", coroutineScope);
   }
@@ -292,12 +291,12 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  private void onDetectorsChange() {
+  private void onDetectorListChange() {
     clearCaches();
-    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorsString());
+    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorListString());
   }
 
-  private static @NotNull List<String> getDetectorsString() {
+  private static @NotNull List<String> getDetectorListString() {
     ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector> ep =
       (ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector>)FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint();
     int size = ep.size();
@@ -315,6 +314,7 @@ final class FileTypeDetectionService implements Disposable {
   @Override
   public void dispose() {
     LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
+    reDetectExecutor.cancel();
   }
 
   static boolean isDetectable(@NotNull VirtualFile file) {
@@ -398,7 +398,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private void awakeReDetectExecutor() {
-    reDetectExecutor.execute(() -> {
+    reDetectExecutor.schedule(() -> {
       List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);
       synchronized (filesToRedetect) {
         for (int i = 0; i < CHUNK_SIZE; i++) {
@@ -730,7 +730,7 @@ final class FileTypeDetectionService implements Disposable {
 
   @TestOnly
   void drainReDetectQueue() {
-    ((CoroutineDispatcherBackedExecutor)reDetectExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
+    reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
   }
 
   @TestOnly

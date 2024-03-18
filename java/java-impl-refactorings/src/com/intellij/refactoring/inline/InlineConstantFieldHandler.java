@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InlineConstantFieldHandler extends JavaInlineActionHandler {
+public final class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
   @Override
   public boolean canInlineElement(PsiElement element) {

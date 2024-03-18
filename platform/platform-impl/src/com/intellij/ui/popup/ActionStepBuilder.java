@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -26,11 +27,11 @@ final class ActionStepBuilder {
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
   private final boolean                         myUseAlphaAsNumbers;
-  private final PresentationFactory presentationFactory;
+  private final PresentationFactory             myPresentationFactory;
   private final boolean                         myShowDisabled;
   private       int                             myCurrentNumber;
   private       boolean                         myPrependWithSeparator;
-  private @NlsContexts.Separator String mySeparatorText;
+  private @NlsContexts.Separator String         mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
   private int myMaxIconWidth  = -1;
@@ -44,12 +45,7 @@ final class ActionStepBuilder {
                     @Nullable String actionPlace,
                     @Nullable PresentationFactory presentationFactory) {
     myUseAlphaAsNumbers = useAlphaAsNumbers;
-    if (presentationFactory == null) {
-      this.presentationFactory = new PresentationFactory();
-    }
-    else {
-      this.presentationFactory = Objects.requireNonNull(presentationFactory);
-    }
+    myPresentationFactory = presentationFactory == null ? new PresentationFactory() : presentationFactory;
     myListModel = new ArrayList<>();
     myDataContext = dataContext;
     myShowNumbers = showNumbers;
@@ -80,7 +76,7 @@ final class ActionStepBuilder {
         continue;
       }
 
-      Presentation presentation = presentationFactory.getPresentation(action);
+      Presentation presentation = myPresentationFactory.getPresentation(action);
       Pair<Icon, Icon> icons = calcRawIcons(action, presentation, true);
       Icon icon = icons.first == null ? icons.second : icons.first;
       if (icon == null) {
@@ -101,9 +97,9 @@ final class ActionStepBuilder {
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     boolean multiChoicePopup = Utils.isMultiChoiceGroup(actionGroup);
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      actionGroup, presentationFactory, myDataContext, myActionPlace);
+      actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
-      newVisibleActions, o -> o instanceof Separator || presentationFactory.getPresentation(o).isEnabled());
+      newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);
     for (AnAction action : filtered) {
       if (action instanceof Separator) {
@@ -111,7 +107,7 @@ final class ActionStepBuilder {
         mySeparatorText = ((Separator)action).getText();
       }
       else {
-        Presentation presentation = presentationFactory.getPresentation(action);
+        Presentation presentation = myPresentationFactory.getPresentation(action);
         if (multiChoicePopup && action instanceof Toggleable) {
           presentation.setMultiChoice(true);
         }
@@ -136,9 +132,7 @@ final class ActionStepBuilder {
     }
 
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-    List<PopupFactoryImpl.InlineActionItem> inlineItems = action instanceof InlineActionsHolder
-                                                          ? createInlineActionsItems(((InlineActionsHolder)action).getInlineActions())
-                                                          : Collections.emptyList();
+    List<PopupFactoryImpl.ActionItem> inlineItems = createInlineActionsItems(action, presentation);
     PopupFactoryImpl.ActionItem actionItem = new PopupFactoryImpl.ActionItem(
       action, mnemonic, myShowNumbers, myHonorActionMnemonics,
       myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText, inlineItems);
@@ -148,13 +142,17 @@ final class ActionStepBuilder {
     mySeparatorText = null;
   }
 
-  private @NotNull List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<? extends AnAction> inlineActions) {
-    List<PopupFactoryImpl.InlineActionItem> res = new ArrayList<>();
-    for (AnAction action : inlineActions) {
-      Presentation presentation = presentationFactory.getPresentation(action);
-      if (!presentation.isVisible()) continue;
-      PopupFactoryImpl.InlineActionItem item = new PopupFactoryImpl.InlineActionItem(action, myMaxIconWidth, myMaxIconHeight);
-      item.updateFromPresentation(presentation, myActionPlace);
+  private @NotNull List<PopupFactoryImpl.ActionItem> createInlineActionsItems(@NotNull AnAction action,
+                                                                                    @NotNull Presentation presentation) {
+    List<? extends AnAction> inlineActions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
+    if (inlineActions == null && action instanceof InlineActionsHolder holder) inlineActions = holder.getInlineActions();
+    if (inlineActions == null) return Collections.emptyList();
+    List<PopupFactoryImpl.ActionItem> res = new ArrayList<>();
+    for (AnAction a : inlineActions) {
+      Presentation p = myPresentationFactory.getPresentation(a);
+      if (!p.isVisible()) continue;
+      PopupFactoryImpl.ActionItem item = PopupFactoryImpl.createInlineActionItem(a, myMaxIconWidth, myMaxIconHeight);
+      item.updateFromPresentation(p, myActionPlace);
       res.add(item);
     }
     return res.isEmpty() ? Collections.emptyList() : res;

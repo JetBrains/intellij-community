@@ -9,9 +9,9 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.Tag
 import org.jetbrains.annotations.Nls
-import java.awt.Graphics2D
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Stream
+import javax.swing.JComponent
 
 interface SavedPatchesProvider<S> {
   val dataClass: Class<S>
@@ -22,7 +22,7 @@ interface SavedPatchesProvider<S> {
 
   fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit)
   fun isEmpty(): Boolean
-  fun buildPatchesTree(modelBuilder: TreeModelBuilder)
+  fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean)
   fun getData(dataId: String, selectedObjects: Stream<PatchObject<*>>): Any?
 
   interface PatchObject<S> {
@@ -31,11 +31,7 @@ interface SavedPatchesProvider<S> {
     fun loadChanges(): CompletableFuture<LoadingResult>?
     fun cachedChanges(): Collection<ChangeObject>?
     fun getDiffPreviewTitle(changeName: String?): String
-    fun createPainter(tree: ChangesTree, renderer: ChangesTreeCellRenderer, row: Int, selected: Boolean): Painter? = null
-
-    interface Painter {
-      fun paint(graphics: Graphics2D)
-    }
+    fun getLabelComponent(tree: ChangesTree, row: Int, selected: Boolean): JComponent? = null
   }
 
   interface ChangeObject : PresentableChange {

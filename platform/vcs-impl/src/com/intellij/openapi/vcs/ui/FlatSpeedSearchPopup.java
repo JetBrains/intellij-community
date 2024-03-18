@@ -27,12 +27,25 @@ import org.jetbrains.annotations.Nullable;
 
 public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
 
+  /** @deprecated Use {@link #FlatSpeedSearchPopup(String, ActionGroup, DataContext, String, Condition, boolean)} instead */
+  @Deprecated(forRemoval = true)
   public FlatSpeedSearchPopup(@Nullable @NlsContexts.PopupTitle String title,
                               @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
-                              @Nullable Condition<? super AnAction> preselectActionCondition, boolean showDisableActions) {
+                              @Nullable Condition<? super AnAction> preselectActionCondition,
+                              boolean showDisableActions) {
+    this(title, actionGroup, dataContext, ActionPlaces.getPopupPlace("VCS.FlatSpeedSearchPopup"),
+         preselectActionCondition, showDisableActions);
+  }
+
+  public FlatSpeedSearchPopup(@Nullable @NlsContexts.PopupTitle String title,
+                              @NotNull ActionGroup actionGroup,
+                              @NotNull DataContext dataContext,
+                              @NotNull String place,
+                              @Nullable Condition<? super AnAction> preselectActionCondition,
+                              boolean showDisableActions) {
     super(title, actionGroup, dataContext, false, false, showDisableActions, false,
-          null, -1, preselectActionCondition, null);
+          null, -1, preselectActionCondition, place);
   }
 
   protected FlatSpeedSearchPopup(@Nullable WizardPopup parent,

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-public class ArrayObjectsEqualsInspection extends BaseInspection {
+public final class ArrayObjectsEqualsInspection extends BaseInspection {
   enum Kind {
     TO_EQUALS("equals", "array.equals.problem.descriptor"),
     TO_DEEP_EQUALS("deepEquals", "array.equals.problem.descriptor"),

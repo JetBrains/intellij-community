@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutinesInfoFromJsonAndReferencesProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
@@ -34,20 +32,13 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
 
     private fun findProvider(executionContext: DefaultExecutionContext): CoroutineInfoProvider? {
         val debugProbesImpl = DebugProbesImpl.instance(executionContext)
-        return when {
-            debugProbesImpl != null && debugProbesImpl.isInstalled ->
-                CoroutinesInfoFromJsonAndReferencesProvider.instance(executionContext, debugProbesImpl) ?:
-                CoroutineLibraryAgent2Proxy(executionContext, debugProbesImpl)
-            standaloneCoroutineDebuggerEnabled() ->
-                CoroutineNoLibraryProxy(executionContext)
-            else ->
-                null
-        }
+        return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+            CoroutinesInfoFromJsonAndReferencesProvider.instance(executionContext, debugProbesImpl) ?:
+            CoroutineLibraryAgent2Proxy(executionContext, debugProbesImpl)
+        } else null
     }
 
     companion object {
         private val log by logger
     }
 }
-
-fun standaloneCoroutineDebuggerEnabled() = Registry.`is`("kotlin.debugger.coroutines.standalone")

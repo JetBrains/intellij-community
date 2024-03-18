@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.openapi.util.Key;
@@ -20,8 +20,7 @@ public abstract class EscapeSequenceTokenizer<T extends PsiElement> extends Toke
   }
 
   @Override
-  @NotNull
-  public TextRange getHighlightingRange(PsiElement element, int offset, TextRange range) {
+  public @NotNull TextRange getHighlightingRange(PsiElement element, int offset, TextRange range) {
     final int[] offsets = element.getUserData(ESCAPE_OFFSETS);
     if (offsets != null) {
       int start = offsets[range.getStartOffset()];

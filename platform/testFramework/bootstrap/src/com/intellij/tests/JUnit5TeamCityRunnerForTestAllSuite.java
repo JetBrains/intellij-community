@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -53,6 +53,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       }
     }
     catch (Throwable x) {
+      //noinspection CallToPrintStackTrace
       x.printStackTrace();
     }
     finally {
@@ -106,6 +107,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
+    private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
+      Integer.getInteger("intellij.build.test.stacktrace.max.length", 100 * 1024);
 
     public TCExecutionListener() {
       myPrintStream = System.out;
@@ -272,7 +275,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           attrs.put("duration", Long.toString(duration));
         }
         if (reason != null) {
-          attrs.put("message", reason);
+          attrs.put("message", limit(reason));
         }
         if (ex != null) {
           attrs.put("details", getTrace(ex));
@@ -286,8 +289,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           else if (ex instanceof AssertionFailedError &&
                    ((AssertionFailedError)ex).isActualDefined() &&
                    ((AssertionFailedError)ex).isExpectedDefined()) {
-            attrs.put("expected", ((AssertionFailedError)ex).getExpected().getStringRepresentation());
-            attrs.put("actual", ((AssertionFailedError)ex).getActual().getStringRepresentation());
+            attrs.put("expected", limit(((AssertionFailedError)ex).getExpected().getStringRepresentation()));
+            attrs.put("actual", limit(((AssertionFailedError)ex).getActual().getStringRepresentation()));
             attrs.put("type", "comparisonFailure");
           }
           else {
@@ -297,8 +300,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
                 String expected = (String)aClass.getMethod("getExpected").invoke(ex);
                 String actual = (String)aClass.getMethod("getActual").invoke(ex);
 
-                attrs.put("expected", expected);
-                attrs.put("actual", actual);
+                attrs.put("expected", limit(expected));
+                attrs.put("actual", limit(actual));
                 attrs.put("type", "comparisonFailure");
               }
               catch (Throwable e) {
@@ -323,11 +326,23 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       return isComparisonFailure(aClass.getSuperclass());
     }
 
+    private static String limit(String string) {
+      if (string == null) return null;
+      if (string.length() > MAX_STACKTRACE_MESSAGE_LENGTH) {
+        return string.substring(0, MAX_STACKTRACE_MESSAGE_LENGTH);
+      }
+      return string;
+    }
+
     protected String getTrace(Throwable ex) {
       final StringWriter stringWriter = new StringWriter();
       final PrintWriter writer = new PrintWriter(stringWriter);
       ex.printStackTrace(writer);
-      return stringWriter.toString();
+      StringBuffer buffer = stringWriter.getBuffer();
+      if (buffer.length() > MAX_STACKTRACE_MESSAGE_LENGTH) {
+        return buffer.substring(0, MAX_STACKTRACE_MESSAGE_LENGTH);
+      }
+      return buffer.toString();
     }
 
     private static String getId(TestIdentifier identifier) {

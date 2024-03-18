@@ -86,7 +86,8 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
        .getFileIndex()
        .getOrderEntriesForFile(file);
 
-    return entries.stream().anyMatch(entry -> entry instanceof LibraryOrSdkOrderEntry &&
-                                              ContainerUtil.filter(AnnotationOrderRootType.getFiles(entry), VirtualFile::isInLocalFileSystem).size() == 1);
+    return ContainerUtil.exists(entries, entry -> entry instanceof LibraryOrSdkOrderEntry &&
+                                                  ContainerUtil.filter(AnnotationOrderRootType.getFiles(entry),
+                                                                       VirtualFile::isInLocalFileSystem).size() == 1);
  }
 }

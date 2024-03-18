@@ -52,7 +52,8 @@ public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvide
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    if (changes == null) return;
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
     CreatePatchFromChangesAction.createPatch(e.getProject(), commitMessage, Arrays.asList(changes), mySilentClipboard);
   }

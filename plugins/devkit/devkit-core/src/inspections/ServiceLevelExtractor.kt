@@ -15,7 +15,7 @@ interface ServiceLevelExtractor : JvmProvider {
   fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level>
 }
 
-private class ServiceLevelExtractorForJVM : ServiceLevelExtractor {
+internal class ServiceLevelExtractorForJVM : ServiceLevelExtractor {
   override fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level> {
     return attributeValue.values
       .filterIsInstance<JvmAnnotationEnumFieldValue>()

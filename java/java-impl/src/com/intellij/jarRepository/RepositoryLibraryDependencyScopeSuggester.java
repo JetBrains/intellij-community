@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
-public class RepositoryLibraryDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
+public final class RepositoryLibraryDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
   @Nullable
   @Override
   public DependencyScope getDefaultDependencyScope(@NotNull Library library) {

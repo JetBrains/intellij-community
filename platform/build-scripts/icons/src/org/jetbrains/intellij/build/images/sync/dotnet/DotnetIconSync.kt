@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
@@ -9,6 +10,8 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.exists
 import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.writeText
 
 object DotnetIconSync {
 
@@ -17,7 +20,8 @@ object DotnetIconSync {
 
   private class SyncPath(val iconsPath: String, val devPath: String)
 
-  private const val RIDER_ICONS_RELATIVE_PATH = "Rider/Frontend/rider/icons"
+  private const val RIDER_ICONS_RELATIVE_PATH = "rider/icons"
+  private const val RIDER_ICONS_REVISION_FILE = ".icons.last.revision"
 
   private val syncPaths = listOf(
     SyncPath("rider", "$RIDER_ICONS_RELATIVE_PATH/resources/rider"),
@@ -47,23 +51,62 @@ object DotnetIconSync {
     val prop = "icons.sync.dotnet.merge.robot.build.conf"
     System.getProperty(prop) ?: error("Specify property $prop")
   }
+  private val skipTriggerMerge by lazy {
+    val prop = "icons.sync.skip.trigger.merge"
+    System.getProperty(prop)?.toBoolean() ?: false
+  }
+  private val customToolPath: String? by lazy {
+    val prop = "icons.sync.custom.tool.path"
+    System.getProperty(prop)?.takeIf { it.isNotEmpty() }
+  }
+  private val customToolArgs: String? by lazy {
+    val prop = "icons.sync.custom.tool.args"
+    System.getProperty(prop)
+  }
 
   private fun step(msg: String) = println("\n** $msg")
+
+  private fun checkCaseConflicts() {
+    val riderIconRoot = context.devRepoRoot.resolve("Rider").resolve("Frontend").resolve("rider")
+      .resolve("icons").resolve("resources").resolve("rider")
+    val ideaIconRoot = context.devRepoRoot.resolve("Rider").resolve("ultimate").resolve("community")
+      .resolve("platform").resolve("icons").resolve("src")
+    val ideaIconIndex = mutableMapOf<String, String>()
+    for(file in ideaIconRoot.toFile().walkTopDown().filter { it.isFile }) {
+      val relPath = toSystemIndependentName(file.relativeTo(ideaIconRoot.toFile()).toString())
+      ideaIconIndex[relPath.lowercase()] = relPath
+    }
+    val errors = mutableListOf<String>()
+    for(file in riderIconRoot.toFile().walkTopDown().filter { it.isFile }) {
+      val relPath = toSystemIndependentName(file.relativeTo(riderIconRoot.toFile()).toString())
+      if (ideaIconIndex.containsKey(relPath.lowercase()) && relPath != ideaIconIndex[relPath.lowercase()]) {
+        errors.add("$file->${ideaIconIndex[relPath.lowercase()]}")
+      }
+    }
+    if (errors.isNotEmpty()) {
+      error("Found case conflicts in repository: \n\t${errors.joinToString(separator = "\n\t")}")
+    }
+  }
 
   fun sync() {
     try {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
+      callCustomTool()
       generateClasses()
       RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH))
+      checkCaseConflicts()
       if (stageChanges().isEmpty()) {
         println("Nothing to commit")
       }
       else if (isUnderTeamCity()) {
+        writeRevisionFile()
         createBranchForMerge()
         commitChanges()
         pushBranchForMerge()
-        triggerMerge()
+        if (!skipTriggerMerge) {
+          triggerMerge()
+        }
       }
       println("Done.")
     }
@@ -98,20 +141,21 @@ object DotnetIconSync {
     }
   }
 
-  private fun findProjectHomePath(devRepoDir: Path): String {
-    var currentPath = devRepoDir
-    while (currentPath.parent != null) {
-      if (currentPath.resolve("Frontend").resolve(".idea").exists()) {
-        return currentPath.resolve("Frontend").toAbsolutePath().toString()
-      }
-      currentPath = currentPath.parent
+  private fun callCustomTool() {
+    customToolPath?.let {
+      step("Call custom tool: $it with args $customToolArgs")
+      val output = execute(
+        context.devRepoDir, it,
+        *customToolArgs?.splitWithSpace()?.toTypedArray() ?: error("Custom tool args should be specified")
+      )
+      println("Custom Tool Output:")
+      println(output)
     }
-    error("can't find project home path for devRepoDir: $devRepoDir")
   }
 
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconClasses(config = DotnetIconClasses(findProjectHomePath(context.devRepoDir)))
+    generateIconClasses()
   }
 
   private fun stageChanges(): Collection<String> {
@@ -147,5 +191,12 @@ object DotnetIconSync {
     step("Triggering merge with $mergeRobotBuildConfiguration..")
     val response = triggerBuild(mergeRobotBuildConfiguration, branchForMerge)
     println("Response is $response")
+  }
+
+  private fun writeRevisionFile() {
+    val revisionFile = context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH).resolve(RIDER_ICONS_REVISION_FILE)
+    val revision = execute(context.iconRepoDir, GIT, "rev-parse", "HEAD")
+    revisionFile.writeText(revision)
+    stageFiles(listOf(revisionFile.pathString), context.devRepoRoot)
   }
 }

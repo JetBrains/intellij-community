@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.CommonBundle;
@@ -87,9 +87,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     context.getModulesConfigurator().addAllModuleChangeListener(new ModuleEditor.ChangeListener() {
       @Override
       public void moduleStateChanged(ModifiableRootModel moduleRootModel) {
-        for (ProjectStructureElement element : getProjectStructureElements()) {
-          myContext.getDaemonAnalyzer().queueUpdate(element);
-        }
+        myContext.getDaemonAnalyzer().queueUpdates(getProjectStructureElements());
       }
     });
 

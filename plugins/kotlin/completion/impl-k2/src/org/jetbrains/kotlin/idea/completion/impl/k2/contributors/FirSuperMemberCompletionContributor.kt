@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -111,9 +112,8 @@ internal class FirSuperMemberCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableInfo> {
-        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters).map {
-            CallableInfo(receiverType, it.signature, it.scopeKind)
-        }
+        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter = { true })
+            .map { CallableInfo(receiverType, it.signature, it.scopeKind) }
     }
 
     context(KtAnalysisSession)
@@ -174,6 +174,7 @@ internal class FirSuperMemberCompletionContributor(
         // * Callable.call -> <anonymous object>.call
         val superFunctionToContainingFunction = superReceiver
             .parentsOfType<KtNamedFunction>(withSelf = false)
+            .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile) }
             .flatMap { containingFunction ->
                 containingFunction
                     .getFunctionLikeSymbol()

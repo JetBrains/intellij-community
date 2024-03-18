@@ -10,6 +10,7 @@
   <technology name="allure1" root="ru.yandex.qatools.allure"/>
   <technology name="allure2" root="io.qameta.allure"/>
   <technology name="androidx-compose" root="androidx.compose"/>
+  <technology name="android" root="android"/>
   <technology name="apache-bval" root="org.apache.bval"/>
   <technology name="apache-camel" root="org.apache.camel"/>
   <technology name="apache-cayenne" root="org.apache.cayenne"/>
@@ -197,6 +198,8 @@
   <technology name="kotlinx-datetime" root="kotlinx.datetime"/>
   <technology name="kotlinx-html" root="kotlinx.html"/>
   <technology name="kotlinx-io" root="kotlinx.io"/>
+  <technology name="kotlinx-jupyter-ktor-client" root="org.jetbrains.kotlinx.jupyter.ktor.client"/>
+  <technology name="kotlinx-jupyter-json-generation" root="org.jetbrains.kotlinx.jupyter.json"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
   <technology name="ktor" root="io.ktor"/>

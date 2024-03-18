@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.progress.blockingContext
@@ -45,7 +45,7 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  * If the write action happens while the [action] is running, then the [action] is canceled,
  * and the function suspends until its possible to acquire the read lock, and then the [action] is tried again.
  *
- * Since the [action] might me executed several times, it must be idempotent.
+ * Since the [action] might be executed several times, it must be idempotent.
  * The function returns when given [action] was completed fully.
  * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
  *

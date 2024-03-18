@@ -53,8 +53,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
    * @param stringUrl the url for which to retrieve the last used username;
    * @return the (probably empty) login remembered for this URL.
    */
-  @Nullable
-  public String getRememberedUserName(@NotNull String stringUrl) {
+  public @Nullable String getRememberedUserName(@NotNull String stringUrl) {
     return myState.myRememberedUserNames.get(stringUrl);
   }
 
@@ -74,8 +73,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     myState.myRememberedUserNames.put(stringUrl, username);
   }
 
-  @Nullable
-  public String getHgExecutable() {
+  public @Nullable String getHgExecutable() {
     return myState.myHgExecutable;
   }
 

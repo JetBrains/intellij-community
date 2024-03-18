@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.CommonBundle.getCancelButtonText
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
@@ -17,13 +18,12 @@ import com.intellij.openapi.vcs.AbstractVcs.fileInVcsByFileStatus
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager.Companion.isCommittedChangesAvailable
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 
-class BrowseCommittedChangesAction : DumbAwareAction() {
+private class BrowseCommittedChangesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
 
@@ -36,9 +36,7 @@ class BrowseCommittedChangesAction : DumbAwareAction() {
     e.presentation.isEnabled = vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(vcs.project, file)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
@@ -52,16 +50,23 @@ class BrowseCommittedChangesAction : DumbAwareAction() {
   }
 }
 
-private fun getChangeBrowserSettings(vcs: AbstractVcs): ChangeBrowserSettings =
-  vcs.configuration.changeBrowserSettings.computeIfAbsent(vcs.name) { vcsName ->
+private fun getChangeBrowserSettings(vcs: AbstractVcs): ChangeBrowserSettings {
+  return vcs.configuration.changeBrowserSettings.computeIfAbsent(vcs.name) { vcsName ->
     vcs.committedChangesProvider!!.createDefaultSettings().also {
-      vcs.project.stateStore.initPersistencePlainComponent(it, "VcsManager.ChangeBrowser.$vcsName")
+      vcs.project.stateStore.initPersistencePlainComponent(
+        component = it,
+        key = "VcsManager.ChangeBrowser.$vcsName",
+        pluginId = PluginManagerCore.CORE_ID,
+      )
     }
   }
+}
 
 private fun showCommittedChanges(vcs: AbstractVcs, file: VirtualFile, settings: ChangeBrowserSettings) {
   val maxCount = if (!settings.isAnyFilterSpecified) askMaxCount(vcs.project) else 0
-  if (maxCount < 0) return
+  if (maxCount < 0) {
+    return
+  }
 
   val repositoryLocation = CommittedChangesCache.getInstance(vcs.project).locationCache.getLocation(vcs, getFilePath(file), false)
   if (repositoryLocation == null) {
@@ -73,13 +78,14 @@ private fun showCommittedChanges(vcs: AbstractVcs, file: VirtualFile, settings: 
     vcs.committedChangesProvider!!, repositoryLocation, settings, maxCount, null)
 }
 
-private fun askMaxCount(project: Project): Int =
-  when (
+private fun askMaxCount(project: Project): Int {
+  return when (
     showYesNoCancelDialog(
       project, message("browse.changes.no.filter.prompt"), message("browse.changes.title"), message("browse.changes.show.recent.button"),
       message("browse.changes.show.all.button"), getCancelButtonText(), getQuestionIcon())
-    ) {
+  ) {
     Messages.CANCEL -> -1
     Messages.YES -> 50
     else -> 0
   }
+}

@@ -1,9 +1,9 @@
 {
     "modules" : [
-        { "name": "A", "dependsOn": ["B"] },
-        { "name": "B", "dependsOn": ["C", "O"] },
-        { "name": "C", "dependsOn": ["A"] },
-        { "name": "O", "dependsOn": [] }
+        { "name": "A", "dependencies": ["B"] },
+        { "name": "B", "dependencies": ["C", "O"] },
+        { "name": "C", "dependencies": ["A"] },
+        { "name": "O", "dependencies": [] }
     ],
     "rootModule": "A",
     "modulesToMakeOOBM": ["O"],

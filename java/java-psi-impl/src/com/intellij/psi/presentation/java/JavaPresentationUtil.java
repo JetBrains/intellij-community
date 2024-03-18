@@ -4,6 +4,7 @@ package com.intellij.psi.presentation.java;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -26,11 +27,11 @@ public final class JavaPresentationUtil {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
-        return PsiFormatUtil.formatMethod(
+        return ReadAction.compute(() -> PsiFormatUtil.formatMethod(
           psiMethod,
           PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
           PsiFormatUtilBase.SHOW_TYPE
-        );
+        ));
       }
 
       @Override

@@ -5,9 +5,9 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class KeyboardModifierGestureShortcut extends Shortcut {
-
   private final KeyStroke myStroke;
   private final KeyboardGestureAction.ModifierType myType;
 
@@ -18,7 +18,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     };
   }
 
-  protected KeyboardModifierGestureShortcut(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
+  protected KeyboardModifierGestureShortcut(KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
     myStroke = stroke;
     myType = type;
   }
@@ -37,11 +37,13 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
   }
 
   @Override
-  public boolean startsWith(final @NotNull Shortcut sc) {
-    if (!(sc instanceof KeyboardModifierGestureShortcut other)) return false;
+  public boolean startsWith(@NotNull Shortcut shortcut) {
+    if (!(shortcut instanceof KeyboardModifierGestureShortcut other)) return false;
 
     if (myType.equals(other.myType)) {
-      if (myStroke.getModifiers() != other.myStroke.getModifiers()) return false;
+      if (myStroke.getModifiers() != other.myStroke.getModifiers()) {
+        return false;
+      }
       return other.myStroke.getKeyCode() != -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();
     }
 
@@ -55,7 +57,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
 
     final KeyboardModifierGestureShortcut that = (KeyboardModifierGestureShortcut)o;
 
-    if (myStroke != null ? !myStroke.equals(that.myStroke) : that.myStroke != null) return false;
+    if (!Objects.equals(myStroke, that.myStroke)) return false;
     if (myType != that.myType) return false;
 
     return true;
@@ -75,7 +77,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     }
   }
 
-  public static class Hold extends KeyboardModifierGestureShortcut {
+  public static final class Hold extends KeyboardModifierGestureShortcut {
     public Hold(final KeyStroke stroke) {
       super(stroke, KeyboardGestureAction.ModifierType.hold);
     }

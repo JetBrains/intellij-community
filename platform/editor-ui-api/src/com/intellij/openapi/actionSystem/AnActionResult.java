@@ -26,9 +26,13 @@ public final class AnActionResult {
     return this == PERFORMED;
   }
 
+  public boolean isIgnored() {
+    return this == IGNORED;
+  }
+
   @ApiStatus.Internal
-  public @Nullable Throwable getFailureCause() {
-    if (isPerformed()) {
+  public @NotNull Throwable getFailureCause() {
+    if (myFailureCause == null) {
       throw new AssertionError("not a failure");
     }
     return myFailureCause;

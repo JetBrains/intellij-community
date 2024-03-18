@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonFinalCloneInspection extends BaseInspection {
+public final class NonFinalCloneInspection extends BaseInspection {
 
   @Override
   @NotNull

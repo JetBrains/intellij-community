@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -154,10 +154,11 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     private object DeclarationHandler : ElementHandler<KtDeclaration>(KtDeclaration::class) {
         override fun accepts(element: KtDeclaration): Boolean {
-            if (element is KtProperty) {
-                return element.parent is KtFile || element.parent is KtClassBody // do not show local variables
+            return when (element) {
+                is KtProperty -> element.parent is KtFile || element.parent is KtClassBody // do not show local variables
+                is KtScript, is KtScriptInitializer -> false
+                else -> true
             }
-            return true
         }
 
         override fun elementInfo(element: KtDeclaration): String {
@@ -378,9 +379,9 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun handler(e: PsiElement): ElementHandler<in KtElement>? {
+    private fun handler(e: PsiElement, handlers: List<ElementHandler<*>> = Holder.handlers): ElementHandler<in KtElement>? {
         if (e !is KtElement) return null
-        val handler = Holder.handlers.firstOrNull { it.type.java.isInstance(e) && (it as ElementHandler<in KtElement>).accepts(e) }
+        val handler = handlers.firstOrNull { it.type.java.isInstance(e) && (it as ElementHandler<in KtElement>).accepts(e) }
         return handler as ElementHandler<in KtElement>?
     }
 
@@ -388,14 +389,19 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     override fun acceptElement(e: PsiElement) = !DumbService.isDumb(e.project) && handler(e) != null
 
+    override fun acceptStickyElement(e: PsiElement): Boolean {
+        // do not check isDumb IDEA-345105
+        return handler(e, Holder.stickyHandlers) != null
+    }
+
     override fun getElementInfo(e: PsiElement): String {
         if (DumbService.isDumb(e.project)) return ""
-        return handler(e)!!.elementInfo(e as KtElement)
+        return handler(e)?.elementInfo(e as KtElement) ?: ""
     }
 
     override fun getElementTooltip(e: PsiElement): String {
         if (DumbService.isDumb(e.project)) return ""
-        return handler(e)!!.elementTooltip(e as KtElement)
+        return handler(e)?.elementTooltip(e as KtElement) ?: ""
     }
 
     override fun getParent(element: PsiElement): PsiElement? =
@@ -418,6 +424,13 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
             WhenHandler,
             WhenEntryHandler,
             ForHandler
+        )
+        val stickyHandlers: List<ElementHandler<*>> = listOf<ElementHandler<*>>(
+            LambdaHandler,
+            AnonymousObjectHandler,
+            AnonymousFunctionHandler,
+            PropertyAccessorHandler,
+            DeclarationHandler,
         )
     }
 }

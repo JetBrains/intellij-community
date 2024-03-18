@@ -1,10 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment {
-  public static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
+  private static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
 
   public PsiFragmentImpl(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type, text);
@@ -37,6 +40,24 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
     final CharSequence sequence = CodeInsightUtilCore.parseStringCharacters(content, null);
     if (sequence == null) return null;
     return sequence.toString();
+  }
+
+  @Override
+  public boolean isValidHost() {
+    return true;
+  }
+
+  @Override
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
+    ASTNode valueNode = getNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
+  }
+
+  @Override
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new StringLiteralEscaper<>(this);
   }
 
   private static String getFragmentContent(PsiFragment fragment) {

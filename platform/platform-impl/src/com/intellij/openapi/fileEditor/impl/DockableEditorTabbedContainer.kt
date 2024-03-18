@@ -57,6 +57,7 @@ class DockableEditorTabbedContainer internal constructor(
   private var currentPainter: AbstractPainter? = null
   private var glassPaneListenerDisposable: DisposableHandle? = null
   private var wasEverShown = false
+  internal var focusOnShowing = true
 
   override fun dispose() {
     coroutineScope.cancel()
@@ -290,7 +291,7 @@ class DockableEditorTabbedContainer internal constructor(
   override fun showNotify() {
     if (!wasEverShown) {
       wasEverShown = true
-      splitters.openFilesAsync()
+      splitters.openFilesAsync(focusOnShowing)
     }
   }
 

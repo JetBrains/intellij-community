@@ -1,14 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.runtime.repository.ProductMode
+import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +24,7 @@ import java.util.function.BiPredicate
  */
 abstract class ProductProperties {
   /**
-   * The base name (i.e. a name without the extension and architecture suffix)
+   * The base name (i.e., a name without the extension and architecture suffix)
    * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
    * usually a short product name in lower case (`"idea"` for IntelliJ IDEA, `"webstorm"` for WebStorm, etc.).
    *
@@ -123,14 +122,14 @@ abstract class ProductProperties {
   /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
+  var customJvmMemoryOptions: Map<String, String> = persistentMapOf()
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
   open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+    "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -189,13 +188,6 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
-   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.IntellijLoader]. 
-   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
-   */
-  @ApiStatus.Experimental
-  var supportModularLoading: Boolean = false
-
-  /**
    * Specifies the main module of JetBrains Client product which distribution should be embedded into the IDE's distribution to allow 
    * running JetBrains Client. 
    * If it's set to a non-null value and [BuildOptions.enableEmbeddedJetBrainsClient] is set to `true`, product-modules.xml from the 
@@ -211,9 +203,16 @@ abstract class ProductProperties {
   var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
 
   /**
+   * Set to the root product module (the one containing product-modules.xml file) to enable using module-based loader for the product. 
+   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
+   */
+  @ApiStatus.Experimental
+  var rootModuleForModularLoader: String? = null
+
+  /**
    * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
    * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
-   * This property makes sense only if [supportModularLoading] is set to `true`.
+   * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
    */
   @ApiStatus.Experimental
   var productMode: ProductMode = ProductMode.LOCAL_IDE
@@ -229,10 +228,10 @@ abstract class ProductProperties {
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
    * when .class file version verification is needed.
    */
-  var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
+  var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
   /**
-   * Strings which are forbidden as a part of resulting class file path. E.g.:
+   * Strings which are forbidden as a part of the resulting class file path. E.g.:
    * "license"
    */
   var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()
@@ -325,20 +324,26 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) { }
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
    * @return the name of a subdirectory under `projectHome/out` where build artifacts will be placed,
    * must be unique among all products built from the same sources.
    */
-  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.productName.lowercase(Locale.ROOT)
+  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.fullProductName.lowercase(Locale.ROOT)
 
   /**
    * Paths to externally built plugins to be included in the IDE.
    * They will be copied into the build, as well as included in the IDE classpath when launching it to build search index, .jar order, etc.
    */
   open fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
+
+  /**
+   * Override this function to provide additional JVM command line arguments which will be added to launchers along with 
+   * [additionalIdeJvmArguments].
+   */
+  open fun getAdditionalContextDependentIdeJvmArguments(context: BuildContext): List<String> = emptyList()
 
   /**
    * @return custom properties for [org.jetbrains.intellij.build.impl.productInfo.ProductInfoData].
@@ -406,7 +411,13 @@ abstract class ProductProperties {
   )
 
   /**
-   * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * Returns IDs of flavors which the current product has. They will be added to the product-info.json file.  
+   */
+  open fun getProductFlavors(buildContext: BuildContext): List<String> = emptyList()
+
+  /**
+   * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * Please do not ignore validation failures here, they will fail CI builds anyway.
    * @return list of plugin validation errors.
    */
   open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {

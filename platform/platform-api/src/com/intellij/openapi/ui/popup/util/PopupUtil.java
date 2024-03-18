@@ -74,11 +74,14 @@ public final class PopupUtil {
       if (popup != null) return popup;
     }
     final Window wnd = SwingUtilities.getWindowAncestor(c);
+    return getPopupFor(wnd);
+  }
+
+  public static @Nullable JBPopup getPopupFor(@Nullable Window wnd) {
     if (wnd instanceof JWindow) {
-      final JRootPane root = ((JWindow)wnd).getRootPane();
+      JRootPane root = ((JWindow)wnd).getRootPane();
       return (JBPopup)root.getClientProperty(JBPopup.KEY);
     }
-
     return null;
   }
 

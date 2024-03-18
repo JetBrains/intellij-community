@@ -43,14 +43,14 @@ open class ProjectCodeVisionModel(val project: Project) {
   open fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == HIDE_PROVIDER_ID) {
       val id = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
-      CodeVisionSettings.instance().setProviderEnabled(id, false)
+      CodeVisionSettings.getInstance().setProviderEnabled(id, false)
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
         CodeVisionHost.LensInvalidateSignal(null))
       return
     }
 
     if (actionId == HIDE_ALL) {
-      CodeVisionSettings.instance().codeVisionEnabled = false
+      CodeVisionSettings.getInstance().codeVisionEnabled = false
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
         CodeVisionHost.LensInvalidateSignal(null))
       return

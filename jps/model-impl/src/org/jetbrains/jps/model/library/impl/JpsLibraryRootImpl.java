@@ -63,10 +63,6 @@ public final class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl>
   }
 
   @Override
-  public void applyChanges(@NotNull JpsLibraryRootImpl modified) {
-  }
-
-  @Override
   @NotNull
   public JpsLibrary getLibrary() {
     return (JpsLibrary)myParent.getParent();

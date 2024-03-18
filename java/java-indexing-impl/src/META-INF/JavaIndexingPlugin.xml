@@ -48,7 +48,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex"/>
-    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaUnnamedClassIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex"/>
     <java.shortNamesCache implementation="com.intellij.psi.impl.PsiShortNamesCacheImpl"/>
     <java.staticMethodNamesCache implementation="com.intellij.psi.impl.JavaStaticMethodNameCacheImpl" order="first"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
@@ -57,8 +57,6 @@
                    serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
-    <projectService
-                    serviceImplementation="com.intellij.psi.impl.search.HighlightingCaches"/>
     <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>

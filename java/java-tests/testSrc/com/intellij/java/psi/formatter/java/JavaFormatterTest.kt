@@ -4117,7 +4117,7 @@ public enum LevelCode {
     )
   }
 
-  fun testFormattingUnnamedClassMembers() {
+  fun testFormattingImplicitClassMembers() {
     doTextTest(
       """
       void before() {
@@ -4141,5 +4141,10 @@ public enum LevelCode {
       String s = "foo";
       """.trimIndent()
     )
+  }
+
+  fun testDoNotFormatLongChains() {
+    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest()
   }
 }

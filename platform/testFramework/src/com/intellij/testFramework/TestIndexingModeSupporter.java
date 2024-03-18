@@ -44,9 +44,8 @@ public interface TestIndexingModeSupporter {
 
       @Override
       public void ensureIndexingStatus(@NotNull Project project) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
-        });
+        new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
       }
     }, DUMB_RUNTIME_ONLY_INDEX {
       @Override
@@ -58,6 +57,9 @@ public interface TestIndexingModeSupporter {
     }, DUMB_EMPTY_INDEX {
       @Override
       public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        // indexing code does not expect that FileBasedIndex implementation changes during execution
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
+
         ServiceContainerUtil
           .replaceService(ApplicationManager.getApplication(), FileBasedIndex.class, new EmptyFileBasedIndex(), testRootDisposable);
         EternalTaskShutdownToken dumbTask = becomeDumb(project);
@@ -102,6 +104,7 @@ public interface TestIndexingModeSupporter {
 
     private static EternalTaskShutdownToken indexEverythingAndBecomeDumb(@NotNull Project project) {
       new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
       return becomeDumb(project);
     }
   }

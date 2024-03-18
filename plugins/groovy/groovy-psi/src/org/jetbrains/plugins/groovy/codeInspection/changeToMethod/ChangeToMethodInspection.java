@@ -2,17 +2,16 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToMethod;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations.Transformation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -42,7 +41,7 @@ public class ChangeToMethodInspection extends BaseInspection {
           registerError(
             highlightingElement,
             GroovyBundle.message("replace.with.method.message", transformation.getMethod()),
-            new LocalQuickFix[]{getFix(transformation)},
+            new LocalQuickFix[]{new TransformationBasedFix(transformation)},
             GENERIC_ERROR_OR_WARNING
           );
         }
@@ -50,14 +49,7 @@ public class ChangeToMethodInspection extends BaseInspection {
     };
   }
 
-  @Nullable
-  protected GroovyFix getFix(@NotNull final Transformation<?> transformation) {
-    return new TransformationBasedFix(transformation);
-  }
-
-  private static class TransformationBasedFix extends GroovyFix {
-
-    @SafeFieldForPreview
+  private static class TransformationBasedFix extends PsiUpdateModCommandQuickFix {
     private final Transformation<?> myTransformation;
 
     private TransformationBasedFix(Transformation<?> transformation) { myTransformation = transformation; }
@@ -70,23 +62,23 @@ public class ChangeToMethodInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      PsiElement call = descriptor.getPsiElement().getParent();
-      if (!(call instanceof GrExpression)) return;
-      if (!myTransformation.couldApplyRow((GrExpression)call)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement call = element.getParent();
+      if (!(call instanceof GrExpression expression)) return;
+      if (!myTransformation.couldApplyRow(expression)) return;
 
-      myTransformation.applyRow((GrExpression)call);
+      myTransformation.applyRow(expression);
     }
   }
 
   @Nullable
   public Transformation<? extends GrExpression> getTransformation(@NotNull GrExpression expression) {
-    if (expression instanceof GrUnaryExpression) {
-      return UNARY_TRANSFORMATIONS.get(((GrUnaryExpression)expression).getOperationTokenType());
+    if (expression instanceof GrUnaryExpression unary) {
+      return UNARY_TRANSFORMATIONS.get(unary.getOperationTokenType());
     }
 
-    if (expression instanceof GrBinaryExpression) {
-      return BINARY_TRANSFORMATIONS.get(((GrBinaryExpression)expression).getOperationTokenType());
+    if (expression instanceof GrBinaryExpression binary) {
+      return BINARY_TRANSFORMATIONS.get(binary.getOperationTokenType());
     }
 
     if (expression instanceof GrSafeCastExpression) {
@@ -97,16 +89,16 @@ public class ChangeToMethodInspection extends BaseInspection {
 
   @Nullable
   public PsiElement getHighlightingElement(@NotNull GrExpression expression) {
-    if (expression instanceof GrUnaryExpression) {
-      return ((GrUnaryExpression)expression).getOperationToken();
+    if (expression instanceof GrUnaryExpression unary) {
+      return unary.getOperationToken();
     }
 
-    if (expression instanceof GrBinaryExpression) {
-      return ((GrBinaryExpression)expression).getOperationToken();
+    if (expression instanceof GrBinaryExpression binary) {
+      return binary.getOperationToken();
     }
 
-    if (expression instanceof GrSafeCastExpression) {
-      return ((GrSafeCastExpression)expression).getOperationToken();
+    if (expression instanceof GrSafeCastExpression safeCast) {
+      return safeCast.getOperationToken();
     }
     return null;
   }

@@ -270,7 +270,7 @@ final class ToolWindowsWidget implements CustomStatusBarWidget, Disposable, UISe
       myTextLabel.setText(value.getStripeTitle());
       myTextLabel.setIcon(value.getIcon());
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
-      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
+      String activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(value.getId());
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
       if (shortcut != null) {
         myShortcutLabel.setText(KeymapUtil.getShortcutText(shortcut));

@@ -1,4 +1,4 @@
-// IGNORE_K2
+// INPLACE_VARIABLE_NAME: test1
 fun test() = "123"
 
 open class First(val s: String)

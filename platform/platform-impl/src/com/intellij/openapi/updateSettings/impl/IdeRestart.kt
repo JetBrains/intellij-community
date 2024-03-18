@@ -9,12 +9,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.TimeoutUtil
 
-fun restartOrNotify(project: Project, restartAutomatically: Boolean, restart: () -> Unit) {
+fun restartOrNotify(project: Project,
+                    restartAutomatically: Boolean,
+                    @NlsContexts.DialogTitle progressTitle: String = IdeBundle.message("action.UpdateIde.progress.title"),
+                    restart: () -> Unit) {
   if (restartAutomatically) {
     ApplicationManager.getApplication().invokeLater {
-      scheduleRestart(project, restart)
+      scheduleRestart(project, progressTitle) { restart() }
     }
   }
   else {
@@ -31,8 +35,10 @@ private fun showRestartNotification(project: Project, restart: () -> Unit) {
     .notify(project)
 }
 
-private fun scheduleRestart(project: Project, restart: () -> Unit) {
-  object : Task.Modal(project, IdeBundle.message("action.UpdateIde.progress.title"), true) {
+private fun scheduleRestart(project: Project,
+                            @NlsContexts.DialogTitle progressTitle: String,
+                            restart: () -> Unit) {
+  object : Task.Modal(project, progressTitle, true) {
     override fun run(indicator: ProgressIndicator) {
       indicator.isIndeterminate = false
       var progress = 0

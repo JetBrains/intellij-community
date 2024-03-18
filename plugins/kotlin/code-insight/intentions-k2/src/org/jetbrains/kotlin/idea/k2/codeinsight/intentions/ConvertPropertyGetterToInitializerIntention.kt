@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
-internal class ConvertPropertyGetterToInitializerIntention : AbstractKotlinApplicableIntention<KtPropertyAccessor>(
+internal class ConvertPropertyGetterToInitializerIntention : AbstractKotlinApplicableModCommandIntention<KtPropertyAccessor>(
     KtPropertyAccessor::class
 ) {
     override fun getActionName(element: KtPropertyAccessor) = familyName
@@ -34,12 +34,12 @@ internal class ConvertPropertyGetterToInitializerIntention : AbstractKotlinAppli
                 element.containingClass()?.hasExpectModifier() != true
     }
 
-    override fun apply(element: KtPropertyAccessor, project: Project, editor: Editor?) {
+    override fun apply(element: KtPropertyAccessor, context: ActionContext, updater: ModPsiUpdater) {
         val property = element.parent as? KtProperty ?: return
         val commentSaver = CommentSaver(property)
         property.initializer = element.singleExpression()
         property.deleteChildRange(property.initializer?.nextSibling, element)
-        editor?.caretModel?.moveToOffset(property.endOffset)
+        updater.moveCaretTo(property.endOffset)
         commentSaver.restore(property)
     }
 }

@@ -3,7 +3,7 @@ package git4idea.changes
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitFileHistory {
+internal class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitFileHistory {
 
   private val history: MutableMap<String, Entry> = LinkedHashMap()
 

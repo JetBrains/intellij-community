@@ -45,8 +45,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.messagePointer("inspection.action.title"), InspectionsBundle.messagePointer("inspection.action.noun"));
   }
 
-  public CodeInspectionAction(@NlsContexts.DialogTitle String title, @Nls String analysisNoon) {
-    super(title, analysisNoon);
+  public CodeInspectionAction(@NlsContexts.DialogTitle String title, @Nls String analysisNoun) {
+    super(title, analysisNoun);
   }
 
   @Override

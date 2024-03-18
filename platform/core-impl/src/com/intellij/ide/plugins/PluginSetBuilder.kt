@@ -7,6 +7,9 @@ import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
@@ -14,7 +17,7 @@ import java.util.*
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class PluginSetBuilder(val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
+class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
   private val _moduleGraph = createModuleGraph(unsortedPlugins)
   private val builder = _moduleGraph.builder()
   val moduleGraph: SortedModuleGraph = _moduleGraph.sorted(builder)
@@ -24,7 +27,7 @@ class PluginSetBuilder(val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
 
   constructor(unsortedPlugins: Collection<IdeaPluginDescriptorImpl>) : this(LinkedHashSet(unsortedPlugins))
 
-  fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
+  internal fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
     if (builder.isAcyclic) {
       return
     }
@@ -38,8 +41,8 @@ class PluginSetBuilder(val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
         plugin.isEnabled = false
       }
 
-      val pluginsString = component.joinToString(separator = ", ") { "'${it.name}'" }
-      errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString))
+      val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
+      errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString))
       val detailedMessage = StringBuilder()
       val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString} (${it.name})" }
       detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
@@ -79,17 +82,7 @@ class PluginSetBuilder(val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
     return sorted
   }
 
-  private fun getEnabledModules(): List<IdeaPluginDescriptorImpl> {
-    val result = ArrayList<IdeaPluginDescriptorImpl>(moduleGraph.nodes.size)
-    for (module in moduleGraph.nodes) {
-      if (if (module.moduleName == null) module.isEnabled else enabledModuleV2Ids.containsKey(module.moduleName)) {
-        result.add(module)
-      }
-    }
-    return result
-  }
-
-  fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): PluginSetBuilder {
+  internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): PluginSetBuilder {
     val logMessages = ArrayList<String>()
 
     m@ for (module in moduleGraph.nodes) {
@@ -135,24 +128,32 @@ class PluginSetBuilder(val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
     return this
   }
 
-  fun createPluginSetWithEnabledModulesMap(): PluginSet = computeEnabledModuleMap().createPluginSet()
+  fun createPluginSetWithEnabledModulesMap(): PluginSet = computeEnabledModuleMap().createPluginSet(incompletePlugins = emptyList())
 
-  fun createPluginSet(incompletePlugins: Collection<IdeaPluginDescriptorImpl> = Collections.emptyList()): PluginSet {
+  internal fun createPluginSet(incompletePlugins: Collection<IdeaPluginDescriptorImpl>): PluginSet {
     val sortedPlugins = getSortedPlugins()
-    val allPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>(sortedPlugins.size + incompletePlugins.size)
-    allPlugins += sortedPlugins
-    allPlugins += incompletePlugins
-
-    val enabledPlugins = sortedPlugins.filterTo(ArrayList(sortedPlugins.size)) { it.isEnabled }
+    // ordered - do not use persistentHashSetOf
+    val allPlugins = persistentSetOf<IdeaPluginDescriptorImpl>().mutate { result ->
+      result.addAll(sortedPlugins)
+      result.addAll(incompletePlugins)
+    }
 
     val java11Shim = Java11Shim.INSTANCE
     return PluginSet(
       moduleGraph = moduleGraph,
-      allPlugins = java11Shim.copyOf(allPlugins),
-      enabledPlugins = java11Shim.copyOfCollection(enabledPlugins),
+      allPlugins = allPlugins,
+      enabledPlugins = persistentListOf<IdeaPluginDescriptorImpl>().mutate { result ->
+        sortedPlugins.filterTo(result) { it.isEnabled }
+      },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
-      enabledModules = java11Shim.copyOfCollection(getEnabledModules()),
+      enabledModules = persistentListOf<IdeaPluginDescriptorImpl>().mutate { result ->
+        for (module in moduleGraph.nodes) {
+          if (if (module.moduleName == null) module.isEnabled else enabledModuleV2Ids.containsKey(module.moduleName)) {
+            result.add(module)
+          }
+        }
+      },
     )
   }
 
@@ -238,7 +239,6 @@ private fun createTransitivelyDisabledError(
   isNotifyUser: Boolean,
 ): PluginLoadingError {
   val dependencyName = dependency.name
-
   return PluginLoadingError(
     plugin = descriptor,
     detailedMessageSupplier = message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.name, dependencyName),
@@ -248,17 +248,18 @@ private fun createTransitivelyDisabledError(
   )
 }
 
-private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String, vararg params: Any): @Nls Supplier<String> =
-  Supplier { CoreBundle.message(key, *params) }
+private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String, vararg params: Any): @Nls Supplier<String> {
+  return Supplier { CoreBundle.message(key, *params) }
+}
 
-private val IdeaPluginDescriptorImpl.allPluginDependencies
-  get(): Sequence<PluginId> =
-    pluginDependencies.asSequence()
-      .filterNot { it.isOptional }
-      .map { it.pluginId } +
-    dependencies
-      .plugins.asSequence()
-      .map { it.id }
+private val IdeaPluginDescriptorImpl.allPluginDependencies: Sequence<PluginId>
+  get(): Sequence<PluginId> {
+    return pluginDependencies.asSequence()
+             .filterNot { it.isOptional }
+             .map { it.pluginId } +
+           dependencies.plugins.asSequence()
+             .map { it.id }
+  }
 
 private val IdeaPluginDescriptorImpl.moduleDependencies
   get(): Sequence<String> = dependencies.modules.asSequence().map { it.name }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -12,7 +12,9 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.Location;
@@ -30,7 +32,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
+public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext, Disposable {
   private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
 
   private final DebugProcessImpl myDebugProcess;
@@ -53,6 +55,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private JavaExecutionStack myActiveExecutionStack;
 
+  private @Nullable ThreadReferenceProxyImpl myAnotherThreadToFocus = null;
+
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
                      @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
                      int eventVotes,
@@ -63,11 +67,31 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myEventSet = set;
   }
 
-  public void setThread(ThreadReference thread) {
+  public void setThread(@Nullable ThreadReference thread) {
     assertNotResumed();
-    ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
+    setThread(myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread));
+  }
+
+  private void setThread(@Nullable ThreadReferenceProxyImpl threadProxy) {
     LOG.assertTrue(myThread == null || myThread == threadProxy);
+    if (threadProxy != null && myThread != threadProxy) { // do not add more than once
+      threadProxy.addListener(new ThreadReferenceProxyImpl.ThreadListener() {
+        @Override
+        public void threadSuspended() {
+          myFrameCount = -1;
+        }
+
+        @Override
+        public void threadResumed() {
+          myFrameCount = -1;
+        }
+      }, this);
+    }
     myThread = threadProxy;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public int frameCount() {
@@ -128,6 +152,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
     finally {
       myIsResumed = true;
+      Disposer.dispose(this);
     }
   }
 
@@ -272,7 +297,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public void initExecutionStacks(ThreadReferenceProxyImpl activeThread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myThread == null) {
-      myThread = activeThread;
+      setThread(activeThread);
     }
     if (activeThread != null) {
       myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
@@ -334,4 +359,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
     Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
+
+  public @Nullable ThreadReferenceProxyImpl getAnotherThreadToFocus() {
+    return myAnotherThreadToFocus;
+  }
+
+  public void setAnotherThreadToFocus(@Nullable ThreadReferenceProxyImpl threadToFocus) {
+    myAnotherThreadToFocus = threadToFocus;
+  }
 }

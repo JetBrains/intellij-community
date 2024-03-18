@@ -5,7 +5,9 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.Configurable
 import com.intellij.ide.startup.importSettings.data.Multiple
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignY
@@ -19,10 +21,11 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
-fun createSettingPane(setting: BaseSetting, configurable: Boolean, changeHandler: () -> Unit): BaseSettingPane {
+fun createSettingPane(setting: BaseSetting, configurable: Boolean, changeHandler: () -> Unit, disposable: Disposable): BaseSettingPane {
   return if (setting is Multiple) {
-    MultipleSettingPane(createMultipleItem(setting, configurable), changeHandler)
+    MultipleSettingPane(createMultipleItem(setting, configurable), changeHandler, disposable)
   }
   else {
     BaseSettingPane(SettingItem(setting, configurable), changeHandler)
@@ -94,7 +97,7 @@ open class BaseSettingPane(val item: SettingItem, protected val changeHandler: (
 }
 
 
-class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit) : BaseSettingPane(item, changeHandler) {
+class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit, val disposable: Disposable) : BaseSettingPane(item, changeHandler) {
 
   private val configurable = item.configurable && setting is Configurable
 
@@ -134,11 +137,17 @@ class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit) : BaseSe
     panel.border = JBUI.Borders.empty()
 
     val scrollPane = JBScrollPane(component)
+    scrollPane.horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
     panel.add(scrollPane, BorderLayout.CENTER)
-    scrollPane.border = JBUI.Borders.empty(ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS,
-                                           ChildSettingsList.SCROLL_PANE_INSETS, 0)
+    scrollPane.border = JBUI.Borders.empty(3, 2, 6, 2)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
-    chooserBuilder.createPopup().showUnderneathOf(actionLink)
+    val popup = chooserBuilder.setRequestFocus(true).createPopup()
+    popup.showUnderneathOf(actionLink)
+    component.enterHandler = { popup.cancel() }
+
+    Disposer.register(disposable) {
+      popup.cancel()
+    }
   }
 }
 

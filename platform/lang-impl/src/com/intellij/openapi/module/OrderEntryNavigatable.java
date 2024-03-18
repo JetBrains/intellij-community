@@ -23,9 +23,4 @@ public final class OrderEntryNavigatable implements Navigatable {
   public boolean canNavigate() {
     return ProjectSettingsService.getInstance(myModule.getProject()).canOpenModuleDependenciesSettings();
   }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
 }

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BatchSuppressManagerImpl implements BatchSuppressManager {
+public final class BatchSuppressManagerImpl implements BatchSuppressManager {
   @Override
   public SuppressQuickFix @NotNull [] createBatchSuppressActions(@NotNull HighlightDisplayKey displayKey) {
     return new SuppressQuickFix[] {

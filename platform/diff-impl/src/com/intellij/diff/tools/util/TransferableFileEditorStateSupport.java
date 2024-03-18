@@ -29,11 +29,10 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TransferableFileEditorState;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,11 +203,11 @@ public class TransferableFileEditorStateSupport {
   }
 
 
-  private static class ToggleSynchronousEditorStatesAction extends ToggleActionButton implements DumbAware {
+  private static class ToggleSynchronousEditorStatesAction extends DumbAwareToggleAction {
     @NotNull private final TransferableFileEditorStateSupport mySupport;
 
     ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
-      super(DiffBundle.message("synchronize.editors.settings"), AllIcons.Actions.SyncPanels);
+      super(DiffBundle.message("synchronize.editors.settings"), null, AllIcons.Actions.SyncPanels);
       mySupport = support;
     }
 
@@ -218,8 +217,9 @@ public class TransferableFileEditorStateSupport {
     }
 
     @Override
-    public boolean isVisible() {
-      return mySupport.isSupported();
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(mySupport.isSupported());
     }
 
     @Override

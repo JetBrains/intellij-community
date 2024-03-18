@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
-// https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+// https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
 // If a plugin does not include any module dependency tags in its plugin.xml,
 // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal

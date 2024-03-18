@@ -13,6 +13,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import kotlin.math.min
 
 @RunWith(JUnit4::class)
@@ -71,7 +72,7 @@ class ProjectIndexingDependenciesServiceTest {
   fun `test corrupted scanning mark`() {
     val file = factory.nonExistingFile()
     FileOutputStream(file).use {
-      it.write(ByteArray(7)) // 4 bytes for file version + 3 bytes
+      it.write(1.asByteArray().plus(ByteArray(3))) // 4 bytes for file version + 3 bytes
     }
 
     try {
@@ -83,6 +84,19 @@ class ProjectIndexingDependenciesServiceTest {
       val actual = ae.message!!
       assertEquals(expected, actual.substring(0, min(expected.length, actual.length)))
     }
+  }
+
+  @Test
+  fun `test v0 v1 migration`() {
+    val file = factory.nonExistingFile()
+    FileOutputStream(file).use {
+      it.write(0.asByteArray().plus(1.asByteArray())) // version and incomplete scanning mark
+    }
+
+    factory.newProjectIndexingDependenciesService(file)
+    val inst = factory.newProjectIndexingDependenciesService(file)
+    val indexingRequestId = inst.getAppIndexingRequestIdOfLastScanning()
+    assertEquals(-1, indexingRequestId)
   }
 
   @Test
@@ -172,5 +186,12 @@ class ProjectIndexingDependenciesServiceTest {
     val fileIndexingStampBefore = indexingRequest.getFileIndexingStamp(42)
     val fileIndexingStampAfter = indexingRequest.getFileIndexingStamp(43)
     assertNotEquals(fileIndexingStampBefore, fileIndexingStampAfter)
+  }
+
+  fun Int.asByteArray(): ByteArray {
+    val fourBytes = ByteBuffer.allocate(Int.SIZE_BYTES)
+    fourBytes.putInt(this)
+    fourBytes.rewind()
+    return fourBytes.array()
   }
 }

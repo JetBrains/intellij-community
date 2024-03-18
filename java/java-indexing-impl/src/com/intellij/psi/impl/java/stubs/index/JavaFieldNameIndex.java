@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
+public final class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
   private static final JavaFieldNameIndex ourInstance = new JavaFieldNameIndex();
 
   public static JavaFieldNameIndex getInstance() {

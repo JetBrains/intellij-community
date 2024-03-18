@@ -28,5 +28,5 @@ object PackageSearchBundle {
     fun message(
         @PropertyKey(resourceBundle = BUNDLE) key: String,
         vararg params: Any
-    ): String = bundle.getMessage(key, *params)
+    ): String = if (bundle.containsKey(key)) bundle.getMessage(key, *params) else PackageSearchDeprecatedMessagesBundle.message(key, *params)
 }

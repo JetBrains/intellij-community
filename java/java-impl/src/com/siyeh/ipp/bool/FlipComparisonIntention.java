@@ -28,7 +28,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipComparisonIntention extends MCIntention {
+public final class FlipComparisonIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

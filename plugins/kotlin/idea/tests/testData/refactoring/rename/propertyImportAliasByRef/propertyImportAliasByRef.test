@@ -2,5 +2,5 @@
   "type": "AUTO_DETECT",
   "mainFile": "test.kt",
   "newName": "referWithAli",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

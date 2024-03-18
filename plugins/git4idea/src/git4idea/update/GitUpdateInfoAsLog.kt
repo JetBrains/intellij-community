@@ -176,7 +176,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       val logId = generateUpdateTabId()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
       val vcsLogFilterer = VcsLogFiltererImpl(logData)
-      val initialRangeSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
+      val initialRangeSortType = properties[MainVcsLogUiProperties.BEK_SORT_TYPE]
       val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(rangeFilter), initialRangeSortType,
                                                vcsLogFilterer, logId)
 

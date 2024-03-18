@@ -14,9 +14,13 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
+import com.intellij.platform.workspace.jps.entities.ModuleDependency as EntitiesModuleDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency as EntitiesLibraryDependency
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -98,7 +102,7 @@ internal class WorkspaceModuleImporter(
 
   private fun collectDependencies(moduleName: String,
                                   originalModule: ModuleEntity?,
-                                  dependencies: List<Any>,
+                                  dependencies: List<MavenImportDependency<*>>,
                                   moduleLibrarySource: EntitySource): List<ModuleDependencyItem> {
     val result = ArrayList<ModuleDependencyItem>(2 + dependencies.size)
 
@@ -109,10 +113,10 @@ internal class WorkspaceModuleImporter(
     // With the new workspace model we can make this process working out of the box. For that we need to extract module
     //   dependencies as separate entities and add the SDK dependency with the user defined EntitySource. However, this will require
     //   the refactoring of the ModuleEntity
-    val moduleSdk = originalModule?.dependencies?.find { it is ModuleDependencyItem.SdkDependency }
-                    ?: ModuleDependencyItem.InheritedSdkDependency
+    val moduleSdk = originalModule?.dependencies?.find { it is SdkDependency }
+                    ?: InheritedSdkDependency
     result.add(moduleSdk)
-    result.add(ModuleDependencyItem.ModuleSourceDependency)
+    result.add(ModuleSourceDependency)
 
     for (dependency in dependencies) {
       val created = when (dependency) {
@@ -126,12 +130,12 @@ internal class WorkspaceModuleImporter(
                                   null,
                                   {
                                     dependency.rootPaths.map { (url, type) ->
-                                      LibraryRoot(virtualFileUrlManager.fromUrl(pathToUrl(url)), type)
+                                      LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(pathToUrl(url)), type)
                                     }
                                   },
                                   { reuseOrCreateProjectLibrarySource(dependency.artifact) })
         is ModuleDependency ->
-          ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(dependency.artifact),
+          EntitiesModuleDependency(ModuleId(dependency.artifact),
                                                            false,
                                                            toScope(dependency.scope),
                                                            dependency.isTestJar)
@@ -146,18 +150,18 @@ internal class WorkspaceModuleImporter(
 
   private fun pathToUrl(it: String) = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, it) + JarFileSystem.JAR_SEPARATOR
 
-  private fun toScope(scope: DependencyScope): ModuleDependencyItem.DependencyScope =
+  private fun toScope(scope: DependencyScope): EntitiesDependencyScope =
     when (scope) {
-      DependencyScope.RUNTIME -> ModuleDependencyItem.DependencyScope.RUNTIME
-      DependencyScope.TEST -> ModuleDependencyItem.DependencyScope.TEST
-      DependencyScope.PROVIDED -> ModuleDependencyItem.DependencyScope.PROVIDED
-      else -> ModuleDependencyItem.DependencyScope.COMPILE
+      DependencyScope.RUNTIME -> EntitiesDependencyScope.RUNTIME
+      DependencyScope.TEST -> EntitiesDependencyScope.TEST
+      DependencyScope.PROVIDED -> EntitiesDependencyScope.PROVIDED
+      else -> EntitiesDependencyScope.COMPILE
     }
 
 
   private fun createSystemDependency(moduleName: String,
                                      artifact: MavenArtifact,
-                                     sourceProvider: () -> EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
+                                     sourceProvider: () -> EntitySource): EntitiesLibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
 
     val libraryId = LibraryId(artifact.libraryName, LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName)))
@@ -165,23 +169,23 @@ internal class WorkspaceModuleImporter(
                      artifact,
                      {
                        val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
-                       listOf(LibraryRoot(virtualFileUrlManager.fromUrl(classes), LibraryRootTypeId.COMPILED))
+                       listOf(LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(classes), LibraryRootTypeId.COMPILED))
                      },
                      sourceProvider)
-    return ModuleDependencyItem.Exportable.LibraryDependency(libraryId, false, artifact.dependencyScope)
+    return EntitiesLibraryDependency(libraryId, false, artifact.dependencyScope)
   }
 
   private fun createLibraryDependency(artifact: MavenArtifact,
-                                      sourceProvider: () -> EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
+                                      sourceProvider: () -> EntitySource): EntitiesLibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM != artifact.scope)
     val libraryRootsProvider = {
       val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
       val sources = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")
       val javadoc = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")
       listOf(
-        LibraryRoot(virtualFileUrlManager.fromUrl(classes), LibraryRootTypeId.COMPILED),
-        LibraryRoot(virtualFileUrlManager.fromUrl(sources), LibraryRootTypeId.SOURCES),
-        LibraryRoot(virtualFileUrlManager.fromUrl(javadoc), JAVADOC_TYPE),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(classes), LibraryRootTypeId.COMPILED),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(sources), LibraryRootTypeId.SOURCES),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(javadoc), JAVADOC_TYPE),
       )
     }
     return createLibraryDependency(artifact.libraryName,
@@ -193,16 +197,16 @@ internal class WorkspaceModuleImporter(
 
   private fun createLibraryDependency(
     libraryName: String,
-    scope: ModuleDependencyItem.DependencyScope,
+    scope: EntitiesDependencyScope,
     artifact: MavenArtifact?,
     libraryRootsProvider: () -> List<LibraryRoot>,
     sourceProvider: () -> EntitySource
-  ): ModuleDependencyItem.Exportable.LibraryDependency {
+  ): EntitiesLibraryDependency {
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
     addLibraryEntity(libraryId, artifact, libraryRootsProvider, sourceProvider)
 
-    return ModuleDependencyItem.Exportable.LibraryDependency(libraryId, false, scope)
+    return EntitiesLibraryDependency(libraryId, false, scope)
   }
 
   private fun addLibraryEntity(
@@ -235,41 +239,51 @@ internal class WorkspaceModuleImporter(
     }
   }
 
-  private val MavenArtifact.dependencyScope: ModuleDependencyItem.DependencyScope
+  private val MavenArtifact.dependencyScope: EntitiesDependencyScope
     get() = when (scope) {
-      MavenConstants.SCOPE_RUNTIME -> ModuleDependencyItem.DependencyScope.RUNTIME
-      MavenConstants.SCOPE_TEST -> ModuleDependencyItem.DependencyScope.TEST
-      MavenConstants.SCOPE_PROVIDED -> ModuleDependencyItem.DependencyScope.PROVIDED
-      else -> ModuleDependencyItem.DependencyScope.COMPILE
+      MavenConstants.SCOPE_RUNTIME -> EntitiesDependencyScope.RUNTIME
+      MavenConstants.SCOPE_TEST -> EntitiesDependencyScope.TEST
+      MavenConstants.SCOPE_PROVIDED -> EntitiesDependencyScope.PROVIDED
+      else -> EntitiesDependencyScope.COMPILE
     }
 
+  private fun MavenProject.getManifestAttributes(): Map<String,String> {
+    return this.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin")
+      ?.getChild("archive")
+      ?.getChild("manifestEntries")
+      ?.children
+      ?.associate { it.name to it.text } ?: emptyMap()
+  }
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,
                                  importData: MavenModuleImportData,
                                  importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val mavenProject = importData.mavenProject
+    val languageLevel = MavenImportUtil.getLanguageLevel(mavenProject) { importData.moduleData.sourceLanguageLevel }
 
-    var inheritCompilerOutput = true
+    val inheritCompilerOutput = !importingSettings.isUseMavenOutput
     var compilerOutputUrl: VirtualFileUrl? = null
     var compilerOutputUrlForTests: VirtualFileUrl? = null
 
     val moduleType = importData.moduleData.type
 
-    if (moduleType.containsCode && importingSettings.isUseMavenOutput) {
-
-      inheritCompilerOutput = false
+    if (!inheritCompilerOutput) {
       if (moduleType.containsMain) {
-        compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
+        compilerOutputUrl = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(importFolderHolder.outputPath))
       }
       if (moduleType.containsTest) {
-        compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
+        compilerOutputUrlForTests = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(importFolderHolder.testOutputPath))
       }
     }
+
+    val manifestAttributes = mavenProject.getManifestAttributes()
+
     builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
       this.module = moduleEntity
       this.compilerOutput = compilerOutputUrl
       this.compilerOutputForTests = compilerOutputUrlForTests
       this.languageLevelId = languageLevel.name
+      this.manifestAttributes = manifestAttributes
     }
   }
 

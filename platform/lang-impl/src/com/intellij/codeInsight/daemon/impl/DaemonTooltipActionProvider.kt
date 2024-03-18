@@ -61,6 +61,7 @@ private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: 
   }
 
   override fun showAllActions(editor: Editor) {
+    editor.selectionModel.removeSelection()
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
 

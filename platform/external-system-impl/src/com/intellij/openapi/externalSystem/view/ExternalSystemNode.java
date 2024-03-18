@@ -39,12 +39,12 @@ import java.util.function.Function;
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode<T>> {
 
-  public static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
-  public static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
-  public static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
-  public static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
+  static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
+  static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
+  static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
+  static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
 
-  @NotNull public static final Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<>() {
+  @NotNull private static final Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull ExternalSystemNode<?> o1, @NotNull ExternalSystemNode<?> o2) {
       int order1 = getOrder(o1);
@@ -70,10 +70,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
   private final ExternalProjectsView myExternalProjectsView;
   private List<ExternalSystemNode<?>> myChildrenList = NO_CHILDREN_LIST;
-  protected DataNode<T> myDataNode;
+  DataNode<T> myDataNode;
   @Nullable
   private ExternalSystemNode<?> myParent;
   private ExternalSystemNode<?>[] myChildren;
+  @NotNull
   private ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
   private List<String> myErrors = NO_ERRORS_LIST;
   private ExternalProjectsStructure.ErrorLevel myTotalErrorLevel = null;
@@ -185,7 +186,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  public ExternalProjectsStructure.DisplayKind getDisplayKind() {
+  private ExternalProjectsStructure.DisplayKind getDisplayKind() {
     Class<?>[] visibles = getStructure().getVisibleNodesClasses();
     if (visibles == null) return ExternalProjectsStructure.DisplayKind.NORMAL;
     for (Class<?> each : visibles) {
@@ -203,7 +204,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myChildren;
   }
 
-  protected void onChildrenBuilt() {
+  private void onChildrenBuilt() {
   }
 
   private ExternalSystemNode<?> @NotNull [] buildChildren() {
@@ -219,13 +220,13 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return visibleNodes.toArray(new ExternalSystemNode[0]);
   }
 
-  public void cleanUpCache() {
+  void cleanUpCache() {
     myChildren = null;
     myChildrenList = NO_CHILDREN_LIST;
     myTotalErrorLevel = null;
   }
 
-  protected ExternalSystemNode<?> @Nullable [] getCached() {
+  ExternalSystemNode<?> @Nullable [] getCached() {
     return myChildren;
   }
 
@@ -311,17 +312,20 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  protected void setDataNode(DataNode<T> dataNode) {
+  private void setDataNode(DataNode<T> dataNode) {
     myDataNode = dataNode;
   }
 
-  public ExternalProjectsStructure.ErrorLevel getTotalErrorLevel() {
-    if (myTotalErrorLevel == null) {
-      myTotalErrorLevel = calcTotalErrorLevel();
+  @NotNull
+  private ExternalProjectsStructure.ErrorLevel getTotalErrorLevel() {
+    ExternalProjectsStructure.ErrorLevel level = myTotalErrorLevel;
+    if (level == null) {
+      myTotalErrorLevel = level = calcTotalErrorLevel();
     }
-    return myTotalErrorLevel;
+    return level;
   }
 
+  @NotNull
   private ExternalProjectsStructure.ErrorLevel calcTotalErrorLevel() {
     ExternalProjectsStructure.ErrorLevel childrenErrorLevel = getChildrenErrorLevel();
     return childrenErrorLevel.compareTo(myErrorLevel) > 0 ? childrenErrorLevel : myErrorLevel;
@@ -341,7 +345,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  public void setErrorLevel(ExternalProjectsStructure.ErrorLevel level, String... errors) {
+  public void setErrorLevel(@NotNull ExternalProjectsStructure.ErrorLevel level, String... errors) {
     if (myErrorLevel == level) return;
     myErrorLevel = level;
 

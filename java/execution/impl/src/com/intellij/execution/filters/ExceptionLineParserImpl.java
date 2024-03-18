@@ -61,7 +61,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   private final ExceptionInfoCache myCache;
   private ExceptionLineRefiner myLocationRefiner;
 
-  public ExceptionLineParserImpl(@NotNull ExceptionInfoCache cache) {
+  ExceptionLineParserImpl(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
     myCache = cache;
   }
@@ -155,27 +155,74 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   private static final class StackFrameMatcher implements ExceptionLineRefiner {
-    private final @NonNls String myMethodName;
+    private record ClassMethod(String className, String methodName) {
+    }
+    private record ClassSetMethods(String className, Set<String> methodName){
+
+    }
+    private static final ClassMethod METHOD_HANDLE_AS_TYPE = new ClassMethod("java.lang.invoke.MethodHandle", "asType");
+    private static final ClassMethod VAR_HANDLE_METHOD_HANDLE = new ClassMethod("java.lang.invoke.VarHandle", "getMethodHandle");
+    private static final ClassMethod INVOKERS_CHECK_GENERIC_TYPE = new ClassMethod("java.lang.invoke.Invokers", "checkGenericType");
+    private static final ClassMethod INVOKERS_CHECK_EXACT_TYPE = new ClassMethod("java.lang.invoke.Invokers", "checkExactType");
+    private static final ClassSetMethods VAR_HANDLES =
+      new ClassSetMethods("java.lang.invoke.VarHandle", Set.of("get", "set", "getVolatile", "setVolatile", "setOpaque", "getOpaque",
+                                                       "getAcquire", "setAcquire", "setRelease", "compareAndSet", "compareAndExchange",
+                                                       "compareAndExchangeAcquire", "compareAndExchangeRelease", "weakCompareAndSetPlain",
+                                                       "weakCompareAndSet", "weakCompareAndSetAcquire", "weakCompareAndSetRelease",
+                                                       "getAndSet", "getAndSetAcquire", "getAndSetRelease", "getAndAdd",
+                                                       "getAndAddAcquire",
+                                                       "getAndAddRelease", "getAndBitwiseOr", "getAndBitwiseOrAcquire",
+                                                       "getAndBitwiseOrRelease",
+                                                       "getAndBitwiseAnd", "getAndBitwiseAndAcquire", "getAndBitwiseAndRelease",
+                                                       "getAndBitwiseXor", "getAndBitwiseXorAcquire", "getAndBitwiseXorRelease"));
+    private static final ClassSetMethods METHOD_HANDLES =
+      new ClassSetMethods("java.lang.invoke.MethodHandle", Set.of("invokeExact", "invoke"));
+    private static final Map<ClassMethod, ClassSetMethods> MAPPED_METHODS = Map.of(
+      METHOD_HANDLE_AS_TYPE, VAR_HANDLES,
+      VAR_HANDLE_METHOD_HANDLE, VAR_HANDLES,
+      INVOKERS_CHECK_GENERIC_TYPE, METHOD_HANDLES,
+      INVOKERS_CHECK_EXACT_TYPE, METHOD_HANDLES
+    );
+    private final @NonNls Set<String> myMethodNames;
     private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
+    private final StackFrameMatcher myAdditionalMatcher;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
-      myMethodName = info.methodNameRange.substring(line);
       myClassName = info.classFqnRange.substring(line);
+      myMethodNames = Set.of(info.methodNameRange.substring(line));
       myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
+      ClassSetMethods mappedMethods = MAPPED_METHODS.get(new ClassMethod(myClassName, info.methodNameRange.substring(line)));
+      if (mappedMethods != null) {
+        myAdditionalMatcher = new StackFrameMatcher(mappedMethods.className(), mappedMethods.methodName());
+      }
+      else {
+        myAdditionalMatcher = null;
+      }
+    }
+
+    private StackFrameMatcher(String className, Set<String> methodNames) {
+      myClassName = className;
+      myMethodNames = methodNames;
+      myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
+      myAdditionalMatcher = null;
     }
 
     @Override
     public RefinerMatchResult matchElement(@NotNull PsiElement element) {
-      if (myMethodName.equals("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
+      RefinerMatchResult result = myAdditionalMatcher == null ? null : myAdditionalMatcher.matchElement(element);
+      if (result != null) {
+        return result;
+      }
+      if (myMethodNames.contains("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
         // Since Java 9 Objects.requireNonNull(x) is used by javac instead of x.getClass() for generated null-check (JDK-8074306)
-        RefinerMatchResult result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
+        result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
         if (result != null) {
           return result;
         }
       }
       if (!(element instanceof PsiIdentifier)) return null;
-      if (myMethodName.equals("<init>")) {
+      if (myMethodNames.contains("<init>")) {
         if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
           PsiElement parent = element.getParent();
           while (parent instanceof PsiJavaCodeReferenceElement) {
@@ -192,7 +239,10 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
           }
         }
       }
-      else if (element.textMatches(myMethodName)) {
+      else if (
+        (myMethodNames.size() == 1 && element.textMatches(myMethodNames.iterator().next())) ||
+        myMethodNames.contains(element.getText())
+      ) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceExpression) {
           PsiElement target = ((PsiReferenceExpression)parent).resolve();
@@ -271,7 +321,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
       Set<ExceptionLineRefiner.RefinerMatchResult> matchResults = getExceptionOrigin(psiFile, lineStart, lineEnd);
-      if (matchResults.size() == 0) {
+      if (matchResults.isEmpty()) {
         return FindDivergedExceptionLineHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, lineStart, lineEnd,
                                                                targetEditor);
       }

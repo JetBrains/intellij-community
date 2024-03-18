@@ -30,7 +30,7 @@ class EditorConfigAddDeclarationPartIntention : IntentionAction {
     val section = element.section
     val option = element.option
     val descriptor = element.getDescriptor(false) as? EditorConfigDeclarationDescriptor ?: return
-    val declarationDescriptors = EditorConfigOptionDescriptorManager.instance
+    val declarationDescriptors = EditorConfigOptionDescriptorManager.getInstance(project)
       .getDeclarationDescriptors(descriptor.id)
       .mapNotNull { EditorConfigDescriptorUtil.getParentOfType(it, EditorConfigQualifiedKeyDescriptor::class) }
 

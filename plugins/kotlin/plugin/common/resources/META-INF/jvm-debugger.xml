@@ -31,9 +31,6 @@
     <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 
     <applicationService
-            serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
-
-    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
 
@@ -75,11 +72,6 @@
             implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory"
             order="first"/>
 
-    <registryKey
-            key="kotlin.debugger.coroutines.standalone"
-            description="Enable debugging for coroutines in Kotlin/JVM with no library support"
-            defaultValue="false"
-            restartRequired="false"/>
     <registryKey
             key="kotlin.debugger.coroutines.trace"
             description="Trace coroutines debugger output"

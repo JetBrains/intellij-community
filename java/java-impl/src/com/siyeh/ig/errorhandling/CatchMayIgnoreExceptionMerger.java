@@ -4,7 +4,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jetbrains.annotations.NotNull;
 
-public class CatchMayIgnoreExceptionMerger extends InspectionElementsMergerBase {
+public final class CatchMayIgnoreExceptionMerger extends InspectionElementsMergerBase {
   @NotNull
   @Override
   public String getMergedToolName() {

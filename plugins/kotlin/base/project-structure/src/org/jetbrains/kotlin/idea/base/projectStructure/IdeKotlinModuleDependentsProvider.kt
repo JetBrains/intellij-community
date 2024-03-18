@@ -15,7 +15,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
-import org.jetbrains.kotlin.analysis.project.structure.KtCodeFragmentModule
+import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
@@ -42,8 +42,8 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             is KtSdkModule -> emptySet()
             is KtBuiltinsModule -> emptySet()
 
-            // Code fragments are leaf modules
-            is KtCodeFragmentModule -> emptySet()
+            // There is no way to find dependents of danging file modules, as such modules are created on-site.
+            is KtDanglingFileModule -> emptySet()
 
             // Script modules are not supported yet (see KTIJ-25620).
             is KtScriptModule, is KtScriptDependencyModule -> emptySet()

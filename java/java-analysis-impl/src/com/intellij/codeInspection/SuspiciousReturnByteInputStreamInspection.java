@@ -12,7 +12,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SuspiciousReturnByteInputStreamInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousReturnByteInputStreamInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher READ_INPUT_STREAM = CallMatcher.anyOf(
     CallMatcher.instanceCall("java.io.InputStream", "read").parameterCount(0)

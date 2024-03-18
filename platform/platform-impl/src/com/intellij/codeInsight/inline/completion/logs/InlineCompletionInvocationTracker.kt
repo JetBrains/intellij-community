@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
@@ -40,6 +40,7 @@ internal class InlineCompletionInvocationTracker(
   private var fileLanguage: Language? = null
 
   fun createShowTracker() = InlineCompletionShowTracker(
+    request,
     requestId,
     provider,
     invocationTime,
@@ -53,13 +54,11 @@ internal class InlineCompletionInvocationTracker(
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
-    if (application.isEAP) {
-      val computationTime = measureNanoTime {
-        InlineContextFeatures.capture(psiFile, editor, offset, contextFeatures)
-        request.putUserData(InlineContextFeatures.KEY, contextFeatures)
-      }
-      data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(computationTime))
+    val computationTime = measureNanoTime {
+      contextFeatures.addAll(InlineContextFeatures.capture(psiFile, editor, offset))
+      request.putUserData(InlineContextFeatures.KEY, contextFeatures)
     }
+    data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(computationTime))
     assert(!finished)
   }
 
@@ -68,7 +67,7 @@ internal class InlineCompletionInvocationTracker(
     assert(!finished)
   }
 
-  fun hasSuggestion() {
+  fun hasSuggestions() {
     hasSuggestions = true
     assert(!finished)
   }
@@ -92,7 +91,7 @@ internal class InlineCompletionInvocationTracker(
     buildList {
       val descriptor = InlineCompletionProviderSpecificUsageData.InvocationDescriptor(request.editor, request.file)
       InlineCompletionProviderSpecificUsageData.EP_NAME.forEachExtensionSafe {
-        if (getPluginInfo(it.javaClass).isSafeToReport()) {
+        if (getPluginInfo(it.javaClass).isSafeToReport() && !it.skipLogging()) {
           addAll(it.getAdditionalInvocationUsageData(descriptor))
         }
       }

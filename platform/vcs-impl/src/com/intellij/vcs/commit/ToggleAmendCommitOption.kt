@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
 

@@ -71,7 +71,7 @@ public final class CucumberMain {
     try {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-        IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(() -> {
+        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
           try {
             RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
             MultiLoader resourceLoader = new MultiLoader(classLoader) {

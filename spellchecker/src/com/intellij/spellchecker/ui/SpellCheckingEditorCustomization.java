@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.execution.dashboard.actions.RunAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -116,9 +115,8 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       = CollectionFactory.createConcurrentWeakKeySoftValueMap();
     private boolean myUseSpellCheck;
 
-    @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
+    public @NotNull InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
       if (!READY) {
         return new InspectionProfileWrapper((InspectionProfileImpl)profile);
       }

@@ -80,7 +80,7 @@ private fun isPluginCompatible(plugin: PluginDescriptor,
     nonCheckedModules.remove(declaredModule)
   }
   for (requiredDependency in plugin.requiredDependencies) {
-    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.platform.")) {
+    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.modules.os.")) {
       continue
     }
 
@@ -136,7 +136,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
-      context.messages.debug("PluginsCollector: skipping module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
+      Span.current().addEvent("skip module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
       continue
     }
 

@@ -26,7 +26,7 @@ public class BasicFileParser {
   private final BasicJavaParser myParser;
   private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
 
-  private final TokenSet UNNAMED_CLASS_INDICATORS;
+  private final TokenSet IMPLICIT_CLASS_INDICATORS;
 
   private final WhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder.INSTANCE;
 
@@ -36,7 +36,7 @@ public class BasicFileParser {
     IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
       BasicElementTypes.BASIC_MODIFIER_BIT_SET,
       TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
-    UNNAMED_CLASS_INDICATORS =
+    IMPLICIT_CLASS_INDICATORS =
     TokenSet.create(myJavaElementTypeContainer.METHOD, myJavaElementTypeContainer.FIELD, myJavaElementTypeContainer.CLASS_INITIALIZER);
   }
 
@@ -55,7 +55,7 @@ public class BasicFileParser {
     PsiBuilder.Marker firstDeclaration = null;
 
     PsiBuilder.Marker invalidElements = null;
-    boolean isUnnamedClass = false;
+    boolean isImplicitClass = false;
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         builder.advanceLexer();
@@ -75,8 +75,8 @@ public class BasicFileParser {
         if (firstDeclaration == null) {
           firstDeclaration = declaration;
         }
-        if (!isUnnamedClass && UNNAMED_CLASS_INDICATORS.contains(exprType(declaration))) {
-          isUnnamedClass = true;
+        if (!isImplicitClass && IMPLICIT_CLASS_INDICATORS.contains(exprType(declaration))) {
+          isImplicitClass = true;
         }
         continue;
       }
@@ -96,9 +96,9 @@ public class BasicFileParser {
       impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(), null);  // pass comments behind fake import list
       firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(), null);
     }
-    if (isUnnamedClass) {
+    if (isImplicitClass) {
       PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
-      done(beforeFirst, myJavaElementTypeContainer.UNNAMED_CLASS, myWhiteSpaceAndCommentSetHolder);
+      done(beforeFirst, myJavaElementTypeContainer.IMPLICIT_CLASS, myWhiteSpaceAndCommentSetHolder);
     }
   }
 

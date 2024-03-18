@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -24,18 +24,17 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
-import java.util.function.BiConsumer
 import java.util.zip.Deflater
+import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+
+private const val NO_RUNTIME_SUFFIX = "-no-jdk"
 
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
                              private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
-  internal companion object {
-    const val NO_RUNTIME_SUFFIX = "-no-jdk"
-  }
-
   override val targetOs: OsFamily
     get() = OsFamily.MACOS
 
@@ -51,7 +50,7 @@ class MacDistributionBuilder(override val context: BuildContext,
         <key>CFBundleTypeIconFile</key>
         <string>${context.productProperties.targetIcnsFileName}</string>
         <key>CFBundleTypeName</key>
-        <string>${context.applicationInfo.productName} Project File</string>
+        <string>${context.applicationInfo.fullProductName} Project File</string>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>"""
@@ -93,7 +92,9 @@ class MacDistributionBuilder(override val context: BuildContext,
       "apple.awt.graphics.UseQuartz=true",
       "apple.awt.fullscreencapturealldisplays=false"
     )
-    customizer.getCustomIdeaProperties(context.applicationInfo).forEach(BiConsumer { k, v -> platformProperties.add("$k=$v") })
+    for ((k, v) in customizer.getCustomIdeaProperties(context.applicationInfo)) {
+      platformProperties.add("$k=$v")
+    }
 
     layoutMacApp(ideaPropertyContent = ideaProperties!!,
                  platformProperties = platformProperties,
@@ -281,7 +282,7 @@ class MacDistributionBuilder(override val context: BuildContext,
               target,
               "@@",
               listOf(
-                Pair("product_full", context.applicationInfo.productName),
+                Pair("product_full", context.applicationInfo.fullProductName),
                 Pair("script_name", executable),
                 Pair("inspectCommandName", inspectCommandName),
               ),
@@ -303,7 +304,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                                    macZip: Path,
                                    macZipWithoutRuntime: Path?, customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
-    spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope2 {
+    spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope {
       val notarize = SystemProperties.getBooleanProperty(
         "intellij.build.mac.notarize",
         !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
@@ -355,6 +356,26 @@ class MacDistributionBuilder(override val context: BuildContext,
       }
     }
   }
+
+  override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
+    val archSuffix = suffix(arch)
+    return sequenceOf(
+      "$archSuffix.dmg",
+      "$archSuffix.sit",
+      ".mac.${arch.name}.zip",
+      "$NO_RUNTIME_SUFFIX$archSuffix.dmg",
+      "$NO_RUNTIME_SUFFIX$archSuffix.sit",
+      ".mac.${arch.name}$NO_RUNTIME_SUFFIX.zip"
+    ).map { suffix ->
+      context.productProperties.getBaseArtifactName(context) + suffix
+    }.map(context.paths.artifactDir::resolve)
+      .filter { it.exists() }
+      .toList()
+  }
+
+  override fun isRuntimeBundled(file: Path): Boolean {
+    return !file.name.contains(NO_RUNTIME_SUFFIX)
+  }
 }
 
 private fun optionsToXml(options: List<String>): String {
@@ -379,8 +400,9 @@ private fun propertiesToXml(properties: List<String>, moreProperties: Map<String
   return buff.toString().trim()
 }
 
-internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
-  "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
+  return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+}
 
 private fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
   return generateProductInfoJson(
@@ -432,7 +454,7 @@ private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
       .setAttribute("zipRoot", zipRoot)
       .setAttribute(AttributeKey.stringArrayKey("directories"), directories.map { it.toString() })
       .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFileMatchers.values.toList())
-      .useWithScope2 {
+      .useWithScope {
         val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePathString ->
           val relativePath = Path.of(relativePathString)
           if (executableFileMatchers.any { it.key.matches(relativePath) } || (SystemInfoRt.isUnix && Files.isExecutable(file))) {
@@ -485,7 +507,10 @@ private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
             }
 
             for (item in extraFiles) {
-              zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
+              when(val content = item.content) {
+                is LocalDistFileContent -> zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = content.file)
+                is InMemoryDistFileContent -> zipOutStream.entry(name = "$zipRoot/${item.relativePath}", data = content.data)
+              }
             }
           }
         }
@@ -499,21 +524,23 @@ private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
   val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
                       listOf("-Dapple.awt.application.appearance=system")
   val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
-  VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, "\n")
+  writeVmOptions(file = vmOptionsPath, vmOptions = fileVmOptions, separator = "\n")
 
   return vmOptionsPath
 }
 
-internal fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
-                                               docTypes: String?,
-                                               arch: JvmArchitecture,
-                                               macCustomizer: MacDistributionCustomizer,
-                                               context: BuildContext,
-                                               executableFileName: String = context.productProperties.baseFileName,
-                                               icnsFileName: String = context.productProperties.targetIcnsFileName) {
+internal fun substitutePlaceholdersInInfoPlist(
+  macAppDir: Path,
+  docTypes: String?,
+  arch: JvmArchitecture,
+  macCustomizer: MacDistributionCustomizer,
+  context: BuildContext,
+  executableFileName: String = context.productProperties.baseFileName,
+  icnsFileName: String = context.productProperties.targetIcnsFileName,
+) {
   val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
   val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
-  val fullName = context.applicationInfo.productName
+  val fullName = context.applicationInfo.fullProductName
 
   //todo improve
   val minor = context.applicationInfo.minorVersion

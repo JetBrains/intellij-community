@@ -118,4 +118,8 @@ public interface Repository extends Disposable {
   @NonNls
   @NotNull
   String toLogString();
+
+  default boolean isDisposed() {
+    return false;
+  }
 }

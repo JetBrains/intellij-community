@@ -19,17 +19,5 @@ public interface ExternalProjectSystemRegistry {
   @Nullable
   ProjectModelExternalSource getExternalSource(@NotNull Module module);
 
-  /**
-   * @deprecated use {@link org.jetbrains.jps.model.serialization.SerializationConstants#MAVEN_EXTERNAL_SOURCE_ID} instead
-   */
-  @Deprecated(forRemoval = true)
-  String MAVEN_EXTERNAL_SOURCE_ID = "Maven";
-
   String EXTERNAL_SYSTEM_ID_KEY = "external.system.id";
-
-  /**
-   * @deprecated use {@link org.jetbrains.jps.model.serialization.SerializationConstants#IS_MAVEN_MODULE_IML_ATTRIBUTE} instead
-   */
-  @Deprecated(forRemoval = true)
-  String IS_MAVEN_MODULE_KEY = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
 }

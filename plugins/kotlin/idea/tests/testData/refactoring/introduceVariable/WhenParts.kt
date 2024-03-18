@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun a() {
     when (1) {
         is 3 -> 1

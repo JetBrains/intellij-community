@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -286,59 +286,75 @@ public final class ScopeEditorPanel implements Disposable {
 
   private void excludeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
-      if (myCurrentScope == null) {
-        myCurrentScope = new ComplementPackageSet(set);
-      }
-      else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? new ComplementPackageSet(set) : IntersectionPackageSet.create(myCurrentScope, new ComplementPackageSet(set));
-      }
-      else {
-        final boolean[] append = {true};
-        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, false, append);
-        if (!append[0]) {
-          myCurrentScope = simplifiedScope;
-        }
-        else if (simplifiedScope == null) {
-          myCurrentScope = new ComplementPackageSet(set);
-        }
-        else {
-          PackageSet[] sets = simplifiedScope instanceof IntersectionPackageSet ?
-                              ((IntersectionPackageSet)simplifiedScope).getSets() :
-                              new PackageSet[]{simplifiedScope};
-
-          myCurrentScope = IntersectionPackageSet.create(ArrayUtil.append(sets, new ComplementPackageSet(set)));
-        }
-      }
+      myCurrentScope = doExcludeSelected(set, myCurrentScope);
     }
     rebuild(true);
   }
 
-  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
-    for (PackageSet set : selected) {
-      if (myCurrentScope == null) {
-        myCurrentScope = set;
+  @ApiStatus.Internal
+  @Nullable
+  static PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+    if (current == null) {
+      current = new ComplementPackageSet(set);
+    }
+    else if (current instanceof InvalidPackageSet) {
+      current = StringUtil.isEmpty(current.getText())
+                ? new ComplementPackageSet(set)
+                : IntersectionPackageSet.create(current, new ComplementPackageSet(set));
+    }
+    else {
+      final boolean[] append = {true};
+      final PackageSet simplifiedScope = processComplementaryScope(current, set, false, append);
+      if (!append[0]) {
+        current = simplifiedScope;
       }
-      else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? set : UnionPackageSet.create(myCurrentScope, set);
+      else if (simplifiedScope == null) {
+        current = new ComplementPackageSet(set);
       }
       else {
-        final boolean[] append = {true};
-        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, true, append);
-        if (!append[0]) {
-          myCurrentScope = simplifiedScope;
-        }
-        else if (simplifiedScope == null) {
-          myCurrentScope = set;
-        }
-        else {
-          PackageSet[] sets = simplifiedScope instanceof UnionPackageSet ?
-                              ((UnionPackageSet)simplifiedScope).getSets() :
-                              new PackageSet[]{simplifiedScope};
-          myCurrentScope = UnionPackageSet.create(ArrayUtil.append(sets, set));
-        }
+        PackageSet[] sets = simplifiedScope instanceof IntersectionPackageSet ?
+                            ((IntersectionPackageSet)simplifiedScope).getSets() :
+                            new PackageSet[]{simplifiedScope};
+
+        current = IntersectionPackageSet.create(ArrayUtil.append(sets, new ComplementPackageSet(set)));
       }
     }
+    return current;
+  }
+
+  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
+    for (PackageSet set : selected) {
+      myCurrentScope = doIncludeSelected(set, myCurrentScope);
+    }
     rebuild(true);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  static PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+    if (current == null) {
+      current = set;
+    }
+    else if (current instanceof InvalidPackageSet) {
+      current = StringUtil.isEmpty(current.getText()) ? set : UnionPackageSet.create(current, set);
+    }
+    else {
+      final boolean[] append = {true};
+      final PackageSet simplifiedScope = processComplementaryScope(current, set, true, append);
+      if (!append[0]) {
+        current = simplifiedScope;
+      }
+      else if (simplifiedScope == null) {
+        current = set;
+      }
+      else {
+        PackageSet[] sets = simplifiedScope instanceof UnionPackageSet ?
+                            ((UnionPackageSet)simplifiedScope).getSets() :
+                            new PackageSet[]{simplifiedScope};
+        current = UnionPackageSet.create(ArrayUtil.append(sets, set));
+      }
+    }
+    return current;
   }
 
   @Nullable

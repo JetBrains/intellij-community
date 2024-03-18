@@ -1,0 +1,12 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin>
+  <!-- Included both: in PyCharm Pro and Community customization plugins -->
+
+  <resource-bundle>messages.PyBundle</resource-bundle>
+
+  <content>
+    <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.pycharm.community.ide.impl/training"/>
+  </content>
+
+</idea-plugin>

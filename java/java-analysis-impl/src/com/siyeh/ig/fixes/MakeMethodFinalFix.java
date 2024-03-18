@@ -42,7 +42,7 @@ public class MakeMethodFinalFix extends PsiUpdateModCommandQuickFix {
       method = updater.getWritable(method);
       method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
       if (method.getContainingFile() != element.getContainingFile()) {
-        updater.moveTo(requireNonNullElse(method.getNameIdentifier(), method));
+        updater.moveCaretTo(requireNonNullElse(method.getNameIdentifier(), method));
       }
     }
   }

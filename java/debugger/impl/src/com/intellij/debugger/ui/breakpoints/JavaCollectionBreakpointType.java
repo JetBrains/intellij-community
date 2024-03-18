@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,7 +28,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointPro
 import javax.swing.*;
 
 @ApiStatus.Experimental
-public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties> {
+public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties> {
 
   public JavaCollectionBreakpointType() {
     super("java-collection", JavaDebuggerBundle.message("collection.watchpoints.tab.title"));
@@ -80,7 +81,7 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.COLLECTION_WATCHPOINTS;
   }
 
@@ -89,6 +90,17 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
     return JavaDebuggerBundle.message("collection.watchpoints.tab.title");
   }
 
+  @Nls
+  @Override
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaCollectionBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("collection.watchpoint.description");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XLineBreakpoint<JavaCollectionBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("collection.watchpoint.description");
+  }
 
   @Nls
   public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {

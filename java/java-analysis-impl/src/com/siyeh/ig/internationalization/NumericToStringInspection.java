@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
-public class NumericToStringInspection extends BaseInspection {
+public final class NumericToStringInspection extends BaseInspection {
 
   @Override
   @NotNull

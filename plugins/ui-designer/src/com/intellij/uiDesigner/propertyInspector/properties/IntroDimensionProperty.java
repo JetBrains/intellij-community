@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
@@ -31,7 +31,7 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
   }
 
   @Override
-  public void write(@NotNull final Dimension value, final XmlWriter writer) {
+  public void write(final @NotNull Dimension value, final XmlWriter writer) {
     writer.addAttribute("width", value.width);
     writer.addAttribute("height", value.height);
   }
@@ -42,8 +42,7 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<Dimension> getRenderer() {
+  public @NotNull PropertyRenderer<Dimension> getRenderer() {
     return myRenderer;
   }
 

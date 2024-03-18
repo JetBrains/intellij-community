@@ -5,6 +5,7 @@ package com.intellij.openapi.options.binding;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -13,7 +14,11 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @deprecated Use {@see com.intellij.openapi.options.BoundConfigurable} instead
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public final class ControlBinder {
 
   private static final Logger LOG = Logger.getInstance(ControlBinder.class);

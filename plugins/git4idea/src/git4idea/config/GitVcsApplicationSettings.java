@@ -2,10 +2,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +10,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The application wide settings for the git
  */
-@State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.DISABLED))
+@State(name = "Git.Application.Settings",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "git.xml", roamingType = RoamingType.DISABLED))
 public final class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
@@ -24,6 +24,9 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
     public boolean USE_CREDENTIAL_HELPER = false;
     public boolean STAGING_AREA_ENABLED = false;
+    public boolean COMBINED_STASHES_AND_SHELVES_ENABLED = false;
+
+    public boolean SHOW_DROP_COMMIT_DIALOG = true;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -89,6 +92,22 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setStagingAreaEnabled(boolean isStagingAreaEnabled) {
     myState.STAGING_AREA_ENABLED = isStagingAreaEnabled;
+  }
+
+  public boolean isCombinedStashesAndShelvesTabEnabled() {
+    return myState.COMBINED_STASHES_AND_SHELVES_ENABLED;
+  }
+
+  public void setCombinedStashesAndShelvesTabEnabled(boolean isEnabled) {
+    myState.COMBINED_STASHES_AND_SHELVES_ENABLED = isEnabled;
+  }
+
+  public boolean isShowDropCommitDialog() {
+    return myState.SHOW_DROP_COMMIT_DIALOG;
+  }
+
+  public void setShowDropCommitDialog(boolean isShowDropCommitDialog) {
+    myState.SHOW_DROP_COMMIT_DIALOG = isShowDropCommitDialog;
   }
 
   public enum AnnotateDetectMovementsOption {

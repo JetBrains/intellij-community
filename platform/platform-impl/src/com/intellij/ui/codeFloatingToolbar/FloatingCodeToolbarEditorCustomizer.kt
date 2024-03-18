@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 
 private class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {

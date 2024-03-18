@@ -3,6 +3,7 @@ package com.intellij.modcommand;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @param oldRange the complete text range of the declaration within the oldText
  * @param newRange the complete current text range of the declaration
  */
+@ApiStatus.Experimental
 public record ModUpdateReferences(@NotNull VirtualFile file, @NotNull String oldText, @NotNull TextRange oldRange,
                                   @NotNull TextRange newRange) implements ModCommand {
   /**

@@ -7,8 +7,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.setCustomizationSchemaForCurrentProjects
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -43,7 +42,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -105,12 +103,10 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
       })
   }
 
-  internal class MyActionTuner : ActionConfigurationCustomizer {
-    override fun customize(actionManager: ActionManager) {
+  internal class MyActionTuner : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+    override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
       // load state will call ActionManager, but ActionManager is not yet ready, so, postpone
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        getInstance()
-      }
+      serviceAsync<ActionMacroManager>()
     }
   }
 
@@ -428,7 +424,7 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
       }
     }
     if (!renamingMap.isEmpty()) {
-      setCustomizationSchemaForCurrentProjects()
+      customActionsSchema.setCustomizationSchemaForCurrentProjects()
     }
   }
 
@@ -456,22 +452,19 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
     }
   }
 
-  private class InvokeMacroAction(private val macro: ActionMacro) : AnAction() {
-    init {
-      getTemplatePresentation().setText(macro.name, false)
-    }
+  private class InvokeMacroAction(private val macro: ActionMacro)
+    : AnAction(IdeBundle.message("action.invoke.macro.text")) {
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       IdeEventQueue.getInstance().doWhenReady(Runnable { getInstance().playMacro(macro) })
     }
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
     override fun update(e: AnActionEvent) {
+      e.presentation.setText(macro.name, false)
       e.presentation.setEnabled(!getInstance().isPlaying)
     }
-
-    override fun getTemplateText() = IdeBundle.message("action.invoke.macro.text")
   }
 
   private inner class KeyPostProcessor : IdeEventQueue.EventDispatcher {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
@@ -252,7 +253,6 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   }
 
 
-
   //monitoring:
 
   @Override
@@ -392,19 +392,39 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                                int pageSize) throws IOException;
 
 
-  protected void checkRecordIdExists(int recordId) throws IOException {
-    checkRecordIdValid(recordId);
-    if (!isRecordIdAllocated(recordId)) {
-      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId());
+  protected void checkRecordIdExists(int recordId) throws IllegalArgumentException {
+    if (!isExistingRecordId(recordId)) {
+      throw new IllegalArgumentException("recordId(" + recordId + ") is not valid: allocated ids are in (0, " + nextRecordId() + ")");
+    }
+  }
+
+  protected void checkRedirectToId(int startingRecordId,
+                                   int currentRecordId,
+                                   int redirectToId) throws RecordAlreadyDeletedException, CorruptedException {
+    if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
+      throw new RecordAlreadyDeletedException("Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted");
+    }
+    if (!isExistingRecordId(redirectToId)) {
+      throw new CorruptedException(
+        "record(" + startingRecordId + "/" + currentRecordId + ").redirectToId(=" + redirectToId + ") is not exist: " +
+        "allocated ids are in (0, " + nextRecordId() + ")");
     }
   }
 
   /**
-   * Method returns true if record with id=recordId is already allocated.
-   * It doesn't mean the record is fully written, though -- we could be in the middle of record write.
+   * @return true if record with recordId is already allocated.
+   * It doesn't mean the recordId is valid, though -- it could point to the middle of some record.
    */
   protected boolean isRecordIdAllocated(int recordId) {
     return recordId < nextRecordId();
+  }
+
+  /**
+   * @return true if record with recordId is in the range of existing record ids.
+   * It doesn't mean the recordId is valid, though -- it could point to the middle of some record.
+   */
+  protected boolean isExistingRecordId(int recordId) {
+    return isValidRecordId(recordId) && isRecordIdAllocated(recordId);
   }
 
   protected long nextRecordOffset(long recordOffset,

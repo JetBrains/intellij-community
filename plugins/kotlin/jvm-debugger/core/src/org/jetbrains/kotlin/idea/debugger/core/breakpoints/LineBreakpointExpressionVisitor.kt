@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.debugger.breakpoints.isSuitableLambdaBreakpointTarget
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -153,7 +154,10 @@ class LineBreakpointExpressionVisitor private constructor(
 
     override fun visitLambdaExpression(expression: KtLambdaExpression, data: Unit?): ApplicabilityResult {
         if (expression.isSameLine()) {
-            return ApplicabilityResult.DEFINITELY_YES
+            val lambda = expression.children.singleOrNull() as? KtFunctionLiteral ?: return ApplicabilityResult.DEFINITELY_YES
+            if (lambda.isSuitableLambdaBreakpointTarget(mainLine)) {
+                return ApplicabilityResult.DEFINITELY_YES
+            }
         }
 
         return ApplicabilityResult.UNKNOWN

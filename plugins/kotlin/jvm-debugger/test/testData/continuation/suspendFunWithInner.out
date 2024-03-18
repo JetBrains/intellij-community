@@ -4,7 +4,7 @@ Connected to the target VM
 suspendFunWithInner.kt:40
 Thread stack trace:
 	CoroutinePreflightFrame c:!LINE_NUMBER!, TestSuspendA$InClassB$InClassC (continuation)
-		($continuation, $result, inClassCMethodVal)
+		($completion, $continuation, $result, inClassCMethodVal)
 CoroutineInfo: 1 coroutine RUNNING
 	CoroutineStackFrame b:!LINE_NUMBER!, TestSuspendA$InClassB (continuation)
 		(inClassBMethodVal)
@@ -32,15 +32,15 @@ CoroutineInfo: 1 coroutine RUNNING
 		(mainTestVal)
 Coroutine Creation Stack Trace
 	CreationCoroutineStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)
-		($continuation, $result, inClassCMethodVal)
+		($completion, $continuation, $result, inClassCMethodVal)
 	CreationCoroutineStackFrame startCoroutineCancellable:!LINE_NUMBER!, CancellableKt (kotlinx.coroutines.intrinsics)
-		($continuation, $result, inClassCMethodVal)
+		($completion, $continuation, $result, inClassCMethodVal)
 	CreationCoroutineStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
-		($continuation, $result, inClassCMethodVal)
+		($completion, $continuation, $result, inClassCMethodVal)
 	CreationCoroutineStackFrame main:!LINE_NUMBER!, SuspendFunWithInnerKt (continuation)
-		($continuation, $result, inClassCMethodVal)
+		($completion, $continuation, $result, inClassCMethodVal)
 	CreationCoroutineStackFrame FRAME:main:-1, SuspendFunWithInnerKt (continuation)
-		($continuation, $result, inClassCMethodVal)
+		($completion, $continuation, $result, inClassCMethodVal)
 Disconnected from the target VM
 
 Process finished with exit code 0

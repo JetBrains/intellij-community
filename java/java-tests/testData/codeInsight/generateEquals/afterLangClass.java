@@ -7,10 +7,7 @@ class Integer {
         if (o == null || getClass() != o.getClass()) return false;
 
         final Integer integer = (Integer) o;
-
-        if (i != integer.i) return false;
-
-        return true;
+        return i == integer.i;
     }
 
     @Override

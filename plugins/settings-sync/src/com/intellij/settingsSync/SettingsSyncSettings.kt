@@ -6,7 +6,10 @@ import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 
-@State(name = COMPONENT_NAME, storages = [Storage(FILE_SPEC, usePathMacroManager = false)])
+@State(name = COMPONENT_NAME,
+       category = SettingsCategory.SYSTEM,
+       exportable = true,
+       storages = [Storage(FILE_SPEC, usePathMacroManager = false)])
 @ApiStatus.Internal
 class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateComponent<SettingsSyncSettings.State>(State()) {
   companion object {

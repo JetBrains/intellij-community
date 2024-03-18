@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -27,7 +28,7 @@ public class MakeMethodDefaultIntention extends PsiBasedModCommandAction<PsiMeth
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethod psiMethod) {
-    if (PsiUtil.isLanguageLevel8OrHigher(psiMethod)) {
+    if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, psiMethod)) {
       if (psiMethod.getBody() == null && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
         final PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass != null && containingClass.isInterface() && !containingClass.isAnnotationType()) {

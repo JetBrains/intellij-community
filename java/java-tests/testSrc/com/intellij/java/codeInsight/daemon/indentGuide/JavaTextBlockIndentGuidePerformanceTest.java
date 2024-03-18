@@ -24,10 +24,9 @@ public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzer
     String text = "class X {\n" +
                   createCodeBlocks(n, nLines) +
                   "\n}";
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 7500, this::doHighlighting)
+    PlatformTestUtil.newPerformanceTest(getTestName(false), this::doHighlighting)
       .setup(() -> configureFromFileText("X.java", text))
-      .usesAllCPUCores()
-      .assertTiming();
+      .start();
   }
 
 

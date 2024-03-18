@@ -120,8 +120,8 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
     final boolean historyCacheSupported = historyProvider instanceof VcsCacheableHistorySessionFactory;
     if (historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
-      final VcsAbstractHistorySession cachedSession =
-        myCache.getMaybePartial(filePath, myVcs.getKeyInstanceMethod(), cacheableHistorySessionFactory);
+      final VcsAbstractHistorySession cachedSession = myCache.getSession(filePath, myVcs.getKeyInstanceMethod(),
+                                                                         cacheableHistorySessionFactory, true);
       if (cachedSession != null && !cachedSession.getRevisionList().isEmpty()) {
         final VcsFileRevision recentRevision = cachedSession.getRevisionList().get(0);
         if (recentRevision.getRevisionNumber().compareTo(revision) >= 0 && (firstRevision == null || cachedSession.getHistoryAsMap().containsKey(firstRevision))) {
@@ -140,7 +140,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
     if (sessionFor != null && historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
       final FilePath correctedPath = cacheableHistorySessionFactory.getUsedFilePath(sessionFor);
-      myCache.put(filePath, correctedPath, myVcs.getKeyInstanceMethod(), sessionFor, cacheableHistorySessionFactory, firstRevision == null);
+      myCache.putSession(filePath, correctedPath, myVcs.getKeyInstanceMethod(), sessionFor, cacheableHistorySessionFactory, firstRevision == null);
     }
     return sessionFor;
   }

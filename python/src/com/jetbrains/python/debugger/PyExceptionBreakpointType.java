@@ -32,7 +32,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 
-public class PyExceptionBreakpointType
+public final class PyExceptionBreakpointType
   extends XBreakpointType<XBreakpoint<PyExceptionBreakpointProperties>, PyExceptionBreakpointProperties> {
 
   private static final String BASE_EXCEPTION = "BaseException";

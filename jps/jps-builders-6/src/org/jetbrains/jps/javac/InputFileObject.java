@@ -43,11 +43,6 @@ public final class InputFileObject extends JpsFileObject {
   }
 
   @Override
-  public OutputStream openOutputStream() throws IOException {
-    return super.openOutputStream();
-  }
-
-  @Override
   public Writer openWriter() throws IOException {
     throw new UnsupportedOperationException();
   }

@@ -28,6 +28,8 @@ class ShowStandaloneDiffFromLogActionProvider : AnActionExtensionProvider {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    ChangesBrowserBase.showStandaloneDiff(e.project!!, e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI).changesBrowser)
+    val project = e.project ?: return
+    val ui = e.getData(VcsLogInternalDataKeys.MAIN_UI) ?: return
+    ChangesBrowserBase.showStandaloneDiff(project, ui.changesBrowser)
   }
 }

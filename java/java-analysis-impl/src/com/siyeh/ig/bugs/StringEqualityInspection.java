@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class StringEqualityInspection extends BaseInspection {
+public final class StringEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -8,11 +8,11 @@ import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -168,13 +168,22 @@ public final class Restarter {
     var appDir = ourStarter.getValue();
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     var command = prepareCommand(beforeRestart);
-    command.add(String.valueOf(args.isEmpty() ? 2 : args.size() + 3));
-    command.add("/usr/bin/open");
-    command.add(appDir.toString());
-    if (!args.isEmpty()) {
-      command.add("--args");
-      command.addAll(args);
+    
+    var runProcessCommand = new ArrayList<String>();
+    runProcessCommand.add("/usr/bin/open");
+    if (PlatformUtils.isJetBrainsClient()) {
+      /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new 
+         process from that bundle instead of focusing on the existing application if it's running */
+      runProcessCommand.add("-n");
     }
+    runProcessCommand.add(appDir.toString());
+    if (!args.isEmpty()) {
+      runProcessCommand.add("--args");
+      runProcessCommand.addAll(args);
+    }
+
+    command.add(String.valueOf(runProcessCommand.size()));
+    command.addAll(runProcessCommand);
     runRestarter(command);
   }
 
@@ -227,14 +236,14 @@ public final class Restarter {
     processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile());
     processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
 
-    if (SystemInfo.isXWindow) setDesktopStartupId(processBuilder);
+    if (SystemInfo.isUnix && !SystemInfo.isMac) setDesktopStartupId(processBuilder);
 
     processBuilder.start();
   }
 
   // this is required to support X server's focus stealing prevention mechanism, see JBR-2503
   private static void setDesktopStartupId(ProcessBuilder processBuilder) {
-    if (SystemInfo.isJetBrainsJvm && "sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) {
+    if (SystemInfo.isJetBrainsJvm && StartupUiUtil.isXToolkit()) {
       try {
         var lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
         if (lastUserActionTime == null) {

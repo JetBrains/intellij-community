@@ -30,7 +30,7 @@ import javax.swing.*;
 /**
  * @author Bas Leijdekkers
  */
-public class MissingPackageInfoInspection extends PackageGlobalInspection {
+public final class MissingPackageInfoInspection extends PackageGlobalInspection {
 
   @Nullable
   @Override

@@ -21,6 +21,12 @@ class ReferencingWebSymbol(
   override val priority: WebSymbol.Priority? = null,
 ) : WebSymbol {
 
+  constructor(qualifiedKind: WebSymbolQualifiedKind,
+              name: String,
+              origin: WebSymbolOrigin,
+              vararg qualifiedKinds: WebSymbolQualifiedKind)
+    : this(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *qualifiedKinds)
+
   override val pattern: WebSymbolsPattern =
     WebSymbolsPatternFactory.createComplexPattern(
       ComplexPatternOptions(

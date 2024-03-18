@@ -43,6 +43,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -90,28 +91,18 @@ public final class XLineBreakpointManager {
         }
       }));
 
-      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
-        @Override
-        public void editorCreated(@NotNull EditorFactoryEvent event) {
-          if (!Registry.is("debugger.show.breakpoints.inline")) return;
-          getInlineBreakpointInlayManager().initializeInNewEditor(event.getEditor());
-        }
-      }, project);
-
-      Registry.get("debugger.show.breakpoints.inline").addListener(new RegistryValueListener() {
+      Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          if (!Registry.is("debugger.show.breakpoints.inline")) {
+          for (String fileUrl : myBreakpoints.keySet()) {
+            var file = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+            if (file == null) continue;
+            if (XDebuggerUtil.areInlineBreakpointsEnabled(file)) continue;
+            var document = FileDocumentManager.getInstance().getDocument(file);
+            if (document == null) continue;
             // Multiple breakpoints on the single line should be joined in this case.
-            for (String fileUrl : myBreakpoints.keySet()) {
-              var file = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
-              if (file == null) continue;
-              var document = FileDocumentManager.getInstance().getDocument(file);
-              if (document == null) continue;
-              updateBreakpoints(document);
-            }
+            updateBreakpoints(document);
           }
-          getInlineBreakpointInlayManager().reinitializeAll();
         }
       }, project);
     }
@@ -126,10 +117,6 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
-  }
-
-  private @NotNull InlineBreakpointInlayManager getInlineBreakpointInlayManager() {
-    return InlineBreakpointInlayManager.getInstance(myProject);
   }
 
   void updateBreakpointsUI() {
@@ -168,11 +155,13 @@ public final class XLineBreakpointManager {
       return;
     }
 
+    boolean areInlineBreakpoints = XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document));
+
     IntSet positions = new IntOpenHashSet();
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(Registry.is("debugger.show.breakpoints.inline") ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(areInlineBreakpoints ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }
@@ -252,18 +241,7 @@ public final class XLineBreakpointManager {
           }
         });
 
-        if (Registry.is("debugger.show.breakpoints.inline")) {
-          var file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null) {
-            var inlineInlaysManager = getInlineBreakpointInlayManager();
-            var firstLine = document.getLineNumber(e.getOffset());
-            var lastLine = document.getLineNumber(e.getOffset() + e.getNewLength());
-            inlineInlaysManager.redrawLineQueued(document, firstLine);
-            if (lastLine != firstLine) {
-              inlineInlaysManager.redrawLineQueued(document, lastLine);
-            }
-          }
-        }
+        InlineBreakpointInlayManager.getInstance(myProject).redrawDocument(e);
       }
     }
   }

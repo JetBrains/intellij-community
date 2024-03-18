@@ -3,8 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
@@ -23,17 +21,6 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyYieldExpression(this);
-  }
-
-  @Override
-  public PyExpression getExpression() {
-    final PyExpression[] expressions = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
-    return (expressions != null && expressions.length > 0) ? expressions[0] : null;
-  }
-
-  @Override
-  public boolean isDelegating() {
-    return getNode().findChildByType(PyTokenTypes.FROM_KEYWORD) != null;
   }
 
   @Override

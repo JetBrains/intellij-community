@@ -4,9 +4,13 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.completion.JavaCompletionUtil
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -15,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
+import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
@@ -23,6 +28,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.JavaNameSuggestionUtil
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -46,7 +52,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinI
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.IntroduceTypeAliasDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.KotlinIntroduceTypeAliasHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeParameter.KotlinIntroduceTypeParameterHandler
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.markMembersInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.extractClassMembers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
@@ -54,12 +60,14 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
 import java.io.File
@@ -71,16 +79,40 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
 
+    protected open fun getIntroduceVariableHandler(): RefactoringActionHandler = K1IntroduceVariableHandler
+
     protected open fun doIntroduceVariableTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
+            TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
+
             file as KtFile
 
-            KotlinIntroduceVariableHandler.invoke(
+            getIntroduceVariableHandler().invoke(
                 fixture.project,
                 fixture.editor,
                 file,
                 DataManager.getInstance().getDataContext(fixture.editor.component)
             )
+
+            val inplaceVariableNames = InTextDirectivesUtils.findListWithPrefixes(file.text, "// INPLACE_VARIABLE_NAME:")
+                .takeUnless { it.isEmpty() }
+            val templateState = TemplateManagerImpl.getTemplateState(editor)
+
+            if (inplaceVariableNames != null) {
+                templateState as TemplateState
+
+                WriteCommandAction.runWriteCommandAction(project) {
+                    for (inplaceVariableName in inplaceVariableNames) {
+                        val range = templateState.currentVariableRange ?: error("No variable range was found")
+                        templateState.editor.document.replaceString(range.startOffset, range.endOffset, inplaceVariableName)
+                        templateState.nextTab()
+                    }
+                }
+            }
+
+            if (templateState?.isFinished == false) {
+                project.executeCommand("") { templateState.gotoEnd(false) }
+            }
         }
     }
 
@@ -182,8 +214,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 true
             )
             val suggestedNames = JavaNameSuggestionUtil.appendUnresolvedExprName(
-              JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
-              initializer
+                JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
+                initializer
             )
 
             IntroduceParameterProcessor(
@@ -195,7 +227,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 localVar,
                 true,
                 suggestedNames.first(),
-                IntroduceVariableBase.JavaReplaceChoice.ALL, 
+                IntroduceVariableBase.JavaReplaceChoice.ALL,
                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
                 false,
                 false,
@@ -353,7 +385,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     protected fun doExtractInterfaceTest(path: String) = doExtractSuperTest(path, true)
 
     protected fun doTestIfNotDisabledByFileDirective(action: (PsiFile) -> Unit) {
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else  IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),
@@ -393,12 +425,20 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             }
 
             try {
+                val extractTestFiles = ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin)
                 checkExtract(
-                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin),
+                    extractTestFiles,
                     checkAdditionalAfterdata,
                     generateMissingFiles,
                     action,
                 )
+
+                extractTestFiles.afterFile.takeIf { it.exists() }?.let { afterFile ->
+                    val caretAndSelectionState = EditorTestUtil.extractCaretAndSelectionMarkers(DocumentImpl(afterFile.readText()))
+                    if (caretAndSelectionState.hasExplicitCaret()) {
+                        EditorTestUtil.verifyCaretAndSelectionState(editor, caretAndSelectionState)
+                    }
+                }
             } finally {
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
 
@@ -452,7 +492,7 @@ fun checkExtract(
         action(files.mainFile)
 
         assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
-        KotlinTestUtils.assertEqualsToFile(afterFile, files.mainFile.text!!)
+        KotlinTestUtils.assertEqualsToFile(afterFile, files.mainFile.text!!) { it.removeCaret() }
 
         if (checkAdditionalAfterdata) {
             for ((extraPsiFile, extraFile) in files.extraFilesToPsi) {
@@ -469,6 +509,8 @@ fun checkExtract(
         assertEqualsToFile(conflictFile, e.message!!, generateMissingFiles)
     }
 }
+
+private fun String.removeCaret(): String = replace("<caret>", "")
 
 private fun assertEqualsToFile(expectedFile: File, actualText: String, generateMissingFiles: Boolean) {
     if (!generateMissingFiles && !expectedFile.exists()) {
@@ -540,7 +582,7 @@ fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {
                     descriptor
                 }
 
-                fun afterFinish(extraction: ExtractionResult){
+                fun afterFinish(extraction: ExtractionResult) {
                     processDuplicates(extraction.duplicateReplacers, project, editor)
                     onFinish(extraction)
                 }

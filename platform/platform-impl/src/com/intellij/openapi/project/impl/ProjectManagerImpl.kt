@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.project.impl
@@ -32,6 +32,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -57,6 +58,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
@@ -381,7 +383,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project)
       if (project is ProjectImpl) {
-        cancelAndJoinBlocking(project)
+        if (Registry.`is`("ide.await.project.scope.completion")) {
+          cancelAndJoinBlocking(project)
+        }
+        else {
+          cancelAndTryJoin(project)
+        }
       }
     }
 
@@ -684,9 +691,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         result?.let { project ->
           try {
             try {
-              @Suppress("DEPRECATION")
               // cancel async preloading of services as soon as possible
-              project.coroutineScope.coroutineContext.job.cancelAndJoin()
+              (project as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
             }
             catch (secondException: Throwable) {
               e.addSuppressed(secondException)
@@ -728,7 +734,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         throw e
       }
 
-      LOG.error(e)
+      LOG.error("project loading failed", e)
       failedToOpenProject(frameAllocator = frameAllocator, exception = e, options = options)
       return null
     }
@@ -739,8 +745,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = result!!
     if (!app.isUnitTestMode) {
       val openTimestamp = System.currentTimeMillis()
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
         dispatchEarlyNotifications()
       }
@@ -869,7 +874,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                                      projectInitObserver: ProjectInitObserver?): Project {
     var conversionResult: ConversionResult? = null
     if (options.runConversionBeforeOpen) {
-      val conversionService = ConversionService.getInstance()
+      val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
+        .getServiceAsyncIfDefined(ConversionService::class.java)
       if (conversionService != null) {
         conversionResult = span("project conversion") {
           conversionService.convert(projectStoreBaseDir)
@@ -1077,10 +1083,8 @@ private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
     return true
   }
 
-  val message: @NlsContexts.DialogMessage StringBuilder = StringBuilder()
-  message.append("${ApplicationNamesInfo.getInstance().productName} was unable to save some project files," +
-                 "\nare you sure you want to close this project anyway?")
-  message.append("\n\nRead-only files:\n")
+  val message: @NlsContexts.DialogMessage StringBuilder = StringBuilder(
+    IdeBundle.message("dialog.message.was.unable.to.save.some.project.files", ApplicationNamesInfo.getInstance().productName))
   var count = 0
   val files = notifications.first().files
   for (file in files) {
@@ -1177,12 +1181,7 @@ private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStor
   return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     project,
-    IdeBundle.message("untrusted.project.open.dialog.title", project.name),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-  )
+    IdeBundle.message("untrusted.project.open.dialog.title", project.name))
 }
 
 private suspend fun initProject(file: Path,
@@ -1197,11 +1196,11 @@ private suspend fun initProject(file: Path,
   try {
     coroutineContext.ensureActive()
 
-    val registerComponentActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
-
-    if (!PROJECT_PATH.isIn(project)) {
-      PROJECT_PATH.set(project, file)
+    val registerComponentActivity = createActivity(project) {
+      "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}"
     }
+
+    project.putUserDataIfAbsent(PROJECT_PATH, file)
     project.registerComponents()
     registerComponentActivity?.end()
 
@@ -1242,7 +1241,7 @@ private suspend fun initProject(file: Path,
   catch (initThrowable: Throwable) {
     try {
       withContext(NonCancellable) {
-        project.coroutineScope.coroutineContext.job.cancelAndJoin()
+        project.getCoroutineScope().coroutineContext.job.cancelAndJoin()
         writeAction {
           Disposer.dispose(project)
         }
@@ -1261,7 +1260,11 @@ internal suspend inline fun projectInitListeners(crossinline executor: suspend (
     .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
+    if (!isCorePlugin(pluginDescriptor) &&
+        !(pluginDescriptor.pluginId.idString == "com.jetbrains.codeWithMe"
+          && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")
+        && !(pluginDescriptor.pluginId.idString == "intellij.rider.plugins.cwm"
+          && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")) {
       LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
@@ -1381,11 +1384,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     null,
-    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName)
   )
 }
 

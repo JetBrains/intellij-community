@@ -12,7 +12,7 @@ import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TransientFieldNotInitializedInspection extends BaseInspection {
+public final class TransientFieldNotInitializedInspection extends BaseInspection {
 
   @Override
   @NotNull

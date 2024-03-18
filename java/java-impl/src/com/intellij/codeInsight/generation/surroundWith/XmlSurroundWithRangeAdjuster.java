@@ -15,7 +15,7 @@ import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.xml.XmlFile;
 
 
-public class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
+public final class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
   private static boolean isLanguageWithWSSignificant(Language lang) {
     return lang == HTMLLanguage.INSTANCE ||
            lang == XHTMLLanguage.INSTANCE ||

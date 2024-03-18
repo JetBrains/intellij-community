@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build
 
 import com.intellij.testFramework.PlatformTestUtil
@@ -35,7 +33,7 @@ class ReorderJarsTest {
 
   @Test
   fun `keep all dirs with resources`() {
-    // check that not only the immediate parent of resource file is preserved, but also any dir in a path
+    // check that not only the immediate parent of the resource file is preserved, but also any dir in a path
     val random = Random(42)
 
     val rootDir = fs.root.resolve("dir")

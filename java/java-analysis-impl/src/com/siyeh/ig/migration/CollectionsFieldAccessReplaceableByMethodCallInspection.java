@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class CollectionsFieldAccessReplaceableByMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class CollectionsFieldAccessReplaceableByMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -27,14 +27,13 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.ide.progress.*
-import com.intellij.platform.util.progress.asContextElement
-import com.intellij.platform.util.progress.impl.ProgressState
-import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
+import com.intellij.platform.util.coroutines.flow.throttle
+import com.intellij.platform.util.progress.ProgressState
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -47,7 +46,6 @@ import kotlin.coroutines.coroutineContext
 
 @Internal
 class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
-
   data class ProgressStartedEvent(
     val title: @ProgressTitle String,
     val cancellation: TaskCancellation,
@@ -80,15 +78,14 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     val taskJob = coroutineContext.job
-    TextDetailsProgressReporter(cs).use { reporter ->
-      progressStarted(title, cancellation, reporter.progressState)
-      val showIndicatorJob = cs.showIndicator(project, taskJob, taskInfo(title, cancellation), reporter.progressState)
-      try {
-        withContext(reporter.asContextElement(), action)
-      }
-      finally {
-        showIndicatorJob.cancel()
-      }
+    val pipe = cs.createProgressPipe()
+    val showIndicatorJob = cs.showIndicator(project, taskJob, taskInfo(title, cancellation), pipe.progressUpdates())
+    progressStarted(title, cancellation, pipe.progressUpdates())
+    try {
+      pipe.collectProgressUpdates(action)
+    }
+    finally {
+      showIndicatorJob.cancel()
     }
   }
 
@@ -135,31 +132,30 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
       val modalityContext = newModalityState.asContextElement()
-      TextDetailsProgressReporter(cs).use { reporter ->
-        val taskJob = async(dispatcherCtx + modalityContext + reporter.asContextElement()) {
-          progressStarted(descriptor.title, descriptor.cancellation, reporter.progressState)
-          action()
-        }
-        val modalJob = cs.launch(modalityContext) {
-          val showIndicatorJob = showModalIndicator(taskJob, descriptor, reporter.progressState, deferredDialog)
-          try {
-            taskJob.join()
-          }
-          finally {
-            showIndicatorJob.cancel()
-          }
-        }
-        modalJob.invokeOnCompletion {
-          // Unblock `getNextEvent()` in case it's blocked.
-          SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
-        }
-        IdeEventQueue.getInstance().pumpEventsForHierarchy(
-          exitCondition = modalJob::isCompleted,
-          modalComponent = deferredDialog::modalComponent,
-        )
-        @OptIn(ExperimentalCoroutinesApi::class)
-        taskJob.getCompleted()
+      val pipe = cs.createProgressPipe()
+      val taskJob = async(dispatcherCtx + modalityContext) {
+        progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
+        pipe.collectProgressUpdates(action)
       }
+      val modalJob = cs.launch(modalityContext) {
+        val showIndicatorJob = showModalIndicator(taskJob, descriptor, pipe.progressUpdates(), deferredDialog)
+        try {
+          taskJob.join()
+        }
+        finally {
+          showIndicatorJob.cancel()
+        }
+      }
+      modalJob.invokeOnCompletion {
+        // Unblock `getNextEvent()` in case it's blocked.
+        SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+      }
+      IdeEventQueue.getInstance().pumpEventsForHierarchy(
+        exitCondition = modalJob::isCompleted,
+        modalComponent = deferredDialog::modalComponent,
+      )
+      @OptIn(ExperimentalCoroutinesApi::class)
+      taskJob.getCompleted()
     }
   }
 }
@@ -176,7 +172,9 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
   override fun getJob(): Job = modalJob
 }
 
-val tracer = getInstance().getTracer(ProgressManagerScope)
+private val progressManagerTracer by lazy {
+  TelemetryManager.getInstance().getTracer(ProgressManagerScope)
+}
 
 private fun CoroutineScope.showIndicator(
   project: Project,
@@ -186,7 +184,7 @@ private fun CoroutineScope.showIndicator(
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-    tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().use {
+    progressManagerTracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().useWithoutActiveScope {
       val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
       withContext(Dispatchers.EDT) {
         val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
@@ -229,14 +227,15 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
  * Asynchronously updates the indicator [text][ProgressIndicator.setText],
  * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
-private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+@Internal
+suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
   updates.throttle(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
     text = state.text
     text2 = state.details
-    if (state.fraction >= 0.0) {
+    state.fraction?.let {
       // first fraction update makes the indicator determinate
       isIndeterminate = false
-      fraction = state.fraction
+      fraction = it
     }
   }
   error("collect call must be cancelled")
@@ -345,7 +344,7 @@ private suspend fun doShowModalIndicator(
         awaitCancellationAndInvoke {
           // TODO: don't move focus back if the focus owner was changed
           //if (focusComponent.isFocusOwner)
-            previousFocusOwner.requestFocusInWindow()
+          previousFocusOwner.requestFocusInWindow()
         }
       }
 

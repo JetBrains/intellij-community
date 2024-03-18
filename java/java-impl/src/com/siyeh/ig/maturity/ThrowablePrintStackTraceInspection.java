@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowablePrintStackTraceInspection extends BaseInspection {
+public final class ThrowablePrintStackTraceInspection extends BaseInspection {
 
   @Nullable
   @Override

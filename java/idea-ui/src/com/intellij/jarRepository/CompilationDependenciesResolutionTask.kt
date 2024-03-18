@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
@@ -21,10 +21,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
  * * private Maven repositories authentication for build process.
  */
 internal class CompilationDependenciesResolutionTask : CompileTask {
-  companion object {
-    private val log = logger<CompilationDependenciesResolutionTask>()
-  }
-
   private class ResolutionTask(library: LibraryEx, val module: Module, project: Project) {
     val promise: Promise<*> = RepositoryUtils.reloadDependencies(project, library)
 
@@ -67,7 +63,7 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
         task.join()
       }
       catch (e: Exception) {
-        log.warn(e)
+        thisLogger().warn(e)
         context.addMessage(
           CompilerMessageCategory.ERROR,
           JavaUiBundle.message("precompile.library.resolution.failure", library.presentableName, e.message),

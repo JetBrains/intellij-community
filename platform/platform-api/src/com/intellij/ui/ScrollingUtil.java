@@ -560,7 +560,10 @@ public final class ScrollingUtil {
     }
 
     protected boolean isEnabled() {
-      return SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent);
+      var speedSearch = SpeedSearchSupply.getSupply(myComponent);
+      // Check if the speed search supports its own navigation (such as go to next/previous match).
+      // If it doesn't, we take over instead.
+      return (speedSearch == null || !speedSearch.supportsNavigation()) && !isEmpty(myComponent);
     }
   }
 

@@ -18,7 +18,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaASTFactory extends ASTFactory {
+public final class JavaASTFactory extends ASTFactory {
   private final DefaultASTFactory myDefaultASTFactory = ApplicationManager.getApplication().getService(DefaultASTFactory.class);
 
   @Override

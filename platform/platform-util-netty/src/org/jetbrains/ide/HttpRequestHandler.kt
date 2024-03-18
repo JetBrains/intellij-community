@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.ide
@@ -30,8 +30,8 @@ abstract class HttpRequestHandler {
   }
 
   companion object {
-    // Your handler will be instantiated on first user request
-    val EP_NAME = ExtensionPointName<HttpRequestHandler>("com.intellij.httpRequestHandler")
+    // Your handler will be instantiated on the first user request
+    val EP_NAME: ExtensionPointName<HttpRequestHandler> = ExtensionPointName("com.intellij.httpRequestHandler")
 
     @JvmStatic
     fun checkPrefix(uri: String, prefix: String): Boolean {
@@ -49,13 +49,12 @@ abstract class HttpRequestHandler {
   }
 
   /**
-   * Write request from browser without Origin will always be blocked regardless of your implementation.
+   * Write request from a browser without Origin will always be blocked regardless of your implementation.
    */
-  @SuppressWarnings("SpellCheckingInspection")
   open fun isAccessible(request: HttpRequest): Boolean {
     val hostName = getHostName(request)
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
-    // So we should check Host header.
+    // So we should check `Host` header.
     return hostName != null && isOriginAllowed(request) != OriginCheckResult.FORBID && isLocalHost(hostName)
   }
 

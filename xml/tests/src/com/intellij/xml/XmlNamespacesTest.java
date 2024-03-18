@@ -22,7 +22,6 @@ import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
@@ -38,17 +37,12 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testUnusedDefaultNamespace() {
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTestUnusedDefaultNamespace);
-  }
-
-  // TODO: remove this temporary private method and inline its content into the tests when duplication problem will be fixed
-  private void doTestUnusedDefaultNamespace() {
     doUnusedDeclarationTest("""
-                              <schema:schema\s
-                                          xmlns:schema="http://www.w3.org/2001/XMLSchema"
-                                          <warning descr="Namespace declaration is never used">xmlns="http://www.w3.org/2001/X<caret>Include"</warning>
-                                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                          <warning descr="Namespace location is never used">xsi:noNamespaceSchemaLocation="http://www.w3.org/2001/XInclude"</warning>>
+                              <schema:schema
+                                      xmlns:schema="http://www.w3.org/2001/XMLSchema"
+                                      <warning descr="Namespace declaration is never used">xmlns="http://www.w3.org/2001/X<caret>Include"</warning>
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                      <warning descr="Namespace location is never used">xsi:noNamespaceSchemaLocation="http://www.w3.org/2001/XInclude"</warning>>
                               </schema:schema>""",
 
                             """
@@ -57,13 +51,12 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                               >
                               </schema:schema>""", XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl"), false);
-
     doOptimizeImportsTest("""
-                            <schema:schema\s
-                                        xmlns:schema="http://www.w3.org/2001/XMLSchema"
-                                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            >
-                            </schema:schema>""");
+                              <schema:schema
+                                      xmlns:schema="http://www.w3.org/2001/XMLSchema"
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                              >
+                              </schema:schema>""");
   }
 
   public void testDifferentPrefixes() {
@@ -308,7 +301,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPatternPerformanceProblem() {
     myFixture.configureByFile("idproblem.html");
-    PlatformTestUtil.startPerformanceTest("?", 100, () -> myFixture.doHighlighting()).assertTiming();
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> myFixture.doHighlighting()).start();
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name) {

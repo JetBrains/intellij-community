@@ -11,6 +11,10 @@ import com.intellij.openapi.util.NotNullLazyValue
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
 
+fun kotlinStandaloneScriptRunConfigurationType(): KotlinStandaloneScriptRunConfigurationType {
+    return ConfigurationTypeUtil.findConfigurationType(KotlinStandaloneScriptRunConfigurationType::class.java)
+}
+
 class KotlinStandaloneScriptRunConfigurationType : SimpleConfigurationType(
     "KotlinStandaloneScriptRunConfigurationType",
     KotlinRunConfigurationsBundle.message("name.kotlin.script"),
@@ -26,9 +30,4 @@ class KotlinStandaloneScriptRunConfigurationType : SimpleConfigurationType(
     override fun isEditableInDumbMode(): Boolean = true
 
     override fun isDumbAware(): Boolean = true
-
-    companion object {
-        val instance: KotlinStandaloneScriptRunConfigurationType
-            get() = ConfigurationTypeUtil.findConfigurationType(KotlinStandaloneScriptRunConfigurationType::class.java)
-    }
 }

@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ConvertCatchToThrowsIntention extends MCIntention {
+public final class ConvertCatchToThrowsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 object FileEditorCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("file.editor", 5)
+  private val GROUP = EventLogGroup("file.editor", 6)
   private val FILE_EDITOR_FIELD = EventFields.Class("fileEditor")
   private val ALTERNATIVE_FILE_EDITOR_SELECTED = GROUP.registerVarargEvent("alternative.file.editor.selected",
                                                                            FILE_EDITOR_FIELD,

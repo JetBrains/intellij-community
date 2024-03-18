@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ArrayUtil
@@ -68,8 +68,12 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             emptyList(),
             KotlinModuleKind.DEFAULT,
             "",
+            CompilerSettingsData("", "", "", true, "lib", true),
             "",
-            CompilerSettingsData("", "", "", true, "lib"), "", module.entitySource
+            emptyList(),
+            KotlinFacetSettings.CURRENT_VERSION,
+            false,
+            module.entitySource
         ) {
             this.module = module
         }
@@ -181,7 +185,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
                 } else {
                     val minVersion =
                         module.dependencies.mapNotNull { moduleDependencyItem ->
-                            if (moduleDependencyItem !is ModuleDependencyItem.Exportable.LibraryDependency) return@mapNotNull null
+                            if (moduleDependencyItem !is LibraryDependency) return@mapNotNull null
                             val name = moduleDependencyItem.library.name
                             val artifactWithVersion = name.substringAfterLastOrNull("org.jetbrains.kotlin:")
                             if (artifactWithVersion != null && artifactWithVersion.contains(KOTLIN_JAVA_STDLIB_NAME)) {
@@ -242,20 +246,21 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             this.testOutputPath = kotlinFacetSettings.testOutputPath ?: ""
             this.sourceSetNames = kotlinFacetSettings.sourceSetNames.toMutableList()
             this.isTestModule = kotlinFacetSettings.isTestModule
-            this.externalProjectId = kotlinFacetSettings.externalProjectId
+            this.externalProjectId = "Maven"
             this.isHmppEnabled = kotlinFacetSettings.isHmppEnabled
             this.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
             this.kind = kotlinFacetSettings.kind
-            this.compilerArguments = KotlinModuleSettingsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
+            this.compilerArguments = CompilerArgumentsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
             val compilerSettings = kotlinFacetSettings.compilerSettings
             this.compilerSettings =
-                if (compilerSettings == null) CompilerSettingsData("", "", "", true, "lib")
+                if (compilerSettings == null) CompilerSettingsData("", "", "", true, "lib", false)
                 else CompilerSettingsData(
                     compilerSettings.additionalArguments,
                     compilerSettings.scriptTemplates,
                     compilerSettings.scriptTemplatesClasspath,
                     compilerSettings.copyJsLibraryFiles,
-                    compilerSettings.outputDirectoryForJsLibraryFiles
+                    compilerSettings.outputDirectoryForJsLibraryFiles,
+                    true
                 )
             this.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms() ?: ""
         }

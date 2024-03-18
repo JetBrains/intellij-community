@@ -20,11 +20,6 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestCase {
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
   protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
     final Language language = getInjectedLanguage();
     final Language expectedLang = Language.findLanguageByID(actionHint.getExpectedText());

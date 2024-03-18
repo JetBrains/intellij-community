@@ -40,7 +40,7 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if the tool window isn't installed.
    */
   default void activate(@Nullable Runnable runnable) {
     activate(runnable, true, true);
@@ -160,6 +160,15 @@ public interface ToolWindow extends BusyObject {
   void setStripeTitle(@NlsContexts.TabTitle @NotNull String title);
 
   void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @Nullable default Supplier<@NlsContexts.TabTitle String> getStripeShortTitleProvider() {
+    return null;
+  }
+
+  default void setStripeShortTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title) {
+  }
 
   /**
    * @return Whether the window is available or not.

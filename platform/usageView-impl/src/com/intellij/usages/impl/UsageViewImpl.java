@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -12,7 +12,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -304,6 +303,10 @@ public class UsageViewImpl implements UsageViewEx {
   @IntellijInternalApi
   public int getId() {
     return myUniqueIdentifier;
+  }
+  
+  public JTree getTree() {
+    return myTree;
   }
 
   private void initInEDT() {
@@ -997,11 +1000,33 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
     sortGroupingActions(list);
-    ActionUtil.moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
-                            UsageViewBundle.message("action.flatten.modules"), true);
+    moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
+                 UsageViewBundle.message("action.flatten.modules"), true);
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
+  protected static void moveActionTo(@NotNull List<AnAction> list,
+                                     @NotNull String actionText,
+                                     @NotNull String targetActionText,
+                                     boolean before) {
+    if (Objects.equals(actionText, targetActionText)) {
+      return;
+    }
+
+    int actionIndex = -1;
+    int targetIndex = -1;
+    for (int i = 0; i < list.size(); i++) {
+      AnAction action = list.get(i);
+      if (actionIndex == -1 && Objects.equals(actionText, action.getTemplateText())) actionIndex = i;
+      if (targetIndex == -1 && Objects.equals(targetActionText, action.getTemplateText())) targetIndex = i;
+      if (actionIndex != -1 && targetIndex != -1) {
+        if (actionIndex < targetIndex) targetIndex--;
+        AnAction anAction = list.remove(actionIndex);
+        list.add(before ? targetIndex : targetIndex + 1, anAction);
+        return;
+      }
+    }
+  }
 
   /**
    * create*Action() methods can be used in createActions() method in subclasses to create a toolbar
@@ -1609,13 +1634,13 @@ public class UsageViewImpl implements UsageViewEx {
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed()) return;
+        if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
+          expandAll();
+        }
         if (userHasSelectedNode()) return;
         Node nodeToSelect = ObjectUtils.coalesce(myAutoSelectedGroupNode, myModel.getFirstUsageNode());
         if (nodeToSelect == null) return;
         showNode(nodeToSelect);
-        if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
-          expandAll();
-        }
       });
     }
   }
@@ -1681,12 +1706,6 @@ public class UsageViewImpl implements UsageViewEx {
     if (prev != null) myAdditionalComponent.remove(prev);
     if (comp != null) myAdditionalComponent.add(comp, BorderLayout.CENTER);
     myAdditionalComponent.revalidate();
-  }
-
-  @Override
-  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text, char mnemonic) {
-    // implemented method is deprecated, so, it just calls non-deprecated overloading one
-    addButtonToLowerPane(runnable, text);
   }
 
   @Override

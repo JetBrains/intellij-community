@@ -3,10 +3,12 @@ package com.intellij.filePrediction
 
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidate
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 
+@Service(Service.Level.PROJECT)
 internal class FilePredictionSessionHistory {
   companion object {
     private const val DEFAULT_CANDIDATES_PER_SESSION = 25

@@ -27,11 +27,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
   private var myStructure: MavenProjectsStructure? = null
 
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
-    myProject.replaceService(ToolWindowManager::class.java, object : ToolWindowHeadlessManagerImpl(myProject) {
+    project.replaceService(ToolWindowManager::class.java, object : ToolWindowHeadlessManagerImpl(project) {
       override fun invokeLater(runnable: Runnable) {
         runnable.run()
       }
@@ -39,7 +37,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     initProjectsManager(false)
 
     withContext(Dispatchers.EDT) {
-      myNavigator = MavenProjectsNavigator.getInstance(myProject)
+      myNavigator = MavenProjectsNavigator.getInstance(project)
       myNavigator!!.initForTests()
       myNavigator!!.groupModules = true
 
@@ -70,7 +68,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    readFiles(myProjectPom)
+    readFiles(projectPom)
 
 
     projectsManager.fireActivatedInTests()
@@ -90,10 +88,10 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    readFiles(myProjectPom)
+    readFiles(projectPom)
 
     assertEquals(1, rootNodes.size)
-    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(projectPom, rootNodes[0].virtualFile)
     assertEquals(0, rootNodes[0].projectNodesInTests.size)
 
     val m = createModulePom("m", """
@@ -104,7 +102,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     readFiles(m)
 
     assertEquals(1, rootNodes.size)
-    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(projectPom, rootNodes[0].virtualFile)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
     assertEquals(m, rootNodes[0].projectNodesInTests[0].virtualFile)
   }
@@ -131,10 +129,10 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    readFiles(myProjectPom)
+    readFiles(projectPom)
 
     assertEquals(1, rootNodes.size)
-    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(projectPom, rootNodes[0].virtualFile)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
     assertEquals(m, rootNodes[0].projectNodesInTests[0].virtualFile)
   }
@@ -154,7 +152,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    readFiles(myProjectPom, m)
+    readFiles(projectPom, m)
 
     assertEquals(2, rootNodes.size)
 
@@ -166,10 +164,10 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    readFiles(myProjectPom)
+    readFiles(projectPom)
 
     assertEquals(1, rootNodes.size)
-    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(projectPom, rootNodes[0].virtualFile)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
     assertEquals(m, rootNodes[0].projectNodesInTests[0].virtualFile)
   }
@@ -183,8 +181,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    readFiles(myProjectPom)
-    resolveDependenciesAndImport()
+    readFiles(projectPom)
     assertEquals(1, rootNodes.size)
     MavenUtil.cleanAllRunnables()
 
@@ -192,7 +189,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
     waitForImportWithinTimeout {
-      projectsManager.removeManagedFiles(listOf(myProjectPom))
+      projectsManager.removeManagedFiles(listOf(projectPom))
     }
     UsefulTestCase.assertEmpty(projectsManager.getRootProjects())
     assertEquals(0, rootNodes.size)
@@ -227,7 +224,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>mm</artifactId>
       <version>1</version>
       """.trimIndent())
-    readFiles(myProjectPom, m, mm)
+    readFiles(projectPom, m, mm)
 
     assertEquals(1, rootNodes.size)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
@@ -260,22 +257,20 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    readFiles(myProjectPom, m)
-
-    projectsManager.waitForAfterImportJobs()
+    readFiles(projectPom, m)
 
     projectsManager.projectsTree.ignoredFilesPaths = listOf(m.getPath())
 
     myNavigator!!.showIgnored = true
     assertTrue(rootNodes[0].isVisible())
     val childNodeNamesBefore = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins", "m"), childNodeNamesBefore)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories", "m"), childNodeNamesBefore)
 
     myNavigator!!.showIgnored = false
     assertTrue(rootNodes[0].isVisible())
     waitForPluginNodesUpdated()
     val childNodeNamesAfter = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories"), childNodeNamesAfter)
   }
 
   private suspend fun waitForPluginNodesUpdated() = withContext(Dispatchers.EDT) {
@@ -302,15 +297,15 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    readFiles(myProjectPom, m)
+    readFiles(projectPom, m)
 
-    projectsTree.ignoredFilesPaths = listOf(myProjectPom.getPath())
+    projectsTree.ignoredFilesPaths = listOf(projectPom.getPath())
 
     myNavigator!!.showIgnored = true
     assertEquals(1, rootNodes.size)
     assertEquals(1, myStructure!!.rootElement.getChildren().size)
     var projectNode = myStructure!!.rootElement.getChildren()[0] as ProjectNode
-    assertEquals(myProjectPom, projectNode.virtualFile)
+    assertEquals(projectPom, projectNode.virtualFile)
     assertEquals(1, projectNode.projectNodesInTests.size)
 
     myNavigator!!.showIgnored = false
@@ -372,7 +367,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    readFiles(myProjectPom, m)
+    readFiles(projectPom, m)
 
     assertEquals(1, rootNodes.size)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
@@ -394,7 +389,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <version>1</version>
                        """.trimIndent())
 
-    readFiles(myProjectPom)
+    readFiles(projectPom)
     withContext(Dispatchers.EDT) {
       assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
     }
@@ -410,10 +405,10 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <version>1</version>
                        """.trimIndent())
 
-    readFiles(myProjectPom)
+    readFiles(projectPom)
 
     val rootNode = myStructure!!.rootElement
-    val projectsManager = MavenProjectsManager.getInstance(myProject)
+    val projectsManager = MavenProjectsManager.getInstance(project)
     val project = projectsManager.getProjects()[0]
     val node = ProjectNode(myStructure, project)
     rootNode.add(node)
@@ -434,9 +429,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <version>1</version>
                        """.trimIndent())
 
-    readFiles(myProjectPom)
+    readFiles(projectPom)
 
-    val projectsManager = MavenProjectsManager.getInstance(myProject)
+    val projectsManager = MavenProjectsManager.getInstance(project)
     val project = projectsManager.getProjects()[0]
     val node = ProjectNode(myStructure, project)
     val projectNode = rootNodes[0]
@@ -466,14 +461,14 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    readFiles(myProjectPom, m)
+    readFiles(projectPom, m)
 
     assertEquals(1, rootNodes.size)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
 
-    val runManager = getInstanceImpl(myProject)
+    val runManager = getInstanceImpl(project)
     val mavenTemplateConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createTemplateConfiguration(
-      myProject)
+      project)
     val mavenConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createConfiguration("myConfiguration",
                                                                                                                    mavenTemplateConfiguration)
     val configuration = RunnerAndConfigurationSettingsImpl(runManager, mavenConfiguration)
@@ -481,8 +476,57 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     runManager.removeConfiguration(configuration)
   }
 
+
+  @Test
+  fun testRepositoriesListForSimpleProject() = runBlocking {
+    assumeMaven3()
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """.trimIndent())
+
+    readFiles(projectPom)
+    projectsManager.fireActivatedInTests()
+    assertEquals(1, rootNodes.size)
+    val repositoriesNodes = rootNodes[0].listOfRepositoryNodes
+    assertEquals(2, repositoriesNodes.size)
+    assertEquals("local", repositoriesNodes[0].name)
+    assertEquals("central", repositoriesNodes[1].name)
+  }
+
+  @Test
+  fun testRepositoriesListWithNewRepo() = runBlocking {
+    assumeMaven3()
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       
+                       <repositories>
+                        <repository>
+                          <id>repo-id</id>
+                          <name>repo-name</name>
+                          <url>https://example.com/repository</url>
+                          <snapshots>
+                            <enabled>true</enabled>
+                          </snapshots>
+                        </repository>
+                      </repositories>
+                       """.trimIndent())
+
+    readFiles(projectPom)
+    projectsManager.fireActivatedInTests()
+    assertEquals(1, rootNodes.size)
+    val repositoriesNodes = rootNodes[0].listOfRepositoryNodes
+    assertEquals(3, repositoriesNodes.size)
+    assertEquals("local", repositoriesNodes[0].name)
+    assertEquals("central", repositoriesNodes[1].name)
+    assertEquals("repo-id", repositoriesNodes[2].name)
+  }
+
   private suspend fun readFiles(vararg files: VirtualFile) {
-    projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(*files), MavenExplicitProfiles.NONE, null, null)
+    projectsManager.addManagedFilesWithProfiles(listOf(*files), MavenExplicitProfiles.NONE, null, null, true)
   }
 
   private val rootNodes: List<ProjectNode>

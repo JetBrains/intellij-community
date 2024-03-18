@@ -11,10 +11,11 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import java.io.File
 
 /**
  * Logic is mostly copied from [com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler].
- * Added additional characters to trigger auto popup (' ', '-', '/').
+ * Added additional characters to trigger auto popup ('-', '/').
  * Allowed to reopen the popup automatically in the [EmptyAutoPopup] phase.
  */
 class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
@@ -31,11 +32,19 @@ class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
       return Result.STOP
     }
 
-    if (Character.isLetterOrDigit(charTyped) || charTyped == ' ' || charTyped == '-' || charTyped == '/') {
+    if (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
       return Result.STOP
     }
 
     return Result.CONTINUE
+  }
+
+  override fun beforeClosingQuoteInserted(quote: CharSequence, project: Project, editor: Editor, file: PsiFile): Result {
+    // do not insert backticks in pairs because it is a line continuation character in PowerShell
+    return if (!editor.isPromptEditor || quote != "`") {
+      Result.CONTINUE
+    }
+    else Result.STOP
   }
 }

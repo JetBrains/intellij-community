@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Responses")
 package org.jetbrains.io
 
@@ -34,6 +34,18 @@ fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): Fu
   return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
 }
 
+fun responseStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
+  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
+  HttpUtil.setContentLength(response, 0)
+  response.addCommonHeaders()
+  response.addNoCache()
+  if (keepAlive) {
+    HttpUtil.setKeepAlive(response, true)
+  }
+  response.headers().set("X-Frame-Options", "Deny")
+  response.send(channel, !keepAlive)
+}
+
 fun HttpResponse.addNoCache(): HttpResponse {
   headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
   headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS
@@ -67,7 +79,7 @@ fun HttpResponse.send(channel: Channel, request: HttpRequest?, extraHeaders: Htt
   extraHeaders?.let {
     headers().add(it)
   }
-  send(channel, request != null && !addKeepAliveIfNeeded(request))
+  send(channel = channel, close = request != null && !addKeepAliveIfNeeded(request))
 }
 
 fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {

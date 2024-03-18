@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -8,18 +8,28 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ReflectionUtil
 
 public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
-  //override lateinit var entitySource: EntitySource
-  //  internal set
-
   public var id: EntityId = invalidEntityId
 
   public lateinit var snapshot: EntityStorage
+  internal var onRead: ((ReadTrace) -> Unit)? = null
 
   public abstract fun connectionIdList(): List<ConnectionId>
+
+  /**
+   * Record information that some field was read. This function is used only for fields with primitive values.
+   *   Reading of references to other entities doesn't use this function.
+   *
+   * [name] is passed for future use
+   */
+  @Suppress("UNUSED_PARAMETER")
+  protected fun readField(name: String) {
+    onRead?.invoke(ReadTrace.SomeFieldAccess(id))
+  }
 
   public open fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {
     val mySnapshot = snapshot as AbstractEntityStorage
@@ -63,8 +73,8 @@ public abstract class WorkspaceEntityBase(private var currentEntityData: Workspa
     return emptySequence()
   }
 
-  override fun <E : WorkspaceEntity> createReference(): EntityReference<E> {
-    return EntityReferenceImpl(this.id)
+  override fun <E : WorkspaceEntity> createPointer(): EntityPointer<E> {
+    return EntityPointerImpl(this.id)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
@@ -117,9 +127,18 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
   public fun updateChildToParentReferences(parents: Set<WorkspaceEntity>?) {
     if (diff == null) return
     val childId = getEntityData().createEntityId().asChild()
-    val entityInterfaceToEntity = parents?.associateBy { it.getEntityInterface() } ?: emptyMap()
+    val entityInterfaceToEntity = parents
+                                    ?.associateBy { it.getEntityInterface() }
+                                    ?.toMutableMap() ?: mutableMapOf()
+    val idToInterface = parents?.associate { it.asBase().id to it.getEntityInterface() } ?: emptyMap()
 
-    (diff as MutableEntityStorageImpl).refs.getParentRefsOfChild(childId).forEach { (connectionId, _) ->
+    (diff as MutableEntityStorageImpl).refs.getParentRefsOfChild(childId).forEach { (connectionId, existingParent) ->
+      val interfaceOfParent = idToInterface[existingParent.id]
+      if (interfaceOfParent != null) {
+        // We're trying to add parent that already exists. Skip it
+        entityInterfaceToEntity.remove(interfaceOfParent)
+        return@forEach
+      }
       val parentEntityClass = connectionId.parentClass.findWorkspaceEntity()
       // Remove outdated references
       if (!entityInterfaceToEntity.contains(parentEntityClass)) {
@@ -485,7 +504,8 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
 
   public fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
 
-  public abstract fun createEntity(snapshot: EntityStorage): E
+  @OptIn(EntityStorageInstrumentationApi::class)
+  public abstract fun createEntity(snapshot: EntityStorageInstrumentation): E
 
   public abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>
 
@@ -561,14 +581,6 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
    */
   public abstract class WithCalculableSymbolicId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
     public abstract fun symbolicId(): SymbolicEntityId<*>
-  }
-
-  @OptIn(EntityStorageInstrumentationApi::class)
-  protected fun <T : WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
-    if (storage !is EntityStorageInstrumentation) {
-      error("Entities implementation is supposed to work with ${EntityStorageInstrumentation::class.simpleName} storage only")
-    }
-    return storage.initializeEntity(createEntityId(), init)
   }
 }
 

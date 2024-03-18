@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
@@ -26,10 +27,10 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCas
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
-import org.jetbrains.kotlin.idea.test.IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.util.IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY
+import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -200,6 +201,8 @@ abstract class AbstractKotlinMppGradleImportingTest(private val pluginKind: Kotl
         super.setUp()
 
         checkPluginIsCorrect(pluginKind.isK2)
+        // KMP support in non-JVM modules should be explicitly enabled ATM
+        if (pluginKind.isK2) Registry.get("kotlin.k2.kmp.enabled").setValue(true)
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()

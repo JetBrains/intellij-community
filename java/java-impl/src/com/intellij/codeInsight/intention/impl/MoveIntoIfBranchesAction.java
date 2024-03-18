@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class MoveIntoIfBranchesAction implements ModCommandAction {
+public final class MoveIntoIfBranchesAction implements ModCommandAction {
   @Override
   public @NotNull @IntentionFamilyName String getFamilyName() {
     return JavaBundle.message("intention.name.move.into.if.branches");
@@ -79,6 +79,7 @@ public class MoveIntoIfBranchesAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     List<PsiStatement> statements = extractStatements(context);
     if (statements.isEmpty()) return null;
     PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.get(0));

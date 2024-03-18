@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.text.CharFilter.NOT_WHITESPACE_FILTER;
 
-public class JavadocBlankLinesInspection extends LocalInspectionTool {
+public final class JavadocBlankLinesInspection extends LocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

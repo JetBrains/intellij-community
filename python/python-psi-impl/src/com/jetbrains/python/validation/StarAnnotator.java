@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class StarAnnotator extends PyAnnotator {
+public final class StarAnnotator extends PyAnnotator {
   @Override
   public void visitPyStarExpression(@NotNull PyStarExpression node) {
     super.visitPyStarExpression(node);

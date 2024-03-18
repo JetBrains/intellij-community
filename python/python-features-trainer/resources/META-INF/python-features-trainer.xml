@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<idea-plugin>
-  <extensions defaultExtensionNs="training">
-    <ift.language.extension language="Python" defaultProductName="PyCharm"
-                            implementationClass="com.jetbrains.python.ift.PythonLangSupport"/>
-    <ift.learning.course language="Python" implementationClass="com.jetbrains.python.ift.PythonLearningCourse"/>
-    <ifs.suggesterSupport language="Python" implementationClass="com.jetbrains.python.ifs.PythonSuggesterSupport"/>
-  </extensions>
-</idea-plugin>

@@ -163,7 +163,10 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     virtualFileToEditor.put(file, editor)
     activeFile = file
     if (editor != null) {
-      editor.selectionModel.removeSelection()
+      // This code clears selection in tests, to disable this test-only behaviour use the next system property
+      if ("disabled" != System.getProperty("clear.selection.in.tests")) {
+        editor.selectionModel.removeSelection()
+      }
       if (openFileDescriptor is OpenFileDescriptor) {
         openFileDescriptor.navigateIn(editor)
       }

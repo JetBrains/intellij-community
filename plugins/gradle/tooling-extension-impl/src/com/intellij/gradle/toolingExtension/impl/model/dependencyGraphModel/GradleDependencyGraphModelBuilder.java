@@ -16,8 +16,6 @@ import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
-import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
-
 public class GradleDependencyGraphModelBuilder implements ModelBuilderService {
 
   private final GradleDependencyReportGenerator reportGenerator = new GradleDependencyReportGenerator();
@@ -30,7 +28,7 @@ public class GradleDependencyGraphModelBuilder implements ModelBuilderService {
   @Override
   public Object buildAll(String modelName, Project project) {
     boolean resolveSourceSetDependencies = Boolean.parseBoolean(System.getProperty("idea.resolveSourceSetDependencies", "false"));
-    if (!resolveSourceSetDependencies || !isIsNewDependencyResolutionApplicable()) return null;
+    if (!resolveSourceSetDependencies) return null;
 
     SourceSetContainer sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project);
     if (sourceSetContainer == null) return null;

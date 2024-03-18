@@ -84,8 +84,16 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                        @NotNull OuterLanguageElement outerTemplateElement,
                                                        @NotNull CodeStyleSettings settings,
                                                        @Nullable Indent indent) throws FragmentedTemplateException {
-    List<PsiElement> templateElements = TemplateFormatUtil.findAllTemplateLanguageElementsInside(outerTemplateElement, viewProvider);
+    List<PsiElement> templateElements = getTreeElementsInsideOuterFragment(viewProvider, outerTemplateElement);
     return createTemplateFormattingModelInternal(psiFile, settings, getPolicy(settings, psiFile), templateElements, indent);
+  }
+
+  @NotNull
+  protected List<PsiElement> getTreeElementsInsideOuterFragment(
+    @NotNull TemplateLanguageFileViewProvider viewProvider,
+    @NotNull OuterLanguageElement outerTemplateElement
+  ) {
+    return TemplateFormatUtil.findAllTemplateLanguageElementsInside(outerTemplateElement, viewProvider);
   }
 
   public FormattingModel createTemplateFormattingModel(PsiFile file,
@@ -123,8 +131,14 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       }
     }
     if (templateBlocks.size() == 0) return null;
-    Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : new CompositeTemplateBlock(templateBlocks);
+    Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : createCompositeTemplateBlock(templateBlocks, xmlFormattingPolicy);
     return new DocumentBasedFormattingModel(topBlock, file.getProject(), settings, file.getFileType(), file);
+  }
+
+  @NotNull
+  protected Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
+                                                                XmlFormattingPolicy xmlFormattingPolicy) {
+    return new CompositeTemplateBlock(templateBlocks);
   }
 
   /**
@@ -308,9 +322,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                         Indent childrenIndent) throws FragmentedTemplateException {
     List<Block> templateBlocks = new ArrayList<>();
     TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)templateFile.getViewProvider();
-    List<PsiElement> templateElements = TemplateFormatUtil.findAllElementsInside(range,
-                                                                                 viewProvider,
-                                                                                 true);
+    List<PsiElement> templateElements = getTemplateElements(range, viewProvider);
     FormattingModel localModel = createTemplateFormattingModelInternal(templateFile, settings, xmlFormattingPolicy, templateElements, childrenIndent);
     if (localModel != null) {
       Block rootBlock = localModel.getRootBlock();
@@ -322,6 +334,13 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       }
     }
     return templateBlocks;
+  }
+
+  @NotNull
+  protected List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
+    return TemplateFormatUtil.findAllElementsInside(range,
+                                                    viewProvider,
+                                                    true);
   }
 
   /**

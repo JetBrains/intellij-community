@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization;
 
 import org.jetbrains.annotations.NotNull;
@@ -130,6 +130,11 @@ final class FieldAccessor implements MutableAccessor {
   @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
     return field.getAnnotation(annotationClass);
+  }
+
+  @Override
+  public <T extends Annotation> boolean isAnnotationPresent(@NotNull Class<T> annotationClass) {
+    return field.isAnnotationPresent(annotationClass);
   }
 
   @Override

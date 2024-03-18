@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_IF_STATEMENT;
 
-public class IfStatementSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class IfStatementSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

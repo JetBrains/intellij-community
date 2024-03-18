@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaEnabler;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ public final class JsonSchemaIconProvider implements FileIconProvider {
     if (project != null
         && JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(e -> e.canBeSchemaFile(file))) {
       JsonSchemaService service = JsonSchemaService.Impl.get(project);
-      if (service.isApplicableToFile(file) && service.isSchemaFile(file)) {
+      if (service.isApplicableToFile(file) && JsonSchemaObjectStorage.getInstance(project).getComputedSchemaRootOrNull(file) != null) {
         return AllIcons.FileTypes.JsonSchema;
       }
     }

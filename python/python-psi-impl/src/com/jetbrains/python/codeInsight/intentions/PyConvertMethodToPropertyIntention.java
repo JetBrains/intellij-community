@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
+public final class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

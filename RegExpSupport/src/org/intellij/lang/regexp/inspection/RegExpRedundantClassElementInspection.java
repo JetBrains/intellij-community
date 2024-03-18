@@ -2,9 +2,9 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -66,7 +66,7 @@ public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
     return classElement instanceof RegExpSimpleClass && ((RegExpSimpleClass)classElement).getKind().equals(NON_WORD);
   }
 
-  private static class RemoveRedundantClassElement implements LocalQuickFix {
+  private static class RemoveRedundantClassElement extends PsiUpdateModCommandQuickFix {
     private final String myClassElementText;
 
     private RemoveRedundantClassElement(String text) { myClassElementText = text; }
@@ -82,9 +82,7 @@ public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element == null) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       element.delete();
     }
   }

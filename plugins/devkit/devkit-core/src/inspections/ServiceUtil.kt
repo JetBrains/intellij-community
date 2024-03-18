@@ -138,3 +138,5 @@ fun toLevel(name: String): Service.Level? {
 internal fun isLightService(uClass: UClass): Boolean {
   return uClass.findAnnotation(Service::class.java.canonicalName) != null
 }
+
+fun getProjectLevelFQN(): String = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"

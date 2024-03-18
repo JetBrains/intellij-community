@@ -195,10 +195,6 @@ public class PyClassNameCompletionTest extends PyTestCase {
     PyClass ndarrayUserSkeleton = ContainerUtil.getFirstItem(PyClassNameIndex.findByQualifiedName("numpy.core.multiarray.ndarray",
                                                                                                   project,
                                                                                                   GlobalSearchScope.allScope(project)));
-    if (ndarrayUserSkeleton == null) {
-      System.out.println("Dumb mode: " + DumbService.isDumb(project));
-      dumpSdkRoots();
-    }
     assertNotNull(ndarrayUserSkeleton);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(ndarrayUserSkeleton.getContainingFile()));
   }

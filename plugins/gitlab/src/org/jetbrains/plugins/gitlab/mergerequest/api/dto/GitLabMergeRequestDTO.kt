@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.dto
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
+import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
@@ -24,7 +24,7 @@ class GitLabMergeRequestDTO(
   val targetBranch: String,
   val sourceBranch: String,
   @SinceGitLab("12.1") val diffRefs: GitLabDiffRefs?,
-  @SinceGitLab("14.3", editions = [Enterprise]) val approved: Boolean?,
+  @SinceGitLab("13.9", editions = [GitLabEdition.Enterprise]) val approvalsRequired: Int?,
   @SinceGitLab("13.4") val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
   @SinceGitLab("14.0") val mergeStatusEnum: GitLabMergeStatus?,

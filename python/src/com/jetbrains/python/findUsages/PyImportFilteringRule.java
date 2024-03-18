@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyImportFilteringRule extends ImportFilteringRule {
+public final class PyImportFilteringRule extends ImportFilteringRule {
   @Override
   public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget @NotNull [] targets) {
     if (usage instanceof PsiElementUsage) {

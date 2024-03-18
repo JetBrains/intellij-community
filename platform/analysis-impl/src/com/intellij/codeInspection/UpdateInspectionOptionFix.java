@@ -48,7 +48,7 @@ public class UpdateInspectionOptionFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommand.updateOption(context.file(), myInspection, tool -> {
+    return ModCommand.updateInspectionOption(context.file(), myInspection, tool -> {
       tool.getOptionController().setOption(myProperty, myValue);
     });
   }

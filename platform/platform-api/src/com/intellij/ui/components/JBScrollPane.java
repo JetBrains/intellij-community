@@ -153,11 +153,17 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init(boolean setupCorners) {
-    setLayout(new Layout());
+    setLayout(createLayout());
 
     if (setupCorners) {
       setupCorners();
     }
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  protected Layout createLayout() {
+    return new Layout();
   }
 
   protected void setupCorners() {

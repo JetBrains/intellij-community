@@ -32,15 +32,6 @@ interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModul
     override val platform: TargetPlatform
         get() = module.platform
 
-    @Suppress("DEPRECATION_ERROR")
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(
-        message = "This accessor is deprecated and will be removed soon, use API from 'org.jetbrains.kotlin.platform.*' packages instead",
-        replaceWith = ReplaceWith("platform"),
-        level = DeprecationLevel.ERROR
-    )
-    fun getPlatform(): org.jetbrains.kotlin.resolve.TargetPlatform = platform.toOldPlatform()
-
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.findAnalyzerServices(module.project)
 

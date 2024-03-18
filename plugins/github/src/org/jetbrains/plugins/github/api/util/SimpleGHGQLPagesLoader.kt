@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api.util
 
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
+import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequest
@@ -9,10 +10,10 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 
 class SimpleGHGQLPagesLoader<T>(executor: GithubApiRequestExecutor,
-                                requestProducer: (GraphQLRequestPagination) -> GithubApiRequest.Post<GraphQLPagedResponseDataDTO<T>>,
+                                requestProducer: (GraphQLRequestPagination) -> GithubApiRequest.Post<GraphQLPagedResponseDataDTO<T>?>,
                                 supportsTimestampUpdates: Boolean = false,
                                 pageSize: Int = GithubRequestPagination.DEFAULT_PAGE_SIZE)
-  : GHGQLPagesLoader<GraphQLPagedResponseDataDTO<T>, List<T>>(executor, requestProducer, supportsTimestampUpdates, pageSize) {
+  : GHGQLPagesLoader<GraphQLPagedResponseDataDTO<T>?, List<T>?>(executor, requestProducer, supportsTimestampUpdates, pageSize) {
 
   fun loadAll(progressIndicator: ProgressIndicator): List<T> {
     val list = mutableListOf<T>()
@@ -22,7 +23,7 @@ class SimpleGHGQLPagesLoader<T>(executor: GithubApiRequestExecutor,
     return list
   }
 
-  override fun extractPageInfo(result: GraphQLPagedResponseDataDTO<T>) = result.pageInfo
+  override fun extractPageInfo(result: GraphQLPagedResponseDataDTO<T>?): GraphQLCursorPageInfoDTO? = result?.pageInfo
 
-  override fun extractResult(result: GraphQLPagedResponseDataDTO<T>) = result.nodes
+  override fun extractResult(result: GraphQLPagedResponseDataDTO<T>?): List<T>? = result?.nodes
 }

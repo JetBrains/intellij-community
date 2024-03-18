@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
 import com.intellij.openapi.application.impl.*
@@ -22,7 +22,7 @@ import org.junit.platform.suite.api.Suite
   RunWithModalProgressBlockingTest::class,
   WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
-  CurrentThreadScopeTest::class,
+  CurrentThreadCoroutineScopeTest::class,
 
   // rw
   CancellableReadActionWithJobTest::class,
@@ -37,6 +37,7 @@ import org.junit.platform.suite.api.Suite
   ThreadContextPropagationTest::class,
   CancellationPropagationTest::class,
   AlarmContextPropagationTest::class,
+  MergingUpdateQueuePropagationTest::class,
   DocumentManagerPropagationTest::class,
   DumbServicePropagationTest::class,
 )

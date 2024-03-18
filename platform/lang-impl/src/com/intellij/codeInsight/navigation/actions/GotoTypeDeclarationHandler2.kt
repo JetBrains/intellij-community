@@ -10,7 +10,6 @@ import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleT
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -36,9 +35,6 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
     catch (e: IndexNotReadyException) {
       dumbService.showDumbModeNotificationForFunctionality(CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
                                                            DumbModeBlockedFunctionality.GotoTypeDeclaration)
-      return
-    }
-    catch (e: ProcessCanceledException) {
       return
     }
     if (result == null) {

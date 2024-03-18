@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import java.util.function.Predicate
 import java.util.function.UnaryOperator
 import kotlin.math.max

@@ -5,3 +5,5 @@ class A(val n: Int)
 fun A.bar(n: Int): Int {
     return foo(n) + this.n
 }
+
+// IGNORE_K2

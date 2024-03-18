@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ReadAction;
@@ -81,9 +81,8 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     return project.getService(ProjectTypeService.class);
   }
 
-  @Nullable
   @Override
-  public ProjectType getState() {
+  public @Nullable ProjectType getState() {
     return myProjectType;
   }
 

@@ -14,6 +14,10 @@ interface HighlightingCheckDsl {
         get() = configuration.hideLineMarkers
         set(value) { configuration.hideLineMarkers = value }
 
+    var TestConfigurationDslScope.renderLineMarkersTargetIcons: Boolean
+        get() = configuration.renderLineMarkersTargetIcons
+        set(value) { configuration.renderLineMarkersTargetIcons = value }
+
     var TestConfigurationDslScope.hideHighlightsBelow: HighlightSeverity
         get() = configuration.hideHighlightsBelow
         set(value) { configuration.hideHighlightsBelow = value }

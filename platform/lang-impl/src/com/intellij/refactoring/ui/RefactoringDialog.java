@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
@@ -9,10 +9,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbModeBlockedFunctionality;
-import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.Button;
@@ -35,7 +32,7 @@ import java.util.List;
 /**
  * Author: msk
  */
-public abstract class RefactoringDialog extends DialogWrapper {
+public abstract class RefactoringDialog extends DialogWrapper implements PossiblyDumbAware {
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;

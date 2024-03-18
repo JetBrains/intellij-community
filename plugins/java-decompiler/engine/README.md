@@ -66,6 +66,8 @@ The rest of options can be left as they are: they are aimed at professional reve
 - lac (0): decompile lambda expressions to anonymous classes
 - nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Unix), default is OS-dependent
 - ind: indentation string (default is 3 spaces)
+- crp (0): use record patterns where it is possible
+- cps (0): use switch with patterns where it is possible 
 - log (INFO): a logging level, possible values are TRACE, INFO, WARN, ERROR
 
 ### Renaming identifiers

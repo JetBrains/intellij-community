@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -11,7 +12,6 @@ import java.util.List;
  */
 @Service
 public final class ChooseByNameRegistry {
-
   /**
    * Returns the singleton instance of the registry.
    *
@@ -22,12 +22,18 @@ public final class ChooseByNameRegistry {
   }
 
   /**
-   * Returns the list of registered contributors for the "Goto Class" list.
-   *
-   * @return the array of contributors.
+   * @deprecated Use {@link #getClassModelContributorList()}
    */
+  @Deprecated
   public ChooseByNameContributor[] getClassModelContributors() {
     return ChooseByNameContributor.CLASS_EP_NAME.getExtensions();
+  }
+
+  /**
+   * Returns the list of registered contributors for the "Goto Class" list.
+   */
+  public @NotNull List<ChooseByNameContributor> getClassModelContributorList() {
+    return ChooseByNameContributor.CLASS_EP_NAME.getExtensionList();
   }
 
   /**

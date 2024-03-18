@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// WITH_MESSAGE: "Removed 1 import"
 import foo.ArrayList
 import foo.ArrayList
 

@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -30,7 +30,7 @@ import java.util.function.BiConsumer;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
   private static final int MAX_LEVEL = 5;
   private static final int MAX_COMPONENT_COUNTS = 10;
@@ -66,10 +66,14 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     );
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.RECORD_PATTERNS_IN_FOR_EACH);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     boolean useVar = IntroduceVariableBase.createVarType() || forceUseVar;
     return new JavaElementVisitor() {
       private final Options options = new Options(maxNotUsedComponentCounts,

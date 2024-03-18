@@ -8,10 +8,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.trigger
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenWslUtil
-import kotlin.io.path.absolutePathString
 
 class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
   override fun create(jdk: Sdk,
@@ -30,7 +29,7 @@ class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
   private fun toWslMavenDistribution(mavenDistribution: MavenDistribution, wslDistribution: WSLDistribution): WslMavenDistribution {
     if (mavenDistribution is WslMavenDistribution) return mavenDistribution
     if (mavenDistribution is LocalMavenDistribution) {
-      return wslDistribution.getWslPath(mavenDistribution.mavenHome.absolutePathString())?.let {
+      return wslDistribution.getWslPath(mavenDistribution.mavenHome.toAbsolutePath())?.let {
         WslMavenDistribution(wslDistribution, it, it)
       } ?: throw IllegalArgumentException("Cannot use mavenDistribution ${mavenDistribution}")
     }
@@ -65,7 +64,5 @@ class WslRemotePathTransformFactory : RemotePathTransformerFactory {
         return s?.startsWith("/") ?: false
       }
     }
-
   }
-
 }

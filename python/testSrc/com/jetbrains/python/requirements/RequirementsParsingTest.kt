@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
 import com.intellij.testFramework.ParsingTestCase
+import com.jetbrains.python.requirements.RequirementsParserDefinition
 
-class RequirementsParsingTest : ParsingTestCase("requirements/parsing", "requirements.txt", RequirementsParserDefinition()) {
+class RequirementsParsingTest : ParsingTestCase("requirements/parsing", "requirements.txt",
+                                                RequirementsParserDefinition()) {
   fun testConstraint() {
     doTest(true)
   }

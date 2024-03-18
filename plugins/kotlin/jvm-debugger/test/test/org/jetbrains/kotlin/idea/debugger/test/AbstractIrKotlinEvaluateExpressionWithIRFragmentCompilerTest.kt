@@ -8,10 +8,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 
-abstract class AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest : AbstractKotlinEvaluateExpressionTest() {
-
-    override fun useIrBackend(): Boolean = true
-
+abstract class AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest : AbstractIrKotlinEvaluateExpressionTest() {
     override fun fragmentCompilerBackend() =
         FragmentCompilerBackend.JVM_IR
 

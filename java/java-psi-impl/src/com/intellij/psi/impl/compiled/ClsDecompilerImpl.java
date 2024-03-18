@@ -15,7 +15,7 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClsDecompilerImpl extends ClassFileDecompilers.Full {
+public final class ClsDecompilerImpl extends ClassFileDecompilers.Full {
   private static final Logger LOG = Logger.getInstance(ClsDecompilerImpl.class);
   private final ClsStubBuilder myStubBuilder = new MyClsStubBuilder();
 

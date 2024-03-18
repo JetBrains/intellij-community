@@ -331,7 +331,7 @@ public class LongLinkedHashMap<V> {
   }
 
   private static int hashCode(long value) {
-    return ((int)(value ^ (value >>> 32))) & 0x7fffffff;
+    return Long.hashCode(value) & 0x7fffffff;
   }
 
   private final class Values extends AbstractCollection<V> {

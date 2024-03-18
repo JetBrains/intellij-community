@@ -2,20 +2,26 @@
 package org.intellij.plugins.markdown.injection
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.DependentLanguage
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Utility functions used to work with Markdown Code Fences
@@ -29,7 +35,7 @@ object MarkdownCodeFenceUtils {
 
   /**
    * Consider using [MarkdownCodeFence.obtainFenceContent], since it caches its result.
-   * 
+   *
    * Get content of code fence as list of [PsiElement]
    *
    * @param withWhitespaces defines if whitespaces (including blockquote chars `>`) should be
@@ -112,5 +118,15 @@ object MarkdownCodeFenceUtils {
     val offset = element.textOffset
     val lineStartOffset = document.getLineStartOffset(document.getLineNumber(offset))
     return document.getText(TextRange.create(lineStartOffset, offset)).replace("[^> ]".toRegex(), " ")
+  }
+
+  @Internal
+  @JvmStatic
+  fun getLanguageInfoString(language: Language, context: PsiElement?): String {
+    return CodeFenceLanguageProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
+      it.getInfoStringForLanguage(language, context)
+    } ?: LanguageUtil.getBaseLanguages(language).firstNotNullOfOrNull {
+      CodeFenceLanguageAliases.findMainAliasIfRegistered(it.id) ?: if (it is DependentLanguage) null else StringUtil.toLowerCase(it.id)
+    } ?: StringUtil.toLowerCase(language.id)
   }
 }

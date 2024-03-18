@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class VcsContentAnnotationExceptionFilterFactory implements ExceptionFilterFactory {
+public final class VcsContentAnnotationExceptionFilterFactory implements ExceptionFilterFactory {
   @NotNull
   @Override
   public Filter create(@NotNull GlobalSearchScope searchScope) {

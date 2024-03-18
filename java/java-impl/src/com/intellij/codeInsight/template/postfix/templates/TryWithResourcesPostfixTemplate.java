@@ -11,6 +11,8 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
+public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements DumbAware {
   protected TryWithResourcesPostfixTemplate() {
     super("twr", "try(Type f = new Type()) catch (Exception e)");
   }
@@ -34,15 +36,14 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
 
     if (initializer == null) return false;
 
-    final PsiType type = initializer.getType();
-    if (!(type instanceof PsiClassType)) return false;
-    final PsiClass aClass = ((PsiClassType)type).resolve();
-    Project project = element.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
-    if (!InheritanceUtil.isInheritorOrSelf(aClass, autoCloseable, true)) return false;
-
-    return true;
+    return DumbService.getInstance(initializer.getProject()).computeWithAlternativeResolveEnabled(() -> {
+      if (!(initializer.getType() instanceof PsiClassType classType)) return false;
+      final PsiClass aClass = classType.resolve();
+      Project project = element.getProject();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+      final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
+      return InheritanceUtil.isInheritorOrSelf(aClass, autoCloseable, true);
+    });
   }
 
   @Override
@@ -60,7 +61,9 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
     template.addTextSegment("try (");
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
 
-    template.addVariable("type", new TypeExpression(project, new PsiType[]{expression.getType()}), false);
+    DumbService dumbService = DumbService.getInstance(project);
+    PsiType type = dumbService.computeWithAlternativeResolveEnabled(expression::getType);
+    template.addVariable("type", new TypeExpression(project, new PsiType[]{type}), false);
     template.addTextSegment(" ");
     template.addVariable("name", name, name, true);
     template.addTextSegment(" = ");
@@ -69,7 +72,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
     template.addEndVariable();
     template.addTextSegment("\n}");
 
-    Collection<PsiClassType> unhandled = getUnhandled(expression);
+    Collection<PsiClassType> unhandled = dumbService.computeWithAlternativeResolveEnabled(() -> getUnhandled(expression));
     for (PsiClassType exception : unhandled) {
       MacroCallNode variable = new MacroCallNode(new SuggestVariableNameMacro());
       template.addTextSegment("catch(");

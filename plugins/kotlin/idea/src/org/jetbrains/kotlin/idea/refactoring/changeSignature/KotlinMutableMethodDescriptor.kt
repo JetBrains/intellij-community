@@ -16,11 +16,11 @@ class KotlinMutableMethodDescriptor(override val original: KotlinMethodDescripto
             field = value
         }
 
-    override fun addParameter(parameter: KotlinParameterInfo) {
+    fun addParameter(parameter: KotlinParameterInfo) {
         parameters.add(parameter)
     }
 
-    override fun addParameter(index: Int, parameter: KotlinParameterInfo) {
+    fun addParameter(index: Int, parameter: KotlinParameterInfo) {
         parameters.add(index, parameter)
     }
 

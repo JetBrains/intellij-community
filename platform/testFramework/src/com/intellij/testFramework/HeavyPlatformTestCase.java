@@ -239,6 +239,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
+      IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -273,6 +274,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
@@ -335,7 +337,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
                                                   @NotNull ModuleType<?> moduleType,
                                                   @NotNull Path path) {
     Path moduleFile = path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    return WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
+    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
   protected @NotNull ModuleType<?> getModuleType() {
@@ -355,14 +359,25 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       globalInstance.dropHistoryInTests();
     }
 
-    if (project != null && !project.isDisposed()) {
-      ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-      ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
+    ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
 
-      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
-    }
+    cleanupProjectDependentCaches(project);
 
     TestApplicationKt.cleanupApplicationCaches(app);
+  }
+
+  public static void cleanupProjectDependentCaches(@Nullable Project project) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null) {
+      return;
+    }
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
+    if (project != null && !project.isDisposed()) {
+      ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
+    }
   }
 
   private static @NotNull Set<VirtualFile> eternallyLivingFiles() {

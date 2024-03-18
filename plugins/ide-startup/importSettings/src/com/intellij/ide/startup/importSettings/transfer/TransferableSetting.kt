@@ -1,25 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
-import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
-import com.intellij.ide.customize.transferSettings.models.DummyKeyboardShortcut
-import com.intellij.ide.customize.transferSettings.models.FeatureInfo
-import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
-import com.intellij.ide.customize.transferSettings.models.Keymap
-import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
 import com.intellij.ide.nls.NlsMessages
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ide.startup.importSettings.data.Multiple
+import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.text.nullize
 import javax.swing.Icon
 import javax.swing.KeyStroke
+import kotlin.io.path.Path
 
 open class TransferableSetting(
   override val id: String,
@@ -35,7 +35,7 @@ open class TransferableSetting(
     const val PLUGINS_ID = "plugins"
     const val RECENT_PROJECTS_ID = "recentProjects"
 
-    fun uiTheme(laf: ILookAndFeel): TransferableSetting? {
+    fun uiTheme(laf: ILookAndFeel): TransferableSetting {
       val themeName = laf.getPreview().name
       return TransferableSetting(
         UI_ID,
@@ -47,14 +47,21 @@ open class TransferableSetting(
 
     fun keymap(keymap: Keymap): Multiple {
       val customShortcuts = (keymap as? PatchedKeymap)?.overrides
-      val customShortcutCount = customShortcuts?.size ?: 0
+      val customShortcutCount = customShortcuts?.sumOf { it.shortcuts.size } ?: 0
       val title = if (customShortcutCount == 0)
         keymap.displayName
       else ImportSettingsBundle.message("transfer.settings.keymap-with-custom-shortcuts", keymap.displayName, customShortcutCount)
       val examples = keymap.demoShortcuts.map { DemoShortcut(it.humanName, it.defaultShortcut) }
-      val custom = customShortcuts?.flatMap {
-        val name = it.originalId ?: it.actionId
-        it.shortcuts.map { DemoShortcut(name, it) }
+      val custom = customShortcuts?.flatMap { shortcut ->
+        val action = ActionManager.getInstance().getAction(shortcut.actionId) ?: run {
+          thisLogger().error("Cannot find action ${shortcut.actionId}.")
+          return@flatMap emptyList()
+        }
+        val name = action.templateText.nullize() ?: run {
+          thisLogger().error("Cannot determine text of action ${shortcut.actionId}.")
+          return@flatMap emptyList()
+        }
+        shortcut.shortcuts.map { DemoShortcut(name, it) }
       }
       val items = buildList {
         add(examples)
@@ -69,25 +76,33 @@ open class TransferableSetting(
       )
     }
 
-    fun plugins(features: List<FeatureInfo>): Multiple {
-      val items = features.filter { !it.isHidden }.map(::FeatureSetting)
+    fun plugins(features: Collection<FeatureInfo>): Multiple {
       val limitForPreview = 3
+      val items = features.asSequence().filter { !it.isHidden }.map(::FeatureSetting).toList()
       val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.nameForPreview })
+      val itemGroups = if (items.size > limitForPreview) listOf(items) else emptyList()
       return TransferableSettingGroup(
         PLUGINS_ID,
         ImportSettingsBundle.message("transfer.settings.plugins"),
         StartupImportIcons.Icons.Plugin,
         comment,
-        listOf(items)
+        itemGroups
       )
     }
 
-    fun recentProjects() = TransferableSetting(
-      RECENT_PROJECTS_ID,
-      ImportSettingsBundle.message("transfer.settings.recent-projects"),
-      StartupImportIcons.Icons.Recent,
-      null
-    )
+    fun recentProjects(projects: List<RecentPathInfo>): Multiple {
+      val limitForPreview = 6
+      val items = projects.map(::RecentProjectSetting)
+      val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.name })
+      val itemGroups = if (items.size > limitForPreview) listOf(items) else emptyList()
+      return TransferableSettingGroup(
+        RECENT_PROJECTS_ID,
+        ImportSettingsBundle.message("transfer.settings.recent-projects"),
+        StartupImportIcons.Icons.Recent,
+        comment,
+        itemGroups
+      )
+    }
   }
 }
 
@@ -111,7 +126,7 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
       is KeyboardShortcut -> buildString {
         append(getKeyStrokeText(shortcut.firstKeyStroke))
         shortcut.secondKeyStroke?.let {
-          if (!SystemInfo.isMac) append("+")
+          append(", ")
           append(getKeyStrokeText(it))
         }
       }
@@ -133,7 +148,14 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
 private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
   override val id = ""
   override val name = feature.name
-  override val leftComment = if (feature is BuiltInFeature) ImportSettingsBundle.message("transfer.setting.feature.built-in") else null
+  override val leftComment = when(feature) {
+    is BuiltInFeature -> ImportSettingsBundle.message("transfer.setting.feature.built-in")
+    is PluginFeature ->
+      if (PluginManager.isPluginInstalled(PluginId.getId(feature.pluginId)))
+        ImportSettingsBundle.message("transfer.setting.feature.built-in")
+      else null
+    else -> null
+  }
   override val rightComment = null
   val nameForPreview: String
     get() = buildString {
@@ -143,4 +165,11 @@ private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
         append(it)
       }
     }
+}
+
+private class RecentProjectSetting(item: RecentPathInfo) : ChildSetting {
+  override val id = ""
+  override val name = Path(item.path).fileName?.toString() ?: item.path
+  override val leftComment = null
+  override val rightComment = null
 }

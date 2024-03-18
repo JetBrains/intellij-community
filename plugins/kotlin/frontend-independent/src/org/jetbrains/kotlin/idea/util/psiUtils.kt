@@ -2,14 +2,18 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLiteral
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.psi.*
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("The function is ad-hoc, has arbitrary naming and does not support extension receivers")
+@ApiStatus.ScheduledForRemoval
 fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
     valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)
 
@@ -23,6 +27,7 @@ fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
 }
 
 @Deprecated("Use org.jetbrains.kotlin.idea.base.util.reformatted() instead.")
+@ApiStatus.ScheduledForRemoval
 fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement {
     CodeStyleManager.getInstance(project).reformat(this, canChangeWhiteSpacesOnly)
     return this

@@ -627,7 +627,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         throw cannotBindError(aClass, getKindEnum(containingFile), reason);
       }
     }
-    else if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification) {
+    else if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification &&
+             //`findClass` doesn't return nested in PsiImplicitClass
+             PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) == null) {
       return this;
     }
     else if (facade.getResolveHelper().resolveReferencedClass(qName, this) == null &&

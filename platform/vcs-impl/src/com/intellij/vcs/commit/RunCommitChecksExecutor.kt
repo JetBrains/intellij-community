@@ -28,6 +28,9 @@ internal object RunCommitChecksExecutor : CommitExecutor {
   override fun supportsPartialCommit(): Boolean = true
 }
 
+/**
+ * See [com.intellij.vcs.commit.RerunCommitChecksAction]
+ */
 internal class RunCommitChecksAction : BaseCommitExecutorAction() {
   override val executorId: String get() = RunCommitChecksExecutor.ID
 }

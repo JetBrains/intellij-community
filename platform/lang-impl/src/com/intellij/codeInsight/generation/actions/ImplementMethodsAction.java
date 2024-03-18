@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -7,9 +6,10 @@ import com.intellij.codeInsight.generation.ImplementMethodsHandler;
 import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public final class ImplementMethodsAction extends PresentableActionHandlerBasedAction {
+public final class ImplementMethodsAction extends PresentableActionHandlerBasedAction implements DumbAware {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {

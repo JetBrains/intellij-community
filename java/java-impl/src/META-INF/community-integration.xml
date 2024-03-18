@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <pluginSuggestionProvider implementation="com.intellij.ide.ultimatepromo.FrameworkSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.ide.ultimatepromo.LiquibaseSuggestionProvider"/>
 
     <applicationConfigurable id="promo.database"
                              groupId="tools"

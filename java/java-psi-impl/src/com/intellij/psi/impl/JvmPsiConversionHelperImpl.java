@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
+public final class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
 
   @Override
   public PsiClass convertTypeDeclaration(@Nullable JvmTypeDeclaration typeDeclaration) {

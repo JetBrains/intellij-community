@@ -78,7 +78,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
                                                            SearchMode.MAX_2_CANDIDATES : SearchMode.FULL_SEARCH);
     SmartPsiElementPointer<PsiMethodCallExpression> pointer = SmartPointerManager.createPointer(element);
     List<ModCommandAction> qualifyActions = ContainerUtil.map(candidates, candidate -> createAction(candidate, pointer));
-    return new ModChooseAction(QuickFixBundle.message("add.qualifier"), qualifyActions);
+    return ModCommand.chooseAction(QuickFixBundle.message("add.qualifier"), qualifyActions);
   }
 
   @NotNull
@@ -88,7 +88,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
           PsiMethodCallExpression call = updater.getWritable(pointer.getElement());
           if (call == null) return;
           replaceWithQualifier(var, call);
-          updater.moveTo(call.getTextOffset() + call.getTextLength());
+          updater.moveCaretTo(call.getTextOffset() + call.getTextLength());
         }, var -> requireNonNullElse(var.getNameIdentifier(), var).getTextRange())
       .withPresentation(p -> p.withIcon(candidate.getIcon(0)));
   }

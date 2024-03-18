@@ -18,6 +18,11 @@ import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 public class NewProjectAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
+
+  public NewProjectAction() {
+    getTemplatePresentation().setApplicationScope(true);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class PatternVariableHidesFieldInspection extends BaseInspection {
+public final class PatternVariableHidesFieldInspection extends BaseInspection {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {

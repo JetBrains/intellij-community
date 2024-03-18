@@ -24,7 +24,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>
  * <p>
  */
-public class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
+public final class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
 
   public static final int DEFAULT_SAMPLING_INTERVAL_MS =
     SystemProperties.getIntProperty("ReentrantReadWriteLockUsageMonitor.DEFAULT_SAMPLING_INTERVAL_MS", 500);

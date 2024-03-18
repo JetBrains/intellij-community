@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public final class X11UiUtil {
   /**
    * List of all known tile WM in lower case, can be updated later
    */
-  private static final Set<String> TILE_WM = Set.of(
+  public static final Set<String> TILE_WM = Set.of(
     "awesome",
     "bspwm",
     "cagebreak",
@@ -93,7 +94,7 @@ public final class X11UiUtil {
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-      if (!SystemInfoRt.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+      if (!StartupUiUtil.isXToolkit()) {
         return null;
       }
 
@@ -303,12 +304,12 @@ public final class X11UiUtil {
   }
 
   public static boolean isWSL() {
-    return SystemInfoRt.isXWindow && System.getenv("WSL_DISTRO_NAME") != null;
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && System.getenv("WSL_DISTRO_NAME") != null;
   }
 
   public static boolean isTileWM() {
     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-    return SystemInfoRt.isXWindow && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
   }
 
   public static boolean isUndefinedDesktop() {

@@ -439,8 +439,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     statusPanel.add(myStatusLabel);
 
     JPanel separatorPanel = new JPanel(new BorderLayout());
+    separatorPanel.add(statusPanel, BorderLayout.CENTER);
     separatorPanel.add(myChangesOnlyCheckBox, BorderLayout.WEST);
-    separatorPanel.add(statusPanel, BorderLayout.EAST);
+    JPanel emptyPanel = new JPanel();
+    emptyPanel.setPreferredSize(myChangesOnlyCheckBox.getPreferredSize());
+    separatorPanel.add(emptyPanel, BorderLayout.EAST);
 
     tablePanel.add(separatorPanel, BorderLayout.NORTH);
     tablePanel.setBorder(JBUI.Borders.empty(0, 16, UIUtil.DEFAULT_VGAP, 16));

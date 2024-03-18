@@ -26,6 +26,8 @@ import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,17 +82,26 @@ final class PassExecutorService implements Disposable {
 
   @Override
   public void dispose() {
-    cancelAll(true);
+    cancelAll(true, "PassExecutorService.dispose");
     // some workers could, although idle, still retain some thread references for some time causing leak hunter to frown
-    ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
+    // call it from BGT to avoid "calling daemon from EDT" assertion
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
+    });
+    try {
+      future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
     isDisposed = true;
   }
 
-  void cancelAll(boolean waitForTermination) {
+  void cancelAll(boolean waitForTermination, @NotNull String reason) {
     for (Map.Entry<ScheduledPass, Job<Void>> entry : mySubmittedPasses.entrySet()) {
       Job<Void> job = entry.getValue();
       ScheduledPass pass = entry.getKey();
-      pass.myUpdateProgress.cancel();
+      pass.myUpdateProgress.cancel(reason);
       job.cancel();
     }
     try {
@@ -125,7 +137,7 @@ final class PassExecutorService implements Disposable {
     List<EditorBoundHighlightingPass> editorBoundPasses = new ArrayList<>();
     Int2ObjectMap<TextEditorHighlightingPass> id2Pass = new Int2ObjectOpenHashMap<>(30);
 
-    List<ScheduledPass> freePasses = new ArrayList<>();
+    List<ScheduledPass> freePasses = new ArrayList<>(); // passes free to start, with no "after" dependencies
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
 
     for (HighlightingPass pass : passes) {
@@ -161,7 +173,7 @@ final class PassExecutorService implements Disposable {
     }
 
     if (LOG.isDebugEnabled()) {
-      log(updateProgress, null, virtualFile + " ----- starting " + threadsToStartCountdown.get(), freePasses);
+      log(updateProgress, null, "submitPasses: "+virtualFile.getName() + " ----- starting " + threadsToStartCountdown.get() + "passes. free:"+freePasses+"; editorBound:"+editorBoundPasses+"; documentBound:"+documentBoundPasses);
     }
 
     for (ScheduledPass dependentPass : dependentPasses) {
@@ -364,7 +376,7 @@ final class PassExecutorService implements Disposable {
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
         try {
-          doRun();
+          ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
         }
         catch (ApplicationUtil.CannotRunReadActionException e) {
           myUpdateProgress.cancel();
@@ -379,7 +391,7 @@ final class PassExecutorService implements Disposable {
     private void doRun() {
       if (myUpdateProgress.isCanceled()) return;
 
-      log(myUpdateProgress, myPass, "Started. ");
+      log(myUpdateProgress, myPass, "Started.");
 
       for (ScheduledPass successor : mySuccessorsOnSubmit) {
         int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();

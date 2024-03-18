@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class EqualsCalledOnEnumConstantInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class EqualsCalledOnEnumConstantInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

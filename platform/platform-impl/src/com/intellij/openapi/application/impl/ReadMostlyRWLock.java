@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -206,9 +205,9 @@ final class ReadMostlyRWLock {
 
   private boolean tryReadLock(Reader status) {
     throwIfImpatient(status);
-    if (!isWriteRequested()) {
+    if (!isWriteInAnyState()) {
       status.readRequested = true;
-      if (!isWriteRequested()) {
+      if (!isWriteInAnyState()) {
         return true;
       }
       status.readRequested = false;
@@ -344,13 +343,16 @@ final class ReadMostlyRWLock {
     assert writeState == INITIAL;
   }
 
-  @VisibleForTesting
   boolean isWriteRequested() {
-    return writeState != INITIAL;
+    return writeState == WRITE_REQUESTED;
   }
 
   boolean isWriteAcquired() {
     return writeState == WRITE_ACQUIRED;
+  }
+
+  private boolean isWriteInAnyState() {
+    return writeState != INITIAL;
   }
 
   boolean isWriteIntentLocked() {

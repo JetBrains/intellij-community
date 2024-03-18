@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -39,7 +39,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -55,6 +54,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
@@ -249,7 +249,7 @@ object DynamicPlugins {
     }
 
     val epNameToExtensions = module.epNameToExtensions
-    if (epNameToExtensions != null) {
+    if (!epNameToExtensions.isEmpty()) {
       doCheckExtensionsCanUnloadWithoutRestart(
         extensions = epNameToExtensions,
         descriptor = module,
@@ -287,6 +287,11 @@ object DynamicPlugins {
     // if not a sub plugin descriptor, then check that any dependent plugin also reloadable
     if (parentModule != null && module !== parentModule) {
       return null
+    }
+
+    if (isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(module)) {
+      // force restarting the IDE in the case the dynamic plugin is incompatible with Kotlin Plugin K2 mode KTIJ-24797
+      return "Plugin ${module.pluginId} depends on the Kotlin plugin in K2 Mode, but the plugin does not support K2 Mode"
     }
 
     var dependencyMessage: String? = null
@@ -352,11 +357,8 @@ object DynamicPlugins {
    */
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    val extensions = (module.unsortedEpNameToExtensionElements.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
-    if (extensions != null && !extensions.all {
-        it.key == UIThemeProvider.EP_NAME.name ||
-        it.key == BundledKeymapBean.EP_NAME.name
-      }) {
+    val extensions = (module.epNameToExtensions.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
+    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name }) {
       return false
     }
     return checkNoComponentsOrServiceOverrides(module) == null && module.actions.isEmpty()
@@ -709,15 +711,20 @@ object DynamicPlugins {
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
     val unloadListeners = mutableListOf<Runnable>()
-    unregisterUnknownLevelExtensions(module.unsortedEpNameToExtensionElements, module, appExtensionArea, openedProjects,
+    unregisterUnknownLevelExtensions(module.epNameToExtensions, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
-    for (epName in (module.appContainerDescriptor.extensions?.keys ?: emptySet())) {
-      appExtensionArea.unregisterExtensions(epName, module, priorityUnloadListeners, unloadListeners)
+    for (epName in module.appContainerDescriptor.extensions.keys) {
+      appExtensionArea.unregisterExtensions(extensionPointName = epName,
+                                            pluginDescriptor = module,
+                                            priorityListenerCallbacks = priorityUnloadListeners,
+                                            listenerCallbacks = unloadListeners)
     }
-    for (epName in (module.projectContainerDescriptor.extensions?.keys ?: emptySet())) {
+    for (epName in module.projectContainerDescriptor.extensions.keys) {
       for (project in openedProjects) {
-        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, priorityUnloadListeners,
-                                                                           unloadListeners)
+        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(extensionPointName = epName,
+                                                                           pluginDescriptor = module,
+                                                                           priorityListenerCallbacks = priorityUnloadListeners,
+                                                                           listenerCallbacks = unloadListeners)
       }
     }
 
@@ -856,11 +863,13 @@ object DynamicPlugins {
         val listenerCallbacks = mutableListOf<Runnable>()
 
         // 4. load into service container
-        loadModules(pluginWithContentModules, app, listenerCallbacks)
+        loadModules(modules = pluginWithContentModules, app = app, listenerCallbacks = listenerCallbacks)
         loadModules(
-          optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet),
-          app,
-          listenerCallbacks,
+          modules = optionalDependenciesOnPlugin(dependencyPlugin = pluginDescriptor,
+                                                 classLoaderConfigurator = classLoaderConfigurator,
+                                                 pluginSet = pluginSet).toList(),
+          app = app,
+          listenerCallbacks = listenerCallbacks,
         )
 
         clearPluginClassLoaderParentListCache(pluginSet)
@@ -964,9 +973,6 @@ private fun clearNewFocusOwner() {
 }
 
 private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
-  if (!Registry.`is`("ide.await.scope.completion")) {
-    return
-  }
   for (classLoader in classLoaders) {
     cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job, _ ->
       while (job.isActive) {
@@ -1060,28 +1066,23 @@ private fun optionalDependenciesOnPlugin(
     .topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
-  return dependentPluginsAndItsModule.distinct()
+  return dependentPluginsAndItsModule
+    .distinct()
     .filter { (mainDescriptor, moduleDescriptor) ->
       // 3. setup classloaders
       classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
-    }.map { it.second }.toSet()
+    }
+    .map { it.second }
+    .toSet()
 }
 
-private fun loadModules(
-  modules: Collection<IdeaPluginDescriptorImpl>,
-  app: ApplicationImpl,
-  listenerCallbacks: MutableList<in Runnable>,
-) {
-  fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
-  }
-
-  registerComponents(app)
-  for (openProject in ProjectUtil.getOpenProjects()) {
-    registerComponents(openProject)
+private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
+  app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+  for (openProject in getOpenedProjects()) {
+    (openProject as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
     for (module in ModuleManager.getInstance(openProject).modules) {
-      registerComponents(module)
+      (module as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
     }
   }
 

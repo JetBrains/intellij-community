@@ -149,7 +149,13 @@ internal object Completions {
             val receiver = positionContext.superExpression
 
             // Implicit receivers do not match for this position completion context.
-            WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), positionContext.position)
+            WeighingContext.createWeighingContext(
+                basicContext,
+                receiver,
+                expectedType,
+                implicitReceivers = emptyList(),
+                positionContext.position
+            )
         }
 
         is KotlinWithSubjectEntryPositionContext -> {
@@ -158,10 +164,8 @@ internal object Completions {
             createWeighingContextForNameReference(basicContext, positionContext, symbolsToSkip)
         }
 
-        is KotlinExpressionNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-        is KotlinInfixCallPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-
-        else -> WeighingContext.createEmptyWeighingContext(positionContext.position)
+        is KotlinNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
+        else -> WeighingContext.createEmptyWeighingContext(basicContext, positionContext.position)
     }
 
     context(KtAnalysisSession)
@@ -170,11 +174,26 @@ internal object Completions {
         positionContext: KotlinNameReferencePositionContext,
         symbolsToSkip: Set<KtSymbol> = emptySet(),
     ): WeighingContext {
-        val expectedType = positionContext.nameExpression.getExpectedType()
+        val expectedType = when (positionContext) {
+            // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
+            // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
+            // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
+            // about expected type at all
+            // TODO: calculate actual types for callable references correctly and use information about expected type
+            is KotlinCallableReferencePositionContext -> null
+            else -> positionContext.nameExpression.getExpectedType()
+        }
         val receiver = positionContext.explicitReceiver
         val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
 
-        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, positionContext.position, symbolsToSkip)
+        return WeighingContext.createWeighingContext(
+            basicContext,
+            receiver,
+            expectedType,
+            implicitReceivers,
+            positionContext.position,
+            symbolsToSkip
+        )
     }
 }
 

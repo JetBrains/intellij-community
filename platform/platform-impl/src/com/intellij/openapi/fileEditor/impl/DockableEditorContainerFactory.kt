@@ -2,10 +2,10 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockContainerFactory
 import com.intellij.ui.docking.DockableContent
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls

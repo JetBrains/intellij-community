@@ -13,9 +13,4 @@ public class PyDoubleStarPatternImpl extends PyElementImpl implements PyDoubleSt
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyDoubleStarPattern(this);
   }
-
-  @Override
-  public boolean isIrrefutable() {
-    return true;
-  }
 }

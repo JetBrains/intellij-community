@@ -7,8 +7,6 @@ import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.annotations.ApiStatus
 
 object WorkspaceChangesRetentionUtil {
@@ -20,7 +18,6 @@ object WorkspaceChangesRetentionUtil {
   }
 
   private fun retainExcludedFolders(project: Project, currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
-    val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
     val previouslyExcludedUrls = currentStorage.entities(ExcludeUrlEntity::class.java)
     val newExcludedUrlMap = newStorage.entities(ExcludeUrlEntity::class.java).associateBy({ it.url }, { it })
     val newContentRootMap = newStorage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it })
@@ -40,7 +37,7 @@ object WorkspaceChangesRetentionUtil {
             }
             break
           }
-          parentUrl = virtualFileUrlManager.getParentVirtualUrl(parentUrl)
+          parentUrl = parentUrl.parent
         }
       }
     }

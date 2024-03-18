@@ -4,6 +4,7 @@ package com.intellij.terminal.completion
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
+import java.io.File
 
 internal class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
@@ -30,10 +31,10 @@ internal class CommandTreeBuilder private constructor(
       val name = arguments[curIndex]
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
       var suggestion = suggestions.find { it.names.contains(name) }
-      if (suggestion == null && name.contains('/')) {
+      if (suggestion == null && name.contains(File.separatorChar)) {
         // most probably it is a file path
-        val fileName = name.substringAfterLast('/')
-        suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName/" } != null }
+        val fileName = name.substringAfterLast(File.separatorChar)
+        suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName${File.separatorChar}" } != null }
       }
       if (suggestion == null
           && !root.getMergedParserDirectives().flagsArePosixNoncompliant

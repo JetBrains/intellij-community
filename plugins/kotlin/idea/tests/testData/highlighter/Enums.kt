@@ -1,3 +1,4 @@
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 package testing
 
 <symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">enum</symbolName> class <symbolName textAttributesKey="KOTLIN_ENUM">Test</symbolName> {

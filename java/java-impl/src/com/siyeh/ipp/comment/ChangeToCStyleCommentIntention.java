@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeToCStyleCommentIntention extends MCIntention {
+public final class ChangeToCStyleCommentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

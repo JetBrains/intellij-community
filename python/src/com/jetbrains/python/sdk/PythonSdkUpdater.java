@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -25,7 +24,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -37,11 +35,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -66,7 +64,7 @@ import java.util.function.Function;
 /**
  * Refreshes all project's Python SDKs.
  */
-public final class PythonSdkUpdater implements StartupActivity, DumbAware {
+public final class PythonSdkUpdater {
   private static final Logger LOG = Logger.getInstance(PythonSdkUpdater.class);
 
   private static final Object ourLock = new Object();
@@ -81,25 +79,9 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ourEnabledInTests = enabled;
   }
 
-  static boolean dropUpdaterInHeadless() {
-    return ApplicationManager.getApplication().isHeadlessEnvironment() && !Registry.is("ide.warmup.use.predicates");
-  }
-
   /**
    * Schedules a background refresh of the SDKs of the modules for the open project.
    */
-  @Override
-  public void runActivity(@NotNull Project project) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) return;
-    if (dropUpdaterInHeadless()) return; // see PythonHeadlessSdkUpdater
-    if (project.isDisposed()) return;
-
-    for (Sdk sdk : getPythonSdks(project)) {
-      scheduleUpdate(sdk, project);
-    }
-  }
-
   private static class PyUpdateSdkRequestData {
     final Instant myTimestamp;
     final Throwable myTraceback;
@@ -149,6 +131,8 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       if (isSdkDisposed()) {
         return;
       }
+      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress
+      cancelIndicatorOnProjectDisposal(indicator);
       if (Trigger.LOG.isDebugEnabled()) {
         Trigger.LOG.debug(
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
@@ -180,6 +164,17 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
         // restart code analysis
         ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
       }
+    }
+
+    private void cancelIndicatorOnProjectDisposal(@NotNull ProgressIndicator indicator) {
+      Disposable indicatorDisposable = indicator instanceof Disposable disposable ? disposable : new Disposable() {
+        @Override
+        public void dispose() {
+          LOG.info("Cancelling update for " + mySdk + " due to project " + myProject + " disposal");
+          indicator.cancel();
+        }
+      };
+      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
     }
 
     private void refreshPackages(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
@@ -361,7 +356,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData()));
   }
 
-  static boolean isUpdateScheduled(@NotNull Sdk sdk) {
+  public static boolean isUpdateScheduled(@NotNull Sdk sdk) {
     synchronized (ourLock) {
       return ourUnderRefresh.contains(sdk) || ourToBeRefreshed.containsKey(sdk);
     }
@@ -471,8 +466,6 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     pathsToTransfer.removeAll(nonTransferredModuleRoots);
 
     /*
-    Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
-
     PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
     that are not equal to module one (editable as well).
 
@@ -481,8 +474,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     When current method was executed for original sdk,
     roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
      */
-    if (ArrayUtil.contains(sdk, ProjectJdkTable.getInstance().getAllJdks()) &&
-        !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
       if (project != null) {
         PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
       }
@@ -688,7 +680,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
-        effectiveModificator.commitChanges();
+        ApplicationManager.getApplication().runWriteAction(() -> effectiveModificator.commitChanges());
       }
     });
   }
@@ -716,7 +708,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   }
 
   private enum Trigger {
-    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdater.runActivity"),
+    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity.execute"),
     CHANGE_UNDER_INTERPRETER_ROOTS("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$subscribeToLocalChanges"),
     REFRESH_AFTER_PACKAGING_OPERATION("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$refresh"),
     NEW_SDK_GENERATION("com.jetbrains.python.sdk.PySdkExtKt.createSdkByGenerateTask"),

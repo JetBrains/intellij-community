@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,12 +21,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -42,7 +46,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
-  private AnAction myNavigateAction = new NavigateAction<>(this);
+  private AnAction myNavigateAction;
   private final @NotNull GutterIconRenderer.Alignment myIconAlignment;
   private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -138,6 +142,9 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIconAlignment = alignment;
     this.elementRef = elementRef;
     myNavigationHandler = navHandler;
+    if (navHandler != null) {
+      myNavigateAction = new NavigateAction<>(this);
+    }
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
     updatePass = 11; //Pass.LINE_MARKERS;
@@ -202,7 +209,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return MarkupEditorFilter.EMPTY;
   }
 
-  public GutterIconNavigationHandler<T> getNavigationHandler() {
+  public final GutterIconNavigationHandler<T> getNavigationHandler() {
     return myNavigationHandler;
   }
 
@@ -210,7 +217,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return myAccessibleNameProvider;
   }
 
-  public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer {
+  public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer implements DumbAware {
     private final LineMarkerInfo<T> myInfo;
 
     public LineMarkerGutterIconRenderer(@NotNull LineMarkerInfo<T> info) {
@@ -244,6 +251,11 @@ public class LineMarkerInfo<T extends PsiElement> {
     @Override
     public boolean isNavigateAction() {
       return myInfo.myNavigationHandler != null;
+    }
+
+    @ApiStatus.Internal
+    public @Nullable ActionGroup getPopupMenuActions(@NotNull MouseEvent mouseEvent) {
+      return getPopupMenuActions();
     }
 
     @Override

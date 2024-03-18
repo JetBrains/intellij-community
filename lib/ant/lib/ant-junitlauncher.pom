@@ -26,38 +26,44 @@
         <groupId>org.apache.ant</groupId>
         <artifactId>ant-parent</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>1.10.12</version>
+        <version>1.10.14</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <url>https://ant.apache.org/</url>
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-junitlauncher</artifactId>
-    <version>1.10.12</version>
+    <version>1.10.14</version>
     <name>Apache Ant + JUnit 5</name>
     <description>contains JUnit 5.x support</description>
     <dependencies>
         <dependency>
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>1.10.12</version>
+            <version>1.10.14</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
-            <version>1.2.0</version>
+            <version>1.10.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.2.0</version>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
-            <version>5.2.0</version>
+            <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

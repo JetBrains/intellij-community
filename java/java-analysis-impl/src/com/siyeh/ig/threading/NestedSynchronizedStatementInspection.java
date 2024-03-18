@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NestedSynchronizedStatementInspection extends BaseInspection {
+public final class NestedSynchronizedStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class DeclarationMover extends LineMover {
+final class DeclarationMover extends LineMover {
   private static final Logger LOG = Logger.getInstance(DeclarationMover.class);
   @SuppressWarnings("StatefulEp")
   private PsiEnumConstant myEnumToInsertSemicolonAfter;

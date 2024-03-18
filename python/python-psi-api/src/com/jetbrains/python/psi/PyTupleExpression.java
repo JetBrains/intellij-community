@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyTupleExpression extends PySequenceExpression, Iterable<PyExpression> {
+import com.jetbrains.python.ast.PyAstTupleExpression;
+
+public interface PyTupleExpression extends PyAstTupleExpression<PyExpression>, PySequenceExpression, Iterable<PyExpression> {
 }

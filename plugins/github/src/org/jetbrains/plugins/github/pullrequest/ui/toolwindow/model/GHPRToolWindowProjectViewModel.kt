@@ -1,114 +1,85 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
+import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.onFailure
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
-import com.intellij.util.io.await
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult
+import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+
+private val LOG = logger<GHPRToolWindowProjectViewModel>()
 
 @ApiStatus.Experimental
 class GHPRToolWindowProjectViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
+  private val twVm: GHPRToolWindowViewModel,
   connection: GHRepositoryConnection
 ) : ReviewToolwindowProjectViewModel<GHPRToolWindowTab, GHPRToolWindowTabViewModel> {
   private val cs = parentCs.childScope()
 
   internal val dataContext: GHPRDataContext = connection.dataContext
+  val defaultBranch: String? = dataContext.repositoryDataService.defaultBranchName
 
-  private val allRepos = project.service<GHHostedRepositoriesManager>().knownRepositories.map(GHGitRepositoryMapping::repository)
+  private val repoManager = project.service<GHHostedRepositoriesManager>()
+  private val allRepos = repoManager.knownRepositories.map(GHGitRepositoryMapping::repository)
   val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
   override val projectName: String = GHUIUtil.getRepositoryDisplayName(allRepos, repository)
 
-  override val listVm: GHPRListViewModel =
-    GHPRListViewModel(project, cs, connection.dataContext)
+  override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
-  val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
-
-  private val _tabs = MutableStateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>>(
-    ReviewToolwindowTabs(emptyMap(), null)
-  )
-  override val tabs: StateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>> = _tabs.asStateFlow()
-
-  private val tabsGuard = Mutex()
-
-  private inline fun <reified T, reified VM> showTab(tab: T,
-                                                     crossinline vmProducer: (T) -> VM,
-                                                     crossinline processVM: VM.() -> Unit = {})
-    where T : GHPRToolWindowTab, VM : GHPRToolWindowTabViewModel {
-    cs.launch {
-      tabsGuard.withLock {
-        val current = _tabs.value
-        val currentVm = current.tabs[tab]
-        if (currentVm == null || currentVm !is VM || !tab.reuseTabOnRequest) {
-          currentVm?.destroy()
-          val tabVm = vmProducer(tab).apply(processVM)
-          _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
-        }
-        else {
-          currentVm.apply(processVM)
-          _tabs.value = current.copy(selectedTab = tab)
-        }
-      }
+  private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
+    DisposalCountingHolder {
+      GHPRViewModelContainer(project, cs, dataContext, this, id, it)
     }
   }
 
+  private val tabsHelper = ReviewToolwindowTabsStateHolder<GHPRToolWindowTab, GHPRToolWindowTabViewModel>()
+  override val tabs: StateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>> = tabsHelper.tabs.asStateFlow()
+
   private fun createVm(tab: GHPRToolWindowTab.PullRequest): GHPRToolWindowTabViewModel.PullRequest =
-    GHPRToolWindowTabViewModel.PullRequest(project, cs, dataContext, tab.prId)
+    GHPRToolWindowTabViewModel.PullRequest(cs, this, tab.prId)
 
   private fun createVm(tab: GHPRToolWindowTab.NewPullRequest): GHPRToolWindowTabViewModel.NewPullRequest =
     GHPRToolWindowTabViewModel.NewPullRequest(project, dataContext)
 
-  override fun selectTab(tab: GHPRToolWindowTab?) {
-    cs.launch {
-      tabsGuard.withLock {
-        _tabs.update {
-          it.copy(selectedTab = tab)
-        }
-      }
-    }
-  }
-
-  override fun closeTab(tab: GHPRToolWindowTab) {
-    cs.launch {
-      tabsGuard.withLock {
-        val current = _tabs.value
-        val currentVm = current.tabs[tab]
-        if (currentVm != null) {
-          currentVm.destroy()
-          _tabs.value = current.copy(current.tabs - tab, null)
-        }
-      }
-    }
-  }
+  override fun selectTab(tab: GHPRToolWindowTab?) = tabsHelper.select(tab)
+  override fun closeTab(tab: GHPRToolWindowTab) = tabsHelper.close(tab)
 
   fun createPullRequest(requestFocus: Boolean = true) {
-    showTab(GHPRToolWindowTab.NewPullRequest, ::createVm) {
+    tabsHelper.showTab(GHPRToolWindowTab.NewPullRequest, ::createVm) {
       if (requestFocus) {
         requestFocus()
       }
@@ -123,7 +94,10 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true) {
-    showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
+    if (requestFocus) {
+      twVm.activate()
+    }
+    tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       if (requestFocus) {
         requestFocus()
       }
@@ -131,14 +105,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
-    showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
+    twVm.activate()
+    tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
-    }
-  }
-
-  fun viewPullRequest(id: GHPRIdentifier, commitOid: String?, filePath: String) {
-    showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
-      selectChange(commitOid, filePath)
     }
   }
 
@@ -148,6 +117,45 @@ class GHPRToolWindowProjectViewModel internal constructor(
   fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
     dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
 
+  fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
+    pullRequestsVms[id].acquireValue(disposable).infoVm
+
+  fun acquireEditorReviewViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRReviewInEditorViewModel =
+    pullRequestsVms[id].acquireValue(disposable).editorVm
+
+  fun acquireBranchWidgetModel(id: GHPRIdentifier, disposable: Disposable): GHPRBranchWidgetViewModel =
+    pullRequestsVms[id].acquireValue(disposable).branchWidgetVm
+
+  fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
+    pullRequestsVms[id].acquireValue(disposable).diffVm
+
+  fun acquireTimelineViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRTimelineViewModel =
+    pullRequestsVms[id].acquireValue(disposable).timelineVm
+
+  fun findDetails(pullRequest: GHPRIdentifier): GHPullRequestShort? =
+    dataContext.listLoader.loadedData.find { it.id == pullRequest.id }
+    ?: dataContext.dataProviderRepository.findDataProvider(pullRequest)?.detailsData?.loadedDetails
+
+  private val prOnCurrentBranchRefreshSignal =
+    MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  val prOnCurrentBranch: StateFlow<ComputedResult<GHPRIdentifier?>?> =
+    repoManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)
+      .combineTransform(prOnCurrentBranchRefreshSignal.withInitial(Unit)) { projectAndBranch, _ ->
+        if (projectAndBranch == null) {
+          emit(ComputedResult.success(null))
+        }
+        else {
+          val (targetProject, remoteBranch) = projectAndBranch
+          computeEmitting {
+            val targetRepository = targetProject.repository.repositoryPath
+            dataContext.creationService.findOpenPullRequest(null, targetRepository, remoteBranch)
+          }?.onFailure {
+            LOG.warn("Could not lookup a pull request for current branch", it)
+          }
+        }
+      }.stateIn(cs, SharingStarted.Lazily, null)
+
   suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
     val creationService = dataContext.creationService
     val repositoryDataService = dataContext.repositoryDataService
@@ -155,13 +163,16 @@ class GHPRToolWindowProjectViewModel internal constructor(
     val repositoryMapping = repositoryDataService.repositoryMapping
     val defaultRemoteBranch = repositoryDataService.getDefaultRemoteBranch() ?: return null
 
-    val pullRequest = creationService.findPullRequestAsync(
-      EmptyProgressIndicator(),
+    val pullRequest = creationService.findOpenPullRequest(
       baseBranch = defaultRemoteBranch,
-      repositoryMapping,
+      repositoryMapping.repository.repositoryPath,
       headBranch = GitStandardRemoteBranch(repositoryMapping.gitRemote, pushResult.sourceBranch)
-    ).await()
+    )
 
     return pullRequest != null
+  }
+
+  fun refreshPrOnCurrentBranch() {
+    prOnCurrentBranchRefreshSignal.tryEmit(Unit)
   }
 }

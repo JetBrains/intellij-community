@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.keymap.impl
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.ResourceUtil
 import org.jdom.Element
-import java.util.function.BiConsumer
 
 open class DefaultKeymap {
   internal val keymaps: MutableList<Keymap> = ArrayList()
@@ -43,7 +42,7 @@ open class DefaultKeymap {
     var macosParentKeymapFound = false
     val macOsBeans = if (SystemInfoRt.isMac) null else LinkedHashMap<BundledKeymapBean, PluginDescriptor>()
 
-    BundledKeymapBean.EP_NAME.processWithPluginDescriptor(BiConsumer { bean, pluginDescriptor ->
+    BundledKeymapBean.EP_NAME.processWithPluginDescriptor { bean, pluginDescriptor ->
       val keymapName = getKeymapName(bean)
       // filter out bundled keymaps for other systems, but allow them via non-bundled plugins
       // on non-macOS add non-bundled known macOS keymaps if the default macOS keymap is present
@@ -59,7 +58,7 @@ open class DefaultKeymap {
 
         (if (isMacOsBean) macOsBeans!! else filteredBeans).put(bean, pluginDescriptor)
       }
-    })
+    }
     if (macosParentKeymapFound && macOsBeans != null) {
       filteredBeans.putAll(macOsBeans)
     }
@@ -110,7 +109,7 @@ open class DefaultKeymap {
       SystemInfoRt.isMac -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
       SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
       SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
-      SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
+      SystemInfo.isUnix -> KeymapManager.X_WINDOW_KEYMAP
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 

@@ -18,3 +18,17 @@ class MockCustomLibraryTableDescription : CustomLibraryTableDescription {
     return "mock"
   }
 }
+
+class NewMockCustomLibraryTableDescription : CustomLibraryTableDescription {
+  override fun getPresentation(): LibraryTablePresentation {
+    return object : LibraryTablePresentation() {
+      override fun getLibraryTableEditorTitle(): String = "NewMock"
+      override fun getDescription(): String = "NewMock"
+      override fun getDisplayName(plural: Boolean): String = "NewMock"
+    }
+  }
+
+  override fun getTableLevel(): String {
+    return "new_mock"
+  }
+}

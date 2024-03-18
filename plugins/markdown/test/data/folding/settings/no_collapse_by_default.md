@@ -5,7 +5,7 @@ Some front matter
 ---</fold>
 
 
-[Some link](<fold text='...' expand='false'>#some-extremely-long-link-that-should-be-folded</fold>)
+[Some link](<fold text='...' expand='true'>#some-extremely-long-link-that-should-be-folded</fold>)
 
 
 <fold text='table: | Simple | Table     |...sed |' expand='true'>| Simple | Table     |
@@ -26,7 +26,7 @@ to be collapsed
 
 
 <fold text='table of contents' expand='true'><!-- TOC -->
-<fold text='unordered list: * [Some primary header...ader)' expand='true'>* [Some primary header](<fold text='...' expand='false'>#some-primary-header</fold>)
-  * [Some secondary header](<fold text='...' expand='false'>#some-secondary-header</fold>)</fold>
+<fold text='unordered list: * [Some primary header...ader)' expand='true'>* [Some primary header](<fold text='...' expand='true'>#some-primary-header</fold>)
+  * [Some secondary header](<fold text='...' expand='true'>#some-secondary-header</fold>)</fold>
 <!-- TOC --></fold>
 </fold></fold>

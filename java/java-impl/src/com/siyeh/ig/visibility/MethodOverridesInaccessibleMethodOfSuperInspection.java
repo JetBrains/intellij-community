@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MethodOverridesInaccessibleMethodOfSuperInspection extends BaseInspection {
+public final class MethodOverridesInaccessibleMethodOfSuperInspection extends BaseInspection {
 
   @Override
   @NotNull

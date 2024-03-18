@@ -121,6 +121,15 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
+   * @param file file to check
+   * @return true if the inspection is available for this particular file. If false is returned, 
+   * {@link #buildVisitor(ProblemsHolder, boolean, LocalInspectionToolSession)} method will not be called by inspection engine.
+   */
+  public boolean isAvailableForFile(@NotNull PsiFile file) {
+    return true;
+  }
+
+  /**
    * Override to provide your own inspection visitor.
    * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.

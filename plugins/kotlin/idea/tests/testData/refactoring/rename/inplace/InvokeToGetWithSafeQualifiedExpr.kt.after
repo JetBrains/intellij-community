@@ -1,6 +1,5 @@
 // NEW_NAME: get
 // RENAME: member
-// IGNORE_K2
 
 class WInvoke {
     operator fun get(body: () -> Unit) { }

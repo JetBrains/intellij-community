@@ -1,7 +1,6 @@
 class X {
   int switchTest1(Object obj) {
     return switch (obj) {
-      case <error descr="Parenthesized patterns are not supported at language level '21'">(String s)</error> -> 1;
       case Integer i -> 3;
       case default -> 4;
       case null -> 10;
@@ -47,10 +46,10 @@ class X {
   }
 
   int instanceofTest(Object obj) {
-    if (obj instanceof (Integer i<error descr="')' expected"> </error>&& predicate())<error descr="Statement expected"><error descr="Unexpected token">)</error></error> {
+    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>(Integer<error descr="')' expected"> </error><error descr="Cannot resolve symbol 'i'">i</error> && predicate()<error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
       return 1;
     }
-    if (obj instanceof <error descr="Parenthesized patterns are not supported at language level '21'">(String s)</error>) {
+    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>(String<error descr="')' expected"> </error><error descr="Cannot resolve symbol 's'">s</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
       return 3;
     }
     return 2;

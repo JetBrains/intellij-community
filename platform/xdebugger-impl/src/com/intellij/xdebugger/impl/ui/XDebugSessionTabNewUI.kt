@@ -51,7 +51,12 @@ open class XDebugSessionTabNewUI(
 
   override fun initToolbars(session: XDebugSessionImpl) {
     val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
-    (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(isVerticalToolbar)
+    (myUi as? RunnerLayoutUiImpl)?.also {
+      it.setLeftToolbarVisible(isVerticalToolbar)
+      if (Registry.`is`("debugger.toolbar.before.tabs", true)) {
+        it.setTopLeftActionsBefore(true)
+      }
+    }
 
     val toolbar = DefaultActionGroupWithDelegate(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
@@ -82,13 +87,12 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = headerGroup.getChildren(null).toList()
-    toolbar.addAll(headerActions)
+    val headerActions = headerGroup.getChildren(null)
+    RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
 
     val more = MoreActionGroup()
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    val moreActionsWithoutDuplicates = RunContentBuilder.removeDuplicatesExceptSeparators(moreGroup.getChildren(null), headerActions)
-    more.addAll(moreActionsWithoutDuplicates)
+    RunContentBuilder.addAvoidingDuplicates(more, moreGroup.getChildren(null), headerActions)
     more.addSeparator()
 
     // reversed because it was like this in the original tab

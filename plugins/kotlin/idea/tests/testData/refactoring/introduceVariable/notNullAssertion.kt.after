@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(): Int {
     val s: String? = ""
     val length = s!!.length

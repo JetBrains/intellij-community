@@ -25,15 +25,17 @@ import java.util.*
 )
 @ApiStatus.Internal
 internal class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager, Disposable {
+  private val defaultValueChangeListener = object : RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(RegistryManager.TOPIC).afterValueChanged(value)
+    }
+  }
+
   init {
     runActivity("registry keys adding") {
       RegistryKeyBean.addKeysFromPlugins()
     }
-    Registry.setValueChangeListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(RegistryManager.TOPIC).afterValueChanged(value)
-      }
-    })
+    Registry.setValueChangeListener(defaultValueChangeListener)
 
     // EarlyAccessRegistryManager cannot access AppLifecycleListener
     ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
@@ -65,6 +67,10 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
   }
 
   override fun get(key: String): RegistryValue = Registry._getWithoutStateCheck(key)
+
+  override fun resetValueChangeListener() {
+    Registry.setValueChangeListener(defaultValueChangeListener)
+  }
 
   override fun getState(): Element = Registry.getInstance().state
 

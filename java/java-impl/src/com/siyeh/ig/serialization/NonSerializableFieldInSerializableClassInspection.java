@@ -19,11 +19,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
+public final class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
@@ -52,7 +52,8 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiModifierListOwner field = (PsiModifierListOwner)infos[0];
-    return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
+    return SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(field, this, insp -> insp.ignorableAnnotations)
+      .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

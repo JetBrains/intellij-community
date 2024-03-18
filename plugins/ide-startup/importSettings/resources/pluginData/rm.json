@@ -1,0 +1,262 @@
+[
+  {
+    "vsCodeId": "4ops.terraform",
+    "ideaName": "Terraform and HCL",
+    "ideaId": "org.intellij.plugins.hcl"
+  },
+  {
+    "vsCodeId": "abusaidm.html-snippets",
+    "ideaName": "HTML Snippets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "aki77.rails-routes",
+    "ideaName": "Rails Routes",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "aliariff.vscode-erb-beautify",
+    "ideaName": "ERB support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bung87.rails",
+    "ideaName": "Rails support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bung87.vscode-gemfile",
+    "ideaName": "Gemfile support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "castwide.solargraph",
+    "ideaName": "Ruby support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "connorshea.vscode-ruby-test-adapter",
+    "ideaName": "Ruby Test Runner",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "CraigMaslowski.erb",
+    "ideaName": "ERB support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "cweijan.vscode-mysql-client2",
+    "ideaName": "Database Tools and SQL",
+    "ideaId": "com.intellij.database"
+  },
+  {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
+    "vsCodeId": "esbenp.prettier-vscode",
+    "ideaName": "Prettier",
+    "ideaId": "intellij.prettierJS"
+  },
+  {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.vscode-mysql",
+    "ideaName": "Database Tools and SQL",
+    "ideaId": "com.intellij.database"
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab Workflow",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql"
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql"
+  },
+  {
+    "vsCodeId": "HashiCorp.terraform",
+    "ideaName": "Terraform and HCL",
+    "ideaId": "org.intellij.plugins.hcl"
+  },
+  {
+    "vsCodeId": "kaiwood.endwise",
+    "ideaName": "Ruby support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "karunamurti.haml",
+    "ideaName": "HAML support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "KoichiSasada.vscode-rdbg",
+    "ideaName": "Ruby Debugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "misogi.ruby-rubocop",
+    "ideaName": "Rubocop support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mongodb.mongodb-vscode",
+    "ideaName": "Database Tools and SQL",
+    "ideaId": "com.intellij.database"
+  },
+  {
+    "vsCodeId": "mrmlnc.vscode-scss",
+    "ideaName": "Sass",
+    "ideaId": "org.jetbrains.plugins.sass"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "ideaName": "Docker",
+    "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
+  },
+  {
+    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "ideaName": "Kubernetes",
+    "ideaId": "com.intellij.kubernetes"
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "ideaName": "Code With Me",
+    "ideaId": "com.jetbrains.codeWithMe"
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "noku.rails-run-spec-vscode",
+    "ideaName": "RSpec support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Shopify.ruby-lsp",
+    "ideaName": "Ruby support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Shopify.theme-check-vscode",
+    "ideaName": "Liquid support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sianglim.slim",
+    "ideaName": "Slim support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sorbet.sorbet-vscode-extension",
+    "ideaName": "Ruby Sorbet support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
+    "vsCodeId": "svelte.svelte-vscode",
+    "ideaName": "Svelte",
+    "ideaId": "dev.blachut.svelte.lang"
+  },
+  {
+    "vsCodeId": "techer.open-in-browser",
+    "ideaName": "Open in browser",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
+  },
+  {
+    "vsCodeId": "Zignd.html-css-class-completion",
+    "ideaName": "CSS",
+    "ideaId": "com.intellij.css"
+  }
+]

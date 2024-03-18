@@ -302,12 +302,12 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   private fun assertTypeResult(c: Char, xml: String) {
-    assertTypeResultInRegularFile(myProjectPom, c, createPomXml(xml))
+    assertTypeResultInRegularFile(projectPom, c, createPomXml(xml))
   }
 
   private fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {
     type(f, c)
-    myFixture.checkResult(expected)
+    fixture.checkResult(expected)
   }
 
   private fun assertBackspaceResult(xml: String) {

@@ -23,6 +23,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
       override fun visitCallExpression(node: UCallExpression): Boolean {
         val (howServiceRetrieved, serviceClass) = getServiceRetrievingInfo(node) ?: return true
         val retrievingExpression = getRetrievingExpression(node) ?: return true
+        if (retrievingExpression.isInitializerOfVariableAnnotatedAsNullable) return true
         val getInstanceMethod = findGetInstanceMethod(retrievingExpression, howServiceRetrieved, serviceClass)
         if (getInstanceMethod != null) {
           registerProblem(getInstanceMethod, howServiceRetrieved, holder, retrievingExpression)
@@ -38,6 +39,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
     val returnExpr = retrievingExpression.uastParent as? UReturnExpression
     val containingMethod = returnExpr?.jumpTarget as? UMethod
     if (containingMethod != null) {
+      if (containingMethod.isNullable) return null
       if (howServiceRetrieved == Service.Level.APP && isGetInstanceApplicationLevel(containingMethod)) return null
       if (howServiceRetrieved == Service.Level.PROJECT && isGetInstanceProjectLevel(containingMethod)) return null
     }
@@ -91,11 +93,14 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
   private fun isApplicableForGetInstance(method: UMethod): Boolean {
     return method.isStaticOrJvmStatic &&
            method.visibility == UastVisibility.PUBLIC &&
-           !method.javaPsi.hasAnnotation(Nullable::class.java.canonicalName)
+           !method.isNullable
   }
 
   private val UMethod.isStaticOrJvmStatic: Boolean
     get() = this.isStatic || this.findAnnotation(JvmStatic::class.java.canonicalName) != null
+
+  private val UMethod.isNullable: Boolean
+    get() = javaPsi.hasAnnotation(Nullable::class.java.canonicalName)
 
   private fun getReturnExpression(method: UMethod): UReturnExpression? {
     return (method.uastBody as? UBlockExpression)?.expressions?.singleOrNull() as? UReturnExpression
@@ -139,3 +144,10 @@ private fun getRetrievingExpression(call: UCallExpression): UExpression? {
     return qualifiedCall.takeIf { qualifiedCall.accessType == UastQualifiedExpressionAccessType.SIMPLE }
   } else call
 }
+
+private val UExpression.isInitializerOfVariableAnnotatedAsNullable: Boolean
+  get() {
+    val variable = getContainingUVariable() ?: return false
+    return variable.uastInitializer?.sourcePsi == sourcePsi &&
+           variable.uAnnotations.find { it.qualifiedName == Nullable::class.java.canonicalName } != null
+  }

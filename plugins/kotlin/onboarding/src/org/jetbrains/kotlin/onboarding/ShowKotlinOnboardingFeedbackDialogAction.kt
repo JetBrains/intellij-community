@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.onboarding
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class ShowKotlinOnboardingFeedbackDialogAction : AnAction(FeedbackBundle.message("show.dialog.action.name")) {
+class ShowKotlinOnboardingFeedbackDialogAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         OnboardingFeedbackDialog(e.project, true).show()
     }

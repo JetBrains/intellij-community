@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
@@ -49,7 +49,7 @@ class IntroduceVariableIntention : SelfTargetingIntention<PsiElement>(
 
     override fun applyTo(element: PsiElement, editor: Editor?) {
         val expression = getExpressionToProcess(element) ?: return
-        KotlinIntroduceVariableHandler.doRefactoring(
+        K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             element.project, editor, expression, isVar = false, occurrencesToReplace = null, onNonInteractiveFinish = null
         )
     }

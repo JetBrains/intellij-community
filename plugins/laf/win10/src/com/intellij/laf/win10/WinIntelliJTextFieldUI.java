@@ -15,8 +15,6 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
-import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -104,7 +102,7 @@ public final class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     Insets i = c.getInsets();
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class,
                                                                                              (Component)c) != null ?
-           textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
+           textHeight : JBUI.CurrentTheme.TextField.minimumSize().height + i.top + i.bottom;
   }
 
   @Override

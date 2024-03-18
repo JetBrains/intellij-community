@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlipSetterCallIntention extends MCIntention {
+public final class FlipSetterCallIntention extends MCIntention {
   @Override
   protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     return getFamilyName();
@@ -41,7 +41,7 @@ public class FlipSetterCallIntention extends MCIntention {
           PsiMethodCallExpression flipped = flipCall(call);
           if (flipped != null) {
             updater.highlight(flipped);
-            updater.moveTo(flipped);
+            updater.moveCaretTo(flipped);
           }
         }
         return;

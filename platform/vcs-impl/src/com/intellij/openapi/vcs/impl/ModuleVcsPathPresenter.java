@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -55,8 +56,8 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     final FilePath fromPath = fromRevision.getFile();
     final FilePath toPath = toRevision.getFile();
 
-    final VirtualFile fromParent = ChangesUtil.findValidParentAccurately(fromPath);
-    final VirtualFile toParent = ChangesUtil.findValidParentAccurately(toPath);
+    final VirtualFile fromParent = VcsImplUtil.findValidParentAccurately(fromPath);
+    final VirtualFile toParent = VcsImplUtil.findValidParentAccurately(toPath);
 
     if (fromParent != null && toParent != null) {
       String moduleResult = ReadAction.compute(() -> {

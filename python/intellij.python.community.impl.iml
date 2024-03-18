@@ -111,7 +111,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.extensions" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
@@ -143,5 +142,12 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.platform.ml.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.syntax" />
   </component>
 </module>

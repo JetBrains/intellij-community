@@ -224,4 +224,42 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     doClassTest(methodWithAnnotation, methodWithAnnotation);
     doClassTest(methodWithAnnotationAndVisibility, methodWithAnnotationAndVisibility);
   }
+
+  public void testMoveSimpleMethodBodyOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {int x = 1;}
+                     """,
+                """
+                  public void foo() {
+                      int x = 1;
+                  }
+                  """);
+  }
+
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {}
+                     """,
+                """
+                  public void foo() { }
+                  """);
+  }
+
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {int x = 1;}
+                     """,
+                """
+                  public void foo() { int x = 1; }
+                  """);
+  }
 }

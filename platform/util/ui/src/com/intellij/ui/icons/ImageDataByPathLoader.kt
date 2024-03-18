@@ -66,9 +66,9 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                             path: String,
                             classLoader: ClassLoader,
                             toolTip: Supplier<String?>? = null): CachedImageIcon {
-      val loader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
-      val resolver = if (patched == null) loader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = loader)
-      return CachedImageIcon(resolver = resolver, toolTip = toolTip)
+      val originalLoader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
+      val loader = if (patched == null) originalLoader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = originalLoader)
+      return CachedImageIcon(loader = loader, toolTip = toolTip, originalLoader = loader.original ?: loader)
     }
 
     private fun doPatch(originalLoader: ImageDataByPathLoader,
@@ -76,7 +76,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                         isOriginal: Boolean): ImageDataLoader? {
       val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
       val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
-      return if (patched.first.startsWith("file:/")) {
+      return if (patched.first.startsWith(FILE_SCHEME_PREFIX)) {
         ImageDataByFilePathLoader(patched.first)
       }
       else {
@@ -94,6 +94,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                      colorPatcherProvider = parameters.colorPatcher,
                      scaleContext = scaleContext,
                      classLoader = classLoader,
+                     isStroke = parameters.isStroke,
       // CachedImageIcon instance cache the resolved image
                      useCache = false)
   }

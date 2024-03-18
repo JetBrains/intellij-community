@@ -21,21 +21,20 @@ public class IntelliSortChooserPopupAction extends DefaultActionGroup {
   public IntelliSortChooserPopupAction() {
     super(VcsLogBundle.messagePointer("action.IntelliSortChooserPopupAction.text"),
           VcsLogBundle.messagePointer("action.IntelliSortChooserPopupAction.description"), VcsLogIcons.IntelliSort);
+    getTemplatePresentation().setPopupGroup(true);
   }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+    if (e == null) return EMPTY_ARRAY;
+    VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (logUI == null) return EMPTY_ARRAY;
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+    if (properties == null) return EMPTY_ARRAY;
 
     return Arrays.stream(PermanentGraph.SortType.values())
       .map(sortType -> new SelectIntelliSortTypeAction(logUI, properties, sortType))
       .toArray(AnAction[]::new);
-  }
-
-  @Override
-  public boolean isPopup() {
-    return true;
   }
 
   @Override

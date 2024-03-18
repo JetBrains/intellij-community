@@ -19,9 +19,9 @@ internal class LibraryUsageStatisticsAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
-    val caretOffset = e.getRequiredData(CommonDataKeys.CARET).offset
-    val psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE)
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    val caretOffset = e.getData(CommonDataKeys.CARET)?.offset ?: return
+    val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val fileType = psiFile.fileType
     fun showErrorHint(message: String): Unit = HintManager.getInstance().showErrorHint(editor, message)
 

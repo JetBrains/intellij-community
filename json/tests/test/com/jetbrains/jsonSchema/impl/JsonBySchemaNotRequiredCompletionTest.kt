@@ -2,10 +2,9 @@
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 /** Describes all the behavior we cover have for common use cases that configure objects to have field only based on a condition. */
-class JsonBySchemaNotRequiredCompletionTest: JsonBySchemaCompletionBaseTest() {
+class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
 
   fun `test not required x than it won't complete property x`() {
     assertThatSchema("""
@@ -261,14 +260,15 @@ class JsonBySchemaNotRequiredCompletionTest: JsonBySchemaCompletionBaseTest() {
   }
 
   private fun JsonSchemaAppliedToJsonSetup.hasCompletionVariantsAtCaret(vararg expectedVariants: String): JsonSchemaSetup {
-    testBySchema(
-      schemaSetup.schemaJson,
-      json,
-      "json",
-      { it.apply(schemaSetup.configurator) },
-      LookupElement::getLookupString,
-      *expectedVariants.map { "\"$it\"" }.toTypedArray(),
-    )
+    testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
+      testBySchema(
+        schemaSetup.schemaJson,
+        json,
+        "json",
+        LookupElement::getLookupString,
+        *expectedVariants.map { "\"$it\"" }.toTypedArray(),
+      )
+    }
     return schemaSetup
   }
 

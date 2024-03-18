@@ -49,7 +49,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 69);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 70);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
@@ -194,7 +194,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
 
     @Override
-    public String getKey() {
+    public @NotNull String getKey() {
       return schema;
     }
   }

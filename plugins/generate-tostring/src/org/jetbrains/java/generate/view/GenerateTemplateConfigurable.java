@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.generate.view;
 
 import com.intellij.java.JavaBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -18,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -30,9 +32,9 @@ import java.util.List;
 import java.util.*;
 
 public class GenerateTemplateConfigurable implements UnnamedConfigurable{
-    private final TemplateResource template;
-    private final Editor myEditor;
-    private final List<String> availableImplicits = new ArrayList<>();
+  private final TemplateResource template;
+  private final Editor myEditor;
+  private final List<String> availableImplicits = new ArrayList<>();
   private @Nls String myHint;
 
   public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
@@ -45,25 +47,27 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       Document doc = factory.createDocument(template.getTemplate());
       final FileType ftl = FileTypeManager.getInstance().findFileTypeByName("VTL");
       if (project != null && ftl != null) {
-        final PsiFile file = PsiFileFactory.getInstance(project)
+        Document document = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+          final PsiFile file = PsiFileFactory.getInstance(project)
             .createFileFromText(template.getFileName(), ftl, template.getTemplate(), LocalTimeCounter.currentTime(), true);
-        if (!template.isDefault()) {
-          final HashMap<String, PsiType> map = new LinkedHashMap<>();
-          map.put("java_version", PsiTypes.intType());
-          map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
-          if (multipleFields) {
-            map.put("fields", TemplatesManager.createFieldListElementType(project));
+          if (!template.isDefault()) {
+            final HashMap<String, PsiType> map = new LinkedHashMap<>();
+            map.put("java_version", PsiTypes.intType());
+            map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
+            if (multipleFields) {
+              map.put("fields", TemplatesManager.createFieldListElementType(project));
+            }
+            else {
+              map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
+            }
+            map.put("helper", TemplatesManager.createElementType(project, GenerationHelper.class));
+            map.put("settings", TemplatesManager.createElementType(project, JavaCodeStyleSettings.class));
+            map.putAll(contextMap);
+            availableImplicits.addAll(map.keySet());
+            file.getViewProvider().putUserData(TemplatesManager.TEMPLATE_IMPLICITS, map);
           }
-          else {
-            map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
-          }
-          map.put("helper", TemplatesManager.createElementType(project, GenerationHelper.class));
-          map.put("settings", TemplatesManager.createElementType(project, JavaCodeStyleSettings.class));
-          map.putAll(contextMap);
-          availableImplicits.addAll(map.keySet());
-          file.getViewProvider().putUserData(TemplatesManager.TEMPLATE_IMPLICITS, map);
-        }
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+          return PsiDocumentManager.getInstance(project).getDocument(file);
+        });
         if (document != null) {
           doc = document;
         }
@@ -76,7 +80,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     }
 
     @Override
-    public JComponent createComponent() {
+    public @NotNull JComponent createComponent() {
       final JComponent component = myEditor.getComponent();
       if (availableImplicits.isEmpty() && myHint == null) {
         return component;

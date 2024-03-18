@@ -7,5 +7,4 @@ fun foo(x: String?, y: String) {
 
 fun bar(s: String, t: String) = s.hashCode() + t.hashCode()
 
-/* IGNORE_K2 */
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.WrapWithSafeLetCallFixFactories$applicator$1

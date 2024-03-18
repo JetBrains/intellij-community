@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.PATTERNS_IN_SWITCH;
+import static com.intellij.pom.java.JavaFeature.PATTERNS_IN_SWITCH;
 
 public final class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassHint {
   private static final Logger LOG = Logger.getInstance(JavaCompletionProcessor.class);
@@ -155,7 +156,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       return true;
     }
 
-    if (element instanceof PsiMethod method && PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {
+    if (element instanceof PsiMethod method && PsiTypesUtil.isGetClass(method) && PsiUtil.isAvailable(JavaFeature.GENERICS, myElement)) {
       PsiType patchedType = PsiTypesUtil.createJavaLangClassType(myElement, myQualifierType, false);
       if (patchedType != null) {
         element = new LightMethodBuilder(element.getManager(), method.getName()).
@@ -192,7 +193,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       }
     }
 
-    if (!(element instanceof PsiClass psiClass) || !PATTERNS_IN_SWITCH.isAvailable(myElement)) return true;
+    if (!(element instanceof PsiClass psiClass) || !PsiUtil.isAvailable(PATTERNS_IN_SWITCH, myElement)) return true;
 
     if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
       addSealedHierarchy(state, psiClass);

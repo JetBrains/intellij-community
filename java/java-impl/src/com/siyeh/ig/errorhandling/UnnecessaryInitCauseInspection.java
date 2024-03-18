@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryInitCauseInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryInitCauseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Nullable
   @Override

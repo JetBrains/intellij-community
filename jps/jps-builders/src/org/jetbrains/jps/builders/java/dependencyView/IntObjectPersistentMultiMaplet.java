@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 
 public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
-  private static final int CACHE_SIZE = 128;
+  private static final int CACHE_SIZE = 256;
   private final PersistentHashMap<Integer, Collection<V>> map;
   private final DataExternalizer<V> valueExternalizer;
   private final LoadingCache<Integer, Collection<V>> cache;

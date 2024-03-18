@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -425,6 +425,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testOneLineLambdaVoidCompatible() {UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}"))); doTest("c", false, false, false, JAVA_LANG_STRING); }
   public void testOneLineLambdaValueCompatible() { doTest("c", false, false, false, "int"); }
+  public void testStatementsBeforeSuper() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest("c", false, false, false, "int"));
+  }
 
   public void testPutInLambdaBody() {
     UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("J: (Object a) -> {...}")));
@@ -510,6 +513,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest("x", true, false, true, "int");
   }
 
+  public void testIntroduceVariableInsideImplicitClass() {
+    doTest("x", true, false, false, "java.lang.Class<Nested>");
+  }
+
   private void doTestWithVarType(IntroduceVariableBase testMe) {
     Boolean asVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
     try {
@@ -540,8 +547,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     testMe.invoke(getProject(), getEditor(), getFile(), null);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-    if (state == null) return;
-    state.gotoEnd(false);
+    if (state != null) {
+      state.gotoEnd(false);
+    }
     checkResultByFile(baseName + ".after.java");
   }
 }

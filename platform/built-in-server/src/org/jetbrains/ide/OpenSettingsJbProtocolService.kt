@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.ide.IdeBundle
@@ -13,7 +13,14 @@ private const val SERVICE_NAME = "settings"
 
 @Internal
 class OpenSettingsJbProtocolService : JBProtocolCommand(SERVICE_NAME) {
-  companion object {
+
+  override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? {
+    return parameter(parameters, "name").let { name ->
+      if (Util.doOpenSettings(name)) null else IdeBundle.message("jb.protocol.settings.no.configurable", name)
+    }
+  }
+
+  object Util {
     fun doOpenSettings(name: String): Boolean {
       val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       val configurable = SearchConfigurableByNameHelper(name, project).searchByName() ?: return false
@@ -21,12 +28,6 @@ class OpenSettingsJbProtocolService : JBProtocolCommand(SERVICE_NAME) {
         Runnable { SettingsDialogFactory.getInstance().create(project, SettingsDialog.DIMENSION_KEY, configurable, false, false).show() },
         project.disposed)
       return true
-    }
-  }
-
-  override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? {
-    return parameter(parameters, "name").let { name ->
-      if (doOpenSettings(name)) null else IdeBundle.message("jb.protocol.settings.no.configurable", name)
     }
   }
 }

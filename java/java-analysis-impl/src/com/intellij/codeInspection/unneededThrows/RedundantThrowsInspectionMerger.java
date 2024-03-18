@@ -18,7 +18,7 @@ package com.intellij.codeInspection.unneededThrows;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantThrowsInspectionMerger extends InspectionElementsMerger {
+public final class RedundantThrowsInspectionMerger extends InspectionElementsMerger {
   @NotNull
   @Override
   public String getMergedToolName() {

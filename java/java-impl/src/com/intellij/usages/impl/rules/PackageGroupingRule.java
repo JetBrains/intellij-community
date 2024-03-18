@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class PackageGroupingRule extends DirectoryGroupingRule {
+public final class PackageGroupingRule extends DirectoryGroupingRule {
   public PackageGroupingRule(@NotNull Project project) {
     super(project);
   }
@@ -89,11 +89,6 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     @Override
     public boolean canNavigate() {
       return myPackage.canNavigate();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override

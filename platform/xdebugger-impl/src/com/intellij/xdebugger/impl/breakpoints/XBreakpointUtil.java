@@ -40,16 +40,39 @@ public final class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
+  /**
+   * The forcibly shortened version of {@link XBreakpointType#getShortText(XBreakpoint)}.
+   */
   @Nls
   public static <B extends XBreakpoint> String getShortText(B breakpoint) {
     //noinspection unchecked
     return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(breakpoint.getType().getShortText(breakpoint)), 70, 5);
   }
 
+  /**
+   * @see XBreakpointType#getDisplayText(XBreakpoint)
+   */
   @Nls
   public static <B extends XBreakpoint> String getDisplayText(@NotNull B breakpoint) {
     //noinspection unchecked
     return breakpoint.getType().getDisplayText(breakpoint);
+  }
+
+  /**
+   * @see XBreakpointType#getGeneralDescription(XBreakpoint)
+   */
+  @Nls
+  public static <B extends XBreakpoint> String getGeneralDescription(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return breakpoint.getType().getGeneralDescription(breakpoint);
+  }
+
+  /**
+   * @see #getPropertyXMLDescriptions(XBreakpoint)
+   */
+  public static <B extends XBreakpoint> List<@Nls String> getPropertyXMLDescriptions(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return breakpoint.getType().getPropertyXMLDescriptions(breakpoint);
   }
 
   @Nullable
@@ -97,8 +120,8 @@ public final class XBreakpointUtil {
     return Pair.create(null, null);
   }
 
-  public static List<BreakpointPanelProvider> collectPanelProviders() {
-    List<BreakpointPanelProvider> panelProviders = new ArrayList<>();
+  public static List<BreakpointPanelProvider<?>> collectPanelProviders() {
+    List<BreakpointPanelProvider<?>> panelProviders = new ArrayList<>();
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }

@@ -110,6 +110,7 @@ public final class CompilerTester {
           }
         }
       });
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
     }
   }
 

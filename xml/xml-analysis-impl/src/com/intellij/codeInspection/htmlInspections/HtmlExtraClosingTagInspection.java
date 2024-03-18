@@ -15,12 +15,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
+  @NonNls
+  public static final String TOOL_ID = "HtmlExtraClosingTag";
 
   @Override
   @NonNls
   @NotNull
   public String getShortName() {
-    return "HtmlExtraClosingTag";
+    return TOOL_ID;
   }
 
   @Override

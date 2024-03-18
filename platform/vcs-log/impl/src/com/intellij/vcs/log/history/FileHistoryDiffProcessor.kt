@@ -24,7 +24,8 @@ internal class FileHistoryDiffProcessor(project: Project,
     Disposer.register(disposable, this)
   }
 
-  fun updatePreview(state: Boolean) {
+  fun updatePreview() {
+    val state = component.isShowing
     if (state) {
       refresh(false)
     }

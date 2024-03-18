@@ -7,4 +7,4 @@ fun Foo.foo(){}
  */
 fun test() {}
 
-// REF: (for Foo in <root>).foo()
+// REF: (<root>).Foo.foo()

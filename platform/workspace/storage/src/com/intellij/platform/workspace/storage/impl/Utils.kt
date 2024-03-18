@@ -1,17 +1,26 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.instrumentation.Modification
 
 // Just a wrapper for entity id in THIS store
 @JvmInline
-internal value class ThisEntityId(val id: EntityId)
+internal value class ThisEntityId(val id: EntityId) {
+  override fun toString(): String {
+    return "ThisEntityId(id=${id.asString()})"
+  }
+}
 
 // Just a wrapper for entity id in some other store
 @JvmInline
-internal value class NotThisEntityId(val id: EntityId)
+internal value class NotThisEntityId(val id: EntityId) {
+  override fun toString(): String {
+    return "NotThisEntityId(id=${id.asString()})"
+  }
+}
 
 internal fun EntityId.asThis(): ThisEntityId = ThisEntityId(this)
 internal fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
@@ -58,3 +67,23 @@ internal fun WorkspaceEntity.asBase(): WorkspaceEntityBase = this as WorkspaceEn
 
 internal val EntityStorage.mutable: MutableEntityStorage
   get() = this as MutableEntityStorage
+
+/**
+ * Create replace events from the list of modifications for [connectionId]
+ */
+internal fun MutableEntityStorageImpl.createReplaceEventsForUpdates(updates: Collection<Modification>, connectionId: ConnectionId) {
+  updates.forEach { update ->
+    when (update) {
+      is Modification.Add -> {
+        changeLog.addReplaceEventForNewChild(update.parent, connectionId, update.child.asChild(), incModificationCounter = true)
+
+        changeLog.addReplaceEventForNewParent(update.child, connectionId, update.parent.asParent(), false)
+      }
+      is Modification.Remove -> {
+        changeLog.addReplaceEventForRemovedChild(update.parent, connectionId, update.child.asChild(), incModificationCounter = true)
+
+        changeLog.addReplaceEventForRemovedParent(update.child, connectionId, update.parent.asParent(), false)
+      }
+    }
+  }
+}

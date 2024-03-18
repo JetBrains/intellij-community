@@ -27,7 +27,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 /**
  * @author Bas Leijdekkers
  */
-public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
+public final class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 

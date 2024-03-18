@@ -32,14 +32,17 @@ object BuildDependenciesJps {
   }
 
   @JvmStatic
-  fun getModuleLibraryRoots(iml: Path, libraryName: String, mavenRepositoryUrl: String, communityRoot: BuildDependenciesCommunityRoot): List<Path> = try {
+  fun getModuleLibraryRoots(
+    iml: Path,
+    libraryName: String,
+    mavenRepositoryUrl: String,
+    communityRoot: BuildDependenciesCommunityRoot,
+    username: String?,
+    password: String?
+  ): List<Path> = try {
     val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
-    val rootManager = BuildDependenciesUtil.getComponentElement(root, "NewModuleRootManager")
-    val library = BuildDependenciesUtil.getChildElements(rootManager, "orderEntry")
-                    .filter { it.getAttribute("type") == "module-library" }
-                    .map { BuildDependenciesUtil.getSingleChildElement(it, "library") }
-                    .singleOrNull { it.getAttribute("name") == libraryName }
-                  ?: error("Library '$libraryName' was not found in '$iml'")
+
+    val library = BuildDependenciesUtil.getLibraryElement(root, libraryName, iml)
     val classes = BuildDependenciesUtil.getSingleChildElement(library, "CLASSES")
     val roots = BuildDependenciesUtil.getChildElements(classes, "root")
       .mapNotNull { it.getAttribute("url") }
@@ -47,7 +50,12 @@ object BuildDependenciesJps {
         .removePrefix("jar:/")
         .trim('!', '/')
         .replace("\$MAVEN_REPOSITORY\$", mavenRepositoryUrl.trimEnd('/')) }
-      .map { BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(it)) }
+      .map {
+        if (username != null && password != null)
+          BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(it), username, password)
+        else
+          BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(it))
+      }
 
     if (roots.isEmpty()) {
       error("No library roots for library '$libraryName'")
@@ -60,11 +68,28 @@ object BuildDependenciesJps {
   }
 
   @JvmStatic
-  fun getModuleLibrarySingleRoot(iml: Path, libraryName: String, mavenRepositoryUrl: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot)
+  fun getModuleLibrarySingleRoot(
+    iml: Path,
+    libraryName: String,
+    mavenRepositoryUrl: String,
+    communityRoot: BuildDependenciesCommunityRoot
+  ) = getModuleLibrarySingleRoot(iml, libraryName, mavenRepositoryUrl, communityRoot, null, null)
+
+  @JvmStatic
+  fun getModuleLibrarySingleRoot(
+    iml: Path,
+    libraryName: String,
+    mavenRepositoryUrl: String,
+    communityRoot: BuildDependenciesCommunityRoot,
+    username: String?,
+    password: String?
+  ): Path {
+
+    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, username, password)
     if (roots.size != 1) {
       error("Expected one and only one library '$libraryName' root in '$iml', but got ${roots.size}: ${roots.joinToString()}")
     }
+
     return roots.single()
   }
 }

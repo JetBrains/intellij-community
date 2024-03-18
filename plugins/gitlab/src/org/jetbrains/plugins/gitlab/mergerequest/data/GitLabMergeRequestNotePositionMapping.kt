@@ -59,10 +59,10 @@ interface GitLabMergeRequestNotePositionMapping {
       }
 
       val change = changes.find {
-        val beforeRevision = it.beforeRevision
-        val afterRevision = it.afterRevision
-        beforeRevision != null && position.filePathBefore != null && beforeRevision.file.path.endsWith(position.filePathBefore!!) ||
-        afterRevision != null && position.filePathAfter != null && afterRevision.file.path.endsWith(position.filePathAfter!!)
+        val pathBefore = it.filePathBefore
+        val pathAfter = it.filePathAfter
+        pathBefore != null && position.filePathBefore != null && pathBefore.path.endsWith(position.filePathBefore) ||
+        pathAfter != null && position.filePathAfter != null && pathAfter.path.endsWith(position.filePathAfter)
       } ?: run {
         LOG.debug("Can't find change for $position")
         return Obsolete

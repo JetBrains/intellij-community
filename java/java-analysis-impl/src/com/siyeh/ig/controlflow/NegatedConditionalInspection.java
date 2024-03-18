@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class NegatedConditionalInspection extends BaseInspection {
+public final class NegatedConditionalInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

@@ -369,14 +369,13 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
   }
 
   public void testPerformanceWithLotsOfFragments() {
-    PlatformTestUtil.startPerformanceTest("Flushing lot's of fragments", 10, mySplitter::flush)
+    PlatformTestUtil.newPerformanceTest("Flushing lot's of fragments", mySplitter::flush)
       .setup(() -> {
         for (int i = 0; i < 10_000; i++) {
           mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         }
       })
-      .useLegacyScaling()
-      .assertTiming();
+      .start();
   }
 
   public void testPerformanceSimple() {
@@ -387,12 +386,12 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
       }
     };
-    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+    PlatformTestUtil.newPerformanceTest("print newlines with backspace", () -> {
       for (int i = 0; i < 2_000_000; i++) {
         mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         mySplitter.process(testStarted, ProcessOutputTypes.STDOUT);
       }
-    }).assertTiming();
+    }).start();
   }
 
   private static Future<?> execute(final Runnable runnable) {

@@ -53,4 +53,6 @@ public abstract class IdeDocumentHistory {
    */
   @ApiStatus.Experimental
   public abstract void reallyExcludeCurrentCommandAsNavigation();
+
+  public abstract boolean isSame(@NotNull IdeDocumentHistoryImpl.PlaceInfo first, @NotNull IdeDocumentHistoryImpl.PlaceInfo second);
 }

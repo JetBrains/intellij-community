@@ -24,14 +24,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.Arrays;
 
-import static com.intellij.reference.SoftReference.dereference;
-
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
-  private volatile Reference<PsiType> myCachedType;
+  private volatile PsiType myCachedType;
   private volatile String myCachedName;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
@@ -131,10 +127,10 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public @NotNull PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
-      PsiType type = dereference(myCachedType);
+      PsiType type = myCachedType;
       if (type == null) {
         type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
-        myCachedType = new SoftReference<>(type);
+        myCachedType = type;
       }
       return type;
     }

@@ -7,11 +7,17 @@ import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.JavaTokenType.COLON;
 
 public final class JavaTailTypes {
   public static final TailType CALL_RPARENTH = new RParenthTailType(){
@@ -144,7 +150,20 @@ public final class JavaTailTypes {
   public static final TailType DO_LBRACE = BRACES;
 
   public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
-    return SwitchUtils.isRuleFormatSwitch(block) ? CASE_ARROW : TailTypes.caseColonType();
+    boolean ruleFormatSwitch = SwitchUtils.isRuleFormatSwitch(block);
+    if (ruleFormatSwitch) {
+      //for not completed code with `:`
+      final PsiCodeBlock switchBody = block.getBody();
+      if (switchBody != null) {
+        for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child instanceof PsiErrorElement &&
+              ContainerUtil.exists(child.getChildren(), t -> t instanceof PsiJavaToken && ((PsiJavaToken)t).getTokenType() == COLON)) {
+            return TailTypes.caseColonType();
+          }
+        }
+      }
+    }
+    return ruleFormatSwitch ? CASE_ARROW : TailTypes.caseColonType();
   }
 
 

@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.psi.*
@@ -57,7 +59,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 object KotlinUnusedSymbolUtil {
-  private val KOTLIN_ADDITIONAL_ANNOTATIONS = listOf("kotlin.test.*", "kotlin.js.JsExport")
+  private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
 
   // Simple PSI-based checks
   fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
@@ -84,27 +86,24 @@ object KotlinUnusedSymbolUtil {
               // do not highlight unused in .forEach { (a,b) -> {} }
               return false
           }
-          else if (ownerFunction is KtFunction) {
-              if (isEffectivelyAbstract(ownerFunction)) {
-                  return false
-              }
-              if (ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                  return false
-              }
-              if (ownerFunction.hasModifier(KtTokens.OPEN_KEYWORD)) { // maybe one of overriders does use this parameter
-                  return false
-              }
+          else if (ownerFunction is KtFunction && isEffectivelyAbstractFunction(ownerFunction)) {
+              return false
           }
       }
 
       return !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }
 
-    private fun isEffectivelyAbstract(ownerFunction: KtFunction): Boolean {
-        if (ownerFunction.hasModifier(KtTokens.ABSTRACT_KEYWORD) || ownerFunction.hasModifier(KtTokens.EXPECT_KEYWORD)) {
+    private fun isEffectivelyAbstractFunction(ownerFunction: KtFunction): Boolean {
+        val modifierList = ownerFunction.modifierList
+        if (modifierList != null && (modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.EXPECT_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.OPEN_KEYWORD))
+        ) { // maybe one of overriders does use this parameter
             return true
         }
-        return ownerFunction.containingClass()?.isAbstract() == true
+        return ownerFunction.containingClass()?.isInterface() == true
     }
 
     fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {
@@ -113,7 +112,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPoint: (PsiElement) -> Boolean): PsiElement? {
+  fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
       val symbol = declaration.getSymbol()
       if (declaration.languageVersionSettings.getFlag(
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KtSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
@@ -124,7 +123,7 @@ object KotlinUnusedSymbolUtil {
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) {
           isCheapEnoughToSearchUsages(declaration)
       }
-      if (isEntryPoint(declaration, isCheapEnough, isJavaEntryPoint)) return null
+      if (isEntryPoint(declaration, isCheapEnough, isJavaEntryPointInspection)) return null
       if (declaration.isFinalizeMethod()) return null
       if (declaration is KtProperty && declaration.isSerializationImplicitlyUsedField()) return null
       if (declaration is KtNamedFunction && declaration.isSerializationImplicitlyUsedMethod()) return null
@@ -148,7 +147,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  private fun KtDeclaration.hasKotlinAdditionalAnnotation() =
+  private fun KtDeclaration.hasKotlinAdditionalAnnotation(): Boolean =
       this is KtNamedDeclaration && checkAnnotatedUsingPatterns(this, KOTLIN_ADDITIONAL_ANNOTATIONS)
 
   private fun KtProperty.isSerializationImplicitlyUsedField(): Boolean {
@@ -258,10 +257,7 @@ object KotlinUnusedSymbolUtil {
 
   // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
   context(KtAnalysisSession)
-  private fun checkAnnotatedUsingPatterns(
-      declaration: KtNamedDeclaration,
-      annotationPatterns: Collection<String>
-  ): Boolean {
+  private fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
       if (declaration.annotationEntries.isEmpty()) return false
       val annotationsPresent = declaration.annotationEntries.mapNotNull {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
@@ -326,9 +322,9 @@ object KotlinUnusedSymbolUtil {
               }
           }
           if (declaration.hasActualModifier()) {
-              KotlinSourceFilterScope.projectSources(project.projectScope(), project)
+              KotlinSourceFilterScope.projectSourcesAndResources(project.projectScope(), project)
           } else {
-              KotlinSourceFilterScope.projectSources(useScope, project)
+              KotlinSourceFilterScope.projectSourcesAndResources(useScope, project)
           }
       } else useScope
 
@@ -701,14 +697,20 @@ object KotlinUnusedSymbolUtil {
   }
 
     fun createQuickFixes(declaration: KtNamedDeclaration): Array<LocalQuickFixAndIntentionActionOnPsiElement> {
-        if (declaration is KtParameter && declaration.isLoopParameter) {
-            return emptyArray()
-        }
-        if (declaration is KtParameter && declaration.isCatchParameter) {
-            return if (declaration.name == "_") {
-                emptyArray()
-            } else {
-                arrayOf(com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix(declaration, "_"))
+        if (declaration is KtParameter) {
+            if (declaration.isLoopParameter) {
+                return emptyArray()
+            }
+            if (declaration.isCatchParameter) {
+                return if (declaration.name == "_") {
+                    emptyArray()
+                } else {
+                    arrayOf(RenameElementFix(declaration, "_"))
+                }
+            }
+            val ownerFunction = declaration.ownerFunction
+            if (ownerFunction is KtPropertyAccessor && ownerFunction.isSetter) {
+                return emptyArray()
             }
         }
         // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
@@ -716,7 +718,7 @@ object KotlinUnusedSymbolUtil {
     }
 
   context(KtAnalysisSession)
-  private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: (PsiElement)->Boolean): Boolean {
+  private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: UnusedDeclarationInspectionBase): Boolean {
       if (declaration.hasKotlinAdditionalAnnotation()) return true
       val lightElement: PsiElement = when (declaration) {
           is KtClass -> {
@@ -739,7 +741,7 @@ object KotlinUnusedSymbolUtil {
               if (declaration is KtParameter && isAnnotationParameter(declaration)) {
                   val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
                   for (javaParameterPsi in lightAnnotationMethods) {
-                      if (isJavaEntryPoint.invoke(javaParameterPsi)) {
+                      if (isJavaEntryPoint.isEntryPoint(javaParameterPsi)) {
                           return true
                       }
                   }
@@ -756,6 +758,6 @@ object KotlinUnusedSymbolUtil {
 
       if (isCheapEnough.value == com.intellij.psi.search.PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false
 
-      return isJavaEntryPoint.invoke(lightElement)
+      return isJavaEntryPoint.isEntryPoint(lightElement)
   }
 }

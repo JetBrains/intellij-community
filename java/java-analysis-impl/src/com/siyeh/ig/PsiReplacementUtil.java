@@ -150,7 +150,7 @@ public final class PsiReplacementUtil {
     }
   }
 
-  public static @NotNull PsiElement replaceOperatorAssignmentWithAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
+  public static @NotNull PsiAssignmentExpression replaceOperatorAssignmentWithAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
     CommentTracker tracker = new CommentTracker();
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final PsiExpression lhs = assignmentExpression.getLExpression();
@@ -178,7 +178,7 @@ public final class PsiReplacementUtil {
     }
     final Project project = assignmentExpression.getProject();
     final PsiElement replacementExpression = tracker.replaceAndRestoreComments(assignmentExpression, newExpression.toString());
-    return CodeStyleManager.getInstance(project).reformat(replacementExpression);
+    return (PsiAssignmentExpression)CodeStyleManager.getInstance(project).reformat(replacementExpression);
   }
 
   private static String getCastString(PsiExpression lhs, PsiExpression rhs) {

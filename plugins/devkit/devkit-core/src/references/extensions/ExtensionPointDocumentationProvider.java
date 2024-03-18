@@ -24,6 +24,9 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
+
 final class ExtensionPointDocumentationProvider implements DocumentationProvider {
 
   @Override
@@ -111,7 +114,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     }
 
     HtmlBuilder builder = new HtmlBuilder();
-    builder.append(defBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
+    builder.append(defBuilder.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT));
 
     HtmlBuilder platformExplorerLink = new HtmlBuilder();
     platformExplorerLink.appendLink("https://jb.gg/ipe?extensions=" + extensionPoint.getEffectiveQualifiedName(),
@@ -148,7 +151,12 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
 
   private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
-    return HtmlChunk.raw(StringUtil.notNullize(documentationProvider.generateDoc(element, null)));
+    String doc = StringUtil.notNullize(documentationProvider.generateDoc(element, null));
+    int bodyIndex = doc.indexOf("<body>");
+    if (bodyIndex >= 0) {
+      doc = doc.substring(bodyIndex + 6);
+    }
+    return HtmlChunk.raw(doc);
   }
 
   private static HtmlChunk createSectionRow(HtmlChunk sectionName, @Nls String sectionContent) {

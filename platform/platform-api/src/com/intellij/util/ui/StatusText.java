@@ -504,4 +504,18 @@ public abstract class StatusText {
   public static @NlsContexts.StatusText String getDefaultEmptyText() {
     return UIBundle.message("message.nothingToShow");
   }
+
+  @Override
+  public String toString() {
+    StringBuilder text = new StringBuilder();
+    for (Fragment fragment : myPrimaryColumn.fragments) {
+      if (!text.isEmpty()) text.append("\n");
+      text.append(fragment.myComponent);
+    }
+    for (Fragment fragment : mySecondaryColumn.fragments) {
+      if (!text.isEmpty()) text.append("\n");
+      text.append(fragment.myComponent);
+    }
+    return text.toString();
+  }
 }

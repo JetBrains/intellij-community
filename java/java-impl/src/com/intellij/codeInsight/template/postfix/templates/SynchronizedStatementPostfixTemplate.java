@@ -3,12 +3,13 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class SynchronizedStatementPostfixTemplate extends JavaEditablePostfixTemplate {
+public class SynchronizedStatementPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public SynchronizedStatementPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("synchronized",
           "synchronized ($EXPR$) {\n$END$\n}",

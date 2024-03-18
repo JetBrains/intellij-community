@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
-import com.intellij.coverage.analysis.Annotator;
+import com.intellij.coverage.analysis.CoverageInfoCollector;
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
 import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.openapi.application.PluginPathManager;
@@ -20,12 +20,16 @@ import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.JavaModuleTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RunWith(JUnit4.class)
 public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
   private CompilerTester myCompilerTester;
 
@@ -61,6 +65,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
                                            });
   }
 
+  @Test
   public void testExcludeEverythingFromCoverage() {
     JavaCoverageEngine engine = new JavaCoverageEngine() {
       @Override
@@ -80,14 +85,15 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    new JavaCoverageClassesAnnotator(suite, myProject, new Annotator() {
+    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+      public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
         Assert.fail("No classes are accepted by filter");
       }
     }).visitSuite();
   }
 
+  @Test
   public void testMultipleSourceRoots() {
     CoverageSuitesBundle suite = new CoverageSuitesBundle(new JavaCoverageSuite(new JavaCoverageEngine())) {
       @NotNull
@@ -111,10 +117,10 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
     javaCoverageSuite.setIncludeFilters(new String[]{"p.*"});
     Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> dirs = new HashMap<>();
-    new JavaCoverageClassesAnnotator(suite, myProject, new Annotator() {
+    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void annotateSourceDirectory(VirtualFile virtualFile,
-                                          PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
+      public void addSourceDirectory(VirtualFile virtualFile,
+                                     PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
     }).visitSuite();

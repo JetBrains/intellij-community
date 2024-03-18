@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsPage implements RainbowColorSettingsPage{
+public final class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsPage implements RainbowColorSettingsPage{
 
   @Override
   public Icon getIcon() {

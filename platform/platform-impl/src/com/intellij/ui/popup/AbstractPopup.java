@@ -49,6 +49,8 @@ import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchInputMethodRequests;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,8 +63,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.im.InputMethodRequests;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -173,6 +177,28 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     @Override
     public void noHits() {
       updateSpeedSearchColors(true);
+    }
+
+    @Override
+    public InputMethodRequests getInputMethodRequests() {
+      return new SpeedSearchInputMethodRequests() {
+        @Override
+        protected InputMethodRequests getDelegate() {
+          if (searchFieldShown || mySpeedSearchAlwaysShown) {
+            return mySpeedSearchPatternField.getTextEditor().getInputMethodRequests();
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        protected void ensurePopupIsShown() {
+          if (!searchFieldShown && !mySpeedSearchAlwaysShown) {
+            setHeaderComponent(mySpeedSearchPatternField);
+            searchFieldShown = true;
+          }
+        }
+      };
     }
   };
 
@@ -500,6 +526,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void showCenteredInCurrentWindow(@NotNull Project project) {
     if (UiInterceptors.tryIntercept(this)) return;
+    Window window = getCurrentWindow(project);
+    if (window != null && window.isShowing()) {
+      showInCenterOf(window);
+    }
+  }
+
+  @Nullable
+  protected static Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -512,9 +546,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if ((window == null || !window.isShowing()) && manager != null) {
       window = manager.getFrame(project);
     }
-    if (window != null && window.isShowing()) {
-      showInCenterOf(window);
-    }
+
+    return window;
   }
 
   private static Window getTargetWindow(Component component) {
@@ -2534,5 +2567,34 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private void forHorizontalScrollBar(@NotNull Consumer<? super JScrollBar> consumer) {
     JScrollBar bar = findHorizontalScrollBar();
     if (bar != null) consumer.consume(bar);
+  }
+
+  @Override
+  public final boolean dispatchInputMethodEvent(InputMethodEvent event) {
+    if (anyModalWindowsKeepPopupOpen()) {
+      return false;
+    }
+
+    // Try forwarding the input method event to various possible speed search handlers
+
+    JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(comp, true);
+
+    if (!event.isConsumed() && supply instanceof SpeedSearchBase<?>) {
+      ((SpeedSearchBase<?>)supply).processInputMethodEvent(event);
+    }
+
+    if (!event.isConsumed() && comp instanceof ListWithFilter<?>) {
+      ((ListWithFilter<?>)comp).processInputMethodEvent(event);
+    }
+
+    // Don't try to attempt to pass IMEs to speed search if the popup is a text field
+    boolean isText = comp instanceof EditorTextField || comp instanceof JTextComponent;
+    if (!event.isConsumed() && !isText && mySpeedSearchPatternField != null) {
+      mySpeedSearchPatternField.getTextEditor().dispatchEvent(event);
+      mySpeedSearch.updatePattern(mySpeedSearchPatternField.getText());
+      mySpeedSearch.update();
+    }
+    return event.isConsumed();
   }
 }

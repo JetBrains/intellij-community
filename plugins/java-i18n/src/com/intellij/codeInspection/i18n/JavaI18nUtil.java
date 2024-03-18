@@ -3,6 +3,8 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -19,12 +21,11 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.codeInspection.restriction.AnnotationContext;
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.util.UastExpressionUtils;
@@ -276,26 +277,26 @@ public final class JavaI18nUtil {
   @NotNull
   private static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final UExpression expression,
                                                                 @Nullable final String resourceBundleName) {
-    final ULiteralExpression literalExpression;
-    if (expression instanceof ULiteralExpression) {
-      literalExpression = (ULiteralExpression)expression;
+    final UInjectionHost injectionHost;
+    if (expression instanceof UInjectionHost) {
+      injectionHost = (UInjectionHost)expression;
     }
     else if (expression instanceof UReferenceExpression) {
       final PsiElement resolved = ((UReferenceExpression)expression).resolve();
       final PsiField field = resolved == null ? null : (PsiField)resolved;
-      literalExpression =
+      injectionHost =
         field != null && field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() instanceof PsiLiteralExpression
-        ? UastContextKt.toUElement(field.getInitializer(), ULiteralExpression.class)
+        ? UastContextKt.toUElement(field.getInitializer(), UInjectionHost.class)
         : null;
     }
     else {
-      literalExpression = null;
+      injectionHost = null;
     }
     final TreeSet<Integer> paramsCount = new TreeSet<>();
-    if (literalExpression == null) {
+    if (injectionHost == null) {
       return paramsCount;
     }
-    for (PsiReference reference : UastLiteralUtils.getInjectedReferences(literalExpression)) {
+    for (PsiReference reference : UastLiteralUtils.getInjectedReferences(injectionHost)) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
           if (result.isValidResult() && result.getElement() instanceof IProperty) {
@@ -370,10 +371,10 @@ public final class JavaI18nUtil {
 
     UExpression thenExpression = ((UIfExpression)expression).getThenExpression();
     UExpression elseExpression = ((UIfExpression)expression).getElseExpression();
-    if (!(thenExpression instanceof ULiteralExpression) &&
-        !(elseExpression instanceof ULiteralExpression)) return false;
+    if (!(thenExpression instanceof UInjectionHost) &&
+        !(elseExpression instanceof UInjectionHost)) return false;
 
-    boolean nested = !(thenExpression instanceof ULiteralExpression && elseExpression instanceof ULiteralExpression);
+    boolean nested = !(thenExpression instanceof UInjectionHost && elseExpression instanceof UInjectionHost);
 
     String thenStr = getSideText(formatParameters, project, thenExpression, nested);
     String elseStr = getSideText(formatParameters, project, elseExpression, nested);

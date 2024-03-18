@@ -23,8 +23,7 @@ public class ChangeBoundFieldTypeFix extends PsiUpdateModCommandAction<PsiField>
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("uidesigner.change.bound.field.type");
   }
 

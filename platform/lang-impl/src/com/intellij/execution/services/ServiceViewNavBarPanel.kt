@@ -27,13 +27,13 @@ import java.util.*
 internal class ServiceViewNavBarPanel(
   project: Project,
   private val cs: CoroutineScope,
-  private val viewModel: ServiceViewModel,
+  val view: ServiceView,
   private val selector: ServiceViewNavBarSelector,
 ) : JBPanel<ServiceViewNavBarPanel>(BorderLayout()) {
 
   private val visible: StateFlow<Boolean> = trackVisibility(this)
   private val updateRequests: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val root = ServiceViewRootNavBarItem(viewModel)
+  private val root = ServiceViewRootNavBarItem(view.model)
   private val _vm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
   val model: NavBarVm? get() = _vm.value
 
@@ -75,9 +75,9 @@ internal class ServiceViewNavBarPanel(
     val path = ArrayList<NavBarVmItem>()
     var item = selector.getSelectedItem()
     if (item != null) {
-      val roots = viewModel.visibleRoots
+      val roots = view.model.visibleRoots
       do {
-        path.add(ServiceViewNavBarItem(viewModel, item!!))
+        path.add(ServiceViewNavBarItem(view.model, item!!))
         item = if (roots.contains(item)) null else item.parent
       }
       while (item != null)
@@ -115,7 +115,7 @@ private fun trackVisibility(component: Component): StateFlow<Boolean> {
   return visible
 }
 
-private class ServiceViewRootNavBarItem(
+internal class ServiceViewRootNavBarItem(
   private val viewModel: ServiceViewModel,
 ) : NavBarVmItem,
     NavBarItem,

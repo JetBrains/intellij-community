@@ -35,7 +35,7 @@ public abstract class StubIndex {
    * @deprecated use {@link #getElements(StubIndexKey, Object, Project, GlobalSearchScope, Class)}
    */
   @Deprecated(forRemoval = true)
-  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
+  <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull Key key,
                                                            @NotNull Project project,
                                                            @Nullable final GlobalSearchScope scope) {

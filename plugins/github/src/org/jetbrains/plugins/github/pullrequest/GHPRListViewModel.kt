@@ -7,19 +7,23 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListPersistentSearchHistory
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryModel
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import javax.swing.ListModel
 
 @ApiStatus.Experimental
@@ -30,10 +34,12 @@ class GHPRListViewModel internal constructor(
 ) : ReviewListViewModel {
   private val cs = parentCs.childScope()
 
+  private val interactionStateService = project.service<GHPRPersistentInteractionState>()
   private val repositoryDataService = dataContext.repositoryDataService
   private val listLoader = dataContext.listLoader
 
   val account: GithubAccount = dataContext.securityService.account
+  private val currentUser: GHUser = dataContext.securityService.currentUser
   val repository: @NlsSafe String = repositoryDataService.repositoryCoordinates.repositoryPath.repository
 
   val listModel: ListModel<GHPullRequestShort> = CollectionListModel(listLoader.loadedData).also { model ->
@@ -43,12 +49,16 @@ class GHPRListViewModel internal constructor(
         model.add(loadedData.subList(startIdx, loadedData.size))
       }
 
-      override fun onDataUpdated(idx: Int) = model.setElementAt(listLoader.loadedData[idx], idx)
-      override fun onDataRemoved(data: Any) {
-        (data as? GHPullRequestShort)?.let { model.remove(it) }
+      override fun onDataUpdated(idx: Int) {
+        model.setElementAt(listLoader.loadedData[idx], idx)
+      }
+      override fun onDataRemoved(idx: Int) {
+        model.remove(idx)
       }
 
-      override fun onAllDataRemoved() = model.removeAll()
+      override fun onAllDataRemoved() {
+        model.removeAll()
+      }
     })
   }
 
@@ -59,10 +69,18 @@ class GHPRListViewModel internal constructor(
   private val outdatedState = MutableStateFlow(false)
   val outdated: SharedFlow<Boolean> = outdatedState.asSharedFlow()
 
+  private val hasUpdatesState = MutableStateFlow(false)
+  val hasUpdates = hasUpdatesState.asSharedFlow()
+
   init {
     val listenersDisposable = cs.nestedDisposable()
     listLoader.addLoadingStateChangeListener(listenersDisposable) {
       loadingState.value = listLoader.loading
+
+      // If transitioning from loading to not loading, check for no updates
+      if (!listLoader.loading) {
+        hasUpdatesState.value = listModel.items.any { !interactionStateService.isSeen(it, currentUser) }
+      }
     }
     listLoader.addErrorChangeListener(listenersDisposable) {
       errorState.value = listLoader.error
@@ -83,6 +101,8 @@ class GHPRListViewModel internal constructor(
 
   private val _focusRequests = Channel<Unit>(1)
   internal val focusRequests: Flow<Unit> = _focusRequests.receiveAsFlow()
+
+  val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
 
   init {
     cs.launchNow {

@@ -34,7 +34,8 @@ public final class SwitchToReplace extends DumbAwareAction implements LightEditC
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    if (search == null) return;
     FindModel findModel = search.getFindModel();
     if (!findModel.isReplaceState()) {
       findModel.setReplaceState(true);

@@ -2,19 +2,24 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableRecordContainsIgnoredMembersInspection extends BaseInspection {
+import java.util.Set;
+
+public final class SerializableRecordContainsIgnoredMembersInspection extends BaseInspection {
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel14OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.RECORDS);
   }
 
   @Override

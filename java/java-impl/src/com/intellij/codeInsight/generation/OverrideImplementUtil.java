@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,12 +34,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -106,14 +109,14 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (superMethod.isConstructor() || superMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
-    if (!PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, targetClass)) {
       return false;
     }
     if (targetClass.isRecord() && superMethod.getParameterList().isEmpty()) {
       PsiMethod method = targetClass.findMethodBySignature(superMethod, false);
       if (method != null && !method.isPhysical()) return false;
     }
-    if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
+    if (PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, targetClass)) return true;
     PsiClass superClass = superMethod.getContainingClass();
     return superClass != null && !superClass.isInterface();
   }
@@ -428,7 +431,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   private static boolean isImplementInterfaceInJava8Interface(@NotNull PsiClass targetClass) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(targetClass)){
+    if (!PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)){
       return false;
     }
     String commandName = CommandProcessor.getInstance().getCurrentCommandName();
@@ -449,14 +452,18 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          final Editor editor,
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
-    ReadAction.nonBlocking(() -> {
+    NonBlockingReadAction<JavaOverrideImplementMemberChooserContainer> prepareChooserTask = ReadAction.nonBlocking(() -> {
         return prepareChooser(aClass, toImplement);
       })
-      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+      .expireWhen(() -> !aClass.isValid());
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      showAndPerform(project, editor, aClass, toImplement, prepareChooserTask.executeSynchronously());
+    } else {
+      prepareChooserTask.finishOnUiThread(ModalityState.defaultModalityState(), container -> {
         showAndPerform(project, editor, aClass, toImplement, container);
-      })
-      .expireWhen(() -> !aClass.isValid())
-      .submit(AppExecutorUtil.getAppExecutorService());
+      }).submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   public static void showAndPerform(@NotNull Project project,
@@ -471,7 +478,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
     PsiUtilCore.ensureValid(aClass);
     final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
-      () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions());
+      () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+        () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions()));
     if (Registry.is("run.refactorings.under.progress")) {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
         return;
@@ -667,13 +675,13 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     try {
       int offset = editor.getCaretModel().getOffset();
       PsiElement brace = aClass.getLBrace();
-      if (brace == null) {
+      if (brace == null && !(aClass instanceof PsiImplicitClass)) {
         PsiClass psiClass = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass("X");
         brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
         LOG.assertTrue(brace != null, aClass.getLastChild());
       }
 
-      int lbraceOffset = brace.getTextOffset();
+      int lbraceOffset = brace == null ? 0 : brace.getTextOffset();
       List<PsiGenerationInfo<PsiMethod>> resultMembers;
       if (offset <= lbraceOffset || aClass.isEnum()) {
         resultMembers = new ArrayList<>();
@@ -782,6 +790,13 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     final PsiClass aClass = (PsiClass)element;
     if (aClass instanceof PsiSyntheticClass) return null;
+    if (file instanceof PsiJavaFile javaFile) {
+      PsiClass[] classes = javaFile.getClasses();
+      if (classes.length == 1 && classes[0] instanceof PsiImplicitClass implicitClass &&
+          implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
+        return classes[0];
+      }
+    }
     return aClass == null || !allowInterface && aClass.isInterface() ? null : aClass;
   }
 

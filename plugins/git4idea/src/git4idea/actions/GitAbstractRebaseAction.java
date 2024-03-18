@@ -22,7 +22,8 @@ public abstract class GitAbstractRebaseAction extends GitOperationActionBase {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     if (getRepositoryManager(project).hasOngoingRebase()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, getProgressTitle()) {
         @Override

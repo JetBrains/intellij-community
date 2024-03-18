@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,6 +131,10 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
         LOG.warn("Can't restore changes:" + result.getErrorOutputAsJoinedString());
       }
     }
+  }
+
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myVcsShelveChangesSaver.setReportLocalHistoryActivity(reportLocalHistoryActivity);
   }
 
   @Override

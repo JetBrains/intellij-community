@@ -17,8 +17,8 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,9 +26,10 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.function.Supplier;
 
-public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
+public final class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @NotNull
   @Override
@@ -65,8 +66,8 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.VARARGS);
   }
 
   @Override

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -195,6 +196,7 @@ class ImplicitPackagePrefixCache(private val project: Project) {
     }
 }
 
+@Service(Service.Level.PROJECT)
 class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     /*

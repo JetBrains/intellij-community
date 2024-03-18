@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlDomReader")
 @file:Suppress("ReplacePutWithAssignment")
 
@@ -55,7 +55,7 @@ fun readXmlAsModel(inputData: ByteArray): XmlElement {
 private fun readAndClose(reader: XMLStreamReader2): XmlElement {
   try {
     val rootName = if (nextTag(reader) == XMLStreamConstants.START_ELEMENT) reader.localName else null
-    return readXmlAsModel(reader, rootName, NoOpXmlInterner)
+    return readXmlAsModel(reader = reader, rootName = rootName, interner = NoOpXmlInterner)
   }
   finally {
     reader.closeCompletely()
@@ -63,10 +63,9 @@ private fun readAndClose(reader: XMLStreamReader2): XmlElement {
 }
 
 @ApiStatus.Internal
-fun readXmlAsModel(reader: XMLStreamReader2,
-                   rootName: String?,
-                   interner: XmlInterner): XmlElement {
-  val fragment = XmlElementBuilder(name = if (rootName == null) "" else interner.name(rootName), attributes = readAttributes(reader = reader, interner = interner))
+fun readXmlAsModel(reader: XMLStreamReader2, rootName: String?, interner: XmlInterner): XmlElement {
+  val fragment = XmlElementBuilder(name = if (rootName == null) "" else interner.name(rootName),
+                                   attributes = readAttributes(reader = reader, interner = interner))
   var current = fragment
   val stack = ArrayDeque<XmlElementBuilder>()
   val elementPool = ArrayDeque<XmlElementBuilder>()
@@ -148,11 +147,11 @@ fun readXmlAsModel(reader: XMLStreamReader2,
 }
 
 private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map<String, String> {
-  return when (val attributeCount = reader.attributeCount) {
-    0 -> Collections.emptyMap()
+  when (val attributeCount = reader.attributeCount) {
+    0 -> return Collections.emptyMap()
     1 -> {
       val name = interner.name(reader.getAttributeLocalName(0))
-      Collections.singletonMap(name, interner.value(name, reader.getAttributeValue(0)))
+      return Collections.singletonMap(name, interner.value(name, reader.getAttributeValue(0)))
     }
     else -> {
       // Map.of cannot be used here - in core-impl only Java 8 is allowed
@@ -163,7 +162,7 @@ private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map
         result.put(name, interner.value(name, reader.getAttributeValue(i)))
         i++
       }
-      result
+      return result
     }
   }
 }

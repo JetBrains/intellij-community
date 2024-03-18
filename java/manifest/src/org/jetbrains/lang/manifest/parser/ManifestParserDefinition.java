@@ -44,7 +44,7 @@ import org.jetbrains.lang.manifest.psi.impl.ManifestFileImpl;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class ManifestParserDefinition implements ParserDefinition {
+public final class ManifestParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public Lexer createLexer(Project project) {

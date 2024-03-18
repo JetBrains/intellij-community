@@ -22,6 +22,8 @@ internal interface ToolWindowButtonManager {
 
   fun initMoreButton(project: Project) {}
 
+  fun updateResizeState(toolbar: ToolWindowToolbar?) {}
+
   fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean
 
   fun layout(size: Dimension, layeredPane: JComponent)

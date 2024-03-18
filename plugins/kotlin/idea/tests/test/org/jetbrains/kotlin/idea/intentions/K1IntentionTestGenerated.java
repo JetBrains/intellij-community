@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions;
 
@@ -5404,6 +5404,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertForEachToForLoop/nullableReceiver.kt");
             }
 
+            @TestMetadata("nullableReceiver2.kt")
+            public void testNullableReceiver2() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/nullableReceiver2.kt");
+            }
+
             @TestMetadata("parenthesizedExpression.kt")
             public void testParenthesizedExpression() throws Exception {
                 runTest("testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
@@ -6674,54 +6679,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("var.kt")
         public void testVar() throws Exception {
             runTest("testData/intentions/convertLazyPropertyToOrdinary/var.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/convertLineCommentToBlockComment")
-    public static class ConvertLineCommentToBlockComment extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("afterStatement.kt")
-        public void testAfterStatement() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/afterStatement.kt");
-        }
-
-        @TestMetadata("blankLine.kt")
-        public void testBlankLine() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/blankLine.kt");
-        }
-
-        @TestMetadata("blockComment.kt")
-        public void testBlockComment() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/blockComment.kt");
-        }
-
-        @TestMetadata("includeBlockComment.kt")
-        public void testIncludeBlockComment() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/includeBlockComment.kt");
-        }
-
-        @TestMetadata("includeBlockComment2.kt")
-        public void testIncludeBlockComment2() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/includeBlockComment2.kt");
-        }
-
-        @TestMetadata("newLinesBetweenCommentAndDeclaration.kt")
-        public void testNewLinesBetweenCommentAndDeclaration() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/newLinesBetweenCommentAndDeclaration.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/simple.kt");
-        }
-
-        @TestMetadata("simple2.kt")
-        public void testSimple2() throws Exception {
-            runTest("testData/intentions/convertLineCommentToBlockComment/simple2.kt");
         }
     }
 
@@ -10175,6 +10132,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/declarations/split/anonymousFunction.kt");
             }
 
+            @TestMetadata("genericType.kt")
+            public void testGenericType() throws Exception {
+                runTest("testData/intentions/declarations/split/genericType.kt");
+            }
+
             @TestMetadata("longInit.kt")
             public void testLongInit() throws Exception {
                 runTest("testData/intentions/declarations/split/longInit.kt");
@@ -11079,49 +11041,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/indentRawString")
-    public static class IndentRawString extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("annotationEntry.kt")
-        public void testAnnotationEntry() throws Exception {
-            runTest("testData/intentions/indentRawString/annotationEntry.kt");
-        }
-
-        @TestMetadata("const.kt")
-        public void testConst() throws Exception {
-            runTest("testData/intentions/indentRawString/const.kt");
-        }
-
-        @TestMetadata("hasIndent.kt")
-        public void testHasIndent() throws Exception {
-            runTest("testData/intentions/indentRawString/hasIndent.kt");
-        }
-
-        @TestMetadata("notRawString.kt")
-        public void testNotRawString() throws Exception {
-            runTest("testData/intentions/indentRawString/notRawString.kt");
-        }
-
-        @TestMetadata("receiver.kt")
-        public void testReceiver() throws Exception {
-            runTest("testData/intentions/indentRawString/receiver.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/indentRawString/simple.kt");
-        }
-
-        @TestMetadata("singleLine.kt")
-        public void testSingleLine() throws Exception {
-            runTest("testData/intentions/indentRawString/singleLine.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/infixCallToOrdinary")
     public static class InfixCallToOrdinary extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -11156,39 +11075,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("simpleInfixFunctionCall.kt")
         public void testSimpleInfixFunctionCall() throws Exception {
             runTest("testData/intentions/infixCallToOrdinary/simpleInfixFunctionCall.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/inlayHints")
-    public static class InlayHints extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("lambdaParameterType.kt")
-        public void testLambdaParameterType() throws Exception {
-            runTest("testData/intentions/inlayHints/lambdaParameterType.kt");
-        }
-
-        @TestMetadata("lambdaReturnExpression.kt")
-        public void testLambdaReturnExpression() throws Exception {
-            runTest("testData/intentions/inlayHints/lambdaReturnExpression.kt");
-        }
-
-        @TestMetadata("localVariable.kt")
-        public void testLocalVariable() throws Exception {
-            runTest("testData/intentions/inlayHints/localVariable.kt");
-        }
-
-        @TestMetadata("property.kt")
-        public void testProperty() throws Exception {
-            runTest("testData/intentions/inlayHints/property.kt");
-        }
-
-        @TestMetadata("range.kt")
-        public void testRange() throws Exception {
-            runTest("testData/intentions/inlayHints/range.kt");
         }
     }
 
@@ -11767,6 +11653,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("functionWithReturnExpression.kt")
         public void testFunctionWithReturnExpression() throws Exception {
             runTest("testData/intentions/invertIfCondition/functionWithReturnExpression.kt");
+        }
+
+        @TestMetadata("hasNothing.kt")
+        public void testHasNothing() throws Exception {
+            runTest("testData/intentions/invertIfCondition/hasNothing.kt");
         }
 
         @TestMetadata("ifExpressionInsideForLoop.kt")
@@ -12715,6 +12606,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("extention2.kt")
         public void testExtention2() throws Exception {
             runTest("testData/intentions/lambdaToAnonymousFunction/extention2.kt");
+        }
+
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/flexibleType.kt");
         }
 
         @TestMetadata("fullyQualified.kt")
@@ -15315,6 +15211,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializerInferredType.kt");
         }
 
+        @TestMetadata("arrayAccessExpressionInitializer.kt")
+        public void testArrayAccessExpressionInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/arrayAccessExpressionInitializer.kt");
+        }
+
+        @TestMetadata("arrayAccessExpressionInitializer2.kt")
+        public void testArrayAccessExpressionInitializer2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/arrayAccessExpressionInitializer2.kt");
+        }
+
         @TestMetadata("callableInitializerExplicitTypeArguments.kt")
         public void testCallableInitializerExplicitTypeArguments() throws Exception {
             runTest("testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
@@ -17545,6 +17451,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/specifyTypeExplicitly/constructor.kt");
         }
 
+        @TestMetadata("constructorParameter.kt")
+        public void testConstructorParameter() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/constructorParameter.kt");
+        }
+
         @TestMetadata("definitelyNonNullType.kt")
         public void testDefinitelyNonNullType() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/definitelyNonNullType.kt");
@@ -17593,6 +17504,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("forAsExpression.kt")
         public void testForAsExpression() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/forAsExpression.kt");
+        }
+
+        @TestMetadata("functionParameter.kt")
+        public void testFunctionParameter() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/functionParameter.kt");
         }
 
         @TestMetadata("functionType.kt")
@@ -17739,6 +17655,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testUnitType() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/unitType.kt");
         }
+
+        @TestMetadata("variableWithoutInitializer.kt")
+        public void testVariableWithoutInitializer() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/variableWithoutInitializer.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -17781,171 +17702,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("variableHasUnderscore.kt")
         public void testVariableHasUnderscore() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/variableHasUnderscore.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/splitIf")
-    public abstract static class SplitIf extends AbstractK1IntentionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/intentions/splitIf/keepComments")
-        public static class KeepComments extends AbstractK1IntentionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("ifOrReturn.kt")
-            public void testIfOrReturn() throws Exception {
-                runTest("testData/intentions/splitIf/keepComments/ifOrReturn.kt");
-            }
-
-            @TestMetadata("twoOperators.kt")
-            public void testTwoOperators() throws Exception {
-                runTest("testData/intentions/splitIf/keepComments/twoOperators.kt");
-            }
-
-            @TestMetadata("withAnd.kt")
-            public void testWithAnd() throws Exception {
-                runTest("testData/intentions/splitIf/keepComments/withAnd.kt");
-            }
-
-            @TestMetadata("withOR.kt")
-            public void testWithOR() throws Exception {
-                runTest("testData/intentions/splitIf/keepComments/withOR.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/intentions/splitIf")
-        public static class Uncategorized extends AbstractK1IntentionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("and.kt")
-            public void testAnd() throws Exception {
-                runTest("testData/intentions/splitIf/and.kt");
-            }
-
-            @TestMetadata("caretOnIf.kt")
-            public void testCaretOnIf() throws Exception {
-                runTest("testData/intentions/splitIf/caretOnIf.kt");
-            }
-
-            @TestMetadata("ifAndOr.kt")
-            public void testIfAndOr() throws Exception {
-                runTest("testData/intentions/splitIf/ifAndOr.kt");
-            }
-
-            @TestMetadata("ifAndOrWithBraces.kt")
-            public void testIfAndOrWithBraces() throws Exception {
-                runTest("testData/intentions/splitIf/ifAndOrWithBraces.kt");
-            }
-
-            @TestMetadata("ifAndWithBraces.kt")
-            public void testIfAndWithBraces() throws Exception {
-                runTest("testData/intentions/splitIf/ifAndWithBraces.kt");
-            }
-
-            @TestMetadata("ifOrReturn.kt")
-            public void testIfOrReturn() throws Exception {
-                runTest("testData/intentions/splitIf/ifOrReturn.kt");
-            }
-
-            @TestMetadata("ifWithElse.kt")
-            public void testIfWithElse() throws Exception {
-                runTest("testData/intentions/splitIf/ifWithElse.kt");
-            }
-
-            @TestMetadata("localFunction.kt")
-            public void testLocalFunction() throws Exception {
-                runTest("testData/intentions/splitIf/localFunction.kt");
-            }
-
-            @TestMetadata("nestedIf.kt")
-            public void testNestedIf() throws Exception {
-                runTest("testData/intentions/splitIf/nestedIf.kt");
-            }
-
-            @TestMetadata("nestedIfNotApplicable.kt")
-            public void testNestedIfNotApplicable() throws Exception {
-                runTest("testData/intentions/splitIf/nestedIfNotApplicable.kt");
-            }
-
-            @TestMetadata("nestedIfOutside.kt")
-            public void testNestedIfOutside() throws Exception {
-                runTest("testData/intentions/splitIf/nestedIfOutside.kt");
-            }
-
-            @TestMetadata("nestedInside.kt")
-            public void testNestedInside() throws Exception {
-                runTest("testData/intentions/splitIf/nestedInside.kt");
-            }
-
-            @TestMetadata("notIf.kt")
-            public void testNotIf() throws Exception {
-                runTest("testData/intentions/splitIf/notIf.kt");
-            }
-
-            @TestMetadata("onIfWithOr.kt")
-            public void testOnIfWithOr() throws Exception {
-                runTest("testData/intentions/splitIf/onIfWithOr.kt");
-            }
-
-            @TestMetadata("operatorAsFunctionParam.kt")
-            public void testOperatorAsFunctionParam() throws Exception {
-                runTest("testData/intentions/splitIf/operatorAsFunctionParam.kt");
-            }
-
-            @TestMetadata("operatorOutsideIf.kt")
-            public void testOperatorOutsideIf() throws Exception {
-                runTest("testData/intentions/splitIf/operatorOutsideIf.kt");
-            }
-
-            @TestMetadata("orAnd.kt")
-            public void testOrAnd() throws Exception {
-                runTest("testData/intentions/splitIf/orAnd.kt");
-            }
-
-            @TestMetadata("orWithBraces.kt")
-            public void testOrWithBraces() throws Exception {
-                runTest("testData/intentions/splitIf/orWithBraces.kt");
-            }
-
-            @TestMetadata("twoOperatorsFirst.kt")
-            public void testTwoOperatorsFirst() throws Exception {
-                runTest("testData/intentions/splitIf/twoOperatorsFirst.kt");
-            }
-
-            @TestMetadata("twoOperatorsSecond.kt")
-            public void testTwoOperatorsSecond() throws Exception {
-                runTest("testData/intentions/splitIf/twoOperatorsSecond.kt");
-            }
-
-            @TestMetadata("withNotOperator.kt")
-            public void testWithNotOperator() throws Exception {
-                runTest("testData/intentions/splitIf/withNotOperator.kt");
-            }
-
-            @TestMetadata("withNotOperatorGood.kt")
-            public void testWithNotOperatorGood() throws Exception {
-                runTest("testData/intentions/splitIf/withNotOperatorGood.kt");
-            }
-
-            @TestMetadata("withOR.kt")
-            public void testWithOR() throws Exception {
-                runTest("testData/intentions/splitIf/withOR.kt");
-            }
-
-            @TestMetadata("withORElse.kt")
-            public void testWithORElse() throws Exception {
-                runTest("testData/intentions/splitIf/withORElse.kt");
-            }
-
-            @TestMetadata("wrongCaretLocation.kt")
-            public void testWrongCaretLocation() throws Exception {
-                runTest("testData/intentions/splitIf/wrongCaretLocation.kt");
-            }
         }
     }
 

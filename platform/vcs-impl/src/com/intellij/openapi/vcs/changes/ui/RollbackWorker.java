@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -19,8 +21,10 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +34,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class RollbackWorker {
   private static final Logger LOG = Logger.getInstance(RollbackWorker.class);
@@ -56,30 +58,40 @@ public class RollbackWorker {
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles) {
-    doRollback(changes, deleteLocallyAddedFiles, null, null);
+    doRollback(changes, deleteLocallyAddedFiles, VcsBundle.message("activity.name.rollback"), VcsActivity.Rollback);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @Nullable @Nls String localHistoryActionName) {
-    doRollback(changes, deleteLocallyAddedFiles, afterVcsRefreshInAwt, localHistoryActionName, false);
+    doRollback(changes, deleteLocallyAddedFiles, afterVcsRefreshInAwt,
+               ObjectUtils.chooseNotNull(localHistoryActionName, VcsBundle.message("activity.name.rollback")),
+               VcsActivity.Rollback, false);
+  }
+
+  public void doRollback(@NotNull Collection<? extends Change> changes,
+                         boolean deleteLocallyAddedFiles,
+                         @NotNull @NlsContexts.Label String localHistoryActionName,
+                         @NotNull ActivityId activityId) {
+    doRollback(changes, deleteLocallyAddedFiles, null, localHistoryActionName, activityId, false);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
-                         @Nullable @Nls String localHistoryActionName,
+                         @NotNull @NlsContexts.Label String localHistoryActionName,
+                         @Nullable ActivityId activityId,
                          boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
+      LocalHistoryAction action = activityId != null ? LocalHistory.getInstance().startAction(localHistoryActionName, activityId) : null;
 
       final Runnable afterRefresh = () -> {
-        action.finish();
-        LocalHistory.getInstance().putSystemLabel(myProject, notNull(localHistoryActionName, myOperationName), -1);
+        if (action != null) action.finish();
+        LocalHistory.getInstance().putSystemLabel(myProject, localHistoryActionName, -1);
 
         InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
                                            InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
+public final class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean reportLocalVariables = true;

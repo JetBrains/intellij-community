@@ -18,6 +18,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -210,11 +211,15 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       IntList caseCounts = new IntArrayList();
       StringJoiner joiner = new StringJoiner("\n");
       boolean addDefaultBranch = mySwitchBlock instanceof PsiSwitchExpression;
-      for (PsiSwitchLabeledRuleStatement rule : rules) {
+      for (int i = 0; i < rules.size(); i++) {
+        PsiSwitchLabeledRuleStatement rule = rules.get(i);
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
         String generate = collectCommentsBefore(rule, mainCommentTracker);
         generate += generateBranch(rule, ct, switchCopy);
+        if (i == rules.size() - 1) {
+          generate += collectCommentsBefore(body.getRBrace(), mainCommentTracker);
+        }
         PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
         int caseCount = labelElementList == null ? 1 : labelElementList.getElementCount();
         caseCounts.add(caseCount);
@@ -224,6 +229,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
         addDefaultBranch &= !SwitchUtils.isDefaultLabel(rule);
+
       }
       if (addDefaultBranch) {
         joiner.add("default:throw new java.lang.IllegalArgumentException();");
@@ -250,17 +256,27 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     }
 
     @NotNull
-    private static String collectCommentsBefore(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull CommentTracker ct) {
+    private static String collectCommentsBefore(@Nullable PsiElement rule, @NotNull CommentTracker ct) {
+      boolean commentFound = false;
+      if (rule == null) {
+        return "";
+      }
       List<String> lists = new ArrayList<>();
       PsiElement previous = rule.getPrevSibling();
       while (true) {
         if (previous instanceof PsiComment || previous instanceof PsiWhiteSpace) {
+          if (previous instanceof PsiComment) {
+            commentFound = true;
+          }
           lists.add(ct.text(previous));
           previous = previous.getPrevSibling();
         }
         else {
           break;
         }
+      }
+      if (!commentFound) {
+        return "";
       }
       Collections.reverse(lists);
       return String.join("", lists);

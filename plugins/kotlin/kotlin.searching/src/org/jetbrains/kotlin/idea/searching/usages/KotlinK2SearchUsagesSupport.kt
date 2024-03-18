@@ -4,10 +4,8 @@ package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -15,20 +13,24 @@ import kotlinx.coroutines.Runnable
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
+import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -77,18 +79,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return super.getClassNameToSearch(namedElement)
     }
 
-    override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
-        return emptySet()
-    }
-
-    override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
-        return null
-    }
-
-    override fun isExpectDeclaration(declaration: KtDeclaration): Boolean {
-        return false
-    }
-
     override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
         return analyze(subDeclaration) {
             val subSymbol = subDeclaration.getSymbol() as? KtCallableSymbol ?: return false
@@ -97,6 +87,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
+        if (declaration.isExpectDeclaration() &&
+            reference.unwrappedTargets.any { target -> target is KtDeclaration && ExpectActualSupport.getInstance(declaration.project).expectedDeclarationIfAny(target) == declaration }) {
+            return true
+        }
+
         fun KtDeclaration.isTopLevelCallable() = when (this) {
             is KtNamedFunction -> isTopLevel
             is KtProperty -> isTopLevel
@@ -258,29 +253,44 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         searchDeeply: Boolean,
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean {
-        TODO()
+        for (member in members) {
+            if (member is KtCallableDeclaration) {
+                val iterator = if (searchDeeply) {
+                    member.findAllOverridings().filterIsInstance<KtElement>().iterator()
+                } else {
+                    DirectKotlinOverridingCallableSearch.search(member).iterator()
+                }
+                for (psiElement in iterator) {
+                    if (!processor(member, psiElement)) return false
+                }
+            }
+        }
+        return true
     }
 
-    override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
         return when (val element = method.unwrapped) {
-            is PsiMethod -> element.findDeepestSuperMethods().toList()
-            is KtCallableDeclaration -> analyze(element) {
-                // it's not possible to create symbol for function type parameter, so we need to process this case separately
-                // see KTIJ-25760 and KTIJ-25653
-                if (method is KtParameter && method.isFunctionTypeParameter) return emptyList()
+            is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()
+            is KtCallableDeclaration -> allowAnalysisOnEdt {
+                analyze(element) {
+                    // it's not possible to create symbol for function type parameter, so we need to process this case separately
+                    // see KTIJ-25760 and KTIJ-25653
+                    if (method is KtParameter && method.isFunctionTypeParameter) return emptyList()
 
-                val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
+                    val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
 
-                val allSuperMethods = symbol.getAllOverriddenSymbols()
-                val deepestSuperMethods = allSuperMethods.filter {
-                    when (it) {
-                        is KtFunctionSymbol -> !it.isOverride
-                        is KtPropertySymbol -> !it.isOverride
-                        else -> false
+                    val allSuperMethods = if (deepest) symbol.getAllOverriddenSymbols() else symbol.getDirectlyOverriddenSymbols()
+                    val deepestSuperMethods = allSuperMethods.filter {
+                        when (it) {
+                            is KtFunctionSymbol -> !it.isOverride
+                            is KtPropertySymbol -> !it.isOverride
+                            else -> false
+                        }
                     }
-                }
 
-                deepestSuperMethods.mapNotNull { it.psi }
+                    deepestSuperMethods.mapNotNull { it.psi }
+                }
             }
             else -> emptyList()
         }
@@ -331,7 +341,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
                 return withResolvedCall(callExpression) { call ->
                     when (call) {
-                        is KtDelegatedConstructorCall -> call.symbol == ktDeclaration.getSymbol()
+                        is KtDelegatedConstructorCall -> {
+                            val constructorSymbol = call.symbol
+                            val declarationSymbol = ktDeclaration.getSymbol()
+                            constructorSymbol == declarationSymbol || constructorSymbol.getContainingSymbol() == declarationSymbol
+                        }
                         else -> false
                     }
                 } ?: false

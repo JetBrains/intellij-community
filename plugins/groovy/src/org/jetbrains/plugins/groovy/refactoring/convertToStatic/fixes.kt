@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic
 
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix
@@ -27,6 +28,7 @@ fun applyErrorFixes(element: GroovyPsiElement) {
   repeat(MAX_FIX_ITERATIONS) {
     val checker = TypeChecker()
     element.accept(TypeCheckVisitor(checker))
+    PsiDocumentManager.getInstance(element.project).doPostponedOperationsAndUnblockDocument(element.containingFile.viewProvider.document)
     if (checker.applyFixes() == 0) {
       return
     }

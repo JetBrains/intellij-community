@@ -66,8 +66,10 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return;
     Integer selectedOffset = e.getData(SELECTED_OFFSET_KEY);
     LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     assert tracker != null;

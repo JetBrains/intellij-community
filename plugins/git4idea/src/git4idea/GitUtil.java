@@ -64,7 +64,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 
 /**
  * Git utility/helper methods
@@ -862,7 +861,7 @@ public final class GitUtil {
       else if (after == null) {
         return "D: " + getRelativePath(root, before);
       }
-      else if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(before, after)) {
+      else if (ChangesUtil.equalsCaseSensitive(before, after)) {
         return "M: " + getRelativePath(root, after);
       }
       else {
@@ -933,7 +932,7 @@ public final class GitUtil {
   /**
    * @deprecated Prefer using {@link #isGitRoot(Path)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
     try {
       return isGitRoot(Paths.get(rootDir));

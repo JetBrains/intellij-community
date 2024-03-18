@@ -139,11 +139,6 @@ public class DynamicMethodDialog extends DynamicDialog {
     }
 
     @Override
-    public boolean isCellEditable(EventObject e) {
-      return true;
-    }
-
-    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof String) {
         myNameField.setText((String)value);

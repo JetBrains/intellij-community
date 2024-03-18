@@ -6,8 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.ui.table.VcsLogCommitList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +18,9 @@ import java.util.Map;
 
 public class VcsLogImpl implements VcsLog {
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull AbstractVcsLogUi myUi;
+  private final @NotNull VcsLogUiEx myUi;
 
-  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull AbstractVcsLogUi ui) {
+  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiEx ui) {
     myLogData = manager;
     myUi = ui;
   }
@@ -65,7 +65,7 @@ public class VcsLogImpl implements VcsLog {
     return myLogData.getLogProviders();
   }
 
-  private @NotNull VcsLogGraphTable getTable() {
+  private @NotNull VcsLogCommitList getTable() {
     return myUi.getTable();
   }
 }

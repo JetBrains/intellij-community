@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_IN
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -253,6 +254,11 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     return (if (ignorePopup) editorTabs.selectedInfo else editorTabs.targetInfo)?.component
   }
 
+  fun getSelectedComposite(): EditorComposite? {
+    val selectedInfo = editorTabs.selectedInfo
+    return selectedInfo?.component?.let { (it as EditorWindowTopComponent).composite }
+  }
+
   fun insertTab(file: VirtualFile,
                 icon: Icon?,
                 component: JComponent,
@@ -287,24 +293,12 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       }
     }
 
-    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
-    val dataContext = DataManager.getInstance().getDataContext(component)
-    val actionManager = ActionManager.getInstance()
-    val editorActionGroup = actionManager.getAction("EditorTabActionGroup") as DefaultActionGroup
-    val group = DefaultActionGroup()
-    val event = AnActionEvent.createFromDataContext("EditorTabActionGroup", null, dataContext)
-    for (action in editorActionGroup.getChildren(event, actionManager)) {
-      if (action is ActionGroup) {
-        group.addAll(action.getChildren(event, actionManager).asList(), actionManager)
-      }
-      else {
-        group.addAction(action)
-      }
-    }
-    group.addAction(closeTab, Constraints.LAST)
+    val closeTab = CloseTab(component, file, window, parentDisposable)
+    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
+    val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
     tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
-    if (EditorsSplitters.isOpenedInBulk(file)) {
+    if (AsyncEditorLoader.isOpenedInBulk(file) && !AsyncEditorLoader.isFirstInBulk(file)) {
       editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
       editorTabs.updateListeners()
     }

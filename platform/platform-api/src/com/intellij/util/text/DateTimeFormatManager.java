@@ -9,33 +9,34 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
 
-/**
- * @author Konstantin Bulenkov
- */
+@ApiStatus.Internal
 @State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"), category = SettingsCategory.SYSTEM)
 public final class DateTimeFormatManager implements PersistentStateComponent<Element> {
-  public static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
-  private boolean myPrettyFormattingAllowed = true;
-  private String myPattern = DEFAULT_DATE_FORMAT;
+  private static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
+
   private boolean myOverrideSystemDateFormat = false;
   private boolean myUse24HourTime = true;
+  private String myPattern = DEFAULT_DATE_FORMAT;
+  private boolean myPrettyFormattingAllowed = true;
 
   @Override
   public @Nullable Element getState() {
     return XmlSerializer.serialize(this);
   }
+
   @Override
   public void loadState(@NotNull Element state) {
-    DateTimeFormatManager loaded = XmlSerializer.deserialize(state, DateTimeFormatManager.class);
+    var loaded = XmlSerializer.deserialize(state, DateTimeFormatManager.class);
     XmlSerializerUtil.copyBean(loaded, this);
+    resetFormats();
   }
 
   public boolean isOverrideSystemDateFormat() {
@@ -54,24 +55,6 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
     myUse24HourTime = use24HourTime;
   }
 
-  public void setPrettyFormattingAllowed(boolean prettyFormattingAllowed) {
-    myPrettyFormattingAllowed = prettyFormattingAllowed;
-  }
-
-  public @Nullable DateFormat getDateFormat() {
-    try {
-      return new SimpleDateFormat(myPattern);
-    }
-    catch (IllegalArgumentException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-  public Set<String> getIds() {
-    return DateTimeFormatterBean.EP_NAME.getExtensionList().stream().map(bean -> bean.id).collect(Collectors.toSet());
-  }
-
   public @NotNull String getDateFormatPattern() {
     return myPattern;
   }
@@ -81,15 +64,46 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
       //noinspection ResultOfObjectAllocationIgnored
       new SimpleDateFormat(pattern);
       myPattern = pattern;
-    } catch (Exception ignored) {
     }
+    catch (Exception ignored) { }
   }
 
   public boolean isPrettyFormattingAllowed() {
     return myPrettyFormattingAllowed;
   }
 
+  public void setPrettyFormattingAllowed(boolean prettyFormattingAllowed) {
+    myPrettyFormattingAllowed = prettyFormattingAllowed;
+  }
+
   public static DateTimeFormatManager getInstance() {
     return ApplicationManager.getApplication().getService(DateTimeFormatManager.class);
   }
+
+  //<editor-fold desc="Internal stuff">
+  record Formats(
+    DateTimeFormatter date, DateTimeFormatter timeShort, DateTimeFormatter timeMedium, DateTimeFormatter dateTime,
+    DateFormat dateFmt, DateFormat dateTimeFmt
+  ) { }
+
+  private volatile Formats myFormats;
+
+  Formats getFormats() {
+    var formats = myFormats;
+    if (formats == null) {
+      myFormats = formats = myOverrideSystemDateFormat ? DateFormatUtil.getCustomFormats(this) : DateFormatUtil.getSystemFormats();
+    }
+    return formats;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull DateFormat getDateFormat() {
+    return getFormats().dateFmt;
+  }
+
+  @ApiStatus.Internal
+  public void resetFormats() {
+    myFormats = null;
+  }
+  //</editor-fold>
 }

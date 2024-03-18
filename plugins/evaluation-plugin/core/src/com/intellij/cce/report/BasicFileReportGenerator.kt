@@ -37,19 +37,23 @@ open class BasicFileReportGenerator(
 
   protected open fun textToInsert(session: Session): String = session.expectedText
 
-  private fun getLineNumbers(linesCount: Int): String =
-    (1..linesCount).joinToString("\n") { it.toString().padStart(linesCount.toString().length) }
-
   private fun BODY.codeBlocks(text: String, sessions: List<List<Session>>, maxLookupOrder: Int) {
     div {
       for (lookupOrder in 0..maxLookupOrder) {
         div("code-container ${if (lookupOrder != maxLookupOrder) "order-hidden" else ""}") {
-          div { pre("line-numbers") { +getLineNumbers(text.lines().size) } }
-          div { pre("code") { unsafe { raw(prepareCode(text, sessions, lookupOrder)) } } }
+          codeContainer(this, text, sessions, lookupOrder)
         }
       }
     }
   }
+
+  protected open fun codeContainer(containerDiv: DIV, text: String, sessions: List<List<Session>>, lookupOrder: Int) = containerDiv.apply {
+    div { pre("line-numbers") { +getLineNumbers(text.lines().size) } }
+    div { pre("code") { unsafe { raw(prepareCode(text, sessions, lookupOrder)) } } }
+  }
+
+  private fun getLineNumbers(linesCount: Int): String =
+    (1..linesCount).joinToString("\n") { it.toString().padStart(linesCount.toString().length) }
 
   private fun prepareCode(text: String, _sessions: List<List<Session>>, lookupOrder: Int): String {
     if (_sessions.isEmpty() || _sessions.all { it.isEmpty() }) return text

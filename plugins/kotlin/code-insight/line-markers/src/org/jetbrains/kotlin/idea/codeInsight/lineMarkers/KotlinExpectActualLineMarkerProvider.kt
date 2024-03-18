@@ -14,6 +14,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.*
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
@@ -41,7 +42,7 @@ class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
         for (element in elements) {
             val declaration = element as? KtNamedDeclaration ?: continue
             if (expectEnabled) {
-                if (!declaration.isExpectDeclaration() && declaration.isEffectivelyActualDeclaration()) {
+                if (!declaration.isExpectDeclaration() && declaration.isEffectivelyActual()) {
                     collectExpectMarkers(declaration, result)
                 }
             }

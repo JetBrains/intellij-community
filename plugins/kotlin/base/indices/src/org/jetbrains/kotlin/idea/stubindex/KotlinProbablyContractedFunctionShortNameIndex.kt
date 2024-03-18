@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class KotlinProbablyContractedFunctionShortNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex")
+            StubIndexKey.createIndexKey(KotlinProbablyContractedFunctionShortNameIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey

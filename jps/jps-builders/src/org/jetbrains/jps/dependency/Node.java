@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 
-public interface Node<T extends Node<T, D>, D extends Difference> extends DiffCapable<T, D>, SerializableGraphElement {
+public interface Node<T extends Node<T, D>, D extends Difference> extends DiffCapable<T, D>, ExternalizableGraphElement {
 
   @NotNull
   ReferenceID getReferenceID();

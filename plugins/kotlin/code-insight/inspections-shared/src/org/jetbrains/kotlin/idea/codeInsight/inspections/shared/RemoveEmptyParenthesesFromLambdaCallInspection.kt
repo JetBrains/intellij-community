@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -41,7 +41,7 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinAp
     override fun isApplicableByAnalyze(element: KtValueArgumentList): Boolean =
         (element.parent as? KtCallExpression)?.resolveCall() is KtSuccessCallInfo
 
-    override fun apply(element: KtValueArgumentList, project: Project, editor: Editor?) {
+    override fun apply(element: KtValueArgumentList, project: Project, updater: ModPsiUpdater) {
         removeArgumentList(element)
     }
 }

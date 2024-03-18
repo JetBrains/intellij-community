@@ -17,7 +17,7 @@ import javax.swing.JComponent
 class GHSelectorErrorStatusPresenter(
   private val project: Project,
   private val resetAction: () -> Unit = {}
-) : ErrorStatusPresenter<RepositoryAndAccountSelectorViewModel.Error> {
+) : ErrorStatusPresenter.Text<RepositoryAndAccountSelectorViewModel.Error> {
   override fun getErrorTitle(error: RepositoryAndAccountSelectorViewModel.Error): String = when (error) {
     is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> CollaborationToolsBundle.message(
       "review.list.connection.failed.repository.account",

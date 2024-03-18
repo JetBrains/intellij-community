@@ -22,7 +22,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   private static final boolean IS_ENABLED = SystemProperties.getBooleanProperty("bytecodeAnalysis.index.enabled", true);
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 

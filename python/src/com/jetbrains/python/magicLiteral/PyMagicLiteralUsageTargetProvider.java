@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Ilya.Kazakevich
  */
-class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider {
+final class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider {
   @Override
   public UsageTarget @Nullable [] getTargets(@NotNull final Editor editor, @NotNull final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());

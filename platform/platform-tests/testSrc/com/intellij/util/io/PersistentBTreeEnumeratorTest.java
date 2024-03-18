@@ -225,7 +225,7 @@ public class PersistentBTreeEnumeratorTest {
     StorageLockContext.assertNoBuffersLocked();
 
     FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 400, () -> {
+    PlatformTestUtil.newPerformanceTest("PersistentStringEnumerator", () -> {
       for (int i = 0; i < 10000; i++) {
         for (String item : data) {
           assertNotEquals(0, myEnumerator.tryEnumerate(item));
@@ -235,7 +235,7 @@ public class PersistentBTreeEnumeratorTest {
           assertEquals(0, myEnumerator.tryEnumerate(item));
         }
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
 
     // ensure we don't cache anything
@@ -327,7 +327,7 @@ public class PersistentBTreeEnumeratorTest {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
+    PlatformTestUtil.newPerformanceTest("PersistentStringEnumerator", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         String string = createRandomString();
@@ -335,7 +335,7 @@ public class PersistentBTreeEnumeratorTest {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).assertTiming();
+    }).start();
     myEnumerator.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }

@@ -38,7 +38,7 @@ class MethodTypeParams {
 
   interface Middle extends Top
   {
-    <T> List<T> getList();
+    <T> List<T> <warning descr="Abstract method 'getList()' overrides abstract method">getList</warning>();
   }
 
   abstract class Bottom implements Middle
@@ -57,7 +57,7 @@ class SuperclassSubst {
     abstract class Bottom implements Top<String>
     {
         @Override
-        public abstract String <warning descr="Abstract method 'getList()' overrides abstract method">getList</warning>();
+        public abstract String getList();
     }
 }
 

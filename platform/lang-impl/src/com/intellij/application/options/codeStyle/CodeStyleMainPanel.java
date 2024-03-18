@@ -198,7 +198,6 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
   }
 
   public boolean isModified() {
-    if (myModel.isSchemeListModified()) return true;
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
       //if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);

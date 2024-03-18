@@ -1,4 +1,4 @@
-// SHORTEN_AND_IMPORT
+// STRATEGY: SHORTEN_AND_IMPORT
 package a.b.c
 
 import x.y.z.Outer.Inner.VALUE0

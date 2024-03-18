@@ -167,6 +167,10 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       }
     }
 
+  fun ModuleInfo.Builder.withFile(relativePath: String, content: String) {
+    filesConfiguration.withFile(relativePath, content)
+  }
+
   fun ModuleInfo.Builder.withSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
     filesConfiguration.withSettingsFile(useKotlinDsl = useKotlinDsl, configure = configure)
   }

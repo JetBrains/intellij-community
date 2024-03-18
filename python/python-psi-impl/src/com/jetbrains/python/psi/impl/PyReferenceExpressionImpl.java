@@ -12,8 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -86,35 +84,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     pyVisitor.visitPyReferenceExpression(this);
   }
 
-  @Override
-  @Nullable
-  public PyExpression getQualifier() {
-    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
-    return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
-  }
-
-  @Override
-  public boolean isQualified() {
-    return getQualifier() != null;
-  }
-
-  @Override
-  @Nullable
-  public String getReferencedName() {
-    final ASTNode nameElement = getNameElement();
-    return nameElement != null ? nameElement.getText() : null;
-  }
-
-  @Override
-  @Nullable
-  public ASTNode getNameElement() {
-    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-  }
-
   @Nullable
   @Override
   public String getName() {
-    return getReferencedName();
+    return PyReferenceExpression.super.getName();
   }
 
   @Override

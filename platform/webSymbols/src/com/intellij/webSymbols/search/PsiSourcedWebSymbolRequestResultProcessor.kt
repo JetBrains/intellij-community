@@ -4,7 +4,6 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.model.psi.PsiSymbolService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -17,7 +16,7 @@ import com.intellij.webSymbols.references.WebSymbolReference
 
 class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiElement,
                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {
-  private val mySymbolReferenceService = service<PsiSymbolReferenceService>()
+  private val mySymbolReferenceService = PsiSymbolReferenceService.getService()
   private val myPsiReferenceService = PsiReferenceService.getService()
 
   override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {

@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
 import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.*
@@ -104,8 +103,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase() 
     }
 
     companion object {
-
-        private val FLAG_NAMESPACE_TO_CLASS: Map<String, Class<*>> = ImmutableMap.of(
+        private val FLAG_NAMESPACE_TO_CLASS: Map<String, Class<*>> = java.util.Map.of(
             "CLI", CLIConfigurationKeys::class.java,
             "JVM", JVMConfigurationKeys::class.java
         )

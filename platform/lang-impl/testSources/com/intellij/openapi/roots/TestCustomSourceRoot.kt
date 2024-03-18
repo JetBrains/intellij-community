@@ -60,16 +60,11 @@ class TestCustomSourceRootProperties(initialTestString: String?) : JpsElementBas
     set(value) {
       if (value != field) {
         field = value
-        fireElementChanged()
       }
     }
 
   override fun createCopy(): TestCustomSourceRootProperties {
     return TestCustomSourceRootProperties(testString)
-  }
-
-  override fun applyChanges(modified: TestCustomSourceRootProperties) {
-    testString = modified.testString
   }
 }
 

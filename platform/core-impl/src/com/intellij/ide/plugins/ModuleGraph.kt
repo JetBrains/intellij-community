@@ -3,9 +3,9 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.util.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -90,7 +90,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
 
     if (!result.isEmpty()) {
-      directDependencies.put(module, Java11Shim.INSTANCE.copyOfCollection(result))
+      directDependencies.put(module, result.toPersistentList())
       result.clear()
     }
   }

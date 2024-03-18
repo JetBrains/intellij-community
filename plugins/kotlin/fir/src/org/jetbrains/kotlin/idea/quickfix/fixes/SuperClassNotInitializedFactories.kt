@@ -9,10 +9,8 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.utils.getContainingKtModule
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -61,7 +59,7 @@ internal object SuperClassNotInitializedFactories {
             val withParenthesis = element.replaced(KtPsiFactory(context.project).createSuperTypeCallEntry(element.text + "()"))
             if (moveCaretIntoParenthesis) {
                 withParenthesis.valueArgumentList?.leftParenthesis?.endOffset?.let { offset ->
-                    updater.moveTo(offset)
+                    updater.moveCaretTo(offset)
                 }
             }
         }

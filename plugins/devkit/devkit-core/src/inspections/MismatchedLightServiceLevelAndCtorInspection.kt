@@ -79,7 +79,7 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
       private fun registerProblemProjectLevelRequired(annotation: JvmAnnotation,
                                                       elementToReport: PsiJavaCodeReferenceElement,
                                                       file: PsiFile) {
-        val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
+        val projectLevelFqn = getProjectLevelFQN()
         val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
         val text = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.project.level.fix")
         val actions = createChangeAnnotationAttributeActions(annotation, 0, request, text, text)

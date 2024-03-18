@@ -37,6 +37,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getCopyrightStart(): String? = delegate.copyrightStart
   override fun isMajorEAP(): Boolean = delegate.isMajorEAP()
   override fun isPreview(): Boolean = delegate.isPreview()
+  override fun getFullIdeProductCode(): String? = delegate.fullIdeProductCode
   override fun getUpdateUrls(): UpdateUrls? = delegate.updateUrls
   override fun getDocumentationUrl(): String? = delegate.documentationUrl
   override fun getSupportUrl(): String? = delegate.supportUrl

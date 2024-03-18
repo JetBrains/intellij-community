@@ -1,3 +1,3 @@
 fun test(list: List<String>?) {
-    list.for
+    list.for    <caret>
 }

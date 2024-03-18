@@ -446,7 +446,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private boolean isRepetition(String path) {
-    // debouncing subsequent notifications (happen e.g. on copying of large files); this reduces path checks at least 20% on Windows
+    // debouncing subsequent notifications (happens on copying of large files); this reduces path checks at least 20% on Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {
         int last = myLastChangedPathIndex - i - 1;

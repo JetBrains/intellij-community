@@ -3,6 +3,7 @@ package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
@@ -25,7 +26,7 @@ class GitInteractiveRebaseFile {
     myFile = file;
   }
 
-  public @NotNull List<GitRebaseEntry> load() throws IOException, NoopException {
+  public @NotNull List<GitRebaseEntry> load() throws IOException, NoopException, VcsException {
     String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     List<GitRebaseEntry> entries = new ArrayList<>();
     final StringScanner s = new StringScanner(FileUtil.loadFile(myFile, encoding));

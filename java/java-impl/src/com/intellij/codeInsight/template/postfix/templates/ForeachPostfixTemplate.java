@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -16,7 +17,7 @@ import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate {
+public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public ForeachPostfixTemplate(@NotNull String templateName, @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, "for ($FINAL$$TYPE$ $NAME$ : $EXPR$) {\n    $END$\n}", "for (T item : expr)",
           ContainerUtil.newHashSet(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition(),

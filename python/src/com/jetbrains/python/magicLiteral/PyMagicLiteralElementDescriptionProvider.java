@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Ilya.Kazakevich
  */
-class PyMagicLiteralElementDescriptionProvider implements ElementDescriptionProvider {
+final class PyMagicLiteralElementDescriptionProvider implements ElementDescriptionProvider {
   @Nullable
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {

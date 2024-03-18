@@ -46,5 +46,9 @@ class OldPlainTerminalView(project: Project, settings: JBTerminalSystemSettingsP
     widget.asNewWidget().addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    widget.executeCommand(shellCommand)
+  }
+
   override fun dispose() {}
 }

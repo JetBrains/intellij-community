@@ -9,6 +9,8 @@ import org.junit.Test
 import java.io.File
 
 class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("""
@@ -20,11 +22,11 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testParentRelativePathOutsideProjectRoot() = runBlocking {
-    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/1.0/example-1.0.pom")
+    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
 
     val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(myProjectRoot.getPath()), file)!!.replace("\\\\".toRegex(), "/")
+      FileUtil.getRelativePath(File(projectRoot.getPath()), file)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -38,25 +40,25 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    myFixture.configureFromExistingVirtualFile(pom)
-    val resolved = myFixture.getElementAtCaret()
+    fixture.configureFromExistingVirtualFile(pom)
+    val resolved = fixture.getElementAtCaret()
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
-    assertResolved(myProjectPom, parentPsi)
+    assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
   }
 
 
   @Test
   fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
-    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/1.0/pom.xml")
+    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/pom.xml")
 
     val parentFile = file.getParentFile()
 
 
     val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(myProjectRoot.getPath()), parentFile)!!.replace("\\\\".toRegex(), "/")
+      FileUtil.getRelativePath(File(projectRoot.getPath()), parentFile)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -70,12 +72,12 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    myFixture.configureFromExistingVirtualFile(pom)
-    val resolved = myFixture.getElementAtCaret()
+    fixture.configureFromExistingVirtualFile(pom)
+    val resolved = fixture.getElementAtCaret()
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
-    assertResolved(myProjectPom, parentPsi)
+    assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
   }
 }

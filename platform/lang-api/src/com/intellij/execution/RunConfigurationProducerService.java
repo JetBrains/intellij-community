@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -29,6 +30,7 @@ import java.util.Set;
  * Project component that keeps track of {@link RunConfigurationProducer} implementations that should be ignored for a given project. All
  * subclasses of classes specified here will be ignored when looking for configuration producers.
  */
+@Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationProducerService", storages = @Storage("runConfigurations.xml"))
 public final class RunConfigurationProducerService implements PersistentStateComponent<RunConfigurationProducerService.State> {
   private State myState = new State();

@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -194,7 +195,11 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   private static @NotNull Iterable<ActionToolbar> iterateToolbars(Iterable<? extends JComponent> roots) {
     return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal()
       .filter(ActionToolbar.class)
-      .filter(toolbar -> !Boolean.TRUE.equals(toolbar.getComponent().getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY)));
+      .filter(toolbar -> {
+        var c = toolbar.getComponent();
+        return !Boolean.TRUE.equals(c.getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY))
+          && !(c instanceof FloatingToolbarComponent);
+      });
   }
 
   private static final class OptionsGroup extends NonTrivialActionGroup implements DumbAware {

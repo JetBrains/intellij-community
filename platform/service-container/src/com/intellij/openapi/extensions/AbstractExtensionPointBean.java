@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -33,27 +32,12 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     return findClass(className, myPluginDescriptor);
   }
 
-  public final @NotNull <T> Class<T> findExtensionClass(@NotNull String className) {
-    try {
-      return findClass(className, myPluginDescriptor);
-    }
-    catch (Throwable t) {
-      throw new PluginException(t, getPluginId());
-    }
-  }
-
   private static @NotNull <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     ClassLoader classLoader = pluginDescriptor != null ?
                               pluginDescriptor.getClassLoader() :
                               AbstractExtensionPointBean.class.getClassLoader();
     //noinspection unchecked
     return (Class<T>)Class.forName(className, true, classLoader);
-  }
-
-  public @NotNull ClassLoader getLoaderForClass() {
-    return myPluginDescriptor != null ?
-           myPluginDescriptor.getClassLoader() :
-           getClass().getClassLoader();
   }
 
   public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {

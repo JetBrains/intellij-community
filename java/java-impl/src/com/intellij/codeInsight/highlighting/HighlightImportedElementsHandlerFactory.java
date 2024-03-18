@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class HighlightImportedElementsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
+public final class HighlightImportedElementsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
 
   @Nullable
   @Override

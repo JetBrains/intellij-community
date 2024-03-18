@@ -45,10 +45,11 @@ internal class SpecifyTypeExplicitlyIntention:
                         || diagnostic is KtFirDiagnostic.MustBeInitialized
         }) return null
 
-        return invokeContext(element)
+        return invokeContext(element).takeUnless { it.defaultType.isError }
     }
 
-    context(KtAnalysisSession) override fun invokeContext(element: KtCallableDeclaration): TypeInfo = getTypeInfo(element)
+    context(KtAnalysisSession)
+    override fun invokeContext(element: KtCallableDeclaration): TypeInfo = getTypeInfo(element)
 
     override fun apply(element: KtCallableDeclaration, context: AnalysisActionContext<TypeInfo>, updater: ModPsiUpdater) {
         updateType(element, context.analyzeContext, element.project, updater = updater)

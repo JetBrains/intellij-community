@@ -1,4 +1,4 @@
-// "Add library 'Lib' to classpath" "true"
+// "Add library 'lib' to classpath" "true"
 package y;
 
 public class AddLibrary {

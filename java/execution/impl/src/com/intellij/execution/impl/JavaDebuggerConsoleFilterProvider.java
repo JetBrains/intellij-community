@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider {
+public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider {
   static final Pattern PATTERN = Pattern.compile("Listening for transport (\\S+) at address: (\\S+)");
 
   @Override

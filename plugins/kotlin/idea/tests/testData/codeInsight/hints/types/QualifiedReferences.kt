@@ -12,7 +12,7 @@ class A {
 fun foo() {
     val v1 = A.B.C.D()
     val v2 = p.A.B.C.D()
-    val v3/*<# [:  [temp:///src/KotlinReferencesTypeHintsProvider.kt:34]A .E] #>*/ = A().E()
+    val v3/*<# : |[p.A:kotlin.fqn.class]A|.|E #>*/ = A().E()
     val v4 = p.A.F.enumCase
     val v5 = A.F.enumCase
     val v6 = p.A()

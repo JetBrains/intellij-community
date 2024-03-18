@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -112,6 +113,7 @@ internal class PluginInstalledFusListener : FusEventCatcher(), FusEventCatcher.F
 
   override suspend fun onEvent(fields: Map<String, Any>, eventTime: Instant) {
     val pluginId = fields["plugin"] as? String ?: return
+    logger.info("Plugin installed: ${pluginId}.")
 
     FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(PluginsInstalledCounterUserActivity) {
       it.writeInstallation(pluginId, eventTime)
@@ -128,9 +130,12 @@ internal class PluginUninstalledFusListener : FusEventCatcher(), FusEventCatcher
 
   override suspend fun onEvent(fields: Map<String, Any>, eventTime: Instant) {
     val pluginId = fields["plugin"] as? String ?: return
+    logger.info("Plugin uninstalled: ${pluginId}.")
 
     FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(PluginsInstalledCounterUserActivity) {
       it.writeUninstallation(pluginId)
     }
   }
 }
+
+private val logger = logger<PluginsInstalledCounterUserActivity>()

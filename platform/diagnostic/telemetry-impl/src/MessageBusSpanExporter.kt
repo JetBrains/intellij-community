@@ -10,7 +10,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
 class MessageBusSpanExporter : AsyncSpanExporter {
   companion object {
     private val lock = Object()
-    private val spansData = mutableListOf<SpanData>()
+    private val spanData = mutableListOf<SpanData>()
     private fun initPublisher() = ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC)
   }
 
@@ -19,15 +19,17 @@ class MessageBusSpanExporter : AsyncSpanExporter {
       val dataToSend = mutableListOf<SpanData>()
       synchronized(lock) {
         val publisher = initPublisher()
-        if (!spansData.isEmpty()) dataToSend.addAll(spansData)
+        if (!spanData.isEmpty()) {
+          dataToSend.addAll(spanData)
+        }
         dataToSend.addAll(spans)
-        spansData.clear()
+        spanData.clear()
         publisher
       }.sendSpans(dataToSend)
     }
     else {
       synchronized(lock) {
-        spansData.addAll(spans)
+        spanData.addAll(spans)
       }
     }
   }

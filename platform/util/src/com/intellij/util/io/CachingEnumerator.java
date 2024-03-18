@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,13 +14,15 @@ public final class CachingEnumerator<Data> implements DataEnumerator<Data> {
   private static final int STRIPE_POWER = 4;
   private static final int STRIPE_COUNT = 1 << STRIPE_POWER;
   private static final int STRIPE_MASK = STRIPE_COUNT - 1;
+
   @SuppressWarnings("unchecked") private final SLRUMap<Integer, Integer>[] myHashcodeToIdCache = new SLRUMap[STRIPE_COUNT];
   @SuppressWarnings("unchecked") private final SLRUMap<Integer, Data>[] myIdToStringCache = new SLRUMap[STRIPE_COUNT];
   private final Lock[] myStripeLocks = new Lock[STRIPE_COUNT];
-  private final DataEnumerator<Data> myBase;
-  private final KeyDescriptor<Data> myDataDescriptor;
 
-  public CachingEnumerator(@NotNull DataEnumerator<Data> base, @NotNull KeyDescriptor<Data> dataDescriptor) {
+  private final DataEnumerator<Data> myBase;
+  private final EqualityPolicy<Data> myDataDescriptor;
+
+  public CachingEnumerator(@NotNull DataEnumerator<Data> base, @NotNull EqualityPolicy<Data> dataDescriptor) {
     myBase = base;
     myDataDescriptor = dataDescriptor;
     int protectedSize = 8192;
@@ -30,7 +33,6 @@ public final class CachingEnumerator<Data> implements DataEnumerator<Data> {
       myIdToStringCache[i] = new SLRUMap<>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
       myStripeLocks[i] = new ReentrantLock();
     }
-
   }
 
   @Override

@@ -11,7 +11,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class StringConcatenationInFormatCallInspection extends BaseInspection {
+public final class StringConcatenationInFormatCallInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -4,12 +4,13 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
-import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInsight.documentation.DocumentationFontSize;
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -23,7 +24,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ShortcutExtension;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
@@ -38,7 +41,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.EditorKit;
+import javax.swing.text.View;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
@@ -51,8 +56,11 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getContentSpacing;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
+import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES;
 
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {
@@ -71,7 +79,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static final int ARC_RADIUS = 5;
 
   private static StyleSheet ourCachedStyleSheet;
-  private static String ourCachedStyleSheetLinkColor = "non-existing";
+  private static String ourCachedStyleSheetCheckColors = "non-existing";
 
   private final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
@@ -299,6 +307,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       text = unwrapTipsText(text);
       text = ShortcutExtension.Companion.patchShortcutTags(text, false);
       useTipsKit = true;
+    } else {
+      text = DocumentationHtmlUtil.transpileForHtmlEditorPaneInput(text);
     }
     EditorPane pane = new EditorPane(!reusable);
     pane.setEditable(false);
@@ -307,7 +317,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.setEditorKit(createEditorKit(editor, useTipsKit));
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
-    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationComponent.getQuickDocFontSize().getSize()));
+    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationFontSize.getDocumentationFontSize().getSize()));
     // disable kerning for now - laying out all fragments in a file with it takes too much time
     fontAttributes.put(TextAttribute.KERNING, 0);
     pane.setFont(pane.getFont().deriveFont(fontAttributes));
@@ -346,10 +356,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static EditorKit createEditorKit(@NotNull Editor editor, boolean useTipsKit) {
     HTMLEditorKit editorKit =
       new HTMLEditorKitBuilder()
-        .withViewFactoryExtensions(useTipsKit ?
-                                   new ShortcutExtension() :
-                                   ((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
-        )
+        .withViewFactoryExtensions(useTipsKit ? new ShortcutExtension() : FIT_TO_WIDTH_IMAGES)
         .withFontResolver(EditorCssFontResolver.getInstance(editor))
         .build();
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor, useTipsKit));
@@ -359,34 +366,27 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static StyleSheet getStyleSheet(@NotNull Editor editor, boolean useTipsKit) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
+    Color backgroundColor = colorsScheme.getDefaultBackground();
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
-    String linkColorHex = ColorUtil.toHex(linkColor);
-    if (useTipsKit || !Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
-      String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
+    String checkColors = ColorUtil.toHex(backgroundColor) + ColorUtil.toHex(linkColor);
+    if (useTipsKit || !Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
+      // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneDefaultCssRules
+      int spacing = scale(getContentSpacing());
       @Language("CSS") String input =
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
-        "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
-        "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
-        "white-space: pre-wrap}" + // supported by JetBrains Runtime
-        "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
-        "a {color: #" + linkColorHex + "; text-decoration: none}" +
-        "p {padding: 7 0 2 0}" +
-        "ol {padding: 0 20 0 0}" +
-        "ul {padding: 0 20 0 0}" +
-        "li {padding: 1 0 2 0}" +
-        "li p {padding-top: 0}" +
-        "table p {padding-bottom: 0}" +
-        "th {text-align: left}" +
-        "td {padding: 2 0 2 0}" +
-        "td p {padding-top: 0}" +
-        ".sections {border-spacing: 0}" +
-        ".section {padding-right: 5; white-space: nowrap}" +
-        ".content {padding: 2 0 2 0}" +
-        (useTipsKit ? createAdditionalStylesForTips(editor) : "");
+        "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
+        "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
+        "." + CLASS_SECTIONS + " {border-spacing: 0}" +
+        "." + CLASS_SECTION + " {padding-right: 5; white-space: nowrap}" +
+        "." + CLASS_CONTENT + " {padding: 0 2px " + spacing + "px 0}" +
+        (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
+        StringUtil.join(QuickDocHighlightingHelper.getDefaultDocCodeStyles(
+          colorsScheme, colorsScheme.getDefaultBackground(), spacing), "\n") +
+        StringUtil.join(QuickDocHighlightingHelper.getDefaultFormattingStyles(spacing), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {
         ourCachedStyleSheet = result;
-        ourCachedStyleSheetLinkColor = linkColorHex;
+        ourCachedStyleSheetCheckColors = checkColors;
       }
       return result;
     }
@@ -414,7 +414,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     private final ImageObserver myImageObserver = new ImageObserver() {
       @Override
       public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
-        if ((infoflags & (ImageObserver.WIDTH | ImageObserver.HEIGHT)) != 0) {
+        if ((infoflags & (WIDTH | HEIGHT)) != 0) {
           scheduleUpdate();
           return false;
         }
@@ -468,7 +468,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       return getSelectionStart() != getSelectionEnd();
     }
 
-    @Nullable Point getSelectionPositionInEditor() {
+    @Nullable
+    Point getSelectionPositionInEditor() {
       if (myPane != this) {
         return null;
       }
@@ -527,7 +528,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         update |= image.getWidth(myImageObserver) >= 0 || image.getHeight(myImageObserver) >= 0;
       }
       if (update) {
-        myImageObserver.imageUpdate(null, ImageObserver.WIDTH | ImageObserver.HEIGHT, 0, 0, 0, 0);
+        myImageObserver.imageUpdate(null, WIDTH | HEIGHT, 0, 0, 0, 0);
       }
     }
 
@@ -547,89 +548,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
-    }
-  }
-
-  private static final class MyScalingImageView extends ImageView {
-    private int myAvailableWidth;
-
-    private MyScalingImageView(Element element) {
-      super(element);
-    }
-
-    @Override
-    public Icon getLoadingImageIcon() {
-      return AllIcons.Process.Step_passive;
-    }
-
-    @Override
-    public int getResizeWeight(int axis) {
-      return 1;
-    }
-
-    @Override
-    public float getMaximumSpan(int axis) {
-      return getPreferredSpan(axis);
-    }
-
-    @Override
-    public float getPreferredSpan(int axis) {
-      float baseSpan = super.getPreferredSpan(axis);
-      if (axis == View.X_AXIS) {
-        return baseSpan;
-      }
-      else {
-        int availableWidth = getAvailableWidth();
-        if (availableWidth <= 0) return baseSpan;
-        float baseXSpan = super.getPreferredSpan(View.X_AXIS);
-        if (baseXSpan <= 0) return baseSpan;
-        if (availableWidth > baseXSpan) {
-          availableWidth = (int)baseXSpan;
-        }
-        if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
-          preferenceChanged(null, false, true);
-        }
-        myAvailableWidth = availableWidth;
-        return baseSpan * availableWidth / baseXSpan;
-      }
-    }
-
-    private int getAvailableWidth() {
-      for (View v = this; v != null; ) {
-        View parent = v.getParent();
-        if (parent instanceof FlowView) {
-          int childCount = parent.getViewCount();
-          for (int i = 0; i < childCount; i++) {
-            if (parent.getView(i) == v) {
-              return ((FlowView)parent).getFlowSpan(i);
-            }
-          }
-        }
-        v = parent;
-      }
-      return 0;
-    }
-
-    @Override
-    public void paint(Graphics g, Shape a) {
-      Rectangle targetRect = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
-      Graphics scalingGraphics = new Graphics2DDelegate((Graphics2D)g) {
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-          int maxWidth = Math.max(0, targetRect.width - 2 * (x - targetRect.x)); // assuming left and right insets are the same
-          int maxHeight = Math.max(0, targetRect.height - 2 * (y - targetRect.y)); // assuming top and bottom insets are the same
-          if (width > maxWidth) {
-            height = height * maxWidth / width;
-            width = maxWidth;
-          }
-          if (height > maxHeight) {
-            width = width * maxHeight / height;
-            height = maxHeight;
-          }
-          return super.drawImage(img, x, y, width, height, observer);
-        }
-      };
-      super.paint(scalingGraphics, a);
     }
   }
 

@@ -1,26 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-/**
- * @author nik
- */
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.awt.Font
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-class ShortcutPresenter : Disposable {
-  private val movingActions = setOf(
+internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
+  private val movingActions = java.util.Set.of(
     "EditorLeft", "EditorRight", "EditorDown", "EditorUp",
     "EditorLineStart", "EditorLineEnd", "EditorPageUp", "EditorPageDown",
     "EditorPreviousWord", "EditorNextWord",
@@ -39,21 +43,20 @@ class ShortcutPresenter : Disposable {
   private var lastPresentedActionData: ActionData? = null
 
   init {
-    enable()
+    enable(coroutineScope)
   }
 
-  private fun enable() {
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(AnActionListener.TOPIC, object : AnActionListener {
+  private fun enable(coroutineScope: CoroutineScope) {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(AnActionListener.TOPIC, object : AnActionListener {
       override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         // Show popups a bit later after action is called, to avoid too many UI processes get triggered.
         // Otherwise, popups may be presented with visible blinks.
-        ApplicationManager.getApplication().invokeLater {
-          val actionId = ActionManager.getInstance().getId(action) ?: return@invokeLater
-
+        coroutineScope.launch(Dispatchers.EDT) {
+          val actionId = serviceAsync<ActionManager>().getId(action) ?: return@launch
           if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
             val project = event.project
             val text = event.presentation.text
-            showActionInfo(ActionData(actionId, project, text))
+            showActionInfo(ActionData(actionId = actionId, project = project, actionText = text))
           }
         }
       }
@@ -99,14 +102,12 @@ class ShortcutPresenter : Disposable {
 
   }
 
-  class ActionData(val actionId: String, val project: Project?, val actionText: String?)
-
-  private fun MutableList<Pair<String, Font?>>.addText(text: String) {
-    this.add(Pair(text, null))
-  }
+  internal class ActionData(@JvmField val actionId: String, @JvmField val project: Project?, @JvmField val actionText: String?)
 
   fun showActionInfo(actionData: ActionData) {
-    if (actionData.actionId == "UiInspector") return
+    if (actionData.actionId == "UiInspector") {
+      return
+    }
 
     val fragments = getActionFragments(actionData)
 
@@ -121,11 +122,11 @@ class ShortcutPresenter : Disposable {
         infoPopupGroup!!.updateText(realProject, fragments)
       }
     }
-    PresentationAssistant.INSTANCE.checkIfMacKeymapIsAvailable()
+    service<PresentationAssistant>().checkIfMacKeymapIsAvailable()
   }
 
   private fun getActionFragments(actionData: ActionData): List<TextData> {
-    val configuration = PresentationAssistant.INSTANCE.configuration
+    val configuration = service<PresentationAssistant>().configuration
 
     val actionId = actionData.actionId
     val parentGroupName = parentNames[actionId]
@@ -138,14 +139,19 @@ class ShortcutPresenter : Disposable {
     }
 
     val mainKeymap = configuration.mainKeymapKind()
-    getShortcutTextData(mainKeymap, configuration.mainKeymapLabel, actionId, actionText)?.let {
+    val keymapManager = KeymapManager.getInstance()
+    getShortcutTextData(keymap = mainKeymap,
+                        label = configuration.mainKeymapLabel,
+                        actionId = actionId,
+                        shownShortcut = actionText,
+                        keymapManager = keymapManager)?.let {
       fragments.add(it)
     }
 
     val alternativeKeymap = configuration.alternativeKeymapKind()
     if (alternativeKeymap != null) {
-      val mainShortcut = getShortcutsText(mainKeymap.keymap?.getShortcuts(actionId), mainKeymap)
-      getShortcutTextData(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut)?.let {
+      val mainShortcut = getShortcutsText(keymapManager.getKeymap(mainKeymap.value)?.getShortcuts(actionId), mainKeymap)
+      getShortcutTextData(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut, keymapManager)?.let {
         fragments.add(it)
       }
     }
@@ -176,8 +182,12 @@ class ShortcutPresenter : Disposable {
     }
   }
 
-  private fun getShortcutTextData(keymap: KeymapKind, label: String?, actionId: String, shownShortcut: String): TextData? {
-    val shortcuts = keymap.keymap?.getShortcuts(actionId)?.let {
+  private fun getShortcutTextData(keymap: KeymapKind,
+                                  label: String?,
+                                  actionId: String,
+                                  shownShortcut: String,
+                                  keymapManager: KeymapManager): TextData? {
+    val shortcuts = keymapManager.getKeymap(keymap.value)?.getShortcuts(actionId)?.let {
       if (it.isNotEmpty()) it else getCustomShortcut(actionId, keymap)
     }
     val shortcutText = getShortcutsText(shortcuts, keymap)
@@ -240,14 +250,15 @@ class ShortcutPresenter : Disposable {
     }
 
   fun disable() {
-    if (infoPopupGroup != null) {
-      infoPopupGroup!!.close()
-      infoPopupGroup = null
+    try {
+      infoPopupGroup?.let {
+        it.close()
+        infoPopupGroup = null
+      }
     }
-    Disposer.dispose(this)
-  }
-
-  override fun dispose() {
+    finally {
+      coroutineScope.cancel()
+    }
   }
 }
 

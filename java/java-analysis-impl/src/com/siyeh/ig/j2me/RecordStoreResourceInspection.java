@@ -26,7 +26,7 @@ import com.siyeh.ig.resources.ResourceInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class RecordStoreResourceInspection extends ResourceInspection {
+public final class RecordStoreResourceInspection extends ResourceInspection {
 
   @Override
   @NotNull

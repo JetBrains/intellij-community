@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.DnDEvent;
@@ -146,7 +146,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   }
 
   @Override
-  @Nullable public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     Object data = myPaletteWindow.getData(dataId);
     if (data != null) return data;
     Project project = CommonDataKeys.PROJECT.getData(myPaletteWindow);

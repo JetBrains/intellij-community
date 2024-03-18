@@ -3,17 +3,17 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 internal class ImportMemberIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
+    AbstractKotlinModCommandWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
     HighPriorityAction {
 
     class Context(
@@ -48,8 +48,8 @@ internal class ImportMemberIntention :
         return computeContext(element, symbol)
     }
 
-    override fun apply(element: KtNameReferenceExpression, context: Context, project: Project, editor: Editor?) {
-        context.shortenCommand.invokeShortening()
+    override fun apply(element: KtNameReferenceExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+        context.analyzeContext.shortenCommand.invokeShortening()
     }
 }
 
@@ -65,16 +65,16 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
-                classShortenOption = {
+                classShortenStrategy = {
                     if (it.classIdIfNonLocal == classId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
-                }, callableShortenOption = {
+                        ShortenStrategy.DO_NOT_SHORTEN
+                }, callableShortenStrategy = {
                     if (it is KtConstructorSymbol && it.containingClassIdIfNonLocal == classId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
+                        ShortenStrategy.DO_NOT_SHORTEN
                 })
             if (shortenCommand.isEmpty) return null
             ImportMemberIntention.Context(classId.asSingleFqName(), shortenCommand)
@@ -86,12 +86,12 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
             if (!canBeImported(symbol)) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
-                classShortenOption = { ShortenOption.DO_NOT_SHORTEN },
-                callableShortenOption = {
+                classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
+                callableShortenStrategy = {
                     if (it.callableIdIfNonLocal == callableId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
+                        ShortenStrategy.DO_NOT_SHORTEN
                 }
             )
             if (shortenCommand.isEmpty) return null

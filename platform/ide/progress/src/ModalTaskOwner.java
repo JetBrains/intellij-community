@@ -2,12 +2,10 @@
 package com.intellij.platform.ide.progress;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-@Experimental
 public sealed interface ModalTaskOwner
   permits ProjectModalTaskOwner,
           ComponentModalTaskOwner,

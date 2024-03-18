@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
@@ -68,7 +67,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
-  private Boolean myUpdateNotOverridden;
+  @ApiStatus.Internal
+  int myMetaFlags;
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -120,7 +120,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * @param icon        the action's icon
    */
   public AnAction(@Nullable @ActionText String text, @Nullable @ActionDescription String description, @Nullable Icon icon) {
-    this(() -> text, () -> description, icon);
+    this(text == null ? Presentation.NULL_STRING : () -> text,
+         description == null ? Presentation.NULL_STRING : () -> description, icon);
   }
 
   @ApiStatus.Experimental
@@ -184,7 +185,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (PossiblyDumbAware.super.isDumbAware()) {
       return true;
     }
-    return updateNotOverridden();
+    return ActionClassMetaData.isDefaultUpdate(this);
   }
 
   @Override
@@ -192,19 +193,10 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
       return ActionUpdateThread.BGT;
     }
-    if (updateNotOverridden()) {
+    if (ActionClassMetaData.isDefaultUpdate(this)) {
       return ActionUpdateThread.BGT;
     }
     return ActionUpdateThreadAware.super.getActionUpdateThread();
-  }
-
-  private boolean updateNotOverridden() {
-    if (myUpdateNotOverridden != null) {
-      return myUpdateNotOverridden;
-    }
-    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
-    myUpdateNotOverridden = AnAction.class.equals(declaringClass);
-    return myUpdateNotOverridden;
   }
 
   /** Returns the set of shortcuts associated with this action. */
@@ -274,7 +266,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     setShortcutSet(sourceAction.getShortcutSet());
   }
 
-
   public final boolean isEnabledInModalContext() {
     return myEnabledInModalContext;
   }
@@ -285,6 +276,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * Return {@code true} if the action has to display its text along with the icon when placed in the toolbar.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public boolean displayTextInToolbar() {
     return false;
@@ -292,6 +285,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * Return {@code true} if the action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public boolean useSmallerFontForTextInToolbar() {
     return false;
@@ -348,12 +343,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       templatePresentation = presentation;
-      if (this instanceof ActionGroup group) {
-        // init group flags from deprecated methods
-        //myTemplatePresentation.setPopupGroup(((ActionGroup)this).isPopup());
-        templatePresentation.setHideGroupIfEmpty(group.hideIfNoVisibleChildren());
-        templatePresentation.setDisableGroupIfEmpty(group.disableIfNoVisibleChildren());
-      }
     }
     return presentation;
   }
@@ -361,6 +350,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   @NotNull
   Presentation createTemplatePresentation() {
     return Presentation.newTemplatePresentation();
+  }
+
+  /**
+   * A shortcut for {@code getTemplatePresentation().getText()}.
+   */
+  public final String getTemplateText() {
+    return getTemplatePresentation().getText();
   }
 
   /**
@@ -391,6 +387,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
    *
    * @param isDefaultIconSet {@code true} if the icon is internal, {@code false} if the user customizes the icon
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
@@ -398,6 +396,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * @return {@code true} if the icon is internal, {@code false} if the user customizes the icon.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
@@ -414,18 +414,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   public boolean isInInjectedContext() {
     return myWorksInInjected;
-  }
-
-  /** @deprecated not used anymore */
-  @Deprecated(forRemoval = true)
-  public boolean isTransparentUpdate() {
-    return this instanceof TransparentUpdate;
-  }
-
-  /** @deprecated unused */
-  @Deprecated(forRemoval = true)
-  public boolean startInTransaction() {
-    return false;
   }
 
   public void addTextOverride(@NotNull String place, @NotNull String text) {
@@ -479,29 +467,12 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return mySynonyms;
   }
 
-  /** @deprecated not used anymore */
-  @Deprecated(forRemoval = true)
-  public interface TransparentUpdate {
-  }
-
-  public static @Nullable Project getEventProject(AnActionEvent e) {
+  public static @Nullable Project getEventProject(@Nullable AnActionEvent e) {
     return e == null ? null : e.getData(CommonDataKeys.PROJECT);
   }
 
   @Override
   public @Nls String toString() {
     return getTemplatePresentation().toString();
-  }
-
-  /**
-   * Returns the default action text.
-   * <p>
-   * This method must be overridden if the template presentation contains user data
-   * like the name of the project, of a run configuration, etc.
-   *
-   * @return action presentable text without private user data
-   */
-  public @Nullable @ActionText String getTemplateText() {
-    return getTemplatePresentation().getText();
   }
 }

@@ -1,14 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.pluginPage
 
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import com.intellij.ui.dsl.builder.BottomGap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -19,7 +23,7 @@ internal enum class CaseType {
   DISABLE, UNINSTALL
 }
 
-internal abstract class PluginPageFeedbackDialog(pluginId: String,
+internal abstract class PluginPageFeedbackDialog(private val pluginId: String,
                                                  pluginName: String,
                                                  caseType: CaseType,
                                                  project: Project?,
@@ -52,7 +56,8 @@ internal abstract class PluginPageFeedbackDialog(pluginId: String,
   )
 
   override val myBlocks: List<FeedbackBlock> = listOf(
-    TopLabelBlock(PluginPageFeedbackBundle.message("dialog.title", pluginNameCapitalized)),
+    TopLabelBlock(PluginPageFeedbackBundle.message("dialog.title", pluginNameCapitalized))
+      .setBottomGap(BottomGap.MEDIUM),
     CheckBoxGroupBlock(PluginPageFeedbackBundle.message("$messageIdPrefixForCase.dialog.checkbox.group.label"),
                        reasonsItems, "reasons").addOtherTextField().requireAnswer(),
     TextAreaBlock(PluginPageFeedbackBundle.message("dialog.textarea.label"), "what_to_improve")
@@ -61,6 +66,13 @@ internal abstract class PluginPageFeedbackDialog(pluginId: String,
   override fun showThanksNotification() {
     ThanksForFeedbackNotification(description = PluginPageFeedbackBundle.message(
       "notification.thanks.feedback.content")).notify(myProject)
+  }
+
+  override fun shouldAutoCloseZendeskTicket(): Boolean {
+    val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginId))
+    val pluginVendor = pluginDescriptor?.vendor ?: return true
+
+    return !StringUtil.equalsIgnoreCase(pluginVendor, "JetBrains")
   }
 }
 

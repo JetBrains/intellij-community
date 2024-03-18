@@ -18,6 +18,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,10 @@ import java.util.stream.StreamSupport;
 @ApiStatus.NonExtendable
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
+
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static boolean DISABLE_TEXT_LAYOUT = false;
 
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
@@ -198,6 +203,14 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final class OurDocument extends HTMLDocument {
     private OurDocument(StyleSheet styles) {
       super(styles);
+      if (DISABLE_TEXT_LAYOUT) {
+        setDocumentProperties(new Hashtable<>(2) {
+          @Override
+          public synchronized Object get(Object key) {
+            return "i18n".equals(key) ? Boolean.FALSE : super.get(key);
+          }
+        });
+      }
     }
 
     @Override

@@ -9,19 +9,24 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] = external listOf("1", "2")("1", "2")
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("1", "2")("1", "2")
-                            ULiteralExpression (value = "1") ["1"] = "1"
-                            ULiteralExpression (value = "2") ["2"] = "2"
+                            UPolyadicExpression (operator = +) ["1"] = "1"
+                                ULiteralExpression (value = "1") ["1"] = "1"
+                            UPolyadicExpression (operator = +) ["2"] = "2"
+                                ULiteralExpression (value = "2") ["2"] = "2"
                 USwitchExpression [switch (string)  {...] = Nothing
                     USimpleNameReferenceExpression (identifier = string) [string] = Undetermined
                     UExpressionList (when) [    "aaaa" -> {...    ] = Nothing
                         USwitchClauseExpressionWithBody ["aaaa" -> {...] = Undetermined
-                            ULiteralExpression (value = "aaaa") ["aaaa"] = "aaaa"
+                            UPolyadicExpression (operator = +) ["aaaa"] = "aaaa"
+                                ULiteralExpression (value = "aaaa") ["aaaa"] = "aaaa"
                             UExpressionList (when_entry) [{...] = Undetermined
                                 UYieldExpression [yield return "bindingContext"] = UYieldResult(Nothing)
                                     UReturnExpression [return "bindingContext"] = Nothing
-                                        ULiteralExpression (value = "bindingContext") ["bindingContext"] = "bindingContext"
+                                        UPolyadicExpression (operator = +) ["bindingContext"] = "bindingContext"
+                                            ULiteralExpression (value = "bindingContext") ["bindingContext"] = "bindingContext"
                         USwitchClauseExpressionWithBody ["empty-switch" -> {...] = Undetermined
-                            ULiteralExpression (value = "empty-switch") ["empty-switch"] = "empty-switch"
+                            UPolyadicExpression (operator = +) ["empty-switch"] = "empty-switch"
+                                ULiteralExpression (value = "empty-switch") ["empty-switch"] = "empty-switch"
                             UExpressionList (when_entry) [{...] = Undetermined
                         USwitchClauseExpressionWithBody [ -> {...] = Undetermined
                             UExpressionList (when_entry) [{...] = Undetermined

@@ -33,7 +33,7 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.REMOTE_AUTH_ERROR;
 
 public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
-  @Nullable private final ModalityState myState;
+  private final @Nullable ModalityState myState;
   final boolean myIgnoreAuthorizationRequest;
 
   public HgRemoteCommandExecutor(@NotNull Project project, @Nullable String destination) {
@@ -49,9 +49,8 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
   }
 
   @Override
-  @Nullable
-  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
-                                                @Nullable final List<String> arguments) {
+  public @Nullable HgCommandResult executeInCurrentThread(final @Nullable VirtualFile repo, final @NotNull String operation,
+                                                          final @Nullable List<String> arguments) {
 
 
     HgCommandResult result = executeRemoteCommandInCurrentThread(repo, operation, arguments, false);
@@ -69,11 +68,10 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     return result;
   }
 
-  @Nullable
-  private HgCommandResult executeRemoteCommandInCurrentThread(@Nullable final VirtualFile repo,
-                                                              @NotNull final String operation,
-                                                              @Nullable final List<String> arguments,
-                                                              boolean forceAuthorization) {
+  private @Nullable HgCommandResult executeRemoteCommandInCurrentThread(final @Nullable VirtualFile repo,
+                                                                        final @NotNull String operation,
+                                                                        final @Nullable List<String> arguments,
+                                                                        boolean forceAuthorization) {
 
     PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization, myIgnoreAuthorizationRequest, myState);
     SocketServer passServer = new SocketServer(passReceiver);
@@ -119,7 +117,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     private HgCommandAuthenticator myAuthenticator;
     private final boolean myForceAuthorization;
     private final boolean mySilentMode;
-    @Nullable private final ModalityState myState;
+    private final @Nullable ModalityState myState;
 
     private PassReceiver(Project project, boolean forceAuthorization, boolean silent, @Nullable ModalityState state) {
       myProject = project;

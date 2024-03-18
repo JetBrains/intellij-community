@@ -20,7 +20,7 @@ class CoroutineFrameBuilder {
         fun build(coroutine: CoroutineInfoData, suspendContext: SuspendContextImpl): CoroutineFrameItemLists? =
             when {
                 coroutine.isRunning() -> buildStackFrameForActive(coroutine, suspendContext)
-                coroutine.isSuspended() -> CoroutineFrameItemLists(coroutine.stackTrace, coroutine.creationStackTrace)
+                coroutine.isSuspended() -> CoroutineFrameItemLists(coroutine.continuationStackFrames, coroutine.creationStackFrames)
                 else -> null
             }
 
@@ -39,14 +39,14 @@ class CoroutineFrameBuilder {
 
                     val coroutineFrameLists = build(preflightStackFrame, suspendContext)
                     coroutineStackFrameList.addAll(coroutineFrameLists.frames)
-                    return CoroutineFrameItemLists(coroutineStackFrameList, coroutine.creationStackTrace)
+                    return CoroutineFrameItemLists(coroutineStackFrameList, coroutine.creationStackFrames)
                 } else {
                     buildRealStackFrameItem(runningStackFrameProxy)?.let {
                         coroutineStackFrameList.add(it)
                     }
                 }
             }
-            return CoroutineFrameItemLists(coroutineStackFrameList, coroutine.creationStackTrace)
+            return CoroutineFrameItemLists(coroutineStackFrameList, coroutine.creationStackFrames)
         }
 
         /**
@@ -66,14 +66,14 @@ class CoroutineFrameBuilder {
                 suspendContext.invokeInManagerThread { buildRealStackFrameItem(stackFrameProxyImpl) }
             })
 
-            return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineInfoData.creationStackTrace)
+            return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineInfoData.creationStackFrames)
         }
 
         private fun restoredStackTrace(
             preflightFrame: CoroutinePreflightFrame,
         ): Pair<List<CoroutineStackFrameItem>, List<XNamedValue>> {
             val preflightFrameLocation = preflightFrame.stackFrameProxy.location()
-            val coroutineStackFrame = preflightFrame.coroutineInfoData.stackTrace
+            val coroutineStackFrame = preflightFrame.coroutineInfoData.continuationStackFrames
             val preCoroutineTopFrameLocation = preflightFrame.threadPreCoroutineFrames.firstOrNull()?.location()
 
             val variablesRemovedFromTopRestoredFrame = mutableListOf<XNamedValue>()
@@ -143,6 +143,7 @@ class CoroutineFrameBuilder {
             if (mode.isSuspendMethodParameter()) {
                 if (theFollowingFrames.isNotEmpty()) {
                     // have to check next frame if that's invokeSuspend:-1 before proceed, otherwise skip
+                    // remove negative frames from the stacktrace
                     lookForTheFollowingFrame(theFollowingFrames) ?: return null
                 } else
                     return null

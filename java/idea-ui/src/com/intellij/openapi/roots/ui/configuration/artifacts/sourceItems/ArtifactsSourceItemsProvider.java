@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
+public final class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
   @Override
   @NotNull
   public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,

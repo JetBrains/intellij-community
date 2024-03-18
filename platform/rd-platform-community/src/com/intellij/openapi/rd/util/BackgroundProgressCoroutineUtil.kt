@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.rd.util
 
 import com.intellij.openapi.application.ModalityState
@@ -20,8 +20,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.asContextElement
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.framework.util.startAsync
@@ -339,8 +338,8 @@ private class ProgressCoroutineScopeBridge private constructor(coroutineContext:
         coroutineScope {
           val bridge = ProgressCoroutineScopeBridge(coroutineContext, BridgeIndicator(coroutineContext, isModal))
 
-          withRawProgressReporter {
-            bridge.bridgeIndicator.reporter = rawProgressReporter!!
+          reportRawProgress { reporter ->
+            bridge.bridgeIndicator.reporter = reporter
 
             val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
               awaitCancellationAndInvoke {

@@ -23,7 +23,7 @@ class AddFileAsMavenProjectAction : MavenAction() {
     val file = getSelectedFile(context)
     if (project != null && file != null) {
       val openProjectProvider = MavenOpenProjectProvider()
-      openProjectProvider.linkToExistingProjectAsync(file, project)
+      openProjectProvider.forceLinkToExistingProjectAsync(file, project)
     }
   }
 

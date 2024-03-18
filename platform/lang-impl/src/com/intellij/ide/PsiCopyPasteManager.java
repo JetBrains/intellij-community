@@ -56,7 +56,7 @@ public final class PsiCopyPasteManager {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (myRecentData != null && (myRecentData.project == project || !myRecentData.isValid())) {
+        if (myRecentData != null && myRecentData.project == project) {
           myRecentData = null;
         }
 
@@ -66,7 +66,7 @@ public final class PsiCopyPasteManager {
           if (t instanceof MyTransferable) {
             MyData myData = ((MyTransferable)t).myDataProxy;
             try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322955, EA-642861")) {
-              if (!myData.isValid() || myData.project == project) {
+              if (myData.project == project) {
                 myCopyPasteManager.removeContent(t);
               }
             }

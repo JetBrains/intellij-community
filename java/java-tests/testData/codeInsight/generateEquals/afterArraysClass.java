@@ -7,10 +7,7 @@ class Arrays {
         if (o == null || getClass() != o.getClass()) return false;
 
         final Arrays arrays = (Arrays) o;
-
-        if (!java.util.Arrays.equals(i, arrays.i)) return false;
-
-        return true;
+        return java.util.Arrays.equals(i, arrays.i);
     }
 
     @Override

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -125,7 +126,8 @@ public final class AnnotationsHighlightUtil {
       }
     }
     PsiAnnotationMethod annotationMethod = ObjectUtils.tryCast(method, PsiAnnotationMethod.class);
-    if (annotationMethod == null) return null;
+    if (annotationMethod == null || annotationMethod instanceof SyntheticElement) return null;
+
     boolean fromDefaultValue = PsiTreeUtil.isAncestor(annotationMethod.getDefaultValue(), value, false);
     if (value instanceof PsiAnnotation) {
       PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
@@ -397,7 +399,7 @@ public final class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo.Builder info = HighlightUtil.checkFeature(annotation, HighlightingFeature.TYPE_ANNOTATIONS, level, file);
+      HighlightInfo.Builder info = HighlightUtil.checkFeature(annotation, JavaFeature.TYPE_ANNOTATIONS, level, file);
       if (info != null) return info;
     }
 
@@ -511,12 +513,18 @@ public final class AnnotationsHighlightUtil {
     }
 
     PsiElement parent = ref.getParent();
-    if (parent instanceof PsiJavaCodeReferenceElement) {
+    while (parent instanceof PsiJavaCodeReferenceElement) {
       PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return createAnnotationError(annotation,
                                      JavaErrorBundle.message("annotation.not.allowed.static"),
                                      new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asIntention());
+      }
+      if (qualified instanceof PsiClass) {
+        parent = parent.getParent();
+      }
+      else {
+        break;
       }
     }
     return null;
@@ -672,7 +680,8 @@ public final class AnnotationsHighlightUtil {
   }
 
   static HighlightInfo.Builder checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+    if (JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(languageLevel) && 
+        Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList) {
         PsiElement parent = ((PsiModifierList)owner).getParent();

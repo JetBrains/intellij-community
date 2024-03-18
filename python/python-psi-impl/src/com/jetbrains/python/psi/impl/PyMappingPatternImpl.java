@@ -22,11 +22,6 @@ public class PyMappingPatternImpl extends PyElementImpl implements PyMappingPatt
   }
 
   @Override
-  public boolean isIrrefutable() {
-    return false;
-  }
-
-  @Override
   public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(findChildrenByClass(PyKeyValuePattern.class));
   }

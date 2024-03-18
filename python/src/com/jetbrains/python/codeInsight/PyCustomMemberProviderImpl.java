@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
+final class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
   @Override
   public PyTypedElement createPyCustomMemberTarget(PyCustomMember member,
                                                    PyClass clazz,

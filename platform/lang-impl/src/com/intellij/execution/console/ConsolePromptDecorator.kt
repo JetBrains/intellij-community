@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -32,7 +32,7 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx) : EditorLinePaint
       }
     }
 
-  var promptAttributes: ConsoleViewContentType = ConsoleViewContentType.USER_INPUT
+  var promptAttributes: ConsoleViewContentType = ConsoleViewContentType.SYSTEM_OUTPUT
     set(promptAttributes) {
       field = promptAttributes
       myEditorEx.colorsScheme.setColor(promptColor, promptAttributes.attributes.foregroundColor)

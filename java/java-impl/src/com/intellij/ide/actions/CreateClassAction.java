@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -38,12 +38,14 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-    if (HighlightingFeature.RECORDS.isAvailable(directory)) {
+    LanguageLevel level = PsiUtil.getLanguageLevel(directory);
+    if (JavaFeature.RECORDS.isSufficient(level)) {
       builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
     }
-    LanguageLevel level = PsiUtil.getLanguageLevel(directory);
-    if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
+    if (JavaFeature.ENUMS.isSufficient(level)) {
       builder.addKind(JavaPsiBundle.message("node.enum.tooltip"), PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
+    }
+    if (JavaFeature.ANNOTATIONS.isSufficient(level)) {
       builder.addKind(JavaPsiBundle.message("node.annotation.tooltip"), PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
 

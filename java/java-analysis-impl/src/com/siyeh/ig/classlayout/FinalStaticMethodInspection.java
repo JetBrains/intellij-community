@@ -26,7 +26,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalStaticMethodInspection extends BaseInspection {
+public final class FinalStaticMethodInspection extends BaseInspection {
 
   @Override
   @NotNull

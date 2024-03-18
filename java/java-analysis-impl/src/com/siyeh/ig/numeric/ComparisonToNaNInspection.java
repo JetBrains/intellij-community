@@ -32,7 +32,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparisonToNaNInspection extends BaseInspection {
+public final class ComparisonToNaNInspection extends BaseInspection {
 
   @Override
   @NotNull

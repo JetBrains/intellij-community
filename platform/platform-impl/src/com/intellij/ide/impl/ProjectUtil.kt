@@ -13,6 +13,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -49,9 +50,13 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.*
+import com.intellij.util.ModalityUiUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.PlatformUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -462,7 +467,7 @@ object ProjectUtil {
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
     // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
-    if (SystemInfoRt.isWindows || (SystemInfoRt.isXWindow && appIsActive)) {
+    if (SystemInfoRt.isWindows || (StartupUiUtil.isXToolkit() && appIsActive)) {
       val state = frame.extendedState
       if (state and Frame.ICONIFIED != 0) {
         frame.extendedState = state and Frame.ICONIFIED.inv()
@@ -472,7 +477,7 @@ object ProjectUtil {
       AppIcon.getInstance().requestFocus(frame as IdeFrame)
     }
     else {
-      if (!SystemInfoRt.isXWindow || appIsActive) {
+      if (!StartupUiUtil.isXToolkit() || appIsActive) {
         // some Linux window managers allow `j.a.Window#toFront` to steal focus, so we don't call it on Linux when the IDE is inactive
         frame.toFront()
       }
@@ -512,9 +517,8 @@ object ProjectUtil {
         forceOpenInNewFrame = true
       })?.also {
         return it
-      }.alsoIfNull {
-        FUSProjectHotStartUpMeasurer.resetProjectPath()
       }
+      FUSProjectHotStartUpMeasurer.resetProjectPath()
     }
 
     var result: Project? = null
@@ -721,7 +725,13 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledThread(task: Runnable) {
-  @Suppress("DEPRECATION")
+  (this as ComponentManagerEx).getCoroutineScope().launch { blockingContext { task.run() } }
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Internal
+@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
+fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable) {
   coroutineScope.launch { blockingContext { task.run() } }
 }
 
@@ -731,5 +741,5 @@ fun Project.executeOnPooledThread(task: Runnable) {
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
   @Suppress("DEPRECATION")
-  coroutineScope.launch(Dispatchers.IO) { blockingContext { task.run() } }
+  (this as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) { blockingContext { task.run() } }
 }

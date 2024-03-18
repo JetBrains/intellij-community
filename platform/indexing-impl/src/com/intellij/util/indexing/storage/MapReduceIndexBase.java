@@ -102,7 +102,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       super.updateWithMap(updateData);
     }
     catch (ProcessCanceledException e) {
-      getLogger().error("ProcessCancelledException is not expected here!", e);
+      getLogger().error("ProcessCanceledException is not expected here!", e);
       throw e;
     }
   }

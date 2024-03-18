@@ -13,31 +13,37 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 
 private class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    if (!fileIsOpenAlready) return
+    if (!fileIsOpenAlready) {
+      return
+    }
 
-    val highlighting =
-      if (readerMode && !ReaderModeSettings.getInstance(project).showWarnings) FileHighlightingSetting.SKIP_INSPECTION
-      else FileHighlightingSetting.FORCE_HIGHLIGHTING
+    val highlighting = if (readerMode && !ReaderModeSettings.getInstance(project).showWarnings) {
+      FileHighlightingSetting.SKIP_INSPECTION
+    }
+    else {
+      FileHighlightingSetting.FORCE_HIGHLIGHTING
+    }
 
     HighlightLevelUtil.forceRootHighlighting(PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return, highlighting)
   }
 }
 
-private class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider() {
+private class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider(), DumbAware {
   override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {
-    if (ReaderModeSettings.getInstance(project).enabled
-        && !ReaderModeSettings.getInstance(project).showWarnings
-        && ReaderModeSettings.matchMode(project, file)) {
+    val readerModeSettings = ReaderModeSettings.getInstance(project)
+    if (readerModeSettings.enabled && !readerModeSettings.showWarnings && ReaderModeSettings.matchMode(project, file)) {
       return FileHighlightingSetting.SKIP_INSPECTION
     }
-
-    return null
+    else {
+      return null
+    }
   }
 }
 

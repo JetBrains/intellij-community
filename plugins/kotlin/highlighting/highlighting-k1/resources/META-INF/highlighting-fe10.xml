@@ -21,7 +21,6 @@
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.Fe10KotlinSafeAnalysisWrapper"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspendNotificationProvider"/>
 
     <registryKey key="kotlin.highlighting.suspended.timeout"

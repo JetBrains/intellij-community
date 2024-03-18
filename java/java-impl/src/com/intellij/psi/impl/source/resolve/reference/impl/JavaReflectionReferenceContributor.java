@@ -22,7 +22,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaReflectionReferenceContributor extends PsiReferenceContributor {
+public final class JavaReflectionReferenceContributor extends PsiReferenceContributor {
   static final class Holder {
     public static final PsiJavaElementPattern.Capture<PsiLiteral> PATTERN =
       psiLiteral().methodCallParameter(psiMethod().withName(GET_FIELD, GET_DECLARED_FIELD, GET_METHOD, GET_DECLARED_METHOD)

@@ -11,6 +11,7 @@ import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 class SingularGuavaCollectionHandler extends SingularCollectionHandler {
 
@@ -21,7 +22,19 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     super(collectionQualifiedName);
     this.sortedCollection = sortedCollection;
     this.typeCollectionQualifiedName = SingularCollectionClassNames.GUAVA_IMMUTABLE_COLLECTION.equals(collectionQualifiedName)
-      ? SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST : collectionQualifiedName;
+                                       ? SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST : collectionQualifiedName;
+  }
+
+  @NotNull
+  private static PsiType getCollectionType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+    final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
+    return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_LANG_ITERABLE, elementType);
+  }
+
+  @Override
+  protected List<PsiType> getAllMethodParameterTypes(@NotNull BuilderInfo info) {
+    final PsiType collectionType = getCollectionType(info.getFieldType(), info.getManager());
+    return List.of(collectionType);
   }
 
   @Override
@@ -34,10 +47,11 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
   }
 
   @Override
-  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                       @NotNull PsiType psiFieldType,
+                                       @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
-    final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
-    final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_LANG_ITERABLE, elementType);
+    final PsiType collectionType = getCollectionType(psiFieldType, psiManager);
 
     methodBuilder.withParameter(singularName, collectionType);
   }
@@ -45,7 +59,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
   @Override
   protected String getClearMethodBody(@NotNull BuilderInfo info) {
     final String codeBlockFormat = "this.{0} = null;\n" +
-      "return {1};";
+                                   "return {1};";
     return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
@@ -57,7 +71,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
       return {4};""";
 
     return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, typeCollectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
+                                sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
   @Override
@@ -69,7 +83,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
       return {3};""";
 
     return MessageFormat.format(codeBlockTemplate, singularName, typeCollectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
+                                sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
   @Override
@@ -80,9 +94,9 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
     return MessageFormat.format(
       "{2}<{1}> {0} = " +
-        "{4}.{0} == null ? " +
-        "{3}.<{1}>of() : " +
-        "{4}.{0}.build();\n",
+      "{4}.{0} == null ? " +
+      "{3}.<{1}>of() : " +
+      "{4}.{0}.build();\n",
       fieldName, elementType.getCanonicalText(false), collectionQualifiedName, typeCollectionQualifiedName, builderVariable);
   }
 

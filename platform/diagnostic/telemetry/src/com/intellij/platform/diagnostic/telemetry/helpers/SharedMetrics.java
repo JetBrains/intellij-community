@@ -74,7 +74,7 @@ public abstract class SharedMetrics {
       LOG.error(String.format("Span with name %s isn't started yet, but was called to stop", spanName));
     }
 
-    var span = spans.get(spanName);
+    Span span = spans.get(spanName);
     if (span != null) {
       try {
         action.apply(span).end();

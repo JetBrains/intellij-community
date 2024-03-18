@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.LazyKt;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +35,12 @@ public class SameKeyPostfixTemplatesTest extends PostfixTemplateTestCase {
     PostfixTemplateStorage.getInstance().setTemplates(provider, asList(template1, template2));
   }
 
+  @NeedsIndex.SmartMode(reason = "Not created as DumbAware")
   public void testSameKeyInteger() {
     doTest();
   }
 
+  @NeedsIndex.SmartMode(reason = "Not created as DumbAware")
   public void testSameKeyBoolean() {
     doTest();
   }

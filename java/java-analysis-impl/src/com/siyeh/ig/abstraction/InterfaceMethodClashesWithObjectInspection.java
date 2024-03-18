@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
+public final class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
 
   @NotNull
   @Override

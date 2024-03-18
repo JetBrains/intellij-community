@@ -1,30 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UsePropertyAccessSyntax")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
-import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
-import com.intellij.configurationStore.statistic.eventLog.isComponentOptionNameWhitelisted
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.configurationStore.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.components.SkipReportingStatistics
 import com.intellij.openapi.components.State
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.NonNls
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test
 
-@Suppress("SameParameterValue")
 class FeatureUsageSettingsEventsTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
   @Test
@@ -110,8 +106,8 @@ class FeatureUsageSettingsEventsTest {
     val withProject = true
     val defaultProject = false
     assertThat(printer.result).hasSize(2)
-    assertDefaultState(printer.getOptionByName("boolOption"), "boolOption", false, "bool", withProject, defaultProject)
-    assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, "bool", withProject, defaultProject)
+    assertDefaultState(printer.getOptionByName("boolOption"), "boolOption", false, SettingsFields.Companion.Types.BOOl, withProject, defaultProject)
+    assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, SettingsFields.Companion.Types.BOOl, withProject, defaultProject)
   }
 
   @Test
@@ -168,7 +164,8 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     assertThat(printer.result).hasSize(2)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
   }
 
   @Test
@@ -194,7 +191,8 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     assertThat(printer.result).hasSize(2)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
   }
 
   @Test
@@ -209,8 +207,10 @@ class FeatureUsageSettingsEventsTest {
     val withProject = true
     val defaultProject = false
     assertThat(printer.result).hasSize(2)
-    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
-    assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, "bool", withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
+    assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true,
+                       SettingsFields.Companion.Types.BOOl, withProject, defaultProject)
   }
 
   @Test
@@ -226,7 +226,8 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     assertThat(printer.result).hasSize(2)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
   }
 
   @Suppress("SameParameterValue")
@@ -242,8 +243,10 @@ class FeatureUsageSettingsEventsTest {
     val withProject = true
     val defaultProject = false
     assertThat(printer.result).hasSize(2)
-    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, "bool", withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
   }
 
   @Test
@@ -259,8 +262,10 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     assertThat(printer.result).hasSize(3)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, "bool", withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
   }
 
   @Test
@@ -289,10 +294,14 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     Assert.assertEquals(5, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("integerOption"), "integerOption", null, "int", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("longOption"), "longOption", null, "int", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("floatOption"), "floatOption", null, "float", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("doubleOption"), "doubleOption", null, "float", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("integerOption"), "integerOption", null,
+                          SettingsFields.Companion.Types.INT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("longOption"), "longOption", null,
+                          SettingsFields.Companion.Types.INT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("floatOption"), "floatOption", null,
+                          SettingsFields.Companion.Types.FLOAT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("doubleOption"), "doubleOption", null,
+                          SettingsFields.Companion.Types.FLOAT, false, withProject, defaultProject)
   }
 
   @Test
@@ -307,10 +316,14 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     Assert.assertEquals(5, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absIntegerOption"), "absIntegerOption", 10, "int", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absLongOption"), "absLongOption", 15L, "int", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absFloatOption"), "absFloatOption", 5.5f, "float", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absDoubleOption"), "absDoubleOption", 3.4, "float", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absIntegerOption"), "absIntegerOption", 10,
+                          SettingsFields.Companion.Types.INT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absLongOption"), "absLongOption", 15L,
+                          SettingsFields.Companion.Types.INT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absFloatOption"), "absFloatOption", 5.5f,
+                          SettingsFields.Companion.Types.FLOAT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absDoubleOption"), "absDoubleOption", 3.4,
+                          SettingsFields.Companion.Types.FLOAT, false, withProject, defaultProject)
   }
 
   @Test
@@ -325,10 +338,14 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     Assert.assertEquals(5, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absIntegerOption"), "absIntegerOption", 10, "int", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absLongOption"), "absLongOption", 15L, "int", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absFloatOption"), "absFloatOption", 5.5f, "float", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absDoubleOption"), "absDoubleOption", 3.4, "float", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absIntegerOption"), "absIntegerOption", 10,
+                          SettingsFields.Companion.Types.INT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absLongOption"), "absLongOption", 15L,
+                          SettingsFields.Companion.Types.INT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absFloatOption"), "absFloatOption", 5.5f,
+                          SettingsFields.Companion.Types.FLOAT, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absDoubleOption"), "absDoubleOption", 3.4,
+                          SettingsFields.Companion.Types.FLOAT, false, withProject, defaultProject)
   }
 
   @Test
@@ -343,8 +360,10 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     Assert.assertEquals(3, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("enumOption"), "enumOption", null, "enum", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absEnumOption"), "absEnumOption", ComponentStateWithEnum.EnumOption.BAR.name, "enum", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("enumOption"), "enumOption", null,
+                          SettingsFields.Companion.Types.ENUM, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absEnumOption"), "absEnumOption", ComponentStateWithEnum.EnumOption.BAR.name,
+                          SettingsFields.Companion.Types.ENUM, false, withProject, defaultProject)
   }
 
   @Test
@@ -359,8 +378,10 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     Assert.assertEquals(3, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("stringOption"), "stringOption", null, "string", false, withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absStringOption"), "absStringOption", "predefined", "string", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("stringOption"), "stringOption", null,
+                          SettingsFields.Companion.Types.STRING, false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absStringOption"), "absStringOption", "predefined",
+                          SettingsFields.Companion.Types.STRING, false, withProject, defaultProject)
   }
 
   @Test
@@ -375,7 +396,8 @@ class FeatureUsageSettingsEventsTest {
     val defaultProject = false
     Assert.assertEquals(2, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
-    assertNotDefaultState(printer.getOptionByName("absStringOption"), "absStringOption", null, "string", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absStringOption"), "absStringOption", null,
+                          SettingsFields.Companion.Types.STRING, false, withProject, defaultProject)
   }
 
   @Test
@@ -391,7 +413,7 @@ class FeatureUsageSettingsEventsTest {
     Assert.assertEquals(2, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("absStringOptionWithoutPossibleValues"), "absStringOptionWithoutPossibleValues", null,
-                          "string", recordDefault, withProject, defaultProject)
+                          SettingsFields.Companion.Types.STRING, recordDefault, withProject, defaultProject)
   }
 
   @Test
@@ -400,7 +422,7 @@ class FeatureUsageSettingsEventsTest {
     component.loadState(ComponentState(bool = true))
     val printer = TestFeatureUsageSettingsEventsPrinter(false)
     printer.logConfigurationState(getStateSpec(component).name, component.state, null)
-    assertThat(printer.getInvokedEvent().data["project"]).isEqualTo(printer.getOptionByName("boolOption").data["project"])
+    assertThat(printer.getInvokedEvent().project).isEqualTo(printer.getOptionByName("boolOption").project)
   }
 
   @Test
@@ -415,12 +437,19 @@ class FeatureUsageSettingsEventsTest {
     validateChangedComponent(state, printer.result.first())
   }
 
-  private fun validateChangedComponent(state: State, event: Pair<String, FeatureUsageData>) {
-    val (eventId, usageData) = event
-    assertThat(eventId).isEqualTo("component_changed")
-    val data = usageData.build()
-    assertThat(data["component"]).isEqualTo(state.name)
-    assertThat(data).containsOnlyKeys("component", "plugin_type", "project")
+  private fun validateChangedComponent(state: State, event: Pair<(Project?, List<EventPair<*>>) -> Unit, MutableList<EventPair<*>>>) {
+    val (eventFunction, usageData) = event
+    assertThat(eventFunction.toString()).isEqualTo(SettingsChangesCollector::logComponentChanged.toString())
+
+    val componentField = usageData.stream().filter { it.field == SettingsFields.COMPONENT_FIELD }.findFirst()
+    assertThat(componentField.isPresent).isEqualTo(true)
+    assertThat(componentField.get().data).isEqualTo(state.name)
+
+    assertThat(usageData.stream().filter {
+      it.field != SettingsFields.COMPONENT_FIELD &&
+      it.field != SettingsFields.PLUGIN_INFO_FIELD &&
+      it.field.name != "project"
+    }.count()).isEqualTo(0)
   }
 
   @Test
@@ -432,13 +461,31 @@ class FeatureUsageSettingsEventsTest {
     printer.logConfigurationStateChanged(state.name, component.state, projectRule.project)
 
     assertThat(printer.result).hasSize(2)
-    val (eventId, usageData) = printer.result[0]
-    assertThat(eventId).isEqualTo("component_changed_option")
-    val data = usageData.build()
-    assertThat(data["component"]).isEqualTo(state.name)
-    assertThat(data["type"]).isEqualTo("bool")
-    assertThat(data["name"]).isEqualTo("secondBoolOption")
-    assertThat(data).containsOnlyKeys("component", "plugin_type", "project", "type", "name", "value")
+    val (eventFunction, usageData) = printer.result[0]
+
+    assertThat(eventFunction.toString()).isEqualTo(SettingsChangesCollector::logComponentChangedOption.toString())
+
+    val componentField = usageData.stream().filter { it.field == SettingsFields.COMPONENT_FIELD }.findFirst()
+    assertThat(componentField.isPresent).isEqualTo(true)
+    assertThat(componentField.get().data).isEqualTo(state.name)
+
+    val typeField = usageData.stream().filter { it.field == SettingsFields.TYPE_FIELD }.findFirst()
+    assertThat(typeField.isPresent).isEqualTo(true)
+    assertThat(typeField.get().data).isEqualTo(SettingsFields.Companion.Types.BOOl)
+
+    val nameField = usageData.stream().filter { it.field == SettingsFields.NAME_FIELD }.findFirst()
+    assertThat(nameField.isPresent).isEqualTo(true)
+    assertThat(nameField.get().data).isEqualTo("secondBoolOption")
+
+    assertThat(usageData.stream().filter {
+      it.field != SettingsFields.COMPONENT_FIELD &&
+      it.field != SettingsFields.PLUGIN_INFO_FIELD &&
+      it.field != SettingsFields.VALUE_FIELD &&
+      it.field != SettingsFields.TYPE_FIELD &&
+      it.field != SettingsFields.NAME_FIELD &&
+      it.field.name != "project"
+    }.count()).isEqualTo(0)
+
     validateChangedComponent(state, printer.result[1])
   }
 
@@ -527,121 +574,129 @@ class FeatureUsageSettingsEventsTest {
                                     withProject: Boolean,
                                     defaultProject: Boolean) {
     assertThat(printer.result).hasSize(1)
-    assertNotDefaultState(printer.result[0], "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
+    assertNotDefaultState(printer.result[0], "boolOption", true,
+                          SettingsFields.Companion.Types.BOOl, withRecordDefault, withProject, defaultProject)
   }
 
   private fun assertNotDefaultState(event: LoggedComponentStateEvents,
                                     name: String,
                                     value: Any?,
-                                    type: String,
+                                    type: SettingsFields.Companion.Types,
                                     withDefaultRecorded: Boolean,
                                     withProject: Boolean,
                                     defaultProject: Boolean) {
-    assertThat(event.group.id).isEqualTo("settings")
-    assertThat(event.group.version > 0).isTrue()
-    assertThat(event.eventId).isEqualTo(if (withDefaultRecorded) "option" else "not.default")
-    assertThat(event.id).isNotNull()
 
-    var size = 3
-    if (value != null) size++
-    if (withDefaultRecorded) size++
-    if (withProject) size++
-    if (defaultProject) size++
-    if (event.data.containsKey("plugin_type")) size++
-    if (event.data.containsKey("plugin_version")) size++
-    if (event.data.containsKey("plugin")) size++
+    val eventFunction = if (withDefaultRecorded) SettingsCollector::logOption
+    else SettingsCollector::logNotDefault
 
-    assertThat(event.data).hasSize(size)
-    assertThat(event.data["component"]).isEqualTo("MyTestComponent")
-    assertThat(event.data["type"]).isEqualTo(type)
-    assertThat(event.data["name"]).isEqualTo(name)
-    if (value != null) {
-      assertThat(event.data["value"]).isEqualTo(value)
-    }
-    if (withDefaultRecorded) {
-      assertThat(event.data["default"]).isEqualTo(false)
-    }
-    if (withProject) {
-      assertThat(event.data).containsKey("project")
-    }
-    if (defaultProject) {
-      assertThat(event.data["default_project"]).isEqualTo(true)
-    }
-    assertThat(event.data["plugin_type"]).isNotNull
+    checkEventData(event, eventFunction, name, value, type, withDefaultRecorded, withProject, defaultProject, 3)
   }
 
   private fun assertDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
     assertThat(printer.result).hasSize(1)
-    assertDefaultState(printer.result[0], "boolOption", false, "bool", withProject, defaultProject)
+    assertDefaultState(printer.result[0], "boolOption", false,
+                       SettingsFields.Companion.Types.BOOl, withProject, defaultProject)
   }
 
   private fun assertDefaultState(event: LoggedComponentStateEvents,
                                  name: String,
                                  value: Any,
-                                 type: String,
-                                 withProject: Boolean,
-                                 defaultProject: Boolean) {
-    assertThat(event.group.id).isEqualTo("settings")
-    assertThat(event.group.version).isGreaterThan(0)
-    assertThat(event.eventId).isEqualTo("option")
-    assertThat(event.id).isNotNull()
+                                 type: SettingsFields.Companion.Types,
+                                    withProject: Boolean,
+                                    defaultProject: Boolean) {
+    checkEventData(event, SettingsCollector::logOption, name, value, type, null, withProject, defaultProject, 5)
 
-    var size = 5
-    if (withProject) size++
-    if (defaultProject) size++
-    if (event.data.containsKey("plugin_type")) size++
-    if (event.data.containsKey("plugin_version")) size++
-    if (event.data.containsKey("plugin")) size++
-
-    assertThat(event.data).hasSize(size)
-    assertThat(event.data["component"]).isEqualTo("MyTestComponent")
-    assertThat(event.data["type"]).isEqualTo(type)
-    assertThat(event.data["name"]).isEqualTo(name)
-    assertThat(event.data["value"]).isEqualTo(value)
-    assertThat(event.data["default"]).isEqualTo(true)
-    assertThat(event.data["plugin_type"]).isNotNull
-    if (withProject) {
-      assertThat(event.data).containsKey("project")
-    }
-    if (defaultProject) {
-      assertThat(event.data["default_project"]).isEqualTo(true)
-    }
+    val defaultField = event.data.stream().filter { it.field == SettingsFields.DEFAULT_FIELD }.findFirst()
+    assertThat(defaultField.isPresent).isEqualTo(true)
+    assertThat(defaultField.get().data).isEqualTo(true)
   }
 
-  private fun assertInvokedRecorded(event: LoggedComponentStateEvents, withProject: Boolean, defaultProject: Boolean) {
-    assertThat(event.group.id).isEqualTo("settings")
-    assertThat(event.group.version).isGreaterThan(0)
-    assertThat(event.eventId).isEqualTo("invoked")
+  private fun assertInvokedRecorded(event: LoggedComponentStateEvents,
+                                    withProject: Boolean,
+                                    defaultProject: Boolean) {
+    checkEventData(event, SettingsCollector::logInvoked, null, null,
+                   null, null, withProject, defaultProject, 1)
+  }
+
+  private fun checkEventData(event: LoggedComponentStateEvents,
+                             @NonNls eventFunction: (Project?, List<EventPair<*>>) -> Unit,
+                             name: String?,
+                             value: Any?,
+                             type: SettingsFields.Companion.Types?,
+                             withDefaultRecorded: Boolean?,
+                             withProject: Boolean,
+                             defaultProject: Boolean,
+                             startSize: Int) {
+    assertThat(event.eventFunction.toString()).isEqualTo(eventFunction.toString())
     assertThat(event.id).isNotNull()
 
-    var size = 1
-    if (withProject) size++
+    var size = startSize
     if (defaultProject) size++
-    if (event.data.containsKey("plugin_type")) size++
-    if (event.data.containsKey("plugin_version")) size++
-    if (event.data.containsKey("plugin")) size++
-
+    if (withDefaultRecorded != null && withDefaultRecorded) size++
+    if (withDefaultRecorded != null && value != null) size++
+    if (event.data.stream().filter { it.field == SettingsFields.PLUGIN_INFO_FIELD }.count() > 0) size++
+    if (event.data.stream().filter { it.field.name == "plugin_version" }.count() > 0) size++
+    if (event.data.stream().filter { it.field.name == "plugin" }.count() > 0) size++
     assertThat(event.data).hasSize(size)
-    assertThat(event.data["component"]).isEqualTo("MyTestComponent")
-    assertThat(event.data["plugin_type"]).isNotNull
+
     if (withProject) {
-      assertThat(event.data).containsKey("project")
+      assertThat(event.project).isNotNull
     }
+
     if (defaultProject) {
-      assertThat(event.data["default_project"]).isEqualTo(true)
+      val defaultProjectField = event.data.stream().filter { it.field == SettingsFields.DEFAULT_PROJECT_FIELD }
+        .findFirst()
+      assertThat(defaultProjectField.isPresent).isEqualTo(true)
+      assertThat(defaultProjectField.get().data).isEqualTo(true)
+    }
+
+    val componentField = event.data.stream().filter { it.field == SettingsFields.COMPONENT_FIELD }.findFirst()
+    assertThat(componentField.isPresent).isEqualTo(true)
+    assertThat(componentField.get().data).isEqualTo("MyTestComponent")
+
+    val pluginInfoField = event.data.stream().filter { it.field == SettingsFields.PLUGIN_INFO_FIELD }.findFirst()
+    assertThat(pluginInfoField.isPresent).isEqualTo(true)
+    assertThat(pluginInfoField.get().data).isNotNull
+
+    if (name != null) {
+    val nameField = event.data.stream().filter { it.field == SettingsFields.NAME_FIELD }.findFirst()
+    assertThat(nameField.isPresent).isEqualTo(true)
+    assertThat(nameField.get().data).isEqualTo(name)
+    }
+
+    if (value != null) {
+      val valueField = event.data.stream().filter { it.field == SettingsFields.VALUE_FIELD }.findFirst()
+      assertThat(valueField.isPresent).isEqualTo(true)
+      assertThat(valueField.get().data.toString()).isEqualTo(value.toString())
+    }
+
+    if (type != null) {
+      val typeField = event.data.stream().filter { it.field == SettingsFields.TYPE_FIELD }.findFirst()
+      assertThat(typeField.isPresent).isEqualTo(true)
+      assertThat(typeField.get().data).isEqualTo(type)
+    }
+
+    if ((withDefaultRecorded != null) && withDefaultRecorded) {
+      val defaultField = event.data.stream().filter { it.field == SettingsFields.DEFAULT_FIELD }.findFirst()
+      assertThat(defaultField.isPresent).isEqualTo(true)
+      assertThat(defaultField.get().data).isEqualTo(false)
     }
   }
 
   private class TestFeatureUsageSettingsEventsPrinter(recordDefault: Boolean) : FeatureUsageSettingsEventPrinter(recordDefault) {
     val result: MutableList<LoggedComponentStateEvents> = ArrayList()
 
-    override fun logConfig(group: EventLogGroup, eventId: String, data: FeatureUsageData, id: Int) {
-      result.add(LoggedComponentStateEvents(group, eventId, data.build(), id))
+    override fun logConfig(@NonNls eventFunction: (Project?, List<EventPair<*>>) -> Unit,
+                           project: Project?,
+                           data: MutableList<EventPair<*>>,
+                           id: Int) {
+      result.add(LoggedComponentStateEvents(eventFunction, project, data, id))
     }
 
     fun getOptionByName(name: String): LoggedComponentStateEvents {
       for (event in result) {
-        if (event.data.containsKey("name") && event.data["name"] == name) {
+        val nameField = event.data.stream().filter { it.field == SettingsFields.NAME_FIELD }.findFirst()
+        if (nameField.isPresent && nameField.get().data == name) {
           return event
         }
       }
@@ -650,7 +705,7 @@ class FeatureUsageSettingsEventsTest {
 
     fun getInvokedEvent(): LoggedComponentStateEvents {
       for (event in result) {
-        if (event.eventId == "invoked") {
+        if (event.eventFunction == SettingsCollector::logInvoked) {
           return event
         }
       }
@@ -659,14 +714,19 @@ class FeatureUsageSettingsEventsTest {
   }
 
   private class TestFeatureUsageSettingsChangedPrinter(recordDefault: Boolean) : FeatureUsageSettingsEventPrinter(recordDefault) {
-    val result: MutableList<Pair<String, FeatureUsageData>> = ArrayList()
-
-    override fun logSettingsChanged(eventId: String, data: FeatureUsageData, id: Int) {
-      result.add(Pair(eventId, data))
+    val result: MutableList<Pair<(Project?, List<EventPair<*>>) -> Unit, MutableList<EventPair<*>>>> = ArrayList()
+    override fun logSettingsChanged(@NonNls eventFunction: (Project?, List<EventPair<*>>) -> Unit,
+                                    project: Project?,
+                                    data: MutableList<EventPair<*>>,
+                                    id: Int) {
+      result.add(Pair(eventFunction, data))
     }
   }
 
-  private class LoggedComponentStateEvents(val group: EventLogGroup, val eventId: String, val data: Map<String, Any>, val id: Int)
+  private class LoggedComponentStateEvents(val eventFunction: (Project?, List<EventPair<*>>) -> Unit,
+                                           val project: Project?,
+                                           val data: MutableList<EventPair<*>>,
+                                           val id: Int)
 
   @State(name = "MyTestComponent", reportStatistic = true)
   private class TestComponent : PersistentStateComponent<ComponentState> {

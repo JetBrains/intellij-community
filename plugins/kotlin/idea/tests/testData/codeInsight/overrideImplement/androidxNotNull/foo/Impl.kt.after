@@ -1,4 +1,4 @@
-// IGNORE_K2
+// FIR_IDENTICAL
 import foo.A
 
 class B : A() {

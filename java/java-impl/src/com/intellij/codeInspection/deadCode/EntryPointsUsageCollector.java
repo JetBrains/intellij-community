@@ -16,7 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class EntryPointsUsageCollector extends ProjectUsagesCollector {
+public final class EntryPointsUsageCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("entry.points", 2);
   private static final EventId2<Boolean, Boolean> ADDITIONAL_ANNOTATIONS =
     GROUP.registerEvent("additional_annotations",

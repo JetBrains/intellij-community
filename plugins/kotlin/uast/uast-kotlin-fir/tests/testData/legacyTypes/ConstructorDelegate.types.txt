@@ -33,7 +33,8 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
                 ULiteralExpression (value = 10) [10] : PsiType:int
         UExpressionList (super_delegation) [super_delegation java.lang.CharSequence : "abc"]
             UTypeReferenceExpression (name = java.lang.CharSequence) [java.lang.CharSequence]
-            ULiteralExpression (value = "abc") ["abc"] : PsiType:String
+            UPolyadicExpression (operator = +) ["abc"] : PsiType:String
+                ULiteralExpression (value = "abc") ["abc"] : PsiType:String
         UMethod (name = Derived) [public fun Derived(@org.jetbrains.annotations.NotNull b: Base) = UastEmptyExpression]
             UParameter (name = b) [@org.jetbrains.annotations.NotNull var b: Base]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

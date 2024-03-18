@@ -7,8 +7,7 @@ class Test {
        System.out.println(o);
    }
 
-    @Nullable
-    private Object newMethod() {
+    private @Nullable Object newMethod() {
         Object o = "";
         for (int i = 0; i < 5; i++) {
            if (i == 10){

@@ -9,7 +9,8 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : PsiType:Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
                     USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : PsiType:Void
-                    ULiteralExpression (value = "message") ["message"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["message"] : PsiType:String
+                        ULiteralExpression (value = "message") ["message"] : PsiType:String
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
             UBlockExpression [{...}] : PsiType:void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:String
@@ -34,7 +35,8 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("foo")] : PsiType:List<? extends String>
                                 UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                                 USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                                ULiteralExpression (value = "foo") ["foo"] : PsiType:String
+                                UPolyadicExpression (operator = +) ["foo"] : PsiType:String
+                                    ULiteralExpression (value = "foo") ["foo"] : PsiType:String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : PsiType:List<? extends String>
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
                                 USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : PsiType:List<? extends String>
@@ -47,4 +49,5 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : PsiType:Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
                     USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : PsiType:Void
-                    ULiteralExpression (value = "message") ["message"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["message"] : PsiType:String
+                        ULiteralExpression (value = "message") ["message"] : PsiType:String

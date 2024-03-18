@@ -10,8 +10,7 @@ class Test {
     };
   }
 
-    @NotNull
-    private String newMethod() {
+    private @NotNull String newMethod() {
         return "42";
     }
 }

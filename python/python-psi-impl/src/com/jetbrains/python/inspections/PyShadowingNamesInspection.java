@@ -43,7 +43,7 @@ import java.util.Arrays;
  * Warns about shadowing names defined in outer scopes.
  *
  */
-public class PyShadowingNamesInspection extends PyInspection {
+public final class PyShadowingNamesInspection extends PyInspection {
 
   @NotNull
   @Override

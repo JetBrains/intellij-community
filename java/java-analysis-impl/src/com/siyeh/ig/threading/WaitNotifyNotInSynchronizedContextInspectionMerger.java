@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class WaitNotifyNotInSynchronizedContextInspectionMerger extends InspectionElementsMerger {
+public final class WaitNotifyNotInSynchronizedContextInspectionMerger extends InspectionElementsMerger {
   @NotNull
   @Override
   public String getMergedToolName() {

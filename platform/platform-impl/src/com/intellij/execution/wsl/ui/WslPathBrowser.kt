@@ -36,6 +36,6 @@ fun browseWslPath(linuxPathField: TextAccessor,
   }
   val dialog = FileChooserDialogImpl(descriptor, parent)
   val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
-  val linuxPath = files.firstOrNull()?.let { distro.getWslPath(it.path) } ?: return
+  val linuxPath = files.firstOrNull()?.let { distro.getWslPath(it.toNioPath()) } ?: return
   linuxPathField.text = linuxPath
 }

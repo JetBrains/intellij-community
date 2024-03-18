@@ -8,8 +8,7 @@ class SwitchExpressionMigration {
       /*2*/
       /*3*/
       int x;
-      switch (x +/*cond*/ x) {
-          /*5*/
+      switch (x +/*cond*/ x) {/*5*/
           case 1:
               if (true) {
                   x = 0;

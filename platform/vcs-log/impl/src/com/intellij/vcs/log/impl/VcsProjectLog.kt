@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.ide.caches.CachesInvalidator
@@ -30,8 +30,8 @@ import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -40,9 +40,9 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
-import com.intellij.vcs.log.util.VcsLogUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -83,12 +83,24 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   init {
     val busConnection = project.messageBus.connect(listenersDisposable)
     busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+      LOG.debug("Recreating Vcs Log after roots changed")
       launchWithAnyModality { disposeLog(recreate = true) }
     })
     busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
     VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
+        LOG.debug("Recreating Vcs Log after indexing registry value changed")
         launchWithAnyModality { disposeLog(recreate = true) }
+      }
+    }, listenersDisposable)
+    project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+      LOG.debug("Recreating Vcs Log after settings changed")
+      launchWithAnyModality { disposeLog(recreate = true) }
+    }, listenersDisposable)
+    PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
+        launchWithAnyModality { logManager?.let { invalidateCaches(it) } }
       }
     }, listenersDisposable)
 
@@ -204,7 +216,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       return it
     }
 
-    LOG.debug { "Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}" }
+    LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
     val result = VcsProjectLogManager(project, uiProperties, logProviders) { s, t ->
       errorHandler.recreateOnError(s, t)
     }
@@ -222,7 +234,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     ThreadingAssertions.assertEventDispatchThread()
     val oldValue = cachedLogManager ?: return null
     cachedLogManager = null
-    LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }
+    LOG.debug { "Disposing ${oldValue.name}" }
     project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
     return oldValue
   }
@@ -255,6 +267,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
       if (hasLogExtensions(pluginDescriptor)) {
+        LOG.debug { "Disposing Vcs Log after loading ${pluginDescriptor.pluginId}" }
         launchWithAnyModality { disposeLog(recreate = true) }
       }
     }

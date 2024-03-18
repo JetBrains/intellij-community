@@ -5,10 +5,12 @@ import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -54,18 +56,19 @@ public class AddVariableInitializerFix extends PsiUpdateModCommandAction<PsiVari
 
   static LookupElement @NotNull [] suggestInitializer(final PsiVariable variable) {
     PsiType type = variable.getType();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 
-    final List<LookupElement> result = new SmartList<>();
-    final String defaultValue = PsiTypesUtil.getDefaultValueOfType(type);
-    final ExpressionLookupItem defaultExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(defaultValue, variable));
-    result.add(defaultExpression);
-    if (type instanceof PsiClassType) {
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        result.add(new ExpressionLookupItem(elementFactory.createExpressionFromText("\"\"", variable)));
-      }
-      final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-      if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.hasDefaultConstructor(aClass)) {
+    List<LookupElement> result = new SmartList<>();
+    String defaultValue = PsiTypesUtil.getDefaultValueOfType(type);
+    String customDefaultValue = PsiTypesUtil.getDefaultValueOfType(type, true);
+    if (!customDefaultValue.equals(defaultValue)) {
+      PsiExpression customDef = elementFactory.createExpressionFromText(customDefaultValue, variable);
+      result.add(new ExpressionLookupItem((PsiExpression)JavaCodeStyleManager.getInstance(variable.getProject()).shortenClassReferences(customDef)));
+    }
+    result.add(new ExpressionLookupItem(elementFactory.createExpressionFromText(defaultValue, variable)));
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (aClass != null) {
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.hasDefaultConstructor(aClass)) {
         String typeText = type.getCanonicalText(false);
         if (aClass.getTypeParameters().length > 0 && PsiUtil.isLanguageLevel7OrHigher(variable)) {
           if (!PsiDiamondTypeImpl.haveConstructorsGenericsParameters(aClass)) {

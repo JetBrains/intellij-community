@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,8 +31,7 @@ public interface SdkTypeId {
   /**
    * Note to implementors: you may need to override this method if SDKs of this type have non-trivial version strings.
    */
-  @NotNull
-  default Comparator<Sdk> versionComparator() {
+  default @NotNull Comparator<Sdk> versionComparator() {
     Comparator<String> versionStringComparator = versionStringComparator();
     return (sdk1, sdk2) -> {
       assert sdk1.getSdkType() == this : sdk1;
@@ -47,8 +46,7 @@ public interface SdkTypeId {
    * <br />
    * The implementation has to be synchronized with {@link #versionComparator()}
    */
-  @NotNull
-  default Comparator<String> versionStringComparator() {
+  default @NotNull Comparator<String> versionStringComparator() {
     return (v1, v2) -> StringUtil.compareVersionNumbers(v1, v2);
   }
 

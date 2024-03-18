@@ -5,13 +5,11 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.metadata.fullName
+import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
-import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
-import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 /**
  * - Soft links
@@ -38,7 +36,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
   return lines {
     section("$generatedCodeVisibilityModifier class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
 
-      listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode(this@implWsDataClassCode) }
+      listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode }
 
       listNl(allFields.noRefs().noEntitySource().noSymbolicId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
 
@@ -54,11 +52,13 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       // --- createEntity
-      sectionNl("override fun createEntity(snapshot: $EntityStorage): $javaFullName") {
-        section("return getCached(snapshot)") {
+      line("@OptIn($EntityStorageInstrumentationApi::class)")
+      sectionNl("override fun createEntity(snapshot: $EntityStorageInstrumentation): $javaFullName") {
+        line("val entityId = createEntityId()")
+        section("return snapshot.initializeEntity(entityId)") {
           line("val entity = $javaImplName(this)")
           line("entity.snapshot = snapshot")
-          line("entity.id = createEntityId()")
+          line("entity.id = entityId")
           line("entity")
         }
       }

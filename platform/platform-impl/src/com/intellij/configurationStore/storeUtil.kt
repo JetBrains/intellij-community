@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
@@ -19,11 +19,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -31,15 +32,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
+import kotlin.time.Duration.Companion.nanoseconds
 
 private val LOG: Logger
   get() = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 /**
- * Only for Java clients.
- * Clients in kotlin should use corresponding package-level suspending functions.
+ * Only for Java clients; Kotlin clients should use corresponding package-level suspending functions.
  */
 @ApiStatus.Obsolete
+@Suppress("DEPRECATION")
 object StoreUtil {
   /**
    * Don't use this method in tests, instead directly save using state store.
@@ -114,10 +116,8 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
       LOG.warn("Save settings failed", e)
     }
 
-    val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName,
-                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(
-                                             e) + "</p>"
-                                           else ""))
+    val reason = if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""
+    val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName, reason)
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val group = NotificationGroupManager.getInstance().getNotificationGroup("Settings Error")
@@ -167,9 +167,9 @@ fun getStateSpec(originalClass: Class<*>): State? {
  * Returns the path to the storage file for the given [PersistentStateComponent].
  * The storage file is defined by [Storage.value] of the [State] annotation, and is located under the APP_CONFIG directory.
  *
- * Returns null if there is no State or Storage annotation on the given class.
+ * Returns `null` if there is no [State] or [Storage] annotation on the given class.
  *
- * *NB:* Don't use this method without a strict reason: the storage location is an implementation detail.
+ * *NB*: Don't use this method without a strict reason: the storage location is an implementation detail.
  */
 @Internal
 fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? {
@@ -218,7 +218,7 @@ fun getPerOsSettingsStorageFolderName(): String {
 @Internal
 fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
   // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
-  // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+  // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/my_keymap.xml'
   return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
     "${PathManager.OPTIONS_DIRECTORY}/$fileSpecPassedToProvider"
   }
@@ -227,12 +227,11 @@ fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
   }
 }
 
-
 /**
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  val start = System.currentTimeMillis()
+  val start = System.nanoTime()
   saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
   if (onlyProject == null) {
     for (project in getOpenedProjects()) {
@@ -243,9 +242,9 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
     saveSettings(onlyProject, forceSavingAllSettings = true)
   }
 
-  val duration = System.currentTimeMillis() - start
+  val duration = (System.nanoTime() - start).nanoseconds.inWholeMilliseconds
   if (duration > 1000 || LOG.isDebugEnabled) {
-    LOG.info("saveProjectsAndApp took $duration ms")
+    LOG.info("saveProjectsAndApp took ${duration} ms")
   }
 }
 
@@ -280,3 +279,5 @@ fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, f
     }
   }
 }
+
+class UnresolvedReadOnlyFilesException(val files: List<VirtualFile>) : RuntimeException()

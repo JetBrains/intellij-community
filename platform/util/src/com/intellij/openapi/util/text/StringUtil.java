@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -645,7 +645,8 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.unquoteString(s, quotationChar);
   }
 
-  private static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
+  @ApiStatus.Internal
+  public static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
       char ch = s.charAt(idx);
@@ -1555,7 +1556,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
    * This method is intended to be used in non-localized contexts (primarily in log output).
-   * See com.intellij.ide.nls.NlsMessages for localized output.
+   * @see com.intellij.ide.nls.NlsMessages NlsMessages for localized output.
    */
   @Contract(pure = true)
   public static @NotNull @NonNls String formatDuration(long duration) {

@@ -64,9 +64,10 @@ abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionTex
   open fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {}
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
+    val project = e.project ?: return
+    val branches = e.getData(GitBranchActionsUtil.BRANCHES_KEY) ?: return
+    val branch = branches.singleOrNull() ?: return
     val repositories = getAffectedRepositories(e)
-    val branch = e.getRequiredData(GitBranchActionsUtil.BRANCHES_KEY).single()
 
     actionPerformed(e, project, repositories, branch)
   }

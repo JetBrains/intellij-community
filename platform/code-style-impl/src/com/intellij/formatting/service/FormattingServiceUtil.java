@@ -110,8 +110,7 @@ public final class FormattingServiceUtil {
     }
   }
 
-  public static void formatRanges(@NotNull PsiFile file, @NotNull FormatTextRanges ranges, boolean canChangeWhiteSpaceOnly) {
-    boolean isFullRange = ranges.getRanges().size() == 1 && ranges.getRanges().get(0).getTextRange().equals(file.getTextRange());
+  public static void formatRanges(@NotNull PsiFile file, @NotNull FormatTextRanges ranges, boolean canChangeWhiteSpaceOnly, boolean isFullRange) {
     FormattingService mainService = findService(file, true, isFullRange);
     if (isFullRange) {
       for (FormattingService service : getChainedServices(mainService)) {

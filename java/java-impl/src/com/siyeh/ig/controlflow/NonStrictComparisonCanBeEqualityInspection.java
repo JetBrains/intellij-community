@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class NonStrictComparisonCanBeEqualityInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class NonStrictComparisonCanBeEqualityInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

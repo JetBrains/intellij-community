@@ -21,7 +21,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedDeclarationInspectionMerger extends InspectionElementsMergerBase {
+public final class UnusedDeclarationInspectionMerger extends InspectionElementsMergerBase {
   private static final String UNUSED_SYMBOL = "UNUSED_SYMBOL";
   private static final String UNUSED_DECLARATION = "UnusedDeclaration";
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -17,12 +17,12 @@ import java.lang.reflect.Method;
 public final class IntFieldProperty extends Property<RadComponent, Integer> {
   private final LabelPropertyRenderer<Integer> myRenderer;
   private final IntEditor myEditor;
-  @NotNull private final Property myParent;
+  private final @NotNull Property myParent;
   private final String myFieldName;
   private final Object myTemplateValue;
-  @NonNls private static final String METHOD_CLONE = "clone";
+  private static final @NonNls String METHOD_CLONE = "clone";
 
-  public IntFieldProperty(@NotNull final Property parent, @NonNls final String fieldName, final int lowBoundary, final Object templateValue) {
+  public IntFieldProperty(final @NotNull Property parent, final @NonNls String fieldName, final int lowBoundary, final Object templateValue) {
     super(parent, fieldName);
     myParent = parent;
     myFieldName = fieldName;
@@ -61,8 +61,7 @@ public final class IntFieldProperty extends Property<RadComponent, Integer> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<Integer> getRenderer() {
+  public @NotNull PropertyRenderer<Integer> getRenderer() {
     return myRenderer;
   }
 

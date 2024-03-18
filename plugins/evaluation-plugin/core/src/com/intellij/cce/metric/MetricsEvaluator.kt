@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
@@ -21,8 +21,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   private val metrics = mutableListOf<Metric>()
 
   fun registerDefaultMetrics() {
-    registerMetric(RecallAtMetric(true, 1))
-    registerMetric(RecallAtMetric(true, 5))
+    registerMetric(RecallAtMetric(showByDefault = true, n = 1))
+    registerMetric(RecallAtMetric(showByDefault = true, n = 5))
     registerMetric(RecallMetric())
     registerMetric(MeanLatencyMetric())
     registerMetric(MaxLatencyMetric())

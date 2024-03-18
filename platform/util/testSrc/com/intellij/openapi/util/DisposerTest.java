@@ -668,7 +668,7 @@ public class DisposerTest  {
     Disposable root = Disposer.newDisposable("test_root");
 
     Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child " + i)).toArray(Disposable[]::new);
-    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 15_000, () -> {
+    PlatformTestUtil.newPerformanceTest(name.getMethodName(), () -> {
         for (Disposable child : children) {
           Disposer.register(root, child);
         }
@@ -680,6 +680,6 @@ public class DisposerTest  {
         Disposer.dispose(root);
         Disposer.register(myRoot, root);
       })
-      .assertTiming();
+      .start();
   }
 }

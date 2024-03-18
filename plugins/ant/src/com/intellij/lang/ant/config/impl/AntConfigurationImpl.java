@@ -136,7 +136,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         restartDaemon();
       }
       private void restartDaemon() {
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> DaemonCodeAnalyzer.getInstance(project).restart());
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
+          if (project.isDisposed()) return;
+
+          DaemonCodeAnalyzer.getInstance(project).restart();
+        });
       }
     });
 

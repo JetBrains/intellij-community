@@ -249,7 +249,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       val lastSection = path.last()
       finalProcessor(scope, lastSection, params)
     } ?: run {
-      thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/", "/")} with virtualSymbols=${params.virtualSymbols}.\n" +
+      thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
                         "Context: " + initialScope.filterIsInstance<WebSymbol>().map { it.kind + "/" + it.name })
       emptyList()
     }

@@ -24,7 +24,6 @@ import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.*
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
-import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.BidirectionalMultiMap
@@ -57,8 +56,12 @@ internal class StorageClassesRegistrar(
   override fun registerClasses(kryo: Kryo) {
     registerDefaultSerializers(kryo)
 
+    // Prohibited structure. See serializer for details
+    kryo.register(Int2IntOpenHashMap::class.java, Int2IntOpenHashMapSerializer())
+
     kryo.register(EntityId::class.java, serializerUtil.getEntityIdSerializer())
     kryo.register(HashMultimap::class.java, HashMultimapSerializer())
+    kryo.register(Int2IntWithDefaultMap::class.java, Int2IntWithDefaultMapSerializer())
     kryo.register(ConnectionId::class.java, serializerUtil.getConnectionIdSerializer())
     kryo.register(ImmutableEntitiesBarrel::class.java, serializerUtil.getImmutableEntitiesBarrelSerializer())
     kryo.register(ChildEntityId::class.java, serializerUtil.getChildEntityIdSerializer())
@@ -141,13 +144,11 @@ internal class StorageClassesRegistrar(
 
     kryo.register(SmartList::class.java).instantiator = ObjectInstantiator { SmartList<Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
-    kryo.register(BidirectionalMap::class.java).instantiator = ObjectInstantiator { BidirectionalMap<Any, Any>() }
     kryo.register(BidirectionalSetMap::class.java).instantiator = ObjectInstantiator { BidirectionalSetMap<Any, Any>() }
     kryo.register(BidirectionalMultiMap::class.java).instantiator = ObjectInstantiator { BidirectionalMultiMap<Any, Any>() }
     kryo.register(HashBiMap::class.java).instantiator = ObjectInstantiator { HashBiMap.create<Any, Any>() }
     kryo.register(LinkedHashSet::class.java).instantiator = ObjectInstantiator { LinkedHashSet<Any>() }
     kryo.register(LinkedBidirectionalMap::class.java).instantiator = ObjectInstantiator { LinkedBidirectionalMap<Any, Any>() }
-    kryo.register(Int2IntOpenHashMap::class.java).instantiator = ObjectInstantiator { Int2IntOpenHashMap() }
     @Suppress("SSBasedInspection")
     kryo.register(ObjectOpenHashSet::class.java).instantiator = ObjectInstantiator { ObjectOpenHashSet<Any>() }
     @Suppress("SSBasedInspection")
@@ -193,6 +194,10 @@ internal class StorageClassesRegistrar(
   }
 
   private fun registerMetadataClasses(kryo: Kryo) {
+    kryo.register(CacheMetadata::class.java)
+    kryo.register(CacheMetadata.Id::class.java)
+    kryo.register(CacheMetadata.SerializableTypeMetadata::class.java)
+
     kryo.register(StorageTypeMetadata::class.java)
 
     kryo.register(EntityMetadata::class.java)
@@ -211,14 +216,12 @@ internal class StorageClassesRegistrar(
     kryo.register(ExtPropertyMetadata::class.java)
 
     kryo.register(ValueTypeMetadata::class.java)
-    kryo.register(ParameterizedType::class.java)
-    kryo.register(SimpleType::class.java)
-    kryo.register(SimpleType.PrimitiveType::class.java)
-    kryo.register(SimpleType.CustomType::class.java)
-    kryo.register(EntityReference::class.java)
+    kryo.register(ValueTypeMetadata.ParameterizedType::class.java)
+    kryo.register(ValueTypeMetadata.SimpleType::class.java)
+    kryo.register(ValueTypeMetadata.SimpleType.PrimitiveType::class.java)
+    kryo.register(ValueTypeMetadata.SimpleType.CustomType::class.java)
+    kryo.register(ValueTypeMetadata.EntityReference::class.java)
     kryo.register(ConnectionId.ConnectionType::class.java)
-
-    kryo.register(CacheMetadata::class.java)
   }
 
   private fun registerFieldSerializers(kryo: Kryo) {

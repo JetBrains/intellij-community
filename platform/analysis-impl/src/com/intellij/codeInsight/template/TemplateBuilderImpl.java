@@ -157,13 +157,20 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   /**
-   * Adds end variable after the specified element
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element after which the cursor will be placed
    */
   public void setEndVariableAfter(PsiElement element) {
     element = PsiTreeUtil.nextLeaf(element);
     setEndVariableBefore(element);
   }
 
+  /**
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element before which the cursor will be placed
+   */
   public void setEndVariableBefore(PsiElement element) {
     if (myEndElement != null) {
       myElements.remove(myEndElement);
@@ -308,18 +315,6 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(element.getTextRange().getStartOffset()));
     ConstantNode value = new ConstantNode(replacementText);
     replaceElement(key, value);
-  }
-
-  @Override
-  public void run() {
-    final Project project = myFile.getProject();
-    VirtualFile file = myFile.getVirtualFile();
-    assert file != null: "Virtual file is null for " + myFile;
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-
-    assert editor != null : "Editor is null";
-    run(editor, false);
   }
 
   @Override

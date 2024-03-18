@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
+public final class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(JavaEncapsulateFieldHelper.class);
 
   @Override
@@ -233,7 +233,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static PsiMethodCallExpression createGetterCall(FieldDescriptor fieldDescriptor,
                                                           PsiReferenceExpression expr,
                                                           PsiClass aClass,
-                                                          PsiMethod getter) throws IncorrectOperationException {
+                                                          @NotNull PsiMethod getter) throws IncorrectOperationException {
     final String getterName = fieldDescriptor.getGetterName();
     @NonNls String text = getterName + "()";
     PsiMethodCallExpression methodCall = prepareMethodCall(expr, text);
@@ -257,13 +257,13 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   }
 
   @Nullable
-  private static PsiMethodCallExpression checkMethodResolvable(PsiMethodCallExpression methodCall,
-                                                               PsiMethod targetMethod,
+  private static PsiMethodCallExpression checkMethodResolvable(@NotNull PsiMethodCallExpression methodCall,
+                                                               @NotNull PsiMethod targetMethod,
                                                                PsiReferenceExpression context,
                                                                PsiClass aClass) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(targetMethod.getProject());
     final PsiElement resolved = methodCall.getMethodExpression().resolve();
-    if (resolved != targetMethod) {
+    if (!targetMethod.equals(resolved)) {
       PsiClass containingClass;
       if (resolved instanceof PsiMethod) {
         containingClass = ((PsiMethod)resolved).getContainingClass();

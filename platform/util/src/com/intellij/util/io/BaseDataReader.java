@@ -206,7 +206,9 @@ public abstract class BaseDataReader {
       myFinishedFuture.get();
     }
     catch (ExecutionException e) {
-      LOG.error(e);
+      if (!(e.getCause() instanceof ControlFlowException)) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -215,7 +217,9 @@ public abstract class BaseDataReader {
       myFinishedFuture.get(timeout, unit);
     }
     catch (ExecutionException e) {
-      LOG.error(e);
+      if (!(e.getCause() instanceof ControlFlowException)) {
+        LOG.error(e);
+      }
     }
   }
 }

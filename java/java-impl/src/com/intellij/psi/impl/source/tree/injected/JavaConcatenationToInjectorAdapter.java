@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
+public final class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
   public JavaConcatenationToInjectorAdapter(@NotNull Project project) {
     super(project);
   }
@@ -19,9 +19,12 @@ public class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorMan
   public Pair<PsiElement, PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context) {
     PsiElement element = context;
     PsiElement parent = context.getParent();
-    while (parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS
-           || parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.PLUSEQ
-           || parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != element
+    if (element instanceof PsiFragment && parent instanceof PsiTemplate) {
+      return Pair.create(parent, parent.getChildren());
+    }
+    while (parent instanceof PsiPolyadicExpression polyadic && polyadic.getOperationTokenType() == JavaTokenType.PLUS
+           || parent instanceof PsiAssignmentExpression assignment && assignment.getOperationTokenType() == JavaTokenType.PLUSEQ
+           || parent instanceof PsiConditionalExpression cond && cond.getCondition() != element
            || parent instanceof PsiTypeCastExpression
            || parent instanceof PsiParenthesizedExpression) {
       element = parent;
@@ -52,5 +55,5 @@ public class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorMan
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return LITERALS;
   }
-  private static final List<Class<PsiLiteralExpression>> LITERALS = Collections.singletonList(PsiLiteralExpression.class);
+  private static final List<Class<? extends PsiElement>> LITERALS = List.of(PsiLiteralExpression.class, PsiFragment.class);
 }

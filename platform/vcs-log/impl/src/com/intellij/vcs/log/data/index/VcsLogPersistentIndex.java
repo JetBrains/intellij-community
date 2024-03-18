@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -139,7 +139,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         if (oldFull == null) return full;
         return oldFull || full;
       });
-    } else {
+    }
+    else {
       doScheduleIndex(full);
     }
   }
@@ -282,6 +283,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return indexers;
   }
 
+  public static @NotNull Collection<VcsLogIndexer> getAvailableIndexers(@NotNull Project project) {
+    return getAvailableIndexers(VcsProjectLog.getLogProviders(project)).values();
+  }
+
   private final class MyHeavyAwareListener extends HeavyAwareListener {
 
     private MyHeavyAwareListener(int delay) {
@@ -316,7 +321,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
 
     MySingleTaskController(@NotNull Disposable parent) {
-      super("index", parent, unused -> {});
+      super("index", parent, unused -> {
+      });
     }
 
     @Override
@@ -410,7 +416,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Indexing.getName()).startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 

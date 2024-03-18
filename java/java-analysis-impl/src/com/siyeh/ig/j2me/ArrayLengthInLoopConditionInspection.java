@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class ArrayLengthInLoopConditionInspection extends BaseInspection {
+public final class ArrayLengthInLoopConditionInspection extends BaseInspection {
 
   @Override
   @NotNull

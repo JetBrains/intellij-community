@@ -34,7 +34,7 @@ public final class PasteFromX11Action extends EditorAction {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor == null || !SystemInfo.isXWindow) {
+    if (editor == null || SystemInfo.isWindows || SystemInfo.isMac) {
       presentation.setEnabled(false);
     }
     else {

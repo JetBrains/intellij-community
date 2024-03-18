@@ -8,16 +8,16 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.VfsTestUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
-import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -83,6 +83,16 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
         val afterDirIOFile = File(testDataDirectory, afterDir)
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDirIOFile)!!
         UsefulTestCase.refreshRecursively(afterVFile)
+
+        VfsUtilCore.visitChildrenRecursively(beforeVFile, object : VirtualFileVisitor<Void?>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+                val relative = VfsUtil.getRelativePath(file, beforeVFile)
+                if (relative != null) {
+                    file.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, File(afterDirIOFile, relative).toString())
+                }
+                return true
+            }
+        })
 
         action(beforeVFile)
 

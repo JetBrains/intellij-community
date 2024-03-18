@@ -122,7 +122,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
   }
 
-  public static class JCRIIsUpToDateConsumer implements IsUpToDateCheckConsumer {
+  public static final class JCRIIsUpToDateConsumer implements IsUpToDateCheckConsumer {
     @Override
     public boolean isApplicable(@NotNull Project project) {
       CompilerReferenceServiceBase<?> serviceBase = getInstanceIfEnabled(project);

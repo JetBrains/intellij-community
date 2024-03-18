@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.projectModel
 
 import org.jetbrains.kotlin.tooling.core.HasMutableExtras
+import java.io.File
 
 interface KotlinCompilation : KotlinComponent, HasMutableExtras {
     /**
@@ -26,6 +27,11 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
     val platform: KotlinPlatform
     val kotlinTaskProperties: KotlinTaskProperties
     val nativeExtensions: KotlinNativeCompilationExtensions?
+
+    /**
+     * Compilation outputs packed in an archive (JAR, KLIB) file
+     */
+    val archiveFile: File?
 
     companion object {
         const val MAIN_COMPILATION_NAME = "main"

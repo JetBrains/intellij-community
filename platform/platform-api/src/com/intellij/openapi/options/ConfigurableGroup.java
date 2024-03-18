@@ -9,10 +9,4 @@ public interface ConfigurableGroup extends Configurable.Composite {
   String getDisplayName();
 
   default @NlsContexts.DetailedDescription @Nullable String getDescription() { return null; }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  default String getShortName() { return null; }
 }

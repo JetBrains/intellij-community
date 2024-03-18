@@ -54,19 +54,14 @@
 
 package org.jdom;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 /**
  * An XML attribute. Methods allow the user to obtain the value of the attribute
  * as well as namespace and type information.
- * <p>
- * <strong>JDOM 1.x Compatibility Note:</strong><br>
- * The Attribute class in JDOM 1.x had a number of int Constants declared to
- * represent different Attribute Types. JDOM2 has introduced an AttributeType
- * enumeration instead. To facilitate compatibility and to simplify JDOM 1.x
- * migrations, the replacement AttributeType enums are referenced still using
- * the JDOM 1.x constant names. In JDOM 1.x these names referenced constant
- * int values. In JDOM2 these names reference Enum constants.
  *
  * @author Brett McLaughlin
  * @author Jason Hunter
@@ -102,8 +97,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   protected AttributeType type = AttributeType.UNDECLARED;
 
   /**
-   * Specified attributes are part of the XML,
-   * unspecified attributes are 'defaulted' from a DTD.
+   * Specified attributes are part of the XML, unspecified attributes are 'defaulted' from a DTD.
    */
   protected boolean specified = true;
 
@@ -156,11 +150,18 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
    *                              if the given attribute type is not one of the
    *                              supported types.
    */
-  public Attribute(final String name, final String value, final AttributeType type, final Namespace namespace) {
+  public Attribute(@NotNull String name, @NotNull String value, AttributeType type, Namespace namespace) {
     setName(name);
     setValue(value);
     setAttributeType(type);
     setNamespace(namespace);
+  }
+
+  @ApiStatus.Internal
+  public Attribute(boolean ignored, @NotNull String name, @NotNull String value, @NotNull Namespace namespace) {
+    this.name = name;
+    this.value = value;
+    this.namespace = namespace;
   }
 
   /**
@@ -180,7 +181,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
    *                              illegal character data (as determined by
    *                              {@link Verifier#checkCharacterData}).
    */
-  public Attribute(final String name, final String value) {
+  public Attribute(@NotNull String name, @NotNull String value) {
     this(name, value, AttributeType.UNDECLARED, Namespace.NO_NAMESPACE);
   }
 
@@ -223,7 +224,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   /**
    * Get this Attribute's Document.
    *
-   * @return The document to which this Attribute is associated, may be null.
+   * @return The document to which this Attribute is associated may be null.
    */
   public Document getDocument() {
     return parent == null ? null : parent.getDocument();
@@ -232,7 +233,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   /**
    * This will retrieve the local name of the
    * <code>Attribute</code>. For any XML attribute
-   * which appears as
+   * that appears as
    * <code>[namespacePrefix]:[attributeName]</code>,
    * the local name of the attribute would be
    * <code>[attributeName]</code>. When the attribute
@@ -309,7 +310,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   /**
    * This will retrieve the namespace prefix of the
    * <code>Attribute</code>. For any XML attribute
-   * which appears as
+   * that appears as
    * <code>[namespacePrefix]:[attributeName]</code>,
    * the namespace prefix of the attribute would be
    * <code>[namespacePrefix]</code>. When the attribute
@@ -350,8 +351,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
    *
    * @param namespace the new namespace
    * @return <code>Element</code> - the element modified.
-   * @throws IllegalNameException if the new namespace is the default
-   *                              namespace. Attributes cannot be in a default namespace.
+   * @throws IllegalNameException if the new namespace is the default namespace. Attributes cannot be in a default namespace.
    */
   public Attribute setNamespace(Namespace namespace) {
     if (namespace == null) {
@@ -372,9 +372,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   }
 
   /**
-   * This will return the actual textual value of this
-   * <code>Attribute</code>.  This will include all text
-   * within the quotation marks.
+   * This will return the actual textual value of this <code>Attribute</code>.  This will include all text within the quotation marks.
    *
    * @return <code>String</code> - value for this attribute.
    */
@@ -387,19 +385,15 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
    *
    * @param value <code>String</code> value for the attribute.
    * @return <code>Attribute</code> - this Attribute modified.
-   * @throws IllegalDataException if the given attribute value is
-   *                              illegal character data (as determined by
-   *                              {@link Verifier#checkCharacterData}).
+   * @throws IllegalDataException if the given attribute value is illegal character data
+   * (as determined by {@link Verifier#checkCharacterData}).
    */
-  public Attribute setValue(final String value) {
-    if (value == null) {
-      throw new NullPointerException(
-        "Can not set a null value for an Attribute");
-    }
-    final String reason = Verifier.checkCharacterData(value);
+  public Attribute setValue(@NotNull String value) {
+    String reason = Verifier.checkCharacterData(value);
     if (reason != null) {
       throw new IllegalDataException(value, "attribute", reason);
     }
+
     this.value = value;
     specified = true;
     return this;
@@ -419,8 +413,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
    *
    * @param type <code>int</code> type for the attribute.
    * @return <code>Attribute</code> - this Attribute modified.
-   * @throws IllegalDataException if the given attribute type is
-   *                              not one of the supported types.
+   * @throws IllegalDataException if the given attribute type is not one of the supported types.
    */
   public Attribute setAttributeType(final AttributeType type) {
     this.type = type == null ? AttributeType.UNDECLARED : type;
@@ -429,9 +422,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   }
 
   /**
-   * Get the 'specified' flag. True values indicate this attribute
-   * was part of an XML document, false indicates it was defaulted
-   * from a DTD.
+   * Get the 'specified' flag. True values indicate this attribute was part of an XML document; false indicates it was defaulted from a DTD.
    *
    * @return the specified flag.
    * @since JDOM2
@@ -490,8 +481,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
    * Set this Attribute's parent. This is not public!
    *
    * @param parent The parent to set
-   * @return this Attribute (state may be indeterminate depending on whether
-   * this has been included in the Element's list yet).
+   * @return this Attribute (state may be indeterminate depending on whether this has been included in the Element's list yet).
    */
   protected Attribute setParent(Element parent) {
     this.parent = parent;

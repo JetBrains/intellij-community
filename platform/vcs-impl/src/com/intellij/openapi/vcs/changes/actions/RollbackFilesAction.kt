@@ -41,11 +41,11 @@ class RollbackFilesAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     if (!Manager.checkClmActive(e)) return
 
-    val project = e.project!!
-    val changes = e.getRequiredData(VcsDataKeys.CHANGES).asList()
+    val project = e.project ?: return
+    val changes = e.getData(VcsDataKeys.CHANGES) ?: return
 
     FileDocumentManager.getInstance().saveAllDocuments()
-    RollbackChangesDialog.rollbackChanges(project, changes)
+    RollbackChangesDialog.rollbackChanges(project, changes.asList())
   }
 
   object Manager {

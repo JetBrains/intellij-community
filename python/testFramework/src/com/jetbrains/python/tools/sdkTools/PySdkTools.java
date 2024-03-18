@@ -60,6 +60,10 @@ public final class PySdkTools {
       // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
       final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
+
+      // Env might be conda, so we look for conda binary and configure it as conda
+      // Consider migrating to `conda` tag
+      PyCondaSdkFixKt.fixPythonCondaSdk(sdk, PySdkExtKt.getOrCreateAdditionalData(sdk));
       ref.set(sdk);
     });
     final Sdk sdk = ref.get();
@@ -108,23 +112,38 @@ public final class PySdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
-
     for (final String path : new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator())) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+      commitChangesObeyWriteAction(modificator);
       return;
     }
 
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
-    ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+    commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
       .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
+  }
+
+  /**
+   * {@link SdkModificator#commitChanges()} is marked with {@link com.intellij.util.concurrency.annotations.RequiresWriteLock} and can't be called without it
+   */
+  private static void commitChangesObeyWriteAction(@NotNull SdkModificator modificator) {
+    var app = ApplicationManager.getApplication();
+    app.invokeAndWait(() -> {
+      if (app.isWriteAccessAllowed()) {
+        modificator.commitChanges();
+      }
+      else {
+        WriteAction.run(() -> {
+          modificator.commitChanges();
+        });
+      }
+    });
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {

@@ -32,6 +32,8 @@
                           bundleName="messages.LangBundle"
                           providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
                           version="0"/>
+
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
   </extensions>
 
 </idea-plugin>

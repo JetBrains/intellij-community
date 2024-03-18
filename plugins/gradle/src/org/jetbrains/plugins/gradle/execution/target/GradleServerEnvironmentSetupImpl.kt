@@ -1,5 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.SimpleJavaParameters
@@ -9,21 +10,23 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredLocalTargetValue
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
+import groovy.lang.MissingMethodException
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
-import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -120,29 +123,33 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     val pathsToUpload: MutableSet<String> = HashSet()
 
     val workingDir = consumerOperationParameters.projectDir
-    val gradleProjectDirectory = toSystemDependentName(workingDir.path)
+    val gradleProjectDirectory = FileUtilRt.toSystemDependentName(workingDir.path)
     pathsToUpload.add(gradleProjectDirectory)
 
     val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(
       ExternalSystemApiUtil.toCanonicalPath(workingDir.path))
     projectSettings?.modules
       ?.filter { Files.exists(Path.of(it)) }
-      ?.mapTo(pathsToUpload) { toSystemDependentName(it) }
+      ?.mapTo(pathsToUpload) { FileUtilRt.toSystemDependentName(it) }
 
     val commonAncestor = findCommonAncestor(pathsToUpload)
-    val uploadPath = Paths.get(toSystemDependentName(commonAncestor!!))
+    val uploadPath = Paths.get(FileUtilRt.toSystemDependentName(commonAncestor!!))
     val uploadRoot = TargetEnvironment.UploadRoot(uploadPath, TargetEnvironment.TargetPath.Temporary())
     request.uploadVolumes += uploadRoot
     val targetFileSeparator = request.targetPlatform.platform.fileSeparator
 
     var targetWorkingDirectory: TargetValue<String>? = null
     for (path in pathsToUpload) {
-      val relativePath = getRelativePath(commonAncestor, path, File.separatorChar)
+      val relativePath = FileUtilRt.getRelativePath(commonAncestor, path, File.separatorChar)
       val targetValue = targetEnvironmentProvider.upload(uploadRoot, path, relativePath!!)
-      if (targetWorkingDirectory == null && isAncestor(path, gradleProjectDirectory, false)) {
-        val workingDirRelativePath = getRelativePath(path, gradleProjectDirectory, File.separatorChar)!!
-        val targetWorkingDirRelativePath = if (workingDirRelativePath == ".") ""
-        else toSystemDependentName(workingDirRelativePath, targetFileSeparator)
+      if (targetWorkingDirectory == null && FileUtil.isAncestor(path, gradleProjectDirectory, false)) {
+        val workingDirRelativePath = FileUtilRt.getRelativePath(path, gradleProjectDirectory, File.separatorChar)!!
+        val targetWorkingDirRelativePath = if (workingDirRelativePath == ".") {
+          ""
+        }
+        else {
+          FileUtilRt.toSystemDependentName(workingDirRelativePath, targetFileSeparator)
+        }
         targetWorkingDirectory = TargetValue.map(targetValue) { "$it$targetFileSeparator$targetWorkingDirRelativePath" }
       }
     }
@@ -153,7 +160,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   private fun findCommonAncestor(paths: Set<String>): String? {
     var commonRoot: File? = null
     for (path in paths) {
-      commonRoot = if (commonRoot == null) File(path) else findAncestor(commonRoot, File(path))
+      commonRoot = if (commonRoot == null) File(path) else FileUtil.findAncestor(commonRoot, File(path))
       requireNotNull(commonRoot) { "no common root found" }
     }
     assert(commonRoot != null)
@@ -205,7 +212,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     if (request is LocalTargetEnvironmentRequest) {
       javaParameters.vmParametersList.addProperty(Main.LOCAL_BUILD_PROPERTY, "true")
       val javaHomePath = consumerOperationParameters.javaHome.path
-      ProjectJdkTable.getInstance().allJdks.find { pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
+      ProjectJdkTable.getInstance().allJdks.find { FileUtilRt.pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
     }
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
@@ -322,22 +329,20 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(KotlinVersion::class.java)
     // gradle-api jar
     classpathInferer.add(Gradle::class.java)
-    // gradle-api-impldep jar
-    classpathInferer.add(org.gradle.internal.impldep.com.google.common.base.Function::class.java)
-    // gradle-wrapper jar
-    classpathInferer.add(WrapperExecutor::class.java)
     // logging jars
     classpathInferer.add(LoggerFactory::class.java)
     classpathInferer.add(JDK14LoggerFactory::class.java)
     // gradle tooling proxy module
     classpathInferer.add(Main::class.java)
     // intellij.gradle.toolingExtension - for use of model adapters classes
-    classpathInferer.add(
-      org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java)
+    classpathInferer.add(GradleToolingExtensionClass::class.java)
     // intellij.platform.externalSystem.rt
-    classpathInferer.add(ExternalSystemSourceType::class.java)
+    classpathInferer.add(ExternalSystemRtClass::class.java)
+    // groovy runtime for serialization
+    classpathInferer.add(MissingMethodException::class.java)
 
     javaParameters.classPath.addAll(classpathInferer.getClasspath())
+    javaParameters.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
     javaParameters.mainClass = Main::class.java.name
     if (log.isDebugEnabled) {
       javaParameters.programParametersList.add("--debug")
@@ -382,7 +387,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     fun requestUploadIntoTarget(path: String,
                                 request: TargetEnvironmentRequest,
                                 environmentConfiguration: TargetEnvironmentConfiguration): TargetValue<String> {
-      val uploadPath = Paths.get(toSystemDependentName(path))
+      val uploadPath = Paths.get(FileUtilRt.toSystemDependentName(path))
       val localRootPath = uploadPath.parent
 
       val languageRuntime = environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java)

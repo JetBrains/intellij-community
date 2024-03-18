@@ -87,8 +87,9 @@ public final class ReviewCommentComponent extends JPanel {
 
   private @NotNull JComponent createMoreAction() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.setPopup(true);
-
+    group.getTemplatePresentation().setPopupGroup(true);
+    group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
+    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     group.add(new DumbAwareAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -99,11 +100,7 @@ public final class ReviewCommentComponent extends JPanel {
       }
     });
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-    return new ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return new ActionButton(group, null, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
       protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
         myShowPopup = true;

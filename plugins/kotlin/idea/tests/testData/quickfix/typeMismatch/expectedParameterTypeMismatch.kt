@@ -5,3 +5,4 @@ fun foo(f: (Int) -> String) {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeTypeFix
+/* IGNORE_K2 */

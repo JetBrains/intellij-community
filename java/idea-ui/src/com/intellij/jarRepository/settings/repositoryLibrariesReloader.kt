@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.settings
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RepositoryLibrarySynchronizer
+import com.intellij.jarRepository.collectLibraries
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
@@ -12,12 +12,13 @@ import org.jetbrains.concurrency.collectResults
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
-fun reloadAllRepositoryLibraries(project: Project) {
-  val libraries = RepositoryLibrarySynchronizer.collectLibraries(project) {
-    (it as? LibraryEx)?.properties is RepositoryLibraryProperties
-  }.filterIsInstance<LibraryEx>()
+internal fun reloadAllRepositoryLibraries(project: Project) {
+  val libraries = collectLibraries(project) { (it as? LibraryEx)?.properties is RepositoryLibraryProperties }
   libraries
+    .asSequence()
+    .filterIsInstance<LibraryEx>()
     .map { RepositoryUtils.reloadDependencies(project, it) }
+    .toList()
     .collectResults()
     .onSuccess {
       Notifications.Bus.notify(JarRepositoryManager.GROUP.createNotification(

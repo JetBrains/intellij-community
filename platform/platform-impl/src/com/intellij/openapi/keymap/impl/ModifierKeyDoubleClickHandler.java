@@ -301,7 +301,7 @@ public final class ModifierKeyDoubleClickHandler {
     }
 
     private boolean shouldSkipIfActionHasShortcut() {
-      return mySkipIfActionHasShortcut && getActiveKeymapShortcuts(myActionId).getShortcuts().length > 0;
+      return mySkipIfActionHasShortcut && getActiveKeymapShortcuts(myActionId).hasShortcuts();
     }
 
     @Override

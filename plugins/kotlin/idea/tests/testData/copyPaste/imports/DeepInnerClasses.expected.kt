@@ -1,10 +1,14 @@
 package to
 
 import a.Outer
+import a.Outer.Inner.II
+import a.Outer.Nested.NI
+import a.Outer.Nested.NN
+import a.Outer.Nested.NN2
 import a.with
 
-fun f(p1: Outer.Nested.NN, p2: Outer.Nested.NI, p3: Outer.Inner.II) {
-    Outer.Nested.NN2()
+fun f(p1: NN, p2: NI, p3: II) {
+    NN2()
     with(Outer.Nested()) {
         NI2()
     }

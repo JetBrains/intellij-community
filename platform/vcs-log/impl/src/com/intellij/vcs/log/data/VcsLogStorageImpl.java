@@ -329,7 +329,11 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       try {
         VcsLogStorageBackend indexBackend = PhmVcsLogStorageBackend.create(project, storage, indexStorageId, indexingRoots, errorHandler, parent);
         return new Pair<>(storage, indexBackend);
-      } catch (IOException e) {
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
         LOG.error("Could not create index storage backend", e);
         return new Pair<>(storage, null);
       }

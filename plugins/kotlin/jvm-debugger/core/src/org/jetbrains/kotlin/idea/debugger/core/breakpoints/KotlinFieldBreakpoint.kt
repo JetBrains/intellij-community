@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Method
@@ -54,6 +55,7 @@ class KotlinFieldBreakpoint(
         return super.isValid() && evaluationElement != null
     }
 
+    @RequiresBackgroundThread
     override fun reload() {
         super.reload()
 

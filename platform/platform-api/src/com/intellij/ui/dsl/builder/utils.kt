@@ -3,14 +3,13 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.UINumericRange
+import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JList
-import javax.swing.JPanel
+import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
 /**
@@ -60,7 +59,25 @@ enum class DslComponentProperty {
    *
    * Value: [JComponent]
    */
-  INTERACTIVE_COMPONENT
+  INTERACTIVE_COMPONENT,
+
+  /**
+   * Provides custom icons for icon tag <icon src='key'>. Example of usage in plugins with own icons:
+   *
+   * ```
+   *  text("").applyToComponent { // Custom icons cannot be used before ICONS_PROVIDER is set
+   *    putClientProperty(DslComponentProperty.ICONS_PROVIDER, classIconProvider(PluginIcons::class.java))
+   *    text = "<icon src='PluginIcons.Icon'>"
+   *  }
+   * ```
+   *
+   * Can be applied only to JEditorPane-s created by Kotlin UI DSL (like [Row.text], [Row.comment] and others).
+   *
+   * Value: [IconsProvider]
+   *
+   * @see classIconProvider
+   */
+  ICONS_PROVIDER,
 }
 
 /**
@@ -99,6 +116,10 @@ fun interface HyperlinkEventAction {
   }
 }
 
+fun interface IconsProvider {
+  fun getIcon(key: String): Icon?
+}
+
 /**
  * Values meaning:
  *
@@ -110,6 +131,8 @@ data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? =
 
 fun UINumericRange.asRange(): IntRange = min..max
 
+@Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer instead")
+@ApiStatus.ScheduledForRemoval
 fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T>.(T) -> Unit): SimpleListCellRenderer<T> {
   return object : SimpleListCellRenderer<T>() {
     override fun customize(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -135,4 +158,13 @@ fun cleanupHtml(@Nls s: String): @Nls String {
   }
   @Suppress("HardCodedStringLiteral")
   return result.groups["body"]!!.value
+}
+
+fun classIconProvider(iconClass: Class<*>): IconsProvider {
+  return IconsProvider {
+    if (it.startsWith(iconClass.simpleName + '.')) {
+      IconLoader.findIcon(iconClass.packageName + '.' + it, iconClass)
+    }
+    else null
+  }
 }

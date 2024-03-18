@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -18,78 +18,117 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../completion/testData/incrementalResolve")
-public class PerformanceCompletionIncrementalResolveTestGenerated extends AbstractPerformanceCompletionIncrementalResolveTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+public abstract class PerformanceCompletionIncrementalResolveTestGenerated extends AbstractPerformanceCompletionIncrementalResolveTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/incrementalResolve/basic")
+    public abstract static class Basic extends AbstractPerformanceCompletionIncrementalResolveTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/incrementalResolve/basic/localChange")
+        public static class LocalChange extends AbstractPerformanceCompletionIncrementalResolveTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("addVariable_beforeCaret.kt")
+            public void testAddVariable_beforeCaret() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/localChange/addVariable_beforeCaret.kt");
+            }
+
+            @TestMetadata("changeVariable_beforeCaret.kt")
+            public void testChangeVariable_beforeCaret() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/localChange/changeVariable_beforeCaret.kt");
+            }
+
+            @TestMetadata("deleteVariable_beforeCaret.kt")
+            public void testDeleteVariable_beforeCaret() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/localChange/deleteVariable_beforeCaret.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/incrementalResolve/basic")
+        public static class Uncategorized extends AbstractPerformanceCompletionIncrementalResolveTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("functionWithExpressionBody.kt")
+            public void testFunctionWithExpressionBody() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/functionWithExpressionBody.kt");
+            }
+
+            @TestMetadata("functionWithExpressionBody_implicitType.kt")
+            public void testFunctionWithExpressionBody_implicitType() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/functionWithExpressionBody_implicitType.kt");
+            }
+
+            @TestMetadata("localAnonymousFunctionWithExpressionBody.kt")
+            public void testLocalAnonymousFunctionWithExpressionBody() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/localAnonymousFunctionWithExpressionBody.kt");
+            }
+
+            @TestMetadata("noDataFlowFromOldStatement.kt")
+            public void testNoDataFlowFromOldStatement() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/noDataFlowFromOldStatement.kt");
+            }
+
+            @TestMetadata("propertyWithInitializer.kt")
+            public void testPropertyWithInitializer() throws Exception {
+                runTest("../completion/testData/incrementalResolve/basic/propertyWithInitializer.kt");
+            }
+        }
     }
 
-    @TestMetadata("codeAboveChanged.kt")
-    public void testCodeAboveChanged() throws Exception {
-        runTest("../completion/testData/incrementalResolve/codeAboveChanged.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/incrementalResolve/smart")
+    public static class Smart extends AbstractPerformanceCompletionIncrementalResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("codeAboveChanged2.kt")
-    public void testCodeAboveChanged2() throws Exception {
-        runTest("../completion/testData/incrementalResolve/codeAboveChanged2.kt");
-    }
+        @TestMetadata("codeAboveChanged.kt")
+        public void testCodeAboveChanged() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/codeAboveChanged.kt");
+        }
 
-    @TestMetadata("dataFlowInfoFromPrevStatement.kt")
-    public void testDataFlowInfoFromPrevStatement() throws Exception {
-        runTest("../completion/testData/incrementalResolve/dataFlowInfoFromPrevStatement.kt");
-    }
+        @TestMetadata("codeAboveChanged2.kt")
+        public void testCodeAboveChanged2() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/codeAboveChanged2.kt");
+        }
 
-    @TestMetadata("dataFlowInfoFromSameStatement.kt")
-    public void testDataFlowInfoFromSameStatement() throws Exception {
-        runTest("../completion/testData/incrementalResolve/dataFlowInfoFromSameStatement.kt");
-    }
+        @TestMetadata("dataFlowInfoFromPrevStatement.kt")
+        public void testDataFlowInfoFromPrevStatement() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/dataFlowInfoFromPrevStatement.kt");
+        }
 
-    @TestMetadata("doNotAnalyzeComplexStatement.kt")
-    public void testDoNotAnalyzeComplexStatement() throws Exception {
-        runTest("../completion/testData/incrementalResolve/doNotAnalyzeComplexStatement.kt");
-    }
+        @TestMetadata("dataFlowInfoFromSameStatement.kt")
+        public void testDataFlowInfoFromSameStatement() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/dataFlowInfoFromSameStatement.kt");
+        }
 
-    @TestMetadata("functionWithExpressionBody.kt")
-    public void testFunctionWithExpressionBody() throws Exception {
-        runTest("../completion/testData/incrementalResolve/functionWithExpressionBody.kt");
-    }
+        @TestMetadata("doNotAnalyzeComplexStatement.kt")
+        public void testDoNotAnalyzeComplexStatement() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/doNotAnalyzeComplexStatement.kt");
+        }
 
-    @TestMetadata("functionWithExpressionBody_implicitType.kt")
-    public void testFunctionWithExpressionBody_implicitType() throws Exception {
-        runTest("../completion/testData/incrementalResolve/functionWithExpressionBody_implicitType.kt");
-    }
+        @TestMetadata("noPrevStatement.kt")
+        public void testNoPrevStatement() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/noPrevStatement.kt");
+        }
 
-    @TestMetadata("localAnonymousFunctionWithExpressionBody.kt")
-    public void testLocalAnonymousFunctionWithExpressionBody() throws Exception {
-        runTest("../completion/testData/incrementalResolve/localAnonymousFunctionWithExpressionBody.kt");
-    }
+        @TestMetadata("outOfBlockModification.kt")
+        public void testOutOfBlockModification() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/outOfBlockModification.kt");
+        }
 
-    @TestMetadata("noDataFlowFromOldStatement.kt")
-    public void testNoDataFlowFromOldStatement() throws Exception {
-        runTest("../completion/testData/incrementalResolve/noDataFlowFromOldStatement.kt");
-    }
+        @TestMetadata("prevStatementNotResolved.kt")
+        public void testPrevStatementNotResolved() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/prevStatementNotResolved.kt");
+        }
 
-    @TestMetadata("noPrevStatement.kt")
-    public void testNoPrevStatement() throws Exception {
-        runTest("../completion/testData/incrementalResolve/noPrevStatement.kt");
-    }
-
-    @TestMetadata("outOfBlockModification.kt")
-    public void testOutOfBlockModification() throws Exception {
-        runTest("../completion/testData/incrementalResolve/outOfBlockModification.kt");
-    }
-
-    @TestMetadata("prevStatementNotResolved.kt")
-    public void testPrevStatementNotResolved() throws Exception {
-        runTest("../completion/testData/incrementalResolve/prevStatementNotResolved.kt");
-    }
-
-    @TestMetadata("propertyWithInitializer.kt")
-    public void testPropertyWithInitializer() throws Exception {
-        runTest("../completion/testData/incrementalResolve/propertyWithInitializer.kt");
-    }
-
-    @TestMetadata("sameStatement.kt")
-    public void testSameStatement() throws Exception {
-        runTest("../completion/testData/incrementalResolve/sameStatement.kt");
+        @TestMetadata("sameStatement.kt")
+        public void testSameStatement() throws Exception {
+            runTest("../completion/testData/incrementalResolve/smart/sameStatement.kt");
+        }
     }
 }

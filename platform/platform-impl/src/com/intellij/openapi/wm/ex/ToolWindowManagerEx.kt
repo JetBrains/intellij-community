@@ -4,9 +4,9 @@ package com.intellij.openapi.wm.ex
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.toolWindow.ToolWindowToolbar
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -34,6 +34,12 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   abstract fun getMoreButtonSide(): ToolWindowAnchor
 
   open fun setMoreButtonSide(side: ToolWindowAnchor) {
+  }
+
+  open fun setShowNames(value: Boolean) {
+  }
+
+  open fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
   }
 
   /**

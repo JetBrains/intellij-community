@@ -20,8 +20,10 @@ UFile (package = test.pkg) [package test.pkg...]
             UParameter (name = str) [@org.jetbrains.annotations.NotNull var str: java.lang.String = "hello " + "world"]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 UBinaryExpression (operator = +) ["hello " + "world"] = "hello world"
-                    ULiteralExpression (value = "hello ") ["hello "] = "hello "
-                    ULiteralExpression (value = "world") ["world"] = "world"
+                    UPolyadicExpression (operator = +) ["hello "] = "hello "
+                        ULiteralExpression (value = "hello ") ["hello "] = "hello "
+                    UPolyadicExpression (operator = +) ["world"] = "world"
+                        ULiteralExpression (value = "world") ["world"] = "world"
             UParameter (name = args) [@org.jetbrains.annotations.NotNull var args: java.lang.String...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined

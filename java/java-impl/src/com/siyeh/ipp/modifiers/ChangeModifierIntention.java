@@ -69,7 +69,7 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.Command;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
+public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   private final boolean myErrorFix;
   private AccessModifier myTarget;

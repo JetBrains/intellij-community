@@ -65,6 +65,17 @@ fun getLibraryVersion(
     return getDefaultVersion(minVersion, coerceRuntimeLibraryVersionToReleased)
 }
 
+fun getKotlinStdlibVersionOrNull(
+    module: Module,
+    rootModel: ModuleRootModel?,
+    platformKind: IdePlatformKind?,
+    coerceRuntimeLibraryVersionToReleased: Boolean = true
+): IdeKotlinVersion? {
+    return getRuntimeLibraryVersions(module, rootModel, platformKind ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind)
+        .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
+        .minOrNull()
+}
+
 fun getDefaultVersion(
     explicitVersion: IdeKotlinVersion? = null,
     coerceRuntimeLibraryVersionToReleased: Boolean = true

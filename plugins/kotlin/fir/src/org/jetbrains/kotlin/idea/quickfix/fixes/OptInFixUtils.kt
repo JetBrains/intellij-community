@@ -5,17 +5,19 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
-object OptInFixUtils {
-    fun optInMarkerFqName(diagnostic: KtFirDiagnostic<PsiElement>) = when (diagnostic) {
-        is KtFirDiagnostic.OptInUsage -> diagnostic.optInMarkerFqName
-        is KtFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerFqName
-        is KtFirDiagnostic.OptInOverride -> diagnostic.optInMarkerFqName
-        is KtFirDiagnostic.OptInOverrideError -> diagnostic.optInMarkerFqName
+internal object OptInFixUtils {
+    fun optInMarkerClassId(diagnostic: KtFirDiagnostic<PsiElement>): ClassId? = when (diagnostic) {
+        is KtFirDiagnostic.OptInUsage -> diagnostic.optInMarkerClassId
+        is KtFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerClassId
+        is KtFirDiagnostic.OptInOverride -> diagnostic.optInMarkerClassId
+        is KtFirDiagnostic.OptInOverrideError -> diagnostic.optInMarkerClassId
         else -> null
     }
 
@@ -24,5 +26,16 @@ object OptInFixUtils {
         ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME.takeIf { it.annotationApplicable() }
 
     context (KtAnalysisSession)
-    private fun FqName.annotationApplicable() = getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
+    private fun FqName.annotationApplicable(): Boolean =
+        getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
+
+    context (KtAnalysisSession)
+    fun findAnnotation(classId: ClassId): KtNamedClassOrObjectSymbol? =
+        getClassOrObjectSymbolByClassId(classId) as? KtNamedClassOrObjectSymbol
+
+    context (KtAnalysisSession)
+    fun annotationIsVisible(annotation: KtNamedClassOrObjectSymbol, from: KtElement): Boolean {
+        val file = from.containingKtFile.getFileSymbol()
+        return isVisible(annotation, file, receiverExpression = null, from)
+    }
 }

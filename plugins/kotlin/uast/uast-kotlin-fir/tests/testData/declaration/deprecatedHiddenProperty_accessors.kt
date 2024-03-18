@@ -1,7 +1,7 @@
 package test.pkg
 
 class Test {
-    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+    @Deprecated("no more property", level = DeprecationLevel.HIDDEN)
     var pOld_accessors_deprecatedOnProperty: String? = null
         get() = field ?: "null?"
         set(value) {
@@ -10,7 +10,7 @@ class Test {
             }
         }
 
-    @get:Deprecated(level = DeprecationLevel.HIDDEN, "no more getter")
+    @get:Deprecated("no more getter", level = DeprecationLevel.HIDDEN)
     var pOld_accessors_deprecatedOnGetter: String? = null
         get() = field ?: "null?"
         set(value) {
@@ -19,7 +19,7 @@ class Test {
             }
         }
 
-    @set:Deprecated(level = DeprecationLevel.HIDDEN, "no more setter")
+    @set:Deprecated("no more setter", level = DeprecationLevel.HIDDEN)
     var pOld_accessors_deprecatedOnSetter: String? = null
         get() = field ?: "null?"
         set(value) {

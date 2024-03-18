@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.ide.wizard.AbstractWizard.isNewWizard;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 public final class ActionGroupPanelWrapper {
@@ -86,7 +85,7 @@ public final class ActionGroupPanelWrapper {
                            @Override
                            protected JComponent createItemComponent() {
                              JComponent component = super.createItemComponent();
-                             myTextLabel.setBorder(!isNewWizard() ? JBUI.Borders.empty(3) : JBUI.Borders.empty(5, 0));
+                             myTextLabel.setBorder(JBUI.Borders.empty(5, 0));
                              return component;
                            }
 

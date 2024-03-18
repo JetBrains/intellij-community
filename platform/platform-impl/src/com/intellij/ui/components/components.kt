@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -62,12 +63,16 @@ fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: 
   return label
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Row.link")
 fun Link(@Label text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): JComponent {
   val result = ActionLink(text) { action() }
   style?.let { UIUtil.applyStyle(it, result) }
   return result
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, methods like Row.text, Row.comment or Cell.comment")
 @JvmOverloads
 fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
   val matcher = URLUtil.HREF_PATTERN.matcher(note)
@@ -98,6 +103,8 @@ fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = n
   return noteComponent
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Row.text")
 @JvmOverloads
 fun htmlComponent(@DetailedDescription text: String = "",
                   font: Font? = null,
@@ -123,11 +130,15 @@ fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Toolti
   return component
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Panel.group")
 @JvmOverloads
 fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
   return Panel(title, false, layout)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Panel.group")
 fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }

@@ -44,6 +44,8 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
+  override fun getBackgroundClass(lookup: Lookup, expectedText: String): String = ""
+
   override fun getThresholds(): List<BaseThreshold> = Threshold.values().toList()
 
   override fun getThresholdClass(value: Double?): String = value?.let {

@@ -37,7 +37,7 @@ import java.util.function.Predicate;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CyclicClassDependencyInspection extends BaseGlobalInspection {
+public final class CyclicClassDependencyInspection extends BaseGlobalInspection {
 
   public boolean ignoreInSameFile = false;
 

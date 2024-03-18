@@ -5,6 +5,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -77,6 +79,7 @@ class ActionUpdaterTest {
     val customizedText = "Customized!"
     val presentationFactory = PresentationFactory()
     val popupGroup: ActionGroup = object : DefaultActionGroup(newCanBePerformedGroup(true, true)) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       override fun update(e: AnActionEvent) {
         e.presentation.text = customizedText
       }
@@ -254,10 +257,110 @@ class ActionUpdaterTest {
     assertEquals(1, actions.size)
   }
 
+  @Test
+  fun testPostprocessChildrenSessionCalls() = timeoutRunBlocking {
+    val actionGroup = object : ActionGroup() {
+      val extra = newAction(ActionUpdateThread.BGT) { awaitWithCheckCanceled(10) }
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+      }
+      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
+                                              updateSession: UpdateSession): List<AnAction?> {
+        updateSession.presentation(extra).isEnabledAndVisible = true
+        return visibleChildren + listOf(extra)
+      }
+    }
+    val actions = withContext(Dispatchers.EDT) {
+      Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+    }
+    assertEquals(2, actions.size)
+  }
+
+  @Test
+  fun testMaxAwaitRetriesWorksAsExpected() = timeoutRunBlocking {
+    val retries = Registry.get("actionSystem.update.actions.max.await.retries")
+    val prevRetries = retries.asInteger()
+    val quickRetries = 10
+    var currentMethodId = 0
+    var checkedCounts = IntArray(3)
+    fun updateNewInstance(session: UpdateSession, methodId: Int) {
+      if (methodId != currentMethodId) return
+      checkedCounts[currentMethodId]++
+      session.presentation(newAction(ActionUpdateThread.BGT) { awaitWithCheckCanceled(10) })
+    }
+    val actionGroup = object : ActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+      override fun update(e: AnActionEvent) {
+        updateNewInstance(e.updateSession, 0)
+      }
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        updateNewInstance(e!!.updateSession, 1)
+        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+      }
+      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
+                                              updateSession: UpdateSession): List<AnAction?> {
+        updateNewInstance(updateSession, 2)
+        return visibleChildren
+      }
+    }
+    repeat(3) {
+      val actions = try {
+        retries.setValue(10)
+        withContext(Dispatchers.EDT) {
+          Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                         ActionPlaces.UNKNOWN, false, fastTrack = false)
+        }
+      }
+      catch (_: TestLoggerAssertionError) {
+        currentMethodId++
+        emptyList()
+      }
+      finally {
+        retries.setValue(prevRetries)
+      }
+      // TODO "postProcess" in production returns original items, it will be 1 when behaviors are unified
+      assertEquals(0, actions.size)
+    }
+    assertEquals(quickRetries, checkedCounts[0], "update retries")
+    assertEquals(quickRetries, checkedCounts[1], "getChildren retries")
+    assertEquals(quickRetries, checkedCounts[2], "postProcessVisibleChildren retries")
+  }
+
+  @Test
+  fun testSkipOperationException() = timeoutRunBlocking {
+    val key1 = Key.create<Int>("Key1")
+    val key2 = Key.create<Int>("Key2")
+    val actionGroup = object : ActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        e!!
+        return arrayOf<AnAction>(
+          EmptyAction.createEmptyAction("", null, true),
+          newAction(ActionUpdateThread.BGT) { throw SkipOperation("update") },
+          newAction(ActionUpdateThread.EDT) { throw SkipOperation("update") },
+          newAction(ActionUpdateThread.BGT) { e.updateSession.sharedData(key1) { throw SkipOperation("sharedData") } },
+          newAction(ActionUpdateThread.EDT) { e.updateSession.sharedData(key2) { throw SkipOperation("sharedData") } })
+      }
+    }
+    val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
+      Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+    }
+    assertEquals(1, actions.size)
+  }
+
   private fun expandActionGroup(actionGroup: ActionGroup,
                                 presentationFactory: PresentationFactory = PresentationFactory()): List<AnAction?> {
     return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
   }
+
+  private fun newAction(updateThread: ActionUpdateThread, update: (AnActionEvent) -> Unit): AnAction =
+    object : AnAction("testAction-$updateThread") {
+      override fun actionPerformed(e: AnActionEvent) {}
+      override fun getActionUpdateThread(): ActionUpdateThread = updateThread
+      override fun update(e: AnActionEvent) = update(e)
+    }
 
   private fun newPopupGroup(vararg actions: AnAction): ActionGroup =
     DefaultActionGroup(*actions).apply {
@@ -265,15 +368,15 @@ class ActionUpdaterTest {
       templatePresentation.isHideGroupIfEmpty = true
     }
 
-  private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup {
-    return object : DefaultActionGroup() {
+  private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup =
+    object : DefaultActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       override fun update(e: AnActionEvent) {
         e.presentation.isVisible = visible
         e.presentation.isEnabled = enabled
         e.presentation.isPerformGroup = true
       }
     }
-  }
 
   private class MyContextElement(val value: Int)
     : AbstractCoroutineContextElement(MyContextElement), CoroutineContext.Element {

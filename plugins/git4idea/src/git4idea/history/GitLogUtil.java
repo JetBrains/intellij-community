@@ -123,7 +123,7 @@ public final class GitLogUtil {
 
       if (userConsumer != null) userConsumer.accept(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(handler);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
     handlerListener.reportErrors();
   }
 

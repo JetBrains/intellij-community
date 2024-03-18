@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchemaTypesCompatible;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 
 public final class JsonSchemaResolver {
   private final @NotNull Project myProject;
@@ -88,19 +89,19 @@ public final class JsonSchemaResolver {
           if (value == null) return null;
         }
         else {
-          JsonPropertyAdapter props = findProperty((JsonObjectValueAdapter)value, JsonSchemaObject.PROPERTIES);
+          JsonPropertyAdapter props = findProperty((JsonObjectValueAdapter)value, JSON_PROPERTIES);
           if (props != null) {
             value = getValue(props);
             continue;
           }
 
-          JsonPropertyAdapter defs = findProperty((JsonObjectValueAdapter)value, JsonSchemaObject.DEFINITIONS);
+          JsonPropertyAdapter defs = findProperty((JsonObjectValueAdapter)value, JSON_DEFINITIONS);
           if (defs != null) {
             value = getValue(defs);
             continue;
           }
 
-          JsonPropertyAdapter defs9 = findProperty((JsonObjectValueAdapter)value, JsonSchemaObject.DEFINITIONS_v9);
+          JsonPropertyAdapter defs9 = findProperty((JsonObjectValueAdapter)value, DEFS);
           if (defs9 != null) {
             value = getValue(defs9);
             continue;
@@ -141,7 +142,7 @@ public final class JsonSchemaResolver {
     return ContainerUtil.find(list, p -> name.equals(p.getName()));
   }
 
-  private @Nullable JsonSchemaObject selectSchema(final @NotNull JsonSchemaTreeNode resolveRoot,
+  public static @Nullable JsonSchemaObject selectSchema(final @NotNull JsonSchemaTreeNode resolveRoot,
                                                   final @Nullable PsiElement element,
                                                   boolean topLevelSchema) {
     final MatchResult matchResult = MatchResult.create(resolveRoot);
@@ -187,11 +188,11 @@ public final class JsonSchemaResolver {
     return schemas.stream().findFirst().orElse(null);
   }
 
-  private boolean isCorrect(final @NotNull JsonValueAdapter value, final @NotNull JsonSchemaObject schema) {
+  private static boolean isCorrect(final @NotNull JsonValueAdapter value, final @NotNull JsonSchemaObject schema) {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     if (type == null) return true;
     if (!areSchemaTypesCompatible(schema, type)) return false;
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
+    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(value.getDelegate().getProject(), JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
     checker.checkByScheme(value, schema);
     return checker.isCorrect();
   }

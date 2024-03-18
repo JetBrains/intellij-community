@@ -4,17 +4,36 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
 
+/**
+ * Deprecated
+ *
+ * The language new project wizard step was replaced by new project wizard generators.
+ * The language selector was moved from the right side of the wizard to the left tray.
+ *
+ * Please, use [com.intellij.ide.wizard.comment.LinkNewProjectWizardStep] instead of it for navigation between languages.
+ *
+ * @see GeneratorNewProjectWizard
+ * @see com.intellij.ide.wizard.comment.LinkNewProjectWizardStep
+ * @see com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard.getLanguageModelBuilderId
+ * @see NewProjectWizardLanguageStep
+ */
+@Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
+@Deprecated("See LanguageNewProjectWizardData documentation for details")
 interface LanguageNewProjectWizardData : NewProjectWizardBaseData {
 
+  @Deprecated("See LanguageNewProjectWizardData documentation for details")
   val languageProperty: GraphProperty<String>
 
+  @Deprecated("See LanguageNewProjectWizardData documentation for details")
   var language: String
 
   companion object {
 
+    @Deprecated("See LanguageNewProjectWizardData documentation for details")
     val KEY: Key<LanguageNewProjectWizardData> = Key.create(LanguageNewProjectWizardData::class.java.name)
 
     @JvmStatic
+    @Deprecated("See LanguageNewProjectWizardData documentation for details")
     val NewProjectWizardStep.languageData: LanguageNewProjectWizardData?
       get() = data.getUserData(KEY)
   }

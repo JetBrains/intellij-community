@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 class KotlinExtensionsInObjectsByReceiverTypeIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinExtensionsByReceiverTypeStubIndexHelper() {
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsInObjectsByReceiverTypeIndex")
+            StubIndexKey.createIndexKey(KotlinExtensionsInObjectsByReceiverTypeIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtCallableDeclaration> = indexKey

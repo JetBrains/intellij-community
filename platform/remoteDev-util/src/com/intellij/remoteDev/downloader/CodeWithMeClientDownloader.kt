@@ -21,8 +21,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
@@ -336,13 +335,9 @@ object CodeWithMeClientDownloader {
 
 
   suspend fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo): ExtractedJetBrainsClientData {
-    return progressStep(1.0, RemoteDevUtilBundle.message("launcher.get.client.info")) {
-      withRawProgressReporter {
-        blockingContext {
-          blockingContextToIndicator {
-            downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
-          }
-        }
+    return withProgressText(RemoteDevUtilBundle.message("launcher.get.client.info")) {
+      coroutineToIndicator {
+        downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
       }
     }
   }
@@ -549,11 +544,11 @@ object CodeWithMeClientDownloader {
   }
 
   internal fun createEmbeddedClientLauncherIfAvailable(expectedClientBuildNumber: String): EmbeddedClientLauncher? {
-    if (Registry.`is`("rdct.use.embedded.client")) {
+    if (Registry.`is`("rdct.use.embedded.client") || Registry.`is`("rdct.always.use.embedded.client")) {
       val hostBuildNumberString = BuildNumber.fromStringOrNull(expectedClientBuildNumber)?.withoutProductCode()
       val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
       LOG.debug("Host build number: $hostBuildNumberString, current IDE build number: $currentIdeBuildNumber")
-      if (hostBuildNumberString == currentIdeBuildNumber) {
+      if (hostBuildNumberString == currentIdeBuildNumber || Registry.`is`("rdct.always.use.embedded.client")) {
         val embeddedClientLauncher = EmbeddedClientLauncher.create()
         if (embeddedClientLauncher != null) {
           LOG.debug("Embedded client is available")

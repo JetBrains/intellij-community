@@ -26,7 +26,7 @@ import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ReadResolveAndWriteReplaceProtectedInspection
+public final class ReadResolveAndWriteReplaceProtectedInspection
   extends BaseInspection {
 
   @Override

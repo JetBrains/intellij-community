@@ -1,9 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.advertiser
 
-import com.intellij.openapi.components.*
-import kotlinx.serialization.Serializable
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.Setting
+import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.settingDescriptorFactory
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -13,32 +17,18 @@ import org.jetbrains.annotations.ApiStatus
  * that are incompatible with the current IDE build.
  */
 @Service(Service.Level.APP)
-@State(name = "PluginFeatureCacheService", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
 @ApiStatus.Internal
-class PluginFeatureCacheService : SerializablePersistentStateComponent<PluginFeatureCacheService.MyState>(MyState()) {
+class PluginFeatureCacheService {
   companion object {
     fun getInstance(): PluginFeatureCacheService = service()
   }
 
-  @Serializable
-  data class MyState(
-    val extensions: PluginFeatureMap? = null,
-    val dependencies: PluginFeatureMap? = null
-  )
+  private val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
+  private val serializer = factory.objectSerializer<PluginFeatureMap>()
+  private val settingGroup = factory.group(groupKey = "pluginFeatureCache") {
+    tags = listOf(CacheTag)
+  }
 
-  var extensions: PluginFeatureMap?
-    get() = state.extensions
-    set(value) {
-      updateState {
-        MyState(value, it.dependencies)
-      }
-    }
-
-  var dependencies: PluginFeatureMap?
-    get() = state.dependencies
-    set(value) {
-      updateState {
-        MyState(it.extensions, value)
-      }
-    }
+  val dependencies: Setting<PluginFeatureMap> = settingGroup.setting("dependencies", serializer)
+  val extensions: Setting<PluginFeatureMap> = settingGroup.setting("extensions", serializer)
 }

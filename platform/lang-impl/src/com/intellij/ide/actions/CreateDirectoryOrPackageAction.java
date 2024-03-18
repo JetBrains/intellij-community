@@ -52,12 +52,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
@@ -141,7 +138,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       return;
     }
 
-    List<@NotNull PsiDirectory> directories = Stream.of(view.getDirectories()).filter(d -> d != null).toList();
+    List<@NotNull PsiDirectory> directories = Arrays.asList(view.getDirectories());
     if (directories.isEmpty()) {
       presentation.setEnabledAndVisible(false);
       return;

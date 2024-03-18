@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl;
 public enum IntentionGroup {
   ERROR(30),
   INSPECTION(20),
+  REMOTE_ERROR(10), // problems collected from other offsets in this line
   NOTIFICATION(7),
   GUTTER(-5),
   ADVERTISEMENT(-10),

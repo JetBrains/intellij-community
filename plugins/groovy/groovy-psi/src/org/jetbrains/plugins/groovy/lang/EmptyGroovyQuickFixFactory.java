@@ -89,7 +89,7 @@ public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   }
 
   @Override
-  public GroovyFix createReplaceWithImportFix() {
+  public LocalQuickFix createReplaceWithImportFix() {
     return GroovyFix.EMPTY_FIX;
   }
 
@@ -134,27 +134,27 @@ public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   }
 
   @Override
-  public GroovyFix createMultipleAssignmentFix(int size) {
+  public LocalQuickFix createMultipleAssignmentFix(int size) {
     return GroovyFix.EMPTY_FIX;
   }
 
   @Override
-  public GroovyFix createSpreadArgumentFix(int size) {
+  public LocalQuickFix createSpreadArgumentFix(int size) {
     return GroovyFix.EMPTY_FIX;
   }
 
   @Override
-  public GroovyFix createMapConstructorFix() {
+  public LocalQuickFix createMapConstructorFix() {
     return GroovyFix.EMPTY_FIX;
   }
 
   @Override
-  public GroovyFix createQualifyExpressionFix() {
+  public LocalQuickFix createQualifyExpressionFix() {
     return GroovyFix.EMPTY_FIX;
   }
 
   @Override
-  public GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
+  public LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
     return null;
   }
 }

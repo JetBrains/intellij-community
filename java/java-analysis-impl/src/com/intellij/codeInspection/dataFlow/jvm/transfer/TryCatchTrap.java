@@ -110,8 +110,14 @@ public class TryCatchTrap implements Trap {
   }
 
   @Override
-  public @NotNull Collection<@NotNull Integer> getPossibleTargets() {
-    return ContainerUtil.map(myClauses.values(), ControlFlow.ControlFlowOffset::getInstructionOffset);
+  public int @NotNull [] getPossibleTargets() {
+    Collection<? extends ControlFlow.ControlFlowOffset> values = myClauses.values();
+    int[] result = new int[values.size()];
+    int i = 0;
+    for (ControlFlow.ControlFlowOffset value : values) {
+      result[i++] = value.getInstructionOffset();
+    }
+    return result;
   }
 
   @Override

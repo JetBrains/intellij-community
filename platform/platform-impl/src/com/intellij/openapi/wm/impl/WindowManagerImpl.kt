@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -10,10 +10,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -30,7 +27,6 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.sun.jna.platform.WindowUtils
@@ -59,7 +55,10 @@ private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
 @NonNls
 private const val FRAME_ELEMENT = "frame"
 
-@State(name = "WindowManager", storages = [
+@State(name = "WindowManager",
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [
   Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED, usePathMacroManager = false)
 ])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
@@ -351,7 +350,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
     state.getChild(DesktopLayout.TAG)?.let {
       val layout = DesktopLayout()
-      layout.readExternal(it, ExperimentalUI.isNewUI())
+      layout.readExternal(it)
       oldLayout = layout
     }
   }

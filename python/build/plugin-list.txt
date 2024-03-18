@@ -13,7 +13,6 @@ intellij.grazie
 intellij.markdown
 intellij.platform.langInjection
 intellij.properties
-intellij.reStructuredText
 intellij.searchEverywhereMl
 intellij.settingsSync
 intellij.sh
@@ -23,7 +22,6 @@ intellij.terminal
 intellij.textmate
 intellij.toml
 intellij.vcs.git
-intellij.vcs.github
 intellij.vcs.gitlab
 intellij.vcs.hg
 intellij.vcs.svn

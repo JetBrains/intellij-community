@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DialogTitleCapitalization", "HardCodedStringLiteral")
 package com.intellij.execution.wsl.ijent
 
@@ -17,9 +17,11 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
-import com.intellij.platform.ijent.fs.nio.asNioFileSystem
-import com.intellij.util.childScope
+import com.intellij.platform.ijent.community.impl.nio.asNioFileSystem
+import com.intellij.platform.ijent.executeProcess
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -58,9 +60,23 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
 
               coroutineScope {
                 launch {
-                  val process = when (val p = ijent.executeProcess("uname", "-a")) {
-                    is IjentApi.ExecuteProcessResult.Failure -> error(p)
-                    is IjentApi.ExecuteProcessResult.Success -> p.process
+                  val info = ijent.info
+                  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                    Messages.showInfoMessage(
+                      """
+                      Architecture: ${info.architecture}
+                      Remote PID:   ${info.remotePid}
+                      Version:      ${info.version}
+                      """.trimIndent(),
+                      title
+                    )
+                  }
+                }
+
+                launch {
+                  val process = when (val p = ijent.exec.executeProcess("uname", "-a")) {
+                    is IjentExecApi.ExecuteProcessResult.Failure -> error(p)
+                    is IjentExecApi.ExecuteProcessResult.Success -> p.process
                   }
                   val stdout = ByteArrayOutputStream()
                   process.stdout.consumeEach(stdout::write)

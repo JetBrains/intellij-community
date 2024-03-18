@@ -75,6 +75,8 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -105,7 +107,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl, location)
+        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
         if (coroutineFrame != null) {
             return listOf(coroutineFrame)
         }
@@ -212,14 +214,18 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
+        val lineRange = file.getRangeOfLine(line) ?: return null
+        val elementsOnLine = file.findElementsOfTypeInRange<PsiElement>(lineRange)
+            .filter { it.startOffset in lineRange && it.parents.contains(lambda) }
+
+        // Prefer elements that are inside body range
         val bodyRange = lambda.bodyExpression!!.textRange
-        val searchRange = file.getRangeOfLine(line)?.intersection(bodyRange) ?: return null
-        val elementsAtLine = file.findElementsOfTypeInRange<PsiElement>(searchRange)
+        elementsOnLine.firstOrNull {it.startOffset in bodyRange } ?.let { return it }
 
-        // Prefer elements that start on the line
-        elementsAtLine.firstOrNull { it.textRange.startOffset in searchRange }?.let { return it }
+        // Prefer KtElements
+        elementsOnLine.firstOrNull { it is KtElement } ?.let { return it }
 
-        return elementsAtLine.firstOrNull()
+        return elementsOnLine.firstOrNull()
     }
 
     private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
@@ -242,7 +248,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun Location.hasFinallyBlockInParent(psiFile: PsiFile): Boolean {
-        val elementAt = psiFile.getLineStartOffset(lineNumber())?.let { psiFile.findElementAt(it) }
+        val elementAt = psiFile.getLineStartOffset(getZeroBasedLineNumber())?.let { psiFile.findElementAt(it) }
         return elementAt?.parentOfType<KtFinallySection>() != null
     }
 
@@ -573,19 +579,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use 'ClassNameProvider' directly")
-    fun originalClassNamesForPosition(position: SourcePosition): List<String> {
-        return runReadAction {
-            val classNameProvider = ClassNameProvider(
-                debugProcess.project,
-                debugProcess.searchScope,
-                ClassNameProvider.Configuration.DEFAULT.copy(findInlineUseSites = false)
-            )
-            classNameProvider.getCandidates(position)
-        }
-    }
-
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
         if (position.file !is KtFile) {
             throw NoDataException.INSTANCE
@@ -674,12 +667,18 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 }
 
-internal fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
-    PsiTreeUtil.getParentOfType(this, excludingElement,
-                                KtFunction::class.java,
-                                KtClassInitializer::class.java,
-                                KtPropertyAccessor::class.java,
-                                KtScript::class.java)
+private val FUNCTION_TYPES = arrayOf(
+    KtFunction::class.java,
+    KtClassInitializer::class.java,
+    KtPropertyAccessor::class.java,
+    KtScript::class.java
+)
+
+fun PsiElement.getContainingMethod(excludingElement: Boolean = true): KtExpression? =
+    PsiTreeUtil.getParentOfType(this, excludingElement, *FUNCTION_TYPES)
+
+fun PsiElement.getContainingBlockOrMethod(excludingElement: Boolean = true): KtExpression? =
+    PsiTreeUtil.getParentOfType(this, excludingElement, KtBlockExpression::class.java, *FUNCTION_TYPES)
 
 // Kotlin compiler generates private final static <outer-method>$lambda$0 method
 // per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter

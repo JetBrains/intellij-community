@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyBoolLiteralExpression extends PyLiteralExpression {
-  boolean getValue();
+import com.jetbrains.python.ast.PyAstBoolLiteralExpression;
+
+public interface PyBoolLiteralExpression extends PyAstBoolLiteralExpression, PyLiteralExpression {
 }

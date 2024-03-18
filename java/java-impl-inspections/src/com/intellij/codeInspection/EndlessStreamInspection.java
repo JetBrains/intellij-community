@@ -2,8 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ import java.util.Set;
 
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
-public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> ALL_CONSUMING_OPERATIONS = Set.of(
     "sorted",
     "count",
@@ -64,12 +64,13 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     CallMatcher.instanceCall("java.util.Random", "ints", "longs", "doubles").parameterCount(0)
   );
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

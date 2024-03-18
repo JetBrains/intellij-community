@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -61,13 +61,11 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  @Nullable
-  public HgTarget getValue() {
+  public @Nullable HgTarget getValue() {
     return createValidPushTarget();
   }
 
-  @NotNull
-  private HgTarget createValidPushTarget() {
+  private @NotNull HgTarget createValidPushTarget() {
     return new HgTarget(myDestTargetPanel.getText(), myBranchName);
   }
 
@@ -82,8 +80,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  @Nullable
-  public ValidationInfo verify() {
+  public @Nullable ValidationInfo verify() {
     if (StringUtil.isEmptyOrSpaces(myDestTargetPanel.getText())) {
       return new ValidationInfo(VcsError.createEmptyTargetError(DvcsUtil.getShortRepositoryName(myRepository)).getText(), this);
     }
@@ -96,7 +93,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
+  public void addTargetEditorListener(final @NotNull PushTargetEditorListener listener) {
     myDestTargetPanel.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {

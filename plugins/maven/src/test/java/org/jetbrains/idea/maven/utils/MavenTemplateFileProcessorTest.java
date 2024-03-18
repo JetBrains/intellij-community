@@ -43,7 +43,7 @@ public class MavenTemplateFileProcessorTest extends BasePlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().closeAllConnectorsAndWait();
     }
     catch (Throwable e) {
       addSuppressedException(e);

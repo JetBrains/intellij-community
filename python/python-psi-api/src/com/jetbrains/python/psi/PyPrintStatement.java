@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyPrintStatement extends PyStatement {
+import com.jetbrains.python.ast.PyAstPrintStatement;
+
+public interface PyPrintStatement extends PyAstPrintStatement, PyStatement {
 }

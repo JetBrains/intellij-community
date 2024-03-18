@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

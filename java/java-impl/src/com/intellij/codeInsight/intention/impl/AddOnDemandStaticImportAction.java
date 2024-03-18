@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
   
   public AddOnDemandStaticImportAction() {
@@ -50,7 +51,7 @@ public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<Psi
    */
   @Nullable
   public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement refExpr)) {
       return null;
     }

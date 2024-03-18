@@ -45,7 +45,7 @@ import java.util.function.Predicate;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
+public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
   @SuppressWarnings({"PublicField", "SpellCheckingInspection"})

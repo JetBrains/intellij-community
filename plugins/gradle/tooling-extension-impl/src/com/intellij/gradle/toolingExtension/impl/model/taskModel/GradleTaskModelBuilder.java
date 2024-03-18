@@ -3,11 +3,11 @@ package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
 import org.gradle.api.tasks.TaskContainer;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
@@ -22,9 +22,7 @@ import java.util.TreeSet;
 @ApiStatus.Internal
 public class GradleTaskModelBuilder extends AbstractModelBuilderService {
 
-  private static final GradleVersion gradleVersion = GradleVersion.current().getBaseVersion();
-  private static final boolean TASKS_REFRESH_REQUIRED =
-    gradleVersion.compareTo(GradleVersion.version("5.0")) < 0;
+  private static final boolean TASKS_REFRESH_REQUIRED = GradleVersionUtil.isCurrentGradleOlderThan("5.0");
 
 
   @Override
@@ -64,12 +62,12 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
         return new TreeSet<>(project.getTasks());
       });
     }
-    catch (Exception e) {
+    catch (Exception exception) {
       context.getMessageReporter().createMessage()
         .withGroup(Messages.TASK_MODEL_COLLECTING_GROUP)
         .withTitle("Tasks collecting failure")
         .withText("Tasks for " + project + " cannot be collected due to plugin exception.")
-        .withException(e)
+        .withException(exception)
         .withKind(Message.Kind.WARNING)
         .reportMessage(project);
       return Collections.emptySet();

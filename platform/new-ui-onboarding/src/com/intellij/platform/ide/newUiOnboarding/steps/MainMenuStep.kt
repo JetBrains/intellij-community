@@ -31,6 +31,6 @@ class MainMenuStep : NewUiOnboardingStep {
   }
 
   override fun isAvailable(): Boolean {
-    return (SystemInfoRt.isWindows || SystemInfoRt.isXWindow) && !UISettings.getInstance().separateMainMenu
+    return !SystemInfoRt.isMac && !UISettings.getInstance().separateMainMenu
   }
 }

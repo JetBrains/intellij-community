@@ -98,7 +98,7 @@ private fun isWindowsScreenReaderEnabled(): Boolean {
   return retValue && isActive.value.booleanValue()
 }
 
-private class EnableScreenReaderSupportTask : ProjectActivity {
+internal class EnableScreenReaderSupportTask : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (enable) {
       serviceAsync<GeneralSettings>().isSupportScreenReaders = true

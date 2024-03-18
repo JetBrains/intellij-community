@@ -7,8 +7,7 @@ class SomeClass {
         System.out.println(s);
     }
 
-    @NotNull
-    private static String getString() {
+    private static @NotNull String getString() {
         var s = "42";
         return s;
     }

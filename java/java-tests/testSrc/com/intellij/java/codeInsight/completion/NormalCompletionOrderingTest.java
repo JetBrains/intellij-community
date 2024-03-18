@@ -29,6 +29,8 @@ import java.util.List;
 import static org.junit.Assert.assertNotEquals;
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
+  private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
+
   public NormalCompletionOrderingTest() {
     super(CompletionType.BASIC);
   }
@@ -1014,5 +1016,20 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
       assertPreferredItems(0, "case A", "case", "case B", "casecase", "case null", "case null, default");
     });
   }
-  private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
+
+  @NeedsIndex.ForStandardLibrary
+  public void testPreferLocalOverTypeMatching() {
+    myFixture.configureByText("Test.java", """
+      import java.util.*;
+      
+      public class Test {
+        void test(Set<String> additional, Set<String> expected) {
+          if (add<caret>)
+        }
+      }
+      """);
+    myFixture.completeBasic();
+    assertPreferredItems(0, "additional", "additional.add", "additional.addAll");
+  }
+  
 }

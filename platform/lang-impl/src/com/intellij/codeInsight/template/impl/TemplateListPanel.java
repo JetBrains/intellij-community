@@ -592,14 +592,14 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .disableDownAction()
       .disableUpAction()
-      .addExtraAction(new DumbAwareActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
+      .addExtraAction(new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
         }
 
         @Override
-        public void updateButton(@NotNull AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
         }
 
@@ -607,7 +607,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.EDT;
         }
-      }).addExtraAction(new DumbAwareActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
+      })
+      .addExtraAction(new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TemplateSettings.getInstance().reset();
@@ -615,9 +616,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
 
         @Override
-        public boolean isEnabled() {
-          return super.isEnabled() && !TemplateSettings.getInstance().getDeletedTemplates().isEmpty();
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!TemplateSettings.getInstance().getDeletedTemplates().isEmpty());
         }
+
         @Override
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.EDT;

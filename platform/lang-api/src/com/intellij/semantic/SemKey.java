@@ -2,11 +2,9 @@
 package com.intellij.semantic;
 
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -16,44 +14,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@link #subKey(String, SemKey[])}.
  */
 public final class SemKey<T extends SemElement> {
-  private static final AtomicInteger counter = new AtomicInteger(0);
+  private static final AtomicInteger ourCounter = new AtomicInteger(0);
+
   private final String myDebugName;
   private final SemKey<? super T> @NotNull [] mySupers;
-  private final List<SemKey<?>> myInheritors = ContainerUtil.createEmptyCOWList();
   private final int myUniqueId;
 
   @SafeVarargs
   private SemKey(String debugName, SemKey<? super T> @NotNull ... supers) {
     myDebugName = debugName;
     mySupers = supers;
-    myUniqueId = counter.getAndIncrement();
-    myInheritors.add(this);
-    registerInheritor(this);
-  }
-
-  private void registerInheritor(SemKey<?> eachParent) {
-    for (SemKey<?> superKey : eachParent.mySupers) {
-      superKey.myInheritors.add(this);
-      registerInheritor(superKey);
-    }
+    myUniqueId = ourCounter.getAndIncrement();
   }
 
   public SemKey<? super T> @NotNull [] getSupers() {
     return mySupers;
-  }
-
-  public List<SemKey<?>> getInheritors() {
-    return myInheritors;
-  }
-
-  public boolean isKindOf(SemKey<?> another) {
-    if (another == this) return true;
-    for (final SemKey<? super T> superKey : mySupers) {
-      if (superKey.isKindOf(another)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override

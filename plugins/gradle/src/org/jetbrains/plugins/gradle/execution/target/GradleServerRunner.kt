@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
+import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -185,7 +186,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
                       resultHandler: ResultHandler<Any?>,
                       buildEventConsumer: BuildEventConsumer) {
       val inetAddress = InetAddress.getByName(hostName.host)
-      val connectCompletion = TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port))
+      val connectCompletion = connectRetrying(5000) { TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port)) }
       val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
       val connection = connectCompletion.create(Serializers.stateful(serializer))
       connection.dispatch(BuildEvent(targetBuildParameters))

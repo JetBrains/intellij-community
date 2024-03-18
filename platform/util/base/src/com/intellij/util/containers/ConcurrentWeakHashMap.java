@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +24,12 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   }
 
   ConcurrentWeakHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(hashingStrategy);
+    super(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, hashingStrategy);
   }
 
   private static final class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
-    @NotNull private final HashingStrategy<? super K> myStrategy;
+    private final @NotNull HashingStrategy<? super K> myStrategy;
 
     private WeakKey(@NotNull K k,
                     int hash,

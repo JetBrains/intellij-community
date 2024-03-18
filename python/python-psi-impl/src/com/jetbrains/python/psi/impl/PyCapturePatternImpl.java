@@ -13,9 +13,4 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyCapturePattern(this);
   }
-
-  @Override
-  public boolean isIrrefutable() {
-    return true;
-  }
 }

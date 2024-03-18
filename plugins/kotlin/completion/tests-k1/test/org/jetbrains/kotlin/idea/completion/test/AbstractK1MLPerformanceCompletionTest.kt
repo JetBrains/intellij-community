@@ -130,15 +130,8 @@ abstract class AbstractK1MLPerformanceCompletionTest : AbstractK1JvmBasicComplet
                         "Should be some assertions about completion",
                         expected.size != 0 || unexpected.size != 0 || itemsNumber != null || nothingElse
                     )
-                    ExpectedCompletionUtils.assertContainsRenderedItems(
-                        expected, items, false, nothingElse,
-                        ignoreProperties = ignoreProperties
-                    )
-                    ExpectedCompletionUtils.assertNotContainsRenderedItems(
-                        unexpected,
-                        items,
-                        ignoreProperties = ignoreProperties
-                    )
+                    ExpectedCompletionUtils.assertContainsRenderedItems(expected, items, false, nothingElse)
+                    ExpectedCompletionUtils.assertNotContainsRenderedItems(unexpected, items)
 
                     if (itemsNumber != null) {
                         val expectedItems =

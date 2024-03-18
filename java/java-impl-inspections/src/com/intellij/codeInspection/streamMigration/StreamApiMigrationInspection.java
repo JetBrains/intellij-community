@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -44,7 +45,7 @@ import static com.intellij.codeInspection.streamMigration.OperationReductionMigr
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
 
-public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamApiMigrationInspection.class);
 
   @SuppressWarnings("PublicField")
@@ -79,15 +80,14 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     return SHORT_NAME;
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (!JavaFeature.STREAMS.isFeatureSupported(file) || virtualFile == null ||
-        !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new StreamApiMigrationVisitor(holder, isOnTheFly);
   }
 

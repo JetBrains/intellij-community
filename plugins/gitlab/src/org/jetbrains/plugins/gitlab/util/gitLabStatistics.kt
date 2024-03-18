@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 13)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 21)
 
   /**
    * Server metadata was fetched
@@ -119,28 +119,6 @@ internal object GitLabStatistics {
       EventPair(FILTER_LABEL_PRESENT, filters.label != null)
     )
 
-
-  /**
-   * Merge requests toolwindow login view was opened
-   */
-  private val MR_TW_LOGIN_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.toolwindow.login.opened")
-
-  fun logMrTwLoginOpened(project: Project): Unit = MR_TW_LOGIN_OPENED_EVENT.log(project)
-
-  /**
-   * Merge requests toolwindow was opened
-   */
-  private val MR_LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.list.opened")
-
-  fun logMrListOpened(project: Project): Unit = MR_LIST_OPENED_EVENT.log(project)
-
-  /**
-   * Merge request details were opened
-   */
-  private val MR_DETAILS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.details.opened")
-
-  fun logMrDetailsOpened(project: Project): Unit = MR_DETAILS_OPENED_EVENT.log(project)
-
   /**
    * Merge request diff was opened
    */
@@ -180,7 +158,8 @@ internal object GitLabStatistics {
     POST_DRAFT_NOTE,
     SUBMIT_DRAFT_NOTES,
     POST_REVIEW,
-    BRANCH_CHECKOUT
+    BRANCH_CHECKOUT,
+    SHOW_BRANCH_IN_LOG
   }
 
   enum class MergeRequestNoteActionPlace {
@@ -209,11 +188,80 @@ internal object GitLabStatistics {
     CREATE_CREATED,
     CREATE_ERRORED
   }
+
+  /**
+   * Merge request creation started
+   */
+  private val MR_CREATION_STARTED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.started")
+
+  fun logMrCreationStarted(project: Project): Unit = MR_CREATION_STARTED_EVENT.log(project)
+
+  /**
+   * Merge request creation succeeded
+   */
+  private val MR_CREATION_SUCCEEDED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.succeeded")
+
+  fun logMrCreationSucceeded(project: Project): Unit = MR_CREATION_SUCCEEDED_EVENT.log(project)
+
+  /**
+   * Merge request creation failed
+   */
+  private val MR_CREATION_FAILED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.failed", EventFields.Int("error_status_code"))
+
+  fun logMrCreationFailed(project: Project, errorStatusCode: Int): Unit = MR_CREATION_FAILED_EVENT.log(project, errorStatusCode)
+
+  /**
+   * Reviewers have been adjusted to the creation of merge request
+   */
+  private val MR_CREATION_REVIEWERS_ADJUSTED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.reviewer.adjusted")
+
+  fun logMrCreationReviewersAdjusted(project: Project): Unit = MR_CREATION_REVIEWERS_ADJUSTED_EVENT.log(project)
+
+  /**
+   * Merge request creation branches were changed
+   */
+  private val MR_CREATION_BRANCHES_CHANGED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.branches.changed")
+
+  fun logMrCreationBranchesChanged(project: Project): Unit = MR_CREATION_BRANCHES_CHANGED_EVENT.log(project)
+
+  /**
+   * GitLab tool window tab <type> was opened from <place>
+   */
+  private val TW_TAB_OPENED_EVENT = COUNTERS_GROUP.registerEvent(
+    "toolwindow.tab.opened",
+    EventFields.Enum<ToolWindowTabType>("tab_type"),
+    EventFields.Enum<ToolWindowOpenTabActionPlace>("open_action_place")
+  )
+
+  fun logTwTabOpened(project: Project, tabType: ToolWindowTabType, actionPlace: ToolWindowOpenTabActionPlace): Unit =
+    TW_TAB_OPENED_EVENT.log(project, tabType, actionPlace)
+
+  /**
+   * GitLab tool window tab <type> was closed
+   */
+  private val TW_TAB_CLOSED_EVENT = COUNTERS_GROUP.registerEvent("toolwindow.tab.closed", EventFields.Enum<ToolWindowTabType>("tab_type"))
+
+  fun logTwTabClosed(project: Project, tabType: ToolWindowTabType): Unit = TW_TAB_CLOSED_EVENT.log(project, tabType)
+
+  enum class ToolWindowTabType {
+    CREATION,
+    DETAILS,
+    LIST,
+    SELECTOR
+  }
+
+  enum class ToolWindowOpenTabActionPlace {
+    ACTION,
+    CREATION,
+    TOOLWINDOW,
+    NOTIFICATION
+  }
   //endregion
 }
 
 enum class GitLabApiRequestName {
   REST_GET_CURRENT_USER,
+  REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,
@@ -239,11 +287,15 @@ enum class GitLabApiRequestName {
   GQL_GET_CURRENT_USER,
   GQL_GET_MERGE_REQUEST,
   GQL_FIND_MERGE_REQUEST,
+  GQL_GET_MERGE_REQUEST_COMMITS,
   GQL_GET_MERGE_REQUEST_DISCUSSIONS,
+  GQL_GET_PROJECT,
   GQL_GET_PROJECT_LABELS,
   GQL_GET_PROJECT_REPOSITORY,
+  GQL_GET_PROJECT_WORK_ITEMS,
   GQL_GET_MEMBER_PROJECTS,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
+  GQL_AWARD_EMOJI_TOGGLE,
   GQL_CREATE_NOTE,
   GQL_CREATE_DIFF_NOTE,
   GQL_CREATE_REPLY_NOTE,
@@ -264,11 +316,14 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_CURRENT_USER -> GQL_GET_CURRENT_USER
       GitLabGQLQuery.GET_MERGE_REQUEST -> GQL_GET_MERGE_REQUEST
       GitLabGQLQuery.FIND_MERGE_REQUESTS -> GQL_FIND_MERGE_REQUEST
+      GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS -> GQL_GET_MERGE_REQUEST_COMMITS
       GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS -> GQL_GET_MERGE_REQUEST_DISCUSSIONS
+      GitLabGQLQuery.GET_PROJECT -> GQL_GET_PROJECT
       GitLabGQLQuery.GET_PROJECT_LABELS -> GQL_GET_PROJECT_LABELS
-      GitLabGQLQuery.GET_PROJECT_REPOSITORY -> GQL_GET_PROJECT_REPOSITORY
+      GitLabGQLQuery.GET_PROJECT_WORK_ITEMS -> GQL_GET_PROJECT_WORK_ITEMS
       GitLabGQLQuery.GET_MEMBER_PROJECTS -> GQL_GET_MEMBER_PROJECTS
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
+      GitLabGQLQuery.AWARD_EMOJI_TOGGLE -> GQL_AWARD_EMOJI_TOGGLE
       GitLabGQLQuery.CREATE_NOTE -> GQL_CREATE_NOTE
       GitLabGQLQuery.CREATE_DIFF_NOTE -> GQL_CREATE_DIFF_NOTE
       GitLabGQLQuery.CREATE_REPLY_NOTE -> GQL_CREATE_REPLY_NOTE

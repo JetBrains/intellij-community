@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -26,10 +27,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -39,6 +37,8 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -158,6 +158,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull MyScrollPane myScrollPane;
   private final @NotNull EditorComponentImpl myEditorComponent;
   private final @NotNull EditorGutterComponentImpl myGutterComponent;
+  private final @Nullable StickyLinesPanel myStickyLinesPanel;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
@@ -235,6 +236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @MouseSelectionState
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
+  private PanelWithFloatingToolbar myLayeredPane;
 
   @MagicConstant(intValues = {MOUSE_SELECTION_STATE_NONE, MOUSE_SELECTION_STATE_LINE_SELECTED, MOUSE_SELECTION_STATE_WORD_SELECTED})
   private @interface MouseSelectionState {
@@ -298,6 +300,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   LogicalPosition myLastMousePressedLocation;
 
   Point myLastMousePressedPoint;
+  private boolean myLastPressedOnGutterIcon;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myRectangularSelectionInProgress;
@@ -343,6 +346,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final EditorKind myKind;
 
   private boolean myScrollingToCaret;
+
+  private boolean myIsStickyLinePainting;
+  private boolean myIsStickyLineHovered;
 
   EditorImpl(@NotNull Document document,
              boolean viewer,
@@ -433,6 +439,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent = new EditorGutterComponentImpl(this);
     myGutterComponent.putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
     initComponent();
+
+    myStickyLinesPanel = createStickyLinesPanel();
+    if (myStickyLinesPanel != null) {
+      // remove the status component from the scroll pane and place it on the layered pane where the sticky panel lives,
+      // otherwise the sticky panel would overlap the status
+      myScrollPane.placeStatusOnTopOfStickyPanel();
+    }
 
     myView = new EditorView(this);
     myView.reinitSettings();
@@ -561,7 +574,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
-        case EditorState.myBorderPropertyName -> borderChanged(event);
+        case EditorState.myBorderPropertyName -> borderChanged();
       }
     }, myDisposable);
   }
@@ -792,10 +805,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     if (myProject != null && myVirtualFile != null) {
-      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensionList()) {
         if (LightEdit.owns(myProject) && !(painter instanceof LightEditCompatible)) {
           continue;
         }
+
         Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
         if (extensions != null) {
           for (LineExtensionInfo extension : extensions) {
@@ -843,6 +857,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler) {
     myPopupHandlers.remove(popupHandler);
+  }
+
+  @Override
+  public @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+      for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
+        EditorPopupHandler handler = myPopupHandlers.get(i);
+        ActionGroup group = handler instanceof ContextMenuPopupHandler o ? o.getActionGroup(event) : null;
+        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0 &&
+            group.getClass() == DefaultActionGroup.class) return group;
+        if (group != null) return new EditorMousePopupActionGroup(group, event);
+      }
+      return null;
+    }
+    else {
+      return myGutterComponent.getPopupActionGroup(event);
+    }
   }
 
   private @Nullable Cursor getCustomCursor() {
@@ -1107,14 +1138,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
-    JLayeredPane layeredPane = new PanelWithFloatingToolbar();
-    layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+    this.myLayeredPane = new PanelWithFloatingToolbar();
+    myLayeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
       if (mayShowToolbar()) {
-        layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
+        myLayeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
       }
     }, getDisposable());
-    myPanel.add(layeredPane, BorderLayout.CENTER);
+    myPanel.add(myLayeredPane, BorderLayout.CENTER);
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
@@ -1360,7 +1391,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       EditorHighlighter oldHighlighter = myHighlighter;
       myHighlighter = highlighter;
-      myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_HIGHLIGHTER, oldHighlighter, highlighter);
+      myPropertyChangeSupport.firePropertyChange(PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
       if (myPanel != null) {
         reinitSettings();
@@ -1593,6 +1624,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) {
       return;
     }
+    if (myView == null) {
+      // repaint may be called from EditorImpl.<init> IDEA-341841
+      return;
+    }
     assertIsDispatchThread();
     ReadAction.run(() -> {
       int minEndOffset = Math.min(endOffset, myDocument.getTextLength());
@@ -1612,7 +1647,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset,
+      // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
       // and it does occupy a particular amount of visual space that may be necessary to repaint.
       if (startOffset <= minEndOffset) {
         int startLine = myView.offsetToVisualLine(startOffset, false);
@@ -1665,6 +1700,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
+    if (myStickyLinesPanel != null) {
+      myStickyLinesPanel.repaintLinesInRange(startVisualLine, endVisualLine);
+    }
   }
 
   private void bulkUpdateStarted() {
@@ -1946,6 +1984,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!Registry.is("editor.dumb.mode.available")) return;
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
+    if (rect.isEmpty()) return;
+    if (myStickyLinesPanel != null) {
+      myStickyLinesPanel.startDumb();
+    }
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
     Graphics imageGraphics = image.createGraphics();
@@ -1980,39 +2022,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (clip == null) {
       return;
     }
+
     Color bg = isReleased ? getDisposedBackground() : getBackgroundColor();
     g.setColor(bg);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
   }
 
   void paint(@NotNull Graphics2D g) {
-    ReadAction.run(() -> {
-      if (g.getClipBounds() == null) return;
-      BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
-      if (buffer != null) {
-        Rectangle rect = getContentComponent().getVisibleRect();
-        StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
-        return;
-      }
-      if (!shouldPaint()) {
-        fillPlaceholder(g);
-        return;
-      }
+    if (g.getClipBounds() == null) {
+      return;
+    }
+
+    BufferedImage buffer = Registry.is("editor.dumb.mode.available", true) ? getUserData(BUFFER) : null;
+    if (buffer != null) {
+      Rectangle rect = getContentComponent().getVisibleRect();
+      StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
+      return;
+    }
+
+    if (!shouldPaint()) {
+      fillPlaceholder(g);
+      return;
+    }
+
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (myUpdateCursor && !myPurePaintingMode) {
         setCursorPosition();
         myUpdateCursor = false;
       }
-      if (myProject != null && myProject.isDisposed()) return;
+
+      if (myProject != null && myProject.isDisposed()) {
+        return;
+      }
 
       myView.paint(g);
-
-      boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
-      if (myBackgroundImageSet != isBackgroundImageSet) {
-        myBackgroundImageSet = isBackgroundImageSet;
-        updateOpaque(myScrollPane.getHorizontalScrollBar());
-        updateOpaque(myScrollPane.getVerticalScrollBar());
-      }
     });
+
+    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+    if (myBackgroundImageSet != isBackgroundImageSet) {
+      myBackgroundImageSet = isBackgroundImageSet;
+      updateOpaque(myScrollPane.getHorizontalScrollBar());
+      updateOpaque(myScrollPane.getVerticalScrollBar());
+    }
   }
 
   @NotNull Color getDisposedBackground() {
@@ -2253,7 +2304,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
      Another approach is to make scrollbars opaque, but only in the editor (as editor is a slow-to-draw component with large screen area).
      This is what "true smooth scrolling" option currently does. Interestingly, making the vertical scrollbar opaque might actually be
-     a good thing because on modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
+     a good thing. On modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
      when it does, its coupling with the navigation bar only reduces intelligibility of both the navigation bar and the code itself.
 
      Horizontal scrollbar is another story - a single long line of text forces horizontal scrollbar in the whole document,
@@ -2307,7 +2358,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setMyBorder(border);
   }
 
-  private void borderChanged(ObservableStateListener.PropertyChangeEvent event) {
+  private void borderChanged() {
     myScrollPane.setBorder(myState.getMyBorder());
   }
 
@@ -2566,9 +2617,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA &&
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
-        getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED) {
-      //IDEA-305975
-      selectLineAtCaret(true);
+        getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
+        //IDEA-295653 We should not select a line if we are dragging an object. For example, a breakpoint
+        !myLastPressedOnGutterIcon) {
+      selectLineAtCaret(true); //IDEA-305975
       getGutterComponentEx().putClientProperty("active.line.number", null); //clear hovered breakpoint
     }
 
@@ -2613,6 +2665,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (dx == 0 && dy == 0) {
       myScrollingTimer.stop();
+
+      if (myLastPressedOnGutterIcon) {
+        return;
+      }
 
       SelectionModel selectionModel = getSelectionModel();
       Caret leadCaret = getLeadCaret();
@@ -2690,7 +2746,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           else {
             if (caretShift != 0) {
-              if (myMousePressedEvent != null && myGutterComponent.getGutterRenderer(e.getPoint()) == null) {
+              if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
                   if (!myDragStarted) {
                     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -3488,10 +3544,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ThreadingAssertions.assertEventDispatchThread();
   }
 
-  private static void assertReadAccess() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-  }
-
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
@@ -3533,12 +3585,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean isMirrored() {
-    return myState.getVerticalScrollBarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
+    return myState.getVerticalScrollBarOrientation() != VERTICAL_SCROLLBAR_RIGHT;
   }
 
   @NotNull
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
+  }
+
+  @ApiStatus.Internal
+  public int getStickyLinesPanelWidth() {
+    return myPanel.getWidth(); //- myVerticalScrollBar.getWidth();
   }
 
   @MouseSelectionState
@@ -3965,6 +4022,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               doc.deleteString(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
             }
           });
+          if (composedRangeMarker.isValid()) {
+            // IDEA-331578: Deleting a string from a document may move the range marker to the left (i.e. during inline rename)
+            // We must use the new `startOffset` value here if the range marker is still valid
+            composedStartIndex = composedRangeMarker.getStartOffset();
+          }
         }
         composedRangeMarker.dispose();
         composedRangeMarker = null;
@@ -4076,6 +4138,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
       myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
+      var lastPressedPointOnGutter = SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
+      myLastPressedOnGutterIcon = myGutterComponent.getGutterRenderer(lastPressedPointOnGutter) != null;
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
@@ -4463,13 +4527,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return true;
     }
 
+    // todo do not update actions manually on EDT
     ActionManager actionManager = ActionManager.getInstance();
     for (String mappedActionId : mappedActions) {
       if (actionId.equals(mappedActionId)) continue;
       AnAction action = actionManager.getAction(mappedActionId);
-      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU,
-                                                                   DataManager.getInstance().getDataContext(e.getComponent()));
-      if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) return false;
+      DataContext dataContext = DataManager.getInstance().getDataContext(e.getComponent());
+      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU, dataContext);
+      ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
+      if (actionEvent.getPresentation().isEnabled()) return false;
     }
     return true;
   }
@@ -5275,9 +5341,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void invokePopupIfNeeded(@NotNull EditorMouseEvent event) {
+    if (myPopupHandlers.isEmpty()) return;
+
     if (event.getArea() == EditorMouseEventArea.EDITING_AREA && event.getMouseEvent().isPopupTrigger() && !event.isConsumed()) {
-      for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
-        if (myPopupHandlers.get(i).handlePopup(event)) break;
+      if (ContainerUtil.all(myPopupHandlers, o -> o instanceof ContextMenuPopupHandler)) {
+        ActionGroup group = getPopupActionGroup(event);
+        if (group == null) return;
+        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0 &&
+            group.getClass() == DefaultActionGroup.class) return;
+        new ContextMenuPopupHandler.Simple(group).handlePopup(event);
+      }
+      else {
+        String message = "Non-ContextMenuPopupHandler popup handler detected: " +
+                         ContainerUtil.map(myPopupHandlers, o -> o.getClass().getName());
+        if (ClientId.isCurrentlyUnderLocalId()) {
+          LOG.warn(message);
+        }
+        else {
+          LOG.error(message);
+        }
+        for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
+          if (myPopupHandlers.get(i).handlePopup(event)) break;
+        }
       }
     }
   }
@@ -5324,7 +5409,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final class DefaultPopupHandler extends ContextMenuPopupHandler {
     @Override
-    public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
+    public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) { //TODO ! renderer, collapsed-host
       String contextMenuGroupId = myState.getContextMenuGroupId();
       Inlay<?> inlay = event.getInlay();
       if (inlay != null) {
@@ -5340,12 +5425,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (group != null) return group;
         }
       }
-      return ContextMenuPopupHandler.getGroupForId(contextMenuGroupId);
+      return getGroupForId(contextMenuGroupId);
     }
   }
 
   @DirtyUI
   private final class MyScrollPane extends JBScrollPane {
+    private JComponent myStatusComponent;
+
     private MyScrollPane() {
       super(0);
       setupCorners();
@@ -5418,6 +5505,54 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super.setupCorners();
       setBorder(new TablessBorder());
     }
+
+    void placeStatusOnTopOfStickyPanel() {
+      setStatusComponent(super.getStatusComponent());
+    }
+
+    @Override
+    public JComponent getStatusComponent() {
+      if (myStickyLinesPanel == null) {
+        return super.getStatusComponent();
+      }
+      else {
+        return myStatusComponent;
+      }
+    }
+
+    @Override
+    public void setStatusComponent(JComponent statusComponent) {
+      if (myStickyLinesPanel == null) {
+        super.setStatusComponent(statusComponent);
+      }
+      else {
+        JComponent oldStatus = super.getStatusComponent();
+        if (oldStatus != null) {
+          super.setStatusComponent(null);
+        }
+        if (statusComponent != null) {
+          myLayeredPane.add(statusComponent, Integer.valueOf(300));
+        } else if (myStatusComponent != null) {
+          myLayeredPane.remove(myStatusComponent);
+        }
+        firePropertyChange("statusComponent", myStatusComponent, statusComponent);
+        myStatusComponent = statusComponent;
+        revalidate();
+        repaint();
+      }
+    }
+
+    @Override
+    protected Layout createLayout() {
+      return new MyScrollPaneLayout();
+    }
+  }
+
+  private static final class MyScrollPaneLayout extends JBScrollPane.Layout {
+    void setVerticalScrollBar(JScrollBar vsb) {
+      // allows layout manager to supervise vertical scroll bar placed on layered pane
+      this.vsb = vsb;
+    }
   }
 
   public void adjustGlobalFontSize(float size) {
@@ -5425,12 +5560,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScheme instanceof MyColorSchemeDelegate) {
       ((MyColorSchemeDelegate)myScheme).resetEditorFontSize();
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+    EditorColorsManagerImpl.fireGlobalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {
     private TablessBorder() {
-      super(JBColor.border(), SideBorder.ALL);
+      super(JBColor.border(), ALL);
     }
 
     @Override
@@ -5536,11 +5671,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           // Main scroll panel: MyScrollPane
           c.setBounds(0, 0, r.width, r.height);
         }
-        else {
+        else if (c instanceof EditorFloatingToolbar){
           // Floating toolbar: EditorFloatingToolbar
           Dimension d = c.getPreferredSize();
           int rightInsets = getVerticalScrollBar().getWidth() + (isMirrored() ? myGutterComponent.getWidth() : 0);
           c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
+        } else if (c instanceof JScrollBar) {
+          // Vertical scroll bar: JScrollBar
+          // do nothing here, MyScrollPaneLayout manages vsb
+        } else if (!(c instanceof StickyLinesPanel)) {
+          // Status component: NonOpaquePanel
+          Dimension d = c.getPreferredSize();
+          c.setBounds(r.width - d.width, 0, d.width, d.height);
+          MyScrollBar vsb = myVerticalScrollBar;
+          if (vsb.getY() != d.height) {
+            vsb.setBounds(vsb.getX(), d.height, vsb.getWidth(), vsb.getHeight() - d.height);
+          }
         }
       }
     }
@@ -5548,6 +5694,66 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public Dimension getPreferredSize() {
       return myScrollPane.getPreferredSize();
+    }
+  }
+
+  @ApiStatus.Internal
+  public MouseListener getMouseListener() {
+    return myMouseListener;
+  }
+
+  @Nullable StickyLinesPanel getStickyLinesPanel() {
+    return myStickyLinesPanel;
+  }
+
+  /**
+   * There is no point to show the editor fragment hint if the sticky panel shows the same line.
+   * They also shouldn't be shown for non-local client ids, they will be handled there locally.
+   */
+  @ApiStatus.Internal
+  public boolean shouldSuppressEditorFragmentHint(int hintStartLogicalLine) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      return true;
+    }
+    if (myStickyLinesPanel != null) {
+      return myStickyLinesPanel.suppressHintForLine(hintStartLogicalLine);
+    }
+    return false;
+  }
+
+  /**
+   * If true, the editor is in special "clean" mode when editor's content is being rendered on sticky lines panel.
+   * This allows suppressing visual elements like caret row background, vertical indent lines, right margin line, etc.
+   */
+  @ApiStatus.Internal
+  public boolean isStickyLinePainting() {
+    return myIsStickyLinePainting;
+  }
+
+  @ApiStatus.Internal
+  public void setStickyLinePainting(boolean stickyLinePainting) {
+    myIsStickyLinePainting = stickyLinePainting;
+  }
+
+  @ApiStatus.Internal
+  public boolean isStickyLineHovered() {
+    return myIsStickyLineHovered;
+  }
+
+  @ApiStatus.Internal
+  public void setStickyLineHovered(boolean stickyLineHovered) {
+    myIsStickyLineHovered = stickyLineHovered;
+  }
+
+  private @Nullable StickyLinesPanel createStickyLinesPanel() {
+    if (myProject != null && myKind == EditorKind.MAIN_EDITOR && !isMirrored()) {
+      StickyLinesManager stickyManager = new StickyLinesManager(this, myDocumentMarkupModel, myDisposable);
+      myLayeredPane.add(stickyManager.getStickyPanel(), Integer.valueOf(200));
+      myLayeredPane.add(myVerticalScrollBar, Integer.valueOf(250));
+      ((MyScrollPaneLayout) myScrollPane.getLayout()).setVerticalScrollBar(myVerticalScrollBar);
+      return stickyManager.getStickyPanel();
+    } else {
+      return null;
     }
   }
 }

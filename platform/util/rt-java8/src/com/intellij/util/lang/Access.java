@@ -15,6 +15,8 @@
  */
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.nio.ByteOrder;
 
 /**
@@ -35,6 +37,7 @@ import java.nio.ByteOrder;
  *
  * @param <T> the type of the object to access
  */
+@ApiStatus.Internal
 public interface Access<T> {
   /**
    * Reads {@code [offset, offset + 7]} bytes of the byte sequence represented by the given

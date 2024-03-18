@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,6 +11,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
+import git4idea.GitActivity
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitStashUsageCollector
 import git4idea.commands.Git
@@ -36,17 +38,19 @@ object GitStashOperation : StagingAreaOperation {
   }
 
   override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
-    val activity = GitStashUsageCollector.logStashPush(project)
-    try {
-      val handler = createStashPushHandler(project, root, nodes.map { it.filePath }, "-u")
-      Git.getInstance().runCommand(handler).throwOnError()
-    }
-    finally {
-      activity.finished()
-    }
+    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.stash"), GitActivity.Stash).use {
+      val activity = GitStashUsageCollector.logStashPush(project)
+      try {
+        val handler = createStashPushHandler(project, root, nodes.map { it.filePath }, "-u")
+        Git.getInstance().runCommand(handler).throwOnError()
+      }
+      finally {
+        activity.finished()
+      }
 
-    StagingAreaOperation.refreshVirtualFiles(nodes, true)
-    refreshStash(project, root)
+      StagingAreaOperation.refreshVirtualFiles(nodes, true)
+      refreshStash(project, root)
+    }
   }
 
   override fun reportResult(project: Project,

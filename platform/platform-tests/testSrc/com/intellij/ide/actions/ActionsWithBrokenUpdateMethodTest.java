@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class ActionsWithBrokenUpdateMethodTest extends LightPlatformTestCase {
   public void testActionsUpdateMethods() {
@@ -21,13 +22,8 @@ public class ActionsWithBrokenUpdateMethodTest extends LightPlatformTestCase {
     Utils.initUpdateSession(event2);
 
     ArrayList<String> failed = new ArrayList<>();
-    for (String id : actionManager.getActionIds()) {
-      AnAction action = actionManager.getAction(id);
-      if (action == null) {
-        failed.add("Can't find action: " + id);
-        continue;
-      }
-
+    for (Iterator<AnAction> iterator = actionManager.actions(false).iterator(); iterator.hasNext(); ) {
+      AnAction action = iterator.next();
       // check invalid getRequiredData usages
       try {
         action.update(event1);
@@ -41,7 +37,7 @@ public class ActionsWithBrokenUpdateMethodTest extends LightPlatformTestCase {
       }
       catch (Throwable e) {
         e.printStackTrace();
-        failed.add(String.format("%s (%s): %s", id, action.getClass().getName(), e.getMessage()));
+        failed.add(String.format("%s (%s): %s", actionManager.getId(action), action.getClass().getName(), e.getMessage()));
       }
     }
 

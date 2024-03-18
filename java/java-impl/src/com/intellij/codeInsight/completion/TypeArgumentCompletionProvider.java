@@ -112,7 +112,7 @@ class TypeArgumentCompletionProvider {
   }
 
   private static TailType getTail(boolean last) {
-    return last ? new CharTailType('>') : CommaTailType.INSTANCE;
+    return last ? TailTypes.charType('>') : CommaTailType.INSTANCE;
   }
 
   @Nullable

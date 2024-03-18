@@ -1,5 +1,6 @@
 package p;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,17 +44,17 @@ class M implements Map {
 
     @NN
     public Set keySet() {
-        return null;
+        return Collections.emptySet();
     }
 
     @NN
     public Collection values() {
-        return null;
+        return Collections.emptyList();
     }
 
     @NN
     public Set<Entry> entrySet() {
-        return null;
+        return Collections.emptySet();
     }
 }
 

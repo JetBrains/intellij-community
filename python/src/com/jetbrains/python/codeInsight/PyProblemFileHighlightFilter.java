@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonFileType;
 
 
-public class PyProblemFileHighlightFilter implements Condition<VirtualFile> {
+public final class PyProblemFileHighlightFilter implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile virtualFile) {
     final FileType fileType = virtualFile.getFileType();

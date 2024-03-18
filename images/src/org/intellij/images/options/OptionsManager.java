@@ -23,14 +23,14 @@ import com.intellij.openapi.application.ApplicationManager;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public abstract class OptionsManager {
-    /**
-     * Return current options.
-     *
-     * @return Options
-     */
-    public abstract Options getOptions();
+  /**
+   * Return current options.
+   *
+   * @return Options
+   */
+  public abstract Options getOptions();
 
-    public static OptionsManager getInstance() {
-      return ApplicationManager.getApplication().getService(OptionsManager.class);
-    }
+  public static OptionsManager getInstance() {
+    return ApplicationManager.getApplication().getService(OptionsManager.class);
+  }
 }

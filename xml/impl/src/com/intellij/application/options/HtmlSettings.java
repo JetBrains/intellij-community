@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-@Service(Service.Level.APP)
 @State(name = "HtmlSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public final class HtmlSettings implements PersistentStateComponent<HtmlSettings> {
 

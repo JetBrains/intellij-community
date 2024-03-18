@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -67,10 +68,11 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class HighlightMethodUtil {
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
-  private static final MethodSignature ourValuesEnumSyntheticMethod = MethodSignatureUtil.createMethodSignature("values",
-                                                                                                                PsiType.EMPTY_ARRAY,
-                                                                                                                PsiTypeParameter.EMPTY_ARRAY,
-                                                                                                                PsiSubstitutor.EMPTY);
+  private static final MethodSignature ourValuesEnumSyntheticMethod =
+    MethodSignatureUtil.createMethodSignature("values",
+                                              PsiType.EMPTY_ARRAY,
+                                              PsiTypeParameter.EMPTY_ARRAY,
+                                              PsiSubstitutor.EMPTY);
 
   private HighlightMethodUtil() { }
 
@@ -218,8 +220,8 @@ public final class HighlightMethodUtil {
     }
 
     PsiType substitutedSuperReturnType;
-    boolean isJdk15 = languageLevel.isAtLeast(LanguageLevel.JDK_1_5);
-    if (isJdk15 && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+    boolean hasGenerics = JavaFeature.GENERICS.isSufficient(languageLevel);
+    if (hasGenerics && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
                                                                                                   superMethodSignature);
       substitutedSuperReturnType = unifyingSubstitutor == null
@@ -232,7 +234,7 @@ public final class HighlightMethodUtil {
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (isJdk15 && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(),
+      if (hasGenerics && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(),
                                                                       methodSignature.getSubstitutor(),
                                                                       () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
         return null;
@@ -430,7 +432,7 @@ public final class HighlightMethodUtil {
         PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           PsiElement element = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
-          builder = HighlightUtil.checkFeature(element, HighlightingFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
+          builder = HighlightUtil.checkFeature(element, JavaFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (builder == null) {
             builder = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, methodCall, containingClass);
           }
@@ -503,8 +505,8 @@ public final class HighlightMethodUtil {
           TextRange range = getFixRange(methodCall);
           registerStaticMethodQualifierFixes(methodCall, builder);
           registerUsageFixes(methodCall, builder, range);
-          if (resolved instanceof PsiVariable && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-            PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiVariable)resolved).getType());
+          if (resolved instanceof PsiVariable variable && JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(languageLevel)) {
+            PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(variable.getType());
             if (method != null) {
               IntentionAction action = QuickFixFactory.getInstance().createInsertMethodCallFix(methodCall, method);
               builder.registerFix(action, null, null, range, null);
@@ -883,7 +885,7 @@ public final class HighlightMethodUtil {
       if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = ((PsiMethod)element).getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
-          HighlightInfo.Builder info = HighlightUtil.checkFeature(elementToHighlight, HighlightingFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
+          HighlightInfo.Builder info = HighlightUtil.checkFeature(elementToHighlight, JavaFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (info != null) return info;
           info = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, elementToHighlight, containingClass);
           if (info != null) return info;
@@ -1391,10 +1393,10 @@ public final class HighlightMethodUtil {
         description = JavaErrorBundle.message("extension.method.should.have.a.body");
       }
       else if (isInterface) {
-        if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (isStatic && JavaFeature.STATIC_INTERFACE_CALLS.isSufficient(languageLevel)) {
           description = JavaErrorBundle.message("static.methods.in.interfaces.should.have.body");
         }
-        else if (isPrivate && languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+        else if (isPrivate && JavaFeature.PRIVATE_INTERFACE_METHODS.isSufficient(languageLevel)) {
           description = JavaErrorBundle.message("private.methods.in.interfaces.should.have.body");
         }
       }
@@ -1405,7 +1407,7 @@ public final class HighlightMethodUtil {
     else if (isInterface) {
       if (!isExtension && !isStatic && !isPrivate && !isConstructor) {
         description = JavaErrorBundle.message("interface.methods.cannot.have.body");
-        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
           if (Stream.of(method.findDeepestSuperMethods())
             .map(PsiMethod::getContainingClass)
             .filter(Objects::nonNull)
@@ -1452,6 +1454,17 @@ public final class HighlightMethodUtil {
 
   static HighlightInfo.Builder checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
+    PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    PsiReferenceExpression expression = methodCall.getMethodExpression();
+    if (method == null || !method.isConstructor()) {
+      String message = JavaErrorBundle.message("constructor.call.only.allowed.in.constructor", expression.getText() + "()");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    }
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+    if (constructorCall != methodCall) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(
+        JavaErrorBundle.message("only.one.constructor.call.allowed.in.constructor", expression.getText() + "()"));
+    }
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (codeBlock instanceof PsiCodeBlock) {
       PsiMethod ctor = tryCast(codeBlock.getParent(), PsiMethod.class);
@@ -1469,9 +1482,13 @@ public final class HighlightMethodUtil {
         }
       }
     }
-    PsiReferenceExpression expression = methodCall.getMethodExpression();
+    if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
+      String message = JavaErrorBundle.message("constructor.call.must.be.top.level.statement", expression.getText() + "()");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    }
     String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    return HighlightUtil.checkFeature(methodCall, JavaFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
+                                      methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
   }
 
 
@@ -2029,8 +2046,8 @@ public final class HighlightMethodUtil {
 
   @NotNull
   private static HighlightInfo.Builder buildAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
-                                                  @NotNull PsiJvmMember resolved,
-                                                  @NotNull JavaResolveResult result) {
+                                                          @NotNull PsiJvmMember resolved,
+                                                          @NotNull JavaResolveResult result) {
     String description = HighlightUtil.accessProblemDescription(ref, resolved, result);
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).navigationShift(+1);
     if (result.isStaticsScopeCorrect()) {

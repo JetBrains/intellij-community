@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.refactoring.suggested.startOffset
@@ -58,7 +58,7 @@ internal class RemoveToStringInStringTemplateInspection :
         return allOverriddenSymbols.any { it.callableIdIfNonLocal == TO_STRING_CALLABLE_ID }
     }
 
-    override fun apply(element: KtDotQualifiedExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtDotQualifiedExpression, project: Project, updater: ModPsiUpdater) {
         val receiverExpression = element.receiverExpression
         val templateEntry = element.parent as? KtBlockStringTemplateEntry
         if (receiverExpression is KtNameReferenceExpression &&

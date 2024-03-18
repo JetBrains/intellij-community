@@ -118,7 +118,12 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
       }""");
     myFixture.enableInspections(new DuplicateCharacterInClassInspection());
     IntentionAction action = myFixture.findSingleIntention("Remove duplicate '1' from character class");
-    assertEquals("[\"123]", myFixture.getIntentionPreviewText(action));
+    assertEquals("""
+                   import java.util.regex.Pattern;
+                                      
+                   class Test {
+                     Pattern p = Pattern.compile("[\\"123]");
+                   }""", myFixture.getIntentionPreviewText(action));
   }
 
   public void testBindFieldsFromParameters() {

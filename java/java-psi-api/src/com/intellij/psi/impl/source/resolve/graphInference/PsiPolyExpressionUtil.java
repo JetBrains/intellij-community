@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -105,7 +106,7 @@ public final class PsiPolyExpressionUtil {
   }
 
   private static boolean isVarContext(PsiVariable variable) {
-    if (PsiUtil.isLanguageLevel10OrHigher(variable)) {
+    if (PsiUtil.isAvailable(JavaFeature.LVTI, variable)) {
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         return true;

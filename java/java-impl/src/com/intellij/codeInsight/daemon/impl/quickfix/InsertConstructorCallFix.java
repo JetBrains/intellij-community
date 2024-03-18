@@ -53,6 +53,6 @@ public class InsertConstructorCallFix extends PsiUpdateModCommandAction<PsiMetho
               .firstChild(PsiMatchers.hasClass(PsiJavaToken.class))
               .dot(PsiMatchers.hasText("("))
               .getElement();
-    updater.moveTo(lBrace.getTextOffset()+1);
+    updater.moveCaretTo(lBrace.getTextOffset() + 1);
   }
 }

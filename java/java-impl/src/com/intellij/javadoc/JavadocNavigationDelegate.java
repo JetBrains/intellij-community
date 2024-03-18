@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * Holds javadoc-specific navigation logic.
  */
-public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
+public final class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
 
   private static final JavadocHelper ourHelper = JavadocHelper.getInstance();
   

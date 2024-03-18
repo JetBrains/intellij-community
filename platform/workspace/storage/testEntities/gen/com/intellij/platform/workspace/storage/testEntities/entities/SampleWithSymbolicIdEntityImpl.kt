@@ -4,8 +4,6 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -21,11 +19,10 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
@@ -43,26 +40,48 @@ open class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymb
 
   }
 
-  override val booleanProperty: Boolean get() = dataSource.booleanProperty
+  override val booleanProperty: Boolean
+    get() {
+      readField("booleanProperty")
+      return dataSource.booleanProperty
+    }
   override val stringProperty: String
-    get() = dataSource.stringProperty
+    get() {
+      readField("stringProperty")
+      return dataSource.stringProperty
+    }
 
   override val stringListProperty: List<String>
-    get() = dataSource.stringListProperty
+    get() {
+      readField("stringListProperty")
+      return dataSource.stringListProperty
+    }
 
   override val stringMapProperty: Map<String, String>
-    get() = dataSource.stringMapProperty
+    get() {
+      readField("stringMapProperty")
+      return dataSource.stringMapProperty
+    }
   override val fileProperty: VirtualFileUrl
-    get() = dataSource.fileProperty
+    get() {
+      readField("fileProperty")
+      return dataSource.fileProperty
+    }
 
   override val children: List<ChildWpidSampleEntity>
     get() = snapshot.extractOneToManyChildren<ChildWpidSampleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val nullableData: String?
-    get() = dataSource.nullableData
+    get() {
+      readField("nullableData")
+      return dataSource.nullableData
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -297,11 +316,13 @@ class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymboli
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): SampleWithSymbolicIdEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SampleWithSymbolicIdEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = SampleWithSymbolicIdEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
   }

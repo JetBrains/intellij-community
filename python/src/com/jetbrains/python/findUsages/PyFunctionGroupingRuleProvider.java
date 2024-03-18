@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyFunctionGroupingRuleProvider implements FileStructureGroupRuleProvider {
+public final class PyFunctionGroupingRuleProvider implements FileStructureGroupRuleProvider {
   @Override
   public UsageGroupingRule getUsageGroupingRule(@NotNull Project project) {
     return new PyFunctionGroupingRule();

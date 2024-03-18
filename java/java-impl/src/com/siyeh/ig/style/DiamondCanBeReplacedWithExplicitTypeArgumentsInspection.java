@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
+public final class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
 
   @NotNull
   @Override

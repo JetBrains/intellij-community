@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -33,7 +33,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new RemoveRedundantStringFormatVisitor(holder, isOnTheFly, HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile()));
+    return new RemoveRedundantStringFormatVisitor(holder, isOnTheFly, PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, holder.getFile()));
   }
 
   private static final class RemoveRedundantStringFormatVisitor extends JavaElementVisitor {

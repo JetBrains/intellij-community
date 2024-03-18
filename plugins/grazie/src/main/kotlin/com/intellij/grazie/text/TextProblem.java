@@ -62,15 +62,6 @@ public abstract class TextProblem {
     return text;
   }
 
-  /**
-   * @return the range in {@link #getText()} to be highlighted
-   * @deprecated use {@link #getHighlightRanges()}
-   */
-  @Deprecated(forRemoval = true)
-  public final @NotNull TextRange getHighlightRange() {
-    return new TextRange(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset());
-  }
-
   /** @return the ranges in {@link #getText()} to be highlighted, non-intersecting, sorted by the start offset ascending */
   public final @NotNull List<TextRange> getHighlightRanges() {
     return highlightRanges;
@@ -143,7 +134,7 @@ public abstract class TextProblem {
 
   @Override
   public String toString() {
-    return getHighlightRange().subSequence(text) + " (" + getShortMessage() + ")";
+    return text.subSequence(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset()) + " (" + getShortMessage() + ")";
   }
 
   public interface Suggestion {

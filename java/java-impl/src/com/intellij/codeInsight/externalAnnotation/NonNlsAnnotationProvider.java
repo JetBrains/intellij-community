@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonNlsAnnotationProvider implements AnnotationProvider {
+public final class NonNlsAnnotationProvider implements AnnotationProvider {
   @NotNull
   @Override
   public String getName(Project project) {

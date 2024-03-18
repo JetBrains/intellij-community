@@ -11,7 +11,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableNotUsedInsideIfInspection extends BaseInspection {
+public final class VariableNotUsedInsideIfInspection extends BaseInspection {
 
   @Override
   @NotNull

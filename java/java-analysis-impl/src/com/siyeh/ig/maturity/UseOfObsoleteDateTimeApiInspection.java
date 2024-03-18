@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
+public final class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
 
   static final Set<String> dateTimeNames = Set.of("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
 

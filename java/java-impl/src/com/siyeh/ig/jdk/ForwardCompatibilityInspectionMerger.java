@@ -4,7 +4,7 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jetbrains.annotations.NotNull;
 
-public class ForwardCompatibilityInspectionMerger extends InspectionElementsMergerBase {
+public final class ForwardCompatibilityInspectionMerger extends InspectionElementsMergerBase {
 
   @NotNull
   @Override

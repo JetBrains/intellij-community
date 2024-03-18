@@ -3,9 +3,11 @@ package com.intellij.completion.ml.ngram
 
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
 import com.intellij.lang.Language
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
+@Service(Service.Level.PROJECT)
 class NGramModelRunnerManager {
 
   private val myModelRunners: MutableMap<String, ModelRunnerWithCache> = mutableMapOf()

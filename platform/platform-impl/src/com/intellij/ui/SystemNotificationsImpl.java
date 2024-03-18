@@ -35,7 +35,7 @@ public final class SystemNotificationsImpl extends SystemNotifications {
         if (SystemInfo.isMac) {
           return MacOsNotifications.getInstance();
         }
-        else if (SystemInfo.isXWindow) {
+        else if (SystemInfo.isUnix) {
           return LibNotifyWrapper.getInstance();
         }
         else if (SystemInfo.isWin10OrNewer) {

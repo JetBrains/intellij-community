@@ -13,22 +13,18 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
 
+import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA;
 import static com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.getJavaData;
-import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
 
 /**
  * @author Dmitry Avdeev
  */
 public class NewProjectWizardTest extends NewProjectWizardTestCase {
+
   public void testCreateProject() throws Exception {
-    Project project = createProject(step -> {
-      if (step instanceof ProjectTypeStep) {
-        assertTrue(((ProjectTypeStep)step).setSelectedTemplate(UIBundle.message("label.project.wizard.project.generator.name"), null));
-      }
-    });
+    Project project = createProjectFromTemplate(JAVA, step -> {});
     assertNotNull(project);
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     assertNotNull(sdk);
@@ -40,7 +36,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
   public void testModuleJdk() throws Exception {
     configureJdk();
 
-    Project project = createProject(step -> {});
+    Project project = createProjectFromTemplate(JAVA, step -> {});
     final var manager = ModuleManager.getInstance(project);
 
     // Default module should have null JDK
@@ -60,14 +56,13 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     });
 
     // Project with default JDK
-    Project project = createProjectFromTemplate(step -> {
+    Project project = createProjectFromTemplate(JAVA, step -> {
       getJavaData(step).setSdk(defaultSdk);
     });
     assertEquals(ProjectRootManager.getInstance(project).getProjectSdk().getName(), defaultSdk.getName());
 
     // Module with custom JDK
-    createModuleFromTemplate(project, step -> {
-      getLanguageData(step).setLanguage("Java");
+    createModuleFromTemplate(project, JAVA, step -> {
       getJavaData(step).setSdk(otherSdk);
       getJavaData(step).setModuleName(moduleName);
     });
@@ -106,7 +101,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
   }
 
   public void testChangeSdk() throws Exception {
-    Project project = createProject(step -> {});
+    Project project = createProjectFromTemplate(JAVA, step -> {});
     Sdk jdk17 = IdeaTestUtil.getMockJdk17();
     addSdk(jdk17);
     setProjectSdk(project, jdk17);
@@ -124,7 +119,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     defaultExt.setLanguageLevel(LanguageLevel.JDK_1_4);
     defaultExt.setDefault(null); // emulate migration from previous build
 
-    Project project = createProject(step -> {});
+    Project project = createProjectFromTemplate(JAVA, step -> {});
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
@@ -132,7 +127,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
   }
 
   public void testSampleCode() throws Exception {
-    Project project = createProjectFromTemplate(step -> {
+    Project project = createProjectFromTemplate(JAVA, step -> {
       getJavaData(step).setAddSampleCode(true);
     });
     final var mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));
@@ -151,7 +146,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     try {
       LanguageLevelProjectExtension.getInstance(defaultProject).setLanguageLevel(languageLevel);
       LanguageLevelProjectExtension.getInstance(defaultProject).setDefault(detect);
-      Project project = createProject(step -> {});
+      Project project = createProjectFromTemplate(JAVA, step -> {});
       assertEquals(languageLevel, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       return project;
     }

@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-
+/** @deprecated Use regular {@link com.intellij.openapi.actionSystem.ToggleAction} instead */
+@Deprecated(forRemoval = true)
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
   public ToggleActionButton(@NlsActions.ActionText String text, Icon icon) {
     super(() -> text, Presentation.NULL_STRING, icon);

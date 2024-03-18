@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -207,12 +208,19 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
   }
 
   @Override
-  public void force() {
+  public void force() throws UncheckedIOException {
     try {
       myImpl.force();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      //TODO (fixme if you're brave enough): Forceable.force() _declares_ throwing IOException -- but this implementation initially
+      //         didn't declare IOException. This is quite natural to 'flush'-like method to throw IOException, so I've tried to
+      //         change that -- but there is HUGE amount of code that is not ready for that -- there are dozens of flush/force-like
+      //         methods across the codebase that do not declare, nor process IOException.
+      //         Have no idea that have been their authors thinking about 'flushing data on disk with no chance of errors' :)
+      //         Anyway, declaring IOException here requires too big refactoring, without clear benefit, so I just go with
+      //         UncheckedIOException for now. Do the next step if you're young and brave
+      throw new UncheckedIOException(e);
     }
   }
 

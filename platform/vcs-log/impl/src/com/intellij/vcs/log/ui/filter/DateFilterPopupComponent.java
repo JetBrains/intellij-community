@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -32,13 +31,13 @@ public class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFil
     Date after = filter.getAfter();
     Date before = filter.getBefore();
     if (after != null && before != null) {
-      return JBDateFormat.getFormatter().formatDate(after) + "-" + JBDateFormat.getFormatter().formatDate(before);
+      return DateFormatUtil.formatDate(after) + '-' + DateFormatUtil.formatDate(before);
     }
     else if (after != null) {
-      return VcsLogBundle.message("vcs.log.date.filter.since", JBDateFormat.getFormatter().formatDate(after));
+      return VcsLogBundle.message("vcs.log.date.filter.since", DateFormatUtil.formatDate(after));
     }
     else if (before != null) {
-      return VcsLogBundle.message("vcs.log.date.filter.until", JBDateFormat.getFormatter().formatDate(before));
+      return VcsLogBundle.message("vcs.log.date.filter.until", DateFormatUtil.formatDate(before));
     }
     else {
       return getEmptyFilterValue();
@@ -87,7 +86,7 @@ public class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFil
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final DateFilterComponent dateComponent = new DateFilterComponent(false, DateFormatUtil.getDateFormat().getDelegate());
+      DateFilterComponent dateComponent = new DateFilterComponent();
       VcsLogDateFilter currentFilter = myFilterModel.getFilter();
       if (currentFilter != null) {
         if (currentFilter.getBefore() != null) {

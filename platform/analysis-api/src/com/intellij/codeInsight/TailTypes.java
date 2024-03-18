@@ -132,4 +132,12 @@ public final class TailTypes {
   public static TailType conditionalExpressionColonType() {
     return COND_EXPR_COLON;
   }
+
+  public static TailType charType(char aChar) {
+    return new CharTailType(aChar);
+  }
+
+  public static TailType charType(char aChar, boolean overwrite) {
+    return new CharTailType(aChar, overwrite);
+  }
 }

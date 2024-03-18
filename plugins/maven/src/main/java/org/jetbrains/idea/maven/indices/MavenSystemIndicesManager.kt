@@ -1,43 +1,104 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtilRt
+import com.intellij.util.messages.Topic
+import com.intellij.util.xmlb.annotations.OptionTag
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.model.MavenIndexId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
+import org.jetbrains.idea.maven.model.RepositoryKind
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.name
+
+
+interface IndexChangeProgressListener {
+  fun indexStatusChanged(state: MavenIndexUpdateState)
+
+}
 
 @Service
-class MavenSystemIndicesManager(val cs: CoroutineScope) {
-  private val openedIndices = HashMap<String, MavenIndex>()
-  private val updatingIndices = HashMap<String, Deferred<MavenIndex>>()
+@State(name = "MavenIndices", storages = ([Storage(value = "mavenIndicesState.xml", roamingType = RoamingType.LOCAL)]))
+class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateComponent<IndexStateList> {
+
+  private var myState: IndexStateList? = null
+  private val luceneIndices = ConcurrentHashMap<String, MavenSearchIndex>()
+  private val inMemoryIndices = ConcurrentHashMap<String, MavenGAVIndex>()
+  private val gavUpdatingIndixes = ConcurrentHashMap<MavenGAVIndex, Boolean>()
   private val mutex = Mutex()
+  private val luceneUpdateStatusMap = ConcurrentHashMap<String, MavenIndexUpdateState>()
+
+  @Volatile
+  private var needPoll: Boolean = false
+
+
+  init {
+
+    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
+        gc()
+      }
+    })
+  }
 
   private var ourTestIndicesDir: Path? = null
   suspend fun getClassIndexForRepository(repo: MavenRepositoryInfo): MavenSearchIndex {
     return getIndexForRepo(repo)
   }
 
-  suspend fun getGAVIndexForRepository(repo: MavenRepositoryInfo): MavenGAVIndex {
-    return getIndexForRepo(repo)
+  suspend fun getGAVIndexForRepository(repo: MavenRepositoryInfo): MavenGAVIndex? {
+    if (repo.kind == RepositoryKind.REMOTE) return null
+    val dir = getDirForMavenIndex(repo)
+    val result = mutex.withLock {
+      inMemoryIndices[dir.toString()]?.let { return@withLock Pair(false, it) }
+      MavenLocalGavIndexImpl(repo)
+        .also { inMemoryIndices[dir.toString()] = it }
+        .let { return@withLock Pair(true, it) }
+    }
+    if (result.first)
+      result.second.also { gavIndex ->
+        //IDEA-342984
+        val skipUpdate = ApplicationManager.getApplication().isUnitTestMode
+                         && Registry.`is`("maven.skip.gav.update.in.unit.test.mode")
+        if (!skipUpdate) {
+          (gavIndex as? MavenUpdatableIndex)?.let {
+            scheduleUpdateIndexContent(listOf(gavIndex), false)
+          }
+        }
+      }
+    return result.second
   }
+
 
   @TestOnly
   fun setTestIndicesDir(myTestIndicesDir: Path?) {
@@ -48,84 +109,53 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     return ourTestIndicesDir ?: MavenUtil.getPluginSystemDir("Indices")
   }
 
-  fun getIndexForRepoSync(repo: MavenRepositoryInfo): MavenIndex {
-    return runBlockingMaybeCancellable {
-      getIndexForRepo(repo)
-    }
-  }
-
-  fun updateIndexContentSync(repo: MavenRepositoryInfo,
-                             fullUpdate: Boolean,
-                             multithreaded: Boolean,
-                             indicator: MavenProgressIndicator) {
-    return runBlockingMaybeCancellable {
-      updateIndexContent(repo, fullUpdate, multithreaded, indicator)
-    }
-  }
-
-  private suspend fun updateIndexContent(repo: MavenRepositoryInfo,
-                                         fullUpdate: Boolean,
-                                         multithreaded: Boolean,
-                                         indicator: MavenProgressIndicator) {
-
-    coroutineScope {
-
-      val updateScope = this
-      val connection = ApplicationManager.getApplication().messageBus.connect(updateScope)
-      connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-        override fun appClosing() {
-          updateScope.cancel()
-          indicator.cancel()
-          MavenLog.LOG.info("Application is closing, gracefully shutdown all indexing operations")
-        }
-      })
-
-      indicator.addCancelCondition {
-        !updateScope.isActive
-      }
-
-      val index = getIndexForRepo(repo)
-      val deferredResult = mutex.withLock {
-        val deferred = updatingIndices[repo.url]
-        if (deferred == null) {
-          val newDeferred = updateScope.async {
-            index.updateOrRepair(fullUpdate, indicator, multithreaded)
-            index
-          }
-          updatingIndices.putIfAbsent(repo.url, newDeferred)
-          return@withLock newDeferred
-        }
-        else return@withLock deferred
-      }
-      deferredResult.invokeOnCompletion {
-        updateScope.async {
-          mutex.withLock {
-            updatingIndices.remove(repo.url)
-          }
-        }
-      }
-
-      deferredResult.await()
-    }
-
-  }
-
-  private suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenIndex {
+  private suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenSearchIndex {
     return cs.async(Dispatchers.IO) {
       val dir = getDirForMavenIndex(repo)
       mutex.withLock {
-        openedIndices[dir.toString()]?.let { return@async it }
+        luceneIndices[dir.toString()]?.let { return@async it }
 
-        val holder = getProperties(dir) ?: MavenIndexUtils.IndexPropertyHolder(
-          dir.toFile(),
-          repo.kind,
-          setOf(repo.id),
-          repo.url
+        val indexId = MavenIndexId(
+          dir.name, repo.id, if (repo.kind == RepositoryKind.LOCAL) repo.url else null,
+          if (repo.kind == RepositoryKind.REMOTE) repo.url else null, dir.absolutePathString()
         )
-        return@async MavenIndexImpl(getIndexWrapper(), holder).also { openedIndices[dir.toString()] = it }
+        return@async MavenLuceneClassIndexServer(repo, indexId, getIndexWrapper()).also {
+          luceneIndices[dir.toString()] = it
+
+          getOrCreateState().mavenIndicesData.computeIfAbsent(repo.url) {
+            IndexStateList.MavenIndexData().also {
+              it.id = indexId.indexId
+              it.repoId = repo.id
+              it.datadir = dir.toString()
+              it.url = repo.url
+              it.timestamp = -1
+            }
+          }
+        }
       }
     }.await()
   }
+
+  private fun getOrCreateState(): IndexStateList {
+    var state = myState
+    if (state == null) {
+      state = IndexStateList()
+      myState = state
+    }
+    return state
+  }
+
+  private fun getIndexProperty(dir: Path,
+                               repo: MavenRepositoryInfo): MavenIndexUtils.IndexPropertyHolder {
+    val holder = getProperties(dir) ?: MavenIndexUtils.IndexPropertyHolder(
+      dir.toFile(),
+      repo.kind,
+      setOf(repo.id),
+      repo.url
+    )
+    return holder
+  }
+
 
   private fun getProperties(dir: Path): MavenIndexUtils.IndexPropertyHolder? {
     try {
@@ -150,6 +180,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     return getIndicesDir().resolve("$key-$locationHash")
   }
 
+
   private fun getCanonicalUrl(repo: MavenRepositoryInfo): String {
     if (File(repo.url).isDirectory) return File(repo.url).canonicalPath
     try {
@@ -166,24 +197,214 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
   }
 
-  fun getOrCreateIndices(project: Project): MavenIndices {
-    return getIndexWrapper().getOrCreateIndices(project)
+
+  fun getUpdatingStateSync(project: Project, repository: MavenRepositoryInfo): IndexUpdatingState {
+    val status = luceneUpdateStatusMap[repository.url]
+    if (status == null) return IndexUpdatingState.IDLE else return IndexUpdatingState.UPDATING
   }
 
-  fun getUpdatingStateSync(project: Project, repository: MavenRepositoryInfo): MavenIndexUpdateManager.IndexUpdatingState {
-    return runWithModalProgressBlocking(project, repository.name) {
-      return@runWithModalProgressBlocking mutex.withLock {
-        val deferred = updatingIndices[repository.url]
-        if (deferred == null) return@withLock MavenIndexUpdateManager.IndexUpdatingState.IDLE
-        return@withLock MavenIndexUpdateManager.IndexUpdatingState.UPDATING
+  fun gc() {
+    val validIndices = ReadAction.compute<Set<Any>, Throwable> {
+      val existed = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
+      getOpenedProjects()
+        .filter { !it.isDisposed }
+        .mapNotNull { MavenIndicesManager.getInstanceIfCreated(it) }
+        .forEach {
+          existed.addAll(it.getGAVIndices())
+        }
+      existed
+    }
+
+
+    collectGarbage(validIndices, luceneIndices) {
+      it.close(true)
+    }
+    collectGarbage(validIndices, inMemoryIndices) {
+      it.close(true)
+    }
+
+  }
+
+  private fun <T : Any> collectGarbage(validIndices: Set<Any>, indices: MutableMap<String, T>, action: (T) -> Unit = {}) {
+    val iterator = indices.iterator()
+    while (iterator.hasNext()) {
+      val idx = iterator.next()
+      if (!validIndices.contains(idx.value)) {
+        iterator.remove()
+        action(idx.value)
       }
     }
+  }
+
+  internal fun scheduleUpdateIndexContent(toUpdate: List<MavenUpdatableIndex>, explicit: Boolean) {
+    val luceneUpdate = ArrayList<MavenLuceneClassIndexServer>()
+    val inMemoryUpdate = ArrayList<MavenGAVIndex>()
+    for (idx: MavenUpdatableIndex in toUpdate) {
+      if (idx is MavenLuceneClassIndexServer && idx in luceneIndices.values) luceneUpdate.add(idx)
+      else if (idx is MavenGAVIndex && idx in inMemoryIndices.values
+               && gavUpdatingIndixes.putIfAbsent(idx, true) == null) inMemoryUpdate.add(idx)
+    }
+
+    inMemoryUpdate.forEach { idx ->
+      cs.async(Dispatchers.IO) {
+        MavenLog.LOG.info("Starting update maven index for ${idx.repository}")
+        val indicator = MavenProgressIndicator(null, null)
+        try {
+          (idx as MavenUpdatableIndex).update(indicator, explicit)
+        }
+        catch (ignore: MavenProcessCanceledException) {
+        }
+        finally {
+          gavUpdatingIndixes.remove(idx)
+        }
+      }
+    }
+
+    luceneUpdate.forEach { idx ->
+      luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
+                                                                        MavenIndexUpdateState.State.INDEXING)
+      cs.async {
+        try {
+          val indicator = MavenProgressIndicator(null, null)
+          idx.update(indicator, explicit)
+          getOrCreateState().updateTimestamp(idx.repository)
+          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
+            idx.repository.url, null, null,
+            MavenIndexUpdateState.State.SUCCEED)
+
+        }
+        catch (e: Throwable) {
+          MavenLog.LOG.error(e)
+          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
+            idx.repository.url, null, null,
+            MavenIndexUpdateState.State.FAILED)
+        }
+
+      }
+    }
+  }
+
+  @TestOnly
+  suspend fun waitAllGavsUpdatesCompleted() {
+    while (!gavUpdatingIndixes.isEmpty()) {
+      delay(500)
+    }
+  }
+
+  @TestOnly
+  suspend fun waitAllLuceneUpdatesCompleted() {
+    while (true) {
+      delay(500)
+      if (luceneUpdateStatusMap.isEmpty() || luceneUpdateStatusMap.values.all {
+          it.myState == MavenIndexUpdateState.State.SUCCEED
+          || it.myState == MavenIndexUpdateState.State.FAILED
+        }) return
+    }
+  }
+
+  @TestOnly
+  fun getAllGavIndices(): List<MavenGAVIndex> {
+    return inMemoryIndices.values.toImmutableList()
+  }
+
+  fun updateIndexContent(repositoryInfo: MavenRepositoryInfo, project: Project) {
+    cs.launch(Dispatchers.IO) {
+      withBackgroundProgress(project, IndicesBundle.message("maven.indices.updating.for.repo", repositoryInfo.url), TaskCancellation.cancellable()) {
+        val mavenIndex = getClassIndexForRepository(repositoryInfo)
+        blockingContext {
+          ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(
+            MavenIndexUpdateState(repositoryInfo.url,
+                                  null,
+                                  IndicesBundle.message("maven.indices.updating.for.repo", repositoryInfo.url),
+                                  MavenIndexUpdateState.State.INDEXING))
+
+          blockingContextToIndicator {
+            val indicator = MavenProgressIndicator(null, ProgressManager.getInstance().progressIndicator, null)
+            try {
+              (mavenIndex as? MavenUpdatableIndex)?.updateOrRepair(true, indicator, true)
+              ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(
+                MavenIndexUpdateState(repositoryInfo.url,
+                                      null,
+                                      IndicesBundle.message("maven.indices.updated.for.repo", repositoryInfo.url),
+                                      MavenIndexUpdateState.State.SUCCEED))
+            }
+            catch (e: MavenProcessCanceledException) {
+              ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(
+                MavenIndexUpdateState(repositoryInfo.url,
+                                      e.message,
+                                      IndicesBundle.message("maven.indices.updated.for.repo", repositoryInfo.url),
+                                      MavenIndexUpdateState.State.CANCELLED))
+            }
+            catch (e: Exception) {
+              if (e !is ProcessCanceledException) {
+                MavenLog.LOG.warn(e)
+              }
+              ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(
+                MavenIndexUpdateState(repositoryInfo.url,
+                                      e.message,
+                                      IndicesBundle.message("maven.index.updated.error"),
+                                      MavenIndexUpdateState.State.FAILED))
+            }
+
+          }
+        }
+      }
+    }
+
   }
 
   companion object {
 
     @JvmStatic
     fun getInstance(): MavenSystemIndicesManager = ApplicationManager.getApplication().service()
+
+
+    @JvmField
+    @Topic.AppLevel
+    val TOPIC: Topic<IndexChangeProgressListener> = Topic("indexChangeProgressListener", IndexChangeProgressListener::class.java)
+  }
+
+  override fun getState(): IndexStateList? {
+    return myState
+  }
+
+  override fun loadState(state: IndexStateList) {
+    myState = state
+  }
+}
+
+class IndexStateList : BaseState() {
+  @get:OptionTag("MAVEN_INDICES_DATA")
+  val mavenIndicesData by map<String, MavenIndexData>()
+
+  fun updateTimestamp(repo: MavenRepositoryInfo) {
+    val mavenIndexData = mavenIndicesData[repo.url]
+    if (mavenIndexData != null) {
+      mavenIndexData.timestamp = System.currentTimeMillis()
+      incrementModificationCount()
+    }
+  }
+
+  class MavenIndexData : BaseState() {
+    @get:OptionTag("id")
+    var id by string()
+
+    @get:OptionTag("repoId")
+    var repoId by string()
+
+    @get:OptionTag("url")
+    var url by string()
+
+    @get:OptionTag("dataDir")
+    var datadir by string()
+
+    @get:OptionTag("updateTimestampe")
+    var timestamp by property(-1L)
+
+  }
+
+  companion object {
+
   }
 }
 

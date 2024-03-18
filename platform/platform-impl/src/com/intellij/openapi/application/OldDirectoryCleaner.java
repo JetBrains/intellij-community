@@ -181,7 +181,7 @@ public final class OldDirectoryCleaner {
     }
 
     @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
       lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
       entriesToDelete++;
       return FileVisitResult.CONTINUE;

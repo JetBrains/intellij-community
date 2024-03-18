@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +51,7 @@ public class TestNGSuiteTest extends LightJavaCodeInsightFixtureTestCase {
                                                             "<classes></classes>" +
                                                             "</test>" +
                                                             "</suite>");
-        myFixture.enableInspections(new XmlPathReferenceInspection());
+        myFixture.enableInspections(new XmlPathReferenceInspection(), new XmlUnresolvedReferenceInspection());
         myFixture.testHighlighting("testng.xml");
       }
       catch (Exception e) {

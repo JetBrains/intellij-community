@@ -216,7 +216,7 @@ public abstract class Invoker implements Disposable {
   }
 
   private void handleTaskError(@NotNull Task<?, ?> task, @NotNull Throwable throwable, int attempt) {
-    if (throwable instanceof ProcessCanceledException || throwable instanceof IndexNotReadyException) {
+    if (throwable instanceof ProcessCanceledException || throwable == AsyncPromise.CANCELED || throwable instanceof IndexNotReadyException) {
       offerRestart(task, attempt);
       return;
     }

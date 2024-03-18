@@ -410,10 +410,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       """
         <scheme name="rainbow" version="142" parent_scheme="Default">
           <metaInfo>
-            <property name="created" />
             <property name="ide" />
             <property name="ideVersion" />
-            <property name="modified" />
             <property name="originalScheme" />
         """;
     final String END =

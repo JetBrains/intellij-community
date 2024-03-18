@@ -2,10 +2,13 @@
 package com.intellij.remote;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> implements RemoteSdkFactory<T> {
+  private static final Logger LOG = Logger.getInstance(RemoteSdkFactoryImpl.class);
   @Override
   public Sdk createRemoteSdk(@Nullable Project project, @NotNull T data, @Nullable String sdkName, Collection<Sdk> existingSdks)
     throws RemoteSdkException {
@@ -29,11 +33,25 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
 
-    sdk.setVersionString(sdkVersion);
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setVersionString(sdkVersion);
 
-    data.setValid(true);
+    var modifiableAdditionalData = sdkModificator.getSdkAdditionalData();
+    if (!(modifiableAdditionalData instanceof RemoteSdkAdditionalData<?> remoteSdkAdditionalData)) {
+      LOG.error("Expected remote additional data, got " + modifiableAdditionalData + " in " + sdk);
+      throw new RemoteSdkException("Internal error");
+    }
+    remoteSdkAdditionalData.setValid(true);
+
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
 
     return sdk;
   }
@@ -55,7 +73,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
 
     data.setValid(false);
 
@@ -74,7 +92,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
    * @param sdkName      the name of SDK
    * @return the SDK with the corresponding data
    */
-  protected abstract @NotNull ProjectJdkImpl createSdk(@NotNull Collection<Sdk> existingSdks,
+  protected abstract @NotNull Sdk createSdk(@NotNull Collection<Sdk> existingSdks,
                                               @NotNull SdkType sdkType,
                                               @NotNull T data,
                                               @Nullable String sdkName);

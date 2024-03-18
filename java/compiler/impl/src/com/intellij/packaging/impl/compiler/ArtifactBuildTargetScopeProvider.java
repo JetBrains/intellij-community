@@ -28,7 +28,7 @@ import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Parame
 
 import java.util.*;
 
-public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
+public final class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull final CompileScope baseScope,

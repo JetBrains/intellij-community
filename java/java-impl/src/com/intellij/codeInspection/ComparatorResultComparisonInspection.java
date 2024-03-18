@@ -20,7 +20,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COMPARE_METHOD = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_COMPARABLE, "compareTo").parameterCount(1)

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -180,12 +180,13 @@ public class BasicStatementParser {
     }
     else if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
       PsiBuilder.Marker refPos = builder.mark();
+      boolean nonSealed = BasicDeclarationParser.isNonSealedToken(builder, tokenType);
       myParser.getDeclarationParser().parseAnnotations(builder);
       skipQualifiedName(builder);
-      IElementType suspectedLT = builder.getTokenType(), next = builder.lookAhead(1);
+      IElementType current = builder.getTokenType(), next = builder.lookAhead(1);
       refPos.rollbackTo();
 
-      if (suspectedLT == JavaTokenType.LT || suspectedLT == JavaTokenType.DOT && next == JavaTokenType.AT) {
+      if (current == JavaTokenType.LT || current == JavaTokenType.DOT && next == JavaTokenType.AT || nonSealed) {
         PsiBuilder.Marker declStatement = builder.mark();
 
         if (myParser.getDeclarationParser().parse(builder, BasicDeclarationParser.BaseContext.CODE_BLOCK) != null) {
@@ -194,7 +195,7 @@ public class BasicStatementParser {
         }
 
         BasicReferenceParser.TypeInfo type = myParser.getReferenceParser().parseTypeInfo(builder, 0);
-        if (suspectedLT == JavaTokenType.LT && (type == null || !type.isParameterized)) {
+        if (current == JavaTokenType.LT && (type == null || !type.isParameterized)) {
           declStatement.rollbackTo();
         }
         else if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
@@ -275,7 +276,7 @@ public class BasicStatementParser {
   private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
     if (!(tokenType == JavaTokenType.IDENTIFIER &&
           PsiKeyword.YIELD.equals(builder.getTokenText()) &&
-          getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14))) {
+          JavaFeature.SWITCH_EXPRESSION.isSufficient(getLanguageLevel(builder)))) {
       return false;
     }
     // we prefer to parse it as yield stmt wherever possible (even in incomplete syntax)
@@ -333,7 +334,7 @@ public class BasicStatementParser {
 
   @Contract(pure = true)
   private boolean isRecordPatternInForEach(final PsiBuilder builder) {
-    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder, false);
+    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder);
     if (patternStart == null) {
       return false;
     }
@@ -563,7 +564,7 @@ public class BasicStatementParser {
     builder.advanceLexer();
 
     if (isCase) {
-      boolean patternsAllowed = getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17);
+      boolean patternsAllowed = JavaFeature.PATTERNS_IN_SWITCH.isSufficient(getLanguageLevel(builder));
       PsiBuilder.Marker list = builder.mark();
       do {
         Pair<PsiBuilder.Marker, Boolean> markerAndIsExpression = parseCaseLabel(builder);

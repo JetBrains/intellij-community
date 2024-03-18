@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
 
 /**
  * [org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProvider]
  */
-class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
+class KotlinCallChainHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     @Language("kotlin")
     val chainLib = """
         class Foo {
@@ -53,9 +53,9 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
 
     fun `test simple`() = doTest("""
         fun main() {
-            Foo().bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
+            Foo().bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
                 .foo()
         }
     """.trimIndent())
@@ -65,18 +65,18 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
             Foo()
                 .bar {
 
-                }/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar {}/*<# [temp:///src/foo.kt:311]Bar #>*/
+                }/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .bar {}/*<# [Bar:kotlin.fqn.class]Bar #>*/
                 .foo()
         }
     """.trimIndent())
 
     fun `test duplicated builder`() = doTest("""
         fun main() {
-            Foo().foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+            Foo().foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
                 .bar().foo()
-                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
                 .foo()
         }
     """.trimIndent())
@@ -84,8 +84,8 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     fun `test comments`() = doTest("""
         fun main() {
             Foo().bar() // comment
-                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
                 .foo()// comment
                 .bar()
                 .bar()
@@ -94,22 +94,21 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
 
     fun `test properties`() = doTest("""
         fun main() {
-            Foo().bar/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar.bar/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .bar()
+            Foo().bar/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .foo/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .bar.bar/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .bar
         }
     """.trimIndent())
 
     fun `test postfix operators`() = doTest("""
         fun main() {
-            Foo().bar()!!/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo++/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .foo[1]/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .nullFoo()!!/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .foo()()/*<# [temp:///src/foo.kt:311]Bar #>*/
+            Foo().bar()!!/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .foo++/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .foo[1]/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .nullFoo()!!/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .foo()()/*<# [Bar:kotlin.fqn.class]Bar #>*/
                 .bar
         }
     """.trimIndent())
@@ -117,49 +116,49 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     fun `test safe dereference`() = doTest("""
         fun main() {
             Foo()
-                .nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
-                ?.foo!!/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .nullBar()/*<# [Bar:kotlin.fqn.class]Bar|? #>*/
+                ?.foo!!/*<# [Foo:kotlin.fqn.class]Foo #>*/
                 .bar()
         }
     """.trimIndent())
 
     fun `test several call chains`() = doTest("""
-        fun main() {
-            Foo()
-                .nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
-                ?.foo!!/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar()
-
-            Bar().foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar().foo()
-                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo()
-        }
-    """.trimIndent())
+            fun main() {
+                Foo()
+                    .nullBar()/*<# [Bar:kotlin.fqn.class]Bar|? #>*/
+                    ?.foo!!/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                    .bar()
+            
+                Bar().foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                    .bar().foo()
+                    .bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                    .foo()
+            }
+        """.trimIndent())
 
     fun `test nested call chains`() = doTest("""
         fun main() {
             Foo().foo {
-                    Bar().foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
-                         .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
+                    Bar().foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                         .bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
                          .foo()
-                }/*<# [temp:///src/foo.kt:0]Foo #>*/
-                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+                }/*<# [Foo:kotlin.fqn.class]Foo #>*/
+                .bar()/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .foo()/*<# [Foo:kotlin.fqn.class]Foo #>*/
                 .bar()
         }
     """.trimIndent())
 
     fun `test nullable and notnullable types rotation of the same type`() = doTest("""
         fun main() {
-            Foo().nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
-                ?.bar!!/*<# [temp:///src/foo.kt:311]Bar #>*/
-                .nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
+            Foo().nullBar()/*<# [Bar:kotlin.fqn.class]Bar|? #>*/
+                ?.bar!!/*<# [Bar:kotlin.fqn.class]Bar #>*/
+                .nullBar()/*<# [Bar:kotlin.fqn.class]Bar|? #>*/
                 ?.foo()
         }
     """.trimIndent())
 
     private fun doTest(@Language("kotlin") text: String) {
-        doTestProvider("foo.kt", "$chainLib\n$text", KotlinCallChainHintsProvider())
+        doTestProvider("foo.kt", "$chainLib\n$text", org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinCallChainHintsProvider())
     }
 }

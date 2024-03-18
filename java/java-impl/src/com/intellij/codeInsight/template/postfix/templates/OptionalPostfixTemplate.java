@@ -7,13 +7,14 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
+public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public OptionalPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("opt",
           "java.util.$OPTIONAL_CLASS$.$OPTIONAL_METHOD$($EXPR$)",

@@ -18,9 +18,7 @@
                      enabledByDefault="true" level="NON_SWITCHABLE_WARNING" dynamicGroup="true"
                      implementationClass="com.intellij.structuralsearch.inspection.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
-    <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager"/>
-    <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager$ProjectConfigurationManagerState"/>
     <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder"/>
     <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager$ConfigurationManagerState"/>
 

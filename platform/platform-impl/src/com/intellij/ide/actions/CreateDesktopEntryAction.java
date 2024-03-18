@@ -43,7 +43,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
-    return SystemInfo.isXWindow && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
+    return SystemInfo.isUnix && !SystemInfo.isMac && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
   }
 
   @Override

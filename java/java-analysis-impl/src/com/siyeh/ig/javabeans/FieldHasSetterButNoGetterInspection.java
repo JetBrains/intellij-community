@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class FieldHasSetterButNoGetterInspection extends BaseInspection {
+public final class FieldHasSetterButNoGetterInspection extends BaseInspection {
 
   @Override
   @NotNull

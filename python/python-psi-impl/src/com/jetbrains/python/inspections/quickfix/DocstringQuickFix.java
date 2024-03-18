@@ -1,15 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : catherine
  */
-public class DocstringQuickFix implements LocalQuickFix {
-  @SafeFieldForPreview
+public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
   private final SmartPsiElementPointer<PyNamedParameter> myMissingParam;
   private final String myUnexpectedParamName;
 
@@ -58,8 +59,8 @@ public class DocstringQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
     if (docStringExpression == null && myMissingParam == null && myUnexpectedParamName == null) {
@@ -93,7 +94,7 @@ public class DocstringQuickFix implements LocalQuickFix {
       .forDocStringOwner(docStringOwner)
       .withInferredParameters(false)
       .addFirstEmptyLine();
-    final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
+    final PyAstStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
     if (updated != null && editor != null) {
       final int offset = updated.getTextOffset();
       editor.getCaretModel().moveToOffset(offset);

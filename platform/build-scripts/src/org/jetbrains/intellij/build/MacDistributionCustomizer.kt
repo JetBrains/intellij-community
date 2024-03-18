@@ -136,7 +136,7 @@ abstract class MacDistributionCustomizer {
    */
   open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
     val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} EAP" else ""
-    return "${appInfo.productName}${suffix}.app"
+    return "${appInfo.fullProductName}${suffix}.app"
   }
 
   /**

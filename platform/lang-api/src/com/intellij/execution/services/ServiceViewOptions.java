@@ -3,6 +3,4 @@ package com.intellij.execution.services;
 
 public interface ServiceViewOptions {
   boolean isGroupByContributor();
-
-  boolean isGroupByServiceGroups();
 }

@@ -124,16 +124,19 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        for (PsiReference reference : element.getReferences()) {
-          if (reference.resolve() == null) {
-            for (ReferenceImporter importer : referenceImporters) {
-              BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
-              if (action != null) {
-                result.add(action);
+        if (!(element instanceof PsiLanguageInjectionHost)) { // ignore contributed references from languages and plugins
+          for (PsiReference reference : element.getReferences()) {
+            if (reference.resolve() == null) {
+              for (ReferenceImporter importer : referenceImporters) {
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
+                if (action != null) {
+                  result.add(action);
+                }
               }
             }
           }
         }
+
         super.visitElement(element);
       }
     });

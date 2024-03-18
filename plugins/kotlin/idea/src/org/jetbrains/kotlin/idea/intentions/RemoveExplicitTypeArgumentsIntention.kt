@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
+import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
@@ -77,9 +77,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
         fun isApplicableTo(element: KtTypeArgumentList, approximateFlexible: Boolean): Boolean {
             val callExpression = element.parent as? KtCallExpression ?: return false
-            val typeArguments = callExpression.typeArguments
-            if (typeArguments.isEmpty()) return false
-            if (typeArguments.any { it.typeReference?.isAnnotatedDeep() == true }) return false
+            if (!RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(callExpression)) return false
 
             val resolutionFacade = callExpression.getResolutionFacade()
             val bindingContext = resolutionFacade.analyze(callExpression, BodyResolveMode.PARTIAL_WITH_CFA)
@@ -193,15 +191,5 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
     override fun isApplicableTo(element: KtTypeArgumentList): Boolean = isApplicableTo(element, approximateFlexible = false)
 
-    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) {
-        val prevCallExpression = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtCallExpression
-        val isBetweenLambdaArguments = prevCallExpression?.lambdaArguments?.isNotEmpty() == true &&
-                element.getNextSiblingIgnoringWhitespaceAndComments() is KtLambdaArgument
-
-        element.delete()
-
-        if (isBetweenLambdaArguments) {
-            prevCallExpression?.replace(KtPsiFactory(element.project).createExpressionByPattern("($0)", prevCallExpression))
-        }
-    }
+    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) = RemoveExplicitTypeArgumentsUtils.applyTo(element)
 }

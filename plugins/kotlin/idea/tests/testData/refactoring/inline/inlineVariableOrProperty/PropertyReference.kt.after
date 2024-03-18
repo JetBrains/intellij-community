@@ -5,3 +5,4 @@ fun main() {
 private class Foo {
     val baz get() = true
 }
+// IGNORE_K2

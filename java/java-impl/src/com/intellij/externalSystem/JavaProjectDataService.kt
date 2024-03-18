@@ -2,13 +2,11 @@
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
@@ -33,13 +31,11 @@ internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectDa
     if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
     val javaProjectData = toImport.first().data
 
-    ExternalSystemApiUtil.executeProjectChangeAction(object : DisposeAwareProjectChange(project) {
-      override fun execute() {
-        importProjectSdk(project, javaProjectData)
-        importLanguageLevel(project, javaProjectData)
-        importTargetBytecodeVersion(project, javaProjectData)
-      }
-    })
+    ExternalSystemApiUtil.executeProjectChangeAction(project) {
+      importProjectSdk(project, javaProjectData)
+      importLanguageLevel(project, javaProjectData)
+      importTargetBytecodeVersion(project, javaProjectData)
+    }
   }
 
   private fun importProjectSdk(project: Project, javaProjectData: JavaProjectData) {

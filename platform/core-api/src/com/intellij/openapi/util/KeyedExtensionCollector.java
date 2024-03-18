@@ -6,22 +6,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.Java11Shim;
 import com.intellij.util.KeyedLazyInstance;
 import kotlinx.collections.immutable.PersistentList;
-import kotlinx.collections.immutable.PersistentMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-import static kotlinx.collections.immutable.ExtensionsKt.persistentHashMapOf;
+import static com.intellij.util.containers.UtilKt.with;
+import static com.intellij.util.containers.UtilKt.without;
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
@@ -31,10 +26,10 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   /** Guarded by {@link #lock} */
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private PersistentMap<String, PersistentList<T>> explicitExtensions = persistentHashMapOf();
+  private Map<String, PersistentList<T>> explicitExtensions = Java11Shim.INSTANCE.mapOf();
 
-  private volatile PersistentMap<String, PersistentList<T>> cache = persistentHashMapOf();
-  private final String myEpName;
+  private volatile @UnmodifiableView Map<String, List<T>> cache = Java11Shim.INSTANCE.mapOf();
+  private final String epName;
   private final SimpleModificationTracker tracker = new SimpleModificationTracker();
 
   protected final AtomicBoolean myEpListenerAdded = new AtomicBoolean();
@@ -44,13 +39,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   public KeyedExtensionCollector(@NotNull String epName) {
-    myEpName = epName;
+    this.epName = epName;
     lock = "lock for KeyedExtensionCollector " + epName;
   }
 
   public void clearCache() {
     synchronized (lock) {
-      cache = cache.clear();
+      cache = Collections.emptyMap();
       tracker.incModificationCount();
     }
   }
@@ -61,11 +56,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  protected void invalidateCacheForExtension(String key) {
+  protected void invalidateCacheForExtension(@NotNull String key) {
+    if (!cache.containsKey(key)) {
+      return;
+    }
+
     synchronized (lock) {
-      if (key != null) {
-        cache = cache.remove(key);
-      }
+      cache = without(cache, key);
       tracker.incModificationCount();
     }
   }
@@ -74,7 +71,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     String stringKey = keyToString(key);
     synchronized (lock) {
       PersistentList<T> value = explicitExtensions.get(stringKey);
-      explicitExtensions = explicitExtensions.put(stringKey, value == null ? persistentListOf(t) : value.add(t));
+      explicitExtensions = with(explicitExtensions, stringKey, value == null ? persistentListOf(t) : value.add(t));
       invalidateCacheForExtension(stringKey);
     }
   }
@@ -90,7 +87,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       PersistentList<T> list = explicitExtensions.get(stringKey);
       if (list != null) {
         list = list.remove(t);
-        explicitExtensions = list.isEmpty() ? explicitExtensions.remove(stringKey) : explicitExtensions.put(stringKey, list);
+        explicitExtensions = list.isEmpty() ? without(explicitExtensions, stringKey) : with(explicitExtensions, stringKey, list);
       }
       invalidateCacheForExtension(stringKey);
     }
@@ -106,7 +103,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   public final @NotNull List<T> forKey(@NotNull KeyT key) {
     String stringKey = keyToString(key);
 
-    PersistentList<T> cached = cache.get(stringKey);
+    List<T> cached = cache.get(stringKey);
     if (cached != null) {
       return cached;
     }
@@ -114,12 +111,12 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     cached = buildExtensions(stringKey, key);
 
     synchronized (lock) {
-      PersistentList<T> recent = cache.get(stringKey);
+      List<T> recent = cache.get(stringKey);
       if (recent != null) {
         return recent;
       }
 
-      cache = cache.put(stringKey, cached);
+      cache = with(cache, stringKey, cached);
       return cached;
     }
   }
@@ -129,12 +126,12 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     return list.isEmpty() ? null : list.get(0);
   }
 
-  protected @NotNull PersistentList<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
+  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
     // compute out of our lock (https://youtrack.jetbrains.com/issue/IDEA-208060)
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       PersistentList<T> explicit = explicitExtensions.get(stringKey);
-      PersistentList<T> result = buildExtensionsFromExtensionPoint(bean -> stringKey.equals(bean.getKey()), extensions);
+      List<T> result = buildExtensionsFromExtensionPoint(bean -> stringKey.equals(bean.getKey()), extensions);
       return explicit == null ? result : explicit.addAll(result);
     }
   }
@@ -143,7 +140,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   protected final @NotNull List<KeyedLazyInstance<T>> getExtensions() {
     ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
     if (point == null) {
-      return Collections.emptyList();
+      return Java11Shim.INSTANCE.listOf();
     }
     else {
       addExtensionPointListener(point);
@@ -151,9 +148,11 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  final @NotNull PersistentList<T> buildExtensionsFromExtensionPoint(@NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
-                                                                     @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
-    PersistentList<T> result = persistentListOf();
+  final @NotNull List<T> buildExtensionsFromExtensionPoint(@NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
+                                                           @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
+    List<T> result = null;
+    T r1 = null;
+    T r2 = null;
     for (KeyedLazyInstance<T> bean : extensions) {
       if (!isMyBean.test(bean)) {
         continue;
@@ -164,9 +163,35 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
         continue;
       }
 
-      result = result.add(instance);
+      if (result != null) {
+        result.add(instance);
+      }
+      else if (r1 == null) {
+        r1 = instance;
+      }
+      else if (r2 == null) {
+        r2 = instance;
+      }
+      else {
+        result = new ArrayList<>();
+        result.add(r1);
+        result.add(r2);
+        result.add(instance);
+      }
     }
-    return result;
+
+    if (result != null) {
+      return result;
+    }
+    else if (r2 != null) {
+      return Java11Shim.INSTANCE.listOf(r1, r2);
+    }
+    else if (r1 != null) {
+      return Java11Shim.INSTANCE.listOf(r1);
+    }
+    else {
+      return Java11Shim.INSTANCE.listOf();
+    }
   }
 
   public static <T> @Nullable T instantiate(@NotNull KeyedLazyInstance<T> bean) {
@@ -189,7 +214,18 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       PersistentList<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
-      PersistentList<T> result = buildExtensionsFromExtensionPoint(bean -> keys.contains(bean.getKey()), extensions);
+      List<T> result = buildExtensionsFromExtensionPoint(bean -> {
+        String key;
+        try {
+          key = bean.getKey();
+        }
+        catch (IllegalStateException e) {
+          LOG.error(e);
+          return false;
+        }
+
+        return keys.contains(key);
+      }, extensions);
       return explicit.addAll(result);
     }
   }
@@ -208,7 +244,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   @ApiStatus.Internal
   public final @Nullable ExtensionPoint<@NotNull KeyedLazyInstance<T>> getPoint() {
     //noinspection deprecation
-    return Extensions.getRootArea().getExtensionPointIfRegistered(myEpName);
+    return Extensions.getRootArea().getExtensionPointIfRegistered(epName);
   }
 
   public boolean hasAnyExtensions() {
@@ -223,7 +259,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   public @NotNull String getName() {
-    return myEpName;
+    return epName;
   }
 
   @Override
@@ -258,7 +294,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     @Override
     public void areaReplaced(@NotNull ExtensionsArea area) {
       synchronized (lock) {
-        cache = cache.clear();
+        cache = Java11Shim.INSTANCE.mapOf();
         tracker.incModificationCount();
       }
     }

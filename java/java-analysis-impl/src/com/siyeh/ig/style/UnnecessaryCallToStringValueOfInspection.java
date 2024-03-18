@@ -33,7 +33,7 @@ import java.util.Objects;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class UnnecessaryCallToStringValueOfInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryCallToStringValueOfInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final @NonNls CallMatcher STATIC_TO_STRING_CONVERTERS = CallMatcher.anyOf(
     staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("boolean"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char"),

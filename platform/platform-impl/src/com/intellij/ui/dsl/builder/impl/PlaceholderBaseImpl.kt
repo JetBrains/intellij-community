@@ -8,6 +8,7 @@ import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Constraints
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 @ApiStatus.Internal
 internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent: RowImpl) : CellBaseImpl<T>() {
@@ -17,6 +18,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   private var enabled = true
   private val uiSwitchers = LinkedHashSet<UiSwitcher>()
   private var componentField: JComponent? = null
+  private var label: JLabel? = null
 
   var component: JComponent?
     get() = componentField
@@ -32,6 +34,8 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
           if (placeholderCellData != null) {
             initInstalledComponent()
           }
+
+          label?.labelFor = value
         }
       }
     }
@@ -85,6 +89,8 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
       it.panel.remove(installedComponent)
       invalidate()
     }
+
+    label?.labelFor = null
   }
 
   private fun initInstalledComponent() {
@@ -112,6 +118,13 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     uiSwitchers.add(uiSwitcher)
     component?.let {
       UiSwitcher.append(it, uiSwitcher)
+    }
+  }
+
+  fun initLabelFor(label: JLabel) {
+    this.label = label
+    component?.let {
+      label.labelFor = it
     }
   }
 

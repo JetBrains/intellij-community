@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar
 
 import com.intellij.ide.navbar.ide.NavBarService
 import com.intellij.ide.navbar.ide.isNavbarShown
-import com.intellij.ide.navbar.ide.isNavbarV2Enabled
 import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension.NavBarWrapperPanel
 import com.intellij.ide.ui.NavBarLocation
 import com.intellij.ide.ui.ToolbarSettings
@@ -28,7 +27,9 @@ import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
@@ -73,9 +74,7 @@ internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
 
       project.messageBus.connect(this@channelFlow).subscribe(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
         trySendBlocking(createPanelIfApplicable(uiSettings))
-        if (isNavbarV2Enabled) {
-          NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
-        }
+        NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
       })
       awaitClose()
     }
@@ -83,9 +82,7 @@ internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
       .map {
         val uiSettings = UISettings.getInstance()
         val result = it.configure(project, statusBar, uiSettings)
-        if (isNavbarV2Enabled) {
-          NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
-        }
+        NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
         result
       }
       .buffer(Channel.UNLIMITED)
@@ -150,17 +147,7 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
     navBarPanel?.let {
       return it
     }
-
-    val navigationBar: JComponent
-    if (isNavbarV2Enabled) {
-      navigationBar = NavBarService.getInstance(project).createNavBarPanel()
-    }
-    else {
-      @Suppress("DEPRECATION")
-      navigationBar = ReusableNavBarPanel(project, true)
-      @Suppress("DEPRECATION")
-      (navigationBar as NavBarPanel).model.setFixedComponent(true)
-    }
+    val navigationBar: JComponent = NavBarService.getInstance(project).createNavBarPanel()
     this.navigationBar = navigationBar
 
     putClientProperty(NavBarRootPaneExtension.PANEL_KEY, navigationBar)
@@ -179,16 +166,9 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
 
     toggleRunPanel(isShowToolPanel(uiSettings))
     toggleNavPanel(uiSettings)
-    if (isNavbarV2Enabled) {
-      NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
-    }
+    NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
 
     val navigationBar = navigationBar ?: return
-    @Suppress("DEPRECATION")
-    if (navigationBar is NavBarPanel) {
-      navigationBar.updateState(uiSettings.showNavigationBar)
-    }
-
     val visible = uiSettings.isNavbarShown()
     if (ExperimentalUI.isNewUI()) {
       scrollPane!!.isVisible = visible
@@ -206,8 +186,16 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
   }
 
   override fun getInsets(): Insets {
-    @Suppress("DEPRECATION")
-    return com.intellij.ide.navigationToolbar.ui.NavBarUIManager.getUI().getWrapperPanelInsets(super.getInsets())
+    val result = JBInsets.create(super.getInsets())
+    if (shouldPaintWrapperPanel()) {
+      result.top += scale(1)
+    }
+    return result
+  }
+
+  private fun shouldPaintWrapperPanel(): Boolean {
+    return false
+    //return !UISettings.getInstance().showMainToolbar && runToolbarExists();
   }
 
   private fun runToolbarExists(): Boolean {
@@ -415,18 +403,14 @@ private class NavBarContainer(layout: LayoutManager,
     scrollPane.viewportBorder = null
     if (ExperimentalUI.isNewUI()) {
       ClientProperty.put(scrollPane, JBScrollPane.FORCE_HORIZONTAL_SCROLL, true)
-      val visible = settings.isNavbarShown()
-      scrollPane.isVisible = visible
-      @Suppress("DEPRECATION")
-      (navigationBar as? NavBarPanel)?.updateState(visible)
+      scrollPane.isVisible = settings.isNavbarShown()
     }
     navigationBar?.border = null
   }
 
   override fun updateAutoscrollLimit(limit: AutoscrollLimit) {
     val navigationBar = navigationBar
-    @Suppress("DEPRECATION")
-    if (navigationBar is NavBarPanel) {
+    if (navigationBar is ScrollableToSelected) {
       navigationBar.updateAutoscrollLimit(limit)
     }
   }

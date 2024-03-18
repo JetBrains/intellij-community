@@ -12,10 +12,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+private const val TIMEOUT_MS = 20_000L
+
+@RunWith(JUnit4::class)
 class SuiteChooserTest : CoverageIntegrationBaseTest() {
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test chooser dialog includes registered suites`(): Unit = runBlocking {
+    assertNoSuites()
+
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
     val xmlSuite = loadXMLSuite().suites[0]
@@ -35,9 +44,15 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     Assert.assertFalse(suites[xmlSuite]!!)
 
     closeDialog(dialog)
+    unregisterCoverageSuite(ijSuite)
+    unregisterCoverageSuite(xmlSuite)
+    unregisterCoverageSuite(jacocoSuite)
+    assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test chooser dialog includes opened suites selected`(): Unit = runBlocking {
+    assertNoSuites()
     val ijBundle = loadIJSuite()
     val ijSuite = ijBundle.suites[0]
     registerSuite(ijSuite)
@@ -58,9 +73,14 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
 
     closeSuite(ijBundle)
     closeDialog(dialog)
+    unregisterCoverageSuite(ijSuite)
+    unregisterCoverageSuite(xmlSuite)
+    assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test suite chooser opens checked suite`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
     registerSuite(ijSuite)
 
@@ -78,9 +98,13 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     Assert.assertTrue(ijSuite in currentBundle.suites)
 
     closeDialog(dialog)
+    unregisterCoverageSuite(ijSuite)
+    assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test suite chooser opens all checked suites`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
     registerSuite(ijSuite)
 
@@ -110,9 +134,14 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     }
 
     closeDialog(dialog)
+    unregisterCoverageSuite(ijSuite)
+    unregisterCoverageSuite(xmlSuite)
+    assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test chooser dialog closes suites if not selected`(): Unit = runBlocking {
+    assertNoSuites()
     val ijBundle = loadIJSuite()
     val ijSuite = ijBundle.suites[0]
     registerSuite(ijSuite)
@@ -130,9 +159,13 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     Assert.assertTrue(bundles.isEmpty())
 
     closeDialog(dialog)
+    unregisterCoverageSuite(ijSuite)
+    assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test no coverage action closes all opened suites`(): Unit = runBlocking {
+    assertNoSuites()
     val ijBundle = loadIJSuite()
     val ijSuite = ijBundle.suites[0]
     registerSuite(ijSuite)
@@ -146,7 +179,8 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
       closeDialog(dialog)
     }
 
-    Assert.assertTrue(manager.activeSuites().isEmpty())
+    unregisterCoverageSuite(ijSuite)
+    assertNoSuites()
   }
 
   private suspend fun openChooserDialog(): CoverageSuiteChooserDialog =
@@ -173,4 +207,6 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     // Use 'presentableName' parameter to avoid report file deletion
     manager.addCoverageSuite(suite, suite.presentableName)
   }
+
+  private fun unregisterCoverageSuite(suite: CoverageSuite) = manager.unregisterCoverageSuite(suite)
 }

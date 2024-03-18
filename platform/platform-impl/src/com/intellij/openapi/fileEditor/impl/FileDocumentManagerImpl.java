@@ -769,9 +769,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void fileDeleted(@NotNull VFileDeleteEvent event) {
-    Document doc = getCachedDocument(event.getFile());
+    VirtualFile virtualFile = event.getFile();
+    Document doc = getCachedDocument(virtualFile);
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
+      unbindFileFromDocument(virtualFile, doc);
     }
   }
 

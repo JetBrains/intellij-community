@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ide.actions.SettingsEntryPointAction
@@ -19,9 +19,9 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.systemIndependentPath
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<JdkUpdateNotification>()
 
@@ -196,7 +196,7 @@ class JdkUpdateNotification(val jdk: Sdk,
               runWriteAction {
                 jdk.sdkModificator.apply {
                   removeAllRoots()
-                  homePath = newJdkHome.systemIndependentPath
+                  homePath = newJdkHome.invariantSeparatorsPathString
                   versionString = newItem.versionString
                 }.commitChanges()
 

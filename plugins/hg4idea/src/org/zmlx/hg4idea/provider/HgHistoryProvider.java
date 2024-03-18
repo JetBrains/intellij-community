@@ -105,15 +105,13 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     }
   }
 
-  @NotNull
-  private VcsAbstractHistorySession createAppendableSession(@NotNull VirtualFile vcsRoot,
-                                                            @NotNull FilePath filePath,
-                                                            @NotNull List<VcsFileRevision> revisions,
-                                                            @Nullable VcsRevisionNumber number) {
+  private @NotNull VcsAbstractHistorySession createAppendableSession(@NotNull VirtualFile vcsRoot,
+                                                                     @NotNull FilePath filePath,
+                                                                     @NotNull List<VcsFileRevision> revisions,
+                                                                     @Nullable VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
       @Override
-      @Nullable
-      protected VcsRevisionNumber calcCurrentRevisionNumber() {
+      protected @Nullable VcsRevisionNumber calcCurrentRevisionNumber() {
         if (filePath.isDirectory()) return new HgWorkingCopyRevisionsCommand(myProject).firstParent(vcsRoot);
         return new HgWorkingCopyRevisionsCommand(myProject).parents(vcsRoot, filePath).first;
       }

@@ -2,32 +2,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceItem;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PySliceItemImpl extends PyElementImpl implements PySliceItem {
   public PySliceItemImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getLowerBound() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getUpperBound() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getStride() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 2);
   }
 }

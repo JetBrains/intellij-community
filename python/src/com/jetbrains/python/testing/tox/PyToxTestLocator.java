@@ -23,8 +23,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAstElementGenerator;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,10 +61,10 @@ public final class PyToxTestLocator implements SMTestLocator {
    */
   @Nullable
   public static String getEnvNameFromElement(@NotNull final PsiFile file) {
-    if (!file.getName().equals(PyElementGeneratorImpl.getDummyFileName())) {
+    if (!file.getName().equals(PyAstElementGenerator.getDummyFileName())) {
       return null;
     }
-    if (! file.getText().equals(DUMMY_FILE_PADDING)) {
+    if (!file.getText().equals(DUMMY_FILE_PADDING)) {
       return null;
     }
     return file.getUserData(ENV_NAME_KEY);

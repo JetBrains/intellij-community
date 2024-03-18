@@ -22,7 +22,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionTest extends Li
   }
 
   public void testUnnecessaryFinalOnPatternVariable() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
   }
 
   @Nullable

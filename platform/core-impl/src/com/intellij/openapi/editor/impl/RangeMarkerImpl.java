@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -420,6 +421,21 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node.intervalEnd();
   }
 
+  /**
+   * @return this marker text range in the scalar form
+   */
+  @ApiStatus.Internal
+  public long getScalarRange() {
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node == null) {
+      return -1;
+    }
+    long range = node.toScalarRange();
+    int delta = node.computeDeltaUpToRoot();
+    return TextRangeScalarUtil.shift(range, delta, delta);
+  }
+
+  // return intrinsic range belonging to that node (without delta-up-to-the-root correction)
   long toScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {

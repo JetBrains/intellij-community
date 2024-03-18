@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 
 public class DocumentationManagerUtil {
@@ -24,29 +23,13 @@ public class DocumentationManagerUtil {
     buffer.append(refText);
     buffer.append("\">");
     if (!plainLink) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        buffer.append(isRendered ? "<code style='font-size:96%;'>" : "<code>");
-      }
-      else {
-        buffer.append("<code style='font-size:");
-        buffer.append(getMonospaceFontSizeCorrection(isRendered));
-        buffer.append("%;'>");
-      }
+      buffer.append("<code>");
     }
     buffer.append(label);
     if (!plainLink) {
       buffer.append("</code>");
     }
     buffer.append("</a>");
-  }
-
-  private static int getMonospaceFontSizeCorrection(boolean isRendered) {
-    if (isRendered) {
-      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
-    }
-    else {
-      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 100;
-    }
   }
 
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {

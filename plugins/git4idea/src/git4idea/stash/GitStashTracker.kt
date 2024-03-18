@@ -21,7 +21,7 @@ import com.intellij.vcs.log.runInEdt
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashToolWindowEnabled
+import git4idea.stash.ui.isStashTabAvailable
 import git4idea.ui.StashInfo
 import java.util.*
 
@@ -59,7 +59,7 @@ class GitStashTracker(private val project: Project) : Disposable {
   }
 
   fun scheduleRefresh() {
-    if (!isStashToolWindowEnabled(project)) return
+    if (!isStashTabAvailable()) return
 
     updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val newStashes = mutableMapOf<VirtualFile, Stashes>()

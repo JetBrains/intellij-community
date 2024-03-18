@@ -1,11 +1,15 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteAnnotation;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverrideAnnotation;
+import com.intellij.util.JavaPsiConstructorUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
@@ -14,6 +18,7 @@ import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -74,6 +79,7 @@ public class LombokInspection extends LombokJavaInspectionBase {
 
     private static void doAdditionalVerifications(@NotNull PsiAnnotation annotation, @NotNull Collection<LombokProblem> problems) {
       verifyBuilderDefault(annotation, problems);
+      verifySneakyThrows(annotation, problems);
     }
 
     private static void verifyBuilderDefault(@NotNull PsiAnnotation annotation, @NotNull Collection<LombokProblem> problems) {
@@ -84,8 +90,27 @@ public class LombokInspection extends LombokJavaInspectionBase {
               !parentOfAnnotation.hasAnnotation(LombokClassNames.SUPER_BUILDER)) {
             final LombokProblemInstance problemInstance = new LombokProblemInstance(
               LombokBundle.message("inspection.message.builder.default.requires.builder.annotation"), ProblemHighlightType.GENERIC_ERROR);
-            problemInstance.withLocalQuickFixes(() -> new AddAnnotationFix(LombokClassNames.BUILDER, parentOfAnnotation),
-                                                () -> new AddAnnotationFix(LombokClassNames.SUPER_BUILDER, parentOfAnnotation));
+            problemInstance.withLocalQuickFixes(
+              () -> PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.BUILDER, parentOfAnnotation),
+              () -> PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.SUPER_BUILDER, parentOfAnnotation));
+            problems.add(problemInstance);
+          }
+        }
+      }
+    }
+
+    private static void verifySneakyThrows(@NotNull PsiAnnotation annotation, @NotNull Collection<LombokProblem> problems) {
+      if (annotation.hasQualifiedName(LombokClassNames.SNEAKY_THROWS)) {
+        final PsiMethod parentOfAnnotation = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
+        if (null != parentOfAnnotation && parentOfAnnotation.isConstructor()) {
+          final PsiMethodCallExpression thisOrSuperCallInConstructor =
+            JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(parentOfAnnotation);
+
+          if (null != thisOrSuperCallInConstructor && parentOfAnnotation.getBody().getStatementCount() == 1) {
+            final LombokProblemInstance problemInstance = new LombokProblemInstance(
+              LombokBundle.message("inspection.message.sneakythrows.calls.to.sibling.super.constructors.excluded"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            problemInstance.withLocalQuickFixes(() -> new RemoveAnnotationQuickFix(annotation, parentOfAnnotation));
             problems.add(problemInstance);
           }
         }
@@ -111,8 +136,10 @@ public class LombokInspection extends LombokJavaInspectionBase {
         JavaResolveResult resolveResult = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
         PsiElement resolved = resolveResult.getElement();
 
-        if (resolved instanceof LombokLightMethodBuilder && ((LombokLightMethodBuilder) resolved).getParameterList().getParameters().length != 0) {
-          holder.registerProblem(methodCall, LombokBundle.message("inspection.message.default.constructor.doesn.t.exist"), ProblemHighlightType.ERROR);
+        if (resolved instanceof LombokLightMethodBuilder &&
+            ((LombokLightMethodBuilder)resolved).getParameterList().getParameters().length != 0) {
+          holder.registerProblem(methodCall, LombokBundle.message("inspection.message.default.constructor.doesn.t.exist"),
+                                 ProblemHighlightType.ERROR);
         }
       }
     }

@@ -132,20 +132,17 @@ public final class Pluralizer {
   /**
    * Pluralize or singularize a word based on the passed in count.
    */
-  @NotNull
-  public String pluralize(@NotNull String word, int count, boolean inclusive) {
+  public @NotNull String pluralize(@NotNull String word, int count, boolean inclusive) {
     String pluralized = count == 1 ? singular(word) : plural(word);
 
     return (inclusive ? count + " " : "") + Strings.notNullize(pluralized, word);
   }
 
-  @Nullable
-  public String plural(@Nullable String word) {
+  public @Nullable String plural(@Nullable String word) {
     return restoreCase(word, replaceWord(word, irregularSingles, irregularPlurals, pluralRules));
   }
 
-  @Nullable
-  public String singular(@Nullable String word) {
+  public @Nullable String singular(@Nullable String word) {
     return restoreCase(word, replaceWord(word, irregularPlurals, irregularSingles, singularRules));
   }
 

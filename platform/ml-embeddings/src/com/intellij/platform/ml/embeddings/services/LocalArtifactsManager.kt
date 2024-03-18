@@ -1,24 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.services
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.delete
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -49,21 +52,19 @@ class LocalArtifactsManager {
   @RequiresBackgroundThread
   suspend fun downloadArtifactsIfNecessary(project: Project? = null,
                                            retryIfCanceled: Boolean = true) = withContext(downloadContext) {
-    if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
+    if (!checkArtifactsPresent() && !ApplicationManager.getApplication().isUnitTestMode && (retryIfCanceled || !downloadCanceled)) {
       logger.debug("Semantic search artifacts are not present, starting the download...")
       if (project != null) {
         withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
-          withRawProgressReporter {
-            try {
-              coroutineToIndicator { // platform code relies on the existence of indicator
-                downloadArtifacts()
-              }
+          try {
+            coroutineToIndicator { // platform code relies on the existence of indicator
+              downloadArtifacts()
             }
-            catch (e: CancellationException) {
-              logger.debug("Artifacts downloading was canceled")
-              downloadCanceled = true
-              throw e
-            }
+          }
+          catch (e: CancellationException) {
+            logger.debug("Artifacts downloading was canceled")
+            downloadCanceled = true
+            throw e
           }
         }
       }
@@ -111,9 +112,9 @@ class LocalArtifactsManager {
     private val ARTIFACTS_DOWNLOAD_TASK_NAME
       get() = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
     private val MODEL_VERSION
-      get() = Registry.stringValue("search.everywhere.ml.semantic.model.version")
+      get() = Registry.stringValue("intellij.platform.ml.embeddings.model.version")
     private val MAVEN_ROOT
-      get() = Registry.stringValue("search.everywhere.ml.semantic.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
+      get() = Registry.stringValue("intellij.platform.ml.embeddings.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
 
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"

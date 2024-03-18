@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,12 +10,12 @@ import org.jetbrains.annotations.PropertyKey;
 public final class BootstrapBundle {
   private static final String BUNDLE = "messages.BootstrapBundle";
 
-  private static final @Nullable AbstractBundle INSTANCE;
+  private static final @Nullable DynamicBundle INSTANCE;
 
   static {
-    AbstractBundle instance = null;
+    DynamicBundle instance = null;
     try {
-      instance = new AbstractBundle(BootstrapBundle.class, BUNDLE);
+      instance = new DynamicBundle(BootstrapBundle.class, BUNDLE);
     }
     catch (Throwable ignored) { }
     INSTANCE = instance;

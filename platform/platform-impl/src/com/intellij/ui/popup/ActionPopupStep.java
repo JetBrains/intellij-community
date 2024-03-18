@@ -132,8 +132,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return myItems;
   }
 
-  public List<PopupFactoryImpl.InlineActionItem> getInlineActions(PopupFactoryImpl.ActionItem value) {
-    return value.getInlineActions();
+  public @NotNull List<PopupFactoryImpl.ActionItem> getInlineItems(@NotNull PopupFactoryImpl.ActionItem value) {
+    return value.getInlineItems();
   }
 
   @Override
@@ -184,8 +184,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   public void setEmptyText(@NotNull StatusText emptyText) { }
 
   @Override
-  public @Nullable String getValueFor(PopupFactoryImpl.ActionItem item) {
-    return item.getValue();
+  public @Nullable String getSecondaryTextFor(PopupFactoryImpl.ActionItem item) {
+    return item.getClientProperty(ActionUtil.SECONDARY_TEXT);
   }
 
   @Override
@@ -228,11 +228,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                         false, false, () -> dataContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
-      performAction(action, inputEvent);
+      performActionItem(item, inputEvent);
       return FINAL_CHOICE;
     }
     else {
-      myFinalRunnable = () -> performAction(action, inputEvent);
+      myFinalRunnable = () -> performActionItem(item, inputEvent);
       return FINAL_CHOICE;
     }
   }
@@ -254,8 +254,15 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
   }
 
-  public void performAction(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
-    ActionUtil.invokeAction(action, myContext.get(), myActionPlace, inputEvent, null);
+  public void performActionItem(@NotNull PopupFactoryImpl.ActionItem item, @Nullable InputEvent inputEvent) {
+    DataContext dataContext = myContext.get();
+    AnAction action = item.getAction();
+    Presentation presentation = item.clonePresentation();
+    AnActionEvent event = AnActionEvent.createFromInputEvent(inputEvent, myActionPlace, presentation, dataContext);
+    event.setInjectedContext(action.isInInjectedContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
   }
 
   public @NotNull AnActionEvent createAnActionEvent(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
@@ -274,7 +281,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
         for (PopupFactoryImpl.ActionItem actionItem : values) {
           Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
           actionItem.updateFromPresentation(presentation, myActionPlace);
-          for (PopupFactoryImpl.InlineActionItem inlineActionItem : actionItem.getInlineActions()) {
+          for (PopupFactoryImpl.ActionItem inlineActionItem : actionItem.getInlineItems()) {
             presentation = presentationFactory.getPresentation(inlineActionItem.getAction());
             inlineActionItem.updateFromPresentation(presentation, myActionPlace);
           }

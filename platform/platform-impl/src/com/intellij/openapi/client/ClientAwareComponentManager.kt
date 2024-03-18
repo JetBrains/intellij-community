@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -89,7 +89,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun isPreInitialized(component: Any): Boolean {
-    return super.isPreInitialized(component) || component is ClientSessionsManager<*>
+  override fun isPreInitialized(service: Any): Boolean {
+    return super.isPreInitialized(service) || service is ClientSessionsManager<*>
   }
 }

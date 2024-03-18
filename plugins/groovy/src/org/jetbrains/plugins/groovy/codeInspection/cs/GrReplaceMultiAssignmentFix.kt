@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.cs
 
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -18,9 +19,9 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil
 
 internal const val defaultFixVariableName = "storedList"
 
-class GrReplaceMultiAssignmentFix(val size: Int) : GroovyFix() {
-  override fun doFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement as? GrExpression ?: return
+class GrReplaceMultiAssignmentFix(val size: Int) : PsiUpdateModCommandQuickFix() {
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is GrExpression) return
     val grStatement = element.parent as? GrStatement ?: return
     val grStatementOwner = grStatement.parent as? GrStatementOwner ?: return
 
@@ -43,7 +44,7 @@ class GrReplaceMultiAssignmentFix(val size: Int) : GroovyFix() {
   }
 
   private fun generateListLiteral(varName: String): String {
-    return (0..(size - 1)).joinToString(", ", "[", "]") { "$varName[$it]" }
+    return (0..<size).joinToString(", ", "[", "]") { "$varName[$it]" }
   }
 
   override fun getName(): String {

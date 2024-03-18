@@ -17,4 +17,6 @@ abstract class AbstractK1QuickFixTest : AbstractQuickFixTest() {
             """.trimIndent()
         )
     }
+
+    override val actionPrefix: String? = "K1_ACTION:"
 }

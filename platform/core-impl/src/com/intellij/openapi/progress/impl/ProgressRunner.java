@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -24,6 +24,7 @@ import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.*;
 
 import java.util.concurrent.*;
@@ -50,6 +51,7 @@ import static com.intellij.openapi.application.ModalityKt.asContextElement;
  *
  * @param <R> type of result to be computed by a given task
  */
+@Obsolete
 public final class ProgressRunner<R> {
   public enum ThreadToUse {
     /**

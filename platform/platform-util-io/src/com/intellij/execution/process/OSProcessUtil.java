@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.process.impl.ProcessListUtil;
@@ -51,7 +51,7 @@ public final class OSProcessUtil {
   }
 
   public static void killProcess(@NotNull Process process) {
-    killProcess(getProcessID(process));
+    killProcess((int)process.pid());
   }
 
   public static void killProcess(int pid) {
@@ -127,15 +127,17 @@ public final class OSProcessUtil {
   }
 
   static void logSkippedActionWithTerminatedProcess(@NotNull Process process, @NotNull String actionName, @Nullable String commandLine) {
-    Integer pid = null;
+    Long pid = null;
     try {
-      pid = getProcessID(process);
+      pid = process.pid();
     }
     catch (Throwable ignored) {
     }
     LOG.info("Cannot " + actionName + " already terminated process (pid: " + pid + ", command: " + commandLine + ")");
   }
 
+  /** @deprecated use {@link Process#pid()} directly */
+  @Deprecated
   public static int getProcessID(@NotNull Process process) {
     return (int)process.pid();
   }

@@ -179,15 +179,18 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       else -> 1
     }
 
-    if (isStoreCredentialsHelperUsed(repositories)) {
+    val isStoreCredentialsHelperUsed = try {
+      repositories.any { GitConfigUtil.getValue(project, it.root, "credential.helper").equals("store", ignoreCase = true) }
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return 1
+    }
+    if (isStoreCredentialsHelperUsed) {
       return 1
     }
 
     return min(maxThreads, MAX_SSH_CONNECTIONS)
-  }
-
-  private fun isStoreCredentialsHelperUsed(repositories: Collection<GitRepository>): Boolean {
-    return repositories.any { GitConfigUtil.getValue(project, it.root, "credential.helper").equals("store", ignoreCase = true) }
   }
 
   private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {

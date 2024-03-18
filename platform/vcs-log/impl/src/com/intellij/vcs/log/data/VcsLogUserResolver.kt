@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.MultiMap
@@ -49,10 +48,7 @@ abstract class VcsLogUserResolverBase : VcsLogUserResolver {
 
   override fun resolveCurrentUser(root: VirtualFile): Set<VcsUser> {
     val vcsUser = currentUsers[root]
-    if (vcsUser == null) {
-      LOG.warn("Can not resolve user name for root $root")
-      return emptySet()
-    }
+    if (vcsUser == null) return emptySet()
 
     val usersByName = resolveUserName(vcsUser.name)
     val emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.email) ?: return usersByName
@@ -66,9 +62,5 @@ abstract class VcsLogUserResolverBase : VcsLogUserResolver {
       emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))
     }
     return usersByName + usersByEmail
-  }
-
-  companion object {
-    private val LOG = logger<VcsLogUserResolverBase>()
   }
 }

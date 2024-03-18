@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
-public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
+public final class PyCallSignatureTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull final PyNamedParameter param,
                                       @NotNull final PyFunction func,

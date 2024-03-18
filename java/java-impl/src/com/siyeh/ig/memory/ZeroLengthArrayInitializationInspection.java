@@ -28,7 +28,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-public class ZeroLengthArrayInitializationInspection extends BaseInspection {
+public final class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

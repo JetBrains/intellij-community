@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLiteralToSetIntention extends PyBaseConvertCollectionLiteralIntention {
+public final class PyConvertLiteralToSetIntention extends PyBaseConvertCollectionLiteralIntention {
   public PyConvertLiteralToSetIntention() {
     super(PySetLiteralExpression.class, "set", "{", "}");
   }

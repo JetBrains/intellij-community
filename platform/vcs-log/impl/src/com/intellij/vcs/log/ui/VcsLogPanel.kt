@@ -2,11 +2,9 @@
 package com.intellij.vcs.log.ui
 
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.navigation.History
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -66,8 +64,6 @@ class VcsLogPanel(private val manager: VcsLogManager, override val vcsLogUi: Vcs
       if (metadata.size > VcsLogUtil.MAX_SELECTED_COMMITS) return null
       return metadata.map { it.getSubject() }.toTypedArray()
     }
-    else if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return vcsLogUi.getHelpId()
-    else if (History.KEY.`is`(dataId)) return vcsLogUi.getNavigationHistory()
     return null
   }
 }

@@ -37,7 +37,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     Ref<MyElement> ref = new Ref<>();
 
-    PlatformTestUtil.startPerformanceTest("creating", 40_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    PlatformTestUtil.newPerformanceTest("creating", () -> ApplicationManager.getApplication().runWriteAction(() -> {
         MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
         MyElement child = element.addChildElement();
         child.getAttr().setValue("239");
@@ -54,17 +54,17 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
         }
         ref.set(element);
     }))
-      .assertTiming();
+      .startAsSubtest();
 
     MyElement newElement = createElement(DomUtil.getFile(ref.get()).getText(), MyElement.class);
 
-    PlatformTestUtil.startPerformanceTest("visiting", 450, () ->
+    PlatformTestUtil.newPerformanceTest("visiting", () ->
       newElement.acceptChildren(new DomElementVisitor() {
         @Override
         public void visitDomElement(DomElement element) {
           element.acceptChildren(this);
         }
-      })).assertTiming();
+      })).startAsSubtest();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {
@@ -99,7 +99,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    PlatformTestUtil.startPerformanceTest("DOM parsing", 10, () -> assertNull(getDomManager().getFileElement(file))).assertTiming();
+    PlatformTestUtil.newPerformanceTest("DOM parsing", () -> assertNull(getDomManager().getFileElement(file))).start();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

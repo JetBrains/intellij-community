@@ -215,7 +215,7 @@ internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<In
     //TODO use dataoutput.nullability instead
     val returnedExpressions = PsiUtil.findReturnStatements(method).mapNotNull(PsiReturnStatement::getReturnValue)
     val resultNullability = CodeFragmentAnalyzer.inferNullability(returnedExpressions)
-    ExtractMethodHelper.addNullabilityAnnotation(method, resultNullability)
+    ExtractMethodHelper.addNullabilityAnnotation(method.returnTypeElement, resultNullability)
   }
   val parameters = method.parameterList.parameters
   inputParameters
@@ -223,7 +223,7 @@ internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<In
     .forEach { inputParameter ->
       val parameterNullability = CodeFragmentAnalyzer.inferNullability(inputParameter.references)
       val parameter = parameters.find { it.name == inputParameter.name }
-      if (parameter != null) ExtractMethodHelper.addNullabilityAnnotation(parameter, parameterNullability)
+      if (parameter != null) ExtractMethodHelper.addNullabilityAnnotation(parameter.typeElement, parameterNullability)
     }
 }
 

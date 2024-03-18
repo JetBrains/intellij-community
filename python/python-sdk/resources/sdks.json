@@ -1,21 +1,21 @@
 {
   "python": [
     {
-      "version": "3.12.0",
+      "version": "3.12.1",
       "product": "CPython",
       "sources": [
         {
-          "url": "https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tar.xz",
-          "size": 20575020,
-          "sha256": "795c34f44df45a0e9b9710c8c71c15c671871524cd412ca14def212e8ccb155d",
-          "fileName": "Python-3.12.0.tar.xz",
+          "url": "https://www.python.org/ftp/python/3.12.1/Python-3.12.1.tar.xz",
+          "size": 20583448,
+          "sha256": "8dfb8f426fcd226657f9e2bd5f1e96e53264965176fa17d32658e873591aeb21",
+          "fileName": "Python-3.12.1.tar.xz",
           "type": "COMPRESSED"
         },
         {
-          "url": "https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz",
-          "size": 27195214,
-          "sha256": "51412956d24a1ef7c97f1cb5f70e185c13e3de1f50d131c0aac6338080687afb",
-          "fileName": "Python-3.12.0.tgz",
+          "url": "https://www.python.org/ftp/python/3.12.1/Python-3.12.1.tgz",
+          "size": 27053241,
+          "sha256": "d01ec6a33bc10009b09c17da95cc2759af5a580a7316b3a446eb4190e13f97b2",
+          "fileName": "Python-3.12.1.tgz",
           "type": "COMPRESSED"
         }
       ],
@@ -25,10 +25,10 @@
           "cpuArch": "X86_64",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.0/python-3.12.0-amd64.exe",
-              "size": 26507904,
-              "sha256": "c6bdf93f4b2de6dfa1a3a847e7c24ae10edf7f6318653d452cd4381415700ada",
-              "fileName": "python-3.12.0-amd64.exe",
+              "url": "https://www.python.org/ftp/python/3.12.1/python-3.12.1-amd64.exe",
+              "size": 26589696,
+              "sha256": "2437d83db04fb272af8de65eead1a2fc416b9fac3f6af9ce51a627e32b4fe8f8",
+              "fileName": "python-3.12.1-amd64.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -38,10 +38,10 @@
           "cpuArch": "X86",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.0/python-3.12.0.exe",
-              "size": 25173976,
-              "sha256": "78fe137b4b78274e455ce678ba2e296ca7c3c6a0e53806bf09e4f8986b64c632",
-              "fileName": "python-3.12.0.exe",
+              "url": "https://www.python.org/ftp/python/3.12.1/python-3.12.1.exe",
+              "size": 25253448,
+              "sha256": "7389c4765535661932e649ac8b5dd523c664692aa06f15e770b06194303f314c",
+              "fileName": "python-3.12.1.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -51,10 +51,10 @@
           "cpuArch": "ARM64",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.0/python-3.12.0-arm64.exe",
-              "size": 25742528,
-              "sha256": "05eb076ce9fe248d4a6295f75be328808b22877f9538cf9effe89938aebc9532",
-              "fileName": "python-3.12.0-arm64.exe",
+              "url": "https://www.python.org/ftp/python/3.12.1/python-3.12.1-arm64.exe",
+              "size": 25806784,
+              "sha256": "900ff6661dc289474f1fa930af138ce8e0e77a0c09068c91c6a2efa9034497d6",
+              "fileName": "python-3.12.1-arm64.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -63,16 +63,16 @@
           "os": "macOS",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.0/python-3.12.0-macos11.pkg",
-              "size": 45371285,
-              "sha256": "d18c9ba65137b6f2ef2f4083b647273639f17e390f7439b3c2e35686040745db",
-              "fileName": "python-3.12.0-macos11.pkg",
+              "url": "https://www.python.org/ftp/python/3.12.1/python-3.12.1-macos11.pkg",
+              "size": 45377529,
+              "sha256": "6178e42679eb83196240fc58b1438f481c32c2b0557f28ccf43aa7b1b80b7c4a",
+              "fileName": "python-3.12.1-macos11.pkg",
               "type": "APPLE_SOFTWARE_PACKAGE"
             }
           ]
         }
       ],
-      "title": "Python 3.12.0"
+      "title": "Python 3.12.1"
     },
     {
       "version": "3.11.7",
@@ -345,135 +345,6 @@
         }
       ],
       "title": "Python 3.8.10"
-    },
-    {
-      "version": "3.7.17",
-      "product": "CPython",
-      "sources": [
-        {
-          "url": "https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tar.xz",
-          "size": 18066196,
-          "sha256": "7911051ed0422fd54b8f59ffc030f7cf2ae30e0f61bda191800bb040dce4f9d2",
-          "fileName": "Python-3.7.17.tar.xz",
-          "type": "COMPRESSED"
-        },
-        {
-          "url": "https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz",
-          "size": 24007497,
-          "sha256": "fd50161bc2a04f4c22a0971ff0f3856d98b4bf294f89740a9f06b520aae63b49",
-          "fileName": "Python-3.7.17.tgz",
-          "type": "COMPRESSED"
-        }
-      ],
-      "title": "Python 3.7.17"
-    },
-    {
-      "version": "3.7.9",
-      "product": "CPython",
-      "binaries": [
-        {
-          "os": "Windows",
-          "cpuArch": "X86_64",
-          "resources": [
-            {
-              "url": "https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe",
-              "size": 26940592,
-              "sha256": "e69ed52afb5a722e5c56f6c21d594e85c17cb29f12f18bb69751cf1714e0f987",
-              "fileName": "python-3.7.9-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
-            }
-          ]
-        },
-        {
-          "os": "Windows",
-          "cpuArch": "X86",
-          "resources": [
-            {
-              "url": "https://www.python.org/ftp/python/3.7.9/python-3.7.9.exe",
-              "size": 25875560,
-              "sha256": "769bb7c74ad1df6d7d74071cc16a984ff6182e4016e11b8949b93db487977220",
-              "fileName": "python-3.7.9.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
-            }
-          ]
-        }
-      ],
-      "title": "Python 3.7.9"
-    },
-    {
-      "version": "3.6.15",
-      "product": "CPython",
-      "sources": [
-        {
-          "url": "https://www.python.org/ftp/python/3.6.15/Python-3.6.15.tar.xz",
-          "size": 17223796,
-          "sha256": "6e28d7cdd6dd513dd190e49bca3972e20fcf455090ccf2ef3f1a227614135d91",
-          "fileName": "Python-3.6.15.tar.xz",
-          "type": "COMPRESSED"
-        },
-        {
-          "url": "https://www.python.org/ftp/python/3.6.15/Python-3.6.15.tgz",
-          "size": 23035095,
-          "sha256": "54570b7e339e2cfd72b29c7e2fdb47c0b7b18b7412e61de5b463fc087c13b043",
-          "fileName": "Python-3.6.15.tgz",
-          "type": "COMPRESSED"
-        }
-      ],
-      "title": "Python 3.6.15"
-    },
-    {
-      "version": "3.6.8",
-      "product": "CPython",
-      "binaries": [
-        {
-          "os": "Windows",
-          "cpuArch": "X86_64",
-          "resources": [
-            {
-              "url": "https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe",
-              "size": 31830944,
-              "sha256": "96088a58b7c43bc83b84e6b67f15e8706c614023dd64f9a5a14e81ff824adadc",
-              "fileName": "python-3.6.8-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
-            }
-          ]
-        },
-        {
-          "os": "Windows",
-          "cpuArch": "X86",
-          "resources": [
-            {
-              "url": "https://www.python.org/ftp/python/3.6.8/python-3.6.8.exe",
-              "size": 30807656,
-              "sha256": "89871d432bc06e4630d7b64cb1a8451e53c80e68de29029976b12aad7dbfa5a0",
-              "fileName": "python-3.6.8.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
-            }
-          ]
-        }
-      ],
-      "title": "Python 3.6.8"
-    },
-    {
-      "version": "2.7.18",
-      "product": "CPython",
-      "sources": [
-        {
-          "url": "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tar.xz",
-          "size": 12854736,
-          "sha256": "b62c0e7937551d0cc02b8fd5cb0f544f9405bafc9a54d3808ed4594812edef43",
-          "fileName": "Python-2.7.18.tar.xz",
-          "type": "COMPRESSED"
-        },
-        {
-          "url": "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz",
-          "size": 17539408,
-          "sha256": "da3080e3b488f648a3d7a4560ddee895284c3380b11d6de75edb986526b9a814",
-          "fileName": "Python-2.7.18.tgz",
-          "type": "COMPRESSED"
-        }
-      ],
-      "title": "Python 2.7.18"
     },
     {
       "version": "3.10.7313",

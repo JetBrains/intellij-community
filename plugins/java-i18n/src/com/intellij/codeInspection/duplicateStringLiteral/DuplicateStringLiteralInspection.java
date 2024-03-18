@@ -326,7 +326,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
       presentation.setTabName(title);
       presentation.setTabText(title);
       presentation.setShowCancelButton(true);
-      UsageView view = UsageViewManager.getInstance(project).showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(startElement) {
+      UsageView view = UsageViewManager.getInstance(project).showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(startElement, false) {
         @Override
         public String getPresentableText() {
           return "String literal: '" + ((PsiLiteralExpression)startElement).getValue() + "'";

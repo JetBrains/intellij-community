@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -17,6 +18,7 @@ import java.util.function.Supplier;
  * Locale-sensitive application-level cache service that is invalidated on locale environment change. E.g. new locale added.
  * Contains all the logic responsible for cache invalidation which may be changed in any moment.
  */
+@Service
 public final class LocaleSensitiveApplicationCacheService implements Disposable {
   private final ClearableLazyValue<Map<Class<?>, Object>> myMapProvider =
     ClearableLazyValue.create(() -> CollectionFactory.createConcurrentWeakMap());

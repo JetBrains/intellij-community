@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassComplexityInspection
+public final class AnonymousClassComplexityInspection
   extends ClassMetricInspection {
 
   private static final int DEFAULT_COMPLEXITY_LIMIT = 3;

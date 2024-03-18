@@ -9,7 +9,7 @@ const user = {
 
 const element = (
     <h1>
-        { (a, b) -> a + "it <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>" + user  }
+        { (a, b) -> a + "it <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>. And here are some correct English words to make the language detector work." + user  }
         First sentence. it <warning descr="IT_VBZ">are</warning> bad,
         <p>
             it is <TYPO descr="Typo: In word 'frend'">frend</TYPO> of human

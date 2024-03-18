@@ -10,12 +10,12 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 public class CreateMethodFromUsagePerformanceTest extends LightQuickFixTestCase {
 
   public void testWithHugeNumberOfParameters() {
-    PlatformTestUtil.startPerformanceTest("5000 args for a new method", 400_000, () -> {
+    PlatformTestUtil.newPerformanceTest("5000 args for a new method", () -> {
       String text = "class Foo {{ f<caret>oo(" + StringUtil.repeat("\"a\", ", 5000) + " \"a\");}}";
       configureFromFileText("Foo.java", text);
       doAction("Create method 'foo' in 'Foo'");
     })
-      .assertTiming();
+      .start();
   }
 
   @Override

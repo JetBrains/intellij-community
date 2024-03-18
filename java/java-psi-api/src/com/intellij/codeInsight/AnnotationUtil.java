@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
@@ -406,7 +407,7 @@ public class AnnotationUtil {
 
   public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, @NotNull String annotationFQN) {
     final Project project = elt.getProject();
-    return PsiUtil.isLanguageLevel5OrHigher(elt) &&
+    return PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, elt) &&
            JavaPsiFacade.getInstance(project).findClass(annotationFQN, elt.getResolveScope()) != null;
   }
 
@@ -806,7 +807,7 @@ public class AnnotationUtil {
         if (annoClass != null) {
           Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annoClass);
           if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE) &&
-              PsiUtil.isLanguageLevel8OrHigher(parent)) {
+              PsiUtil.isAvailable(JavaFeature.TYPE_ANNOTATIONS, parent)) {
             if (typeElement != null && targets.size() == 1) {
               // For ambiguous annotations, we assume that annotation on the outer type relates to the inner type
               // E.g. @Nullable Outer.Inner is equivalent to Outer.@Nullable Inner (if @Nullable is not type-use only)

@@ -8,8 +8,7 @@ class Test {
         return "return";
     }
 
-    @Nullable
-    private String newMethod(String variable) {
+    private @Nullable String newMethod(String variable) {
         if (1 == 1) return variable;
         if (2 == 1) return "literal";
         return null;

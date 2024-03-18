@@ -332,7 +332,6 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
     def wrappers = getActionsFromPopup(project, testRootDisposable, pattern)
-    wrappers.every { it.getPresentation() } // update best group name
     wrappers.sort()
     return wrappers
   }
@@ -352,7 +351,6 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       }
 
       ActionWrapper wrapper = matches[0]
-      wrapper.getPresentation() // update before show
       return wrapper.groupName
     }
   }
@@ -421,13 +419,9 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
                                           String pattern,
                                           MatchMode mode = MatchMode.NAME,
                                           boolean isAvailable = true) {
-    def model = new GotoActionModel(project, null, null)
-    def wrapper = new ActionWrapper(action, null, mode, model) {
-      @Override
-      boolean isAvailable() {
-        return isAvailable
-      }
-    }
+    def presentation = new Presentation()
+    presentation.setEnabledAndVisible(isAvailable)
+    def wrapper = new ActionWrapper(action, null, mode, presentation)
     new MatchedValue(wrapper, pattern, GotoActionModel.MatchedValueType.ACTION)
   }
 
@@ -446,6 +440,11 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static DefaultActionGroup createActionGroup(String text, boolean hideByDefault) {
     new DefaultActionGroup(text, true) {
+      @Override
+      ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT
+      }
+
       @Override
       void update(@NotNull AnActionEvent e) {
         e.presentation.setVisible(!hideByDefault || Boolean.valueOf(e.getData(SHOW_HIDDEN_KEY)))

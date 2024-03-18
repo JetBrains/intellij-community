@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -19,6 +18,8 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
@@ -38,13 +39,22 @@ open class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData
     }
 
     override val path: String
-        get() = dataSource.path
+        get() {
+            readField("path")
+            return dataSource.path
+        }
 
     override val dependencies: Set<KotlinScriptLibraryId>
-        get() = dataSource.dependencies
+        get() {
+            readField("dependencies")
+            return dataSource.dependencies
+        }
 
     override val entitySource: EntitySource
-        get() = dataSource.entitySource
+        get() {
+            readField("entitySource")
+            return dataSource.entitySource
+        }
 
     override fun connectionIdList(): List<ConnectionId> {
         return connections
@@ -222,11 +232,13 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Kotl
         return modifiable
     }
 
-    override fun createEntity(snapshot: EntityStorage): KotlinScriptEntity {
-        return getCached(snapshot) {
+    @OptIn(EntityStorageInstrumentationApi::class)
+    override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinScriptEntity {
+        val entityId = createEntityId()
+        return snapshot.initializeEntity(entityId) {
             val entity = KotlinScriptEntityImpl(this)
             entity.snapshot = snapshot
-            entity.id = createEntityId()
+            entity.id = entityId
             entity
         }
     }

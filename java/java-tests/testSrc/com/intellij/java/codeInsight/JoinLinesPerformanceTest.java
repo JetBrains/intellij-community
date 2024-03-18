@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -27,10 +26,9 @@ public class JoinLinesPerformanceTest extends LightJavaCodeInsightTestCase {
       }""";
     String inputText = text.replace("$bytes$", bytesOriginal);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 2500,
-                                          () -> executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES))
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES))
       .setup(() -> configureFromFileText("X.java", inputText))
-      .assertTiming();
+      .start();
     String outputText = text.replace("$bytes$", bytesResult);
     checkResultByText(outputText);
   }

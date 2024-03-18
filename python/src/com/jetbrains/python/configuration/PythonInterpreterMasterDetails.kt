@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.ToggleActionButton
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
@@ -229,8 +228,10 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
     }
   }
 
-  private inner class ToggleVirtualEnvFilterButton : ToggleActionButton(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"),
-                                                                        AllIcons.General.Filter), DumbAware {
+  private inner class ToggleVirtualEnvFilterButton
+    : DumbAwareToggleAction(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"),
+                            Presentation.NULL_STRING, AllIcons.General.Filter) {
+
     override fun isSelected(e: AnActionEvent): Boolean = hideOtherProjectVirtualenvs
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -246,9 +247,7 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
       hideOtherProjectVirtualenvs = state
     }
 
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
   /**

@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(a: Int, b: Int) {
     var t = a
     <selection>while (t != (a + b)) {

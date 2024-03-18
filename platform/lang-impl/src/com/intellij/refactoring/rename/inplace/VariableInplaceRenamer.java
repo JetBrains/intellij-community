@@ -88,6 +88,10 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   public boolean performInplaceRename() {
+    return performInplaceRename(null);
+  }
+
+  public boolean performInplaceRename(@Nullable Collection<String> nameSuggestions) {
     final String refactoringId = getRefactoringId();
     PsiNamedElement elementToRename = getVariable();
     if (refactoringId != null) {
@@ -97,7 +101,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       myProject.getMessageBus()
         .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
     }
-    return performInplaceRefactoring(null);
+    return performInplaceRefactoring(nameSuggestions == null ? null : new LinkedHashSet<>(nameSuggestions));
   }
 
   @Override

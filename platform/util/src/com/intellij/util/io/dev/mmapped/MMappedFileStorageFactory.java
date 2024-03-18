@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.mmapped;
 
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.StorageFactory;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock.Region;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +28,18 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
 
   private final int pageSize;
+
   /**
-   * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize)?
+   * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize), and there is no marker of unfinished
+   * file expansion?
    * true: expand (and fill with zeroes) the file, so it is page-aligned (fileSize=N * pageSize)
    * false: throw exception
+   * Useful mostly useful for something like backward compatibility: e.g. increase pageSize is a safe change for many
+   * storages -- there is no migration needed, except to align the file size to the new pageSize.
    */
   private final boolean expandFileIfNotPageAligned;
 
-  /** If directories along the path to the file are not exist yet -- create them */
+  /** If directories along the path to the file do not exist yet -- create them */
   private final boolean createParentDirectoriesIfNotExist;
 
   private MMappedFileStorageFactory(int pageSize,
@@ -55,7 +61,8 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
   }
 
   /**
-   * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize)?
+   * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize), and there is no marker of unfinished
+   * file expansion?
    * true: expand (and fill with zeroes) the file, so it is page-aligned (fileSize=N * pageSize)
    * false: throw IOException
    */
@@ -73,29 +80,66 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
   @Override
   public @NotNull MMappedFileStorage open(@NotNull Path storagePath) throws IOException {
-    Path parentDir = storagePath.getParent().toAbsolutePath();
-    if (!Files.exists(parentDir)) {
-      if (createParentDirectoriesIfNotExist) {
-        Files.createDirectories(parentDir);
-      }
-      else {
-        throw new NoSuchFileException(
-          "Parent directory of [" + storagePath.toAbsolutePath() + "] is not exist, and .createDirectoriesIfNotExist=false");
-      }
-    }
-    long fileSize = Files.exists(storagePath) ? Files.size(storagePath) : 0;
+    Path absoluteStoragePath = storagePath.toAbsolutePath();
+
+    boolean storageFileExists = Files.exists(absoluteStoragePath);
+
+    if (!storageFileExists) {
+      checkParentDirectories(absoluteStoragePath);
+    }//if storage file does exist => parentDir definitely does exist also
+
+    RegionAllocationAtomicityLock regionAllocationLock = RegionAllocationAtomicityLock.defaultLock(absoluteStoragePath);
+
+    long fileSize = storageFileExists ? Files.size(absoluteStoragePath) : 0;
+
     if (fileSize % pageSize != 0) {
-      if (!expandFileIfNotPageAligned) {
-        throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
-      }
-      //else:expand (zeroes) file up to next page
-      long fileSizeRoundedUpToPageSize = (fileSize / pageSize) + 1;
+      dealWithPageUnAlignedFileSize(absoluteStoragePath, fileSize, regionAllocationLock);
+    }
+
+    return new MMappedFileStorage(absoluteStoragePath, pageSize, regionAllocationLock);
+  }
+
+  private void dealWithPageUnAlignedFileSize(Path storagePath,
+                                             long fileSize,
+                                             RegionAllocationAtomicityLock regionAllocationLock) throws IOException {
+    // It is generally an error to have file un-aligned with page size.
+    //    One exception is if next-page-expansion wasn't finished because of app crash -> check for it.
+    //    Another exception: we're explicitly asked to ignore that and just expand the file to page-aligned size
+    //    Otherwise: fail
+
+    //Maybe there was a file expansion interrupted by app crash/kill?
+    long startOfSuspiciousRegion = (fileSize / pageSize) * pageSize;
+    Region region = regionAllocationLock.region(startOfSuspiciousRegion, pageSize);
+    if (region.isUnfinished()) {
+      //There is an 'unfinished' region -- i.e. file expansion and zeroing started, but was interrupted by app crash/kill.
+      // MMappedFileStorage will deal with it, no need to do anything here
+      return;
+    }
+
+    if (expandFileIfNotPageAligned) {
+      //expand (zeroes) file up to the next page:
+      long fileSizeRoundedUpToPageSize = ((fileSize / pageSize) + 1) * pageSize;
       try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
         IOUtil.allocateFileRegion(channel, fileSizeRoundedUpToPageSize);
       }
+      return;
     }
 
-    return new MMappedFileStorage(storagePath, pageSize);
+    throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
+  }
+
+  private void checkParentDirectories(@NotNull Path storagePath) throws IOException {
+    Path parentDir = storagePath.getParent();
+    if (Files.exists(parentDir)) {
+      return;
+    }
+
+    if (createParentDirectoriesIfNotExist) {
+      Files.createDirectories(parentDir);
+      return;
+    }
+
+    throw new NoSuchFileException("Parent directory of [" + storagePath + "] is not exist, and .createDirectoriesIfNotExist=false");
   }
 
   @Override

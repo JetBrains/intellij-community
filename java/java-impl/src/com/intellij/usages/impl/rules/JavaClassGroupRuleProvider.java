@@ -7,7 +7,7 @@ import com.intellij.usages.rules.UsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaClassGroupRuleProvider implements FileStructureGroupRuleProvider {
+public final class JavaClassGroupRuleProvider implements FileStructureGroupRuleProvider {
   @Override
   public UsageGroupingRule getUsageGroupingRule(@NotNull final Project project) {
     return new ClassGroupingRule();

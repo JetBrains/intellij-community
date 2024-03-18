@@ -220,7 +220,8 @@ class JCefImageViewer(private val myFile: VirtualFile,
       var resourceHandler: CefStreamResourceHandler? = null
       stream?.let {
         try {
-          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer)
+          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer,
+                                                     mapOf("Content-Security-Policy" to "script-src 'none'"))
         }
         catch (_: IncorrectOperationException) { // The viewer has been disposed just return null that will reject all requests
         }

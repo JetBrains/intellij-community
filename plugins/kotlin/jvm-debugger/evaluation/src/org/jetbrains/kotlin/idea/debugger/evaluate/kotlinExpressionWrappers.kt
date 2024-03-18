@@ -14,8 +14,8 @@ internal interface KotlinExpressionWrapper {
     fun isApplicable(expression: KtExpression): Boolean
 }
 
-internal class KotlinToStringWrapper : KotlinExpressionWrapper {
-    override fun createWrappedExpressionText(expressionText: String) = "($expressionText).toString()"
+internal class KotlinValueClassToStringWrapper : KotlinExpressionWrapper {
+    override fun createWrappedExpressionText(expressionText: String) = "($expressionText) as Any?"
 
     @RequiresReadLock
     override fun isApplicable(expression: KtExpression) = analyze(expression) {

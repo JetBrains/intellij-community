@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -71,7 +71,7 @@ internal class GHAccountsDetailsProvider(
 
   override suspend fun loadAvatar(account: GithubAccount, url: String): Image? {
     val apiExecutor = executorSupplier(account) ?: return null
-    return CachingGHUserAvatarLoader.getInstance().requestAvatar(apiExecutor, url).await()
+    return CachingGHUserAvatarLoader.getInstance().requestAvatar(apiExecutor, url).asDeferred().await()
   }
 
   companion object {

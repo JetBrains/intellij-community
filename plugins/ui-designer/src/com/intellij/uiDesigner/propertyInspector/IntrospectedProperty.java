@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.application.AccessToken;
@@ -22,24 +22,24 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> {
-  protected final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
+  protected static final Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
 
   /**
    * This method is used to set property value to "delegee" JComponent
    */
-  @NotNull protected final Method myReadMethod;
+  protected final @NotNull Method myReadMethod;
   /**
    * This method is used to get property value from "delegee" JComponent
    */
-  @NotNull private final Method myWriteMethod;
+  private final @NotNull Method myWriteMethod;
 
   private final boolean myStoreAsClient;
 
-  @NonNls private static final String INTRO_PREFIX = "Intro:";
+  private static final @NonNls String INTRO_PREFIX = "Intro:";
 
   public IntrospectedProperty(final String name,
-                              @NotNull final Method readMethod,
-                              @NotNull final Method writeMethod,
+                              final @NotNull Method readMethod,
+                              final @NotNull Method writeMethod,
                               final boolean storeAsClient) {
     super(null, name);
     myReadMethod = readMethod;

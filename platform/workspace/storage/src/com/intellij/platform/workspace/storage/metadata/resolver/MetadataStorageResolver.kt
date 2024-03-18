@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.metadata.resolver
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
+import com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
 import com.intellij.platform.workspace.storage.metadata.exceptions.MissingMetadataStorage
 
 
@@ -12,18 +13,27 @@ internal object MetadataStorageResolver {
 
   private const val GENERATED_METADATA_STORAGE_IMPL_NAME = "MetadataStorageImpl"
 
-  internal fun resolveMetadataStorageOrNull(typesResolver: EntityTypesResolver, packageName: String,
-                                            pluginId: PluginId): MetadataStorage? {
-    return metadataStorageCache.getOrPut(pluginId to packageName) {
-      typesResolver.resolveClass(metadataStorageFqn(packageName), pluginId).metadataStorageInstance
+  internal fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String,
+                                     pluginId: PluginId): MetadataStorage {
+    val packageName = extractPackageName(typeFqn)
+    val metadataStorage = metadataStorageCache.getOrPut(pluginId to packageName) {
+      val metadataStorageClass: Class<*>
+      try {
+        metadataStorageClass = typesResolver.resolveClass(metadataStorageFqn(packageName), pluginId)
+      } catch (e : ClassNotFoundException) {
+        throw MissingMetadataStorage(metadataStorageFqn(packageName), typeFqn)
+      }
+      val metadataStorage = metadataStorageClass.metadataStorageInstance
+      if (metadataStorage is MetadataStorageBridge) {
+        metadataStorage.metadataStorage
+      } else {
+        metadataStorage
+      }
     }
+    return metadataStorage ?: throw MissingMetadataStorage(metadataStorageFqn(packageName), typeFqn)
   }
 
-  internal fun resolveMetadataStorage(typesResolver: EntityTypesResolver, packageName: String,
-                                      pluginId: PluginId): MetadataStorage =
-    resolveMetadataStorageOrNull(typesResolver, packageName, pluginId)
-    ?: throw MissingMetadataStorage(metadataStorageFqn(packageName))
-
+  private fun extractPackageName(typeFqn: String): String = typeFqn.substringBeforeLast('.', "")
 
   private fun metadataStorageFqn(packageName: String): String = "$packageName.$GENERATED_METADATA_STORAGE_IMPL_NAME"
 }

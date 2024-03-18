@@ -64,6 +64,7 @@ public final class HtmlUtil {
   public static final @NlsSafe String TEMPLATE_TAG_NAME = "template";
   public static final @NlsSafe String TEXTAREA_TAG_NAME = "textarea";
   public static final @NlsSafe String TITLE_TAG_NAME = "title";
+  public static final @NlsSafe String SLOT_TAG_NAME = "slot";
 
   public static final @NlsSafe String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
   public static final @NlsSafe String SRC_ATTRIBUTE_NAME = "src";
@@ -71,6 +72,7 @@ public final class HtmlUtil {
   public static final @NlsSafe String CLASS_ATTRIBUTE_NAME = "class";
   public static final @NlsSafe String TYPE_ATTRIBUTE_NAME = "type";
   public static final @NlsSafe String LANGUAGE_ATTRIBUTE_NAME = "language";
+  public static final @NlsSafe String LANG_ATTRIBUTE_NAME = "lang";
 
   public static final @NonNls String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   public static final @NonNls String SVG_NAMESPACE = "http://www.w3.org/2000/svg";

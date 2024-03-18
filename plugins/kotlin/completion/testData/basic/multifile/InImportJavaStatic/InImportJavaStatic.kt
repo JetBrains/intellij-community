@@ -3,6 +3,6 @@ package first
 
 import second.InImportJavaStatic.<caret>
 
-// EXIST: {"lookupString":"CONST","typeText":"String!","icon":"fileTypes/java.svg","itemText":"CONST"}
-// EXIST: {"lookupString":"statMeth","tailText":"()","typeText":"Unit","icon":"fileTypes/java.svg","allLookupStrings":"statMeth","itemText":"statMeth"}
+// EXIST: {"lookupString":"CONST","typeText":"String!","icon":"Field","itemText":"CONST"}
+// EXIST: {"lookupString":"statMeth","tailText":"()","typeText":"Unit","icon":"Method","allLookupStrings":"statMeth","itemText":"statMeth"}
 // NOTHING_ELSE

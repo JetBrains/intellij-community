@@ -9,13 +9,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -24,8 +21,7 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   private final float myStep;
   private final boolean myGlobal;
 
-  protected ChangeEditorFontSizeAction(@NotNull Supplier<String> text, float increaseStep, boolean global) {
-    super(text);
+  protected ChangeEditorFontSizeAction(float increaseStep, boolean global) {
     myStep = increaseStep;
     myGlobal = global;
   }
@@ -69,25 +65,25 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
 
   public static final class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {
     private IncreaseEditorFontSize() {
-      super(EditorBundle.messagePointer("increase.editor.font"), 1, false);
+      super(1, false);
     }
   }
 
   public static final class DecreaseEditorFontSize extends ChangeEditorFontSizeAction {
     private DecreaseEditorFontSize() {
-      super(EditorBundle.messagePointer("decrease.editor.font"), -1, false);
+      super(-1, false);
     }
   }
 
   public static final class IncreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
     private IncreaseEditorFontSizeGlobal() {
-      super(EditorBundle.messagePointer("increase.all.editors.font"), 1, true);
+      super(1, true);
     }
   }
 
   public static final class DecreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
     private DecreaseEditorFontSizeGlobal() {
-      super(EditorBundle.messagePointer("decrease.all.editors.font"), -1, true);
+      super(-1, true);
     }
   }
 }

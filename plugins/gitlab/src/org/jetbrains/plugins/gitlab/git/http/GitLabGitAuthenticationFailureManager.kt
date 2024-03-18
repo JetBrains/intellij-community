@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.git.http
 
 import com.intellij.collaboration.util.serviceGet
 import com.intellij.openapi.components.Service
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount

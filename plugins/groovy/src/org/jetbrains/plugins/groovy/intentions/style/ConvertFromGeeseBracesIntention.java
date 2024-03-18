@@ -15,25 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.intentions.style;
 
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -42,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertFromGeeseBracesIntention extends Intention {
+public class ConvertFromGeeseBracesIntention extends GrPsiUpdateIntention {
   private static final Logger LOG = Logger.getInstance(ConvertFromGeeseBracesIntention.class);
 
   private static final PsiElementPredicate MY_PREDICATE = new PsiElementPredicate() {
@@ -95,16 +93,14 @@ public class ConvertFromGeeseBracesIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (PsiImplUtil.isWhiteSpaceOrNls(element)) {
       element = PsiTreeUtil.prevLeaf(element);
     }
     LOG.assertTrue(GeeseUtil.isClosureRBrace(element));
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiFile file = element.getContainingFile();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
 
     PsiElement first = null;
     PsiElement last = null;
@@ -132,7 +128,7 @@ public class ConvertFromGeeseBracesIntention extends Intention {
     }
 
 
-    CodeStyleManager.getInstance(project).reformatText(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+    CodeStyleManager.getInstance(context.project()).reformatText(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
   }
 
 

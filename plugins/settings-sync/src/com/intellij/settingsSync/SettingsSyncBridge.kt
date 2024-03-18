@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
@@ -186,6 +187,13 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       }
       is SyncSettingsEvent.SyncRequest -> {
         checkServer()
+      }
+      is SyncSettingsEvent.RestoreSettingsSnapshot -> {
+        val previousState = collectCurrentState()
+        settingsLog.restoreStateAt(event.hash)
+        pushToIde(settingsLog.collectCurrentSnapshot(), settingsLog.getIdePosition(), null)
+        mergeAndPush(previousState.idePosition, previousState.cloudPosition, MUST_PUSH)
+        event.onComplete.run()
       }
     }
   }

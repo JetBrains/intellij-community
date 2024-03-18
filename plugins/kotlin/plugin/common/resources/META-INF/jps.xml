@@ -41,7 +41,7 @@
     <!-- Workspace Model -->
     <workspaceModel.customFacetRelatedEntitySerializer implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
     <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor" />
-    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="false" restartRequired="true"
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="true" restartRequired="true"
                  description="Enable Kotlin facet work via own entities at workspace model"/>
   </extensions>
 

@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 @State(name = "EntryPointsManager")
-public class EntryPointsManagerImpl extends EntryPointsManagerBase implements PersistentStateComponent<Element> {
+public final class EntryPointsManagerImpl extends EntryPointsManagerBase implements PersistentStateComponent<Element> {
   public EntryPointsManagerImpl(Project project) {
     super(project);
   }

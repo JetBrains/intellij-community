@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.analysis.providers.trackers;
 
@@ -26,6 +26,26 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
     @TestMetadata("contract.kt")
     public void testContract() throws Exception {
         runTest("testData/outOfBlockProjectWide/contract.kt");
+    }
+
+    @TestMetadata("contractAddition.kt")
+    public void testContractAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractAddition.kt");
+    }
+
+    @TestMetadata("contractRemoval.kt")
+    public void testContractRemoval() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractRemoval.kt");
+    }
+
+    @TestMetadata("contractUnwrapping.kt")
+    public void testContractUnwrapping() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractUnwrapping.kt");
+    }
+
+    @TestMetadata("contractWrapping.kt")
+    public void testContractWrapping() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractWrapping.kt");
     }
 
     @TestMetadata("funInCompanionObject.kt")

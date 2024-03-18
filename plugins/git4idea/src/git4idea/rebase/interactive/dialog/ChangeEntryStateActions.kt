@@ -8,7 +8,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.TableUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
@@ -19,6 +18,7 @@ import java.awt.event.InputEvent
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JButton
+import javax.swing.JComponent
 import javax.swing.KeyStroke
 
 private fun getActionShortcutList(actionId: String): List<Shortcut> = KeymapUtil.getActiveKeymapShortcuts(actionId).shortcuts.toList()
@@ -50,7 +50,7 @@ internal abstract class ChangeEntryStateSimpleAction(
   icon: Icon?,
   private val table: GitRebaseCommitsTableView,
   additionalShortcuts: List<Shortcut> = listOf()
-) : AnActionButton(title, description, icon), DumbAware {
+) : AnAction(title, description, icon), DumbAware {
   constructor(
     action: GitRebaseEntry.KnownAction,
     icon: Icon?,
@@ -76,7 +76,7 @@ internal abstract class ChangeEntryStateSimpleAction(
     return ActionUpdateThread.EDT
   }
 
-  override fun updateButton(e: AnActionEvent) {
+  override fun update(e: AnActionEvent) {
     val hasSelection = table.editingRow == -1 && table.selectedRowCount != 0
     e.presentation.isEnabled = hasSelection && isEntryActionEnabled(table.selectedRows.toList(), table.model.rebaseTodoModel)
   }
@@ -132,9 +132,8 @@ internal abstract class ChangeEntryStateButtonAction(
 
   private val buttonPanel = button.withLeftToolbarBorder()
 
-  override fun updateButton(e: AnActionEvent) {
-    super.updateButton(e)
-    button.isEnabled = e.presentation.isEnabled
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    button.isEnabled = presentation.isEnabled
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String) = buttonPanel

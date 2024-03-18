@@ -20,15 +20,49 @@ data class PerformanceMetrics(
     /**
      * Metric used to measure duration of events in ms
      */
-    data class Duration(override val name: String) : MetricId()
+    data class Duration internal constructor(override val name: String) : MetricId()
 
     /**
      * Metric used to count the number of times an event has occurred
      */
-    data class Counter(override val name: String) : MetricId()
+    data class Counter internal constructor(override val name: String) : MetricId()
   }
 
-  data class Metric(val id: MetricId, val value: Long, val compareSetting: CompareSetting = CompareSetting.notComparing)
+  data class Metric private constructor(val id: MetricId,
+                                        val value: Long,
+                                        val compareSetting: CompareSetting = CompareSetting.notComparing) {
+    companion object {
+      /**
+       * Creates instance of the Counter metric type.
+       * @see com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
+       */
+      fun newCounter(name: String, value: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric {
+        return Metric(id = MetricId.Counter(name), value = value, compareSetting)
+      }
+
+      /**
+       * Creates instance of the Duration metric type.
+       * @see com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
+       */
+      fun newDuration(name: String, durationMillis: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric {
+        return Metric(id = MetricId.Duration(name), value = durationMillis, compareSetting)
+      }
+    }
+  }
+
+  companion object {
+    /**
+     * Shortcut for [com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter]
+     */
+    fun newCounter(name: String, value: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric =
+      Metric.newCounter(name, value, compareSetting)
+
+    /**
+     * Shortcut for [com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration]
+     */
+    fun newDuration(name: String, durationMillis: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric =
+      Metric.newDuration(name, durationMillis, compareSetting)
+  }
 }
 
 fun PerformanceMetrics.Metric.toJson() = ApplicationMetricDto(

@@ -23,7 +23,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemGetenvInspection extends BaseInspection {
+public final class SystemGetenvInspection extends BaseInspection {
 
   @Override
   @NotNull

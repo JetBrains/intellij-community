@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -214,10 +214,13 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private boolean shouldApplyContext(DebuggerContextImpl context) {
     SuspendContextImpl suspendContext = context.getSuspendContext();
-    SuspendContextImpl currentContext = (SuspendContextImpl)getSession().getSuspendContext();
-    if (suspendContext != null && !suspendContext.equals(currentContext)) return true;
-    JavaExecutionStack currentExecutionStack = currentContext != null ? currentContext.getActiveExecutionStack() : null;
-    return currentExecutionStack == null || !Comparing.equal(context.getThreadProxy(), currentExecutionStack.getThreadProxy());
+    if (getSession().getSuspendContext() instanceof SuspendContextImpl currentContext) {
+      if (suspendContext == null || suspendContext.equals(currentContext)) {
+        JavaExecutionStack currentExecutionStack = currentContext.getActiveExecutionStack();
+        return currentExecutionStack == null || !Comparing.equal(context.getThreadProxy(), currentExecutionStack.getThreadProxy());
+      }
+    }
+    return true;
   }
 
   public void saveNodeHistory() {

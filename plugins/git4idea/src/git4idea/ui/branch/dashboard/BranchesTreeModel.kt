@@ -6,10 +6,10 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_REPOSITORY
 import com.intellij.dvcs.ui.BranchActionGroup
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ThreeState
+import git4idea.GitBranch
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -23,13 +23,14 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 internal data class RemoteInfo(val remoteName: String, val repository: GitRepository?)
 
-internal data class BranchInfo(val branchName: @NlsSafe String,
+internal data class BranchInfo(val branch: GitBranch,
                                val isLocal: Boolean,
                                val isCurrent: Boolean,
                                var isFavorite: Boolean,
                                var incomingOutgoingState: IncomingOutgoing? = null,
                                val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
+  val branchName: @NlsSafe String get() = branch.name
   override fun toString() = branchName
 }
 
@@ -51,7 +52,7 @@ internal data class BranchNodeDescriptor(val type: NodeType,
                                          val branchInfo: BranchInfo? = null,
                                          val repository: GitRepository? = null,
                                          val displayName: @Nls String? = resolveDisplayName(branchInfo, repository),
-                                         val parent: BranchNodeDescriptor? = null) {
+                                         var parent: BranchNodeDescriptor? = null) {
   override fun toString(): String {
     val suffix = branchInfo?.branchName ?: displayName
     return if (suffix != null) "$type:$suffix" else "$type"
@@ -111,6 +112,9 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
 
   fun populateFrom(branches: Sequence<BranchInfo>, groupingConfig: Map<GroupingKey, Boolean>) {
     branches.forEach { branch -> populateFrom(branch, groupingConfig) }
+    branchNodeDescriptors.forEach { (parent, children)  ->
+      children.forEach { it.parent = parent }
+    }
   }
 
   private fun populateFrom(br: BranchInfo, groupingConfig: Map<GroupingKey, Boolean>) {

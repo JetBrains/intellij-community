@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -41,7 +42,7 @@ import java.util.List;
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
  * and provide your own. It's easier to debug, but harder to write.<p>
  *
- * Q: How do I get automatic lookup element filtering by prefix?<br>
+ * Q: How do I get an automatic lookup element filtering by prefix?<br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
  * automatically, with prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
  * the caret position.
@@ -64,12 +65,12 @@ import java.util.List;
  * Q: I'm not satisfied that completion just inserts the item's lookup string on item selection. How to make it write something else?<br>
  * A: See {@link LookupElement#handleInsert(InsertionContext)}.<p>
  *
- * Q: What if I select item with TAB key?<br>
- * A: Semantics is, that the identifier that you're standing inside gets removed completely, and then the lookup string is inserted. You can change
+ * Q: What if I select item with a TAB key?<br>
+ * A: Semantics is that the identifier that you're standing inside gets removed completely, and then the lookup string is inserted. You can change
  * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
  * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
  *
- * Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests me in some place aren't all that relevant,
+ * Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests me in some places aren't all that relevant,
  * so I'd be happy to filter out 42 of them. How do I do this?<br>
  * A: This is a bit harder than just adding variants. First, you should invoke
  * {@link CompletionResultSet#runRemainingContributors(CompletionParameters, Consumer)}.
@@ -82,7 +83,7 @@ import java.util.List;
  *
  * Q: How are lookup elements sorted?<br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
- * Also, there's a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
+ * Also, there are a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
  * items. To control lookup elements order you may implement {@link CompletionWeigher} or use {@link PrioritizedLookupElement}.<br>
  * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
@@ -123,7 +124,7 @@ import java.util.List;
  * but I want completion to keep going, matching against the typed character.<br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  */
-public abstract class CompletionContributor {
+public abstract class CompletionContributor implements PossiblyDumbAware {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
@@ -193,7 +194,7 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to auto-insert some item (typically - the only one).
+   * Called when the completion is finished quickly, lookup hasn't been shown and gives the possibility to auto-insert some item (typically - the only one).
    */
   public @Nullable AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     return null;
@@ -212,7 +213,7 @@ public abstract class CompletionContributor {
    * Invoked in a read action in parallel to the completion process. Used to calculate the replacement offset
    * (see {@link CompletionInitializationContext#setReplacementOffset(int)})
    * if it takes too much time to spend it in {@link #beforeCompletion(CompletionInitializationContext)},
-   * e.g. doing {@link com.intellij.psi.PsiFile#findReferenceAt(int)}
+   * e.g., doing {@link com.intellij.psi.PsiFile#findReferenceAt(int)}
    *
    * Guaranteed to be invoked before any lookup element is selected
    *
@@ -221,10 +222,11 @@ public abstract class CompletionContributor {
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
   }
 
-  public static @NotNull List<CompletionContributor> forParameters(final @NotNull CompletionParameters parameters) {
+  public static @NotNull List<CompletionContributor> forParameters(@NotNull CompletionParameters parameters) {
     return ReadAction.compute(() -> {
       PsiElement position = parameters.getPosition();
-      return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()), position.getProject());
+      return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()),
+                                      position.getProject());
     });
   }
 

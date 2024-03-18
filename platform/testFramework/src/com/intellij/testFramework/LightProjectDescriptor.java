@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
@@ -8,6 +9,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
@@ -76,9 +78,11 @@ public class LightProjectDescriptor {
       throw new RuntimeException(e);
     }
 
-    return WriteAction.compute(() -> {
+    Module module = WriteAction.compute(() -> {
       return ModuleManager.getInstance(project).newModule(moduleFile, getModuleTypeId());
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
   public @NotNull String getModuleTypeId() {
@@ -135,7 +139,10 @@ public class LightProjectDescriptor {
     };
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.registerIndexableSet(indexableFileSet, project);
-    Disposer.register(project, () -> fileBasedIndex.removeIndexableSet(indexableFileSet));
+    Disposer.register(project, () -> {
+      fileBasedIndex.onProjectClosing(indexableFileSet);
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    });
   }
 
   protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
@@ -152,10 +159,12 @@ public class LightProjectDescriptor {
 
       configureModule(module, model, contentEntry);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
     WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, parentDisposable));
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 
   protected @NotNull JpsModuleSourceRootType<?> getSourceRootType() {
@@ -174,6 +183,11 @@ public class LightProjectDescriptor {
       }
       child.delete(this);
     }
+  }
+
+  @NotNull
+  public Path generateProjectPath() {
+    return TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
   }
 
   protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) { }

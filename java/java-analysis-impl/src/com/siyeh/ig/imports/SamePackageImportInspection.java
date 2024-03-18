@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import org.jetbrains.annotations.NotNull;
 
-public class SamePackageImportInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class SamePackageImportInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

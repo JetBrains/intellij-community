@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
@@ -143,8 +144,15 @@ fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesi
 fun KtDeclaration.isExpectDeclaration(): Boolean =
     when {
         hasExpectModifier() -> true
+        this is KtParameter -> ownerFunction?.isExpectDeclaration() == true
         else -> containingClassOrObject?.isExpectDeclaration() == true
     }
+
+fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
+    hasActualModifier() -> true
+    this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
+    else -> false
+}
 
 fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
@@ -238,6 +246,12 @@ fun KtExpression.unwrapIfLabeled(): KtExpression {
     }
 }
 
+fun KtExpression.previousStatement(): KtExpression? {
+    val statement = unwrapIfLabeled()
+    if (statement.parent !is KtBlockExpression) return null
+    return statement.siblings(forward = false, withItself = false).firstIsInstanceOrNull()
+}
+
 fun getCallElement(argument: KtValueArgument): KtCallElement? {
     return if (argument is KtLambdaArgument) {
         argument.parent as? KtCallElement
@@ -245,3 +259,6 @@ fun getCallElement(argument: KtValueArgument): KtCallElement? {
         argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
     }
 }
+
+val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null

@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -50,8 +50,8 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiField field = (PsiField)infos[0];
     fixes.add(MakeFieldFinalFix.buildFixUnconditional(field));
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-      fixes.add(EntryPointsManagerBase.getInstance(field.getProject()).new AddImplicitlyWriteAnnotation(annoName));
+    SpecialAnnotationsUtilBase.processUnknownAnnotations(field, annoName -> {
+      fixes.add(LocalQuickFix.from(EntryPointsManagerBase.createAddImplicitWriteAnnotation(annoName)));
       return true;
     });
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);

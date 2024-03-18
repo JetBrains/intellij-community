@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "PyNamespacePackagesService")
-public class PyNamespacePackagesService implements PersistentStateComponent<PyNamespacePackagesService> {
+public final class PyNamespacePackagesService implements PersistentStateComponent<PyNamespacePackagesService> {
   private final List<VirtualFile> myNamespacePackageFolders = new ArrayList<>();
   private final FoldersComponentTools myTools = new FoldersComponentTools(myNamespacePackageFolders);
   private final Module myModule;

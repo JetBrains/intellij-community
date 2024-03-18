@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.editor.Document;
@@ -29,48 +29,38 @@ public interface FileDocumentManagerListener extends EventListener {
     new Topic<>(FileDocumentManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   /**
-   * Fired before processing {@link FileDocumentManager#saveAllDocuments()}. Can be used by plugins
-   * which need to perform additional save operations when documents, rather than settings,
-   * are saved.
+   * Fired before processing {@link FileDocumentManager#saveAllDocuments()}.
+   * Can be used by plugins which need to perform additional save operations when documents are saved.
    */
-  default void beforeAllDocumentsSaving() {
-  }
+  default void beforeAllDocumentsSaving() { }
 
   /**
    * Fired before processing {@link FileDocumentManager#saveDocument(Document)}.
    * Fired even document is unchanged.
    */
-  default void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
-  }
+  default void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) { }
 
   /**
    * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
-  default void beforeDocumentSaving(@NotNull Document document) {
-  }
+  default void beforeDocumentSaving(@NotNull Document document) { }
 
   /**
    * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
-  default void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
-  }
+  default void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) { }
 
-  default void fileWithNoDocumentChanged(@NotNull VirtualFile file) {
-  }
+  default void fileWithNoDocumentChanged(@NotNull VirtualFile file) { }
 
-  default void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-  }
+  default void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) { }
 
-  default void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-  }
+  default void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) { }
 
   default void unsavedDocumentDropped(@NotNull Document document) {
     unsavedDocumentsDropped();
   }
 
-  default void unsavedDocumentsDropped() {
-  }
+  default void unsavedDocumentsDropped() { }
 
-  default void afterDocumentUnbound(@NotNull VirtualFile file, @NotNull Document document) {
-  }
+  default void afterDocumentUnbound(@NotNull VirtualFile file, @NotNull Document document) { }
 }

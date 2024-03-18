@@ -3,9 +3,9 @@ package com.intellij.ide
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.childScope
 import junit.framework.TestCase.assertFalse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel

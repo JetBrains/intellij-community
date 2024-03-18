@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.tooling;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.*;
 
+@ApiStatus.Internal
 public interface MessageBuilder {
 
   @CheckReturnValue
@@ -29,6 +30,9 @@ public interface MessageBuilder {
 
   @CheckReturnValue
   @NotNull MessageBuilder withProject(Project project);
+
+  @CheckReturnValue
+  @NotNull MessageBuilder withInternal(boolean isInternal);
 
   @NotNull Message build();
 }

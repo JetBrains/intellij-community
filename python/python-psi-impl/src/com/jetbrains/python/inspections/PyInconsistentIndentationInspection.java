@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyInconsistentIndentationInspection extends PyInspection {
+public final class PyInconsistentIndentationInspection extends PyInspection {
 
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {

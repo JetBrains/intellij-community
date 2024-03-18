@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
+public final class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override
   @NotNull
   public String getText() {
@@ -24,6 +24,7 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
   protected boolean isAvailable(@NotNull PsiField field) {
     if (!super.isAvailable(field)) return false;
     PsiClass containingClass = field.getContainingClass();
+    if (containingClass instanceof PsiImplicitClass) return false;
     assert containingClass != null;
     PsiMethod[] constructors = containingClass.getConstructors();
     if (constructors.length > 0 && ContainerUtil.all(constructors, c -> c instanceof SyntheticElement)) return false;

@@ -1,20 +1,22 @@
 <idea-plugin package="com.intellij.ide.startup.importSettings">
   <actions>
     <!--suppress PluginXmlI18n -->
-    <action id="ProductChooserDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ProductChooserDialogAction" text="[INTERNAL] 1 Transfer: Show Product Chooser Dialog" internal="true"/>
-    <action id="ProductChooserSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ProductChooserSingleDialogAction" text="[INTERNAL] 1s Transfer: Show Product Chooser Dialog Single" internal="true"/>
-    <!--suppress PluginXmlI18n -->
-    <action id="SettingChooserDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.SettingChooserDialogAction" text="[INTERNAL] 2 Transfer: Show Setting Chooser Dialog" internal="true"/>
-    <action id="SettingChooserSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.SettingChooserSimpleDialogAction" text="[INTERNAL] 2s Transfer: Show Setting Chooser Dialog Single" internal="true"/>
-
-    <action id="ImportProgressDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressDialogAction" text="[INTERNAL] 3 Transfer: Import Progress Dialog" internal="true"/>
-    <action id="ImportProgressSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSimpleDialogAction" text="[INTERNAL] 3simple Transfer: Simple Import Progress Dialog" internal="true"/>
-    <action id="ImportProgressSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSingleDialogAction" text="[INTERNAL] 3s Transfer: Import Progress Dialog Single" internal="true"/>
-
-    <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
-
-
+    <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
+    <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
+    <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
+    <!--suppress PluginXmlCapitalization -->
+    <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDemoAction"
+            internal="true" text="Test transfer settings"/>
   </actions>
+
+  <extensionPoints>
+    <extensionPoint name="transferSettings.vscode.pluginMapping"
+                    interface="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.VSCodePluginMapping"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.externalProjectImportChecker"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ExternalProjectImportChecker"
+                    dynamic="true" />
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
@@ -22,6 +24,18 @@
 
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.WizardProvider"
+                        serviceImplementation="com.intellij.ide.startup.importSettings.data.WizardProviderImpl"/>
     <registryKey defaultValue="true" description="Hide import settings sync in unlogged mode" key="import.setting.unlogged.sync.hide" restartRequired="false" />
+
+    <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
+                                           implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.CommonPluginMapping"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
+    <transferSettings.externalProjectImportChecker implementation="com.intellij.ide.startup.importSettings.transfer.backend.CargoExternalProjectImportChecker"/>
   </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
+  </applicationListeners>
 </idea-plugin>

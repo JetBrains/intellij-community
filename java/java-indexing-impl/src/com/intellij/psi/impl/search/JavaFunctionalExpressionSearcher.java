@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
@@ -36,6 +37,7 @@ import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch.SearchParameters;
+import com.intellij.psi.stubs.StubInconsistencyReporter;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
@@ -82,7 +84,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (!aClass.isValid() || !aClass.isInterface()) {
         return List.of();
       }
-      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
+      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasModuleWithFunctionalExpressions(project)) {
         return List.of();
       }
       PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(project);
@@ -123,7 +125,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       for (SamDescriptor descriptor : descriptors) {
-        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope, false, true);
+        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope, true);
         for (FunctionalExpressionKey key : descriptor.keys) {
           FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
             result.putValues(file, ContainerUtil.map(infos, entry -> entry.occurrence));
@@ -277,7 +279,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
         ex = e;
       }
       if (psi == null) {
-        StubTextInconsistencyException.checkStubTextConsistency(file);
+        StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.NoPsiMatchingASTinJava);
         throw new RuntimeExceptionWithAttachments(
           "No functional expression at " + entry + ", file will be reindexed",
           ex, new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
@@ -298,7 +300,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     PsiFile file = member.getContainingFile();
     CharSequence contents = file.getViewProvider().getContents();
     if (memberRange.getEndOffset() > contents.length()) {
-      StubTextInconsistencyException.checkStubTextConsistency(file);
+      StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.OffsetOutsideFileInJava);
       throw new RuntimeExceptionWithAttachments(
         "Range from the index " + memberRange + " exceeds the actual file length " + contents.length() + ", file will be reindexed",
         new Attachment(file.getVirtualFile().getPath(), contents.toString()));
@@ -338,14 +340,14 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     return ThreeState.UNSURE;
   }
 
-  private static boolean hasJava8Modules(@NotNull Project project) {
-    final boolean projectLevelIsHigh = PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_1_8);
+  private static boolean hasModuleWithFunctionalExpressions(@NotNull Project project) {
+    final boolean projectLevelIsHigh = JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(PsiUtil.getLanguageLevel(project));
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final LanguageLevelModuleExtension extension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
       if (extension != null) {
         final LanguageLevel level = extension.getLanguageLevel();
-        if (level == null ? projectLevelIsHigh : level.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (level == null ? projectLevelIsHigh : JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(level)) {
           return true;
         }
       }

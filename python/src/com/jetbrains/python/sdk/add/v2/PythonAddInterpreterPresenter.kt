@@ -13,8 +13,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.flow.mapStateIn
 import com.intellij.util.text.nullize
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory

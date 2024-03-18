@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
  * Consider using {@link com.google.common.collect.Iterators#peekingIterator(Iterator)} instead.
  */
 public class PeekableIteratorWrapper<T> implements PeekableIterator<T> {
-  @NotNull private final Iterator<? extends T> myIterator;
+  private final @NotNull Iterator<? extends T> myIterator;
   private T myValue = null;
   private boolean myValidValue = false;
 

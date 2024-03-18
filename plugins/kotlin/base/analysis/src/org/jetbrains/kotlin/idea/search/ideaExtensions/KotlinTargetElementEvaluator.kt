@@ -10,8 +10,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.util.BitUtil
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.getCalleeByLambdaArgument
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -32,6 +32,14 @@ abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), Targe
     override fun getAdditionalReferenceSearchFlags() = BYPASS_IMPORT_ALIAS
 
     override fun getAllAdditionalFlags() = additionalDefinitionSearchFlags + additionalReferenceSearchFlags
+
+    override fun isAcceptableNamedParent(parent: PsiElement): Boolean {
+        if (parent is KtParameter && parent.name == null) {
+            //functional type parameters
+            return false
+        }
+        return super.isAcceptableNamedParent(parent)
+    }
 
     override fun includeSelfInGotoImplementation(element: PsiElement): Boolean = !(element is KtClass && element.isAbstract())
 

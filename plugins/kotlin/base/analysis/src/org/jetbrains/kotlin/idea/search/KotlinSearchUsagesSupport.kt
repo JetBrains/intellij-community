@@ -87,7 +87,10 @@ interface KotlinSearchUsagesSupport {
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-            getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
+            getInstance(method.project).findSuperMethodsNoWrapping(method, true)
+
+        fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
+            getInstance(method.project).findSuperMethodsNoWrapping(method, false)
 
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
@@ -95,15 +98,6 @@ interface KotlinSearchUsagesSupport {
         @JvmStatic
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
-
-        fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
-            getInstance(project).expectedDeclarationIfAny(this)
-
-        fun KtDeclaration.isExpectDeclaration(): Boolean =
-            getInstance(project).isExpectDeclaration(this)
-
-        fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
-            getInstance(project).actualsForExpected(this, module)
 
         fun PsiElement.canBeResolvedWithFrontEnd(): Boolean =
             getInstance(project).canBeResolvedWithFrontEnd(this)
@@ -116,8 +110,6 @@ interface KotlinSearchUsagesSupport {
     }
 
     fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
-
-    fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
@@ -152,15 +144,11 @@ interface KotlinSearchUsagesSupport {
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean
 
-    fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
+    fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement>
 
     fun isOverridable(declaration: KtDeclaration): Boolean
 
     fun isInheritable(ktClass: KtClass): Boolean
-
-    fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
-
-    fun isExpectDeclaration(declaration: KtDeclaration): Boolean
 
     fun canBeResolvedWithFrontEnd(element: PsiElement): Boolean
 

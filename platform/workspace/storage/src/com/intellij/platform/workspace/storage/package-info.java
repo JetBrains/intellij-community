@@ -8,7 +8,7 @@
  * <p>
  * Types of entities in the storage are represented by interfaces extending {@link com.intellij.platform.workspace.storage.WorkspaceEntity}.
  * Their instances are stored in {@link com.intellij.platform.workspace.storage.VersionedEntityStorage}, which provides access to the 
- * current {@link com.intellij.platform.workspace.storage.EntityStorageSnapshot} and allows to modify entities via 
+ * current {@link com.intellij.platform.workspace.storage.ImmutableEntityStorage} and allows to modify entities via
  * {@link com.intellij.platform.workspace.storage.MutableEntityStorage}. Modifications are performed on copies of the original entities,
  * so they don't affect old snapshots. 
  * <p>

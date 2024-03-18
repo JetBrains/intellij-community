@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
 import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
-import com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction;
+import com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -67,10 +67,10 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
       .toMap(button -> button.getAction().getClass(), Function.identity(), (a, b) -> null);
     model.setGlobal(false);// 'Find' action puts multiline text in search field (in contrast to 'Replace' action)
     assertFalse(model.isGlobal()); // multiline selection = no-global
-    assertEquals(ActionButtonComponent.PUSHED, actions.get(ToggleSelectionOnlyAction.class).getPopState());
+    assertEquals(ActionButtonComponent.PUSHED, actions.get(ToggleFindInSelectionAction.class).getPopState());
     assertFalse(actions.get(AddOccurrenceAction.class).isEnabled());
     assertFalse(actions.get(RemoveOccurrenceAction.class).isEnabled());
-    ShortcutSet shortcuts = actions.get(ToggleSelectionOnlyAction.class).getAction().getShortcutSet();
+    ShortcutSet shortcuts = actions.get(ToggleFindInSelectionAction.class).getAction().getShortcutSet();
     assertEquals(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY).getShortcutSet(), shortcuts);
 
     model.setStringToFind("foo");
@@ -78,7 +78,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     checkResultByText(origText);
 
     model.setGlobal(true);
-    assertEquals(ActionButtonComponent.NORMAL, actions.get(ToggleSelectionOnlyAction.class).getPopState());
+    assertEquals(ActionButtonComponent.NORMAL, actions.get(ToggleFindInSelectionAction.class).getPopState());
     assertTrue(actions.get(AddOccurrenceAction.class).isEnabled());
     assertTrue(actions.get(RemoveOccurrenceAction.class).isEnabled());
     assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 2, 4), component.getStatusText());

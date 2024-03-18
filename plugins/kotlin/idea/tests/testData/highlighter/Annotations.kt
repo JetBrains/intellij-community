@@ -17,12 +17,12 @@ fun <symbolName descr="null">foo</symbolName>() {
 
     <symbolName descr="null"><symbolName descr="null">bar</symbolName></symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_ANNOTATION">@Ann</symbolName> { 1 }
 
-    @<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Err" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">Err</error>
+    <symbolName descr="null" textAttributesKey="KOTLIN_ANNOTATION">@<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Err" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">Err</error></symbolName>
     <warning descr="[UNUSED_EXPRESSION] The expression is unused" textAttributesKey="WARNING_ATTRIBUTES">5</warning>
 }
 
-@<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Err" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">Err</error> class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Err1</symbolName>
+<symbolName descr="null" textAttributesKey="KOTLIN_ANNOTATION">@<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Err" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">Err</error></symbolName> class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS"><symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Err1</symbolName></symbolName>
 
 class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">NotAnn</symbolName>
-<error descr="[NOT_AN_ANNOTATION_CLASS] 'NotAnn' is not an annotation class" textAttributesKey="ERRORS_ATTRIBUTES">@<symbolName descr="null" textAttributesKey="KOTLIN_CLASS">NotAnn</symbolName></error>
+<error descr="[NOT_AN_ANNOTATION_CLASS] 'NotAnn' is not an annotation class" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" textAttributesKey="KOTLIN_ANNOTATION">@<symbolName descr="null" textAttributesKey="KOTLIN_CLASS">NotAnn</symbolName></symbolName></error>
 class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">C</symbolName>

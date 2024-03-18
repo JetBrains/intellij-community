@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.project.impl
 
 import com.intellij.openapi.project.BaseProjectDirectories
@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFilePrefixTreeFactory
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
@@ -27,13 +27,15 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
 
   init {
     scope.launch {
-      WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
-        processingCounter.getAndIncrement()
-        try {
-          updateTreeAndFireChanges(event)
-        }
-        finally {
-          processingCounter.getAndDecrement()
+      WorkspaceModel.getInstance(project).subscribe { _, changes ->
+        changes.collect { event ->
+          processingCounter.getAndIncrement()
+          try {
+            updateTreeAndFireChanges(event)
+          }
+          finally {
+            processingCounter.getAndDecrement()
+          }
         }
       }
     }
@@ -78,7 +80,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
     return url.virtualFile?.takeIf { it.isDirectory }
   }
 
-  protected open fun collectRoots(snapshot: EntityStorageSnapshot): Sequence<VirtualFile> {
+  protected open fun collectRoots(snapshot: ImmutableEntityStorage): Sequence<VirtualFile> {
     return snapshot.entities(ContentRootEntity::class.java).mapNotNull { contentRootEntity ->
       contentRootEntity.getBaseDirectory()
     }

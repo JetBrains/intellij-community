@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -263,8 +264,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun isUseTabCharacter(project: Project): Boolean {
     if (project != state.project) {
-      // todo mb log error only under some flag?
-      LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
+      // getting here when `state.project` is `null` is expected case (e.g. in fleet)
+      if (state.project != null) {
+        LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
+      }
       return isUseTabCharacterForForeignProject(project)
     }
     return state.myUseTabCharacter
@@ -308,8 +311,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       computeIndentOptions(project, file).associateWithDocument(document)
     }
     else {
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         val result = readAction {
           computeIndentOptions(project, file)
         }
@@ -619,6 +621,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically
   }
 
+  override fun areStickyLinesShown(): Boolean {
+    return state.myStickyLinesShown && state.myStickyLinesShownForLanguage
+  }
+
+  override fun getStickyLinesLimit(): Int {
+    return state.myStickyLinesLimit
+  }
+
   @ApiStatus.Internal
   @ApiStatus.Experimental
   fun getState(): EditorSettingsState {
@@ -681,8 +691,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       }
 
       if (currentReadActionRef.get() == null) {
-        @Suppress("DEPRECATION")
-        val readJob = (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope)
+        val readJob = ((project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope()
           .launch(start = CoroutineStart.LAZY) {
             val result = readAction {
               computeValue(project)

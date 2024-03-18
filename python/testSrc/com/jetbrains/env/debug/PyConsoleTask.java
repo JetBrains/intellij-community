@@ -82,11 +82,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     return myConsoleView;
   }
 
-  @Override
-  public void setUp(final String testName) throws Exception {
-    super.setUp(testName);
-  }
-
   @NotNull
   protected String output() {
     return myConsoleView.getHistoryViewer().getDocument().getText();

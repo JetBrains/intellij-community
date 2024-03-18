@@ -16,6 +16,22 @@ public class StatEdge {
   public boolean labeled = true;
   public boolean explicit = true;
 
+  private StatEdge(@NotNull EdgeType type,
+                  Statement source,
+                  Statement destination,
+                  List<String> exceptions,
+                  Statement closure,
+                  boolean labeled,
+                  boolean explicit) {
+    this.type = type;
+    this.source = source;
+    this.destination = destination;
+    this.exceptions = exceptions;
+    this.closure = closure;
+    this.labeled = labeled;
+    this.explicit = explicit;
+  }
+
   public StatEdge(@NotNull EdgeType type, Statement source, Statement destination, Statement closure) {
     this(type, source, destination);
     this.closure = closure;
@@ -59,6 +75,9 @@ public class StatEdge {
     return this.exceptions;
   }
 
+  public StatEdge copy() {
+    return new StatEdge(type, source, destination, exceptions, closure, labeled, explicit);
+  }
   /**
    * Type of the edges between statements.
    * @see Statement

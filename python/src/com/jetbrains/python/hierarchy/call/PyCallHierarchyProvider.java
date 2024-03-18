@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author novokrest
  */
-public class PyCallHierarchyProvider implements HierarchyProvider {
+public final class PyCallHierarchyProvider implements HierarchyProvider {
   @Nullable
   @Override
   public PsiElement getTarget(@NotNull DataContext dataContext) {

@@ -7,6 +7,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -172,6 +173,11 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @Override
   public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
+  }
+
+  @Override
+  public final @NotNull Document getFileDocument() {
+    return PsiFileEx.super.getFileDocument();
   }
 
   @Override

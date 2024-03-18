@@ -19,7 +19,6 @@
   "className": "classNameTest",
   "recorder": "recorderTest",
   "plugin": {
-    "id": "pluginIdTest",
-    "version": "pluginVersionTest"
+    "id": "pluginIdTest"
   }
 }

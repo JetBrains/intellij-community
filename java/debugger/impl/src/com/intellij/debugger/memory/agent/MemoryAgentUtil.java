@@ -10,10 +10,12 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.system.CpuArch;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +78,30 @@ public final class MemoryAgentUtil {
             objectsAndSizes.getRetainedSizes()[i]
           )
         )
+        .toList();
+    }
+    catch (EvaluateException e) {
+      LOG.error("Could not estimate objects sizes", e);
+    }
+
+    return Collections.emptyList();
+  }
+
+  public static List<JavaReferenceInfo> calculateSizesByObjects(@NotNull EvaluationContextImpl context,
+                                                                @NotNull List<ObjectReference> references,
+                                                                @NotNull ProgressIndicator progressIndicator) {
+    MemoryAgent agent = MemoryAgent.get(context);
+    agent.setProgressIndicator(progressIndicator);
+    try {
+      Pair<long[], long[]> sizes = agent.getShallowAndRetainedSizesByObjects(
+        context,
+        references,
+        Registry.get("debugger.memory.agent.action.timeout").asInteger()
+      ).getResult();
+      return IntStreamEx.range(0, references.size())
+        .mapToObj(i -> new SizedReferenceInfo(references.get(i), sizes.first[i], sizes.second[i]))
+        .sortedBy(ref -> -ref.getRetainedSize())
+        .map(ref -> (JavaReferenceInfo)ref)
         .toList();
     }
     catch (EvaluateException e) {

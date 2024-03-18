@@ -1,11 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard
 
+import com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData.Companion.webTemplateData
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.ui.UIBundle
+import java.util.function.Consumer
 import javax.swing.Icon
 
 abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
@@ -35,6 +38,22 @@ abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<We
         get() = UIBundle.message("label.project.wizard.new.project.project.type")
 
       override fun initSteps() = templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) })
+    }
+  }
+}
+
+fun WizardContext.switchToRequested(placeId: String, consumer: Consumer<ProjectGeneratorPeer<*>>) {
+  requestSwitchTo(placeId) { step ->
+    when (step) {
+      is AbstractNewProjectDialog.ProjectStepPeerHolder -> {
+        consumer.accept(step.peer)
+      }
+      is NewProjectWizardStep -> {
+        step.webTemplateData?.let {
+          consumer.accept(it.peer.value)
+        }
+      }
+      else -> throw UnsupportedOperationException("Unsupported step type: ${step.javaClass}")
     }
   }
 }

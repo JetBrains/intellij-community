@@ -32,7 +32,10 @@ class KotlinUTryExpression(
             }
         }
 
-    override val resourceVariables: List<UVariable>
+    @Deprecated("This API doesn't support resource expression", replaceWith = ReplaceWith("resources"))
+    override val resourceVariables: List<UVariable> get() = resources.filterIsInstance<UVariable>()
+
+    override val resources: List<UAnnotated>
         get() = emptyList()
 
     override val hasResources: Boolean

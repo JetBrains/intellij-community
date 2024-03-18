@@ -116,14 +116,15 @@ public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase 
     }
   }
 
-  public void testDisallowFieldInRecord() {
-    configureByFile("beforeDisallowFieldInRecord.java");
+  public void testRejectFieldFromLocal() {
+    configureByFile("beforeRejectFieldFromLocal.java");
     try {
       performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
       fail("Should not proceed");
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\nInstance fields are not allowed in a record.", e.getMessage());
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Local class <b><code>Local</code></b> is not visible to members of class <b><code>K</code></b>", e.getMessage());
     }
   }
 

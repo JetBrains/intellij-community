@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
@@ -7,7 +7,7 @@ import com.intellij.mock.MockApplication;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import org.picocontainer.MutablePicoContainer;
+import com.intellij.util.pico.DefaultPicoContainer;
 
 public abstract class KtPlatformLiteFixture extends KtUsefulTestCase {
     protected MockProjectEx myProject;
@@ -35,7 +35,7 @@ public abstract class KtPlatformLiteFixture extends KtUsefulTestCase {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T registerComponentInstance(MutablePicoContainer container, Class<T> key, T implementation) {
+    public static <T> T registerComponentInstance(DefaultPicoContainer container, Class<T> key, T implementation) {
         Object old = container.getComponentInstance(key);
         container.unregisterComponent(key);
         container.registerComponentInstance(key, implementation);

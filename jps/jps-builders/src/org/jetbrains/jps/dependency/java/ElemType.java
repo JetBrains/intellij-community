@@ -44,5 +44,14 @@ public enum ElemType {
   /**
    * Record component
    */
-  RECORD_COMPONENT
+  RECORD_COMPONENT;
+
+  public static ElemType fromOrdinal(int ord) {
+    for (ElemType value : values()) {
+      if (value.ordinal() == ord) {
+        return value;
+      }
+    }
+    return null;
+  }
 }

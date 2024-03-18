@@ -1,14 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
@@ -170,7 +167,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }
 
     val application = ApplicationManager.getApplication()
-    val future = project.coroutineScope.async {
+    val future = (project as ComponentManagerEx).getCoroutineScope().async {
       blockingContext {
         updateSourceFolders(sourceFoldersToChange)
       }
@@ -242,7 +239,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       WriteAction.run<RuntimeException> {
         if (project.isDisposed) return@run
         WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
-          updater.addDiff(diffBuilder)
+          updater.applyChangesFrom(diffBuilder)
         }
         modifiableRootModels.forEach { it.postCommit() }
       }

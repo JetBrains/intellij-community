@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -31,18 +31,23 @@ import static java.util.Arrays.asList;
 
 public final class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
-  @NotNull private final SpellCheckerManager myManager;
+  private final @NotNull SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
   private final List<String> removedDictionaries = new ArrayList<>();
   private final List<String> defaultDictionaries;
+  private final Map<String, BuiltInDictionary> builtInDictionaries;
 
   public CustomDictionariesPanel(@NotNull SpellCheckerSettings settings, @NotNull Project project, @NotNull SpellCheckerManager manager) {
     mySettings = settings;
     myManager = manager;
     defaultDictionaries = project.isDefault() ? new ArrayList<>() : asList(SpellCheckerBundle.message("app.dictionary"), SpellCheckerBundle
       .message("project.dictionary"));
+    builtInDictionaries = new HashMap<>();
+    BuiltInDictionariesProvider.getAll().stream()
+      .map(BuiltInDictionariesProvider::getDictionaries).flatMap(List::stream)
+      .forEach(dictionary -> builtInDictionaries.put(dictionary.getName(), dictionary));
     myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
-                                                                    defaultDictionaries);
+                                                                    defaultDictionaries, builtInDictionaries.keySet().stream().toList());
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
       .setAddActionName(SpellCheckerBundle.message("add.custom.dictionaries"))
       .setAddAction(new AnActionButtonRunnable() {
@@ -62,7 +67,10 @@ public final class CustomDictionariesPanel extends JPanel {
         removedDictionaries.addAll(myCustomDictionariesTableView.getSelectedObjects());
         TableUtil.removeSelectedItems(myCustomDictionariesTableView);
       })
-      .setRemoveActionUpdater(e -> !ContainerUtil.exists(myCustomDictionariesTableView.getSelectedObjects(), defaultDictionaries::contains))
+      .setRemoveActionUpdater(
+        e -> !ContainerUtil.exists(myCustomDictionariesTableView.getSelectedObjects(),
+                                   x -> defaultDictionaries.contains(x) || builtInDictionaries.containsKey(x))
+      )
 
       .setEditActionName(SpellCheckerBundle.message("edit.custom.dictionary"))
       .setEditAction(new AnActionButtonRunnable() {
@@ -71,6 +79,11 @@ public final class CustomDictionariesPanel extends JPanel {
           String selectedDictionary = myCustomDictionariesTableView.getSelectedObject();
           if (selectedDictionary == null) return;
 
+          if(builtInDictionaries.containsKey(selectedDictionary)) {
+            var dictionary = builtInDictionaries.get(selectedDictionary);
+            dictionary.openDictionaryInEditor(project);
+            return;
+          }
           if (defaultDictionaries.contains(selectedDictionary)) {
             selectedDictionary = selectedDictionary.equals(SpellCheckerBundle.message("app.dictionary"))
                                  ? myManager.getAppDictionaryPath$intellij_spellchecker()
@@ -112,7 +125,7 @@ public final class CustomDictionariesPanel extends JPanel {
 
     Set<String> newPaths = new HashSet<>();
     for (String t : collection) {
-      if (!defaultDictionaries.contains(t)) {
+      if (!defaultDictionaries.contains(t) && !builtInDictionaries.containsKey(t)) {
         newPaths.add(t);
       }
     }
@@ -121,14 +134,14 @@ public final class CustomDictionariesPanel extends JPanel {
 
   public void reset() {
     myCustomDictionariesTableView.getListTableModel()
-      .setItems(new ArrayList<>(ContainerUtil.concat(defaultDictionaries, mySettings.getCustomDictionariesPaths())));
+      .setItems(new ArrayList<>(ContainerUtil.concat(defaultDictionaries, builtInDictionaries.keySet().stream().toList(), mySettings.getCustomDictionariesPaths())));
     removedDictionaries.clear();
   }
 
   public void apply() {
     List<String> oldPaths = mySettings.getCustomDictionariesPaths();
     List<String> newPaths = new ArrayList<>(ContainerUtil.filter(myCustomDictionariesTableView.getItems(), dict -> {
-      return !defaultDictionaries.contains(dict);
+      return !defaultDictionaries.contains(dict) && !builtInDictionaries.containsKey(dict);
     }));
     mySettings.setCustomDictionariesPaths(newPaths);
     myManager.updateBundledDictionaries(ContainerUtil.filter(oldPaths, o -> !newPaths.contains(o)));
@@ -143,9 +156,11 @@ public final class CustomDictionariesPanel extends JPanel {
     final TableCellRenderer myTypeRenderer;
 
     private CustomDictionariesTableView(@NotNull List<String> dictionaries,
-                                        @NotNull List<String> defaultDictionaries) {
-      myTypeRenderer = createTypeRenderer(defaultDictionaries);
+                                        @NotNull List<String> defaultDictionaries,
+                                        @NotNull List<String> builtInDictionaries) {
+      myTypeRenderer = createTypeRenderer(defaultDictionaries, builtInDictionaries);
       var items = new ArrayList<>(defaultDictionaries);
+      items.addAll(builtInDictionaries);
       items.addAll(dictionaries);
       setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), items, 0));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
@@ -155,7 +170,8 @@ public final class CustomDictionariesPanel extends JPanel {
       setTableHeader(null);
     }
 
-    private static TableCellRenderer createTypeRenderer(List<String> defaultDictionaries) {
+    private static TableCellRenderer createTypeRenderer(List<String> defaultDictionaries,
+                                                        @NotNull List<String> builtInDictionaries) {
       return new TableCellRenderer() {
         final SimpleColoredComponent myLabel = new SimpleColoredComponent();
 
@@ -170,7 +186,7 @@ public final class CustomDictionariesPanel extends JPanel {
           myLabel.clear();
           myLabel.append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           String type;
-          if (defaultDictionaries.contains(value)) {
+          if (defaultDictionaries.contains(value) || builtInDictionaries.contains(value)) {
             type = SpellCheckerBundle.message("built.in.dictionary");
           }
           else {
@@ -199,9 +215,8 @@ public final class CustomDictionariesPanel extends JPanel {
             return info;
           }
 
-          @Nullable
           @Override
-          public TableCellRenderer getRenderer(String s) {
+          public @Nullable TableCellRenderer getRenderer(String s) {
             return myTypeRenderer;
           }
         }

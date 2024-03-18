@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.PyElementTypes.*;
 import static com.jetbrains.python.PyTokenTypes.*;
 
-public class PythonTokenSetContributor extends PythonDialectsTokenSetContributorBase {
+public final class PythonTokenSetContributor extends PythonDialectsTokenSetContributorBase {
   @NotNull
   @Override
   public TokenSet getStatementTokens() {

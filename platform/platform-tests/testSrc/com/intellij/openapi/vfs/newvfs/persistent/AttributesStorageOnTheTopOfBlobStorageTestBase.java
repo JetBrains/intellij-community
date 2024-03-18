@@ -22,8 +22,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.NON_EXISTENT_ATTRIBUTE_RECORD_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord.newAttributeRecord;
 import static org.junit.Assert.*;
 
@@ -472,7 +472,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   public void manySmallRecordInserted_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final int inlineAttributeSize = INLINE_ATTRIBUTE_SMALLER_THAN - 1;
     final int fileId = ARBITRARY_FILE_ID;
-    final AttributeRecord[] records = IntStream.range(0, 100)
+    final AttributeRecord[] records = IntStream.range(1, 101)
       .mapToObj(attributeId -> newAttributeRecord(fileId, attributeId)
         .withRandomAttributeBytes(inlineAttributeSize))
       .toArray(AttributeRecord[]::new);
@@ -541,7 +541,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       .limit(size / 2)
       .distinct()
       .toArray();
-    final int[] attributeIds = rnd.ints(0, AbstractAttributesStorage.MAX_ATTRIBUTE_ID + 1)
+    final int[] attributeIds = rnd.ints(0, VFSAttributesStorage.MAX_ATTRIBUTE_ID + 1)
       .filter(id -> id > 0)
       .limit(differentAttributesCount)
       .distinct()
@@ -575,7 +575,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     @NotNull
     public static AttributeRecord newAttributeRecord(final int fileId,
                                                      final int attributeId) {
-      return new AttributeRecord(NON_EXISTENT_ATTR_RECORD_ID, fileId, attributeId);
+      return new AttributeRecord(NON_EXISTENT_ATTRIBUTE_RECORD_ID, fileId, attributeId);
     }
 
     protected AttributeRecord(final int attributesRecordId,
@@ -698,7 +698,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         record.attributeBytes,
         record.attributeBytesLength
       );
-      if (newAttributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      if (newAttributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         throw new AssertionError("updateAttribute return 0: " + record);
       }
       fileIdToAttributeRecordId.put(record.fileId, newAttributeRecordId);
@@ -731,22 +731,22 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
     public boolean deleteRecord(final AttributeRecord record,
                                 final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
-      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return false; //already deleted, do nothing
       }
       final boolean deleted = attributesStorage.deleteAttributes(
         attributeRecordId,
         record.fileId
       );
-      fileIdToAttributeRecordId.put(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
+      fileIdToAttributeRecordId.put(record.fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
       return deleted;
     }
 
     public boolean existsInStorage(final AttributeRecord record,
                                    final AttributesStorageOverBlobStorage storage) throws IOException {
-      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return false; //already deleted, do nothing
       }
       return storage.hasAttribute(attributeRecordId, record.fileId, record.attributeId);

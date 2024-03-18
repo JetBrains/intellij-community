@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceNotEqOperatorQuickFix implements LocalQuickFix {
+public class ReplaceNotEqOperatorQuickFix extends PsiUpdateModCommandQuickFix  {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -34,14 +34,13 @@ public class ReplaceNotEqOperatorQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement binaryExpression = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
 
-    if (binaryExpression instanceof PyBinaryExpression) {
-      PsiElement operator = ((PyBinaryExpression)binaryExpression).getPsiOperator();
+    if (element instanceof PyBinaryExpression) {
+      PsiElement operator = ((PyBinaryExpression)element).getPsiOperator();
       if (operator != null) {
         PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-        operator.replace(elementGenerator.createFromText(LanguageLevel.forElement(binaryExpression), LeafPsiElement.class, "!="));
+        operator.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), LeafPsiElement.class, "!="));
       }
     }
   }

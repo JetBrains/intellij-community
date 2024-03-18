@@ -81,15 +81,5 @@ class LazyClassLoader extends ClassLoader implements Closeable {
     DelegateClassLoader(URL[] urls, final ClassLoader parent) {
       super(urls, parent);
     }
-
-    @Override
-    public URL findResource(String name) {
-      return super.findResource(name);
-    }
-
-    @Override
-    public Enumeration<URL> findResources(String name) throws IOException {
-      return super.findResources(name);
-    }
   }
 }

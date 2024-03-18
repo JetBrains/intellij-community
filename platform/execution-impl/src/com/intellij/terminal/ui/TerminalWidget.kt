@@ -21,6 +21,12 @@ interface TerminalWidget : ComponentContainer {
    */
   val termSize: TermSize?
 
+  /**
+   * Command used to run the session related to this widget
+   * todo: would be great to find better place for it
+   */
+  var shellCommand: List<String>?
+
   fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize)
 
   val ttyConnectorAccessor: TtyConnectorAccessor
@@ -40,6 +46,9 @@ interface TerminalWidget : ComponentContainer {
    * Adds a custom notification component to the top of the terminal.
    */
   fun addNotification(notificationComponent: JComponent, disposable: Disposable)
+
+  @RequiresEdt(generateAssertion = false)
+  fun sendCommandToExecute(shellCommand: String)
 
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)

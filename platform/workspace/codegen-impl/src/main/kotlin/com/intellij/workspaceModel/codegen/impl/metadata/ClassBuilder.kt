@@ -48,6 +48,11 @@ internal class ClassMetadataBuilder(private val propertyBuilder: MetadataBuilder
       else -> unsupportedType(obj)
     }
   }
+
+  companion object {
+    fun newInstance(builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>): MetadataBuilder<ValueType.JvmClass<*>> =
+      PropertyMetadataBuilder(builtPrimitiveTypes).classBuilder
+  }
 }
 
 

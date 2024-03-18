@@ -67,11 +67,22 @@ public final class GenerateMembersUtil {
                                                                           @NotNull Function<? super PsiElement, ? extends PsiClass> aClassFunction) throws IncorrectOperationException {
     if (memberPrototypes.isEmpty()) return memberPrototypes;
     final PsiElement leaf = file.findElementAt(offset);
-    if (leaf == null) return Collections.emptyList();
-
-    PsiClass aClass = aClassFunction.fun(leaf);
-    if (aClass == null) return Collections.emptyList();
-    PsiElement anchor = memberPrototypes.get(0).findInsertionAnchor(aClass, leaf);
+    PsiElement anchor;
+    PsiClass aClass;
+    if (leaf != null){
+      aClass = aClassFunction.fun(leaf);
+      if (aClass == null) return Collections.emptyList();
+      anchor = memberPrototypes.get(0).findInsertionAnchor(aClass, leaf);
+    }
+    else if (file instanceof PsiJavaFile javaFile &&
+             javaFile.getClasses().length == 1 &&
+             javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass) {
+      anchor = null;
+      aClass = implicitClass;
+    }
+    else {
+      return Collections.emptyList();
+    }
 
     if (anchor instanceof PsiWhiteSpace) {
       final ASTNode spaceNode = anchor.getNode();
@@ -182,7 +193,7 @@ public final class GenerateMembersUtil {
       if (body != null) {
         PositionInfo info = getPositionInfo(body);
 
-        updater.moveTo(Math.min(info.start(), info.end()));
+        updater.moveCaretTo(Math.min(info.start(), info.end()));
         if (info.start() < info.end()) {
           //Not an empty body
           updater.select(TextRange.create(info.start(), info.end()));
@@ -199,7 +210,7 @@ public final class GenerateMembersUtil {
     }
 
     int offset = getOffsetInMethod(firstMember);
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 
   @NotNull
@@ -384,9 +395,7 @@ public final class GenerateMembersUtil {
     for (PsiType type : substitutor.getSubstitutionMap().values()) {
       if (type != null && Objects.equals(type.getCanonicalText(), typeParamName)) {
         final String newName = suggestUniqueTypeParameterName(typeParamName, sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class, false));
-        final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, typeParam.getSuperTypes());
-        substitutor.put(typeParam, factory.createType(newTypeParameter));
-        return newTypeParameter;
+        return factory.createTypeParameter(newName, typeParam.getSuperTypes());
       }
     }
     return factory.createTypeParameter(typeParamName, typeParam.getSuperTypes());

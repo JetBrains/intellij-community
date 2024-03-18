@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class TransformClassicClassQuickFix implements LocalQuickFix {
+public class TransformClassicClassQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -22,11 +22,10 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor.getPsiElement();
-    psiElement = PsiTreeUtil.getParentOfType(psiElement, PyClass.class);
-    if (psiElement != null) {
-      PyClass pyClass = (PyClass) psiElement;
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    element = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (element != null) {
+      PyClass pyClass = (PyClass) element;
       PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
       if (superClassExpressions.length == 0) {

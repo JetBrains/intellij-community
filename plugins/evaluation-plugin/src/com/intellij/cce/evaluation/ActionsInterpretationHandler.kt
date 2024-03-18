@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
@@ -18,10 +18,11 @@ import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
-  private val config: Config.ActionsInterpretation,
+  private val config: Config,
   private val language: String,
   private val invokersFactory: InvokersFactory,
   private val project: Project) : TwoWorkspaceHandler {
@@ -35,25 +36,31 @@ class ActionsInterpretationHandler(
       sessionsCount = workspace1.actionsStorage.computeSessionsCount()
     }
     LOG.info("Computing of sessions count took $computingTime ms")
-    val handler = InterpretationHandlerImpl(indicator, sessionsCount, config.sessionsLimit)
+    val interpretationConfig = config.interpret
+    val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit)
     val filter =
-      if (config.sessionProbability < 1) RandomInterpretFilter(config.sessionProbability, config.sessionSeed)
+      if (interpretationConfig.sessionProbability < 1)
+        RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)
       else InterpretFilter.default()
-    val interpreter = Interpreter(invokersFactory, handler, filter, project.basePath)
-    val featuresStorage = if (config.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
+    val interpreter = Interpreter(invokersFactory, handler, filter, config.interpret.order, project.basePath)
+    val featuresStorage = if (interpretationConfig.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
-    if (config.sessionProbability < 1) {
-      val skippedSessions = (sessionsCount * (1.0 - config.sessionProbability)).roundToInt()
+    if (interpretationConfig.sessionProbability < 1) {
+      val skippedSessions = (sessionsCount * (1.0 - interpretationConfig.sessionProbability)).roundToInt()
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
     val files = workspace1.actionsStorage.getActionFiles()
-    for (file in files) {
+    for (file in files.shuffled(FILES_RANDOM)) {
       val fileActions = workspace1.actionsStorage.getActions(file)
       workspace2.fullLineLogsStorage.enableLogging(fileActions.path)
       try {
         val sessions = interpreter.interpret(fileActions) { session -> featuresStorage.saveSession(session, fileActions.path) }
-        val fileText = FilesHelper.getFile(project, fileActions.path).text()
-        workspace2.sessionsStorage.saveSessions(FileSessionsInfo(fileActions.path, fileText, sessions))
+        if (sessions.isNotEmpty()) {
+          val fileText = FilesHelper.getFile(project, fileActions.path).text()
+          workspace2.sessionsStorage.saveSessions(FileSessionsInfo(config.projectName, fileActions.path, fileText, sessions))
+        } else {
+          LOG.warn("No sessions collected from file: $file")
+        }
       }
       catch (e: Throwable) {
         try {
@@ -68,9 +75,11 @@ class ActionsInterpretationHandler(
       }
       if (handler.isCancelled() || handler.isLimitExceeded()) break
     }
-    if (config.saveLogs) workspace2.logsStorage.save(SetupStatsCollectorStep.statsCollectorLogsDirectory(), language, config.trainTestSplit)
+    if (interpretationConfig.saveLogs) workspace2.logsStorage.save(SetupStatsCollectorStep.statsCollectorLogsDirectory(), language, interpretationConfig.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()
     workspace2.saveMetadata()
     LOG.info("Interpreting actions completed")
   }
 }
+
+private val FILES_RANDOM = Random(42)

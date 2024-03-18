@@ -50,7 +50,7 @@ public class VFSAttributeAccessBenchmark {
           minFileId = fileId;
         }
         //just to be sure, not really needed in benchmark:
-        records.setNameId(fileId, vfs.getNameId("test"));
+        records.updateNameId(fileId, vfs.getNameId("test"));
       }
       maxFileId = records.maxAllocatedID();
     }

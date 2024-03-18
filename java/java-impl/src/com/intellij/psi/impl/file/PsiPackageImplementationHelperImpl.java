@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
+public final class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
   @NotNull
   @Override
   public GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {

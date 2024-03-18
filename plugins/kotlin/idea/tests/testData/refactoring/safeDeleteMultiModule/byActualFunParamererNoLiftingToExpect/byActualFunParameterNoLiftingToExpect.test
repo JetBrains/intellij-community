@@ -1,5 +1,6 @@
 {
   "mainFile": "JS/src/test/test.kt",
   "elementClass": "org.jetbrains.kotlin.psi.KtParameter",
-  "liftParameterToExpected": "false"
+  "liftParameterToExpected": "false",
+  "enabledInK2": "false"
 }

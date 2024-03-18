@@ -1,33 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
-  suspend fun saveWithAdditionalSaveSessions(extraSessions: Collection<SaveSession>): SaveResult {
-    val saveSessions = mutableListOf<SaveSession>()
-    collectSaveSessions(saveSessions)
-    if (saveSessions.isEmpty() && extraSessions.isEmpty()) {
-      return SaveResult.EMPTY
-    }
-
-    val saveResult = writeAction {
-      val r = SaveResult()
-      saveSessions(extraSessions, r)
-      saveSessions(saveSessions, r)
-      r
-    }
+internal open class ProjectSaveSessionProducerManager(@JvmField protected val project: Project, isUseVfsForWrite: Boolean)
+  : SaveSessionProducerManager(isUseVfsForWrite, collectVfsEvents = true)
+{
+  suspend fun saveAndValidate(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
+    saveSessions(saveSessions, saveResult)
     validate(saveResult)
-    return saveResult
   }
 
   private suspend fun validate(saveResult: SaveResult) {
@@ -52,13 +38,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    writeAction {
-      val r = SaveResult()
-      for (entry in oldList) {
-        executeSave(entry.session, r)
-      }
-      r
-    }.appendTo(saveResult)
+    saveSessions(oldList.map { it.session }, saveResult)
 
     if (readonlyFiles.isNotEmpty()) {
       dropUnableToSaveProjectNotification(project, getFileList(readonlyFiles))
@@ -76,10 +56,8 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     }
   }
 
-  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> {
-    val notificationManager = serviceIfCreated<NotificationsManager>() ?: return emptyArray()
-    return notificationManager.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
-  }
-}
+  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> =
+    serviceIfCreated<NotificationsManager>()?.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project) ?: emptyArray()
 
-private fun getFileList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.map { it.file }
+  private fun getFileList(readonlyFiles: List<SaveSessionAndFile>): List<VirtualFile> = readonlyFiles.map { it.file }
+}

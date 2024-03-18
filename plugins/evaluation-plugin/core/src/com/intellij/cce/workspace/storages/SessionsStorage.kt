@@ -15,7 +15,7 @@ open class SessionsStorage(storageDir: String) : StorageWithMetadataBase(storage
   private var sessionFiles: MutableMap<String, String> = mutableMapOf()
   private val keyValueStorage = FileArchivesStorage(filesDir.toString())
 
-  fun saveSessions(sessionsInfo: FileSessionsInfo) {
+  open fun saveSessions(sessionsInfo: FileSessionsInfo) {
     val json = sessionSerializer.serialize(sessionsInfo)
     val archivePath = keyValueStorage.save("${toFileName(sessionsInfo.filePath)}.json", json)
     sessionFiles[sessionsInfo.filePath] = archivePath
@@ -26,7 +26,7 @@ open class SessionsStorage(storageDir: String) : StorageWithMetadataBase(storage
     metadataFile.writeText(filesJson)
   }
 
-  fun getSessionFiles(): List<Pair<String, String>> {
+  open fun getSessionFiles(): List<Pair<String, String>> {
     if (!metadataFile.exists()) return emptyList()
     val json = metadataFile.readText()
     val type = object : TypeToken<MutableMap<String, String>>() {}.type

@@ -59,3 +59,12 @@ interface AccountManager<A : Account, Cred> {
    */
   suspend fun getCredentialsState(scope: CoroutineScope, account: A): StateFlow<Cred?>
 }
+
+/**
+ * Find an account by predicate
+ */
+fun <A : Account> AccountManager<A, *>.findAccountOrNull(predicate: (account: A) -> Boolean): A? {
+  return accountsState.value.singleOrNull { account ->
+    predicate(account)
+  }
+}

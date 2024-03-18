@@ -44,8 +44,6 @@
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.MavenSearchableOptionContributor"/>
 
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration"/>
     </extensions>
 
     <actions>

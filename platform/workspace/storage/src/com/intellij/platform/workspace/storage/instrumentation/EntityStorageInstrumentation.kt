@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.instrumentation
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.asString
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Instrumentation level of the storage.
@@ -16,22 +18,76 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 public interface EntityStorageInstrumentation : EntityStorage {
   /**
    * Create entity using [newInstance] function.
-   * In some implementations of the storage ([EntityStorageSnapshot]), the entity is cached and the new instance is created only once.
+   * In some implementations of the storage ([ImmutableEntityStorage]), the entity is cached and the new instance is created only once.
    */
   public fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
-  public fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
+  public fun <T : WorkspaceEntity> resolveReference(reference: EntityPointer<T>): T?
 
   public fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity?
   public fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
 
   public fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity?
+
+  /**
+   * Returns number of entities of the given type in the storage.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @ApiStatus.Internal
+  public fun <E : WorkspaceEntity> entityCount(entityClass: Class<E>): Int
+
+  /**
+   * Returns `true` if the storage doesn't have entities
+   */
+  @ApiStatus.Internal
+  public fun isEmpty(): Boolean
 }
 
 @EntityStorageInstrumentationApi
-public interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
+public interface ImmutableEntityStorageInstrumentation : ImmutableEntityStorage, EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
 public interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
+  /**
+   * Returns a number which is incremented after each change in the storage.
+   *
+   * The number is not precise. A single operation may cause multiple increments.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @get:ApiStatus.Internal
+  public val modificationCount: Long
+
+  /**
+   * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from.
+   * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
+   * with the same properties was added.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @ApiStatus.Internal
+  public fun hasSameEntities(): Boolean
+
+  /**
+   * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
+   * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @ApiStatus.Internal
+  public fun hasChanges(): Boolean
+
+  /**
+   * Return changes in entities recorded in this instance.
+   *
+   * This function isn't supported to be used by client code directly. In order to subscribe to changes in entities inside the IDE process,
+   * use [WorkspaceModelChangeListener][com.intellij.platform.backend.workspace.WorkspaceModelChangeListener].
+   *
+   * To understand how the changes are collected see the KDoc for [com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
+   */
+  @ApiStatus.Internal
+  public fun collectChanges(): Map<Class<*>, List<EntityChange<*>>>
+
   /**
    * Replaces existing children of a given parent with a new list of children.
    *
@@ -41,6 +97,8 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    *   ^^^ This behaviour is questionable. See IDEA-307409
    *
    * If any of child already has a parent, the link to this child will be removed from the old parent and added to the new one.
+   *
+   * This method adds records to the changelog of the builder.
    *
    * @param connectionId The ID of the connection.
    * @param parent The parent WorkspaceEntity whose children will be replaced.
@@ -58,11 +116,32 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    *
    * If the child already has a parent, the link from this parent to this child will be removed.
    *
+   * This method adds records to the changelog of the builder.
+   *
    * @param connectionId The ConnectionId identifying the connection.
    * @param parent The parent WorkspaceEntity.
    * @param child The WorkspaceEntity to be added as a child.
    */
   public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+}
+
+/**
+ * A record of reference modification on two entities.
+ * The reference may be added or removed. Replacement of the reference with a new one is presented as a combination of
+ *   remove and add modifications.
+ */
+internal sealed interface Modification {
+  data class Add(val parent: EntityId, val child: EntityId) : Modification {
+    override fun toString(): String {
+      return "Add(parent=${parent.asString()}, child=${child.asString()})"
+    }
+  }
+
+  data class Remove(val parent: EntityId, val child: EntityId) : Modification {
+    override fun toString(): String {
+      return "Remove(parent=${parent.asString()}, child=${child.asString()})"
+    }
+  }
 }
 
 
@@ -74,7 +153,7 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
  *
  * Examples of code where the marked classes are used:
  * - Entities implementations use instrumentation API to communicate with the storage.
- * - [EntityReference] resolves the entity using the internal API.
+ * - [EntityPointer] resolves the entity using the internal API.
  *
  * The API itself can't be marked as internal as it's used from external code that is generated by entity generator.
  */
@@ -88,8 +167,8 @@ internal val EntityStorage.instrumentation: EntityStorageInstrumentation
   get() = this as EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
-internal val EntityStorageSnapshot.instrumentation: EntityStorageSnapshotInstrumentation
-  get() = this as EntityStorageSnapshotInstrumentation
+internal val ImmutableEntityStorage.instrumentation: ImmutableEntityStorageInstrumentation
+  get() = this as ImmutableEntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
 internal val MutableEntityStorage.instrumentation: MutableEntityStorageInstrumentation

@@ -18,7 +18,7 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class Java8MapApiInspectionMerger extends InspectionElementsMerger {
+public final class Java8MapApiInspectionMerger extends InspectionElementsMerger {
   private static final String COLLECTION_API_INSPECTION = "Java8CollectionsApi";
   private static final String REPLACE_MAP_GET_INSPECTION = "Java8ReplaceMapGet";
 

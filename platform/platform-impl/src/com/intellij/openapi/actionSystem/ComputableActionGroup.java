@@ -39,6 +39,8 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
 
   protected abstract @NotNull CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull ActionManager actionManager);
 
+  /** @deprecated Use {@link DefaultActionGroup} or {@link ActionGroup} directly */
+  @Deprecated
   public abstract static class Simple extends ComputableActionGroup {
     protected Simple() {
     }

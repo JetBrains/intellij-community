@@ -7,6 +7,9 @@ sealed interface InstanceContainerInternal {
   fun instanceHolders(): Collection<InstanceHolder>
 
   @Throws(ContainerDisposedException::class)
+  fun instanceHoldersAndKeys(): Map<String, InstanceHolder>
+
+  @Throws(ContainerDisposedException::class)
   fun getInstanceHolder(keyClassName: String): InstanceHolder?
 
   @Throws(ContainerDisposedException::class)

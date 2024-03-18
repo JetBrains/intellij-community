@@ -1,0 +1,12 @@
+// NEW_NAME: p
+// RENAME: member
+class A {
+    val p: (String) -> String =  {""}
+    fun <caret>p(): String = ""
+
+    fun n() {
+        val pp = p("")
+        val mm = p()
+    }
+
+}

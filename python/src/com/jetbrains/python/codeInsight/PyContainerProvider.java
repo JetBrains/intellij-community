@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyContainerProvider implements ContainerProvider {
+public final class PyContainerProvider implements ContainerProvider {
   @Nullable
   @Override
   public PsiElement getContainer(@NotNull PsiElement item) {

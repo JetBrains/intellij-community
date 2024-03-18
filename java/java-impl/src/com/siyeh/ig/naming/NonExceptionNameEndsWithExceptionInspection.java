@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
+public final class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {

@@ -4,7 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 public record Ref(
-  int id,
+  String id,
   String className,
   int identityHashCode,
   String asString

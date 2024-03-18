@@ -60,7 +60,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class<?>> {
   }
 
   @Override
-  protected final void invalidateCacheForExtension(String key) {
+  protected final void invalidateCacheForExtension(@NotNull String key) {
     clearCache();
   }
 }

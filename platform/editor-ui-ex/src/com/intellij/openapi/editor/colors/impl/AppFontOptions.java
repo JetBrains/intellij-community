@@ -24,8 +24,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   private static final Logger LOG = Logger.getInstance(AppFontOptions.class);
 
   @ApiStatus.Internal
-  public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
-  @ApiStatus.Internal
   public static final boolean APP_CONSOLE_FONT_ENABLED = SystemProperties.getBooleanProperty("app.console.font.enabled", false);
 
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();

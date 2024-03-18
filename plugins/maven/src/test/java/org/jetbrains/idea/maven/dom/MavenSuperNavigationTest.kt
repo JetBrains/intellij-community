@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSuperNavigationTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testNavigationToManagingDependencyWithoutModules() = runBlocking {
     configureProjectPom(
@@ -30,9 +32,9 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         </dependencies>
         """.trimIndent())
 
-    myFixture.performEditorAction("GotoSuperMethod")
+    fixture.performEditorAction("GotoSuperMethod")
 
-    myFixture.checkResultWithInlays(
+    fixture.checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -82,9 +84,9 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         """.trimIndent()
     )
 
-    myFixture.performEditorAction("GotoSuperMethod")
+    fixture.performEditorAction("GotoSuperMethod")
 
-    myFixture.checkResultWithInlays(
+    fixture.checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -135,7 +137,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         """.trimIndent())
 
     configTest(m1)
-    myFixture.performEditorAction("GotoSuperMethod")
+    fixture.performEditorAction("GotoSuperMethod")
 
     val offset = getEditorOffset(parent)
     assertEquals(0, offset)
@@ -182,10 +184,10 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
     )
 
     configTest(m1)
-    myFixture.performEditorAction("GotoSuperMethod")
+    fixture.performEditorAction("GotoSuperMethod")
 
     configTest(parent)
-    myFixture.checkResultWithInlays(
+    fixture.checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -253,10 +255,10 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
     )
 
     configTest(m1)
-    myFixture.performEditorAction("GotoSuperMethod")
+    fixture.performEditorAction("GotoSuperMethod")
 
     configTest(parent)
-    myFixture.checkResultWithInlays(
+    fixture.checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>

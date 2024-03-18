@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.projectView
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -26,8 +27,12 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
 
-class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSettings: ViewSettings) :
-    AbstractPsiBasedNode<KtLightClass>(project, lightClass, viewSettings) {
+class KtInternalFileTreeNode(
+    project: Project?,
+    lightClass: KtLightClass,
+    viewSettings: ViewSettings,
+    private val nestedFileNodes: Collection<AbstractTreeNode<*>>
+) : AbstractPsiBasedNode<KtLightClass>(project, lightClass, viewSettings), FileNodeWithNestedFileNodes {
 
     private val navigatablePsiElement: SmartPsiElementPointer<KtElement>? by lazy {
         val ktClsFile = value?.navigationElement as? KtClsFile
@@ -71,10 +76,13 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
 
     override fun extractPsiFromValue(): PsiElement? = navigatablePsiElement?.element ?: value
 
-    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-        if (!settings.isShowMembers) return emptyList()
+    override fun getNestedFileNodes(): Collection<AbstractTreeNode<*>> = nestedFileNodes
 
-        return (extractPsiFromValue() as? KtFile)?.toDeclarationsNodes(settings) ?: emptyList()
+    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
+        if (!settings.isShowMembers) return nestedFileNodes
+
+        val members = (extractPsiFromValue() as? KtFile)?.toDeclarationsNodes(settings)
+        return if (members.isNullOrEmpty()) nestedFileNodes else nestedFileNodes + members
     }
 
     override fun canRepresent(element: Any?): Boolean {

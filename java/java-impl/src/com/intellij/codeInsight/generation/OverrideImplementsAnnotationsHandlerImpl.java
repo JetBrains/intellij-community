@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
+public final class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
   @Override
   public void transferToTarget(String annotation, PsiModifierListOwner source, PsiModifierListOwner target) {
     Project project = source.getProject();

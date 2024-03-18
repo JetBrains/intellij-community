@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getExternalEventLogSettings
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -20,39 +19,47 @@ class EventLogListenersManager {
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogSettings.EP_NAME)) {
-      addListenersFromEP()
+      ExternalEventLogSettings.EP_NAME.extensionList.forEach { subscribeFromExtension(it) }
 
       // Support for dynamic plugin
       ExternalEventLogSettings.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ExternalEventLogSettings> {
-        override fun extensionAdded(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) = addListenersFromEP()
+        override fun extensionAdded(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) =
+          subscribeFromExtension(extension)
 
-        override fun extensionRemoved(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) {
-          if (listenersFromEP.isEmpty()) return
-          // Do not filter providers by isForceCollectionEnabled flag as it can be dynamic
-          StatisticsEventLogProviderUtil.getEventLogProviders().map { it.recorderId }.forEach { recorderId ->
-            listenersFromEP[recorderId]?.let { listener ->
-              unsubscribe(listener, recorderId)
-              listenersFromEP.remove(recorderId)
-            }
-          }
-        }
+        override fun extensionRemoved(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) =
+          unsubscribeExtension(extension)
+      })
+    }
+
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogListenerProviderExtension.EP_NAME)) {
+      ExternalEventLogListenerProviderExtension.EP_NAME.extensionList.forEach { subscribeFromExtension(it) }
+
+      ExternalEventLogListenerProviderExtension.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ExternalEventLogListenerProviderExtension> {
+        override fun extensionAdded(extension: ExternalEventLogListenerProviderExtension, pluginDescriptor: PluginDescriptor) =
+          subscribeFromExtension(extension)
+
+        override fun extensionRemoved(extension: ExternalEventLogListenerProviderExtension, pluginDescriptor: PluginDescriptor) =
+          unsubscribeExtension(extension)
       })
     }
   }
 
-  private fun addListenersFromEP() {
-    StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isLoggingAlwaysActive() }
-      .map { it.recorderId }.forEach { addListenerFromEP(it) }
-  }
-
-  private fun addListenerFromEP(recorderId: String) {
-    if (listenersFromEP[recorderId] != null) return // Only one EP instance can exist so do not bother if another listener has been registered for this recorderId
-    val externalEventLogSettings = getExternalEventLogSettings()
-    externalEventLogSettings?.let {
-      externalEventLogSettings.getEventLogListener(recorderId)?.let { eventLogListener ->
-        listenersFromEP[recorderId] = eventLogListener
+  private fun subscribeFromExtension(listenerProvider: ExternalEventLogListenerProvider) {
+    StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isLoggingAlwaysActive() }.forEach { loggerProvider ->
+      val recorderId = loggerProvider.recorderId
+      listenerProvider.getEventLogListener(recorderId)?.let { eventLogListener ->
+        listenersFromEP[listenerProvider.javaClass.name] = eventLogListener
         subscribe(eventLogListener, recorderId)
       }
+    }
+  }
+
+  private fun unsubscribeExtension(listenerProvider: ExternalEventLogListenerProvider) {
+    if (listenersFromEP.isEmpty()) return
+    val listener = listenersFromEP[listenerProvider.javaClass.name] ?: return
+    // Do not filter providers by isForceCollectionEnabled flag as it can be dynamic
+    StatisticsEventLogProviderUtil.getEventLogProviders().forEach {
+      unsubscribe(listener, it.recorderId)
     }
   }
 

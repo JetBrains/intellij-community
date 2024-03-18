@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import git4idea.config.GitProtectedBranchProvider
 import java.util.*
 
+@Service(Service.Level.PROJECT)
 @State(name = "GithubProjectSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 class GithubProjectSettings : PersistentStateComponentWithModificationTracker<GithubProjectSettings.State> {
   private var state = State()

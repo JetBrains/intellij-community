@@ -3,14 +3,13 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -92,15 +91,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAugmentedAssignment() {
-    String exception = null;
-    try {
-      doTest();
-    }
-    catch (RuntimeException ex) {
-      exception = ex.getMessage();
-    }
-    String error = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", "text"));
-    assertEquals(error, exception);
+    doTest();
   }
 
   public void testUsedInInnerClass() {       // IDEADEV-28786
@@ -342,10 +333,27 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testUnusedReassignmentInLoop() {
     doTest();
   }
+  
+  public void testCompilationError() {
+    doTest();
+  }
+
+  public void testCompilationErrorAtRef() {
+    doTest();
+  }
+
+  public void testCompilationErrorAssignment() {
+    doTest("Cannot perform refactoring.\n" +
+           "Code contains syntax errors. Cannot perform necessary analysis.");
+  }
 
   public void testEolComment() {
     doTest();
   }
+  
+  public void testCompositeAssignment() { doTest(); }
+  
+  public void testCompositeAssignmentCast() { doTest(); }
 
   private void doTest(String conflictMessage) {
     try {
@@ -360,6 +368,17 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testVariableInsideResourceList() {
     doTest("Cannot perform refactoring.\n" +
            "Variable is used as resource reference");
+  }
+
+  public void testLocalVariableInThisOnlyMode() {
+    boolean initialSetting = JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS;
+    try {
+      JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS = true;
+      doTest();
+    }
+    finally {
+      JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS = initialSetting;
+    }
   }
 
   private void doTest() {

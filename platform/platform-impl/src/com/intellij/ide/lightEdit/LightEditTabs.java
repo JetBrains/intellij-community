@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.tabs.TabInfo;
@@ -155,7 +156,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       e.getPresentation().setIcon(getIcon());
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.LightEditTabs.text"));
+      e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.LightEditTabs.text", SystemInfo.isMac ? "⌥" : "Alt+"));
     }
 
     @Override

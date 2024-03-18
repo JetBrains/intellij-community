@@ -118,7 +118,7 @@ final class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   }
 
   @Override
-  public TextAttributes getPlaceholderAttributes() {
+  public @Nullable TextAttributes getPlaceholderAttributes() {
     return myDelegate.getPlaceholderAttributes();
   }
 

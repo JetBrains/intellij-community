@@ -103,6 +103,10 @@ class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEd
         NotebookEditorMode.EDIT -> false
         NotebookEditorMode.COMMAND -> true
       })
+      editor.contentComponent.enableInputMethods(when (mode) {
+        NotebookEditorMode.EDIT -> true
+        NotebookEditorMode.COMMAND -> false
+      })
     }
   }
 

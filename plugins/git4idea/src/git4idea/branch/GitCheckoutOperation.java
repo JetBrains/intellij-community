@@ -3,8 +3,8 @@ package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
@@ -30,11 +31,9 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,6 @@ import static git4idea.GitUtil.*;
 import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
 import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
 import static git4idea.telemetry.GitTelemetrySpan.Operation;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -63,7 +61,6 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitCheckoutOperation extends GitBranchOperation {
   private static final int REPOSITORIES_LIMIT = 4;
-  private static final @NonNls String ROLLBACK_HREF_ATTRIBUTE = "rollback";
 
   private final @NotNull String myStartPointReference;
   private final boolean myDetach;
@@ -120,7 +117,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     boolean success = false;
     boolean fatalErrorHappened = false;
     notifyBranchWillChange();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.checkout"), GitActivity.Checkout)) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
         VirtualFile root = repository.getRoot();
@@ -187,11 +184,14 @@ class GitCheckoutOperation extends GitBranchOperation {
           if (wereSkipped()) {
             builder.br().append(revisionNotFound);
           }
-          builder.br().appendLink(ROLLBACK_HREF_ATTRIBUTE, GitBundle.message("checkout.operation.rollback"));
 
-          VcsNotifier.getInstance(myProject).notifySuccess(CHECKOUT_SUCCESS, "",
-                                                           builder.toString(),
-                                                           new RollbackOperationNotificationListener());
+          VcsNotifier.NOTIFICATION_GROUP_ID
+            .createNotification("", builder.toString(), NotificationType.INFORMATION)
+            .setDisplayId(CHECKOUT_SUCCESS)
+            .addAction(NotificationAction.createSimple(GitBundle.messagePointer("checkout.operation.rollback.action"), () -> {
+              rollback();
+            }))
+            .notify(myProject);
         }
         success = true;
         notifyBranchHasChanged(myStartPointReference);
@@ -322,11 +322,11 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected @NotNull String getSuccessMessage() {
     if (myNewBranch == null) {
       return GitBundle.message("checkout.operation.checked.out",
-                               bold(code(myStartPointReference)));
+                               code(myStartPointReference));
     }
     return GitBundle.message("checkout.operation.checked.out.new.branch.from",
-                             bold(code(myNewBranch)),
-                             bold(code(getRefPresentation(myStartPointReference))));
+                             code(myNewBranch),
+                             code(getRefPresentation(myStartPointReference)));
   }
 
   private static @NotNull String getRefPresentation(@NotNull String reference) {
@@ -374,15 +374,5 @@ class GitCheckoutOperation extends GitBranchOperation {
     notifyError(GitBundle.message("checkout.operation.could.not.checkout.error", reference),
                 compoundResult.getErrorOutputWithReposIndication());
     return false;
-  }
-
-  private class RollbackOperationNotificationListener implements NotificationListener {
-    @Override
-    public void hyperlinkUpdate(@NotNull Notification notification,
-                                @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase(ROLLBACK_HREF_ATTRIBUTE)) {
-        rollback();
-      }
-    }
   }
 }

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
@@ -49,7 +49,7 @@ internal object EmptyExpressionWeigher: ExpressionWeigher {
 internal abstract class AbstractExpressionWeigher: ExpressionWeigher {
     override fun weigh(descriptor: DeclarationDescriptor): Int {
         val base = descriptor.importableFqName?.let { fqName ->
-            ImportFixHelper.calculateWeightBasedOnFqName(fqName, (descriptor as? DeclarationDescriptorWithSource)?.psiElement)
+            ImportFixHelper.calculateWeightBasedOnFqName(fqName, (descriptor as? DeclarationDescriptorWithSource)?.source?.getPsi())
         } ?: 0
 
         return base + ownWeigh(descriptor)

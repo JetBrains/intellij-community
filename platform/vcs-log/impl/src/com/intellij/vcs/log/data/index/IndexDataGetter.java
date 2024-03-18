@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,8 +7,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -35,7 +33,6 @@ import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.vcs.log.data.index.PhmVcsLogStorageBackendKt.getHashes;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
@@ -63,10 +60,7 @@ public final class IndexDataGetter {
 
     myDirectoryRenamesProvider = VcsDirectoryRenamesProvider.getInstance(myProject);
 
-    myIsProjectLog = Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
-      .map(VcsRoot::getPath)
-      .collect(Collectors.toSet())
-      .containsAll(myProviders.keySet());
+    myIsProjectLog = VcsLogUtil.isProjectLog(myProject, myProviders);
   }
 
   void iterateIndexedCommits(int limit, @NotNull IntFunction<Boolean> processor) {
@@ -339,15 +333,16 @@ public final class IndexDataGetter {
     private DirectoryHistoryData(@NotNull FilePath startPath) {
       super(startPath);
 
-      for (Map.Entry<EdgeData<CommitId>, EdgeData<FilePath>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
+      for (Map.Entry<EdgeData<CommitId>, Collection<EdgeData<FilePath>>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
         EdgeData<CommitId> commits = entry.getKey();
-        EdgeData<FilePath> rename = entry.getValue();
-        if (VcsFileUtil.isAncestor(rename.child, startPath, false)) {
-          FilePath renamedPath = VcsUtil.getFilePath(rename.parent.getPath() + "/" +
-                                                     VcsFileUtil.relativePath(rename.child, startPath), true);
-          renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.parent.getHash(), commits.parent.getRoot()),
-                                        myLogStorage.getCommitIndex(commits.child.getHash(), commits.child.getRoot())),
-                         new EdgeData<>(renamedPath, startPath));
+        for (EdgeData<FilePath> rename : entry.getValue()) {
+          if (VcsFileUtil.isAncestor(rename.child, startPath, false)) {
+            FilePath renamedPath = VcsUtil.getFilePath(rename.parent.getPath() + "/" +
+                                                       VcsFileUtil.relativePath(rename.child, startPath), true);
+            renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.parent.getHash(), commits.parent.getRoot()),
+                                          myLogStorage.getCommitIndex(commits.child.getHash(), commits.child.getRoot())),
+                           new EdgeData<>(renamedPath, startPath));
+          }
         }
       }
     }
@@ -411,11 +406,7 @@ public final class IndexDataGetter {
     return myIndexStorageBackend;
   }
 
-  @NotNull Project getProject() {
-    return myProject;
-  }
-
-  private @Nullable VirtualFile getRoot(@NotNull FilePath path) {
+  @Nullable VirtualFile getRoot(@NotNull FilePath path) {
     if (myIsProjectLog) return VcsLogUtil.getActualRoot(myProject, path);
     return VcsLogUtil.getActualRoot(myProject, myProviders, path);
   }

@@ -7,13 +7,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
@@ -26,11 +23,13 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
-import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
+import com.intellij.vcs.ui.ProgressStripe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,15 +45,13 @@ public final class VcsLogUiUtil {
                                                     @NotNull VcsLogData logData,
                                                     @NotNull String logId,
                                                     @NotNull Disposable disposableParent) {
-    ProgressStripe progressStripe =
-      new ProgressStripe(component, disposableParent,
-                         ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
-        @Override
-        public void updateUI() {
-          super.updateUI();
-          if (myDecorator != null && logData.getProgress().isRunning()) startLoadingImmediately();
-        }
-      };
+    ProgressStripe progressStripe = new ProgressStripe(component, disposableParent) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        if (myDecorator != null && logData.getProgress().isRunning()) startLoadingImmediately();
+      }
+    };
     logData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
       @Override
       public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
@@ -97,6 +94,14 @@ public final class VcsLogUiUtil {
     return scrollPane;
   }
 
+  @NotNull
+  public static JComponent installScrollingAndProgress(@NotNull VcsLogGraphTable table, @NotNull Disposable disposableParent) {
+    JScrollPane scrollPane = setupScrolledGraph(table, SideBorder.NONE);
+    JComponent tableWithProgress = installProgress(scrollPane, table.getLogData(), table.getId(), disposableParent);
+    ScrollableContentBorder.setup(scrollPane, Side.TOP, tableWithProgress);
+    return tableWithProgress;
+  }
+
   public static void showTooltip(@NotNull JComponent component,
                                  @NotNull Point point,
                                  @NotNull Balloon.Position position,
@@ -107,9 +112,9 @@ public final class VcsLogUiUtil {
     IdeTooltipManager.getInstance().show(tooltip, false);
   }
 
-  public static @NotNull History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
+  public static @NotNull History installNavigationHistory(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogGraphTable table) {
     History history = new History(new VcsLogPlaceNavigator(ui));
-    ui.getTable().getSelectionModel().addListSelectionListener((e) -> {
+    table.getSelectionModel().addListSelectionListener((e) -> {
       if (!history.isNavigatingNow() && !e.getValueIsAdjusting()) {
         history.pushQueryPlace();
       }
@@ -117,7 +122,10 @@ public final class VcsLogUiUtil {
     return history;
   }
 
-  public static @NotNull @Nls String shortenTextToFit(@NotNull @Nls String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+  public static @NotNull @Nls String shortenTextToFit(@NotNull @Nls String text,
+                                                      @NotNull FontMetrics fontMetrics,
+                                                      int availableWidth,
+                                                      int maxLength,
                                                       @NotNull @Nls String symbol) {
     if (fontMetrics.stringWidth(text) <= availableWidth) return text;
 
@@ -144,14 +152,15 @@ public final class VcsLogUiUtil {
     appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), filterUi::clearFilters);
   }
 
-  public static boolean isDiffPreviewInEditor(@NotNull Project project) {
-    return EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable();
-  }
-
   public static @NotNull Dimension expandToFitToolbar(@NotNull Dimension size, @NotNull JComponent toolbar) {
     Dimension preferredSize = toolbar.getPreferredSize();
     int minToolbarSize = Math.round(Math.min(preferredSize.width, preferredSize.height) * 1.5f);
     return new Dimension(Math.max(size.width, minToolbarSize), Math.max(size.height, minToolbarSize));
+  }
+
+  public static @NotNull JComponent getComponent(@NotNull VcsLogUiEx ui) {
+    if (ui.getTable() instanceof JComponent) return (JComponent)ui.getTable();
+    return ui.getMainComponent();
   }
 
   private static final class VcsLogPlaceNavigator implements Place.Navigator {
@@ -176,6 +185,8 @@ public final class VcsLogUiUtil {
 
       Object value = place.getPath(PLACE_KEY);
       if (!(value instanceof Integer commitIndex)) return ActionCallback.REJECTED;
+
+      VcsLogUsageTriggerCollector.triggerPlaceHistoryUsed(myUi.getLogData().getProject());
 
       ActionCallback callback = new ActionCallback();
 

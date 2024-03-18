@@ -7,10 +7,13 @@ import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -265,13 +268,17 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
         val fileForBuilder = element.containingKtFile
 
-        val editorForBuilder = EditorHelper.openInEditor(element)
+        val editorForBuilder = FileEditorManager.getInstance(project).getSelectedEditor(fileForBuilder.virtualFile)
+            .asSafely<TextEditor>()?.editor
+            ?: EditorHelper.openInEditor(element)
         if (editorForBuilder != editor) {
             activateFileWithPsiElement(element)
         }
 
         val callableBuilder =
             CallableBuilderConfiguration(callableInfos, element as KtElement, fileForBuilder, editorForBuilder, isExtension).createBuilder()
+
+        callableBuilder.isStartTemplate = isStartTemplate()
 
         fun runBuilder(placement: () -> CallablePlacement) {
             project.executeCommand(text) {
@@ -329,4 +336,6 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
             }
         }
     }
+
+    open fun isStartTemplate(): Boolean = true
 }

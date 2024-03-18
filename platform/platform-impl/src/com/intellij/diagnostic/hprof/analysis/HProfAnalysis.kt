@@ -106,8 +106,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       // Currently, there is a maximum count of supported instances. Produce simplified report
       // (histogram only), if the count exceeds maximum.
       if (!isSupported(histogram.instanceCount)) {
-        result.appendLine(histogram.prepareReport("All", 50))
-        return result.toString()
+        return prepareSimplifiedReport(result, histogram)
       }
 
       val idMappingChannel = openTempEmptyFileChannel("id-mapping")
@@ -122,13 +121,23 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.object.graph.files")
       progress.fraction = 0.3
 
-      val navigator = ObjectNavigator.createOnAuxiliaryFiles(
-        parser,
-        openTempEmptyFileChannel("auxOffset"),
-        openTempEmptyFileChannel("aux"),
-        hprofMetadata,
-        histogram.instanceCount
-      )
+      val navigator = try {
+        ObjectNavigator.createOnAuxiliaryFiles(
+          parser,
+          openTempEmptyFileChannel("auxOffset"),
+          openTempEmptyFileChannel("aux"),
+          hprofMetadata,
+          histogram.instanceCount
+        )
+      }
+      catch (e: IllegalArgumentException) {
+        // Aux channels can exceed 2GB despite the relatively small number
+        // of supported instances.
+        // It's possible to use a buffer with a sliding window,
+        // but there are certain complications, so let's keep
+        // it simplified for the time being
+        return prepareSimplifiedReport(result, histogram)
+      }
 
       prepareFilesStopwatch.stop()
 
@@ -180,6 +189,11 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       parser.close()
       closeAndDeleteTemporaryFiles()
     }
+    return result.toString()
+  }
+
+  private fun prepareSimplifiedReport(result: StringBuilder, histogram: Histogram): String {
+    result.appendLine(histogram.prepareReport("All", 50))
     return result.toString()
   }
 

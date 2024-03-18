@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -28,6 +29,7 @@ private const val cacheSize: Long = 4096 * 4
 /**
  * Implement [WebServerRootsProvider] to add your provider
  */
+@Service(Service.Level.PROJECT)
 class WebServerPathToFileManager(private val project: Project) {
   internal val pathToInfoCache = Caffeine.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()
   // time to expire should be greater than pathToFileCache
@@ -73,7 +75,7 @@ class WebServerPathToFileManager(private val project: Project) {
         for (event in events) {
           if (event is VFileContentChangeEvent) {
             val file = event.file
-            for (rootsProvider in WebServerRootsProvider.EP_NAME.extensions) {
+            for (rootsProvider in WebServerRootsProvider.EP_NAME.extensionList) {
               if (rootsProvider.isClearCacheOnFileContentChanged(file)) {
                 clearCache()
                 break

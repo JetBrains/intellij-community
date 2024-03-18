@@ -11,7 +11,7 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiElement> {
   public SurroundAutoCloseableAction() {
     super(PsiElement.class);
   }
@@ -40,8 +40,8 @@ public class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiEl
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     boolean available = element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
-                PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7) &&
-                (findVariable(element) != null || findExpression(element) != null);
+                        PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, element) &&
+                        (findVariable(element) != null || findExpression(element) != null);
     return available ? Presentation.of(getFamilyName()) : null;
   }
 
@@ -156,7 +156,7 @@ public class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiEl
       if (tryBlock != null) {
         PsiJavaToken brace = tryBlock.getLBrace();
         if (brace != null) {
-          updater.moveTo(brace.getTextOffset() + 1);
+          updater.moveCaretTo(brace.getTextOffset() + 1);
         }
       }
     }
@@ -259,7 +259,7 @@ public class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiEl
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
-  public static class Template implements SurroundDescriptor, Surrounder {
+  public static final class Template implements SurroundDescriptor, Surrounder {
     private final Surrounder[] mySurrounders = {this};
 
     @Override

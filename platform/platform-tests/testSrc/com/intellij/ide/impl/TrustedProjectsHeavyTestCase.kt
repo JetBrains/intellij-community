@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
@@ -14,7 +14,6 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -23,7 +22,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getInstance
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -84,7 +82,7 @@ abstract class TrustedProjectsHeavyTestCase {
       }
       addModuleEntity(project, entityStorage, moduleName, contentRoots)
       WorkspaceModel.getInstance(project).updateProjectModel("Create module $moduleName") {
-        it.addDiff(entityStorage)
+        it.applyChangesFrom(entityStorage)
       }
     }
   }
@@ -102,7 +100,7 @@ abstract class TrustedProjectsHeavyTestCase {
         generateModuleAsync(project, entityStorage, "module-$index", numContentRoots)
       }
       WorkspaceModel.getInstance(project).updateProjectModel("Generate project $projectName") {
-        it.addDiff(entityStorage)
+        it.applyChangesFrom(entityStorage)
       }
     }
     return project
@@ -129,7 +127,7 @@ abstract class TrustedProjectsHeavyTestCase {
     moduleName: String,
     contentRoots: List<VirtualFile>
   ) {
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val moduleEntity = ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
       this.contentRoots = contentRoots.map {
         ContentRootEntity.invoke(it.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource)

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class OptionalUsedAsFieldOrParameterTypeInspection extends BaseInspection {
+public final class OptionalUsedAsFieldOrParameterTypeInspection extends BaseInspection {
 
   @NotNull
   @Override

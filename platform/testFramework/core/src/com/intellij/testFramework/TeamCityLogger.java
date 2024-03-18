@@ -15,7 +15,7 @@ import java.io.IOException;
 public final class TeamCityLogger {
   private static final Logger LOG = Logger.getInstance(TeamCityLogger.class);
 
-  public static final boolean isUnderTC = System.getProperty("bootstrap.testcases") != null;
+  public static final boolean isUnderTC = System.getenv("TEAMCITY_VERSION") != null;
 
   private TeamCityLogger() {}
 

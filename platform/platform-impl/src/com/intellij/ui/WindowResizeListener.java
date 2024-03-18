@@ -3,6 +3,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,6 +65,13 @@ public class WindowResizeListener extends WindowMouseListener {
       convertPointFromScreen(location, parent);
     }
     Rectangle bounds = view.getBounds();
+    boolean isWayland = StartupUiUtil.isWaylandToolkit();
+    if (isWayland) {
+      // The location of the window on the screen is not known, so whatever those
+      // numbers are, disregard ethem for the purpose of the comparisons below.
+      bounds.x = 0;
+      bounds.y = 0;
+    }
     JBInsets.removeFrom(bounds, getResizeOffset(view));
 
     int top = location.y - bounds.y;
@@ -94,23 +102,26 @@ public class WindowResizeListener extends WindowMouseListener {
           bottom = Integer.MAX_VALUE;
         }
       }
-      if (top < expected.top) {
+
+      // Wayland doesn't allow to change window's location programmatically,
+      // so resizing from top/left shall be forbidden for now.
+      if (!isWayland && top < expected.top) {
         if (left < expected.left * 2) return NW_RESIZE_CURSOR;
         if (right < expected.right * 2) return NE_RESIZE_CURSOR;
         return N_RESIZE_CURSOR;
       }
       if (bottom < expected.bottom) {
-        if (left < expected.left * 2) return SW_RESIZE_CURSOR;
+        if (!isWayland && left < expected.left * 2) return SW_RESIZE_CURSOR;
         if (right < expected.right * 2) return SE_RESIZE_CURSOR;
         return S_RESIZE_CURSOR;
       }
-      if (left < expected.left) {
-        if (top < expected.top * 2) return NW_RESIZE_CURSOR;
+      if (!isWayland && left < expected.left) {
+        if (top < expected.top * 2 ) return NW_RESIZE_CURSOR;
         if (bottom < expected.bottom * 2) return SW_RESIZE_CURSOR;
         return W_RESIZE_CURSOR;
       }
       if (right < expected.right) {
-        if (top < expected.top * 2) return NE_RESIZE_CURSOR;
+        if (!isWayland && top < expected.top * 2) return NE_RESIZE_CURSOR;
         if (bottom < expected.bottom * 2) return SE_RESIZE_CURSOR;
         return E_RESIZE_CURSOR;
       }

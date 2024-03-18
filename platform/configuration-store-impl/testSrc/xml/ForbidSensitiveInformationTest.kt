@@ -20,10 +20,12 @@ internal class ForbidSensitiveInformationTest {
   @Rule
   @JvmField
   val disposableRule = DisposableRule()
+
   @Before
   fun before() {
     DefaultLogger.disableStderrDumping(disposableRule.disposable)
   }
+
   @Test
   fun `do not store password as attribute`() {
     @Tag("bean")

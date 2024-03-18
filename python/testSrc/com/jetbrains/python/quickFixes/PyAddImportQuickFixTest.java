@@ -404,9 +404,6 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
     List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
                                                                        myFixture.getProject(), scope);
-    if (djangoPackages.size() != 1) {
-      dumpSdkRootsFileSystemAndIndexResults();
-    }
     PyFile djangoPackage = assertOneElement(djangoPackages);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
   }
@@ -416,33 +413,10 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileNegativeTest("Import");
 
     Project project = myFixture.getProject();
-    PyClass djangoViewClass = ContainerUtil.getFirstItem(PyClassNameIndex.findByQualifiedName("django.views.generic.base.View",
-                                                                                              project,
-                                                                                              GlobalSearchScope.allScope(project)));
-    if (djangoViewClass == null) {
-      dumpSdkRootsFileSystemAndIndexResults();
-    }
-    assertNotNull(djangoViewClass);
+    PyClass djangoViewClass = assertOneElement(PyClassNameIndex.findByQualifiedName("django.views.generic.base.View",
+                                                                                    project,
+                                                                                    GlobalSearchScope.allScope(project)));
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
-  }
-
-  private void dumpSdkRootsFileSystemAndIndexResults() {
-    dumpSdkRoots();
-    VirtualFile skeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-    skeletonsDir.refresh(true, true);
-    System.out.println("Under VFS (django): " + skeletonsDir.findChild("django"));
-    System.out.println("Under VFS (django/__init__.py): " + skeletonsDir.findFileByRelativePath("django/__init__.py"));
-    Path djangoDirPath = skeletonsDir.toNioPath().resolve("django");
-    System.out.println("Under NIO (django): " + Files.exists(djangoDirPath));
-    Path djangoInitPyPath = skeletonsDir.toNioPath().resolve("django/__init__.py");
-    System.out.println("Under NIO (django/__init__.py): " + Files.exists(djangoInitPyPath));
-    GlobalSearchScope projectScope = GlobalSearchScope.allScope(myFixture.getProject());
-    System.out.println("Under filename index (django): " + FilenameIndex.getVirtualFilesByName("django", projectScope));
-    List<VirtualFile> djangoInitPy = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName("__init__.py", projectScope),
-                                                          f -> f.getParent().getName().equals("django"));
-    System.out.println("Under filename index (django/__init__.py): " + djangoInitPy);
-    final List<PyFile> djangoModules = PyModuleNameIndex.findByShortName("django", myFixture.getProject(), projectScope);
-    System.out.println("Under module name index: " + ContainerUtil.map(djangoModules, PsiFile::getVirtualFile));
   }
 
   // PY-46344

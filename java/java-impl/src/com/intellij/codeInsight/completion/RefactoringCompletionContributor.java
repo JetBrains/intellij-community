@@ -11,7 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import org.jetbrains.annotations.NotNull;
 
-public class RefactoringCompletionContributor extends CompletionContributor {
+public final class RefactoringCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet resultSet) {
     if (parameters.getOriginalFile().getUserData(ClassNameReferenceEditor.CLASS_NAME_REFERENCE_FRAGMENT) == null) {

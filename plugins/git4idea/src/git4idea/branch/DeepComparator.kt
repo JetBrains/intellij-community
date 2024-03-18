@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -29,6 +29,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
+import com.intellij.vcs.log.util.VcsLogUiUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.util.subgraphDifference
@@ -167,7 +168,7 @@ class DeepComparator(private val project: Project,
                                                                               MessageType.INFO.popupBackground, null)
         .setFadeoutTime(5000)
         .createBalloon()
-      val component = ui.table
+      val component = VcsLogUiUtil.getComponent(ui)
       balloon.show(RelativePoint(component, Point(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
       Disposer.register(this, balloon)
     }
@@ -356,7 +357,7 @@ class DeepComparator(private val project: Project,
   }
 
   private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), actionName) { span ->
+    return TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(actionName).use { span ->
       span.setAttribute("rootName", root.name)
       block()
     }

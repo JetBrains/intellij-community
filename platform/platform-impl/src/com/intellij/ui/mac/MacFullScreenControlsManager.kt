@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
@@ -22,10 +22,10 @@ import javax.swing.JFrame
  * @author Alexander Lobas
  */
 internal object MacFullScreenControlsManager {
-  fun enabled(): Boolean = ExperimentalUI.isNewUI() && Registry.`is`("apple.awt.newFullScreeControls", true)
+  fun enabled(): Boolean = ExperimentalUI.isNewUI() && Registry.`is`("apple.awt.newFullScreenControls", true)
 
   fun configureEnable(coroutineScope: CoroutineScope, block: () -> Unit) {
-    val rKey = Registry.get("apple.awt.newFullScreeControls")
+    val rKey = Registry.get("apple.awt.newFullScreenControls")
     System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
     rKey.addListener(
       object : RegistryValueListener {
@@ -47,6 +47,7 @@ internal object MacFullScreenControlsManager {
   private fun configureColors() {
     val color = JBColor.namedColor("MainWindow.FullScreeControl.Background", JBColor(0x7A7B80, 0x575A5C))
     System.setProperty("apple.awt.newFullScreeControls.background", "${color.rgb}")
+    System.setProperty("apple.awt.newFullScreenControls.background", "${color.rgb}")
   }
 
   fun updateColors(frame: JFrame) {
@@ -93,7 +94,7 @@ internal object MacFullScreenControlsManager {
 
   fun configureForEmptyToolbarHeader(enter: Boolean) {
     if (enter) {
-      if (enabled() && computeMainActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }) {
+      if (enabled() && blockingComputeMainActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }) {
         configureForDistractionFreeMode(true)
       }
     }

@@ -133,7 +133,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
           } \s""";
 
-    final PsiFile file = myFixture.addFileToProject("aaa.java", text);
+    final PsiFile file = myFixture.addFileToProject("reparseAfterReformat.java", text);
     final int[] added = {0};
     final int[] removed = {0};
     final int[] replacedWhite = {0};
@@ -293,7 +293,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     Document document = pdm.getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PlatformTestUtil.startPerformanceTest("deep reparse", 200, () -> {
+      PlatformTestUtil.newPerformanceTest("deep reparse", () -> {
         document.insertString(document.getTextLength() - suffix.length(), call1);
         pdm.commitDocument(document);
 
@@ -302,7 +302,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
         document.insertString(document.getTextLength() - suffix.length(), "\n");
         pdm.commitDocument(document);
-      }).assertTiming();
+      }).start();
 
       PsiTestUtil.checkFileStructure(file);
     });

@@ -30,7 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class BadOddnessInspection extends BaseInspection {
+public final class BadOddnessInspection extends BaseInspection {
 
   @Override
   @NotNull

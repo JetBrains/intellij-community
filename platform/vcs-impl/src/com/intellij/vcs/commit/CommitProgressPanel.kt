@@ -1,33 +1,33 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.nls.NlsMessages.formatNarrowAndList
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.impl.updateFromFlow
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.ProgressDetails
-import com.intellij.openapi.util.NlsContexts.ProgressText
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
@@ -149,7 +149,18 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     })
     indicator.start()
     try {
-      return withContext(IndeterminateProgressReporter(indicator).asContextElement(), block = action)
+      return coroutineScope {
+        val pipe = scope.createProgressPipe()
+        val updater = launch {
+          indicator.updateFromFlow(pipe.progressUpdates())
+        }
+        try {
+          pipe.collectProgressUpdates(action)
+        }
+        finally {
+          updater.cancel()
+        }
+      }
     }
     finally {
       indicator.stop()
@@ -287,7 +298,7 @@ sealed class CommitCheckFailure {
   class WithDetails(text: @NlsContexts.NotificationContent String,
                     val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
                     val viewDetailsActionText: @NlsContexts.NotificationContent String,
-                    val viewDetails: (place: CommitSessionCounterUsagesCollector.CommitProblemPlace) -> Unit) : WithDescription(text)
+                    val viewDetails: (place: CommitProblemPlace) -> Unit) : WithDescription(text)
 }
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
@@ -356,7 +367,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failureLinks = formatNarrowAndList(failures.mapNotNull {
+    val failureLinks = failures.mapNotNull {
       when (val failure = it.value) {
         is CommitCheckFailure.WithDetails -> {
           if (failure.viewDetailsLinkText != null) {
@@ -370,16 +381,16 @@ private class FailuresDescriptionPanel : HtmlPanel() {
         is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
         else -> null
       }
-    })
-    if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
-    return HtmlChunk.raw(failureLinks)
+    }
+    if (failureLinks.isEmpty()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
+    return HtmlBuilder().appendWithSeparators(HtmlChunk.raw("<br/><br/>"), failureLinks).toFragment()
   }
 
   private fun showDetails(event: HyperlinkEvent) {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
     val failure = failures[event.description.toInt()] as? CommitCheckFailure.WithDetails ?: return
-    failure.viewDetails(CommitSessionCounterUsagesCollector.CommitProblemPlace.COMMIT_TOOLWINDOW)
+    failure.viewDetails(CommitProblemPlace.COMMIT_TOOLWINDOW)
   }
 }
 
@@ -393,16 +404,13 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
 
     (this as? ActionToolbarImpl)?.setForceMinimumSize(true) // for `BoxLayout`
     setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     component.isOpaque = false
     component.border = null
   }
 
-private class RerunCommitChecksAction :
-  AnActionWrapper(ActionManager.getInstance().getAction("Vcs.RunCommitChecks")),
-  TooltipDescriptionProvider {
-
+private class RerunCommitChecksAction : DumbAwareAction(), TooltipDescriptionProvider {
   init {
     templatePresentation.apply {
       setText(Presentation.NULL_STRING)
@@ -412,21 +420,23 @@ private class RerunCommitChecksAction :
       hoveredIcon = AllIcons.General.InlineRefreshHover
     }
   }
-}
 
-private class IndeterminateProgressReporter(private val indicator: ProgressIndicator) : RawProgressReporter {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun text(text: @ProgressText String?) {
-    if (text != null) {
-      indicator.text = text
-    }
+  override fun update(e: AnActionEvent) {
+    val workflowHandler = e.getContextCommitWorkflowHandler()
+    val executor = workflowHandler?.getExecutor(RunCommitChecksExecutor.ID)
+    e.presentation.isVisible = workflowHandler != null && executor != null
+    e.presentation.isEnabled = workflowHandler != null && executor != null && workflowHandler.isExecutorEnabled(executor)
   }
 
-  override fun details(details: @ProgressDetails String?) {
-    if (details != null) {
-      indicator.text2 = details
-    }
-  }
+  /**
+   * See [com.intellij.openapi.vcs.changes.actions.CommitExecutorAction]
+   */
+  override fun actionPerformed(e: AnActionEvent) {
+    val workflowHandler = e.getContextCommitWorkflowHandler()!!
+    val executor = workflowHandler.getExecutor(RunCommitChecksExecutor.ID)!!
 
-  // ignore fraction updates
+    workflowHandler.execute(executor)
+  }
 }

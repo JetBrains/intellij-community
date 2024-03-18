@@ -1,29 +1,34 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.impl.VcsProjectLog
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffSelectionModelImpl
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
 internal class GHPRDataProviderRepositoryImpl(private val project: Project,
+                                              parentCs: CoroutineScope,
+                                              private val repositoryDataService: GHPRRepositoryDataService,
                                               private val detailsService: GHPRDetailsService,
                                               private val stateService: GHPRStateService,
                                               private val reviewService: GHPRReviewService,
@@ -32,6 +37,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
                                               private val changesService: GHPRChangesService,
                                               private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>)
   : GHPRDataProviderRepository {
+  private val cs = parentCs.childScope(classAsCoroutineName())
 
   private var isDisposed = false
 
@@ -64,6 +70,9 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
   }
 
   private fun createDataProvider(parentDisposable: CheckedDisposable, id: GHPRIdentifier): GHPRDataProvider {
+    val providerCs = cs.childScope(classAsCoroutineName<GHPRDataProviderImpl>()).apply {
+      cancelledWith(parentDisposable)
+    }
     val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
       override fun isDisposed() = parentDisposable.isDisposed
 
@@ -96,7 +105,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     val stateData = GHPRStateDataProviderImpl(stateService, id, messageBus, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
-    val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData).also {
+    val changesData = GHPRChangesDataProviderImpl(providerCs, repositoryDataService, changesService, id, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
     val reviewData = GHPRReviewDataProviderImpl(reviewService, changesData, id, messageBus).also {
@@ -115,11 +124,8 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
 
           override fun onCommentAdded() = loader.loadMore(true)
           override fun onCommentUpdated(commentId: String, newBody: String) {
-            val comment = loader.loadedData.find { it is GHIssueComment && it.id == commentId } as? GHIssueComment
-            if (comment != null) {
-              val newComment = GHIssueComment(commentId, comment.author, newBody, comment.createdAt,
-                                              comment.viewerCanDelete, comment.viewerCanUpdate)
-              loader.updateData(newComment)
+            loader.updateData { item ->
+              item.asSafely<GHIssueComment>()?.takeIf { it.id == commentId }?.copy(body = newBody)
             }
             loader.loadMore(true)
           }
@@ -132,11 +138,8 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
           override fun onReviewsChanged() = loader.loadMore(true)
 
           override fun onReviewUpdated(reviewId: String, newBody: String) {
-            val review = loader.loadedData.find { it is GHPullRequestReview && it.id == reviewId } as? GHPullRequestReview
-            if (review != null) {
-              val newReview = GHPullRequestReview(reviewId, review.url, review.author, newBody, review.state, review.createdAt,
-                                                  review.viewerCanUpdate)
-              loader.updateData(newReview)
+            loader.updateData { item ->
+              item.asSafely<GHPullRequestReview>()?.takeIf { it.id == reviewId }?.copy(body = newBody)
             }
             loader.loadMore(true)
           }
@@ -156,8 +159,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     })
 
     return GHPRDataProviderImpl(
-      id, detailsData, stateData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder,
-      GHPRDiffRequestModelImpl(), GHPRCombinedDiffSelectionModelImpl()
+      id, detailsData, stateData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder
     )
   }
 

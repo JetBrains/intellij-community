@@ -69,7 +69,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new MyTabLabelLayout());
+    setLayout(new TabLabelLayout());
 
     myLabelPlaceholder.setOpaque(false);
     myLabelPlaceholder.setFocusable(false);
@@ -815,7 +815,13 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
   }
 
-  private final class MyTabLabelLayout extends BorderLayout {
+  public final class TabLabelLayout extends BorderLayout {
+    private boolean myRightAlignment;
+
+    public void setRightAlignment(boolean rightAlignment) {
+      myRightAlignment = rightAlignment;
+    }
+
     @Override
     public void addLayoutComponent(Component comp, Object constraints) {
       checkConstraints(constraints);
@@ -858,8 +864,22 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
       int xOffset = spaceLeft;
       xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
+      xOffset -= getShift(parent);
       xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
       layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
+    }
+
+    private int getShift(Container parent) {
+      if (myRightAlignment) {
+        int width = parent.getBounds().width;
+        if (width > 0) {
+          int shift = parent.getPreferredSize().width - width;
+          if (shift > 0) {
+            return shift;
+          }
+        }
+      }
+      return 0;
     }
 
     private int layoutComponent(int xOffset, Component component, int spaceTop, int spaceHeight) {

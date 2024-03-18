@@ -6,6 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * An efficient implementation for a set of folders.
+ * It allows to query {@link #hasAncestor(FilePath)} to check if a file is a descendant of any directory in a set.
+ */
 public class RecursiveFilePathSet {
   private final FilePathMapping<FilePath> myMapping;
 
@@ -35,7 +39,7 @@ public class RecursiveFilePathSet {
     myMapping.clear();
   }
 
-  public boolean contains(@NotNull FilePath filePath) {
+  public boolean containsExplicitly(@NotNull FilePath filePath) {
     return myMapping.containsKey(filePath.getPath());
   }
 

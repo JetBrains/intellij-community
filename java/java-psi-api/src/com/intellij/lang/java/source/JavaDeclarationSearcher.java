@@ -13,7 +13,7 @@ import java.util.Collection;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-public class JavaDeclarationSearcher implements JvmDeclarationSearcher {
+public final class JavaDeclarationSearcher implements JvmDeclarationSearcher {
 
   @NotNull
   @Override

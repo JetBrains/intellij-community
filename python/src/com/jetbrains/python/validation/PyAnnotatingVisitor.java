@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyAnnotatingVisitor implements Annotator, DumbAware {
+public final class PyAnnotatingVisitor implements Annotator, DumbAware {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
   private static final Class[] ANNOTATOR_CLASSES = new Class[] {
     AssignTargetAnnotator.class,

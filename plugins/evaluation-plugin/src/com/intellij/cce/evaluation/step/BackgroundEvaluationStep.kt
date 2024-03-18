@@ -38,7 +38,7 @@ abstract class BackgroundEvaluationStep(protected val project: Project) : Evalua
 
       override fun onThrowable(error: Throwable) {
         evaluationAbortedHandler.onError(error, this.title)
-        result.setException(error)
+        result.set(null)
       }
     }
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))

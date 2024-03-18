@@ -2,7 +2,6 @@
 package com.jetbrains.jsonSchema.impl.nestedCompletions
 
 import com.intellij.json.pointer.JsonPointerPosition
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -22,12 +21,6 @@ interface NestedCompletionsNodeBuilder {
   fun open(name: String, childBuilder: NestedCompletionsNodeBuilder.() -> Unit = {})
 }
 
-/** DSL to build a completion tree */
-@ApiStatus.Experimental
-fun JsonSchemaObject.buildNestedCompletionsRootTree(block: NestedCompletionsNodeBuilder.() -> Unit) {
-  applyBuilderOnNestedCompletionsRoot(block)
-}
-
 /**
  * Represents a tree structure of how completions can be nested through a schema.
  *
@@ -37,9 +30,10 @@ fun JsonSchemaObject.buildNestedCompletionsRootTree(block: NestedCompletionsNode
  *
  * See tests for details
  */
-internal class NestedCompletionsNode(val children: List<ChildNode>)
+@ApiStatus.Experimental
+class NestedCompletionsNode(val children: List<ChildNode>)
 
-internal sealed interface ChildNode {
+sealed interface ChildNode {
   val node: NestedCompletionsNode
 
   sealed interface NamedChildNode : ChildNode {
@@ -54,7 +48,7 @@ internal sealed interface ChildNode {
   data class OpenNode(override val name: String, override val node: NestedCompletionsNode) : ChildNode, NamedChildNode
 }
 
-internal fun buildNestedCompletionsTree(block: NestedCompletionsNodeBuilder.() -> Unit): NestedCompletionsNode =
+fun buildNestedCompletionsTree(block: NestedCompletionsNodeBuilder.() -> Unit): NestedCompletionsNode =
   NestedCompletionsNode(
     children = buildList {
       block(
@@ -75,14 +69,7 @@ internal fun buildNestedCompletionsTree(block: NestedCompletionsNodeBuilder.() -
     }
   )
 
-internal fun NestedCompletionsNode?.merge(other: NestedCompletionsNode?): NestedCompletionsNode? = when {
-  this == null -> other
-  other == null -> this
-  else -> this.merge(other)
-}
-
-@JvmName("MergeNotNull")
-private fun NestedCompletionsNode.merge(other: NestedCompletionsNode): NestedCompletionsNode =
+internal fun NestedCompletionsNode.merge(other: NestedCompletionsNode): NestedCompletionsNode =
   NestedCompletionsNode(children + other.children)
 
 internal fun NestedCompletionsNode?.navigate(jsonPointer: JsonPointerPosition): NestedCompletionsNode? =

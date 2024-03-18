@@ -16,7 +16,7 @@ project.commonMain
 
 
 project.commonTest
-    fqName: null
+    fqName: CommonTest
     name: CommonTest
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "CommonTest"]
@@ -24,7 +24,7 @@ project.commonTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: CommonTest
+    fqName: CommonTest.test - failure
     name: CommonTest.test - failure
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "CommonTest.test - failure"]
@@ -32,7 +32,7 @@ project.commonTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: CommonTest
+    fqName: CommonTest.test - success
     name: CommonTest.test - success
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "CommonTest.test - success"]
@@ -64,7 +64,7 @@ project.jvmTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: JvmTest
+    fqName: JvmTest.test - failure
     name: JvmTest.test - failure
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test - failure"]
@@ -72,7 +72,7 @@ project.jvmTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: JvmTest
+    fqName: JvmTest.test - success
     name: JvmTest.test - success
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test - success"]
@@ -116,7 +116,7 @@ project.mingwX64Test
 project.nativeMain
 
 project.nativeTest
-    fqName: null
+    fqName: NativeTest
     name: NativeTest
     type: Gradle
     tasks: [:cleanMingwX64Test, :mingwX64Test, --tests, "NativeTest"]
@@ -124,7 +124,7 @@ project.nativeTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: NativeTest
+    fqName: NativeTest.test - failure
     name: NativeTest.test - failure
     type: Gradle
     tasks: [:cleanMingwX64Test, :mingwX64Test, --tests, "NativeTest.test - failure"]
@@ -132,7 +132,7 @@ project.nativeTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: NativeTest
+    fqName: NativeTest.test - success
     name: NativeTest.test - success
     type: Gradle
     tasks: [:cleanMingwX64Test, :mingwX64Test, --tests, "NativeTest.test - success"]

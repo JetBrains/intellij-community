@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNestingDepthInspection
+public final class ClassNestingDepthInspection
   extends ClassMetricInspection {
 
   private static final int CLASS_NESTING_LIMIT = 1;

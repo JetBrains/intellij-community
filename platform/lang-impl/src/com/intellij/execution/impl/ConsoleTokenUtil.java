@@ -19,12 +19,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class ConsoleTokenUtil {
+public final class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
@@ -98,11 +99,12 @@ final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
-  static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
+  @Nullable
+  public static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
 
-  private static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
+  public static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
     m.putUserData(CONTENT_TYPE, contentType);
   }
 
@@ -174,7 +176,7 @@ final class ConsoleTokenUtil {
       ConsoleViewContentType tokenType = getTokenType(marker);
       if (tokenType != null) {
         if (tokenType != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
-          break;
+          continue;
         }
         marker.putUserData(USER_INPUT_SENT, true);
         textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));

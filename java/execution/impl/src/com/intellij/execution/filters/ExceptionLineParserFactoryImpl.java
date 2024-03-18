@@ -3,7 +3,7 @@ package com.intellij.execution.filters;
 
 import org.jetbrains.annotations.NotNull;
 
-public class ExceptionLineParserFactoryImpl implements ExceptionLineParserFactory {
+public final class ExceptionLineParserFactoryImpl implements ExceptionLineParserFactory {
   @Override
   public ExceptionLineParser create(@NotNull ExceptionInfoCache cache) {
     return new ExceptionLineParserImpl(cache);

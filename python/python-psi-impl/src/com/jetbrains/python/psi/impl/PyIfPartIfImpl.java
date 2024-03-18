@@ -2,20 +2,16 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.ast.PyAstIfPartIf;
 import com.jetbrains.python.psi.PyIfPart;
 
 /**
  * PyIfPart that represents an 'if' part.
  */
-public class PyIfPartIfImpl extends PyConditionalStatementPartImpl implements PyIfPart {
+public class PyIfPartIfImpl extends PyConditionalStatementPartImpl implements PyAstIfPartIf, PyIfPart {
 
   public PyIfPartIfImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @Override
-  public boolean isElif() {
-    return false;
   }
 
 }

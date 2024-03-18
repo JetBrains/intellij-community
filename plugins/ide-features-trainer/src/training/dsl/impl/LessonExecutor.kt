@@ -2,7 +2,6 @@
 package training.dsl.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -13,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -31,6 +29,7 @@ import training.util.getLearnToolWindowForProject
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 internal class LessonExecutor(val lesson: KLesson,
@@ -95,7 +94,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   internal val visualIndexNumber: Int get() = taskActions[currentTaskIndex].taskVisualIndex ?: 0
 
-  private var continueHighlighting: Ref<Boolean> = Ref(true)
+  private var continueHighlighting = AtomicBoolean(true)
 
   internal val internalProblems: MutableSet<LearningInternalProblems> = mutableSetOf()
 
@@ -211,7 +210,7 @@ internal class LessonExecutor(val lesson: KLesson,
     taskInvokeLater(ModalityState.any()) {
       disposeRecorders()
       continueHighlighting.set(false)
-      continueHighlighting = Ref(true)
+      continueHighlighting = AtomicBoolean(true)
       currentTaskIndex = taskIndex
       processNextTask2()
     }
@@ -289,7 +288,7 @@ internal class LessonExecutor(val lesson: KLesson,
     val condition = continueHighlighting
     ApplicationManager.getApplication().executeOnPooledThread {
       var ui = component
-      while (ActionUpdateEdtExecutor.computeOnEdt { condition.get() } == true) {
+      while (condition.get()) {
         if (ui == null || !ui.isShowing || ui.bounds.isEmpty) {
           ui = highlightingFunction()
         }
@@ -413,11 +412,20 @@ internal class LessonExecutor(val lesson: KLesson,
     // do not process the next task if the current task is not fully completed
     // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
     // or the next task already has been processed
-    val allStepsAreCompleted = taskContext.steps.all { it.isDone && it.get() }
-    if (!allStepsAreCompleted || hasBeenStopped || taskInfo.nextTaskHasBeenScheduled) return
+    val stepIsDone: (CompletableFuture<Boolean>) -> Boolean = { it.isDone && it.get() }
+    val taskBecomesCompleted = when (taskContext.passMode) {
+      TaskContext.PassMode.AllSteps -> taskContext.steps.all(stepIsDone)
+      TaskContext.PassMode.AnyStep -> taskContext.steps.any(stepIsDone)
+    }
+    if (!taskBecomesCompleted || hasBeenStopped || taskInfo.nextTaskHasBeenScheduled) return
 
     clearRestore()
     LessonManager.instance.passExercise()
+    for (step in taskContext.steps) {
+      if (!step.isDone) {
+        step.cancel(true)
+      }
+    }
     if (taskContext.propagateHighlighting != false) {
       if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
       if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent

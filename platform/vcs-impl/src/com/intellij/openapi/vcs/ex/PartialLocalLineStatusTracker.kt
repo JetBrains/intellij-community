@@ -47,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Graphics
 import java.awt.Point
@@ -125,6 +126,8 @@ class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcs
   }
 
   @Deprecated("Use [exclusionState] instead", ReplaceWith("exclusionState == RangeExclusionState.Excluded"))
+  @get:Deprecated("Use [exclusionState] instead", ReplaceWith("exclusionState == RangeExclusionState.Excluded"))
+  @get:ApiStatus.ScheduledForRemoval
   val isExcludedFromCommit: Boolean get() = exclusionState == RangeExclusionState.Excluded
 }
 

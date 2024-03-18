@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.legacy
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
 
+@Service(Service.Level.PROJECT)
 class GradleStandaloneScriptActionsManager(val project: Project) {
     private val byFile = mutableMapOf<VirtualFile, GradleStandaloneScriptActions>()
 

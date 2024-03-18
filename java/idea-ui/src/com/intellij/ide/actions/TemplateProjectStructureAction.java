@@ -28,9 +28,4 @@ public class TemplateProjectStructureAction extends ShowStructureSettingsAction 
       e.getPresentation().setText(StringUtil.trimEnd(text, "..."));
     }
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
 }

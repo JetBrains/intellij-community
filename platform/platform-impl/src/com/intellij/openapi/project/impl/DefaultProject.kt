@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreUtil.saveSettings
@@ -144,8 +146,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
   override fun isDefault(): Boolean = true
 
-  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
-  override fun getCoroutineScope(): CoroutineScope = ApplicationManager.getApplication().getCoroutineScope()
+  override fun getCoroutineScope(): CoroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
 
   @Suppress("DEPRECATION")
   @Deprecated("")
@@ -197,14 +198,12 @@ private class DefaultProjectImpl(
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 
-  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      projectMethodType,
-      emptyConstructorMethodType,
-      projectAndScopeMethodType,
-      coroutineScopeMethodType,
-    )
-  }
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
+    projectMethodType,
+    emptyConstructorMethodType,
+    projectAndScopeMethodType,
+    coroutineScopeMethodType,
+  )
 
   override fun isParentLazyListenersIgnored(): Boolean = true
 

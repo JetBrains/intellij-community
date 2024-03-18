@@ -61,4 +61,6 @@ class AddFieldActionCreateCallableFromUsageFix(
                 initializer = initializer
             )
         }
+
+    override fun isStartTemplate(): Boolean = request.isStartTemplate
 }

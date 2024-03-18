@@ -10,9 +10,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,8 +21,6 @@ import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.LatencyListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -74,15 +72,9 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
           pairs.add(TOOL_WINDOW.with(toolWindow.getId()));
         }
 
-        FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-        if (fileEditor != null) {
-          VirtualFile virtualFile = fileEditor.getFile();
-          if (virtualFile != null) {
-            FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
-            if (fileType instanceof LanguageFileType) {
-              pairs.add(EventFields.Language.with(((LanguageFileType)fileType).getLanguage()));
-            }
-          }
+        Language fileLanguage = DataContextUtils.getFileTypeLanguageByEditor(dataContext);
+        if (fileLanguage != null) {
+          pairs.add(EventFields.Language.with(fileLanguage));
         }
 
         TYPED.log(project, pairs);

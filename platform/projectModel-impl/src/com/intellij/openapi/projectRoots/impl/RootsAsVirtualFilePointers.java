@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RootsAsVirtualFilePointers implements RootProvider {
@@ -44,6 +45,10 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   public String @NotNull [] getUrls(@NotNull OrderRootType type) {
     VirtualFilePointerContainer container = myRoots.get(type);
     return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
+  }
+
+  private Set<OrderRootType> getOrderRootTypes() {
+    return myRoots.keySet();
   }
 
   public void addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type) {
@@ -99,9 +104,9 @@ public class RootsAsVirtualFilePointers implements RootProvider {
     }
   }
 
-  void copyRootsFrom(@NotNull RootProvider rootContainer) {
+  void copyRootsFrom(@NotNull RootsAsVirtualFilePointers rootContainer) {
     removeAllRoots();
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : rootContainer.getOrderRootTypes()) {
       final String[] newRoots = rootContainer.getUrls(rootType);
       for (String newRoot : newRoots) {
         addRoot(newRoot, rootType);

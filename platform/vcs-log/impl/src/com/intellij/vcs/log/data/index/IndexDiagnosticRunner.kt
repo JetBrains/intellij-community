@@ -30,18 +30,23 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
                                      private val commitDetailsGetter: CommitDetailsGetter,
                                      private val errorHandler: VcsLogErrorHandler,
                                      parent: Disposable) : Disposable {
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Index Diagnostic Runner", 1)
   private val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
   private val indexingListener = VcsLogIndex.IndexingFinishedListener { root -> runDiagnostic(listOf(root)) }
+  private val disposedFlag = Disposer.newCheckedDisposable()
   private val checkedRoots = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>()
 
   init {
     index.addListener(indexingListener)
     bigRepositoriesList.addListener(MyBigRepositoriesListListener(), this)
     Disposer.register(parent, this)
+    Disposer.register(this, disposedFlag)
   }
 
   private fun runDiagnostic(rootsToCheck: Collection<VirtualFile>) {
-    val backgroundTask = submitTask(AppExecutorUtil.getAppExecutorService(), this) {
+    if (disposedFlag.isDisposed) return
+
+    val backgroundTask = submitTask(executor, this) {
       doRunDiagnostic(rootsToCheck)
     }
     backgroundTask.cancelAfter(3 * 60) {
@@ -99,6 +104,12 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
 
   override fun dispose() {
     index.removeListener(indexingListener)
+    executor.shutdown()
+    try {
+      executor.awaitTermination(10, TimeUnit.MILLISECONDS)
+    }
+    catch (_: InterruptedException) {
+    }
   }
 
   private inner class MyBigRepositoriesListListener : VcsLogBigRepositoriesList.Listener {

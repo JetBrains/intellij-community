@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,13 +17,11 @@ public final class HgBranchUtil {
   /**
    * Only common hg heavy branches
    */
-  @NotNull
-  public static List<String> getCommonBranches(@NotNull Collection<? extends HgRepository> repositories) {
+  public static @NotNull List<String> getCommonBranches(@NotNull Collection<? extends HgRepository> repositories) {
     return getCommonNames(repositories, false);
   }
 
-  @NotNull
-  public static List<String> getCommonBookmarks(@NotNull Collection<? extends HgRepository> repositories) {
+  public static @NotNull List<String> getCommonBookmarks(@NotNull Collection<? extends HgRepository> repositories) {
     return getCommonNames(repositories, true);
   }
 

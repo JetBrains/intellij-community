@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_TRY_STATEMENT;
 
-public class FinallyBlockSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class FinallyBlockSelectioner extends AbstractBasicBackBasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(e), JavaTokenType.FINALLY_KEYWORD);

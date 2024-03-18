@@ -11,7 +11,7 @@ fun commonContext(){
 expect fun left(): Int
 expect fun right(): Int
 
-// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1 / line / 1
+// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1
 
 // EXPRESSION: debugMe(3)
 // RESULT: 6: I

@@ -75,8 +75,12 @@ class InstanceContainerImpl(
     return holder.getInstanceIfRequested() as T?
   }
 
+  override fun instanceHoldersAndKeys(): Map<String, InstanceHolder> {
+    return state().holders
+  }
+
   override fun instanceHolders(): Collection<InstanceHolder> {
-    return state().holders.values
+    return instanceHoldersAndKeys().values
   }
 
   override fun getInstanceHolder(keyClassName: String): InstanceHolder? {

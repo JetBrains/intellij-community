@@ -4,7 +4,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -25,20 +24,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyCallExpression(this);
-  }
-
-  @Override
-  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return PyCallExpressionHelper.getReceiver(this, resolvedCallee);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getCallee() {
-    // peel off any parens, because we may have smth like (lambda x: x+1)(2)
-    PsiElement seeker = getFirstChild();
-    while (seeker instanceof PyParenthesizedExpression) seeker = ((PyParenthesizedExpression)seeker).getContainedExpression();
-    return seeker instanceof PyExpression ? (PyExpression) seeker : null;
   }
 
   @NotNull

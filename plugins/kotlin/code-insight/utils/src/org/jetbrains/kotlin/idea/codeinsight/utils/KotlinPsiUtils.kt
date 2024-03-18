@@ -97,6 +97,11 @@ fun removeProperty(ktProperty: KtProperty) {
     }
 }
 
+fun renameToUnderscore(declaration: KtCallableDeclaration) {
+    declaration.nameIdentifier?.replace(KtPsiFactory(declaration.project).createIdentifier("_"))
+}
+
+
 /**
  * A function that returns whether this KtParameter is a parameter of a setter or not.
  *

@@ -32,7 +32,11 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeAnnotationExternal extends BaseIntentionAction {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public final class MakeAnnotationExternal extends BaseIntentionAction {
 
   @Nls
   @NotNull
@@ -71,7 +75,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
     
     ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(MakeExternalAnnotationExplicit.getFilesToWrite(file, owner, externalAnnotationsManager))) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(getFilesToWrite(file, owner, externalAnnotationsManager))) return;
 
     String qualifiedName = annotation.getQualifiedName();
     assert qualifiedName != null;
@@ -88,5 +92,17 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  private static List<PsiFile> getFilesToWrite(PsiFile file,
+                                               PsiModifierListOwner owner,
+                                               ExternalAnnotationsManager externalAnnotationsManager) {
+    List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(owner);
+    if (files != null) {
+      List<PsiFile> elements = new ArrayList<>(files);
+      elements.add(file);
+      return elements;
+    }
+    return Collections.singletonList(file);
   }
 }

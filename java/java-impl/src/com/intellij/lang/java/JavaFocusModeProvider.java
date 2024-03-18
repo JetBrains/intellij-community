@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaFocusModeProvider implements FocusModeProvider {
+public final class JavaFocusModeProvider implements FocusModeProvider {
   @NotNull
   @Override
   public List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {

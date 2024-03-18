@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PydevDocumentationProvider extends AbstractDocumentationProvider {
+public final class PydevDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {

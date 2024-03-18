@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.InheritanceUtil;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class CastToIncompatibleInterfaceInspection extends BaseInspection {
+public final class CastToIncompatibleInterfaceInspection extends BaseInspection {
 
   @Override
   @NotNull

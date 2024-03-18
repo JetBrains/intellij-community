@@ -28,7 +28,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.packagesearch.api.PackageSearch
@@ -65,11 +64,10 @@ class PackageSearchProviderTest {
   @Test
   fun `test suggested packages search`() = runTest {
     val (paramsFlow, engine) = getMockEngine()
-    val dataJob = getClient(engine).suggestPrefix(
+    val data = getClient(engine).suggestPrefix(
       groupId = "org.apache.maven",
       artifactId = "maven-plugin-api",
     )
-    val data = dataJob.await()
     val params = paramsFlow.first()
     assertEquals("org.apache.maven", params["groupid"])
     assertEquals("maven-plugin-api", params["artifactid"])
@@ -83,11 +81,10 @@ class PackageSearchProviderTest {
   @Test
   fun `test packages fulltext search`() = runTest {
     val (paramsFlow, engine) = getMockEngine()
-    val dataJob = getClient(engine).fulltextSearch(
+    val data = getClient(engine).fulltextSearch(
       searchString = "maven-plugin-api"
     )
 
-    val data = dataJob.await()
     val params = paramsFlow.first()
 
     assertEquals("maven-plugin-api", params["query"])

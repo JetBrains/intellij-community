@@ -5,6 +5,7 @@ package com.intellij.openapi.options.binding;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,7 +15,11 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @deprecated Use Kotlin UI DSL with bindings
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public abstract class ValueAccessor<V> {
 
   public abstract V getValue();

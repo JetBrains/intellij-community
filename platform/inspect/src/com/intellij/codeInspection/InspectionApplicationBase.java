@@ -62,7 +62,6 @@ import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.xml.stream.XMLStreamException;
@@ -79,8 +78,8 @@ import java.util.function.Predicate;
 
 import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 
-public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
-  private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+public class InspectionApplicationBase implements CommandLineInspectionProgressReporter, InspectionApplicationStart.Synchronous {
+  public static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
 
@@ -112,7 +111,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       printHelpAndExit();
     }
 
-    if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
+    if (isProfileConfigInvalid()) {
       reportError("Profile to inspect with is not defined");
       printHelpAndExit();
     }
@@ -145,6 +144,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void header() { }
+
+  protected boolean isProfileConfigInvalid() {
+    return myProfileName == null && myProfilePath == null && myStubProfile == null;
+  }
 
   public void execute() throws Exception {
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -214,7 +217,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
   }
 
-  protected @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
+  private @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
       FileUtil.toSystemIndependentName(projectPath.toString()));
@@ -268,14 +271,13 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return project;
   }
 
-  @VisibleForTesting
-  public @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  private @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
   }
 
-  public @Nullable SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  private SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
 
     if (myAnalyzeChanges) {
       return getSearchScopeFromChangedFiles(project);
@@ -433,7 +435,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysis(project, projectPath, inspectionProfile, scope, reportConverter, resultsDataPath);
   }
 
-  public void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
+  private void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
@@ -736,7 +738,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return InspectionProjectProfileManager.getInstance(project);
   }
 
-  public @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
+  private @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
     return new InspectionProfileLoaderBase<>(project) {
       @Override
       public @Nullable InspectionProfileImpl loadProfileByName(@NotNull String profileName) {

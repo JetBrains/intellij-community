@@ -237,7 +237,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testValidityChecksOnTreeBuild2() {
     doFailTest("aa",
-               "Tokens [LETTER] were not inserted into the tree. Text:\naa", builder -> {
+               "Tokens [LETTER] were not inserted into the tree. \nDetails:\nmissedTokensFragment.txt\naa", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
                  builder.advanceLexer();
                  marker.done(LETTER);
@@ -248,7 +248,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testValidityChecksOnTreeBuild3() {
     doFailTest("a ",
-               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\". Text:\na ", builder -> {
+               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\".\nDetails:\noutsideTokensFragment.txt\na ", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
                  builder.advanceLexer();
                  marker.done(LETTER);

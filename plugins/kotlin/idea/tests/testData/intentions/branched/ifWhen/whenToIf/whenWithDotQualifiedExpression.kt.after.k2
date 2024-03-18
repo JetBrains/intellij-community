@@ -5,7 +5,7 @@ object G {
 }
 
 fun test(x: Int, y: Int): String {
-    val n<caret> = G.cat(x, y)
+    val <caret>n = G.cat(x, y)
     if (n == 1) return "one"
     else if (n == 2) return "two"
     else return "big"

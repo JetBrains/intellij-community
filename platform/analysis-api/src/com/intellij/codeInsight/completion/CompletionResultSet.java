@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -17,27 +17,27 @@ import java.util.LinkedHashSet;
  * match them against specified
  * {@link PrefixMatcher} and give them to special {@link Consumer}
  * for further processing, which usually means
- * they will sooner or later appear in completion list. If they don't, there must be some {@link CompletionContributor}
- * up the invocation stack that filters them out.
- *
+ * they will sooner or later appear in a completion list.
+ * If they don't, there must be some {@link CompletionContributor} up the invocation stack that filters them out.
+ * <p>
  * If you want to change the matching prefix, use {@link #withPrefixMatcher(PrefixMatcher)} or {@link #withPrefixMatcher(String)}
  * to obtain another {@link CompletionResultSet} and give your lookup elements to that one.
  */
 public abstract class CompletionResultSet implements Consumer<LookupElement> {
-  private final PrefixMatcher myPrefixMatcher;
-  private final Consumer<? super CompletionResult> myConsumer;
+  private final PrefixMatcher prefixMatcher;
+  private final java.util.function.Consumer<? super CompletionResult> consumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
-  protected final CompletionContributor myContributor;
+  protected final CompletionContributor contributor;
   private boolean myStopped;
 
-  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<? super CompletionResult> consumer, CompletionContributor contributor) {
-    myPrefixMatcher = prefixMatcher;
-    myConsumer = consumer;
-    myContributor = contributor;
+  protected CompletionResultSet(final PrefixMatcher prefixMatcher, java.util.function.Consumer<? super CompletionResult> consumer, CompletionContributor contributor) {
+    this.prefixMatcher = prefixMatcher;
+    this.consumer = consumer;
+    this.contributor = contributor;
   }
 
-  protected Consumer<? super CompletionResult> getConsumer() {
-    return myConsumer;
+  protected java.util.function.Consumer<? super CompletionResult> getConsumer() {
+    return consumer;
   }
 
   @Override
@@ -52,18 +52,18 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   public abstract void addElement(final @NotNull LookupElement element);
 
   public void passResult(@NotNull CompletionResult result) {
-    myConsumer.consume(result);
+    consumer.accept(result);
   }
 
   public void startBatch() {
-    if (myConsumer instanceof BatchConsumer) {
-      ((BatchConsumer<?>)myConsumer).startBatch();
+    if (consumer instanceof BatchConsumer) {
+      ((BatchConsumer<?>)consumer).startBatch();
     }
   }
 
   public void endBatch() {
-    if (myConsumer instanceof BatchConsumer) {
-      ((BatchConsumer<?>)myConsumer).endBatch();
+    if (consumer instanceof BatchConsumer) {
+      ((BatchConsumer<?>)consumer).endBatch();
     }
   }
 
@@ -74,7 +74,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * Otherwise, when the lookup is shown, most relevant elements processed to that moment are put to the top 
    * and remain there even if more relevant elements appear later. 
    * These "first" elements may differ from completion invocation to completion invocation due to performance fluctuations,
-   * resulting in varying preselected item in completion and worse user experience. Using {@code addAllElements} 
+   * resulting in varying preselected items in completion and worse user experience. Using {@code addAllElements}
    * instead of {@link #addElement(LookupElement)} helps to avoid that.
    */
   public void addAllElements(final @NotNull Iterable<? extends LookupElement> elements) {
@@ -106,13 +106,13 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
 
   /**
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
-   * remain as they are though, so upon insertion the prefix case will be changed.
+   * remain as they are though, so upon insertion, the prefix case will be changed.
    */
   @Contract(pure = true)
   public abstract @NotNull CompletionResultSet caseInsensitive();
 
   public @NotNull PrefixMatcher getPrefixMatcher() {
-    return myPrefixMatcher;
+    return prefixMatcher;
   }
 
   public boolean isStopped() {
@@ -147,7 +147,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     if (stop) {
       stopHere();
     }
-    myCompletionService.getVariantsFromContributors(parameters, myContributor, getPrefixMatcher(), new BatchConsumer<>() {
+    myCompletionService.getVariantsFromContributors(parameters, contributor, getPrefixMatcher(), new BatchConsumer<>() {
       @Override
       public void startBatch() {
         CompletionResultSet.this.startBatch();

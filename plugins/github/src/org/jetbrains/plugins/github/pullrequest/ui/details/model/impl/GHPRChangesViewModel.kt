@@ -2,22 +2,21 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.actions.VcsContextFactory
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
-import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
@@ -26,13 +25,14 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitBrowserComponentController
 
 @ApiStatus.Experimental
-interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit>, GHPRCommitBrowserComponentController {
-  val repository: GitRepository
-  val changeListVm: SharedFlow<Result<GHPRChangeListViewModel>>
+interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit> {
+  val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModel>>
   val changesLoadingErrorHandler: GHApiLoadingErrorHandler
+
+  fun selectCommit(sha: String)
+  fun selectChange(change: RefComparisonChange)
 }
 
 internal class GHPRChangesViewModelImpl(
@@ -43,8 +43,6 @@ internal class GHPRChangesViewModelImpl(
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
-  override val repository: GitRepository = dataContext.repositoryDataService.repositoryMapping.gitRepository
-
   private val commitsResult: Flow<Result<List<GHCommit>>> = channelFlow {
     val disp = Disposer.newDisposable()
     var prev: Job? = null
@@ -52,7 +50,7 @@ internal class GHPRChangesViewModelImpl(
       prev?.cancel()
       prev = launch {
         val result = runCatching {
-          it.await()
+          it.asDeferred().await()
         }
         send(result)
       }
@@ -71,7 +69,7 @@ internal class GHPRChangesViewModelImpl(
         isUpdatingChanges.value = isUpdate
         try {
           val result = runCatching {
-            it.await()
+            it.asDeferred().await()
           }
           send(result)
         }
@@ -103,8 +101,8 @@ internal class GHPRChangesViewModelImpl(
     }
   }
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider).also { vm ->
+  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changes, changeList ->
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList).also { vm ->
       launch {
         isUpdatingChanges.collect {
           vm.setUpdating(it)
@@ -122,15 +120,7 @@ internal class GHPRChangesViewModelImpl(
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, thisLogger())
 
-  override val changeListVm: SharedFlow<Result<GHPRChangeListViewModelImpl>> = delegate.changeListVm
-
-  init {
-    dataProvider.diffRequestModel.addFilePathSelectionListener(cs.nestedDisposable()) {
-      dataProvider.diffRequestModel.selectedFilePath?.also {
-        delegate.selectFile(it)
-      }
-    }
-  }
+  override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelImpl>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
     delegate.selectCommit(index)
@@ -144,14 +134,12 @@ internal class GHPRChangesViewModelImpl(
     delegate.selectPreviousCommit()
   }
 
-  override fun selectCommit(oid: String) {
-    delegate.selectCommit(oid)
+  override fun selectCommit(sha: String) {
+    delegate.selectCommit(sha)
   }
 
-  override fun selectChange(oid: String?, filePath: String) {
-    val repo = dataContext.repositoryDataService.remoteCoordinates.repository
-    val path = VcsContextFactory.getInstance().createFilePath(repo.root, filePath, false)
-    delegate.selectChange(oid, path)
+  override fun selectChange(change: RefComparisonChange) {
+    delegate.selectChange(change)
   }
 
   override fun commitHash(commit: GHCommit): String = commit.abbreviatedOid

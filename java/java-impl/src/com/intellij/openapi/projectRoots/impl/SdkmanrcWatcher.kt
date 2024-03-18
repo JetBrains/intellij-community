@@ -60,13 +60,14 @@ data class SdkmanCandidate(val target: String,
 
   fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
-    if ("version $version" !in versionString && "version \"$version" !in versionString) return false
+    if (version !in versionString) return false
 
     val variant = when {
       vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
       vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
       vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
-      vendor == "grl" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "graal" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "graalce" -> JdkVersionDetector.Variant.GraalVMCE
       vendor == "jbr" -> JdkVersionDetector.Variant.JBR
       vendor == "librca" -> JdkVersionDetector.Variant.Liberica
       vendor == "oracle" -> JdkVersionDetector.Variant.Oracle

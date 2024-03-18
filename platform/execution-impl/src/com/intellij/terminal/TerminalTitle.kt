@@ -20,6 +20,7 @@ interface TerminalTitleListener {
 
 class TerminalTitle {
   private val listeners = CopyOnWriteArrayList<TerminalTitleListener>()
+  @Volatile
   private var state = State()
 
   fun change(block: State.() -> Unit) {
@@ -36,6 +37,9 @@ class TerminalTitle {
 
   val applicationTitle: @Nls String?
     get() = state.applicationTitle
+
+  internal val trackTerminalApplicationTitleChanges: Boolean?
+    get() = state.trackTerminalApplicationTitleChanges
 
   val tag: @Nls String?
     get() = state.tag
@@ -77,15 +81,23 @@ class TerminalTitle {
     }
   }
 
+  override fun toString(): String = state.toString()
+
   data class State(var userDefinedTitle: @Nls String? = null,
                    var applicationTitle: @Nls String? = null,
                    var tag: @Nls String? = null,
-                   var defaultTitle: @Nls String? = null)
+                   var defaultTitle: @Nls String? = null,
+                   var trackTerminalApplicationTitleChanges: Boolean? = null) {
+    override fun toString(): String {
+      return "userDefined=$userDefinedTitle, application=$applicationTitle, tag=$tag," +
+             " default=$defaultTitle, trackTerminalApplicationTitle=$trackTerminalApplicationTitleChanges"
+    }
+  }
 }
 
 fun TerminalTitle.bindApplicationTitle(terminal: Terminal, parentDisposable: Disposable) {
   val listener = TerminalApplicationTitleListener { newApplicationTitle ->
-    if (AdvancedSettings.getBoolean("terminal.show.application.title")) {
+    if (trackTerminalApplicationTitleChanges ?: AdvancedSettings.getBoolean("terminal.show.application.title")) {
       change {
         applicationTitle = newApplicationTitle
       }

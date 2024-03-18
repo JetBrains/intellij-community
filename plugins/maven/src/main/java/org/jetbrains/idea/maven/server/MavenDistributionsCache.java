@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
 
+@Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {
   private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
 

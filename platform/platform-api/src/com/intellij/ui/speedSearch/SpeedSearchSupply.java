@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.ui.JBColor.namedColor;
@@ -53,6 +54,18 @@ public abstract class SpeedSearchSupply {
     return speedSearch != null && speedSearch.isPopupActive() ? speedSearch : null;
   }
 
+  /**
+   * Checks if this implementation of speed search has its own navigation actions.
+   * <p>
+   *   Some implementations have their own actions for up/down, to go to the next/previous
+   *   match. This method is used to determine if it's the case.
+   * </p>
+   * @return true iff speed search has its own action for navigating the contents of the component
+   */
+  public boolean supportsNavigation() {
+    return false;
+  }
+
   public abstract @Nullable Iterable<TextRange> matchingFragments(final @NotNull String text);
 
   /**
@@ -86,6 +99,10 @@ public abstract class SpeedSearchSupply {
 
   public boolean isObjectFilteredOut(Object o) {
     return false;
+  }
+
+  public InputMethodRequests getInputMethodRequests() {
+    return null;
   }
 
   @ApiStatus.Experimental

@@ -15,7 +15,7 @@ import java.io.File
 import javax.imageio.ImageIO
 
 class PresentationUITest : LightPlatformCodeInsightTestCase() {
-  val factory: PresentationFactory by lazy { PresentationFactory(editor as EditorImpl) }
+  val factory: PresentationFactory by lazy { PresentationFactory(editor) }
 
   override fun setUp() {
     super.setUp()

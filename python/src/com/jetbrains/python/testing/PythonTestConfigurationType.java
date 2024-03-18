@@ -11,7 +11,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ImportsUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -25,9 +26,11 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
       final PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
         for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-          PsiClass aClass = statement.resolveTargetClass();
-          if (aClass != null) {
-            importMembersOf(aClass);
+          if (!ImportsUtil.isImplicitImport(statement)) {
+            PsiClass aClass = statement.resolveTargetClass();
+            if (aClass != null) {
+              importMembersOf(aClass);
+            }
           }
         }
       }

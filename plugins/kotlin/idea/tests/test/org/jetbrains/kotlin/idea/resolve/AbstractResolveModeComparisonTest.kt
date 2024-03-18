@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve
 
@@ -94,7 +94,7 @@ abstract class AbstractResolveModeComparisonTest : KotlinLightCodeInsightFixture
     }
 
     private fun findOffsets(resolveModesMarkup: Map<KtElement, List<BodyResolveMode>>): MultiMap<Int, Mark> {
-        val offsets = MultiMap.createSmart<Int, Mark>()
+        val offsets = MultiMap<Int, Mark>()
         val elementPositionComparator = compareBy(KtElement::startOffset).thenByDescending(KtElement::endOffset)
 
         resolveModesMarkup.toSortedMap(elementPositionComparator).entries.forEachIndexed { index, (ktElement, resolveModesForElement) ->
@@ -138,7 +138,7 @@ abstract class AbstractResolveModeComparisonTest : KotlinLightCodeInsightFixture
             val modes = mark.modes
             val modesRepresentation =
                 if (modes.size == RESOLVE_MODES.size) "All"
-                else modes.joinToString { it.toString().toLowerCase().capitalize() }
+                else modes.joinToString { it.toString().lowercase().capitalize() }
             "/*$modesRepresentation (${mark.ordinal})*/"
         }
         is Mark.NotAnalyzed -> {

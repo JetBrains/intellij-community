@@ -34,9 +34,9 @@ import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushParams;
 import git4idea.rebase.GitHandlerRebaseEditorManager;
-import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorHandler;
 import git4idea.rebase.GitRebaseResumeMode;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -58,6 +58,10 @@ import static java.util.Collections.*;
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
+
+  /**
+   * @see GitRebaseUtils#createRebaseEditor(Project, VirtualFile, boolean)
+   */
   public static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
 
   public GitImpl() {
@@ -675,7 +679,7 @@ public class GitImpl extends GitImplBase {
     if (parameters.isInteractive()) {
       GitRebaseEditorHandler editorHandler = parameters.getEditorHandler();
       if (editorHandler == null) {
-        editorHandler = createEditor(project, root, handler, true);
+        editorHandler = createRebaseEditor(project, root, handler, true);
       }
       return runWithEditor(handler, editorHandler);
     }
@@ -708,7 +712,7 @@ public class GitImpl extends GitImplBase {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
     handler.addParameters(rebaseMode.asCommandLineArgument());
     addListeners(handler, listeners);
-    return runWithEditor(handler, createEditor(project, root, handler, false));
+    return runWithEditor(handler, createRebaseEditor(project, root, handler, false));
   }
 
   private @NotNull GitRebaseCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
@@ -721,15 +725,11 @@ public class GitImpl extends GitImplBase {
   }
 
   @VisibleForTesting
-  protected @NotNull GitInteractiveRebaseEditorHandler createEditor(@NotNull Project project,
-                                                                    @NotNull VirtualFile root,
-                                                                    @NotNull GitLineHandler handler,
-                                                                    boolean commitListAware) {
-    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, root);
-    if (!commitListAware) {
-      editor.setRebaseEditorShown();
-    }
-    return editor;
+  protected @NotNull GitRebaseEditorHandler createRebaseEditor(@NotNull Project project,
+                                                               @NotNull VirtualFile root,
+                                                               @NotNull GitLineHandler handler,
+                                                               boolean commitListAware) {
+    return GitRebaseUtils.createRebaseEditor(project, root, commitListAware);
   }
 
   @Override

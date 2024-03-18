@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.resources;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -83,6 +83,14 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaResourceRootType.RESOURCE);
     rebuildAllModules();
     assertOutput(m, fs().file("A.java", "xxx"));
+  }
+
+  public void testFileAdSourceRoot() {
+    String file = createFile("src/data.xml", "xxx");
+    JpsModule m = addModule("m");
+    m.addSourceRoot(JpsPathUtil.pathToUrl(file), JavaSourceRootType.SOURCE);
+    rebuildAllModules();
+    assertOutput(m, fs().file("data.xml", "xxx"));
   }
 
   public void testResourceRootWithJavadocSnippet() {

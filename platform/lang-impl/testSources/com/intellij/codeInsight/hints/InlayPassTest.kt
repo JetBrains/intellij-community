@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import java.util.concurrent.atomic.AtomicBoolean
 
 class InlayPassTest : BasePlatformTestCase() {
   private val noSettings = SettingsKey<NoSettings>("no")
@@ -158,11 +159,10 @@ class InlayPassTest : BasePlatformTestCase() {
   }
 
   private fun createOneOffCollector(collector: (InlayHintsSink) -> Unit): CollectorWithSettings<NoSettings> {
-    var firstTime = true
+    val firstTime = AtomicBoolean(true)
     val collectorLambda: (PsiElement, Editor, InlayHintsSink) -> Boolean = { _, _, sink ->
-      if (firstTime) {
+      if (firstTime.compareAndSet(true, false)) {
         collector(sink)
-        firstTime = false
       }
       false
     }

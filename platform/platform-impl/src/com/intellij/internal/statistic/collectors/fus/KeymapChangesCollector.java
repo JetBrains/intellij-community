@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -6,9 +6,9 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapFlagsStorage;
@@ -19,9 +19,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class KeymapChangesCollector extends ApplicationUsagesCollector {
-
-  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 2);
+final class KeymapChangesCollector extends ApplicationUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 3);
 
   private static final BooleanEventField IMPORTED = EventFields.Boolean("imported");
 
@@ -35,13 +34,18 @@ public final class KeymapChangesCollector extends ApplicationUsagesCollector {
   @Override
   public @NotNull Set<MetricEvent> getMetrics() {
     KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null) return Collections.emptySet();
+    if (keymapManager == null) {
+      return Collections.emptySet();
+    }
 
     Keymap keymap = keymapManager.getActiveKeymap();
-    if (!keymap.canModify()) return Collections.emptySet(); // default keymap can't be customized
+    if (!keymap.canModify()) {
+      // default keymap can't be customized
+      return Collections.emptySet();
+    }
 
     Set<MetricEvent> data = new HashSet<>();
-    KeymapFlagsStorage keymapFlagsStorage = KeymapFlagsStorage.Companion.getInstance();
+    KeymapFlagsStorage keymapFlagsStorage = ApplicationManager.getApplication().getService(KeymapFlagsStorage.class);
 
     for (String action_id : keymap.getActionIds()) {
       if (ActionsTree.isShortcutCustomized(action_id, keymap)) {

@@ -27,14 +27,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     foo(2)
                 }
             """.trimIndent(),
-            {
-                myFixture.type(", p2: Any")
-            },
-            {
-                myFixture.type(", p")
-            },
             expectedAvailability = Availability.Disabled
-        )
+        ) {
+            type(", p2: Any")
+            type(", p")
+        }
     }
 
     fun testInsertTrailingComma() {
@@ -48,41 +45,37 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     foo(2)
                 }
             """.trimIndent(),
-            {
-                myFixture.type(",")
-            },
             expectedAvailability = Availability.NotAvailable
-        )
+        ) {
+            type(",")
+        }
     }
 
     fun testChangeNonVirtualPropertyType() {
         doTest(
             "val v: <caret>String = \"\"",
-            {
-                replaceTextAtCaret("String", "Any")
-            },
             expectedAvailability = Availability.Disabled
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testChangeParameterTypeNonVirtual() {
         doTest(
             "fun foo(p: <caret>String) {}",
-            {
-                replaceTextAtCaret("String", "Any")
-            },
             expectedAvailability = Availability.Disabled
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testChangeReturnTypeNonVirtual() {
         doTest(
             "fun foo(): <caret>String = \"\"",
-            {
-                replaceTextAtCaret("String", "Any")
-            },
             expectedAvailability = Availability.Disabled
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testChangeLocalVariableType() {
@@ -93,11 +86,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     local = 10
                 } 
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "Long")
-            },
             expectedAvailability = Availability.NotAvailable
-        )
+        ) {
+            replaceTextAtCaret("Int", "Long")
+        }
     }
 
     fun testAddLocalVariableType() {
@@ -107,28 +99,22 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     var local<caret> = 10
                 } 
             """.trimIndent(),
-            {
-                myFixture.type(": Long")
-            },
             expectedAvailability = Availability.NotAvailable
-        )
+        ) {
+            type(": Long")
+        }
     }
 
     fun testTypeLocalVariableBeforeExpression() {
         doTest(
             """
             """.trimIndent(),
-            {
-                myFixture.type("val ")
-            },
-            {
-                myFixture.type("cod")
-            },
-            {
-                myFixture.type("e = ")
-            },
             expectedAvailability = Availability.NotAvailable
-        )
+        ) {
+            type("val ")
+            type("cod")
+            type("e = ")
+        }
     }
 
     fun testChangeParameterTypeAndName() {
@@ -138,13 +124,12 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(p: <caret>Int)
                 } 
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "String")
-                editor.caretModel.moveToOffset(editor.caretModel.offset - "p: ".length)
-                replaceTextAtCaret("p", "pNew")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-        )
+        ) {
+            replaceTextAtCaret("Int", "String")
+            editor.caretModel.moveToOffset(editor.caretModel.offset - "p: ".length)
+            replaceTextAtCaret("p", "pNew")
+        }
     }
 
     fun testRenameTwoParameters() {
@@ -154,15 +139,12 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(<caret>p1: Int, p2: Int)
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("p1", "p1New")
-            },
-            {
-                editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New: Int, ".length)
-                replaceTextAtCaret("p2", "p2New")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-        )
+        ) {
+            replaceTextAtCaret("p1", "p1New")
+            editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New: Int, ".length)
+            replaceTextAtCaret("p2", "p2New")
+        }
     }
 
     fun testChangeParameterType() {
@@ -173,11 +155,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     }
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "Any")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
-        )
+        ) {
+            replaceTextAtCaret("Int", "Any")
+        }
     }
 
     fun testChangeParameterTypeForAbstract() {
@@ -187,11 +168,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     abstract fun foo(p1: <caret>Int, p2: Int)
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "Any")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
-        )
+        ) {
+            replaceTextAtCaret("Int", "Any")
+        }
     }
 
     fun testChangeParameterTypeInInterface() {
@@ -201,11 +181,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(p1: <caret>Int, p2: Int)
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "Any")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
-        )
+        ) {
+            replaceTextAtCaret("Int", "Any")
+        }
     }
 
     fun testChangeParameterTypeInInterfaceWithBody() {
@@ -215,11 +194,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(p1: <caret>Int, p2: Int) {}
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "Any")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
-        )
+        ) {
+            replaceTextAtCaret("Int", "Any")
+        }
     }
     
     fun testChangeTypeOfPropertyWithImplementationInInterface() {
@@ -230,11 +208,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                         get() = 0
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("Int", "Any")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("p", "overrides"))
-        )
+        ) {
+            replaceTextAtCaret("Int", "Any")
+        }
     }
 
     fun testSpecifyExplicitType() {
@@ -244,12 +221,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     open fun foo()<caret> = 1
                 }
             """.trimIndent(),
-            {
-                myFixture.type(": Int")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
             expectedAvailabilityAfterResolve = Availability.NotAvailable
-        )
+        ) {
+            type(": Int")
+        }
     }
 
     fun testRemoveExplicitType() {
@@ -259,12 +235,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     open fun foo(): Int<caret> = 1
                 }
             """.trimIndent(),
-            {
-                deleteTextBeforeCaret(": Int")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
             expectedAvailabilityAfterResolve = Availability.NotAvailable
-        )
+        ) {
+            deleteTextBeforeCaret(": Int")
+        }
     }
 
     fun testImportNestedClass() {
@@ -280,15 +255,12 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(): <caret>C.Nested
                 }
             """.trimIndent(),
-            {
-                addImport("ppp.C.Nested")
-            },
-            {
-                replaceTextAtCaret("C.Nested", "Nested")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
             expectedAvailabilityAfterResolve = Availability.NotAvailable
-        )
+        ) {
+            addImport("ppp.C.Nested")
+            replaceTextAtCaret("C.Nested", "Nested")
+        }
     }
 
     fun testImportNestedClassForReceiverType() {
@@ -304,15 +276,12 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun <caret>C.Nested.foo()
                 }
             """.trimIndent(),
-            {
-                addImport("ppp.C.Nested")
-            },
-            {
-                replaceTextAtCaret("C.Nested", "Nested")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
             expectedAvailabilityAfterResolve = Availability.NotAvailable
-        )
+        ) {
+            addImport("ppp.C.Nested")
+            replaceTextAtCaret("C.Nested", "Nested")
+        }
     }
 
     fun testImportNestedClassForParameterType() {
@@ -328,15 +297,12 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(p: <caret>C.Nested)
                 }
             """.trimIndent(),
-            {
-                addImport("ppp.C.Nested")
-            },
-            {
-                replaceTextAtCaret("C.Nested", "Nested")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
             expectedAvailabilityAfterResolve = Availability.NotAvailable
-        )
+        ) {
+            addImport("ppp.C.Nested")
+            replaceTextAtCaret("C.Nested", "Nested")
+        }
     }
 
     fun testImportAnotherType() {
@@ -348,19 +314,14 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(): <caret>ArrayList<Int>
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("ArrayList<Int>", "kotlin.collections.ArrayList<Int>")
-            },
-            {
-                removeImport("java.util.ArrayList")
-                addImport("kotlin.collections.ArrayList")
-            },
-            {
-                replaceTextAtCaret("kotlin.collections.ArrayList<Int>", "ArrayList<Int>")
-            },
             expectedAvailability = Availability.NotAvailable,
             expectedAvailabilityAfterResolve = Availability.Available((changeSignatureAvailableTooltip("foo", "implementations")))
-        )
+        ) {
+            replaceTextAtCaret("ArrayList<Int>", "kotlin.collections.ArrayList<Int>")
+            removeImport("java.util.ArrayList")
+            addImport("kotlin.collections.ArrayList")
+            replaceTextAtCaret("kotlin.collections.ArrayList<Int>", "ArrayList<Int>")
+        }
     }
 
     fun testDuplicateProperty() {
@@ -368,14 +329,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
             """
                 const val <caret>CONST1 = 1
             """.trimIndent(),
-            {
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-            },
-            {
-                replaceTextAtCaret("CONST1", "CONST2")
-            },
             expectedAvailability = Availability.NotAvailable
-        )
+        ) {
+            performAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+            replaceTextAtCaret("CONST1", "CONST2")
+        }
     }
 
     fun testDuplicateMethod() {
@@ -385,14 +343,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun <caret>foo(p: Int) {}
                 }
             """.trimIndent(),
-            {
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-            },
-            {
-                replaceTextAtCaret("foo", "bar")
-            },
             expectedAvailability = Availability.NotAvailable
-        )
+        ) {
+            performAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+            replaceTextAtCaret("foo", "bar")
+        }
     }
 
     fun testNotDuplicateMethod() {
@@ -403,11 +358,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo(p: String) {}
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("foo", "bar")
-            },
             expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar"))
-        )
+        ) {
+            replaceTextAtCaret("foo", "bar")
+        }
     }
 
 
@@ -418,12 +372,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     val local<caret> = 0
                 }
             """.trimIndent(),
-            {
-                myFixture.type("123")
-            },
             expectedAvailability = Availability.Available(renameAvailableTooltip("local", "local123")),
             expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-        )
+        ) {
+            type("123")
+        }
     }
 
     fun testPrivateMethod() {
@@ -432,12 +385,11 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                 private fun foo(<caret>) {
                 }
             """.trimIndent(),
-            {
-                myFixture.type("p: Int")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
             expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-        )
+        ) {
+            type("p: Int")
+        }
     }
 
     fun testAddOptionalParameter() {
@@ -450,11 +402,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     foo(1)
                 }
             """.trimIndent(),
-            {
-                myFixture.type(", p2: Int = 2")
-            },
             expectedAvailability = Availability.Disabled,
-        )
+        ) {
+            type(", p2: Int = 2")
+        }
     }
 
     fun testAddOptionalParameterWithOverrides() {
@@ -469,11 +420,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     }
                 }
             """.trimIndent(),
-            {
-                myFixture.type(", p2: Int = 2")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
-        )
+        ) {
+            type(", p2: Int = 2")
+        }
     }
 
     fun testAddOptionalParameterNotLast() {
@@ -486,11 +436,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     foo(1)
                 }
             """.trimIndent(),
-            {
-                myFixture.type("p0: Int = 0, ")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
-        )
+        ) {
+            type("p0: Int = 0, ")
+        }
     }
 
     fun testAddOptionalParameterAndRenameParameter() {
@@ -503,15 +452,12 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     foo(1)
                 }
             """.trimIndent(),
-            {
-                replaceTextAtCaret("p1", "p1New")
-            },
-            {
-                editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New: Int".length)
-                myFixture.type(", p2: Int = 2")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
-        )
+        ) {
+            replaceTextAtCaret("p1", "p1New")
+            editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New: Int".length)
+            type(", p2: Int = 2")
+        }
     }
 
     fun testAddTwoParameters() {
@@ -524,11 +470,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     foo(1)
                 }
             """.trimIndent(),
-            {
-                myFixture.type(", p2: Int, p3: Int = 3")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
-        )
+        ) {
+            type(", p2: Int, p3: Int = 3")
+        }
     }
 
     fun testExpectedFunction() {
@@ -537,11 +482,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
             """
                 expect fun foo()<caret>
             """.trimIndent(),
-            {
-                myFixture.type(": Int")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "actual declarations")),
-        )
+        ) {
+            type(": Int")
+        }
     }
 
     fun testMemberInsideExpectedClass() {
@@ -552,11 +496,10 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     fun foo()<caret>
                 }
             """.trimIndent(),
-            {
-                myFixture.type(": Int")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "actual declarations")),
-        )
+        ) {
+            type(": Int")
+        }
     }
 
     fun testMemberDeepInsideExpectedClass() {
@@ -569,18 +512,17 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
                     }   
                 }
             """.trimIndent(),
-            {
-                myFixture.type(": Int")
-            },
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "actual declarations")),
-        )
+        ) {
+            type(": Int")
+        }
     }
 
-    private fun addImport(fqName: String) {
+    private fun addImport(fqName: String) = editAction {
         (file as KtFile).importList!!.add(KtPsiFactory(project).createImportDirective(ImportPath.fromString(fqName)))
     }
 
-    private fun removeImport(fqName: String) {
+    private fun removeImport(fqName: String) = editAction {
         (file as KtFile).importList!!.imports.first { it.importedFqName?.asString() == fqName }.delete()
     }
 }

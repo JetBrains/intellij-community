@@ -1206,4 +1206,5 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testLowerBoundAssignabilityCheck() { doTest(); }
   public void testIgnoreErasureForProperTypeBound() { doTest(); }
   public void testInferenceErrorAttribution() {doTest();}
+  public void testLocalClassParameters() {doTest();}
 }

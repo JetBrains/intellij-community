@@ -1,7 +1,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 
-public class PyUnpackTypeVarTupleQuickFix implements LocalQuickFix {
+public class PyUnpackTypeVarTupleQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -35,21 +35,18 @@ public class PyUnpackTypeVarTupleQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement == null) return;
-
-    var languageLevel = LanguageLevel.forElement(psiElement);
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    var languageLevel = LanguageLevel.forElement(element);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     if (languageLevel.isAtLeast(LanguageLevel.PYTHON311)) {
-      String starred = "*" + psiElement.getText();
+      String starred = "*" + element.getText();
       PyExpressionStatement expressionStatement = elementGenerator.createFromText(languageLevel, PyExpressionStatement.class, starred);
       PyExpression newElement = expressionStatement.getExpression();
-      psiElement.replace(newElement);
+      element.replace(newElement);
     }
     else {
-      replaceToTypingExtensionsUnpack(psiElement, psiElement, psiElement.getContainingFile(), project);
+      replaceToTypingExtensionsUnpack(element, element, element.getContainingFile(), project);
     }
   }
 }

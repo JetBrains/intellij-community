@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.CustomFileDropHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorDropHandler
@@ -20,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
@@ -30,55 +32,61 @@ open class FileDropHandler(private val myEditor: Editor?) : EditorDropHandler {
   }
 
   override fun handleDrop(t: Transferable, project: Project?, editorWindowCandidate: EditorWindow?) {
-    if (project == null) return
+    project ?: return
     val fileList = FileCopyPasteUtil.getFileList(t) ?: return
 
     val dropResult = ContainerUtil.process(CustomFileDropHandler.CUSTOM_DROP_HANDLER_EP.getExtensions(project)
     ) { handler: CustomFileDropHandler -> !(handler.canHandle(t, myEditor) && handler.handleDrop(t, myEditor, project)) }
     if (!dropResult) return
-
-    val editorWindow = editorWindowCandidate ?: findEditorWindow(project)
-    project.coroutineScope.launch {
-      openFiles(project, fileList, editorWindow)
-    }
+    openFilesInTab(myEditor, project, fileList, editorWindowCandidate)
   }
 
-  private suspend fun openFiles(project: Project, fileList: List<File>, editorWindow: EditorWindow?) {
-    val vFiles = withContext(Dispatchers.IO) {
-      val fileSystem = LocalFileSystem.getInstance()
-      fileList.mapNotNull { file -> fileSystem.refreshAndFindFileByIoFile(file) }
-        .also { NonProjectFileWritingAccessProvider.allowWriting(it) }
+  companion object {
+    @ApiStatus.Internal
+    fun openFilesInTab(editor: Editor?, project: Project, fileList: List<File>, editorWindowCandidate: EditorWindow? = null) {
+      val editorWindow = editorWindowCandidate ?: findEditorWindow(project, editor)
+      (project as ComponentManagerEx).getCoroutineScope().launch {
+        openFiles(project = project, fileList = fileList, editorWindow = editorWindow)
+      }
     }
 
-    withContext(Dispatchers.EDT) {
-      for (vFile in vFiles) {
-        if (editorWindow != null && !editorWindow.isDisposed) {
-          val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-          val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions(requestFocus = true))
-          if (pair.allEditors.isNotEmpty()) {
-            continue
+    private fun findEditorWindow(project: Project, editor: Editor?): EditorWindow? {
+      val document = editor?.document ?: return null
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return null
+
+      val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
+      val windows = fileEditorManager.windows
+      for (window in windows) {
+        val composite = window.getComposite(file) ?: continue
+        for (editor in composite.allEditors) {
+          if (editor is TextEditor && editor.editor === editor) {
+            return window
           }
         }
-
-        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true)
       }
+      return null
     }
-  }
 
-  private fun findEditorWindow(project: Project): EditorWindow? {
-    val document = myEditor?.document ?: return null
-    val file = FileDocumentManager.getInstance().getFile(document) ?: return null
+    private suspend fun openFiles(project: Project, fileList: List<File>, editorWindow: EditorWindow?) {
+      val vFiles = withContext(Dispatchers.IO) {
+        val fileSystem = LocalFileSystem.getInstance()
+        fileList.mapNotNull { file -> fileSystem.refreshAndFindFileByIoFile(file) }
+          .also { NonProjectFileWritingAccessProvider.allowWriting(it) }
+      }
 
-    val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-    val windows = fileEditorManager.windows
-    for (window in windows) {
-      val composite = window.getComposite(file) ?: continue
-      for (editor in composite.allEditors) {
-        if (editor is TextEditor && editor.editor === myEditor) {
-          return window
+      withContext(Dispatchers.EDT) {
+        for (vFile in vFiles) {
+          if (editorWindow != null && !editorWindow.isDisposed) {
+            val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
+            val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions(requestFocus = true))
+            if (pair.allEditors.isNotEmpty()) {
+              continue
+            }
+          }
+
+          PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true)
         }
       }
     }
-    return null
   }
 }

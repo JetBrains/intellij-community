@@ -53,6 +53,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   private @NonNls String myPlace;
   private Object myObject;
   private JComponent mySideComponent;
+  private JComponent myForeSideComponent;
   private Reference<JComponent> myLastFocusOwner;
 
 
@@ -195,6 +196,15 @@ public final class TabInfo implements Queryable, PlaceProvider {
 
   public JComponent getSideComponent() {
     return mySideComponent;
+  }
+
+  public @NotNull TabInfo setForeSideComponent(JComponent comp) {
+    myForeSideComponent = comp;
+    return this;
+  }
+
+  public JComponent getForeSideComponent() {
+    return myForeSideComponent;
   }
 
   public @NotNull TabInfo setActions(ActionGroup group, @NonNls String place) {

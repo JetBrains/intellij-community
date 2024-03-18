@@ -9,6 +9,8 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -222,7 +224,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
 
     mySearchActionsToolbar = createToolbar(searchToolbar1Actions);
-    mySearchActionsToolbar.setForceShowFirstComponent(true);
+    mySearchActionsToolbar.setLayoutStrategy(ToolbarLayoutUtilKt.autoLayoutStrategy(true));
     mySearchToolbarWrapper.add(mySearchActionsToolbar, BorderLayout.CENTER);
 
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);
@@ -720,7 +722,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
-    toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY);
+    toolbar.setLayoutSecondaryActions(true);
     if (ExperimentalUI.isNewUI()) toolbar.setOpaque(false);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;

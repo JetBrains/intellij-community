@@ -38,11 +38,6 @@ public class JpsJavaFxPreloaderArtifactProperties extends JpsElementBase<JpsJava
     return new JpsJavaFxPreloaderArtifactProperties(myState);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsJavaFxPreloaderArtifactProperties modified) {
-    copyState(modified.myState);
-  }
-
   public String getPreloaderClass() {
     return myState.getPreloaderClass();
   }

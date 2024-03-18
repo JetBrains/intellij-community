@@ -6,6 +6,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <smartUpdateStep id="ide.update" implementation="com.intellij.smartUpdate.IdeUpdateStep"/>
+    <smartUpdateStep id="plugins.update" implementation="com.intellij.smartUpdate.PluginsUpdateStep"/>
     <smartUpdateStep id="vcs.update" implementation="com.intellij.smartUpdate.VcsUpdateStep"/>
     <smartUpdateStep id="build.project" implementation="com.intellij.smartUpdate.BuildProjectStep"/>
     <backgroundPostStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>

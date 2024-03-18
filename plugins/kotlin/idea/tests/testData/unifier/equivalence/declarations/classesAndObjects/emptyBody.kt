@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo() {
     <selection>class A</selection>
 

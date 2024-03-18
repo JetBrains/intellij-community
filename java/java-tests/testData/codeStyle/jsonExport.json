@@ -90,6 +90,7 @@
       "doc_use_throws_not_exception_tag": true,
       "else_on_new_line": false,
       "enum_constants_wrap": "off",
+      "enum_field_annotation_wrap": "off",
       "extends_keyword_wrap": "off",
       "extends_list_wrap": "off",
       "field_annotation_wrap": "split_into_lines",
@@ -148,6 +149,7 @@
       "new_line_after_lparen_in_annotation": false,
       "new_line_after_lparen_in_deconstruction_pattern": true,
       "new_line_after_lparen_in_record_header": false,
+      "new_line_when_body_is_presented": false,
       "packages_to_use_import_on_demand": [
         "java.awt.*",
         "javax.swing.*"
@@ -255,6 +257,7 @@
       "special_else_if_treatment": true,
       "static_field_name_suffix": "_s",
       "subclass_name_suffix": "Impl",
+      "switch_expressions_wrap": "normal",
       "tab_width": 4,
       "ternary_operation_signs_on_next_line": false,
       "ternary_operation_wrap": "off",
@@ -276,7 +279,8 @@
       "wrap_comments": false,
       "wrap_first_method_in_call_chain": false,
       "wrap_long_lines": false,
-      "wrap_on_typing": true
+      "wrap_on_typing": true,
+      "wrap_semicolon_after_call_chain": false
     }
   }
 }

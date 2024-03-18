@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import com.intellij.openapi.diagnostic.debug
@@ -71,20 +71,10 @@ interface DurablePersistentByteArray : AutoCloseable {
         "size=$size must be in 1..${layoutBuilder.maxStateSize}"
       }
       if (path.exists()) {
-        val fileHandler = ResilientFileChannel(path, mode.openOptions)
-        try {
+        ResilientFileChannel(path, mode.openOptions).use { fileHandler ->
           val layout = layoutBuilder.buildLayout(fileHandler, size)
           val (lastState, lastStateIsInSecondInstance) = recoverLastState(fileHandler, layout, size)
           return DurablePersistentByteArrayImpl(path, mode, layout, lastStateIsInSecondInstance, lastState)
-        }
-        catch (e: Throwable) {
-          try {
-            fileHandler.close()
-          }
-          catch (closeE: Throwable) {
-            e.addSuppressed(closeE)
-          }
-          throw e
         }
       }
       else {

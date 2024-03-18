@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -21,6 +21,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
 import junit.framework.TestCase;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
@@ -70,7 +71,7 @@ public final class DynamicExtensionPointsTester {
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
-      String testName = escape(namer.fun("Dynamic EP unloading " + ep.getName()));
+      String testName = escape(namer.fun("Dynamic EP unloading " + ep.name));
       System.out.printf("##teamcity[testStarted name='%s' nodeId='%s' parentNodeId='%s']%n", testName, testName, 
                         MapSerializerUtil.escapeStr("[engine:junit-vintage]/[runner:_LastInSuiteTest]/[test:testDynamicExtensions(_LastInSuiteTest)]", MapSerializerUtil.STD_ESCAPER));
       System.out.flush();
@@ -124,17 +125,19 @@ public final class DynamicExtensionPointsTester {
                                      boolean useWhiteList,
                                      @NotNull Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensions) {
     area.processExtensionPoints(ep -> {
-      if (!ep.isDynamic() || (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.getName()))) {
-        return;
+      if (!ep.isDynamic() || (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.name))) {
+        return Unit.INSTANCE;
       }
 
       List<WeakReference<Object>> list = new ArrayList<>();
-      ep.processWithPluginDescriptor(false, (object, pluginDescriptor) -> {
+      ep.processUnsortedWithPluginDescriptor((object, pluginDescriptor) -> {
         if (!PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())) {
           list.add(new WeakReference<>(object));
         }
+        return Unit.INSTANCE;
       });
       extensions.put(ep, list);
+      return Unit.INSTANCE;
     });
   }
 }

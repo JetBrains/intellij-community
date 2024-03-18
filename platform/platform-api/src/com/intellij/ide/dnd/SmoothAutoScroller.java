@@ -57,13 +57,7 @@ public final class SmoothAutoScroller {
     component.setAutoscrolls(false); // disable default scroller if needed
     DropTarget target = component.getDropTarget();
     if (target == null && !GraphicsEnvironment.isHeadless()) {
-      component.setDropTarget(new DropTarget(component, DragListener.ACTION, DragListener.SHARED) {
-        @Override
-        public void removeNotify() {
-          super.removeNotify();
-          removeDropTargetListener(DragListener.SHARED);
-        }
-      });
+      component.setDropTarget(new DropTarget(component, DragListener.ACTION, DragListener.SHARED));
     }
   }
 

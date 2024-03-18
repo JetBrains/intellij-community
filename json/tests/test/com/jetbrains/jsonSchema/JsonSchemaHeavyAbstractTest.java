@@ -14,7 +14,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -124,7 +124,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
   }
 
   protected String getUrlUnderTestRoot(String path) {
-    return JsonSchemaObject.TEMP_URL + "src/" + StringUtil.trimStart(path, "/");
+    return JsonFileResolver.TEMP_URL + "src/" + StringUtil.trimStart(path, "/");
   }
 
   @NotNull

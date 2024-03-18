@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -29,10 +29,10 @@ interface WorkspaceFileIndexData {
    * Must be called inside Write Action, and [updateDirtyEntities] must be called before that Write Action finishes.
    * It may happen that an implementation of [com.intellij.openapi.vfs.newvfs.BulkFileListener] will try to get information about changed
    * files synchronously during the same Write Action, in that case the index should recalculate the data to provide correct results.
-   * @param entityReferences references to entities which refer to files which were created, deleted, moved or renamed
+   * @param entityPointers references to entities which refer to files which were created, deleted, moved or renamed
    * @param filesToInvalidate files which were deleted or moved to other directories and was referenced from some entities
    */
-  fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>)
+  fun markDirty(entityPointers: Collection<EntityPointer<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>)
 
   /**
    * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].

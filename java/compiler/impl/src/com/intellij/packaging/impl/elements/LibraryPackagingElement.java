@@ -12,10 +12,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementOutputKind;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -253,7 +250,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
         return Unit.INSTANCE;
       }));
     }
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
     return entity;
   }
 

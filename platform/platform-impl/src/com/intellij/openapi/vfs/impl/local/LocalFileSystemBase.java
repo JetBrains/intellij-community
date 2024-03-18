@@ -40,10 +40,6 @@ import java.util.List;
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   @ApiStatus.Internal
-  public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
-    ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
-
-  @ApiStatus.Internal
   private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
 
@@ -433,28 +429,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     Path path = convertToNIOFileAndCheck(file, true);
-
-    for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
-      InputStream is = loader.getInputStream(path);
-      if (is != null) {
-        return is;
-      }
-    }
-
     return new BufferedInputStream(Files.newInputStream(path));
   }
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     Path path = convertToNIOFileAndCheck(file, true);
-
-    for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
-      byte[] bytes = loader.contentToByteArray(path);
-      if (bytes != null) {
-        return bytes;
-      }
-    }
-
     long l = file.getLength();
     if (FileUtilRt.isTooLarge(l)) throw new FileTooBigException(file.getPath());
     int length = (int)l;
@@ -646,7 +626,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
     String path = FileUtilRt.toSystemDependentName(file.getPath());
-    FileUtil.setReadOnlyAttribute(path, !writableFlag);
+    boolean readOnlyFlag = !writableFlag;
+    try {
+      NioFiles.setReadOnly(Paths.get(path), readOnlyFlag);
+    }
+    catch (IOException e) {
+      LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
+    }
     if (FileUtil.canWrite(path) != writableFlag) {
       throw new IOException("Failed to change read-only flag for " + path);
     }

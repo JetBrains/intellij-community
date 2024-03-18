@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
+public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
 
   private static final Pattern WHITESPACE_STAR = Pattern.compile("\n\\s*\\*");
   private static final Pattern START_TAG = Pattern.compile("<\\w+\\s+\\w+\\s*=\\s*[\"']?.*[\"']?\\s*>.*$", Pattern.DOTALL);

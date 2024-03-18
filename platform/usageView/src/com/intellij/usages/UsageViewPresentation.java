@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +41,7 @@ public class UsageViewPresentation {
   private @NlsContexts.ListItem String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
+  private boolean myNonCodeUsageAvailable = true;
   private Pattern mySearchPattern;
   private boolean myCaseSensitive;
   private boolean myPreserveCase;
@@ -212,6 +213,19 @@ public class UsageViewPresentation {
 
   public void setExcludeAvailable(boolean excludeAvailable) {
     myExcludeAvailable = excludeAvailable;
+  }
+  
+  public boolean isNonCodeUsageAvailable() {
+    return myNonCodeUsageAvailable;
+  }
+
+  /**
+   * Allows disabling the grouping by Code/Non Code/Dynamic usage type, i.e., the root node of the usages tree
+   * @see com.intellij.usages.impl.rules.NonCodeUsageGroupingRule
+   * @param nonCodeUsageAvailable  set to false to hide the usage type node
+   */
+  public void setNonCodeUsageAvailable(boolean nonCodeUsageAvailable) {
+    myNonCodeUsageAvailable = nonCodeUsageAvailable;
   }
 
   public void setSearchPattern(Pattern searchPattern) {

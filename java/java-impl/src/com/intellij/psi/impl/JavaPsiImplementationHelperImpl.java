@@ -47,6 +47,7 @@ import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -60,7 +61,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 
-public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
+public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
   private final Project myProject;
@@ -125,7 +126,23 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
-      finder = root -> root.findFileByRelativePath(relativePath);
+      LanguageLevel level = JavaMultiReleaseUtil.getVersion(clsFile);
+      if (level == null) {
+        finder = root -> root.findFileByRelativePath(relativePath);
+      }
+      else {
+        // Multi-release jar: assume that source file is placed in META-INF/versions/<ver>
+        // fallback to default location only if there's no the same file in the root
+        String versionPath = "META-INF/versions/" + level.feature() + "/" + relativePath;
+        if (JavaMultiReleaseUtil.findBaseFile(clsFile.getVirtualFile()) != null) {
+          finder = root -> root.findFileByRelativePath(versionPath);
+        } else {
+          finder = root -> {
+            VirtualFile target = root.findFileByRelativePath(versionPath);
+            return target == null ? root.findFileByRelativePath(relativePath) : target;
+          };
+        }
+      }
       filter = PsiClassOwner.class::isInstance;
     }
     else {
@@ -261,7 +278,10 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyle.getSettings(aClass.getContainingFile());
     MemberOrderService service = ApplicationManager.getApplication().getService(MemberOrderService.class);
-    PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    PsiElement anchor = null;
+    if (!(aClass instanceof PsiImplicitClass)) {
+      anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    }
 
     PsiElement newAnchor = skipWhitespaces(aClass, anchor);
     if (newAnchor != null) {

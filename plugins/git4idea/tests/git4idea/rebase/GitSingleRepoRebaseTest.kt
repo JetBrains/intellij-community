@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitBranch
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
@@ -24,6 +25,7 @@ import junit.framework.TestCase
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
+import java.io.File
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -661,6 +663,26 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertNoErrorNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
+  }
+
+  fun `test rebase on branch with the same name as tag`() {
+    build {
+      master {
+        0("1.txt")
+        git("tag master")
+        1("2.txt")
+      }
+      feature(0) {}
+    }
+
+    val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+    `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
+
+    GitBranchWorker(project, git, uiHandler).rebase(listOf(repo), "master")
+    assertFalse(File(repo.root.path, "2.txt").exists())
+
+    GitBranchWorker(project, git, uiHandler).rebase(listOf(repo), GitBranch.REFS_HEADS_PREFIX + "master")
+    assertTrue(File(repo.root.path, "2.txt").exists())
   }
 
   private fun rebaseInteractively(revision: String = "master") {

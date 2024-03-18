@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public class PyFunctionBuilder {
    */
   public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
     myName = name;
-    myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormatOrPlain(settingsAnchor), 
+    myDocStringGenerator = PyDocstringGenerator.create(DocStringParser.getConfiguredDocStringFormatOrPlain(settingsAnchor),
                                                        PyIndentUtil.getIndentFromSettings(settingsAnchor.getContainingFile()),
                                                        settingsAnchor);
     mySettingAnchor = settingsAnchor;

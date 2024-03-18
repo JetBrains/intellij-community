@@ -1,4 +1,3 @@
-// IGNORE_K2
 val a = 2
 
 val x: Int get() =

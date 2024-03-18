@@ -448,8 +448,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     return targetContent;
   }
 
-  @Deprecated(forRemoval = true)
-  public static @NotNull @Nls String getContentDisplayName(
+  private static @NotNull @Nls String getContentDisplayName(
     final @NotNull NotificationSource notificationSource,
     final @NotNull ProjectSystemId externalSystemId
   ) {

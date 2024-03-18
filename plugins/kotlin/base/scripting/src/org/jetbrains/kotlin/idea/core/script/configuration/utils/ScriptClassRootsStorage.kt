@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
  * @see org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport.collectConfigurations
  *
  */
+@Service(Service.Level.PROJECT)
 @State(
     name = "ScriptClassRootsStorage",
     storages = [Storage(StoragePathMacros.CACHE_FILE)]

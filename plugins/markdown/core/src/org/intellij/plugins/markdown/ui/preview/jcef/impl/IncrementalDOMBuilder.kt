@@ -3,6 +3,12 @@ package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
+import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
@@ -11,20 +17,14 @@ import org.jsoup.nodes.Comment
 import org.jsoup.nodes.DataNode
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
-import java.net.URI
-import java.net.URISyntaxException
-import java.nio.file.Path
-import java.nio.file.Paths
 
 @ApiStatus.Internal
 class IncrementalDOMBuilder(
   html: String,
-  private val basePath: Path?,
-  private val fileSchemeResourceProcessor: FileSchemeResourceProcessingStrategy? = null
+  private val baseFile: VirtualFile?,
+  private val projectRoot: VirtualFile?,
+  private val fileSchemeResourceProcessor: ResourceProvider? = null,
 ) {
-  fun interface FileSchemeResourceProcessingStrategy {
-    fun processFileSchemeResource(basePath: Path, originalUri: URI): String?
-  }
 
   private val document = Jsoup.parse(html)
   private val builder = StringBuilder()
@@ -101,26 +101,30 @@ class IncrementalDOMBuilder(
   }
 
   private fun preprocessNode(node: Node): Node {
-    if (fileSchemeResourceProcessor != null && basePath != null && shouldPreprocessImageNode(node)) {
+    if (baseFile != null && projectRoot != null && shouldPreprocessImageNode(node)) {
       try {
-        actuallyProcessImageNode(node, basePath, fileSchemeResourceProcessor)
+        actuallyProcessImageNode(node, baseFile, projectRoot)
       } catch (exception: Throwable) {
         val originalUrlValue = node.attr("src")
-        thisLogger().error("Failed to process image node\nbasePath: $basePath\noriginalUrl: $originalUrlValue", exception)
+        thisLogger().error("Failed to process image node\nbasePath: $baseFile\noriginalUrl: $originalUrlValue", exception)
       }
     }
     return node
   }
 
-  private fun actuallyProcessImageNode(node: Node, basePath: Path, fileSchemeResourceProcessor: FileSchemeResourceProcessingStrategy) {
-    val originalUrlValue = node.attr("src")
-    val uri = when {
-      originalUrlValue.startsWith("file:/") -> createUri(originalUrlValue)
-      else -> createFileUri(originalUrlValue, basePath) ?: createUri(originalUrlValue)
+  private fun actuallyProcessImageNode(node: Node, baseFile: VirtualFile, projectRoot: VirtualFile) {
+    var path = node.attr("src")
+    if (!path.startsWith('/')) {
+      val resolved = baseFile.findFileByRelativePath(path) ?: return
+      path = VfsUtilCore.getRelativePath(resolved, projectRoot) ?: path
     }
-    if (uri != null && (uri.scheme == null || uri.scheme == "file")) {
-      val processed = fileSchemeResourceProcessor.processFileSchemeResource(basePath, uri) ?: return
-      node.attr("data-original-src", originalUrlValue)
+    if (SystemInfo.isWindows && path.startsWith("/")) {
+      path = path.trimStart('/', '\\')
+    }
+    val fixedPath = FileUtil.toSystemIndependentName(path)
+    if (fileSchemeResourceProcessor != null) {
+      val processed = PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, fixedPath)
+      node.attr("data-original-src", path)
       node.attr("src", processed)
     }
   }
@@ -142,25 +146,6 @@ class IncrementalDOMBuilder(
           traverse(child)
         }
         closeTag(preprocessed)
-      }
-    }
-  }
-
-  companion object {
-    private fun createUri(string: String): URI? {
-      try {
-        return URI(string)
-      } catch (exception: URISyntaxException) {
-        return null
-      }
-    }
-
-    private fun createFileUri(string: String, basePath: Path?): URI? {
-      try {
-        val resolved = basePath?.resolve(string) ?: Paths.get(string)
-        return resolved.toUri()
-      } catch(ignored: Throwable) {
-        return null
       }
     }
   }

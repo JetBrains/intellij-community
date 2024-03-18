@@ -3,7 +3,6 @@ package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +56,7 @@ public final class GitUntrackedFilesHelper {
                                                        @NotNull Collection<String> relativePaths,
                                                        @NotNull @Nls String operation,
                                                        @Nullable @NlsContexts.DetailedDescription String description) {
-    notifyUntrackedFilesOverwrittenBy(project, root, relativePaths, operation, description, null);
+    notifyUntrackedFilesOverwrittenBy(project, root, relativePaths, operation, description, new NotificationAction[0]);
   }
 
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull Project project,
@@ -65,9 +64,8 @@ public final class GitUntrackedFilesHelper {
                                                        @NotNull Collection<String> relativePaths,
                                                        @NotNull @Nls String operation,
                                                        @Nullable @NlsContexts.DetailedDescription String description,
-                                                       @Nullable NotificationListener listener,
                                                        NotificationAction @NotNull ... actions) {
-    Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description, listener);
+    Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description);
     for (NotificationAction action : actions) {
       notification.addAction(action);
     }
@@ -119,8 +117,7 @@ public final class GitUntrackedFilesHelper {
                                                                                   @NotNull VirtualFile root,
                                                                                   @NotNull Collection<String> relativePaths,
                                                                                   @NotNull @Nls String operation,
-                                                                                  @Nullable @NlsContexts.DetailedDescription String description,
-                                                                                  @Nullable NotificationListener listener) {
+                                                                                  @Nullable @NlsContexts.DetailedDescription String description) {
     if (description == null) description = "";
     String notificationTitle = GitBundle.message("notification.title.untracked.files.prevent.operation", StringUtil.capitalize(operation));
     String notificationDesc = GitBundle.message("notification.content.untracked.files.prevent.operation.move.or.commit",
@@ -134,8 +131,6 @@ public final class GitUntrackedFilesHelper {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION
       .createNotification(notificationTitle, notificationDesc, NotificationType.ERROR)
       .setDisplayId(GitNotificationIdsHolder.UNTRACKED_FIES_OVERWITTEN);
-
-    if (listener != null) notification.setListener(listener);
 
     notification.addAction(new NotificationAction(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files")) {
       @Override

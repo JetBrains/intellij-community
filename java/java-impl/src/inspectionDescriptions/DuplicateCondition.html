@@ -14,11 +14,15 @@ Disabling this option may lead to false-positives, for example, when the same me
 </p>
 <p>Example:</p>
 <pre><code>
-  if (iterator.next() != null || iterator.next() != null) {
+  native boolean unknownMethod();
+  
+  ...
+  
+  if (unknownMethod() || unknownMethod()) {
     System.out.println("Got it");
   }
 </code></pre>
-<p>Due to possible side effects of <code>iterator.next()</code> (on the example), the warning will only be
+<p>Due to possible side effects of <code>unknownMethod()</code> (on the example), the warning will only be
   triggered if the <b>Ignore conditions with side effects</b> option is disabled.</p>
 
 </body>

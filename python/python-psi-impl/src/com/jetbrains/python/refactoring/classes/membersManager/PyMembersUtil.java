@@ -2,7 +2,7 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
 import com.google.common.collect.Collections2;
-import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;

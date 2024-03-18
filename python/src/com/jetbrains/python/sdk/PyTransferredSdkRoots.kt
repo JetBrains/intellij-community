@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -50,7 +52,11 @@ fun getPathsToTransfer(sdk: Sdk): Set<VirtualFile> {
 fun setPathsToTransfer(sdk: Sdk, roots: Set<VirtualFile>) {
   runInEdt {
     if (roots.isNotEmpty() || getPathsToTransfer(sdk).isNotEmpty()) { // do not create additional data with no reason
-      sdk.getOrCreateAdditionalData().setPathsToTransferFromVirtualFiles(roots)
+      sdk.getOrCreateAdditionalData()
+      sdk.sdkModificator.apply {
+        (sdkAdditionalData as PythonSdkAdditionalData).setPathsToTransferFromVirtualFiles(roots)
+        runWriteAction { commitChanges() }
+      }
     }
   }
 }

@@ -10,17 +10,22 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 private const val UNDEFINED = "!!!___***undefined***___!!!"
 
 private class CheckKeysStartupActivity : ProjectActivity {
   init {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || !app.isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
   override suspend fun execute(project: Project) {
+    delay(5.seconds)
+
     val environmentService = serviceAsync<EnvironmentService>()
     val messageBuilder = StringBuilder()
     var exceptionOccurred = false

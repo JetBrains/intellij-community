@@ -90,7 +90,7 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
             sourceSet.name = fragment.name
             sourceSet.targetCompatibility = gradleSourceSetData.targetCompatibility
             //TODO compute it properly (if required)
-            sourceSet.dependencies += emptyList<ExternalDependency>()
+            sourceSet.dependencies = emptyList<ExternalDependency>()
 
             sourceSet.setSources(linkedMapOf(
                 fragment.computeSourceType() to DefaultExternalSourceDirectorySet().also { dirSet ->

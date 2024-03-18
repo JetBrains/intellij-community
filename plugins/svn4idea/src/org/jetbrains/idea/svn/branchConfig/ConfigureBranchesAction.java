@@ -47,8 +47,10 @@ public class ConfigureBranchesAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    ChangeList[] changeLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    if (changeLists == null) return;
     SvnChangeList svnList = (SvnChangeList)changeLists[0];
 
     BranchConfigurationDialog.configureBranches(project, svnList.getRoot());

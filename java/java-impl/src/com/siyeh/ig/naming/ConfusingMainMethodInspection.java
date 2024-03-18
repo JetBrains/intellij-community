@@ -16,9 +16,9 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiUnnamedClass;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,7 +29,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ConfusingMainMethodInspection extends BaseInspection {
+public final class ConfusingMainMethodInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -68,7 +68,7 @@ public class ConfusingMainMethodInspection extends BaseInspection {
         return;
       }
       PsiClass containingClass = method.getContainingClass();
-      if (!(containingClass instanceof PsiUnnamedClass) && containingClass != null && containingClass.getQualifiedName() == null) {
+      if (!(containingClass instanceof PsiImplicitClass) && containingClass != null && containingClass.getQualifiedName() == null) {
         registerMethodError(method, Boolean.TRUE); // main method not runnable
       }
     }

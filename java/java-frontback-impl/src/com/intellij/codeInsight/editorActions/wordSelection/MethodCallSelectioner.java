@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_METHOD_CALL_EXPRESSION;
 
-public class MethodCallSelectioner implements ExtendWordSelectionHandler {
+public final class MethodCallSelectioner implements ExtendWordSelectionHandler {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

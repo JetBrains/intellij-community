@@ -6,13 +6,13 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypes;
-import com.intellij.psi.PsiUnnamedClass;
 import org.jetbrains.annotations.NotNull;
 
-public class AddMainMethodFix extends PsiUpdateModCommandAction<PsiUnnamedClass> {
-  public AddMainMethodFix(@NotNull PsiUnnamedClass element) {
+public class AddMainMethodFix extends PsiUpdateModCommandAction<PsiImplicitClass> {
+  public AddMainMethodFix(@NotNull PsiImplicitClass element) {
     super(element);
   }
 
@@ -22,7 +22,7 @@ public class AddMainMethodFix extends PsiUpdateModCommandAction<PsiUnnamedClass>
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiUnnamedClass element, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiImplicitClass element, @NotNull ModPsiUpdater updater) {
     PsiMethod mainMethod = JavaPsiFacade.getInstance(context.project()).getElementFactory().createMethod("main", PsiTypes.voidType());
     element.add(mainMethod);
   }

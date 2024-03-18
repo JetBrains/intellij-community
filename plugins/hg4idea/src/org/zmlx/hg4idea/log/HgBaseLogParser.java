@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
 
@@ -44,8 +44,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
   protected static final int FILES_DELETED_INDEX = 9;
   protected static final int FILES_COPIED_INDEX = 10;
 
-  @Nullable
-  public CommitT convert(@NotNull String line) {
+  public @Nullable CommitT convert(@NotNull String line) {
 
     // we need to get all attributes, include empty trailing strings, so use non-positive limit as second argument
     List<String> attributes = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR, true, false);
@@ -80,17 +79,15 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     return convert(s);
   }
 
-  @Nullable
-  protected abstract CommitT convertDetails(@NotNull String rev,
-                                            @NotNull String changeset,
-                                            @NotNull SmartList<? extends HgRevisionNumber> parents,
-                                            @NotNull Date revisionDate,
-                                            @NotNull String author,
-                                            @NotNull String email,
-                                            @NotNull List<String> attributes);
+  protected abstract @Nullable CommitT convertDetails(@NotNull String rev,
+                                                      @NotNull String changeset,
+                                                      @NotNull SmartList<? extends HgRevisionNumber> parents,
+                                                      @NotNull Date revisionDate,
+                                                      @NotNull String author,
+                                                      @NotNull String email,
+                                                      @NotNull List<String> attributes);
 
-  @NotNull
-  public static List<String> constructDefaultTemplate(HgVersion currentVersion) {
+  public static @NotNull List<String> constructDefaultTemplate(HgVersion currentVersion) {
     List<String> templates = new ArrayList<>();
     templates.add("{rev}");
     templates.add("{node}");
@@ -123,14 +120,12 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     return ArrayUtilRt.toStringArray(templates);
   }
 
-  @NotNull
-  private static List<String> wrapIn(@NotNull List<String> fileTemplates, @NotNull HgVersion currentVersion) {
+  private static @NotNull List<String> wrapIn(@NotNull List<String> fileTemplates, @NotNull HgVersion currentVersion) {
     final boolean supported = currentVersion.isBuiltInFunctionSupported();
     return ContainerUtil.map(fileTemplates, s -> supported ? "{join(" + s + ",'" + HgChangesetUtil.FILE_SEPARATOR + "')}" : "{" + s + "}");
   }
 
-  @NotNull
-  protected static SmartList<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
+  protected static @NotNull SmartList<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
     SmartList<HgRevisionNumber> parents = new SmartList<>();
     if (StringUtil.isEmptyOrSpaces(parentsString)) {
       // parents shouldn't be empty  only if not supported
@@ -152,8 +147,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     return parents;
   }
 
-  @NotNull
-  protected static String parseAdditionalStringAttribute(final List<String> attributes, int index) {
+  protected static @NotNull String parseAdditionalStringAttribute(final List<String> attributes, int index) {
     int numAttributes = attributes.size();
     if (numAttributes > index) {
       return attributes.get(index);
@@ -162,8 +156,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     return "";
   }
 
-  @NotNull
-  public static String extractSubject(@NotNull String message) {
+  public static @NotNull String extractSubject(@NotNull String message) {
     int subjectIndex = message.indexOf('\n');
     return subjectIndex == -1 ? message : message.substring(0, subjectIndex);
   }

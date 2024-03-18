@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
+public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   @Override
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
                                           @NotNull List<? super UsageInfo> usages,

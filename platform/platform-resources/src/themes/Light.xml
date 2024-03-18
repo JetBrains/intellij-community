@@ -16,7 +16,6 @@
     <option name="TEARLINE_COLOR" value="d4d4d4" />
     <option name="GUTTER_BACKGROUND" value="f2f2f2" />
     <option name="FOLDED_TEXT_BORDER_COLOR" value="ADD9C7" deuteranopia="b3b3b3" protanopia="b3b3b3"/>
-    <option name="GRID_STRIPE_COLOR" value="f5f8fe" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
@@ -300,7 +299,7 @@
     </option>
     <option name="JS.LOCAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="248f8f" />
+        <option name="FOREGROUND" value="2A8C7C" />
       </value>
     </option>
     <option name="JS.REGEXP">

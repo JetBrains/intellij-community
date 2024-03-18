@@ -28,7 +28,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedLabelInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnusedLabelInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_22;
 
 public class ChangeToUnnamedPatternTest extends LightIntentionActionTestCase {
   @Override
@@ -18,7 +18,7 @@ public class ChangeToUnnamedPatternTest extends LightIntentionActionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return JAVA_22;
   }
 
   @Override

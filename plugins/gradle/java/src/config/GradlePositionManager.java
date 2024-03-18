@@ -165,7 +165,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     private static TextResource getWslUriResource(@NotNull File scriptFile) {
       WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(scriptFile.getPath());
       if (wslDistribution == null) return null;
-      String wslPath = wslDistribution.getWslPath(scriptFile.getPath());
+      String wslPath = wslDistribution.getWslPath(scriptFile.toPath());
       if (wslPath == null) return null;
       return new UriTextResource("script", pathToUri(wslPath), new IdentityFileResolver());
     }

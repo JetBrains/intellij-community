@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -37,7 +36,7 @@ class SoftLinksTest {
     }
 
     // Apply changes
-    builder.addDiff(newBuilder)
+    builder.applyChangesFrom(newBuilder)
 
     // Check
     assertTrue(NameId(newId) in builder)
@@ -64,7 +63,7 @@ class SoftLinksTest {
     }
 
     // Apply changes
-    builder.addDiff(newBuilder)
+    builder.applyChangesFrom(newBuilder)
 
     // Check
     assertNotNull(NameId(newId) in builder)
@@ -78,7 +77,7 @@ class SoftLinksTest {
     }
 
     // Apply changes
-    builder.addDiff(anotherNewBuilder)
+    builder.applyChangesFrom(anotherNewBuilder)
 
     // Check
     assertNotNull(NameId(id) in builder)

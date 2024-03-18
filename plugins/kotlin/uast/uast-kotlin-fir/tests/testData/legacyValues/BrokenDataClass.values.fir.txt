@@ -16,6 +16,5 @@ UFile (package = ) [public final class Cls : <ErrorType> {...]
                     USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
         UMethod (name = component1) [public final fun component1() : long = UastEmptyExpression]
-        UMethod (name = copy) [public final fun copy(@org.jetbrains.annotations.NotNull a: long) : Cls = UastEmptyExpression]
-            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: long]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+        UMethod (name = copy) [public final fun copy(a: long) : Cls = UastEmptyExpression]
+            UParameter (name = a) [var a: long]

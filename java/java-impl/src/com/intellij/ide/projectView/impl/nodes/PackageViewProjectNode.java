@@ -84,8 +84,9 @@ public class PackageViewProjectNode extends AbstractProjectNode {
         }
       }
 
+      var nodeBuilder = new PackageNodeBuilder(null, false);
       for (final PsiPackage psiPackage : topLevelPackages) {
-        PackageUtil.addPackageAsChild(children, psiPackage, null, getSettings(), false);
+        nodeBuilder.addPackageAsChild(children, psiPackage, getSettings());
       }
 
       if (getSettings().isShowLibraryContents()) {

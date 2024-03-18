@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -19,6 +19,7 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.ref.GCWatcher;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -324,28 +325,32 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
     PsiModifierList modifierList = aClass.getModifierList();
     assertNotNull(modifierList);
-    PsiAnnotation[] annotations = modifierList.getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(modifierList);
 
     PsiMethod method = aClass.getMethods()[1];
-    annotations = method.getModifierList().getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(method.getModifierList());
 
     PsiParameter[] params = method.getParameterList().getParameters();
     assertEquals(1, params.length);
     modifierList = params[0].getModifierList();
     assertNotNull(modifierList);
-    annotations = modifierList.getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(modifierList);
 
     modifierList = aClass.getFields()[0].getModifierList();
     assertNotNull(modifierList);
-    annotations = modifierList.getAnnotations();
+    checkAnnotations(modifierList);
+
+    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    assertEquals(1, typeParameters.length);
+    checkAnnotations(typeParameters[0]);
+  }
+
+  private void checkAnnotations(@NotNull PsiAnnotationOwner annotationOwner) {
+    PsiAnnotation[] annotations = annotationOwner.getAnnotations();
     assertEquals(1, annotations.length);
     assertEquals("@pack.Annotation", annotations[0].getText());
+    assertNotNull(annotationOwner.findAnnotation("pack.Annotation"));
+    assertTrue(annotationOwner.hasAnnotation("pack.Annotation"));
   }
 
   public void testAnnotationMethods() {

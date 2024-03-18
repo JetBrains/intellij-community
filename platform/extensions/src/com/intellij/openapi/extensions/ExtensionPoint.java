@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
@@ -41,8 +42,6 @@ public interface ExtensionPoint<T> {
   T @NotNull [] getExtensions();
 
   @NotNull List<T> getExtensionList();
-
-  @NotNull Stream<T> extensions();
 
   int size();
 
@@ -75,6 +74,8 @@ public interface ExtensionPoint<T> {
    */
   void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);
 
+  void addChangeListener(@NotNull CoroutineScope coroutineScope, @NotNull Runnable listener);
+
   @ApiStatus.Internal
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
@@ -84,6 +85,9 @@ public interface ExtensionPoint<T> {
   boolean isDynamic();
 
   @NotNull PluginDescriptor getPluginDescriptor();
+
+  @ApiStatus.Experimental
+  <K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<T, @Nullable K> keyMapper);
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

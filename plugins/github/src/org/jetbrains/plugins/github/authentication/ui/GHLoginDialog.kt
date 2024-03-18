@@ -30,7 +30,7 @@ internal sealed class GHLoginDialog(
   private val model: GHLoginModel,
   project: Project?,
   parent: Component?
-) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
+) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
   private val cs = DisposingMainScope(disposable) + ModalityState.stateForComponent(window).asContextElement()
 

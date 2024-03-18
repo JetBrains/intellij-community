@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyCodeBlockProvider implements CodeBlockProvider {
+public final class PyCodeBlockProvider implements CodeBlockProvider {
   @Nullable
   @Override
   public TextRange getCodeBlockRange(Editor editor, PsiFile psiFile) {

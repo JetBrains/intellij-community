@@ -10,8 +10,11 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleByModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
 
@@ -29,6 +32,8 @@ internal class ScriptingKtModuleFactory : KtModuleFactory {
 private class KtScriptModuleByModuleInfo(
     private val moduleInfo: ScriptModuleInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtScriptModule {
+    private var hasDirectFriendDependencies: Boolean? = null
+
     override val project: Project
         get() = moduleInfo.project
 
@@ -40,6 +45,16 @@ private class KtScriptModuleByModuleInfo(
 
     override val languageVersionSettings: LanguageVersionSettings
         get() = moduleInfo.languageVersionSettings
+
+    override val directFriendDependencies: List<KtModule>
+        get() = if (hasDirectFriendDependencies == false) {
+            emptyList()
+        } else {
+            val ktModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(moduleInfo.scriptFile, moduleInfo.project)
+                .mapNotNull { it.productionSourceInfo?.toKtModule() }
+            hasDirectFriendDependencies = ktModules.isNotEmpty()
+            ktModules
+        }
 
     override fun hashCode(): Int {
         return moduleInfo.hashCode()

@@ -5,6 +5,7 @@
 // ACTION: Convert to block body
 // ACTION: Convert to run { ... }
 // ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Enable option 'Property types' for 'Types' inlay hints
 // ACTION: Introduce local variable
 // ACTION: Specify explicit lambda signature
 // ACTION: Specify explicit lambda signature

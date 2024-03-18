@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.ide.menu.createMacMenuBar
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
@@ -49,7 +50,6 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
-import com.intellij.util.childScope
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -75,7 +75,7 @@ import javax.swing.event.ListDataListener
 @Suppress("LeakingThis")
 open class FlatWelcomeFrame @JvmOverloads constructor(
   suggestedScreen: AbstractWelcomeScreen? = if (USE_TABBED_WELCOME_SCREEN) TabbedWelcomeScreen() else null
-) : JFrame(), IdeFrame, AccessibleContextAccessor {
+) : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWindow {
   val screen: AbstractWelcomeScreen
   private val content: Wrapper
   private var balloonLayout: WelcomeBalloonLayoutImpl?
@@ -270,6 +270,8 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   override fun getStatusBar(): StatusBar? = null
 

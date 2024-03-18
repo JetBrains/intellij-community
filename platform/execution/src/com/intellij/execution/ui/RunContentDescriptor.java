@@ -30,8 +30,8 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final @TabTitle String myDisplayName;
-  private final Icon myIcon;
+  private final MutableReactiveProperty<@TabTitle @Nullable String> myDisplayNameView = new MutableReactiveProperty<>(null);
+  private final MutableReactiveProperty<@Nullable Icon> myIconView = new MutableReactiveProperty<>(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -69,8 +69,8 @@ public class RunContentDescriptor implements Disposable {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
-    myDisplayName = displayName;
-    myIcon = icon;
+    myDisplayNameView.setValue(displayName);
+    myIconView.setValue(icon);
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
     myActivationCallback = activationCallback;
     if (myExecutionConsole != null) {
@@ -134,12 +134,29 @@ public class RunContentDescriptor implements Disposable {
 
   /**
    * Returns the icon to show in the Run or Debug toolwindow tab corresponding to this content.
-   *
+   * <p>
+   * Note: This method will return a current snapshot of the icon value. It may change during content execution.
+   * Use {@link RunContentDescriptor#getIconProperty} to obtain a reactive property to track icon changes.
+   * </p>
    * @return the icon to show, or null if the executor icon should be used.
    */
   @Nullable
   public Icon getIcon() {
-    return myIcon;
+    return myIconView.getValue();
+  }
+
+  /**
+   * Returns the reactive property for an icon to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the icon property that can be observed for the most recent icon value.
+   */
+  @ApiStatus.Experimental
+  public ReactiveProperty<Icon> getIconProperty() {
+    return myIconView;
+  }
+
+  @ApiStatus.Experimental
+  protected void setIcon(@Nullable Icon icon) {
+    myIconView.setValue(icon);
   }
 
   @Nullable
@@ -159,9 +176,31 @@ public class RunContentDescriptor implements Disposable {
     return myComponent;
   }
 
+  /**
+   * Returns the title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * <p>
+   * Note: This method will return a current snapshot of the title value. It may change during content execution.
+   * Use {@link RunContentDescriptor#getDisplayNameProperty} to obtain a reactive property to track title changes.
+   * </p>
+   * @return the title to show, or null if the executor name should be used.
+   */
   @BuildEventsNls.Title
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayNameView.getValue();
+  }
+
+  /**
+   * Returns the reactive property for a title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the title property that can be observed for the most recent title value.
+   */
+  @ApiStatus.Experimental
+  public ReactiveProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
+    return myDisplayNameView;
+  }
+
+  @ApiStatus.Experimental
+  protected void setDisplayName(@Nullable @TabTitle String displayName) {
+    myDisplayNameView.setValue(displayName);
   }
 
   public String getHelpId() {

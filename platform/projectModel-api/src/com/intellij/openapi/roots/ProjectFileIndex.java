@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Provides information about files contained in a project. Should be used from a read action.
@@ -33,8 +36,7 @@ public interface ProjectFileIndex extends FileIndex {
     }
   }
 
-  @NotNull
-  static ProjectFileIndex getInstance(@NotNull Project project) {
+  static @NotNull ProjectFileIndex getInstance(@NotNull Project project) {
     return project.getService(ProjectFileIndex.class);
   }
 
@@ -128,8 +130,12 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
-   * Returns true if {@code fileOrDir} is a file or directory from production/test sources of some module or sources of some library which is included into dependencies
-   * of some module.
+   * Returns true if {@code fileOrDir} is a file or directory from production/test source root of some module or sources of some library,
+   * which is included in dependencies of some module.
+   * <br>
+   * Note that this method doesn't take the exact type of the containing source root into account. 
+   * If you're interested if the file is located under a root of a specific type (e.g., if you want to distinguish Java source and Java 
+   * resource files), use {@link #isUnderSourceRootOfType(VirtualFile, Set)} instead.
    */
   @RequiresReadLock
   boolean isInSource(@NotNull VirtualFile fileOrDir);
@@ -164,6 +170,13 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isExcluded(@NotNull VirtualFile file);
 
   /**
+   * Returns libraries used in the project which have {@code fileOrDir} under their classes or source roots.
+   * <strong>Currently this method doesn't search for global libraries.</strong>
+   */
+  @ApiStatus.Experimental
+  @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
+
+  /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored
    * by {@link FileTypeRegistry#isFileIgnored(VirtualFile)}).
    *
@@ -190,10 +203,9 @@ public interface ProjectFileIndex extends FileIndex {
    * @deprecated use other methods from this class to obtain the information you need to get from {@link SourceFolder} instance, e.g. 
    * {@link #getContainingSourceRootType} or {@link #isInGeneratedSources}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresReadLock
-  @Nullable
-  default SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
+  default @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return null;
   }
 

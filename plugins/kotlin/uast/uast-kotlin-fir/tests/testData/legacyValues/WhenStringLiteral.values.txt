@@ -11,13 +11,16 @@ UFile (package = ) [public final class WhenStringLiteralKt {...]
                 USimpleNameReferenceExpression (identifier = a) [a] = external a()
                 UExpressionList (when) [    "abc" -> {...    ] = Phi(1, 2)
                     USwitchClauseExpressionWithBody ["abc" -> {...] = Undetermined
-                        ULiteralExpression (value = "abc") ["abc"] = "abc"
+                        UPolyadicExpression (operator = +) ["abc"] = "abc"
+                            ULiteralExpression (value = "abc") ["abc"] = "abc"
                         UExpressionList (when_entry) [{...] = Undetermined
                             UYieldExpression [yield 1] = UYieldResult(1)
                                 ULiteralExpression (value = 1) [1] = 1
                     USwitchClauseExpressionWithBody ["def", "ghi" -> {...] = Undetermined
-                        ULiteralExpression (value = "def") ["def"] = "def"
-                        ULiteralExpression (value = "ghi") ["ghi"] = "ghi"
+                        UPolyadicExpression (operator = +) ["def"] = "def"
+                            ULiteralExpression (value = "def") ["def"] = "def"
+                        UPolyadicExpression (operator = +) ["ghi"] = "ghi"
+                            ULiteralExpression (value = "ghi") ["ghi"] = "ghi"
                         UExpressionList (when_entry) [{...] = Undetermined
                             UYieldExpression [yield 2] = UYieldResult(2)
                                 ULiteralExpression (value = 2) [2] = 2

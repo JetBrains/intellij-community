@@ -1,15 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableWithAnalyze
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -32,6 +33,20 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
 
     override fun getActionName(element: ELEMENT): @IntentionName String = getActionFamilyName()
 
+    abstract fun apply(
+        element: ELEMENT,
+        project: Project,
+        updater: ModPsiUpdater
+    )
+
+    final override fun apply(element: ELEMENT, project: Project, editor: Editor?) {
+        throw UnsupportedOperationException("apply(ELEMENT, Project, Editor?) should not be invoked")
+    }
+
+    final override fun shouldApplyInWriteAction(): Boolean {
+        return false
+    }
+
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
         val isApplicable = isApplicableWithAnalyze(element)
         if (!isApplicable) return null
@@ -39,13 +54,17 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
         val elementPointer = element.createSmartPointer()
         val inspectionClass = javaClass
 
-        val quickFix = object : AbstractKotlinApplicableInspectionQuickFix<ELEMENT>() {
-            override fun applyTo(element: ELEMENT) {
-                apply(element, element.project, element.findExistingEditor())
+        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>() {
+            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
+
+            override fun applyFix(
+                project: Project,
+                element: ELEMENT,
+                updater: ModPsiUpdater
+            ) {
+                apply(element, project, updater)
             }
 
-            override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspection.shouldApplyInWriteAction()
-            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
             override fun getName(): String = runReadAction { elementPointer.element?.let { getActionName(it) } } ?: familyName
             override fun getSubstitutedClass(): Class<*> = inspectionClass
         }

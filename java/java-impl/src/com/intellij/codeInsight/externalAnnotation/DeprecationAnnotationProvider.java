@@ -6,7 +6,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 
-public class DeprecationAnnotationProvider implements AnnotationProvider {
+public final class DeprecationAnnotationProvider implements AnnotationProvider {
   @NotNull
   @Override
   public String getName(Project project) {

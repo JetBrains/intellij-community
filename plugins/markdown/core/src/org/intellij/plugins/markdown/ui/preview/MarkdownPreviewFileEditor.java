@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -25,7 +27,6 @@ import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
-import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,9 +76,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myHtmlPanelWrapper = new JPanel(new BorderLayout());
     myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
 
-    if (isPreviewShown(project, file)) {
-      attachHtmlPanel();
-    }
+    attachHtmlPanel();
 
     final var messageBusConnection = myProject.getMessageBus().connect(this);
     final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
@@ -263,8 +262,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
         String currentHtml = "<html><head></head>" + html + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
-          final var fileSystem = myFile.getFileSystem();
-          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset(), fileSystem.getNioPath(myFile));
+          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset(), myFile);
         }
 
         synchronized (REQUESTS_LOCK) {
@@ -305,21 +303,6 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     if (!alarm.isDisposed()) {
       alarm.addRequest(request, 0, ModalityState.stateForComponent(getComponent()));
     }
-  }
-
-  private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {
-    MarkdownSplitEditorProvider provider = FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findExtension(MarkdownSplitEditorProvider.class);
-    if (provider == null) {
-      return true;
-    }
-
-    FileEditorState state = EditorHistoryManager.getInstance(project).getState(file, provider);
-    if (!(state instanceof SplitFileEditor.MyFileEditorState)) {
-      return true;
-    }
-
-    String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
-    return layout == null || !layout.equals("FIRST"); //todo[kb] remove after migration to the new state model
   }
 
   private class ReparseContentDocumentListener implements DocumentListener {

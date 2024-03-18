@@ -7,7 +7,12 @@ import com.intellij.vcs.log.VcsLogRevisionFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
+/**
+ * @see VcsLogFilterObject#fromCommit(CommitId)
+ * @see VcsLogFilterObject#fromCommits(List)
+ */
 class VcsLogRevisionFilterImpl implements VcsLogRevisionFilter {
   private final @NotNull Collection<CommitId> myHeads;
 

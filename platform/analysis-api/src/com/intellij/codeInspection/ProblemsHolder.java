@@ -68,6 +68,10 @@ public class ProblemsHolder {
       }
     }
 
+    saveProblem(problemDescriptor);
+  }
+
+  protected void saveProblem(@NotNull ProblemDescriptor problemDescriptor) {
     myProblems.add(problemDescriptor);
   }
 

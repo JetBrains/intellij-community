@@ -6,6 +6,8 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -135,9 +138,12 @@ public final class UpdateHighlightersUtil {
                                               int group,
                                               @NotNull MarkupModelEx markup) {
     TextRange range = new TextRange(startOffset, endOffset);
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile instanceof PsiCompiledFile) {
-      psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+    PsiFile psiFile;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-341181, IDEA-301732, EA-823296")) {
+      psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile instanceof PsiCompiledFile) {
+        psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+      }
     }
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (psiFile != null) {
@@ -145,9 +151,9 @@ public final class UpdateHighlightersUtil {
     }
 
     if (psiFile != null) {
-      HighlightingSession session = HighlightingSessionImpl.createHighlightingSession(psiFile, new DaemonProgressIndicator(), colorsScheme, ProperTextRange.create(startOffset, endOffset), CanISilentlyChange.Result.UH_UH,
-                                                                                      0);
-      setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
+      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session -> {
+        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
+      });
     }
   }
 
@@ -187,7 +193,7 @@ public final class UpdateHighlightersUtil {
         return true;
       }
       if (info.isFileLevelAnnotation()) {
-        codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
+        codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null);
         changed[0] = true;
         return true;
       }
@@ -206,13 +212,22 @@ public final class UpdateHighlightersUtil {
     }
   }
 
+  private static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static boolean incinerateObsoleteHighlighters(@NotNull HighlightersRecycler infosToRemove, @NotNull HighlightingSession session) {
     boolean changed = false;
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      if (shouldRemoveHighlighter(highlighter, session)) {
+      boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; info:"+info+"; shouldRemove:"+shouldRemove);
+      }
+      if (shouldRemove) {
         highlighter.dispose();
         changed = true;
+        if (info != null && info.isFileLevelAnnotation()) {
+          session.removeFileLevelHighlight(info);
+        }
       }
     }
     return changed;
@@ -344,7 +359,7 @@ public final class UpdateHighlightersUtil {
   private static class InternalLayerSuppliers {
     private static final ExtensionPointName<InternalLayerSupplier> EP_NAME = ExtensionPointName.create("com.intellij.internalHighlightingLayerSupplier");
     private static int getLayerFromSuppliers(@NotNull HighlightInfo info) {
-      for (InternalLayerSupplier extension : EP_NAME.getExtensions()) {
+      for (InternalLayerSupplier extension : EP_NAME.getExtensionList()) {
         int layer = extension.getLayer(info);
         if (layer > 0) {
           return layer;
@@ -461,4 +476,25 @@ public final class UpdateHighlightersUtil {
     }
   }
 
+  /**
+   * Remove all highlighters with exactly the given range from {@link DocumentMarkupModel} produced by given inspection.
+   * This might be useful in quick fixes and intention actions to provide immediate feedback.
+   * This method currently works in O(total highlighter count in file) time.
+   */
+  public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range, @NotNull String inspectionToolId) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
+    ThreadingAssertions.assertEventDispatchThread();
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
+    if (model == null) return;
+
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      if (TextRange.areSegmentsEqual(range, highlighter)) {
+        var highlightInfo = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (highlightInfo != null && !inspectionToolId.equals(highlightInfo.getInspectionToolId())) {
+          continue;
+        }
+        model.removeHighlighter(highlighter);
+      }
+    }
+  }
 }

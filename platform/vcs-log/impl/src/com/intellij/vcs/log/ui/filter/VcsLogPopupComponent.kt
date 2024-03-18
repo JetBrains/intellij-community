@@ -2,8 +2,10 @@
 package com.intellij.vcs.log.ui.filter
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionGroupUtil
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.NlsContexts
@@ -17,7 +19,9 @@ internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.
   }
 
   fun showPopupMenu() {
+    val start = IdeEventQueue.getInstance().popupTriggerTime
     val popup = createPopupMenu()
+    Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
     popup.showUnderneathOf(getTargetComponent())
   }
 

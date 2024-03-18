@@ -1,36 +1,39 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.metadata.utils
 
+import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.metadata.MetadataStorage
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
+import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver
 
-
-internal fun StorageTypeMetadata.collectClasses(
-  classes: MutableMap<String, StorageClassMetadata> = hashMapOf()
-): List<StorageClassMetadata> {
-  return collectClassesByFqn(classes).values.toList()
+internal fun StorageTypeMetadata.collectTypesByFqn(metadataStorage: MetadataStorage? = null): Map<String, StorageTypeMetadata> {
+  val typesByFqn: MutableMap<String, StorageTypeMetadata> = hashMapOf()
+  collectTypesByFqn(typesByFqn, metadataStorage)
+  return typesByFqn
 }
 
-internal fun StorageTypeMetadata.collectClassesByFqn(
-  classes: MutableMap<String, StorageClassMetadata> = hashMapOf()
-): Map<String, StorageClassMetadata> {
-  recursiveTypeFinder(this, classes) { type ->
-    type is StorageClassMetadata && type !is FinalClassMetadata.KnownClass
-  }
-  return classes
+internal fun StorageTypeMetadata.collectTypesByFqn(types: MutableMap<String, StorageTypeMetadata>, metadataStorage: MetadataStorage? = null) {
+  recursiveTypeFinder(this, types, metadataStorage)
 }
 
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> recursiveTypeFinder(type: StorageTypeMetadata, types: MutableMap<String, T>,
-                                    valueSelector: (StorageTypeMetadata) -> Boolean) {
+private fun recursiveTypeFinder(type: StorageTypeMetadata, types: MutableMap<String, StorageTypeMetadata>, metadataStorage: MetadataStorage?) {
   if (types.containsKey(type.fqName)) {
     return
   }
 
-  if (valueSelector.invoke(type)) {
-    types[type.fqName] = type as T
+  if (type is FinalClassMetadata.KnownClass) {
+    if (metadataStorage != null) {
+      val realTypeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadataOrNull(metadataStorage, type.fqName)
+      if (realTypeMetadata != null) {
+        recursiveTypeFinder(realTypeMetadata, types, metadataStorage)
+      }
+    }
+    return
   }
+
+  types[type.fqName] = type
 
   val valueTypes: MutableList<ValueTypeMetadata> = arrayListOf()
   type.properties.map { it.valueType }.forEach {
@@ -43,11 +46,11 @@ private fun <T> recursiveTypeFinder(type: StorageTypeMetadata, types: MutableMap
   }
 
   valueTypes.filterIsInstance<CustomType>()
-    .forEach { recursiveTypeFinder(it.typeMetadata, types, valueSelector) }
+    .forEach { recursiveTypeFinder(it.typeMetadata, types, metadataStorage) }
 
 
   if (type is ExtendableClassMetadata) {
-    type.subclasses.forEach { recursiveTypeFinder(it, types, valueSelector) }
+    type.subclasses.forEach { recursiveTypeFinder(it, types, metadataStorage) }
   }
 }
 

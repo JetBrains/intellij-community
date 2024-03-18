@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,7 +31,7 @@ public class NoLabelForInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(final Module module, @NotNull final IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(final Module module, final @NotNull IComponent component, FormErrorCollector collector) {
     ComponentItem item = Palette.getInstance(module.getProject()).getItem(component.getComponentClassName());
     if (item != null && item.isCanAttachLabel()) {
       IComponent root = component;

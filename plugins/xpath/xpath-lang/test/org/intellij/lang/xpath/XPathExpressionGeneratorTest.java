@@ -19,11 +19,10 @@ public class XPathExpressionGeneratorTest extends TestBase {
   }
 
   public void testManySiblings() {
-    PlatformTestUtil.startPerformanceTest("Many siblings", 15000, () -> {
+    PlatformTestUtil.newPerformanceTest("Many siblings", () -> {
         assertXPath("/stopWord/word", "/stopWord/word[2359]");
       })
-      .usesAllCPUCores()
-      .assertTiming();
+      .start();
   }
 
   public void testName() {

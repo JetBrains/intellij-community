@@ -56,11 +56,15 @@ fun importActivityStarted(project: Project, externalSystemId: ProjectSystemId, d
 }
 
 
-fun <T> runImportActivitySync(project: Project,
-                              externalSystemId: ProjectSystemId,
-                              taskClass: Class<*>,
-                              action: () -> T): T {
-  val activity = importActivityStarted(project, externalSystemId)
+fun <T> runMavenConfigurationTask(project: Project,
+                                  parentActivity: StructuredIdeActivity,
+                                  taskClass: Class<*>,
+                                  action: () -> T): T {
+  val activity = ProjectImportCollector.PROJECT_CONFIGURATION_STAGE.startedWithParent(project, parentActivity) {
+    listOf(
+      ProjectImportCollector.TASK_CLASS.with(taskClass)
+    )
+  }
   try {
     return action()
   }

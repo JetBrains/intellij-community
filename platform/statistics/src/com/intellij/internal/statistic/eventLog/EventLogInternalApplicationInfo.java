@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsSer
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,9 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getProductCode() {
-    return ApplicationInfo.getInstance().getBuild().getProductCode();
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    String fullIdeProductCode = applicationInfo.getFullIdeProductCode();
+    return fullIdeProductCode != null ? fullIdeProductCode : applicationInfo.getBuild().getProductCode();
   }
 
   @Override

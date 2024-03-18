@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -19,7 +20,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.svg.loadWithSizes
-import com.intellij.util.Urls.newFromEncoded
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -30,6 +30,7 @@ import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Files
@@ -180,19 +181,11 @@ private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIco
   val cache = Path.of(PathManager.getPluginTempPath(), CACHE_DIR)
   val lightFile = cache.resolve("$idFileName.svg")
   val darkFile = cache.resolve(idFileName + "_dark.svg")
-  if (Files.exists(cache)) {
-    val light = tryLoadIcon(lightFile)
-    val dark = tryLoadIcon(darkFile)
-    if (light != null || dark != null) {
-      putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
-      return
-    }
-  }
 
   coroutineContext.ensureActive()
   try {
-    downloadFile(idPlugin, lightFile, "")
-    downloadFile(idPlugin, darkFile, "&theme=DARCULA")
+    downloadOrCheckUpdateFile(idPlugin, lightFile, "")
+    downloadOrCheckUpdateFile(idPlugin, darkFile, "&theme=DARCULA")
   }
   catch (e: Exception) {
     LOG.debug(e)
@@ -291,11 +284,11 @@ private fun tryLoadJarIcons(idPlugin: String,
   return false
 }
 
-private fun downloadFile(idPlugin: String, file: Path, theme: String) {
+private fun downloadOrCheckUpdateFile(idPlugin: String, file: Path, theme: String) {
   try {
-    val url = newFromEncoded(ApplicationInfoImpl.getShadowInstance().pluginManagerUrl +
-                             "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme)
-    HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null)
+    val url = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl + "/api/icon?pluginId=" +
+              URLUtil.encodeURIComponent(idPlugin) + theme
+    MarketplaceRequests.readOrUpdateFile(file, url, null, "", InputStream::close)
   }
   catch (ignore: HttpRequests.HttpStatusException) {
   }

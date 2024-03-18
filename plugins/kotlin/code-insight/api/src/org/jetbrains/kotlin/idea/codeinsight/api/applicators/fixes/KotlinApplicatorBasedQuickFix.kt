@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.internal.statistic.ReportingClassSubstitutor
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -43,5 +43,5 @@ class KotlinApplicatorBasedQuickFix<PSI : PsiElement, in INPUT : KotlinApplicato
     }
 
     override fun getSubstitutedClass(): Class<*> =
-        (applicator as? ReportingClassSubstitutor)?.substitutedClass ?: applicator.javaClass
+      (applicator as? ReportingClassSubstitutor)?.substitutedClass ?: applicator.javaClass
 }

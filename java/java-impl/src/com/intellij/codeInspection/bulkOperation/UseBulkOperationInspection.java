@@ -3,11 +3,11 @@ package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
 
   private static final CallMatcher MAP_ENTRY_SET =
@@ -49,7 +49,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
   @Nullable
   private static BulkMethodInfo findInfo(PsiReferenceExpression ref) {
-    return StreamEx.of(BulkMethodInfoProvider.KEY.getExtensions())
+    return StreamEx.of(BulkMethodInfoProvider.KEY.getExtensionList())
       .flatMap(BulkMethodInfoProvider::consumers).findFirst(info -> info.isMyMethod(ref)).orElse(null);
   }
 

@@ -139,7 +139,8 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return super.visitThisExpression(node)
             }
         })
-        Assert.assertNull("plain `this` has `null` label", thisReference)
+        Assert.assertNotNull("plain `this` has `null` label, but resolved to extension receiver", thisReference)
+        TestCase.assertEquals("java.lang.String", (thisReference as PsiParameter).type.canonicalText)
     }
 
     fun checkCallbackForResolve(uFilePath: String, uFile: UFile) {

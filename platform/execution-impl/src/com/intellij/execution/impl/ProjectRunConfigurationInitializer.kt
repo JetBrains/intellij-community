@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManager.Companion.IS_RUN_MANAGER_INITIALIZED
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -15,8 +16,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitializedListener {
   override suspend fun execute(project: Project) {
     val coroutineTracer = CoroutineTracerShim.coroutineTracer
-    @Suppress("DEPRECATION")
-    project.coroutineScope.launch(if (StartUpMeasurer.isEnabled()) coroutineTracer.rootTrace() else EmptyCoroutineContext) {
+    (project as ComponentManagerEx).getCoroutineScope().launch(if (StartUpMeasurer.isEnabled()) coroutineTracer.rootTrace() else EmptyCoroutineContext) {
       if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
         return@launch
       }

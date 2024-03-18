@@ -80,6 +80,11 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
             private fun isValidInheritor(ktClassOrObject: KtClassOrObject): Boolean {
                 ProgressManager.checkCanceled()
+
+                if (!parameters.includeLocal && ktClassOrObject.isLocal) {
+                    return false
+                }
+
                 analyze(ktClassOrObject) {
                     val baseSymbol = basePointer.restoreSymbol() ?: return false
                     val ktSymbol = ktClassOrObject.getClassOrObjectSymbol() ?: return false

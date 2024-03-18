@@ -4,11 +4,12 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
+public final class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   private final Map<String, ReplaceInfo> myClasses =
     Map.ofEntries(
       Map.entry(CommonClassNames.JAVA_LANG_STRING_BUILDER, ReplaceInfo.stringBuilders()),
@@ -138,7 +139,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
         }
 
         private static boolean isApplicable(PsiElement psiElement) {
-          return PsiUtil.isLanguageLevel11OrHigher(psiElement);
+          return PsiUtil.getLanguageLevel(psiElement).isAtLeast(LanguageLevel.JDK_11);
         }
 
         @Override

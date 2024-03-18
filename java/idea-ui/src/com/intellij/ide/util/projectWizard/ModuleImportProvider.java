@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class ModuleImportProvider extends ProjectImportProvider {
+public final class ModuleImportProvider extends ProjectImportProvider {
 
   public ModuleImportProvider() {
     super(new ModuleImportBuilder());

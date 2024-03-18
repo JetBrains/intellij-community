@@ -50,8 +50,6 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
@@ -95,6 +93,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
 
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
+  public static final Key<Boolean> IS_CONSOLE_DOCUMENT = Key.create("IS_CONSOLE_DOCUMENT");
 
   private static boolean ourTypedHandlerInitialized;
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
@@ -128,7 +127,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private MyDiffContainer myJLayeredPane;
   private JPanel myMainPanel;
   private boolean myAllowHeavyFilters;
-  private boolean myCancelStickToEnd; // accessed in EDT only
+  protected boolean myCancelStickToEnd; // accessed in EDT only
 
   private final Alarm myFlushAlarm = new Alarm(this);
 
@@ -149,7 +148,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   private final InputFilter myInputMessageFilter;
-  private volatile List<Filter> myPredefinedFilters = Collections.emptyList();
+  protected volatile List<Filter> myPredefinedFilters = Collections.emptyList();
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -238,11 +237,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           }
         });
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return OccurenceNavigator.super.getActionUpdateThread();
   }
 
   private void updatePredefinedFiltersLater() {
@@ -895,6 +889,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : 0;
     editor.getDocument().setCyclicBufferSize(bufferSize);
+    editor.getDocument().putUserData(IS_CONSOLE_DOCUMENT, true);
     editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
     editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
     return editor;
@@ -911,12 +906,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(shortcuts, CommonShortcuts.ENTER.getShortcuts()));
     new HyperlinkNavigationAction().registerCustomShortcutSet(shortcutSet, editor.getContentComponent());
     if (!myIsViewer) {
-      new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, editor.getContentComponent());
-      registerActionHandler(editor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
-      registerActionHandler(editor, IdeActions.ACTION_EDITOR_BACKSPACE, new DeleteBackspaceHandler(-1, IdeActions.ACTION_EDITOR_BACKSPACE));
-      registerActionHandler(editor, IdeActions.ACTION_EDITOR_DELETE, new DeleteBackspaceHandler(0, IdeActions.ACTION_EDITOR_DELETE));
-      registerActionHandler(editor, IdeActions.ACTION_EDITOR_TAB, new TabHandler());
-
       registerActionHandler(editor, EOFAction.ACTION_ID);
     }
   }
@@ -925,13 +914,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ThreadingAssertions.assertEventDispatchThread();
     AnAction action = ActionManager.getInstance().getAction(actionId);
     action.registerCustomShortcutSet(action.getShortcutSet(), editor.getContentComponent());
-  }
-
-  private static void registerActionHandler(@NotNull Editor editor, @NotNull String actionId, @NotNull AnAction action) {
-    ThreadingAssertions.assertEventDispatchThread();
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    action.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), editor.getContentComponent());
   }
 
   @NotNull
@@ -1196,6 +1178,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     RangeMarker marker = ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), lastOffset);
     if (marker == null || ConsoleTokenUtil.getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
       print(text, ConsoleViewContentType.USER_INPUT);
+      flushDeferredText();
       moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
       return;
     }
@@ -1215,39 +1198,41 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       typeOffset = editor.getCaretModel().getOffset();
       assert typeOffset <= document.getTextLength() : "typeOffset="+typeOffset+"; document.getTextLength()="+document.getTextLength()+"; caret model="+editor.getCaretModel();
     }
-    insertUserText(typeOffset, textToUse);
+    insertUserText(editor, typeOffset, textToUse);
   }
 
-  private abstract static class ConsoleAction extends AnAction implements DumbAware {
+  abstract static class ConsoleActionHandler extends EditorActionHandler {
+    private final EditorActionHandler myOriginalHandler;
+
+    ConsoleActionHandler(EditorActionHandler originalHandler) {
+      myOriginalHandler = originalHandler;
+    }
+
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       ThreadingAssertions.assertEventDispatchThread();
-      DataContext context = e.getDataContext();
-      ConsoleViewImpl console = getRunningConsole(context);
+      ConsoleViewImpl console = getRunningConsole(dataContext);
       if (console != null) {
-        execute(console, context);
+        execute(console, editor, dataContext);
+      } else {
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
     }
 
-    protected abstract void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context);
-
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      ConsoleViewImpl console = getRunningConsole(e.getDataContext());
-      e.getPresentation().setEnabled(console != null);
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      ConsoleViewImpl console = getRunningConsole(dataContext);
+      return console != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
     }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
+    protected abstract void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context);
 
     @Nullable
     private static ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
       if (editor != null) {
         ConsoleViewImpl console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
-        if (console != null && console.myState.isRunning()) {
+        if (console != null && console.myState.isRunning() && !console.myIsViewer) {
           return console;
         }
       }
@@ -1255,45 +1240,52 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static final class EnterHandler extends ConsoleAction {
+  static final class EnterHandler extends ConsoleActionHandler {
+    EnterHandler(EditorActionHandler originalHandler) {
+      super(originalHandler);
+    }
+
     @Override
-    public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
-      consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
-      consoleView.flushDeferredText();
-      Editor editor = consoleView.getEditor();
+    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
+      console.print("\n", ConsoleViewContentType.USER_INPUT);
+      console.flushDeferredText();
       moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
     }
   }
 
-  private static final class PasteHandler extends ConsoleAction {
+  static final class PasteHandler extends ConsoleActionHandler {
+    PasteHandler(EditorActionHandler originalHandler) {
+      super(originalHandler);
+    }
+
     @Override
-    public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
+    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
       String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       if (text == null) return;
-      Editor editor = consoleView.getEditor();
-      consoleView.type(editor, text);
+      console.type(editor, text);
     }
   }
 
-  private static final class DeleteBackspaceHandler extends ConsoleAction {
+  private static class DeleteBackspaceHandler extends ConsoleActionHandler {
     private final int myTextOffsetToDeleteRelativeToCaret;
     private final String myParentActionId;
 
-    private DeleteBackspaceHandler(int textOffsetToDeleteRelativeToCaret, @NotNull String parentActionId) {
+    private DeleteBackspaceHandler(EditorActionHandler originalHandler,
+                                   int textOffsetToDeleteRelativeToCaret,
+                                   @NotNull String parentActionId) {
+      super(originalHandler);
       myTextOffsetToDeleteRelativeToCaret = textOffsetToDeleteRelativeToCaret;
       myParentActionId = parentActionId;
     }
 
     @Override
-    public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
-      Editor editor = consoleView.getEditor();
-
+    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
       if (IncrementalSearchHandler.isHintVisible(editor)) {
         getDefaultActionHandler(myParentActionId).execute(editor, null, context);
         return;
       }
 
-      consoleView.flushDeferredText();
+      console.flushDeferredText();
       Document document = editor.getDocument();
       int length = document.getTextLength();
       if (length == 0) {
@@ -1302,13 +1294,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasSelection()) {
-        consoleView.deleteUserText(selectionModel.getSelectionStart(),
+        console.deleteUserText(selectionModel.getSelectionStart(),
                                    selectionModel.getSelectionEnd() - selectionModel.getSelectionStart());
       }
       else {
         int offset = editor.getCaretModel().getOffset() + myTextOffsetToDeleteRelativeToCaret;
         if (offset >= 0) {
-          consoleView.deleteUserText(offset, 1);
+          console.deleteUserText(offset, 1);
         }
       }
     }
@@ -1319,9 +1311,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static final class TabHandler extends ConsoleAction {
+  static final class BackspaceHandler extends DeleteBackspaceHandler {
+    BackspaceHandler(EditorActionHandler originalHandler) {
+      super(originalHandler, -1, IdeActions.ACTION_EDITOR_BACKSPACE);
+    }
+  }
+
+  static final class DeleteHandler extends DeleteBackspaceHandler {
+    DeleteHandler(EditorActionHandler originalHandler) {
+      super(originalHandler, 0, IdeActions.ACTION_EDITOR_DELETE);
+    }
+  }
+
+  static final class TabHandler extends ConsoleActionHandler {
+    TabHandler(EditorActionHandler originalHandler) {
+      super(originalHandler);
+    }
+
     @Override
-    protected void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context) {
+    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
       console.type(console.getEditor(), "\t");
     }
   }
@@ -1409,7 +1417,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
       protected Editor getEditor(@NotNull AnActionEvent e) {
-        return ConsoleViewImpl.this.getEditor();
+        var editor = ConsoleViewImpl.this.getEditor();
+        return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
       }
     };
     AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(getEditor());
@@ -1453,18 +1462,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
   }
 
-  private void insertUserText(int offset, @NotNull String text) {
+  private void insertUserText(@NotNull Editor editor, int offset, @NotNull String text) {
     ThreadingAssertions.assertEventDispatchThread();
     List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, ConsoleViewContentType.USER_INPUT);
     if (result == null) {
-      doInsertUserInput(offset, text);
+      doInsertUserInput(editor, offset, text);
     }
     else {
       for (Pair<String, ConsoleViewContentType> pair : result) {
         String chunkText = pair.getFirst();
         ConsoleViewContentType chunkType = pair.getSecond();
         if (chunkType.equals(ConsoleViewContentType.USER_INPUT)) {
-          doInsertUserInput(offset, chunkText);
+          doInsertUserInput(editor, offset, chunkText);
           offset += chunkText.length();
         }
         else {
@@ -1474,9 +1483,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void doInsertUserInput(int offset, @NotNull String text) {
+  private void doInsertUserInput(@NotNull Editor editor, int offset, @NotNull String text) {
     ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
     Document document = editor.getDocument();
 
     int oldDocLength = document.getTextLength();

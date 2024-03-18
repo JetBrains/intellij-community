@@ -35,7 +35,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
+public final class MoveInnerToUpperHandler extends MoveHandlerDelegate {
   @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
     if (elements.length != 1) return false;

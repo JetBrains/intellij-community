@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SmartStripTrailingSpacesFilter;
 import com.intellij.openapi.editor.StripTrailingSpacesFilter;
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.StripTrailingSpacesFilterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +98,10 @@ public final class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrai
 
 
   private static boolean shouldKeepTrailingSpacesOnEmptyLines(@NotNull Project project, @NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
+    PsiFile file;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-341942, IDEA-307607, EA-765259")) {
+      file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
+    }
     if (file != null) {
       CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file);
       CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();

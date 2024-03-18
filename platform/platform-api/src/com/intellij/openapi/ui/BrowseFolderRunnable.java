@@ -72,7 +72,11 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
       }
     }
 
-    FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
+    chooseFile(fileChooserDescriptor);
+  }
+
+  protected void chooseFile(FileChooserDescriptor descriptor) {
+    FileChooser.chooseFile(descriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
   }
 
   protected @Nullable VirtualFile getInitialFile() {

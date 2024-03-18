@@ -4,7 +4,6 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.Timed
-import com.intellij.driver.client.screenshot.TakeScreenshot
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.ProductVersion
@@ -14,6 +13,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 import java.lang.reflect.UndeclaredThrowableException
 import java.util.concurrent.ConcurrentHashMap
+import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
@@ -22,7 +22,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   private val sessionHolder = ThreadLocal<Session>()
 
   private val appServices: MutableMap<Class<*>, Any> = ConcurrentHashMap()
-  private val projectServices: MutableMap<ProjectRef, MutableMap<Class<*>, Any>> = ConcurrentHashMap()
+  private val projectServices: MutableMap<ProjectServiceId, Any> = ConcurrentHashMap()
   private val utils: MutableMap<Class<*>, Any> = ConcurrentHashMap()
 
   override val isConnected: Boolean
@@ -31,7 +31,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         return invoker.isApplicationInitialized()
       }
       catch (ut: UndeclaredThrowableException) {
-        if (ut.cause is InstanceNotFoundException) {
+        if (ut.cause is InstanceNotFoundException
+            || ut.cause is AttributeNotFoundException) {
           return false // Invoker is not yet registered in JMX
         }
         throw ut
@@ -49,6 +50,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     invoker.exit()
   }
 
+  override fun takeScreenshot(outFolder: String?) {
+    invoker.takeScreenshot(outFolder)
+  }
+
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> service(clazz: KClass<T>): T {
     return appServices.computeIfAbsent(clazz.java, ::serviceBridge) as T
@@ -56,8 +61,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> service(clazz: KClass<T>, project: ProjectRef): T {
-    val projectServices = projectServices.computeIfAbsent(project) { ConcurrentHashMap() }
-    return projectServices.computeIfAbsent(clazz.java) { serviceBridge(clazz.java, project) } as T
+    val id = ProjectServiceId((project as RefWrapper).getRef().identityHashCode, clazz.java)
+    return projectServices.computeIfAbsent(id) { serviceBridge(clazz.java, project) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -298,7 +303,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       this.code()
     }
     catch (t: Throwable) {
-      new(TakeScreenshot::class).takeScreenshot("beforeKill")
+      invoker.takeScreenshot("beforeKill")
       throw t
     }
     finally {
@@ -325,7 +330,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   override fun close() {
     try {
       invoker.close()
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       System.err.println("Error on close of JMX session")
       t.printStackTrace()
     }
@@ -357,7 +363,7 @@ internal data class Session(
 private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics.NO_LOCK)
 
 @JmxName("com.intellij.driver:type=Invoker")
-internal interface Invoker : AutoCloseable {
+interface Invoker : AutoCloseable {
   fun getProductVersion(): ProductVersion
 
   fun isApplicationInitialized(): Boolean
@@ -368,7 +374,13 @@ internal interface Invoker : AutoCloseable {
 
   fun newSession(): Int
 
+  fun newSession(id: Int): Int
+
   fun cleanup(sessionId: Int)
+
+  fun takeScreenshot(folder: String?)
 }
 
 class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
+
+private data class ProjectServiceId(val projectId: Int, val serviceClass: Class<*>)

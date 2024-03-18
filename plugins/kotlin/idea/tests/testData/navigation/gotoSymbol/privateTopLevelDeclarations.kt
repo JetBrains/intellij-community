@@ -12,7 +12,7 @@ private val Int.test: Int
 private val test = 4
 
 // SEARCH_TEXT: test
-// REF: (for Int in privateTopLevelDeclarations.kt in foo.bar).test
-// REF: (for Int in privateTopLevelDeclarations.kt in foo.bar).test()
+// REF: (privateTopLevelDeclarations.kt in foo.bar).Int.test
+// REF: (privateTopLevelDeclarations.kt in foo.bar).Int.test()
 // REF: (privateTopLevelDeclarations.kt in foo.bar).test
 // REF: (privateTopLevelDeclarations.kt in foo.bar).test()

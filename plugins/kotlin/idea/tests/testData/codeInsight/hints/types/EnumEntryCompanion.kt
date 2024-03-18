@@ -4,4 +4,4 @@ enum class E {
     ENTRY;
     companion object {}
 }
-val test/*<# [:  [temp:///src/KotlinReferencesTypeHintsProvider.kt:49]E] #>*/ = E.Companion
+val test/*<# : |[E.Companion:kotlin.fqn.class]E #>*/ = E.Companion

@@ -183,7 +183,7 @@ interface UastElementFactory {
 
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?, context: PsiElement?): UIfExpression?
 
-  fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression?
+  fun createStringLiteralExpression(text: String, context: PsiElement?): UExpression?
 
   fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression?
 

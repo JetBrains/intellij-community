@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class IconObjectRenderer extends CompoundRendererProvider {
+final class IconObjectRenderer extends CompoundRendererProvider {
   @Override
   protected String getName() {
     return "Icon";

@@ -33,7 +33,7 @@ public class BasicPatternParser {
    */
   @Contract(pure = true)
   public boolean isPattern(final PsiBuilder builder) {
-    PsiBuilder.Marker patternStart = preParsePattern(builder, true);
+    PsiBuilder.Marker patternStart = preParsePattern(builder);
     if (patternStart == null) {
       return false;
     }
@@ -56,13 +56,8 @@ public class BasicPatternParser {
 
 
   @Nullable("when not pattern")
-  PsiBuilder.Marker preParsePattern(final PsiBuilder builder, boolean parensAllowed) {
+  PsiBuilder.Marker preParsePattern(final PsiBuilder builder) {
     PsiBuilder.Marker patternStart = builder.mark();
-    if (parensAllowed) {
-      while (builder.getTokenType() == JavaTokenType.LPARENTH) {
-        builder.advanceLexer();
-      }
-    }
     Boolean hasNoModifier = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).second;
     PsiBuilder.Marker type =
       myParser.getReferenceParser().parseType(builder, BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.WILDCARD);
@@ -87,16 +82,6 @@ public class BasicPatternParser {
   }
 
   PsiBuilder.@NotNull Marker parsePrimaryPattern(final PsiBuilder builder, boolean expectVar) {
-    if (builder.getTokenType() == JavaTokenType.LPARENTH) {
-      PsiBuilder.Marker parenPattern = builder.mark();
-      builder.advanceLexer();
-      parsePattern(builder);
-      if (!expect(builder, JavaTokenType.RPARENTH)) {
-        error(builder, JavaPsiBundle.message("expected.rparen"));
-      }
-      done(parenPattern, myJavaElementTypeContainer.PARENTHESIZED_PATTERN, myWhiteSpaceAndCommentSetHolder);
-      return parenPattern;
-    }
     return parseTypeOrRecordPattern(builder, expectVar);
   }
 

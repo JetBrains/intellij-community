@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.EDT;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
@@ -183,6 +184,10 @@ public final class IfsUtil {
   }
 
   public static @NlsSafe String getReferencePath(Project project, VirtualFile file) {
+    if (EDT.isCurrentThreadEdt()) {
+      LOG.warn("FIXME IDEA-341171 org.intellij.images.vfs.IfsUtil#getReferencePath on EDT");
+      return file.getName();
+    }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
     if (sourceRoot != null) {

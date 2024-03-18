@@ -11,7 +11,7 @@ import kotlinx.serialization.json.put
 
 class RadioButtonGroupBlock(
   @NlsContexts.Label private val myGroupLabel: String,
-  private val myItemsData: List<CheckBoxItemData>,
+  private val myItemsData: List<RadioButtonItemData>,
   private val myJsonGroupName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var requireAnswer = false
@@ -76,4 +76,9 @@ class RadioButtonGroupBlock(
     requireAnswer = true
     return this
   }
+}
+
+data class RadioButtonItemData(@NlsContexts.RadioButton val label: String,
+                               val jsonElementName: String) {
+  internal var property: Boolean = false
 }

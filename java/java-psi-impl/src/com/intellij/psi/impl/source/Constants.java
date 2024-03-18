@@ -20,7 +20,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface Constants extends ElementType {
-  TokenSet CLASS_BIT_SET = TokenSet.create(JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS, JavaElementType.ENUM_CONSTANT_INITIALIZER, JavaElementType.UNNAMED_CLASS);
+  TokenSet CLASS_BIT_SET = TokenSet.create(JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS, JavaElementType.ENUM_CONSTANT_INITIALIZER, JavaElementType.IMPLICIT_CLASS);
   TokenSet FIELD_BIT_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.ENUM_CONSTANT);
   TokenSet METHOD_BIT_SET = TokenSet.create(JavaElementType.METHOD, JavaElementType.ANNOTATION_METHOD);
   TokenSet CLASS_INITIALIZER_BIT_SET = TokenSet.create(JavaElementType.CLASS_INITIALIZER);

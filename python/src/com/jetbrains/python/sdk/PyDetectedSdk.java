@@ -20,8 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyDetectedSdk extends ProjectJdkImpl {
   public PyDetectedSdk(@NotNull String name) {
-    super(name, PythonSdkType.getInstance());
-    setHomePath(name);
+    super(name, PythonSdkType.getInstance(), name, "");
   }
 
   @Override

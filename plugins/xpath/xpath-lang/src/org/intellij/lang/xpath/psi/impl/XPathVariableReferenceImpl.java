@@ -176,11 +176,6 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return getReferencedName().hashCode();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-
   @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathVariableReference(this);

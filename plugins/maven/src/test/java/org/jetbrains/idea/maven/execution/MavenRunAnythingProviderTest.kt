@@ -25,7 +25,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
     super.setUp()
 
-    myDataContext = SimpleDataContext.getProjectContext(myProject)
+    myDataContext = SimpleDataContext.getProjectContext(project)
     myProvider = MavenRunAnythingProvider()
   }
 
@@ -70,16 +70,16 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
       UsefulTestCase.assertSameElements(groupedValues["clean"]!!, "clean:clean", "clean:help")
       UsefulTestCase.assertSameElements(groupedValues["compiler"]!!, "compiler:testCompile", "compiler:compile", "compiler:help")
     }
-    withVariantsFor("") { it: List<String>? ->
+    withVariantsFor("") { it: List<String> ->
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site")
       assertContain(it, "clean:clean", "clean:help", "compiler:testCompile", "compiler:compile", "compiler:help")
     }
-    withVariantsFor("clean ") { it: List<String>? ->
+    withVariantsFor("clean ") { it: List<String> ->
       assertDoNotContain(it, "clean", "clean clean")
       assertContain(it, "clean validate", "clean compile", "clean test")
       assertContain(it, "clean clean:clean", "clean clean:help")
     }
-    withVariantsFor("clean:clean ") { it: List<String>? ->
+    withVariantsFor("clean:clean ") { it: List<String> ->
       assertDoNotContain(it, "clean:clean", "clean:clean clean:clean")
       assertContain(it, "clean:clean clean", "clean:clean validate", "clean:clean compile", "clean:clean test")
       assertContain(it, "clean:clean clean:help")
@@ -111,26 +111,25 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         <version>1</version>
         """.trimIndent())
     importProjects(m1, m2)
-    resolvePlugins()
 
-    withVariantsFor("", "m1") { it: List<String>? ->
+    withVariantsFor("", "m1") { it: List<String> ->
       assertContain(it, "war:help", "war:inplace", "war:exploded", "war:war")
       assertContain(it, "compiler:compile", "compiler:help")
     }
-    withVariantsFor("", "m2") { it: List<String>? ->
+    withVariantsFor("", "m2") { it: List<String> ->
       assertDoNotContain(it, "war:help", "war:inplace", "war:exploded", "war:war")
       assertContain(it, "compiler:compile", "compiler:help")
     }
   }
 
   private fun withVariantsFor(command: String, moduleName: String, supplier: Consumer<List<String>>) {
-    val moduleManager = getInstance(myProject)
+    val moduleManager = getInstance(project)
     val module = moduleManager.findModuleByName(moduleName)
     withVariantsFor(RunAnythingContext.ModuleContext(module!!), command, supplier)
   }
 
   private fun withVariantsFor(command: String, supplier: Consumer<List<String>>) {
-    withVariantsFor(RunAnythingContext.ProjectContext(myProject), command, supplier)
+    withVariantsFor(RunAnythingContext.ProjectContext(project), command, supplier)
   }
 
   private fun withVariantsFor(context: RunAnythingContext, command: String, supplier: Consumer<List<String>>) {

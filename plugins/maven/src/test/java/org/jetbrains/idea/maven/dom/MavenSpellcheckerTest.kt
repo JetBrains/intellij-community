@@ -23,7 +23,7 @@ import org.junit.Test
 class MavenSpellcheckerTest : MavenDomTestCase() {
   @Test
   fun testSpell() = runBlocking {
-    myFixture.enableInspections(SpellCheckingInspection::class.java)
+    fixture.enableInspections(SpellCheckingInspection::class.java)
 
     createProjectPom("""
                        <groupId>test</groupId>

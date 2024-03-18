@@ -47,6 +47,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
+import static com.intellij.openapi.actionSystem.impl.EdtDataContextKt.wrapUnsafeData;
 
 /**
  * @author gregsh
@@ -203,6 +204,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         }
       });
     }
+    answer = wrapUnsafeData(answer);
     return answer == EXPLICIT_NULL ? null : answer;
   }
 

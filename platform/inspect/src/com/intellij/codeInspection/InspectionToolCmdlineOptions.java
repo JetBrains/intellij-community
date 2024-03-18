@@ -7,7 +7,7 @@ public interface InspectionToolCmdlineOptions extends InspectionToolCmdlineOptio
   /**
    * @param app Inspection Application
    */
-  void initApplication(InspectionApplication app);
+  void initApplication(InspectionApplicationBase app);
 
   /**
    * @return 0 if turned off

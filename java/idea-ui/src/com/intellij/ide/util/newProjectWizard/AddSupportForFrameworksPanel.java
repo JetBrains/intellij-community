@@ -460,14 +460,4 @@ public class AddSupportForFrameworksPanel implements Disposable {
     nodes.sort((o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }
 
-  public void reportSelectedFrameworks(@NotNull String eventId, @NotNull FeatureUsageData original) {
-    List<FrameworkSupportNode> nodes = getSelectedNodes();
-    for (FrameworkSupportNode node : nodes) {
-      FrameworkSupportInModuleProvider provider = node.getUserObject();
-      final FeatureUsageData data = original.copy();
-      data.addData("framework", provider.getId());
-      data.addPluginInfo(PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
-      FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId + ".add.framework", data);
-    }
-  }
 }

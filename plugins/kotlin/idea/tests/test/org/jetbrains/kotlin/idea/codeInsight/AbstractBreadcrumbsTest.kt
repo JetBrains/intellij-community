@@ -13,7 +13,7 @@ abstract class AbstractBreadcrumbsTest : KotlinLightPlatformCodeInsightFixtureTe
 
     protected open fun doTest(unused: String) {
         val fileName = fileName()
-        assert(fileName.endsWith(".kt")) { fileName }
+        assert(fileName.endsWith(".kt") || fileName.endsWith(".kts")) { fileName }
         myFixture.configureByFile(fileName)
 
         val element = myFixture.file.findElementAt(myFixture.caretOffset)!!

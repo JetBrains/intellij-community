@@ -4,3 +4,4 @@ fun foo() {
     }
     val ff = <caret>f
 }
+// IGNORE_K2

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import java.io.InputStream
@@ -8,10 +8,14 @@ import kotlin.random.Random
 
 /**
  * [User] runs in the current process, and deliver some commands to [App] via [UserAgent].
- * [App] runs in another process, and receives commands from [User] with help of [AppAgent], applies
- * those commands to the component-under-test, and returns result(s) back to [User].
- * [AppController] is a handle to dedicated process App runs into -- provides stdin/stdout, isAlive, kill.
+ * Basically, [User] encapsulates 'test scenario'.
  *
+ * [App] runs in another process, receives commands from [User] with help of [AppAgent], applies those commands to
+ * the component-under-test, and delivers result(s) back to the [User].
+ * Basically, it is an event loop, the mediator between wire protocol and actual component-under-stress.
+ *
+ * [AppController] is a handle to a dedicated process App runs into. It provides access to that process's stdin/stdout,
+ * isAlive, and kill.
  */
 
 

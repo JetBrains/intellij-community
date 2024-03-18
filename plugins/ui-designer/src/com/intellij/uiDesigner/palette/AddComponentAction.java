@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.palette;
 
@@ -92,7 +92,7 @@ public class AddComponentAction extends AnAction {
 
   private static void assignDefaultIcon(final Project project, final ComponentItem itemToBeAdded) {
     Palette palette = Palette.getInstance(project);
-    if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().length() == 0) {
+    if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().isEmpty()) {
       PsiClass aClass =
         JavaPsiFacade.getInstance(project).findClass(itemToBeAdded.getClassName().replace('$', '.'), ProjectScope.getAllScope(project));
       while (aClass != null) {
@@ -100,7 +100,7 @@ public class AddComponentAction extends AnAction {
         ComponentItem item = name == null ? null : palette.getItem(name);
         if (item != null) {
           String iconPath = item.getIconPath();
-          if (iconPath != null && iconPath.length() > 0) {
+          if (iconPath != null && !iconPath.isEmpty()) {
             itemToBeAdded.setIconPath(iconPath);
             return;
           }
@@ -125,8 +125,7 @@ public class AddComponentAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static PsiElement findElementToAdd(final PsiFile psiFile) {
+  private static @Nullable PsiElement findElementToAdd(final PsiFile psiFile) {
     if (psiFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
       return psiFile;
     }

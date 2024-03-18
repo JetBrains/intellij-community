@@ -4,7 +4,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.cloudconfig.CloudConfigFileClientV2
 import com.jetbrains.cloudconfig.Configuration
 import com.jetbrains.cloudconfig.FileVersionInfo
-import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -15,9 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
-  private val TOKEN = "my-test-token"
   private val myClientV2 = lazy {
-    object : CloudConfigFileClientV2(defaultUrl, Configuration().auth(JbaJwtTokenAuthProvider(TOKEN)),
+    object : CloudConfigFileClientV2(defaultUrl, Configuration().auth(JbaTokenAuthProvider("my-test-token")),
                                      CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, clientVersionContext) {
       override fun read(filePath: String): InputStream {
         val version = filesAndVersions[filePath] ?: throw IOException("file $filePath is not found")
@@ -47,8 +45,6 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     }
   }
 
-  override val currentIdToken: String?
-    get() = TOKEN
 
   override val client: CloudConfigFileClientV2
     get() = myClientV2.value

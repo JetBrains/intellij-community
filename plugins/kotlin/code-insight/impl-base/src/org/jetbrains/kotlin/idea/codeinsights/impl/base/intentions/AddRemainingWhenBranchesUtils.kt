@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -29,11 +29,11 @@ object AddRemainingWhenBranchesUtils {
         generateWhenBranches(whenExpression, context.whenMissingCases)
         shortenReferences(
             whenExpression,
-            callableShortenOption = {
+            callableShortenStrategy = {
                 if (it.callableIdIfNonLocal?.classId == context.enumToStarImport) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             }
         )

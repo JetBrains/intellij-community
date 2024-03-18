@@ -13,6 +13,14 @@ import com.intellij.settingsSync.RestartReason
 import com.intellij.settingsSync.SettingsSyncBundle
 
 internal class NotificationServiceImpl: NotificationService {
+  override fun notifySateRestoreFailed() {
+    val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+      .createNotification(SettingsSyncBundle.message("sync.notification.git.state.restore.failed.title"),
+                          SettingsSyncBundle.message("sync.notification.git.state.restore.failed.text"),
+                          NotificationType.ERROR)
+    notification.notify(null)
+  }
+
   override fun notifyZipSizeExceed() {
     val notification = buildZipSizeExceedNotification() ?: return
     notification.notify(null)

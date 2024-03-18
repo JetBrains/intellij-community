@@ -34,6 +34,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReassignUsedVars() { doTest(); }
   public void testLambdaContext() { doTest(); }
   public void testReturnTypeCompatibility() { doTest(); }
+
   public void testTypeArgsConsistency() { doTest(); }
   public void testTypeArgsConsistencyMisc1() { doTest(); }
   public void testTypeArgsConsistencyMisc2() { doTest(); }

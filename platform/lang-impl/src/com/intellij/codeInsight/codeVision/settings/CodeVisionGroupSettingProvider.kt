@@ -52,7 +52,7 @@ interface CodeVisionGroupSettingProvider {
 
   fun createModel(project: Project): CodeVisionGroupSettingModel {
     val providers = CodeVisionProviderFactory.createAllProviders(project).filter { it.groupId == groupId }
-    val settings = CodeVisionSettings.instance()
+    val settings = CodeVisionSettings.getInstance()
     val isEnabled = settings.codeVisionEnabled && settings.isProviderEnabled(groupId)
     return createSettingsModel(isEnabled, providers)
   }

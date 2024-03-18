@@ -62,8 +62,10 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
       return null
     }
 
+    var backgroundHighlighter = backgroundHighlighter
     if (backgroundHighlighter == null) {
       backgroundHighlighter = TextEditorBackgroundHighlighter(project, editor)
+      this.backgroundHighlighter = backgroundHighlighter
     }
     return backgroundHighlighter
   }

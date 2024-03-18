@@ -12,13 +12,17 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-internal class StdlibVersionChooserDialog(project: Project, private val availableLibraries: Map<@NlsSafe String, LibraryOrderEntry>) :
-    DialogWrapper(project) {
+@ApiStatus.Internal
+class StdlibVersionChooserDialog(
+    project: Project,
+    val availableLibraries: Map<@NlsSafe String, LibraryOrderEntry>
+) : DialogWrapper(project) {
 
     private val selectedLibrary = AtomicProperty(LibraryNameAndVersion())
 

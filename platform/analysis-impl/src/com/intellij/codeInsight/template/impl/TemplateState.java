@@ -1149,7 +1149,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         }
         EditorActionAvailabilityHintKt.addActionAvailabilityHint(segmentHighlighter,
                                                                  new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                 new EditorActionAvailabilityHint("EditorEscape", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
         segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
       });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -26,15 +26,13 @@ public final class ThreadDumper {
   private ThreadDumper() {
   }
 
-  @NotNull
-  public static String dumpThreadsToString() {
+  public static @NotNull String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
     dumpThreadInfos(getThreadInfos(), writer);
     return writer.toString();
   }
 
-  @NotNull
-  public static String dumpEdtStackTrace(ThreadInfo @NotNull [] threadInfos) {
+  public static @NotNull String dumpEdtStackTrace(ThreadInfo @NotNull [] threadInfos) {
     StringWriter writer = new StringWriter();
     if (threadInfos.length > 0) {
       StackTraceElement[] trace = threadInfos[0].getStackTrace();
@@ -51,8 +49,7 @@ public final class ThreadDumper {
    * @param stripCoroutineDump whether to remove stackframes from coroutine dump that have no useful debug information.
    *                           Enabling this flag should significantly reduce coroutine dump size.
    */
-  @NotNull
-  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
+  public static @NotNull ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
@@ -188,8 +185,7 @@ public final class ThreadDumper {
    *
    * @param fullThreadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
    */
-  @Nullable
-  public static String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
+  public static @Nullable String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
     // We know that the AWT-EventQueue-* thread is dumped out first (see #sort above), and for each thread, there are at the very least
     // 3 lines printed out before the stack trace. If we don't see any of this, then return early
     List<String> threadDump = Arrays.asList(fullThreadDump.split("\n"));

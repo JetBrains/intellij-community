@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -18,7 +19,7 @@ internal class ThreadingInlayHintsProvider : InlayHintsProvider {
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     if (!DevKitInspectionUtil.isAllowed(file)) return null
-    if (!PsiUtil.isIdeaProject(file.project)) return null // TODO enable in IDEA project only
+    if (!PsiUtil.isIdeaProject(file.project) && !Registry.`is`("devkit.inlay.threading")) return null
 
     if (JavaPsiFacade.getInstance(file.project).findClass(RequiresEdt::class.java.canonicalName, file.resolveScope) == null) return null
 

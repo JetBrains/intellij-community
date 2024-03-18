@@ -276,10 +276,4 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
     }
     return true;
   }
-
-  @Override
-  public boolean shouldChangeModificationCount(PsiElement place) {
-    PsiElement parent = getParent();
-    return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);
-  }
 }

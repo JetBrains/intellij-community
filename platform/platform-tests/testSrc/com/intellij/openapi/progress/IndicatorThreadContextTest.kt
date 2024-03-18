@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.contextModality
-import com.intellij.platform.util.progress.progressReporter
-import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.util.parent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -27,9 +25,7 @@ class IndicatorThreadContextTest : CancellationTest() {
         assertNull(ProgressManager.getGlobalProgressIndicator())
         assertNull(ctx.job.parent())
         assertSame(indicator.modalityState, ctx.contextModality())
-        assertNull(ctx.progressReporter)
-        assertNotNull(ctx.rawProgressReporter)
-        assertEquals(3, ctx.fold(0) { acc, _ -> acc + 1 })
+        assertEquals(2, ctx.fold(0) { acc, _ -> acc + 1 })
       }
 
       assertNull(currentThreadContextOrNull())

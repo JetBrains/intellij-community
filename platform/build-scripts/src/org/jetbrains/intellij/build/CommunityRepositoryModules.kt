@@ -1,16 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.impl.BundledMavenDownloader
-import org.jetbrains.intellij.build.impl.LibraryPackMode
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
-import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -22,13 +22,16 @@ import java.util.*
 
 object CommunityRepositoryModules {
   /**
-   * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
+   * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
    */
-  @Suppress("SpellCheckingInspection")
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
+
+      spec.withGeneratedResources { dir, buildContext ->
+        copyAnt(pluginDir = dir, context = buildContext)
+      }
     },
     plugin("intellij.laf.macos") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
@@ -98,6 +101,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       spec.withModule("intellij.maven.server.m40", "maven40-server.jar")
+      spec.withModule("intellij.maven.server.telemetry", "maven-server-telemetry.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
       spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
       spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
@@ -129,6 +133,9 @@ object CommunityRepositoryModules {
 
         val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
         copyDir(maven3Libs, targetLib.resolve("maven3-server-lib"))
+
+        val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+        copyDir(mavenTelemetryDependencies, targetLib.resolve("maven-telemetry-lib"))
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
@@ -251,7 +258,6 @@ object CommunityRepositoryModules {
     )),
     plugin(listOf(
       "intellij.markdown",
-      "intellij.markdown.core",
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
       "intellij.markdown.frontmatter.yaml",
@@ -278,7 +284,8 @@ object CommunityRepositoryModules {
     },
     plugin(listOf(
       "intellij.searchEverywhereMl",
-      "intellij.searchEverywhereMl.ranking",
+      "intellij.searchEverywhereMl.ranking.ext",
+      "intellij.searchEverywhereMl.ranking.core",
       "intellij.searchEverywhereMl.ranking.yaml",
       "intellij.searchEverywhereMl.ranking.vcs",
       "intellij.searchEverywhereMl.typos",
@@ -300,10 +307,14 @@ object CommunityRepositoryModules {
       "intellij.turboComplete",
     ) { spec ->
       spec.withModule("intellij.turboComplete.languages.kotlin")
+    },
+    pluginAuto(listOf("intellij.performanceTesting", "intellij.performanceTesting.remoteDriver")) { spec ->
+      spec.withModule("intellij.driver.model")
+      spec.withModule("intellij.driver.impl")
+      spec.withModule("intellij.driver.client")
     }
   )
 
-  @Suppress("SpellCheckingInspection")
   val CONTRIB_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     plugin("intellij.errorProne") { spec ->
       spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
@@ -838,6 +849,17 @@ object CommunityRepositoryModules {
     }
   }
 
+  fun githubPlugin(mainModuleName: String): PluginLayout {
+    return plugin(mainModuleName) { spec ->
+      spec.directoryName = "vcs-github"
+      spec.mainJarName = "vcs-github.jar"
+      spec.withModules(listOf(
+        "intellij.vcs.github"
+      ))
+    }
+  }
+
+
   @JvmStatic
   @JvmOverloads
   fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
@@ -861,6 +883,43 @@ object CommunityRepositoryModules {
       spec.withResource("hotswap/gragent.jar", "lib/agent")
       spec.withResource("groovy-psi/resources/conf", "lib")
       addition?.invoke(spec)
+    }
+  }
+}
+
+private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
+  val antDir = pluginDir.resolve("dist")
+  return TraceManager.spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
+    val sources = ArrayList<ZipSource>()
+    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.MERGED, reason = "ant")
+    copyDir(
+      sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
+      targetDir = antDir,
+      dirFilter = { !it.endsWith("src") },
+      fileFilter = { file ->
+        if (file.toString().endsWith(".jar")) {
+          sources.add(ZipSource(file = file, distributionFileEntryProducer = null))
+          false
+        }
+        else {
+          true
+        }
+      },
+    )
+    sources.sort()
+
+    val antTargetFile = antDir.resolve("ant.jar")
+    buildJar(targetFile = antTargetFile, sources = sources)
+
+    sources.map { source ->
+      ProjectLibraryEntry(
+        path = antTargetFile,
+        data = libraryData,
+        libraryFile = source.file,
+        hash = source.hash,
+        size = source.size,
+        relativeOutputFile = "dist/ant.jar",
+      )
     }
   }
 }

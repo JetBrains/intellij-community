@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
 import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -76,6 +77,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   private boolean myWriteSorted = false;
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
+
+  @NotNull
+  public static SSBasedInspection getStructuralSearchInspection(@NotNull InspectionProfile profile) {
+    return (SSBasedInspection)CustomInspectionActions.getInspection(profile, SHORT_NAME);
+  }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -280,7 +286,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
-  public InspectionMetaDataDialog createMetaDataDialog(Project project, @Nullable Configuration configuration) {
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable Configuration configuration) {
     final List<Configuration> configurations = getConfigurations();
     final Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
       for (Configuration current : configurations) {
@@ -292,9 +298,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return null;
     };
     if (configuration == null) {
-      return new InspectionMetaDataDialog(project, nameValidator);
+      return new InspectionMetaDataDialog(project, profileName, nameValidator);
     }
-    return new InspectionMetaDataDialog(project, nameValidator, configuration.getName(), configuration.getDescription(),
+    return new InspectionMetaDataDialog(project, profileName, nameValidator, configuration.getName(), configuration.getDescription(),
                                         configuration.getProblemDescriptor(), configuration.getSuppressId());
   }
 

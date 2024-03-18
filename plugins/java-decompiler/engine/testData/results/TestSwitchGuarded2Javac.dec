@@ -1,0 +1,437 @@
+package pkg;
+
+public class TestSwitchGuarded2Javac {
+   public static void main(String[] args) {
+      testObject0(4);// 6
+   }// 7
+
+   public static void testObject0(Object o) {
+      try {
+         System.out.println("inside try 2");// 11
+
+         switch (o) {// 12
+            case Integer var3 when var3 > 3:// 13
+               System.out.println("4");// 14
+               throw new RuntimeException();// 15
+            default:
+               System.out.println(o);// 17
+               System.out.println("2");// 19
+               return;// 25
+         }
+      } catch (UnsupportedOperationException var8) {// 20
+         System.out.println("exception");// 21
+      } finally {
+         System.out.println("finally");// 23
+      }
+
+   }
+
+   public static void testObject1(Object o) {
+      System.out.println("2");// 28
+
+      switch (o) {// 29
+         case Integer n when !(n <= 1):// 30
+            if (n == 1) {// 31
+               System.out.println("212");// 32
+            }
+
+            System.out.println(2);// 34
+            System.out.println(1);// 35
+            break;// 36
+         case Integer n when !(n <= 2):// 37
+            if (n == 1) {// 38
+               System.out.println("4");// 39
+            }
+            break;
+         case Integer var5 when !(var5 <= 3):// 42
+            System.out.println("4");// 43
+            break;// 44
+         default:
+            System.out.println(o);// 45
+            break;
+      }
+
+      System.out.println("2");// 47
+      System.out.println("2");// 48
+
+      switch (o) {// 49
+         case Integer n when !(n <= 1):// 50
+            if (n == 1) {// 51
+               System.out.println("212");// 52
+            }
+
+            System.out.println(2);// 54
+            System.out.println(1);// 55
+            break;// 56
+         case Integer n when !(n <= 2):// 57
+            if (n == 1) {// 58
+               System.out.println("4");// 59
+            }
+            break;
+         case Integer var5 when !(var5 <= 3):// 62
+            System.out.println("4");// 63
+            break;// 64
+         default:
+            System.out.println(o);// 65
+            break;
+      }
+
+      System.out.println("2");// 67
+   }// 68
+
+   public static void testObject2(Object o) {
+      switch (o) {// 72
+         case Integer n:
+            if (n == 1) {// 74
+               System.out.println("2");// 75
+            }
+
+            System.out.println(1);// 77
+            System.out.println(1);// 78
+            break;// 79
+         default:
+            System.out.println(o);// 80
+      }
+
+      System.out.println("2");// 82
+      switch (o) {// 83
+         case Integer n:
+            if (n == 1) {// 85
+               System.out.println("1");// 86
+            }
+
+            System.out.println(1);// 88
+            System.out.println(1);// 89
+            break;// 90
+         default:
+            System.out.println(o);// 91
+      }
+
+      System.out.println("2");// 93
+   }// 94
+
+   public static void testObject3(Object o) {
+      System.out.println("2");// 97
+
+      switch (o) {// 98
+         case Integer n when !(n <= 1):// 99
+            if (n == 1) {// 100
+               System.out.println("212");// 101
+            }
+
+            System.out.println(2);// 103
+            System.out.println(1);// 104
+            break;// 105
+         case Integer n when !(n <= 2):// 106
+            if (n == 1) {// 107
+               System.out.println("4");// 108
+            }
+            break;
+         case Integer var5 when !(var5 <= 3):// 111
+            System.out.println("4");// 112
+            break;// 113
+         default:
+            System.out.println(o);// 114
+            break;
+      }
+
+      System.out.println("2");// 116
+   }// 117
+}
+
+class 'pkg/TestSwitchGuarded2Javac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+      4      4
+      7      5
+   }
+
+   method 'testObject0 (Ljava/lang/Object;)V' {
+      0      9
+      3      9
+      5      9
+      18      11
+      32      12
+      35      12
+      36      12
+      3e      13
+      41      13
+      43      13
+      4d      14
+      51      16
+      55      16
+      58      17
+      5b      17
+      5e      17
+      6e      20
+      6f      21
+      72      21
+      74      21
+      82      23
+      84      23
+      87      23
+      8f      18
+   }
+
+   method 'testObject1 (Ljava/lang/Object;)V' {
+      0      29
+      3      29
+      5      29
+      18      31
+      3a      32
+      3d      32
+      3e      32
+      47      33
+      4a      33
+      4b      33
+      4e      34
+      51      34
+      53      34
+      56      37
+      59      37
+      5a      37
+      5d      38
+      60      38
+      61      38
+      64      39
+      6f      40
+      72      40
+      73      40
+      7d      41
+      80      41
+      81      41
+      84      42
+      87      42
+      89      42
+      97      45
+      9a      45
+      9b      45
+      a3      46
+      a6      46
+      a8      46
+      ab      47
+      b1      49
+      b5      49
+      b8      50
+      bb      53
+      be      53
+      c0      53
+      c3      54
+      c6      54
+      c8      54
+      db      56
+      fa      57
+      fd      57
+      fe      57
+      107      58
+      10a      58
+      10b      58
+      10e      59
+      111      59
+      113      59
+      116      62
+      119      62
+      11a      62
+      11d      63
+      120      63
+      121      63
+      124      64
+      12f      65
+      132      65
+      133      65
+      13d      66
+      140      66
+      141      66
+      144      67
+      147      67
+      149      67
+      157      70
+      15a      70
+      15b      70
+      163      71
+      166      71
+      168      71
+      16b      72
+      171      74
+      175      74
+      178      75
+      17b      78
+      17e      78
+      180      78
+      183      79
+   }
+
+   method 'testObject2 (Ljava/lang/Object;)V' {
+      10      82
+      2a      84
+      2d      84
+      2e      84
+      31      85
+      34      85
+      36      85
+      39      88
+      3c      88
+      3d      88
+      40      89
+      43      89
+      44      89
+      47      90
+      4d      92
+      51      92
+      54      95
+      57      95
+      59      95
+      6c      96
+      86      98
+      89      98
+      8a      98
+      8d      99
+      90      99
+      92      99
+      95      102
+      98      102
+      99      102
+      9c      103
+      9f      103
+      a0      103
+      a3      104
+      a9      106
+      ad      106
+      b0      109
+      b3      109
+      b5      109
+      b8      110
+   }
+
+   method 'testObject3 (Ljava/lang/Object;)V' {
+      0      113
+      3      113
+      5      113
+      18      115
+      3a      116
+      3d      116
+      3e      116
+      47      117
+      4a      117
+      4b      117
+      4e      118
+      51      118
+      53      118
+      56      121
+      59      121
+      5a      121
+      5d      122
+      60      122
+      61      122
+      64      123
+      6f      124
+      72      124
+      73      124
+      7d      125
+      80      125
+      81      125
+      84      126
+      87      126
+      89      126
+      97      129
+      9a      129
+      9b      129
+      a3      130
+      a6      130
+      a8      130
+      ab      131
+      b1      133
+      b5      133
+      b8      134
+      bb      137
+      be      137
+      c0      137
+      c3      138
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 6
+11 <-> 10
+12 <-> 12
+13 <-> 13
+14 <-> 14
+15 <-> 15
+17 <-> 17
+19 <-> 18
+20 <-> 21
+21 <-> 22
+23 <-> 24
+25 <-> 19
+28 <-> 30
+29 <-> 32
+30 <-> 33
+31 <-> 34
+32 <-> 35
+34 <-> 38
+35 <-> 39
+36 <-> 40
+37 <-> 41
+38 <-> 42
+39 <-> 43
+42 <-> 46
+43 <-> 47
+44 <-> 48
+45 <-> 50
+47 <-> 54
+48 <-> 55
+49 <-> 57
+50 <-> 58
+51 <-> 59
+52 <-> 60
+54 <-> 63
+55 <-> 64
+56 <-> 65
+57 <-> 66
+58 <-> 67
+59 <-> 68
+62 <-> 71
+63 <-> 72
+64 <-> 73
+65 <-> 75
+67 <-> 79
+68 <-> 80
+72 <-> 83
+74 <-> 85
+75 <-> 86
+77 <-> 89
+78 <-> 90
+79 <-> 91
+80 <-> 93
+82 <-> 96
+83 <-> 97
+85 <-> 99
+86 <-> 100
+88 <-> 103
+89 <-> 104
+90 <-> 105
+91 <-> 107
+93 <-> 110
+94 <-> 111
+97 <-> 114
+98 <-> 116
+99 <-> 117
+100 <-> 118
+101 <-> 119
+103 <-> 122
+104 <-> 123
+105 <-> 124
+106 <-> 125
+107 <-> 126
+108 <-> 127
+111 <-> 130
+112 <-> 131
+113 <-> 132
+114 <-> 134
+116 <-> 138
+117 <-> 139
+Not mapped:
+24
+73
+84

@@ -130,8 +130,7 @@ class JavaUSwitchEntry(
         }
         else {
           it.caseLabelElementList?.elements.orEmpty().map { element ->
-            if (element is PsiExpression) JavaConverter.convertOrEmpty(element, this)
-            else UnknownJavaExpression(element, this)
+            JavaConverter.convertPsiElement(element, this, UExpression::class.java) as? UExpression ?: UnknownJavaExpression(element, this)
           }
         }
       }

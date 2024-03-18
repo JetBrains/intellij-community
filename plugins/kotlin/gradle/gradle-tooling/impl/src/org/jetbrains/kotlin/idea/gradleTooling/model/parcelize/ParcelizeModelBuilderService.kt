@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.gradleTooling.model.parcelize
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import java.io.Serializable
 
 interface ParcelizeGradleModel : Serializable {
@@ -15,9 +16,15 @@ interface ParcelizeGradleModel : Serializable {
 class ParcelizeGradleModelImpl(override val isEnabled: Boolean) : ParcelizeGradleModel
 
 class ParcelizeModelBuilderService : AbstractKotlinGradleModelBuilder() {
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-            .withDescription("Unable to build kotlin-parcelize plugin configuration")
+
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build kotlin-parcelize plugin configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     override fun canBuild(modelName: String?): Boolean = modelName == ParcelizeGradleModel::class.java.name

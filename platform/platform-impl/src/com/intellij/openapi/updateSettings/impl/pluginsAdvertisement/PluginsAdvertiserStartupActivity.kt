@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -12,13 +15,17 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotifications
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -33,12 +40,12 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
       return
     }
 
-    val customPlugins = loadPluginsFromCustomRepositories()
+    val customPlugins = computeDetached { RepositoryHelper.loadPluginsFromCustomRepositories(null) }
 
     coroutineContext.ensureActive()
 
-    val extensionsService = PluginFeatureCacheService.getInstance()
-    val oldExtensions = extensionsService.extensions
+    val extensionService = PluginFeatureCacheService.getInstance()
+    val oldExtensions = extensionService.extensions.get()
 
     val pluginAdvertiserService = PluginAdvertiserService.getInstance(project)
     pluginAdvertiserService.collectDependencyUnknownFeatures(includeIgnored)
@@ -62,22 +69,22 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           || oldExtensions.isOutdated
           || includeIgnored) {
         @Suppress("DEPRECATION")
-        extensionsService.extensions = PluginFeatureMap(
-          getFeatureMapFromMarketPlace(customPluginIds, FileTypeFactory.FILE_TYPE_FACTORY_EP.name),
-          if (oldExtensions != null) System.currentTimeMillis() else 0L,
-        )
+        extensionService.extensions.set(PluginFeatureMap(
+          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = FileTypeFactory.FILE_TYPE_FACTORY_EP.name),
+          lastUpdateTime = if (oldExtensions != null) System.currentTimeMillis() else 0L,
+        ))
         coroutineContext.ensureActive()
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
 
-      val oldDependencies = extensionsService.dependencies
+      val oldDependencies = extensionService.dependencies.get()
       if (oldDependencies == null
           || oldDependencies.isOutdated
           || includeIgnored) {
-        extensionsService.dependencies = PluginFeatureMap(
-          getFeatureMapFromMarketPlace(customPluginIds, DEPENDENCY_SUPPORT_FEATURE),
-          if (oldDependencies != null) System.currentTimeMillis() else 0L,
-        )
+        extensionService.dependencies.set(PluginFeatureMap(
+          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = DEPENDENCY_SUPPORT_FEATURE),
+          lastUpdateTime = if (oldDependencies != null) System.currentTimeMillis() else 0L,
+        ))
       }
       coroutineContext.ensureActive()
 
@@ -122,19 +129,17 @@ internal fun findSuggestedPlugins(project: Project, customRepositories: Map<Stri
       customPlugins.addAll(value)
     }
 
-    val pluginAdvertiserService = PluginAdvertiserService.getInstance(project)
+    val pluginAdvertiserService = project.serviceAsync<PluginAdvertiserService>()
     pluginAdvertiserService.collectDependencyUnknownFeatures(true)
 
     val customPluginIds = customPlugins.map { it.pluginId.idString }.toSet()
-    val extensionsService = PluginFeatureCacheService.getInstance()
-    val oldDependencies = extensionsService.dependencies
-    extensionsService.dependencies = PluginFeatureMap(
+    val extensionService = serviceAsync<PluginFeatureCacheService>()
+    val oldDependencies = extensionService.dependencies.get()
+    extensionService.dependencies.set(PluginFeatureMap(
       getFeatureMapFromMarketPlace(customPluginIds, DEPENDENCY_SUPPORT_FEATURE),
       if (oldDependencies != null) System.currentTimeMillis() else 0L,
-    )
-
+    ))
     val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
-
     if (unknownFeatures.isNotEmpty()) {
       return@runBlockingMaybeCancellable pluginAdvertiserService.fetch(customPlugins, unknownFeatures, true)
     }
@@ -143,10 +148,10 @@ internal fun findSuggestedPlugins(project: Project, customRepositories: Map<Stri
   }
 }
 
-private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, PluginDataSet> {
+private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, PluginDataSet> {
   val params = mapOf("featureType" to featureType)
-  return MarketplaceRequests.getInstance()
-    .getFeatures(params)
+  val features = MarketplaceRequests.getInstance().getFeatures(params)
+  return features
     .groupBy(
       { it.implementationName!! },
       { feature -> feature.toPluginData { customPluginIds.contains(it) } }

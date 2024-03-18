@@ -4,8 +4,8 @@ Connected to the target VM
 coroutineScopeReceiver.kt:18
 Compile bytecode for text()
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     suspendText()
 }

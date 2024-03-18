@@ -129,6 +129,22 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return false;
   }
 
+  public boolean isIncludedInExpandAll() {
+    return true;
+  }
+
+  /**
+   * Determines whether the node should be auto-expanded.
+   * <p>
+   *   When the parent is expanded, if this node is the only child, it'll also be automatically expanded
+   *   unless this function returns {@code false} or this behavior is overridden on the tree/UI level.
+   * </p>
+   * @return whether this node should auto expand if it's the only child of a newly expanded parent.
+   */
+  public boolean isAutoExpandAllowed() {
+    return true;
+  }
+
   @Override
   public final @Nullable AbstractTreeNode<T> getElement() {
     return getEqualityObject() != null ? this : null;

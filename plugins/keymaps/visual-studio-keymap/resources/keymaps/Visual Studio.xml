@@ -581,11 +581,28 @@
     <keyboard-shortcut first-keystroke="control M" second-keystroke="M"/>
     <keyboard-shortcut first-keystroke="control M" second-keystroke="control M"/>
   </action>
+  <action id="NextOccurence">
+    <keyboard-shortcut first-keystroke="control alt DOWN" />
+    <keyboard-shortcut first-keystroke="F8" />
+  </action>
+  <action id="PreviousOccurence">
+    <keyboard-shortcut first-keystroke="control alt UP" />
+    <keyboard-shortcut first-keystroke="shift F8" />
+  </action>
+  <action id="NextDiff">
+    <keyboard-shortcut first-keystroke="F7" />
+    <keyboard-shortcut first-keystroke="F8" />
+  </action>
+  <action id="PreviousDiff">
+    <keyboard-shortcut first-keystroke="shift F7" />
+    <keyboard-shortcut first-keystroke="shift F8" />
+  </action>
 
   <action id="EditorDecreaseFontSizeGlobal"/>
   <action id="EditorIncreaseFontSizeGlobal"/>
   <action id="ZoomInIdeAction"/>
   <action id="ZoomOutIdeAction"/>
+  <action id="Console.Open"/>
 
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->

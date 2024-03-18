@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gitlab.exception
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.project.Project
+import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
+import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import java.awt.event.ActionEvent
@@ -23,9 +25,11 @@ internal sealed class GitLabHttpStatusErrorAction(@Nls name: String) : AbstractA
   ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
-      val token = GitLabLoginUtil.updateToken(project, parentComponent, account) { _, _ -> true } ?: return
+      val loginResult = GitLabLoginUtil.updateToken(project, parentComponent, account) { _, _ -> true }
+                          .asSafely<LoginResult.Success>()
+                        ?: return
       parentScope.launch {
-        accountManager.updateAccount(account, token)
+        accountManager.updateAccount(account, loginResult.token)
         resetAction()
       }
     }

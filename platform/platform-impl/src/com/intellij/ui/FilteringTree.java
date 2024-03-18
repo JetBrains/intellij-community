@@ -61,7 +61,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   public FilteringTree(@NotNull Tree tree, @NotNull T root) {
     myRoot = root;
     myTree = tree;
-    myTree.setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren, useIdentityHashing()));
+    myTree.setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren,
+                                          useIdentityHashing()));
   }
 
   public @NotNull SearchTextField installSearchField() {
@@ -110,9 +111,29 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     @Override
-    public boolean isMatching(@NotNull T node) {
+    public @NotNull Matching checkMatching(@NotNull T node) {
       String text = getText(getUserObject(node));
-      return text != null && matchingFragments(text) != null;
+      if (text == null) return Matching.NONE;
+
+      Iterable<TextRange> matchingFragments = matchingFragments(text);
+      if (matchingFragments == null) {
+        return Matching.NONE;
+      }
+
+      TextRange onlyFragment = getOnlyElement(matchingFragments);
+      if (onlyFragment != null && onlyFragment.getStartOffset() == 0) {
+        return Matching.FULL;
+      }
+      else {
+        return Matching.PARTIAL;
+      }
+    }
+
+    private static <T> @Nullable T getOnlyElement(@NotNull Iterable<T> iterable) {
+      Iterator<T> it = iterable.iterator();
+      if (!it.hasNext()) return null;
+      T firstValue = it.next();
+      return it.hasNext() ? null : firstValue;
     }
 
     @Override
@@ -523,11 +544,40 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     public void updateSelection() {
       Item selection = getSelection();
-      if (selection != null && isMatching(selection)) return;
-      JBIterator<Item> it = JBIterator.from(iterate(selection, true, true))
-        .filter(item -> item != selection && isMatching(item));
-      if (!it.advance()) return;
-      select(it.current());
+
+      Matching currentMatching = selection != null ? checkMatching(selection) : Matching.NONE;
+      if (currentMatching == Matching.FULL) {
+        return;
+      }
+
+      Item fullMatch = findNextMatchingNode(selection, true);
+      if (fullMatch != null) {
+        select(fullMatch);
+      }
+      else if (currentMatching == Matching.NONE) {
+        Item partialMatch = findNextMatchingNode(selection, false);
+        if (partialMatch != null) {
+          select(partialMatch);
+        }
+      }
+    }
+
+    private @Nullable Item findNextMatchingNode(@Nullable Item selection, boolean fullMatch) {
+      JBIterator<Item> allNodeIterator = JBIterator.from(iterate(selection, true, true));
+      JBIterator<Item> fullMatches = filterMatchingNodes(allNodeIterator, fullMatch)
+        .filter(item -> item != selection);
+      if (fullMatches.advance()) {
+        return fullMatches.current();
+      }
+      return null;
+    }
+
+    @NotNull
+    private JBIterator<Item> filterMatchingNodes(JBIterator<Item> nodes, boolean fullMatch) {
+      return nodes.filter(item -> {
+        Matching matching = checkMatching(item);
+        return fullMatch ? matching == Matching.FULL : matching != Matching.NONE;
+      });
     }
 
     protected void onUpdatePattern(@Nullable String text) { }
@@ -538,7 +588,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     public abstract @Nullable Item getSelection();
 
-    public abstract boolean isMatching(@NotNull Item item);
+    public abstract @NotNull Matching checkMatching(@NotNull Item item);
 
     public abstract @NotNull Iterator<Item> iterate(@Nullable Item start, boolean fwd);
 
@@ -577,7 +627,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       else {
         return false;
       }
-      it = JBIterator.from(it).filter(item -> isMatching(item));
+      it = filterMatchingNodes(JBIterator.from(it), false);
       if (it.hasNext()) {
         select(it.next());
       }
@@ -589,4 +639,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   public final @Nullable U getUserObject(@Nullable TreeNode node) {
     return node == null || !getNodeClass().isAssignableFrom(node.getClass()) ? null : (U)((T)node).getUserObject();
   }
+
+  public enum Matching {NONE, PARTIAL, FULL}
 }

@@ -1,20 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.xml.dom.XmlElement;
-import com.intellij.util.containers.ContainerUtil;
+import kotlinx.serialization.json.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @see com.intellij.util.xmlb.annotations.CollectionBean
  */
-final class CompactCollectionBinding extends NotNullDeserializeBinding implements NestedBinding {
+final class CompactCollectionBinding implements Binding, NestedBinding {
   private final String name;
   private final MutableAccessor accessor;
 
@@ -29,54 +30,80 @@ final class CompactCollectionBinding extends NotNullDeserializeBinding implement
   }
 
   @Override
-  public @NotNull Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Element result = new Element(name);
+  public @NotNull JsonElement deserializeToJson(@NotNull Element element) {
+    List<JsonElement> content = new ArrayList<>(element.getContentSize());
+    for (Element o : element.getChildren()) {
+      content.add(JsonElementKt.JsonPrimitive(o.getAttributeValue(Constants.VALUE)));
+    }
+    return new JsonArray(content);
+  }
+
+  @Override
+  public @NotNull JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
     @SuppressWarnings("unchecked")
-    List<String> list = (List<String>)o;
+    List<String> list = (List<String>)accessor.read(bean);
     if (list.isEmpty()) {
-      return result;
+      return new JsonArray(Collections.emptyList());
+    }
+
+    List<JsonElement> content = new ArrayList<>();
+    for (String item : list) {
+      content.add(JsonElementKt.JsonPrimitive(JDOMUtil.removeControlChars(item)));
+    }
+    return new JsonArray(content);
+  }
+
+  @Override
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
+    if (element == JsonNull.INSTANCE) {
+      //noinspection unchecked
+      ((List<String>)accessor.read(bean)).clear();
+      return;
+    }
+
+    if (!(element instanceof JsonArray)) {
+      BeanBindingKt.LOG.warn("Expected JsonArray but got " + element);
+      return;
+    }
+
+    @SuppressWarnings("unchecked")
+    List<String> list = (List<String>)accessor.read(bean);
+    list.clear();
+    for (JsonElement child : (JsonArray)element) {
+      list.add(((JsonPrimitive)child).getContent());
+    }
+  }
+
+  @Override
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
+    @SuppressWarnings("unchecked")
+    List<String> list = (List<String>)accessor.read(bean);
+    if (list == null) {
+      return;
+    }
+
+    Element result = new Element(name);
+    parent.addContent(result);
+
+    if (list.isEmpty()) {
+      return;
     }
 
     for (String item : list) {
-      result.addContent(new Element("item").setAttribute("value", JDOMUtil.removeControlChars(item)));
+      result.addContent(new Element("item").setAttribute(Constants.VALUE, JDOMUtil.removeControlChars(item)));
     }
-    return result;
   }
 
   @Override
-  public @NotNull Object deserialize(Object context, @NotNull Element element) {
+  public @NotNull <T> Object deserialize(@Nullable Object bean, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+    assert bean != null;
     @SuppressWarnings("unchecked")
-    List<String> list = (List<String>)context;
+    List<String> list = (List<String>)accessor.read(bean);
     list.clear();
-    if (element.getName().equals(name)) {
-      for (Element item : element.getChildren("item")) {
-        ContainerUtil.addIfNotNull(list, item.getAttributeValue("value"));
-      }
-    }
-    else {
-      // JDOMExternalizableStringList format
-      Element value = element.getChild("value");
-      if (value != null) {
-        value = value.getChild("list");
-      }
-      if (value != null) {
-        for (Element item : value.getChildren("item")) {
-          ContainerUtil.addIfNotNull(list, item.getAttributeValue("itemvalue"));
-        }
-      }
-    }
-    return list;
-  }
-
-  @Override
-  public @NotNull Object deserialize(Object context, @NotNull XmlElement element) {
-    @SuppressWarnings("unchecked")
-    List<String> list = (List<String>)context;
-    list.clear();
-    if (element.name.equals(name)) {
-      for (XmlElement item : element.children) {
-        if (item.name.equals("item")) {
-          String v = item.attributes.get("value");
+    if (adapter.getName(element).equals(name)) {
+      for (T item : adapter.getChildren(element)) {
+        if (adapter.getName(item).equals("item")) {
+          String v = adapter.getAttributeValue(item, Constants.VALUE);
           if (v != null) {
             list.add(v);
           }
@@ -85,17 +112,15 @@ final class CompactCollectionBinding extends NotNullDeserializeBinding implement
     }
     else {
       // JDOMExternalizableStringList format
-      XmlElement value = element.getChild("value");
+      T value = adapter.getChild(element, Constants.VALUE);
       if (value != null) {
-        value = value.getChild("list");
+        value = adapter.getChild(value, "list");
       }
       if (value != null) {
-        for (XmlElement item : value.children) {
-          if (item.name.equals("item")) {
-            String v = item.getAttributeValue("itemvalue");
-            if (v != null) {
-              list.add(v);
-            }
+        for (T item : adapter.getChildren(value)) {
+          String v = adapter.getName(item).equals("item") ? adapter.getAttributeValue(item, "itemvalue") : null;
+          if (v != null) {
+            list.add(v);
           }
         }
       }
@@ -104,27 +129,14 @@ final class CompactCollectionBinding extends NotNullDeserializeBinding implement
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
-    String elementName = element.getName();
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
+    String elementName = adapter.getName(element);
     if (isNameEqual(elementName)) {
       return true;
     }
     else if (elementName.equals(Constants.OPTION)) {
       // JDOMExternalizableStringList format
-      return isNameEqual(element.getAttributeValue(Constants.NAME));
-    }
-    return false;
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    String elementName = element.name;
-    if (isNameEqual(elementName)) {
-      return true;
-    }
-    else if (elementName.equals(Constants.OPTION)) {
-      // JDOMExternalizableStringList format
-      return isNameEqual(element.getAttributeValue(Constants.NAME));
+      return isNameEqual(adapter.getAttributeValue(element, Constants.NAME));
     }
     return false;
   }

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
 
   private static final int STATE_INITIAL = 0;
   private static final int STATE_BEFORE_PLUS = 1;

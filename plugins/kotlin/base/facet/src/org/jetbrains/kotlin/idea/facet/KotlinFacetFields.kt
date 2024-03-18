@@ -65,8 +65,6 @@ internal val jsFields = KotlinFacetFields(
         K2JSCompilerArguments::sourceMap.name,
         K2JSCompilerArguments::sourceMapPrefix.name,
         K2JSCompilerArguments::sourceMapEmbedSources.name,
-        K2JSCompilerArguments::outputPrefix.name,
-        K2JSCompilerArguments::outputPostfix.name,
         K2JSCompilerArguments::moduleKind.name
     ),
     hiddenFields = emptyList()

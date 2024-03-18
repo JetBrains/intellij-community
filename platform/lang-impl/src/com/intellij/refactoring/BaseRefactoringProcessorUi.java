@@ -18,15 +18,6 @@ import javax.swing.*;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 final class BaseRefactoringProcessorUi {
-  void displayPreview(Project project, ModelPatch patch) throws ProcessCanceledException {
-    JComponent preview = VcsFacade.getInstance().createPatchPreviewComponent(project, patch);
-    if (preview != null) {
-      DialogBuilder builder = new DialogBuilder(project).title(RefactoringBundle.message("usageView.tabText")).centerPanel(preview);
-      if (builder.show() != DialogWrapper.OK_EXIT_CODE) {
-        throw new ProcessCanceledException();
-      }
-    }
-  }
 
   ConflictsDialog createConflictsDialog(@NotNull Project project,
                                         @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,

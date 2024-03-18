@@ -2,11 +2,13 @@
 com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl
 com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder
+com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyGraphModelBuilder
+com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyBuilder
+com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.AnnotationProcessingModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.WarModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.EarModelBuilderImpl
-org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ScalaModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ExternalTestsModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
@@ -15,3 +17,4 @@ org.jetbrains.plugins.gradle.tooling.builder.IntelliJProjectSettingsBuilder
 org.jetbrains.plugins.gradle.tooling.builder.DependencyAccessorsModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.MavenRepositoriesModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.VersionCatalogsModelBuilder
+org.jetbrains.plugins.gradle.tooling.builder.JarTaskManifestModelBuilder

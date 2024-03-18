@@ -12,12 +12,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 
 public final class ShadowAction {
   private final AnAction myAction;
@@ -86,8 +88,8 @@ public final class ShadowAction {
         }
 
         @Override
-        public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
-          if (myActionId == null || actionId.equals(myActionId)) {
+        public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
+          if (myActionId == null || actionIds.contains(myActionId)) {
             rebound();
           }
         }

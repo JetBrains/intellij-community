@@ -13,8 +13,7 @@ public class Test {
         return null;
     }
 
-    @Nullable
-    private Test newMethod(List<String> list) {
+    private @Nullable Test newMethod(List<String> list) {
         for (String some : list) {
             String x = "x";
             String y = "y";

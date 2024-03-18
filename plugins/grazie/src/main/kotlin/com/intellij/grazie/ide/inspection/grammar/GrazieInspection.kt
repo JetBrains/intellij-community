@@ -51,6 +51,10 @@ class GrazieInspection : LocalInspectionTool() {
     }
   }
 
+  /**
+   * Most of those methods are used in Grazie Pro.
+   */
+  @Suppress("CompanionObjectInExtension")
   companion object {
     private val hasSpellChecking: Boolean by lazy {
       try {

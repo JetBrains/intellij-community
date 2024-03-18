@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -31,6 +30,8 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
  * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
@@ -278,23 +279,24 @@ public final class ExtensionsRootType extends RootType {
 
   private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    if (plugin == null || updatingResources.contains(plugin) || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
+    if (plugin == null ||
+        updatingResources.contains(plugin) ||
+        !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin) ||
+        !updatingResources.add(plugin)) {
       return;
     }
 
-    if (updatingResources.add(plugin)) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          extractBundledResources(pluginId, "");
-          ResourceVersions.getInstance().resourcesUpdated(plugin);
-        }
-        catch (IOException ex) {
-          LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
-        }
-        finally {
-          updatingResources.remove(plugin);
-        }
-      });
-    }
+    executeOnPooledIoThread(() -> {
+      try {
+        extractBundledResources(pluginId, "");
+        ResourceVersions.getInstance().resourcesUpdated(plugin);
+      }
+      catch (IOException e) {
+        LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), e);
+      }
+      finally {
+        updatingResources.remove(plugin);
+      }
+    });
   }
 }

@@ -41,7 +41,7 @@ public interface TooltipActionProvider {
   /**
    * @deprecated use {@link #calcTooltipAction(HighlightInfo, Project, Editor)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   static TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor) {
     return calcTooltipAction(info, editor.getProject(), editor);
   }

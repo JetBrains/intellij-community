@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.jsp.JspSpiUtil;
 import com.intellij.lang.ASTNode;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -45,6 +45,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,7 @@ public final class ImportHelper{
     classesToUseSingle.addAll(toReimport);
 
     try {
-      boolean stringTemplates = HighlightingFeature.STRING_TEMPLATES.isAvailable(file);
+      boolean stringTemplates = PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, file);
       StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle, stringTemplates);
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());
@@ -1036,5 +1037,6 @@ public final class ImportHelper{
     return dotIndex < 0 ? "" : className.substring(0, dotIndex);
   }
 
+  @ApiStatus.Internal
   public record Import(String name, boolean isStatic) {}
 }

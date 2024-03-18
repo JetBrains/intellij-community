@@ -32,10 +32,5 @@ public interface PeekableIterator<T> extends Iterator<T> {
     public Object next() {
       return null;
     }
-
-    @Override
-    public void remove() {
-      PeekableIterator.super.remove();
-    }
   };
 }

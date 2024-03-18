@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
@@ -59,22 +60,28 @@ interface MavenProjectImporter {
       }
     }
 
-    class PostImportingTaskMarker(private val importingActivity: StructuredIdeActivity) {
+    class PostImportingTaskMarker(importingActivity: StructuredIdeActivity) {
       private val activityId = MavenImportCollector.ACTIVITY_ID.with(importingActivity)
       private var startedNano = 0L
 
       fun createStartedTask(): MavenProjectsProcessorTask {
-        return MavenProjectsProcessorTask { _, _, _, _ -> startedNano = System.nanoTime() }
+        return object : MavenProjectsProcessorTask {
+          override fun perform(project: Project, embeddersManager: MavenEmbeddersManager, indicator: ProgressIndicator) {
+            startedNano = System.nanoTime()
+          }
+        }
       }
 
       fun createFinishedTask(): MavenProjectsProcessorTask {
-        return MavenProjectsProcessorTask { project, _, _, _ ->
-          if (startedNano == 0L) {
-            MavenLog.LOG.error("'Finished' post import task called before 'started' task")
-          }
-          else {
-            val totalNano = System.nanoTime() - startedNano
-            MavenImportCollector.POST_IMPORT_TASKS_RUN.log(project, activityId.data, TimeUnit.NANOSECONDS.toMillis(totalNano))
+        return object : MavenProjectsProcessorTask {
+          override fun perform(project: Project, embeddersManager: MavenEmbeddersManager, indicator: ProgressIndicator) {
+            if (startedNano == 0L) {
+              MavenLog.LOG.error("'Finished' post import task called before 'started' task")
+            }
+            else {
+              val totalNano = System.nanoTime() - startedNano
+              MavenImportCollector.POST_IMPORT_TASKS_RUN.log(project, activityId.data, TimeUnit.NANOSECONDS.toMillis(totalNano))
+            }
           }
         }
       }
@@ -110,16 +117,10 @@ interface MavenProjectImporter {
     private val importingInProgress = AtomicInteger()
 
     @JvmStatic
-    fun isImportingInProgress(): Boolean {
-      return importingInProgress.get() > 0
-    }
-
-    @JvmStatic
-    fun isImportToWorkspaceModelEnabled(project: Project?): Boolean {
+    fun isImportToWorkspaceModelEnabled(project: Project): Boolean {
       val property = System.getProperty("maven.import.to.workspace.model")
       if ("true" == property) return true
       if ("false" == property) return false
-      if (project == null) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
     }
   }

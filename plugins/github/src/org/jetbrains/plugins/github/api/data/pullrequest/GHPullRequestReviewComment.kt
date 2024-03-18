@@ -3,26 +3,25 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.GHComment
-import org.jetbrains.plugins.github.api.data.GHCommitHash
-import org.jetbrains.plugins.github.api.data.GHNode
+import org.jetbrains.plugins.github.api.data.*
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewComment.graphql")
-class GHPullRequestReviewComment(id: String,
-                                 val databaseId: Long,
-                                 val url: String,
-                                 author: GHActor?,
-                                 body: String,
-                                 createdAt: Date,
-                                 val state: GHPullRequestReviewCommentState,
-                                 val commit: GHCommitHash?,
-                                 val originalCommit: GHCommitHash?,
-                                 val diffHunk: String,
-                                 @JsonProperty("pullRequestReview") pullRequestReview: GHNode?,
-                                 val viewerCanDelete: Boolean,
-                                 val viewerCanUpdate: Boolean)
-  : GHComment(id, author, body, createdAt) {
+data class GHPullRequestReviewComment(override val id: String,
+                                      val databaseId: Long,
+                                      val url: String,
+                                      override val author: GHActor?,
+                                      override val body: String,
+                                      override val createdAt: Date,
+                                      override val reactions: GHReactable.ReactionConnection,
+                                      val state: GHPullRequestReviewCommentState,
+                                      val commit: GHCommitHash?,
+                                      val originalCommit: GHCommitHash?,
+                                      val diffHunk: String,
+                                      @JsonProperty("pullRequestReview") private val pullRequestReview: GHNode?,
+                                      val viewerCanDelete: Boolean,
+                                      val viewerCanUpdate: Boolean,
+                                      val viewerCanReact: Boolean)
+  : GHComment(id, author, body, createdAt, reactions) {
   val reviewId = pullRequestReview?.id
 }

@@ -13,8 +13,10 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.KeepingPopupOpenAction
+import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
@@ -28,7 +30,7 @@ internal class GitBranchesTreePopupSettings :
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.icon = if(ExperimentalUI.isNewUI()) AllIcons.General.Settings else AllIcons.Actions.More
+    e.presentation.icon = if (ExperimentalUI.isNewUI()) AllIcons.General.Settings else AllIcons.Actions.More
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -56,7 +58,7 @@ internal class GitBranchesTreePopupResizeAction :
 }
 
 internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction(), KeepingPopupOpenAction {
-  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val projectExist = e.project != null
@@ -100,3 +102,87 @@ internal class GitBranchesTreePopupShowRecentBranchesAction :
     e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
   }
 }
+
+internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {
+
+  init {
+    addSeparator(GitBundle.message("separator.git.branches.popup.filter.by"))
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val enabledAndVisible =
+      GitBranchesTreePopupFilterByRepository.isEnabledAndVisible(e) && GitBranchesTreePopupFilterByAction.isEnabledAndVisible(e)
+    e.presentation.isEnabledAndVisible = enabledAndVisible
+  }
+}
+
+internal class GitBranchesTreePopupFilterByAction : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (!GitBranchesTreePopupFilterByRepository.isEnabledAndVisible(e)) {
+      e.presentation.text = GitBundle.message("action.git.branches.popup.filter.by.action.single.text")
+    }
+    e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean = Companion.isSelected(e.project)
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
+
+    GitVcsSettings.getInstance(project).setFilterByActionInPopup(state)
+    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+  }
+
+  companion object {
+    fun isSelected(project: Project?): Boolean {
+      return project != null && project.let(GitVcsSettings::getInstance).filterByActionInPopup()
+    }
+
+    fun isEnabledAndVisible(e: AnActionEvent): Boolean {
+      return e.project != null
+             && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+    }
+  }
+}
+
+internal class GitBranchesTreePopupFilterByRepository : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean = Companion.isSelected(e.project)
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
+
+    GitVcsSettings.getInstance(project).setFilterByRepositoryInPopup(state)
+    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+  }
+
+  companion object {
+    fun isSelected(project: Project?): Boolean {
+      return project != null
+             && project.isMultiRoot() && project.let(GitVcsSettings::getInstance).filterByRepositoryInPopup()
+    }
+
+    fun isEnabledAndVisible(e: AnActionEvent): Boolean {
+      val project = e.project
+      return project != null
+             && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+             && project.isMultiRoot()
+    }
+  }
+}
+
+private fun Project.isMultiRoot() = !GitUtil.justOneGitRepository(this)

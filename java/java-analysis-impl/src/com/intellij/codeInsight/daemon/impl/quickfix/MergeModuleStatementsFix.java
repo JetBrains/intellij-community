@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +28,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaModule element) {
-    return PsiUtil.isLanguageLevel9OrHigher(element) ? Presentation.of(getText()) : null;
+    return PsiUtil.isAvailable(JavaFeature.MODULES, element) ? Presentation.of(getText()) : null;
   }
 
   @IntentionName
@@ -52,7 +53,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
     }
     commentTracker.insertCommentsBefore(resultingStatement);
 
-    updater.moveTo(resultingStatement.getTextRange().getEndOffset());
+    updater.moveCaretTo(resultingStatement.getTextRange().getEndOffset());
   }
 
   @NotNull

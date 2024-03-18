@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.diagnostic.logger
@@ -16,6 +16,9 @@ import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -103,7 +106,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   override fun commit() {
     prepareForCommit()
     WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
-      it.addDiff(diff)
+      it.applyChangesFrom(diff)
     }
     librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
@@ -140,7 +143,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
-  override fun isChanged(): Boolean = diff.hasChanges()
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun isChanged(): Boolean = (diff as MutableEntityStorageInstrumentation).hasChanges()
 
   companion object {
     val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()

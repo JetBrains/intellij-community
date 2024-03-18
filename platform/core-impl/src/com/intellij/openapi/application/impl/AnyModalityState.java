@@ -17,6 +17,6 @@ public final class AnyModalityState extends ModalityState {
 
   @Override
   public String toString() {
-    return "ANY";
+    return "ModalityState.ANY";
   }
 }

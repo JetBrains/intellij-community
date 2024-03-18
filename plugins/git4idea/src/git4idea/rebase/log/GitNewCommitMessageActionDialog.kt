@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -116,4 +117,17 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
 
     onOk(commitEditor.comment)
   }
+
+  override fun dispose() {
+    if (shouldUpdateCommitHistory()) {
+      VcsConfiguration.getInstance(commitEditingData.project).saveCommitMessage(commitEditor.comment)
+    }
+
+    super.dispose()
+  }
+
+  private fun shouldUpdateCommitHistory(): Boolean {
+    return commitEditor.comment != originMessage
+  }
+
 }

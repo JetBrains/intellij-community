@@ -25,11 +25,18 @@ public interface StorageFactory<A extends AutoCloseable> {
    * exception up the stack.
    */
   default <S extends AutoCloseable, E extends Throwable> @NotNull S wrapStorageSafely(@NotNull Path storagePath,
-                                                                                      @NotNull ThrowableNotNullFunction<? super A, S, E> anotherStorageOpener)
+                                                                                      @NotNull ThrowableNotNullFunction<? super A, ? extends S, E> anotherStorageOpener)
     throws IOException, E {
     return IOUtil.wrapSafely(
       open(storagePath),
       storage -> anotherStorageOpener.fun(storage)
     );
+  }
+
+  /** Just a function composition: Factory[Path->A] (x) Opener[A->B] = Factory[Path->B] */
+  default <B extends AutoCloseable> @NotNull StorageFactory<B> compose(
+    @NotNull ThrowableNotNullFunction<? super A, ? extends B, ? extends IOException> anotherStorageOpener
+  ) {
+    return storagePath -> wrapStorageSafely(storagePath, anotherStorageOpener);
   }
 }

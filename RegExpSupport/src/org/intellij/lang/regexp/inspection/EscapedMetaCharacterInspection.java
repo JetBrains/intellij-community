@@ -3,6 +3,8 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -53,7 +55,7 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
     }
   }
 
-  private static class EscapedMetaCharacterFix implements LocalQuickFix {
+  private static class EscapedMetaCharacterFix extends PsiUpdateModCommandQuickFix {
 
     private final char myC;
 
@@ -76,8 +78,7 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof RegExpChar)) {
         return;
       }

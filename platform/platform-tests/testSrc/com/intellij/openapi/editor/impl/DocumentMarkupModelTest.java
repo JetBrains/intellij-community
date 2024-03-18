@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,9 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).create();
+      if (element instanceof PsiFile) {
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).create();
+      }
     }
   }
 }

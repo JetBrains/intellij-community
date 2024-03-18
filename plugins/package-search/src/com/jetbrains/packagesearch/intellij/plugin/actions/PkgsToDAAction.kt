@@ -30,11 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import org.jetbrains.annotations.Nls
 
-internal class PkgsToDAAction : AnAction(
-    /* text = */ PackageSearchBundle.message("packagesearch.quickfix.packagesearch.action.da"),
-    /* description = */ PackageSearchBundle.message("packagesearch.quickfix.packagesearch.action.da.description"),
-    /* icon = */ null
-) {
+internal class PkgsToDAAction : AnAction() {
 
     companion object {
 

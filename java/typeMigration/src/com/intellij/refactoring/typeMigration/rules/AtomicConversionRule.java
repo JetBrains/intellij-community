@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 
-public class AtomicConversionRule extends TypeConversionRule {
+public final class AtomicConversionRule extends TypeConversionRule {
   private static final Logger LOG = Logger.getInstance(AtomicConversionRule.class);
 
 

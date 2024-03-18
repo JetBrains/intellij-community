@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
+@Service(Service.Level.PROJECT)
 public final class LoaderFactory implements Disposable {
   private final Project myProject;
 
@@ -48,7 +50,7 @@ public final class LoaderFactory implements Disposable {
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+      public void rootsChanged(final @NotNull ModuleRootEvent event) {
         clearClassLoaderCache();
       }
     });
@@ -60,7 +62,7 @@ public final class LoaderFactory implements Disposable {
     myModule2ClassLoader.clear();
   }
 
-  @NotNull public ClassLoader getLoader(@NotNull VirtualFile formFile) {
+  public @NotNull ClassLoader getLoader(@NotNull VirtualFile formFile) {
     final Module module = ModuleUtilCore.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
@@ -84,7 +86,7 @@ public final class LoaderFactory implements Disposable {
     return classLoader;
   }
 
-  @NotNull public ClassLoader getProjectClassLoader() {
+  public @NotNull ClassLoader getProjectClassLoader() {
     if (myProjectClassLoader == null) {
       final String runClasspath = OrderEnumerator.orderEntries(myProject).withoutSdk().getPathsList().getPathsString();
       myProjectClassLoader = createClassLoader(runClasspath, "<project>");

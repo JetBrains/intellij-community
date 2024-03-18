@@ -2,12 +2,14 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
   private final boolean myRelativeToDirectParent;
+  private final boolean myEnforceChildrenToBeRelativeToMe;
 
   private final @NotNull Type myType;
   private final int mySpaces;
@@ -18,11 +20,22 @@ public class IndentImpl extends Indent {
   }
 
   public IndentImpl(@NotNull Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
+    this(type, absolute, spaces, relativeToDirectParent, enforceIndentToChildren, false);
+  }
+
+  @ApiStatus.Experimental
+  public IndentImpl(@NotNull Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren, boolean enforceChildrenToBeRelativeToMe) {
     myType = type;
     myIsAbsolute = absolute;
     mySpaces = spaces;
     myRelativeToDirectParent = relativeToDirectParent;
     myEnforceIndentToChildren = enforceIndentToChildren;
+    myEnforceChildrenToBeRelativeToMe = enforceChildrenToBeRelativeToMe;
+    if (myEnforceChildrenToBeRelativeToMe) {
+      assert myEnforceIndentToChildren;
+      assert !myRelativeToDirectParent;
+      assert !myIsAbsolute;
+    }
   }
 
   @Override
@@ -53,6 +66,10 @@ public class IndentImpl extends Indent {
     return myRelativeToDirectParent;
   }
 
+  @ApiStatus.Experimental
+  public boolean isEnforceChildrenToBeRelativeToMe() {
+    return myEnforceChildrenToBeRelativeToMe;
+  }
   /**
    * Allows to answer if current indent object is configured to enforce indent for sub-blocks of composite block that doesn't start
    * new line.
@@ -71,8 +88,9 @@ public class IndentImpl extends Indent {
     if (myType == Type.SPACES) {
       return "<Indent: SPACES(" + mySpaces + ")>";
     }
-    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE " : "") 
+    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE " : "")
            + (myRelativeToDirectParent ? " relative to direct parent " : "")
-           + (myEnforceIndentToChildren ? " enforce indent to children" : "") + ">";
+           + (myEnforceChildrenToBeRelativeToMe ? " enforce children to be relative to me" :
+              myEnforceIndentToChildren ? " enforce indent to children" : "") + ">";
   }
 }

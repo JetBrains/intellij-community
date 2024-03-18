@@ -43,6 +43,7 @@
       "background": "#ECECEC",
       "foreground": "#000000",
       "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
+      "minimumSize": "72,21",
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },
 
@@ -54,6 +55,8 @@
       "background": "#ececec",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "4,4,4,4",
+      "iconSize": 22,
+      "textIconGap": 3,
       "UI": "com.intellij.laf.macos.MacIntelliJCheckBoxUI"
     },
 
@@ -316,6 +319,7 @@
     "TextField": {
       "border": "com.intellij.laf.macos.MacIntelliJTextBorder",
       "disabledBackground": "#ececec",
+      "minimumSize": "49,21",
       "UI": "com.intellij.laf.macos.MacIntelliJTextFieldUI"
     },
 

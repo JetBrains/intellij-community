@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -27,6 +28,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.*;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
@@ -111,7 +113,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     myState.reset();
     myBuiltInSchemaIds.drop();
     myAnyChangeCount.incrementAndGet();
-    for (Runnable action: myResetActions) {
+    for (Runnable action : myResetActions) {
       action.run();
     }
     DaemonCodeAnalyzer.getInstance(myProject).restart();
@@ -209,7 +211,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
           providers.stream().filter(provider -> SchemaType.userSchema.equals(provider.getSchemaType())).findFirst();
         if (userSchema.isEmpty()) return ContainerUtil.emptyList();
         selected = userSchema.get();
-      } else selected = providers.get(0);
+      }
+      else {
+        selected = providers.get(0);
+      }
       VirtualFile schemaFile = getSchemaForProvider(myProject, selected);
       return ContainerUtil.createMaybeSingletonList(schemaFile);
     }
@@ -288,7 +293,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     });
 
-    for (JsonSchemaCatalogEntry schema: schemas) {
+    for (JsonSchemaCatalogEntry schema : schemas) {
       final String url = schema.getUrl();
       if (!processedRemotes.containsKey(url)) {
         final JsonSchemaInfo info = new JsonSchemaInfo(url);
@@ -345,12 +350,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   public @Nullable VirtualFile getLocalSchemaByUrl(String url) {
     return myState.getFiles().stream()
-                  .filter(f -> {
-                     JsonSchemaFileProvider prov = getSchemaProvider(f);
-                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
-                            && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
-                             || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
-                  }).findFirst().orElse(null);
+      .filter(f -> {
+        JsonSchemaFileProvider prov = getSchemaProvider(f);
+        return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
+               && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
+                   || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
+      }).findFirst().orElse(null);
   }
 
   @Override
@@ -360,9 +365,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return isMappedSchema(file)
-           || isSchemaByProvider(file)
-           || hasSchemaSchema(file);
+    return !file.isDirectory()
+           && (isMappedSchema(file)
+               || isSchemaByProvider(file)
+               || hasSchemaSchema(file));
   }
 
   @Override
@@ -413,13 +419,21 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
+    String schemaPropertyValue;
+    if (Registry.is("json.schema.object.v2")) {
+      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
+      if (schemaRootOrNull != null) {
+        schemaPropertyValue = schemaRootOrNull.getSchema();
+        return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
+      }
+    }
     Ref<String> res = Ref.create(null);
     //noinspection CodeBlock2Expr
     ApplicationManager.getApplication().runReadAction(() -> {
       res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
     });
-    if (res.isNull()) return null;
-    return JsonSchemaVersion.byId(res.get());
+    schemaPropertyValue = res.get();
+    return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
   }
 
   private boolean hasSchemaSchema(VirtualFile file) {

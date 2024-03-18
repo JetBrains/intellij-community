@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -18,6 +18,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
@@ -362,6 +364,20 @@ public class StackVarsProcessor {
       }
       else {
         vernotreplaced = true;
+      }
+    }
+
+    //workaround to preserve variable names
+    AssignmentExprent assignmentExprent = (AssignmentExprent)exprent;
+    if (assignmentExprent.getRight() instanceof VarExprent && assignmentExprent.getLeft() instanceof VarExprent leftExp) {
+      StructMethod method = leftExp.getProcessor().getMethod();
+      StructLocalVariableTableAttribute attr =
+        method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+      if (attr != null) {
+        String signature = attr.getDescriptor(leftExp.getIndex(), leftExp.getVisibleOffset());
+        if (signature != null) {
+          return new int[]{-1, changed};
+        }
       }
     }
 

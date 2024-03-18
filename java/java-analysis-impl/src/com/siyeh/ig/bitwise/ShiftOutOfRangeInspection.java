@@ -32,7 +32,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class ShiftOutOfRangeInspection extends BaseInspection {
+public final class ShiftOutOfRangeInspection extends BaseInspection {
 
   @Override
   @NotNull

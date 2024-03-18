@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationBuilder;
@@ -28,17 +27,19 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -61,14 +62,14 @@ public class PropertiesAnnotator implements Annotator {
       .withFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property)).create();
     }
 
-    highlightTokens(property, keyNode, holder, new PropertiesHighlighter());
+    highlightTokens(keyNode, holder, new PropertiesHighlighter());
     ASTNode valueNode = ((PropertyImpl)property).getValueNode();
     if (valueNode != null) {
-      highlightTokens(property, valueNode, holder, new PropertiesValueHighlighter());
+      highlightTokens(valueNode, holder, new PropertiesValueHighlighter());
     }
   }
 
-  private static void highlightTokens(final Property property, final ASTNode node, final AnnotationHolder holder, PropertiesHighlighter highlighter) {
+  private static void highlightTokens(final ASTNode node, final AnnotationHolder holder, PropertiesHighlighter highlighter) {
     Lexer lexer = highlighter.getHighlightingLexer();
     final String s = node.getText();
     lexer.start(s);
@@ -88,37 +89,27 @@ public class PropertiesAnnotator implements Annotator {
 
           int startOffset = textRange.getStartOffset();
           if (key == PropertiesComponent.PROPERTIES_INVALID_STRING_ESCAPE.getTextAttributesKey()) {
-            builder = builder.withFix(new IntentionAction() {
+            builder = builder.withFix(new ModCommandAction() {
               @Override
               @NotNull
-              public String getText() {
+              public String getFamilyName() {
                 return PropertiesBundle.message("unescape");
               }
 
               @Override
-              @NotNull
-              public String getFamilyName() {
-                return getText();
+              public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+                if (!BaseIntentionAction.canModify(context.file())) return null;
+
+                String text = context.file().getText();
+                return text.length() > startOffset && text.charAt(startOffset) == '\\' ?
+                       Presentation.of(getFamilyName()) : null;
               }
 
               @Override
-              public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-                if (!BaseIntentionAction.canModify(file)) return false;
-
-                String text = file.getText();
-                return text.length() > startOffset && text.charAt(startOffset) == '\\';
-              }
-
-              @Override
-              public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-                if (file.getText().charAt(startOffset) == '\\') {
-                  editor.getDocument().deleteString(startOffset, startOffset + 1);
-                }
-              }
-
-              @Override
-              public boolean startInWriteAction() {
-                return true;
+              public @NotNull ModCommand perform(@NotNull ActionContext context) {
+                return ModCommand.psiUpdate(context, updater -> {
+                  updater.getWritable(context.file()).getViewProvider().getDocument().deleteString(startOffset, startOffset + 1);
+                });
               }
             });
           }

@@ -29,28 +29,32 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
   public void testScrollingThroughLongTextFile() {
     initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
-    doTestScrollingPerformance("scrolling through text file with many lines", 2600);
+    doTestScrollingPerformance("scrolling through text file with many lines");
+    // attempt.min.ms varies ~5% (from experiments)
   }
 
   public void testScrollingThroughLongSoftWrappedLine() {
     initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
     EditorTestUtil.configureSoftWraps(getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
-    doTestScrollingPerformance("scrolling through long soft wrapped line", 2500);
+    doTestScrollingPerformance("scrolling through long soft wrapped line");
+    // attempt.min.ms varies ~4% (from experiments)
   }
 
-  private void doTestScrollingPerformance(String message, int expectedMs) {
+  private void doTestScrollingPerformance(String message) {
     EditorImpl editor = (EditorImpl)getEditor();
     int editorHeight = editor.getPreferredHeight();
     int[] result = {0};
-    PlatformTestUtil.startPerformanceTest(message, expectedMs, () -> {
+    PlatformTestUtil.newPerformanceTest(message, () -> {
       for (int y = 0; y < editorHeight; y += 1000) {
         Rectangle clip = new Rectangle(0, y, EDITOR_WIDTH_PX, 1000);
         NullGraphics2D g = new NullGraphics2D(clip);
         editor.getContentComponent().paintComponent(g);
         result[0] += g.getResult();
       }
-    }).assertTiming();
+    }).warmupIterations(50)
+      .attempts(100)
+      .start();
     LOG.debug(String.valueOf(result[0]));
   }
 }

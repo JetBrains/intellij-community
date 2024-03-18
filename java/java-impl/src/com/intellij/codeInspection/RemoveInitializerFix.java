@@ -40,7 +40,7 @@ public class RemoveInitializerFix extends ModCommandQuickFix {
     else {
       subActions = List.of(new DeleteElementFix(initializer));
     }
-    return new ModChooseAction(JavaBundle.message("inspection.unused.assignment.remove.initializer.quickfix.title"), subActions);
+    return ModCommand.chooseAction(JavaBundle.message("inspection.unused.assignment.remove.initializer.quickfix.title"), subActions);
   }
   
   public static class SideEffectAwareRemove extends PsiUpdateModCommandAction<PsiExpression> {

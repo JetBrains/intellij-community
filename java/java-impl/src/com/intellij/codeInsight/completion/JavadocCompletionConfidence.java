@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-public class JavadocCompletionConfidence extends CompletionConfidence {
+public final class JavadocCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override

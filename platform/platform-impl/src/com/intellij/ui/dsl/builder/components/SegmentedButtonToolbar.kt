@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -43,7 +44,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     setForceMinimumSize(true)
     // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
     setMinimumButtonSize(Dimension(0, 0))
-    layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.WRAP_STRATEGY
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
@@ -189,7 +190,7 @@ private class DeprecatedSegmentedButton(
                      preferredSize.height + JBUIScale.scale(spacingConfiguration.segmentedButtonVerticalGap) * 2)
   }
 
-  fun setSelected(selected: Boolean) {
+  override fun setSelected(selected: Boolean) {
     Toggleable.setSelected(myPresentation, selected)
   }
 }

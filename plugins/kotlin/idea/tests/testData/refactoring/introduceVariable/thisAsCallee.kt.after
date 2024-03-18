@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun (String.() -> String).foo(x : String) {
     val function = this
     x.function()

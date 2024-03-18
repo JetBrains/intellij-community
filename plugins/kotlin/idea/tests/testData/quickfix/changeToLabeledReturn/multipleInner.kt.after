@@ -1,7 +1,7 @@
 // "Change to 'return@forEach'" "true"
 // ACTION: Change to 'return@foo'
 // ACTION: Change to 'return@forEach'
-// ACTION: Do not show implicit receiver and parameter hints
+// ACTION: Enable option 'Implicit receivers and parameters' for 'Lambdas' inlay hints
 // ERROR: The integer literal does not conform to the expected type Unit
 // WITH_STDLIB
 

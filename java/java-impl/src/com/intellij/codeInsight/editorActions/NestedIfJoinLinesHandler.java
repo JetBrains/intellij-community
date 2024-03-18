@@ -27,7 +27,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * }
  * }</pre>
  */
-public class NestedIfJoinLinesHandler implements JoinRawLinesHandlerDelegate {
+public final class NestedIfJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     return CANNOT_JOIN;

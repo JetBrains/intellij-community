@@ -4,7 +4,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.util.registry.Registry;
 
-public class FileObjectRenderer extends CompoundRendererProvider {
+public final class FileObjectRenderer extends CompoundRendererProvider {
   @Override
   protected String getName() {
     return "File";

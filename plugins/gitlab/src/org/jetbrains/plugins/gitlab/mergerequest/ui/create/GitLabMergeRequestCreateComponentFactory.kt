@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.bindValueIn
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
-import com.intellij.collaboration.ui.codereview.create.CodeReviewTwoLinesCommitRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.ui.branch.MergeDirectionComponentFactory
@@ -22,6 +21,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequ
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -35,9 +35,13 @@ internal object GitLabMergeRequestCreateComponentFactory {
         directionModel.setHead(branchState.baseRepo, branchState.headBranch)
       }
     }
-    directionModel.addAndInvokeDirectionChangesListener {
+
+    val branchState = BranchState.fromDirectionModel(directionModel)
+    createVm.updateBranchState(branchState)
+    directionModel.addDirectionChangesListener {
       val branchState = BranchState.fromDirectionModel(directionModel)
       createVm.updateBranchState(branchState)
+      GitLabStatistics.logMrCreationBranchesChanged(project)
     }
 
     val directionSelector = createDirectionSelector(directionModel)
@@ -94,7 +98,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
       bindValueIn(cs, createVm.commits.filterNotNull().map { result -> result.getOrDefault(emptyList()) })
     }
     val commitsPanel = CommitsBrowserComponentBuilder(project, commitsModel)
-      .setCustomCommitRenderer(CodeReviewTwoLinesCommitRenderer())
+      .setCustomCommitRenderer(CodeReviewCreateReviewUIUtil.createCommitListCellRenderer())
       .showCommitDetails(false)
       .setEmptyCommitListText(GitLabBundle.message("merge.request.create.commits.empty.text"))
       .create()

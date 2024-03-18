@@ -2,19 +2,26 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("vcs", 13)
+  val GROUP = EventLogGroup("vcs", 15)
 
   @JvmField
   val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
+
+  @JvmField
+  val ANNOTATE_ACTIVITY = GROUP.registerIdeActivity("annotate",
+                                                    finishEventAdditionalFields = arrayOf(ActionsEventLogGroup.CONTEXT_MENU,
+                                                                                          EventFields.ActionPlace))
   val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
   val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
 
@@ -27,6 +34,7 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
   val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
 
   val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))
+
   @JvmField
   val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
@@ -57,6 +65,10 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
       listOf(VCS_FIELD.with(vcs.name),
              IS_FULL_REFRESH_FIELD.with(everythingDirty))
     }
+  }
+
+  fun logNonModalCommitStateChanged(project: Project?) {
+    NON_MODAL_COMMIT_STATE_CHANGED.log(project, VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
   }
 
   private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {

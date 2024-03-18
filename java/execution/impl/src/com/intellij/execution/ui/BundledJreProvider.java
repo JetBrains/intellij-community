@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class BundledJreProvider implements JreProvider {
+public final class BundledJreProvider implements JreProvider {
   public static final String BUNDLED = "Bundled";
 
   private final @Nullable String myBundle = AlternativeJrePathConverter.BUNDLED_JRE_PATH.getValue();

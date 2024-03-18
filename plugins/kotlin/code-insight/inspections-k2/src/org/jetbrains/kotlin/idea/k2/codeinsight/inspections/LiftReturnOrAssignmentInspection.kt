@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableAssignmentsFromBranches
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableReturnsFromBranches
+import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils
+import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils.getFoldableAssignmentsFromBranches
+import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils.getFoldableReturnsFromBranches
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

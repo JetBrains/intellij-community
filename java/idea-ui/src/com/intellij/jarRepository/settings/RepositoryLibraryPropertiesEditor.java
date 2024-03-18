@@ -80,29 +80,6 @@ public final class RepositoryLibraryPropertiesEditor {
     }, globalLibrary);
   }
 
-  /**
-   * @deprecated    * @deprecated Use  {@link #RepositoryLibraryPropertiesEditor(Project, RepositoryLibraryPropertiesModel, RepositoryLibraryDescription, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public RepositoryLibraryPropertiesEditor(@Nullable Project project,
-                                           RepositoryLibraryPropertiesModel model,
-                                           RepositoryLibraryDescription description) {
-    this(project, model, description, false);
-  }
-
-
-  /**
-   * @deprecated Use  {@link #RepositoryLibraryPropertiesEditor(Project, RepositoryLibraryPropertiesModel, RepositoryLibraryDescription, boolean, ModelChangeListener, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public RepositoryLibraryPropertiesEditor(@Nullable Project project,
-                                           final RepositoryLibraryPropertiesModel model,
-                                           RepositoryLibraryDescription description,
-                                           boolean allowExcludingTransitiveDependencies,
-                                           @NotNull final ModelChangeListener onChangeListener) {
-    this(project, model, description, allowExcludingTransitiveDependencies, onChangeListener, false);
-  }
-
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            final RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -17,9 +17,9 @@ import java.util.*;
 
 
 public final class LayoutManagerRegistry {
-  @NonNls private static final Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<>();
-  @NonNls private static final Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<>();
-  @NonNls private static final Map<String, String> ourLayoutManagerDisplayNames = new HashMap<>();
+  private static final @NonNls Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<>();
+  private static final @NonNls Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<>();
+  private static final @NonNls Map<String, String> ourLayoutManagerDisplayNames = new HashMap<>();
 
   private LayoutManagerRegistry() {
   }
@@ -77,14 +77,12 @@ public final class LayoutManagerRegistry {
     return cls.newInstance();
   }
 
-  @Nullable
-  public static RadLayoutManager createFromLayout(LayoutManager layout) {
+  public static @Nullable RadLayoutManager createFromLayout(LayoutManager layout) {
     if (layout == null) return null;
     return createFromLayoutClass(layout.getClass());
   }
 
-  @Nullable
-  private static RadLayoutManager createFromLayoutClass(final Class aClass) {
+  private static @Nullable RadLayoutManager createFromLayoutClass(final Class aClass) {
     // we can't use isInstance() because the class in our map and aClass may have been loaded with
     // different classloaders
     for(Map.Entry<Class, Class<? extends RadLayoutManager>> e: ourLayoutManagerClassRegistry.entrySet()) {

@@ -20,7 +20,10 @@ import javax.swing.JComponent
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.absoluteValue
 
-internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache) {
+internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
+                                     private val bindComponentToElement: (Component, Element) -> Unit = { c, e ->
+                                       e.setUserData("component", c, null)
+                                     }) {
 
   private fun addComponent(
     doc: Document,
@@ -29,6 +32,14 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
     component: Component,
     targetComponent: Component? = null
   ) {
+    val subtreeOverrider = XpathDataModelSubTreeProvider.EP_NAME.extensionList.find { provider ->
+      provider.shouldOverrideSubtree(component)
+    }
+    if (subtreeOverrider != null) {
+      subtreeOverrider.overrideSubtree(doc, parentElement, component)
+      return
+    }
+
     val element = createElement(doc, component, targetComponent)
     parentElement.appendChild(element)
 
@@ -57,7 +68,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
 
     component.fillElement(doc, element, targetComponent)
 
-    element.setUserData("component", component, null)
+    bindComponentToElement(component, element)
     return element
   }
 
@@ -109,7 +120,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
           }?.apply {
             element.setAttribute(attributeName, this)
           }
-          value?.apply {
+          value?.removeInvalidXmlCharacters()?.apply {
             if (textFieldsFilter(attributeName, value)) {
               elementText.append("$attributeName: '$this'. ")
               textToKeyCache.findKey(value)?.apply {
@@ -317,4 +328,9 @@ fun Element.addIcon(iconName: String, size: Int, onClickFunction: String) {
     onClickFunction
   )
   appendChild(icon)
+}
+
+private fun String.removeInvalidXmlCharacters(): String {
+  // Replace any characters not allowed in XML with an empty string
+  return replace(Regex("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]"), "")
 }

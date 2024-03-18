@@ -28,7 +28,8 @@ UFile (package = ) [import java.lang.Runnable...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi")] : PsiType:Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
                                 USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : PsiType:Unit
-                                ULiteralExpression (value = "Hi") ["Hi"] : PsiType:String
+                                UPolyadicExpression (operator = +) ["Hi"] : PsiType:String
+                                    ULiteralExpression (value = "Hi") ["Hi"] : PsiType:String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
                 UIfExpression [if (x != Unit) return "Fail: " + x] : PsiType:Unit
                     UBinaryExpression (operator = !=) [x != Unit] : PsiType:boolean
@@ -44,7 +45,8 @@ UFile (package = ) [import java.lang.Runnable...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi, again")] : PsiType:Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
                                 USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : PsiType:Unit
-                                ULiteralExpression (value = "Hi, again") ["Hi, again"] : PsiType:String
+                                UPolyadicExpression (operator = +) ["Hi, again"] : PsiType:String
+                                    ULiteralExpression (value = "Hi, again") ["Hi, again"] : PsiType:String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
                 UIfExpression [if (y != Unit) return "Fail: " + y] : PsiType:Unit
                     UBinaryExpression (operator = !=) [y != Unit] : PsiType:boolean
@@ -90,4 +92,5 @@ UFile (package = ) [import java.lang.Runnable...]
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
                             USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Runnable
                 UReturnExpression [return "OK"] : PsiType:Void
-                    ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                        ULiteralExpression (value = "OK") ["OK"] : PsiType:String

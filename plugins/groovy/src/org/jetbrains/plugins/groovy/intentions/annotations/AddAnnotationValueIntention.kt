@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.annotations
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.ProcessingContext
-import org.jetbrains.plugins.groovy.intentions.base.Intention
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList
@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgument
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgumentValue
 
-class AddAnnotationValueIntention : Intention() {
+class AddAnnotationValueIntention : GrPsiUpdateIntention() {
   private object Holder {
     val myPredicate: PsiElementPredicate
 
@@ -35,12 +35,12 @@ class AddAnnotationValueIntention : Intention() {
 
   override fun getElementPredicate(): PsiElementPredicate = Holder.myPredicate
 
-  override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
+  override fun processIntention(element: PsiElement, context: ActionContext, updater: ModPsiUpdater) {
     val value = element as? GrAnnotationMemberValue ?: return
     val pair = element.parent as? GrAnnotationNameValuePair ?: return
     val anchor = value.node
     pair.node.addLeaf(GroovyTokenTypes.mIDENT, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, anchor)
     pair.node.addLeaf(GroovyTokenTypes.mASSIGN, "=", anchor)
-    CodeStyleManager.getInstance(project).reformat(pair, true)
+    CodeStyleManager.getInstance(context.project).reformat(pair, true)
   }
 }

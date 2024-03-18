@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -6,8 +6,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.List;
 
 /**
  * A general interface to perform PsiElement's search scope optimization. The interface should be used only for optimization purposes.
@@ -46,13 +45,22 @@ public interface ScopeOptimizer {
   }
 
   @Nullable
-  static SearchScope calculateOverallRestrictedUseScope(ScopeOptimizer @NotNull [] optimizers, @NotNull PsiElement element) {
-    return Stream
-      .of(optimizers)
-      .peek(optimizer -> ProgressManager.checkCanceled())
-      .map(optimizer -> optimizer.getRestrictedUseScope(element))
-      .filter(Objects::nonNull)
-      .reduce((s1, s2) -> s1.intersectWith(s2))
-      .orElse(null);
+  static SearchScope calculateOverallRestrictedUseScope(@NotNull List<ScopeOptimizer> optimizers, @NotNull PsiElement element) {
+    boolean seen = false;
+    SearchScope acc = null;
+    for (ScopeOptimizer optimizer : optimizers) {
+      ProgressManager.checkCanceled();
+      SearchScope scope = optimizer.getRestrictedUseScope(element);
+      if (scope != null) {
+        if (!seen) {
+          seen = true;
+          acc = scope;
+        }
+        else {
+          acc = acc.intersectWith(scope);
+        }
+      }
+    }
+    return seen ? acc : null;
   }
 }

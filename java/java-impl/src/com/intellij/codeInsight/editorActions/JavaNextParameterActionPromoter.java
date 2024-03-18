@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 // Prevents 'tab out' action from taking preference when caret is before completed method call's closing parenthesis
-public class JavaNextParameterActionPromoter implements ActionPromoter {
+public final class JavaNextParameterActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return null;

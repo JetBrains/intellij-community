@@ -14,7 +14,7 @@ UFile (package = ) [import java.util.stream.Stream...]
             UBlockExpression [{...}] : PsiType:Stream<String>
                 UQualifiedReferenceExpression [Stream.empty().filter({ var it: java.lang.String ->...})] : PsiType:Stream<String>
                     UQualifiedReferenceExpression [Stream.empty()] : PsiType:Stream<String>
-                        USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = Stream) [Stream]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : PsiType:Stream<String>
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                             USimpleNameReferenceExpression (identifier = empty, resolvesTo = null) [empty] : PsiType:Stream<String>

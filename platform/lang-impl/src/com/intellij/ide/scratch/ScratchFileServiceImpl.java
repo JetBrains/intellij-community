@@ -40,10 +40,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
@@ -54,7 +59,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.LightDirectoryIndex;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -68,22 +72,30 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
-public final class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable {
+public final class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable,
+                                                                                VirtualFileEnumerationAware {
   private static final RootType NO_ROOT_TYPE = new RootType("", "NO_ROOT_TYPE") {};
 
-  private final LightDirectoryIndex<RootType> myIndex;
+  private final FewRootsLightDirectoryIndex<RootType> myIndex;
   private final MyLanguages myScratchMapping = new MyLanguages();
   private final ConcurrentMap<String, String> myRootPaths = ConcurrentFactoryMap.createMap(ScratchFileServiceImpl::calcRootPath);
 
   private ScratchFileServiceImpl() {
     Disposer.register(this, myScratchMapping);
-    myIndex = new LightDirectoryIndex<>(ApplicationManager.getApplication(), NO_ROOT_TYPE, index -> {
-      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      for (RootType r : RootType.getAllRootTypes()) {
-        index.putInfo(fileSystem.findFileByPath(getRootPath(r)), r);
-      }
-    });
+    myIndex = new FewRootsLightDirectoryIndex<>(ApplicationManager.getApplication(), NO_ROOT_TYPE, ScratchFileServiceImpl::shouldResetIndex, () ->
+      ContainerUtil.mapNotNull(RootType.getAllRootTypes(),
+        root -> {
+          VirtualFile file = LocalFileSystem.getInstance().findFileByPath(getRootPath(root));
+          return file == null ? null : Map.entry(file, root);
+        })
+    );
     initFileOpenedListener();
+  }
+
+  private static boolean shouldResetIndex(@NotNull VFileEvent event) {
+    if (event instanceof VFileContentChangeEvent) return false;
+    VirtualFile file = event instanceof VFileCreateEvent create ? create.getParent() : event.getFile();
+    return file != null && FileUtil.isAncestor(PathManager.getScratchPath(), file.getPath(), false);
   }
 
   @Override
@@ -442,5 +454,10 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       return rootType == null ? null : ourUsageTypes.get(rootType);
     }
+  }
+
+  @Override
+  public @Nullable VirtualFileEnumeration extractFileEnumeration() {
+    return myIndex;
   }
 }

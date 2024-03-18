@@ -83,6 +83,9 @@ public final class SuperBuilderProcessor extends AbstractClassProcessor {
       builderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
 
+      target.addAll(
+        builderHandler.createBuilderDefaultProviderMethodsIfNecessary(psiClass, null, builderBaseClass, psiAnnotation));
+
       // skip generation of builder methods, if class is abstract
       if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final String builderImplClassName = builderHandler.getBuilderImplClassName(psiClass);

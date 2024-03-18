@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceExceptPartQuickFix implements LocalQuickFix {
+public class ReplaceExceptPartQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -37,8 +37,7 @@ public class ReplaceExceptPartQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement exceptPart = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement exceptPart, @NotNull ModPsiUpdater updater) {
     if (exceptPart instanceof PyExceptPart) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PsiElement element = ((PyExceptPart)exceptPart).getExceptClass().getNextSibling();

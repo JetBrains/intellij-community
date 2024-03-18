@@ -21,12 +21,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
+public final class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
   public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PUBLIC;
   public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
   
-  protected @NotNull AccessModifier getHighestModifier() {
+  @NotNull AccessModifier getHighestModifier() {
     return Objects.requireNonNullElse(highestModifier, DEFAULT_HIGHEST_MODIFIER);
   }
 

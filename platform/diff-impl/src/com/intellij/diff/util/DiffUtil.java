@@ -6,15 +6,18 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.DiffToolSubstitutor;
+import com.intellij.diff.merge.ConflictType;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -55,8 +58,11 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -71,6 +77,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -115,6 +122,10 @@ import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
+import static com.intellij.diff.editor.DiffEditorTabFilesManagerKt.DIFF_OPENED_IN_NEW_WINDOW;
+import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
+import static com.intellij.util.ObjectUtils.notNull;
+
 public final class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
@@ -134,6 +145,12 @@ public final class DiffUtil {
 
   private static @Nullable Image iconToImage(@NotNull Icon icon) {
     return IconLoader.toImage(icon, null);
+  }
+
+  private static CharSequence getDocumentCharSequence(DocumentContent documentContent) {
+    return ReadAction.compute(() -> {
+      return documentContent.getDocument().getImmutableCharSequence();
+    });
   }
 
   //
@@ -584,8 +601,8 @@ public final class DiffUtil {
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
     boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = needCreateTitle ? createTitle(titles.get(i),
-                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
+      DiffEditorTitleCustomizer customizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
+      JComponent title = needCreateTitle ? createTitle(titles.get(i), customizer) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       components.add(title);
     }
@@ -621,20 +638,54 @@ public final class DiffUtil {
     return result;
   }
 
+  @NotNull
+  public static List<JComponent> createPatchTextTitles(@Nullable DiffViewer viewer,
+                                                       @NotNull DiffRequest request,
+                                                       @NotNull List<@Nls @Nullable String> titles) {
+    List<JComponent> result = new ArrayList<>(titles.size());
+
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
+    for (int i = 0; i < titles.size(); i++) {
+      JComponent title = null;
+      if (needCreateTitle) {
+        String titleText = titles.get(i);
+        DiffEditorTitleCustomizer customizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
+        //noinspection RedundantCast
+        title = createTitle(titleText, (LineSeparator)null, (Charset)null, (Boolean)null, true, customizer);
+      }
+
+      title = createTitleWithNotifications(viewer, title, null);
+      result.add(title);
+    }
+
+    return result;
+  }
+
   @Nullable
   private static JComponent createTitleWithNotifications(@Nullable DiffViewer viewer,
                                                          @Nullable JComponent title,
-                                                         @NotNull DiffContent content) {
+                                                         @Nullable DiffContent content) {
     List<JComponent> components = new ArrayList<>();
     if (title != null) components.add(title);
 
-    components.addAll(createCustomNotifications(viewer, content));
+    if (content != null) {
+      components.addAll(createCustomNotifications(viewer, content));
+    }
 
-    if (content instanceof DocumentContent) {
-      Document document = ((DocumentContent)content).getDocument();
+    if (content instanceof DocumentContent documentContent) {
+      Document document = documentContent.getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
         components.add(wrapEditorNotificationComponent(
           DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
+      }
+    }
+
+    if (content instanceof FileContent fileContent) {
+      VirtualFile file = fileContent.getFile();
+      if (file.isInLocalFileSystem() && !file.isValid()) {
+        components.add(wrapEditorNotificationComponent(
+          DiffNotifications.createNotification(DiffBundle.message("error.file.is.not.valid"))));
       }
     }
 
@@ -844,6 +895,63 @@ public final class DiffUtil {
     if (smartProvider != null) return smartProvider;
 
     return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
+  }
+
+  public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
+                                                                   @NotNull List<byte[]> byteContents,
+                                                                   @NotNull FilePath filePath,
+                                                                   @Nullable ConflictType conflictType) {
+    return getDocumentContentsForViewer(project, byteContents, conflictType, new DiffContentFactoryEx.ContextProvider() {
+      @Override
+      public void passContext(@NotNull DiffContentFactoryEx.DocumentContentBuilder builder) {
+        builder.contextByFilePath(filePath);
+      }
+    });
+  }
+
+  public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
+                                                                   @NotNull List<byte[]> byteContents,
+                                                                   @NotNull VirtualFile file,
+                                                                   @Nullable ConflictType conflictType) {
+    return getDocumentContentsForViewer(project, byteContents, conflictType, new DiffContentFactoryEx.ContextProvider() {
+      @Override
+      public void passContext(@NotNull DiffContentFactoryEx.DocumentContentBuilder builder) {
+        builder.contextByHighlightFile(file);
+      }
+    });
+  }
+
+  private static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
+                                                                    @NotNull List<byte[]> byteContents,
+                                                                    @Nullable ConflictType conflictType,
+                                                                    @NotNull DiffContentFactoryEx.ContextProvider contextProvider) {
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
+
+    DocumentContent current = contentFactory.documentContent(project, true)
+      .contextByProvider(contextProvider)
+      .buildFromBytes(notNull(byteContents.get(0), EMPTY_BYTE_ARRAY));
+    DocumentContent last = contentFactory.documentContent(project, true)
+      .contextByProvider(contextProvider)
+      .buildFromBytes(notNull(byteContents.get(2), EMPTY_BYTE_ARRAY));
+
+    DocumentContent original;
+    if (conflictType == ConflictType.ADDED_ADDED) {
+      ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
+
+      CharSequence currentContent = getDocumentCharSequence(current);
+      CharSequence lastContent = getDocumentCharSequence(last);
+      String newContent =
+        ComparisonManager.getInstance().mergeLinesAdditions(currentContent, lastContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+      original = contentFactory.documentContent(project, true)
+        .contextByProvider(contextProvider)
+        .buildFromText(newContent, false);
+    }
+    else {
+      original = contentFactory.documentContent(project, true)
+        .contextByProvider(contextProvider)
+        .buildFromBytes(notNull(byteContents.get(1), EMPTY_BYTE_ARRAY));
+    }
+    return Arrays.asList(current, original, last);
   }
 
   @Nullable
@@ -1351,7 +1459,12 @@ public final class DiffUtil {
                                             @NotNull Runnable task) {
     if (!makeWritable(project, document)) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+      String warning = "Document is read-only";
+      if (file != null) {
+        warning += ": " + file.getPresentableName();
+        if (!file.isValid()) warning += " (invalid)";
+      }
+      LOG.warn(warning);
       return false;
     }
 
@@ -1379,10 +1492,17 @@ public final class DiffUtil {
   }
 
   public static boolean canMakeWritable(@NotNull Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+
+    if (file != null && file.isInLocalFileSystem() && !file.isValid()) {
+      // Deleted files have writable Document, but are not writable.
+      // See 'com.intellij.openapi.editor.impl.EditorImpl.processKeyTyped(char)'
+      return false;
+    }
     if (document.isWritable()) {
       return true;
     }
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+
     if (file != null && file.isValid() && file.isInLocalFileSystem()) {
       if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
       // decompiled file can be writable, but Document with decompiled content is still read-only
@@ -1488,6 +1608,27 @@ public final class DiffUtil {
     return true;
   }
 
+  /**
+   * MacOS hack. Try to minimize the window while we are navigating to sources from the window diff in full screen mode.
+   */
+  public static void minimizeDiffIfOpenedInWindow(@NotNull Component diffComponent) {
+    if (!SystemInfo.isMac) return;
+    EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, diffComponent);
+    if (holder == null) return;
+
+    List<EditorComposite> composites = holder.getEditorWindow().getAllComposites();
+    if (composites.size() == 1) {
+      if (DIFF_OPENED_IN_NEW_WINDOW.get(composites.get(0).getFile(), false)) {
+        Window window = UIUtil.getWindow(diffComponent);
+        if (window != null && !canBeHiddenBehind(window)) {
+          if (window instanceof Frame) {
+            ((Frame)window).setState(Frame.ICONIFIED);
+          }
+        }
+      }
+    }
+  }
+
   private static boolean canBeHiddenBehind(@NotNull Window window) {
     if (!(window instanceof Frame)) return false;
     if (SystemInfo.isMac) {
@@ -1496,7 +1637,11 @@ public final class DiffUtil {
         Project project = ((IdeFrame)window).getProject();
         IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
         if (projectFrame != null) {
-          return !projectFrame.isInFullScreen();
+          JComponent projectFrameComponent = projectFrame.getComponent();
+          if (projectFrameComponent != null) {
+            return !projectFrame.isInFullScreen() ||
+                   window.getGraphicsConfiguration().getDevice() != projectFrameComponent.getGraphicsConfiguration().getDevice();
+          }
         }
       }
     }

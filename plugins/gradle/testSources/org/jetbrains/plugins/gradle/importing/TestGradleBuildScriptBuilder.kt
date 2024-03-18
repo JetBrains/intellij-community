@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Version
 import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaLibraryPluginSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigurationAvoidanceSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
@@ -142,10 +141,7 @@ open class TestGradleBuildScriptBuilder(
       applyPlugin("java")
 
     override fun withJavaLibraryPlugin() =
-      if (isJavaLibraryPluginSupported(gradleVersion))
-        applyPlugin("java-library")
-      else
-        applyPlugin("java")
+      applyPlugin("java-library")
 
     override fun withIdeaPlugin() =
       applyPlugin("idea")

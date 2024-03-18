@@ -29,7 +29,7 @@ public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
 
   @Override
   public String toString() {
-    return "YAML file";
+    return "YAML file: " + getName();
   }
 
   @Override

@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspection {
+public final class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspection {
 
   @NotNull
   @Override

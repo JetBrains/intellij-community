@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.metadata.diff
 
-internal interface ComparisonResult {
+internal sealed interface ComparisonResult {
   val areEquals: Boolean
 
   val info: String
@@ -16,7 +16,12 @@ internal object Equal: ComparisonResult {
   override fun toString(): String = "equal"
 }
 
-internal class NotEqual: ComparisonResult {
+internal class NotEqual(override val info: String): ComparisonResult {
+  override val areEquals: Boolean
+    get() = false
+}
+
+internal class NotEqualWithLog: ComparisonResult {
   val log: NotEqualEntitiesLog = NotEqualEntitiesLog()
 
   override val areEquals: Boolean

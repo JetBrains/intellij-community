@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -33,9 +34,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import org.junit.Ignore;
 
 import java.io.File;
 
+/**
+ * Support for suppressions in external annotations is dropped. We may reconsider this later
+ * when external annotations will be supported in ModCommands
+ */
+@IgnoreJUnit3
 public class SuppressExternalTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 

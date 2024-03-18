@@ -927,6 +927,9 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
 
   @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
+
+  @WrapConstant
+  public int SWITCH_EXPRESSIONS_WRAP = WRAP_AS_NEEDED;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
   // BRACE FORCING

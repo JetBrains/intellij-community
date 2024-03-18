@@ -8,7 +8,7 @@ import com.intellij.util.io.DurableDataEnumerator
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentEnumerator
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog
+import com.intellij.util.io.dev.enumerator.DataExternalizerEx
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx
 import java.io.ByteArrayOutputStream
 import java.io.DataInput
@@ -84,11 +84,11 @@ class TimestampsKeyDescriptor : KeyDescriptor<TimestampsImmutable> {
 /** Descriptor for [com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator] */
 class TimestampsKeyDescriptorEx : KeyDescriptorEx<TimestampsImmutable> {
 
-  override fun areEqual(timestamp1: TimestampsImmutable, timestamp2: TimestampsImmutable): Boolean {
+  override fun isEqual(timestamp1: TimestampsImmutable, timestamp2: TimestampsImmutable): Boolean {
     return timestamp1 == timestamp2
   }
 
-  override fun hashCodeOf(timestamp: TimestampsImmutable): Int {
+  override fun getHashCode(timestamp: TimestampsImmutable): Int {
     return timestamp.hashCode()
   }
 
@@ -100,10 +100,9 @@ class TimestampsKeyDescriptorEx : KeyDescriptorEx<TimestampsImmutable> {
     return TimestampsImmutable.readTimestamps(input)
   }
 
-  override fun saveToLog(timestamps: TimestampsImmutable,
-                         log: AppendOnlyLog): Long {
+  override fun writerFor(timestamps: TimestampsImmutable): DataExternalizerEx.KnownSizeRecordWriter {
     val outStream = ByteArrayOutputStream(64)
     DataOutputStream(outStream).use { timestamps.writeToStream(it) }
-    return log.append(outStream.toByteArray())
+    return DataExternalizerEx.fromBytes(outStream.toByteArray())
   }
 }

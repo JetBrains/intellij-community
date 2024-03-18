@@ -71,10 +71,14 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   override fun isEmpty() = mainLists().isEmpty() && deletedLists().isEmpty()
 
-  override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
+  override fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean) {
     val shelvesList = mainLists().sortedByDescending { it.DATE }
-    val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(tag)
-    modelBuilder.insertSubtreeRoot(shelvesRoot)
+    val shelvesRoot = if (showRootNode) SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also {
+      modelBuilder.insertSubtreeRoot(it)
+    } else {
+      modelBuilder.myRoot
+    }
+
     modelBuilder.insertShelves(shelvesRoot, shelvesList)
 
     val deletedShelvesList = deletedLists().sortedByDescending { it.DATE }
@@ -86,9 +90,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
     }
   }
 
-  private fun TreeModelBuilder.insertShelves(root: SavedPatchesTree.TagWithCounterChangesBrowserNode,
-                                             shelvesList: List<ShelvedChangeList>) {
-
+  private fun TreeModelBuilder.insertShelves(root: ChangesBrowserNode<*>, shelvesList: List<ShelvedChangeList>) {
     for (shelve in shelvesList) {
       insertSubtreeRoot(ShelvedChangeListChangesBrowserNode(ShelfObject(shelve)), root)
     }

@@ -24,6 +24,8 @@ import com.intellij.task.*;
 import com.intellij.task.impl.JpsProjectTaskRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -38,19 +40,18 @@ import static java.util.stream.Collectors.joining;
 import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
 
 public class MavenProjectTaskRunner extends ProjectTaskRunner {
-
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  @NotNull Collection<? extends ProjectTask> tasks) {
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
+  public Promise<Result> run(@NotNull Project project, @NotNull ProjectTaskContext context, ProjectTask @NotNull ... tasks) {
+    AsyncPromise<Result> promise = new AsyncPromise<>();
+    ProjectTaskNotification callback = new ProjectTaskNotificationAdapter(promise);
+    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
 
     buildModuleFiles(project, context, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
     buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
     buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
 
     buildArtifacts(project, context, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
+    return promise;
   }
 
   @Override
@@ -270,6 +271,29 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
           }
         }
       }
+    }
+  }
+
+  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
+    private final @NotNull AsyncPromise<? super Result> myPromise;
+
+    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
+      myPromise = promise;
+    }
+
+    @Override
+    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
+      myPromise.setResult(new Result() {
+        @Override
+        public boolean isAborted() {
+          return taskResult.isAborted();
+        }
+
+        @Override
+        public boolean hasErrors() {
+          return taskResult.getErrors() > 0;
+        }
+      });
     }
   }
 }

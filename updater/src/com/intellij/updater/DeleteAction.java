@@ -40,12 +40,12 @@ public class DeleteAction extends PatchAction {
       if (getChecksum() == Digester.INVALID) {
         ValidationResult.Action action = ValidationResult.Action.VALIDATE;
         String details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile));
-        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, "Unexpected file", details, options);
+        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, UpdaterUI.message("file.unexpected"), details, options);
       }
       else {
         ValidationResult.Action action = ValidationResult.Action.DELETE;
         String details = "expected 0x" + Long.toHexString(getChecksum()) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
-        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
+        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, UpdaterUI.message("file.modified"), details, options);
       }
     }
 

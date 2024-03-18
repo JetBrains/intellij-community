@@ -83,17 +83,17 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   private inner class MyVcsLogUiPropertiesImpl(private val id: String) : VcsLogUiPropertiesImpl<MyState>(appSettings) {
     override val logUiState = _state.tabStates.getOrPut(id) { MyState() }
 
-    override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+    override fun <T> get(property: VcsLogUiProperty<T>): T {
       if (property is CustomBooleanTabProperty) {
         @Suppress("UNCHECKED_CAST")
-        return (logUiState.customBooleanProperties[property.getName()] ?: property.defaultValue(id)) as T
+        return (logUiState.customBooleanProperties[property.name] ?: property.defaultValue(id)) as T
       }
       return super.get(property)
     }
 
-    override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+    override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
       if (property is CustomBooleanTabProperty) {
-        logUiState.customBooleanProperties[property.getName()] = value as Boolean
+        logUiState.customBooleanProperties[property.name] = value as Boolean
         onPropertyChanged(property)
         return
       }

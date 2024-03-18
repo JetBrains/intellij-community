@@ -104,8 +104,10 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MouseEvent inputEvent = (MouseEvent)e.getInputEvent();
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    if (!(e.getInputEvent() instanceof MouseEvent inputEvent) ||
+        inputEvent.getComponent() == null) return;
     Runnable callback = e.getData(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK);
 
     Component component = inputEvent.getComponent();

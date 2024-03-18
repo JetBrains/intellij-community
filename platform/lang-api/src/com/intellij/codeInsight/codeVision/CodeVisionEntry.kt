@@ -22,4 +22,6 @@ abstract class CodeVisionEntry(val providerId: String,
    * Defines if we show entry in 'More' popup
    */
   var showInMorePopup: Boolean = true
+
+  override fun toString(): String = "CodeVisionEntry('$longPresentation')"
 }

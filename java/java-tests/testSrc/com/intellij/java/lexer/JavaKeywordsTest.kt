@@ -19,8 +19,8 @@ class JavaKeywordsTest {
     assertTrue(JavaLexer.isSoftKeyword("sealed", LanguageLevel.JDK_17))
     assertFalse(JavaLexer.isKeyword("permits", LanguageLevel.JDK_17))
     assertTrue(JavaLexer.isSoftKeyword("permits", LanguageLevel.JDK_17))
-    assertFalse(JavaLexer.isKeyword("when", LanguageLevel.JDK_20_PREVIEW))
-    assertTrue(JavaLexer.isSoftKeyword("when", LanguageLevel.JDK_20_PREVIEW))
+    assertFalse(JavaLexer.isKeyword("when", LanguageLevel.JDK_20))
+    assertFalse(JavaLexer.isSoftKeyword("when", LanguageLevel.JDK_20))
     assertFalse(JavaLexer.isKeyword("when", LanguageLevel.JDK_21))
     assertTrue(JavaLexer.isSoftKeyword("when", LanguageLevel.JDK_21))
   }

@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.regex.PatternSyntaxException;
 
 
-public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkeletonsProvider {
+public final class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkeletonsProvider {
   private static final Logger LOG = Logger.getInstance(DefaultPregeneratedSkeletonsProvider.class);
 
   @Nullable

@@ -17,7 +17,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
   private static final String JAVA_TIME_LOCAL_DATE = "java.time.LocalDate";
   private static final String JAVA_TIME_LOCAL_DATE_TIME = "java.time.LocalDateTime";

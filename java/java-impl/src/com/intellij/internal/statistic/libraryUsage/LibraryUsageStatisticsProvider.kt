@@ -36,14 +36,21 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
     if (!isEnabled) return
 
     val processedFilesService = ProcessedFilesStorageService.getInstance(project)
+    val reporter = LibraryUsageStatisticReporter(project)
 
     for (fileEditor in fileEditors) {
       val vFile = fileEditor.file
 
       if (processedFilesService.isVisited(vFile)) continue
 
-      project.service<FileImportsCollector>().run(vFile)
+      reporter.addStatsFromFile(vFile)
     }
+  }
+}
+
+class LibraryUsageStatisticReporter(private val project: Project) {
+  fun addStatsFromFile(vFile: VirtualFile) {
+    project.service<FileImportsCollector>().run(vFile)
   }
 }
 

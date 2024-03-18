@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Bas Leijdekkers
  */
-public interface PsiFragment extends PsiLiteralValue, PsiJavaToken {
+public interface PsiFragment extends PsiLiteralValue, PsiJavaToken, PsiLanguageInjectionHost {
 
   /**
    * Returns the type of the fragment token.

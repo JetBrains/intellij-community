@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 /**
- * The entry point for the modular loading scheme. 
- * {@link #main} method is called via reflection from {@link com.intellij.platform.runtime.loader.IntellijLoader}.  
+ * The entry point for the modular loading scheme.
+ * {@link #main} method is called via reflection from {@link com.intellij.platform.runtime.loader.IntellijLoader}.
  */
 @SuppressWarnings("unused")
 public final class ModularMain {

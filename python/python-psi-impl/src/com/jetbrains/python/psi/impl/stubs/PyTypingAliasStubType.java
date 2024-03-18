@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
@@ -37,7 +38,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
+public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
   private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
 
   private static final Pattern TYPE_ANNOTATION_LIKE = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*" +
@@ -84,7 +85,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
       return false;
     }
     final String name = target.getName();
-    if (name == null || PyUtil.isSpecialName(name)) {
+    if (name == null || PyUtilCore.isSpecialName(name)) {
       return false;
     }
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);

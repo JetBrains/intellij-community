@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
@@ -36,6 +35,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -116,6 +116,17 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
+        int row = getSelectedRow();
+        if (row < 0 || row >= myMemberInfos.size()) return false;
+        Boolean current = (Boolean)getValueAt(row, CHECKED_COLUMN);
+        setValueAt(!current, row, CHECKED_COLUMN);
+        setRowSelectionInterval(row,row);
+        return true;
+      }
+    }.installOn(this);
     TableSpeedSearch.installOn(this);
   }
 
@@ -155,7 +166,6 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     ArrayList<M> list = new ArrayList<>(myMemberInfos.size());
     for (M info : myMemberInfos) {
       if (isMemberInfoSelected(info)) {
-//      if (info.isChecked() || (!myMemberInfoModel.isMemberEnabled(info) && myMemberInfoModel.isCheckedWhenDisabled(info))) {
         list.add(info);
       }
     }
@@ -329,7 +339,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       if (columnIndex == CHECKED_COLUMN || columnIndex == ABSTRACT_COLUMN) {
         return Boolean.class;
       }

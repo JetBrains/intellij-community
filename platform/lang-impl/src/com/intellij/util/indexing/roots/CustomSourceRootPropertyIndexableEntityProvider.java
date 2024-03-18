@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity;
+import com.intellij.platform.workspace.jps.entities.RootsExtensions;
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
@@ -50,12 +51,12 @@ final class CustomSourceRootPropertyIndexableEntityProvider implements Indexable
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull SourceRootEntity oldEntity,
                                                                                                                 @NotNull SourceRootEntity newEntity) {
-    if ((oldEntity.getCustomSourceRootProperties() == null) != (newEntity.getCustomSourceRootProperties() == null)) {
+    if ((RootsExtensions.getCustomSourceRootProperties(oldEntity) == null) != (RootsExtensions.getCustomSourceRootProperties(newEntity) == null)) {
       return createIterators(newEntity);
     }
-    if (newEntity.getCustomSourceRootProperties() != null &&
-        !Objects.equals(oldEntity.getCustomSourceRootProperties().getPropertiesXmlTag(),
-                        newEntity.getCustomSourceRootProperties().getPropertiesXmlTag())) {
+    if (RootsExtensions.getCustomSourceRootProperties(newEntity) != null &&
+        !Objects.equals(RootsExtensions.getCustomSourceRootProperties(oldEntity).getPropertiesXmlTag(),
+                        RootsExtensions.getCustomSourceRootProperties(newEntity).getPropertiesXmlTag())) {
       return createIterators(newEntity);
     }
     return Collections.emptyList();

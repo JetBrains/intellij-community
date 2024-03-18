@@ -4,13 +4,17 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.codeInsight.shorten.prepareDelayedRequests
 
 class KotlinRefactoringHelperForDelayedRequests : RefactoringHelper<Any> {
-    override fun prepareOperation(usages: Array<out UsageInfo>): Any? {
+    override fun prepareOperation(
+        usages: Array<out UsageInfo>,
+        elements: List<PsiElement>
+    ): Any? {
         if (usages.isNotEmpty()) {
             val project = usages[0].project
             prepareDelayedRequests(project)

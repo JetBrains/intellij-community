@@ -11,7 +11,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class UnmodifiableAnnotationProvider implements AnnotationProvider {
+public final class UnmodifiableAnnotationProvider implements AnnotationProvider {
 
   @NotNull
   @Override

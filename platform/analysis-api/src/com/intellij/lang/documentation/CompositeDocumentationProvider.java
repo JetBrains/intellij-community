@@ -290,6 +290,17 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
+  public @Nullable DocumentationParts getDocumentationParts(@NotNull PsiElement element, PsiElement originalElement) {
+    for (DocumentationProvider provider : getAllProviders()) {
+      @Nullable DocumentationParts result = provider.getDocumentationParts(element, originalElement);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
   public String toString() {
     return getProviders().toString();
   }

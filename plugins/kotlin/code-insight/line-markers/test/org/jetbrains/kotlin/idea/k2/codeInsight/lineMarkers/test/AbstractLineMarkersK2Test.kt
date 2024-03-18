@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.junit.Assert
 import kotlin.io.path.Path
 

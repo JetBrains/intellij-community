@@ -125,6 +125,7 @@ data class KotlinCompilationImpl(
     override val associateCompilations: Set<KotlinCompilationCoordinates>,
     override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
     override val isTestComponent: Boolean,
+    override val archiveFile: File?,
 ) : KotlinCompilation {
 
     // create deep copy
@@ -140,6 +141,7 @@ data class KotlinCompilationImpl(
         associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
         extras = IdeaKotlinExtras.copy(kotlinCompilation.extras),
         isTestComponent = kotlinCompilation.isTestComponent,
+        archiveFile = kotlinCompilation.archiveFile,
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform

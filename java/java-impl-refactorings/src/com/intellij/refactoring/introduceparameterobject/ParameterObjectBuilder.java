@@ -16,16 +16,17 @@
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ class ParameterObjectBuilder {
   }
 
   public String buildBeanClass() {
-    boolean recordsAvailable = HighlightingFeature.RECORDS.isAvailable(myFile) &&
+    boolean recordsAvailable = PsiUtil.isAvailable(JavaFeature.RECORDS, myFile) &&
                                !ContainerUtil.exists(fields, ParameterSpec::isSetterRequired);
     @NonNls final StringBuilder out = new StringBuilder(1024);
     if (packageName.length() > 0) out.append("package ").append(packageName).append(';');
@@ -100,7 +101,6 @@ class ParameterObjectBuilder {
 
     if (recordsAvailable) {
       out.append("(");
-      fields.stream().map(param -> param.getType().getCanonicalText(true) + " " + param.getName());
       StringUtil.join(fields, param -> {
         PsiType type = param.getType();
         if (param.getParameter().isVarArgs() && type instanceof PsiArrayType) {

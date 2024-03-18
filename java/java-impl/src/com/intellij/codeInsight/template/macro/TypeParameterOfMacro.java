@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class TypeParameterOfMacro extends Macro {
+public final class TypeParameterOfMacro extends Macro {
   @Override
   public String getName() {
     return "typeParameterOf";

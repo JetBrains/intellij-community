@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -583,6 +584,12 @@ public final class FormatterImpl extends FormatterEx
   @Override
   public Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public Indent getIndentEnforcedToChildrenToBeRelativeToMe(Indent.@NotNull Type type, int spaces) {
+    return new IndentImpl(type, false, spaces, false, true, true);
   }
 
   @Override

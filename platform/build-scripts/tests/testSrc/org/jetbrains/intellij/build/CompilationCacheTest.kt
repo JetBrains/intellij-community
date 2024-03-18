@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.compilation.fetchAndUnpackCompiledClasses
 import org.jetbrains.intellij.build.io.deleteDir
 import org.junit.jupiter.api.AfterAll
@@ -8,21 +9,22 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 class CompilationCacheTest {
   companion object {
     @AfterAll
     @JvmStatic
     fun flushTracer() {
-      TraceManager.finish()
+      runBlocking {
+        TraceManager.shutdown()
+      }
     }
   }
 
   @Test
   fun testUnpack() {
     val metadataFile = Path.of("/Volumes/data/Documents/idea/out/compilation-archive/metadata.json")
-    assumeTrue(metadataFile.exists())
+    assumeTrue(Files.exists(metadataFile))
 
     // do not use Junit TempDir - it is very slow
     val outDir = Files.createTempDirectory("CompilationCacheTest")

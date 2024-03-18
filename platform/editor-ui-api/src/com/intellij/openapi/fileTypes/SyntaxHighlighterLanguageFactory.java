@@ -8,8 +8,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.KeyedLazyInstance;
-import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
@@ -23,8 +24,8 @@ public final class SyntaxHighlighterLanguageFactory extends LanguageExtension<Sy
   }
 
   @Override
-  protected @NotNull PersistentList<SyntaxHighlighterFactory> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-    PersistentList<SyntaxHighlighterFactory> fromEp = super.buildExtensions(stringKey, key);
+  protected @NotNull List<SyntaxHighlighterFactory> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    List<SyntaxHighlighterFactory> fromEp = super.buildExtensions(stringKey, key);
     if (!fromEp.isEmpty()) {
       return fromEp;
     }

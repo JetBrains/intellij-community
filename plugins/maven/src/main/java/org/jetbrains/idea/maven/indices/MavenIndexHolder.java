@@ -12,21 +12,21 @@ import java.util.Objects;
 import java.util.Set;
 
 public class MavenIndexHolder {
-  private final @Nullable MavenIndex myLocalIndex;
+  private final @Nullable MavenIndex myLocalClassIndex;
   private final @NotNull List<MavenIndex> myRemoteIndices;
   private final @NotNull List<MavenIndex> myIndices;
 
   MavenIndexHolder(@NotNull List<MavenIndex> remoteIndices, @Nullable MavenIndex localIndex) {
-    myLocalIndex = localIndex;
+    myLocalClassIndex = localIndex;
     myRemoteIndices = List.copyOf(Objects.requireNonNull(remoteIndices));
 
     List<MavenIndex> indices = new ArrayList<>(remoteIndices);
-    if (myLocalIndex != null) indices.add(myLocalIndex);
+    if (myLocalClassIndex != null) indices.add(myLocalClassIndex);
     myIndices = List.copyOf(indices);
   }
 
   public @Nullable MavenIndex getLocalIndex() {
-    return myLocalIndex;
+    return myLocalClassIndex;
   }
 
   public @NotNull List<MavenIndex> getRemoteIndices() {
@@ -34,12 +34,12 @@ public class MavenIndexHolder {
   }
 
   public List<MavenGAVIndex> getGAVIndices() {
-    if (myLocalIndex == null) {
+    if (myLocalClassIndex == null) {
       return ContainerUtil.filter(myRemoteIndices, idx -> idx != null);
     }
     else {
       ArrayList<MavenGAVIndex> result = new ArrayList<>(getRemoteIndices());
-      result.add(myLocalIndex);
+      result.add(myLocalClassIndex);
       return result;
     }
   }
@@ -49,10 +49,10 @@ public class MavenIndexHolder {
   }
 
   public boolean isEquals(@NotNull Set<String> remoteUrls, @Nullable String localPath) {
-    if (!FileUtilRt.pathsEqual(myLocalIndex != null ? myLocalIndex.getRepositoryPathOrUrl() : null, localPath)) return false;
+    if (!FileUtilRt.pathsEqual(myLocalClassIndex != null ? myLocalClassIndex.getRepository().getUrl() : null, localPath)) return false;
     if (remoteUrls.size() != myRemoteIndices.size()) return false;
-    for (MavenSearchIndex index : myRemoteIndices) {
-      if (!remoteUrls.contains(index.getRepositoryPathOrUrl())) return false;
+    for (MavenIndex index : myRemoteIndices) {
+      if (!remoteUrls.contains(index.getRepository().getUrl())) return false;
     }
     return true;
   }

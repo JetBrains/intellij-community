@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaContributorCollectors extends CounterUsagesCollector {
+public final class JavaContributorCollectors extends CounterUsagesCollector {
   public static final String TAG_TYPE = "tag";
   public static final String STATIC_QUALIFIER_TYPE = "static_qualifier";
 

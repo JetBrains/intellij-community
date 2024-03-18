@@ -7,6 +7,7 @@ import javax.swing.Icon
 
 internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val definition: String,
+                                               override val definitionDetails: String?,
                                                override val description: @Nls String?,
                                                override val docUrl: String?,
                                                override val apiStatus: WebSymbolApiStatus?,
@@ -17,7 +18,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val descriptionSections: Map<@Nls String, @Nls String>,
                                                override val footnote: @Nls String?) : WebSymbolDocumentation {
   override fun isNotEmpty(): Boolean =
-    name != definition || description != null || docUrl != null || apiStatus != null
+    name != definition || description != null || docUrl != null || (apiStatus != null && apiStatus != WebSymbolApiStatus.Stable)
     || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
 
   override fun withName(name: String): WebSymbolDocumentation =
@@ -25,6 +26,9 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
 
   override fun withDefinition(definition: String): WebSymbolDocumentation =
     copy(definition = definition)
+
+  override fun withDefinitionDetails(definitionDetails: String?): WebSymbolDocumentation =
+    copy(definitionDetails = definitionDetails)
 
   override fun withDescription(description: @Nls String?): WebSymbolDocumentation =
     copy(description = description)
@@ -55,6 +59,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
 
   override fun with(name: String,
                     definition: String,
+                    definitionDetails: String?,
                     description: @Nls String?,
                     docUrl: String?,
                     apiStatus: WebSymbolApiStatus?,
@@ -64,8 +69,8 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                     icon: Icon?,
                     additionalSections: Map<@Nls String, @Nls String>,
                     footnote: @Nls String?): WebSymbolDocumentation =
-    copy(name = name, definition = definition, description = description, docUrl = docUrl, apiStatus = apiStatus,
-         required = required, defaultValue = defaultValue, library = library, icon = icon,
+    copy(name = name, definition = definition, definitionDetails = definitionDetails, description = description,
+         docUrl = docUrl, apiStatus = apiStatus, required = required, defaultValue = defaultValue, library = library, icon = icon,
          descriptionSections = descriptionSections + additionalSections, footnote = footnote)
 
 }

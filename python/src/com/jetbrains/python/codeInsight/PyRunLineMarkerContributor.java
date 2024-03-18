@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.impl.PyIfStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
+public final class PyRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
   public PyRunLineMarkerContributor() {
     if (PlatformUtils.isPyCharmEducational()) {
       throw ExtensionNotApplicableException.create();

@@ -4,6 +4,7 @@ package com.intellij.execution.configurations;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -103,6 +104,9 @@ public abstract class ConfigurationFactory {
     // null only if SimpleConfigurationType (but method overridden)
     //noinspection ConstantConditions
     return myType;
+  }
+
+  public void configureDefaultSettings(@NotNull RunnerAndConfigurationSettings settings) {
   }
 
   /**

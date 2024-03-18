@@ -56,7 +56,6 @@ public final class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> imp
   public void setName(@NotNull String name) {
     if (!Objects.equals(myName, name)) {
       myName = name;
-      fireElementChanged();
     }
   }
 

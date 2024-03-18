@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.NotNullTypeParameter
 import org.jetbrains.kotlin.types.isNullable
@@ -219,7 +219,7 @@ open class MakeUpperBoundNonNullableFix(
                     MakeUpperBoundNonNullableFix(typeParameter, kind)
             }
 
-            val psiElement = typeParameterDescriptor.psiElement?.safeAs<KtTypeParameter>() ?: return null
+            val psiElement = typeParameterDescriptor.source.getPsi()?.safeAs<KtTypeParameter>() ?: return null
             val existingUpperBound = psiElement.extendsBound
             if (existingUpperBound != null) {
                 val context = existingUpperBound.analyze(BodyResolveMode.PARTIAL)

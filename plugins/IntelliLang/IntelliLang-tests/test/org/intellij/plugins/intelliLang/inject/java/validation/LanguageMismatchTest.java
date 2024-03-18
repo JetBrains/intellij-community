@@ -16,7 +16,9 @@
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -28,6 +30,11 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
     var inspection = new LanguageMismatch();
     inspection.CHECK_NON_ANNOTATED_REFERENCES = true;
     myFixture.enableInspections(inspection);
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21_ANNOTATED;
   }
 
   public void testParenthesesHighlighting() {
@@ -65,6 +72,16 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
       String OTHER_JS_CODE = JS_<caret>CODE;
     }
     """, "Annotate field 'JS_CODE' as '@Language'");
+  }
+  
+  public void testProcessorReassigned() {
+    highlightTest("""
+                      import org.intellij.lang.annotations.Language;
+                      
+                      class Hello {
+                          @Language("JAVA")
+                          public static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
+                      }""");
   }
 
   public void testEmptyArrayConstant() {

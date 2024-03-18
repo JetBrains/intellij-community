@@ -25,7 +25,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceSwitchWithIfIntention extends MCIntention {
+public final class ReplaceSwitchWithIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

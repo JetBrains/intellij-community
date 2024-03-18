@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -41,6 +41,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("callChain.kt")
     public void testCallChain() throws Exception {
         runTest("testData/smartStepInto/callChain.kt");
+    }
+
+    @TestMetadata("classOneLineMethods.kt")
+    public void testClassOneLineMethods() throws Exception {
+        runTest("testData/smartStepInto/classOneLineMethods.kt");
     }
 
     @TestMetadata("constructor.kt")
@@ -93,6 +98,16 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/funWithExpressionBody.kt");
     }
 
+    @TestMetadata("idea335207.kt")
+    public void testIdea335207() throws Exception {
+        runTest("testData/smartStepInto/idea335207.kt");
+    }
+
+    @TestMetadata("idea335263.kt")
+    public void testIdea335263() throws Exception {
+        runTest("testData/smartStepInto/idea335263.kt");
+    }
+
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("testData/smartStepInto/if.kt");
@@ -118,6 +133,31 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/inlinedFunctionalExpression.kt");
     }
 
+    @TestMetadata("insideAddChain.kt")
+    public void testInsideAddChain() throws Exception {
+        runTest("testData/smartStepInto/insideAddChain.kt");
+    }
+
+    @TestMetadata("insideCallChain.kt")
+    public void testInsideCallChain() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain.kt");
+    }
+
+    @TestMetadata("insideCallChain2.kt")
+    public void testInsideCallChain2() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain2.kt");
+    }
+
+    @TestMetadata("insideCallChain3.kt")
+    public void testInsideCallChain3() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain3.kt");
+    }
+
+    @TestMetadata("insideCallChain4.kt")
+    public void testInsideCallChain4() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain4.kt");
+    }
+
     @TestMetadata("invoke.kt")
     public void testInvoke() throws Exception {
         runTest("testData/smartStepInto/invoke.kt");
@@ -126,6 +166,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("javaSyntheticPropertyReference.kt")
     public void testJavaSyntheticPropertyReference() throws Exception {
         runTest("testData/smartStepInto/javaSyntheticPropertyReference.kt");
+    }
+
+    @TestMetadata("lambdas.kt")
+    public void testLambdas() throws Exception {
+        runTest("testData/smartStepInto/lambdas.kt");
     }
 
     @TestMetadata("libraryFun.kt")

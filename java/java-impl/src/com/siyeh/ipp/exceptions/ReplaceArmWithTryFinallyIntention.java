@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceArmWithTryFinallyIntention extends MCIntention {
+public final class ReplaceArmWithTryFinallyIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

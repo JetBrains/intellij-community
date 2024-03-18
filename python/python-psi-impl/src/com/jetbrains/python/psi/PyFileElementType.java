@@ -18,6 +18,7 @@ package com.jetbrains.python.psi;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
@@ -90,7 +91,10 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
         final PythonParser pythonParser = (PythonParser)parser;
         pythonParser.setLanguageLevel(languageLevel);
       }
-      return parser.parse(this, builder).getFirstChildNode();
+      var startTime = System.nanoTime();
+      var result = parser.parse(this, builder).getFirstChildNode();
+      ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+      return result;
     }
     return null;
   }

@@ -47,10 +47,10 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = format) -> Decompiled_Method: format
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> UQualifiedReferenceExpression -> Kotlin_Light_Method: toTypedArray
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> UQualifiedReferenceExpression -> Decompiled_Method: toTypedArray
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Method: chunked
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = chunked) -> Decompiled_Method: chunked
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = toTypedArray) -> Kotlin_Light_Method: toTypedArray
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = toTypedArray) -> Decompiled_Method: toTypedArray
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = with) -> Decompiled_Method: with
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 

@@ -9,4 +9,17 @@ abstract class GHPRTimelineGroupedItems<T : GHPRTimelineItem> : GHPRTimelineItem
   open fun add(item: T) {
     items.add(item)
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GHPRTimelineGroupedItems<*>) return false
+
+    if (items != other.items) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return items.hashCode()
+  }
 }

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyFunctionTypeAnnotationParserDefinition extends PythonParserDefinition {
+public final class PyFunctionTypeAnnotationParserDefinition extends PythonParserDefinition {
 
   @NotNull
   @Override

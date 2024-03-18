@@ -18,6 +18,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ui.JBInsets;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 @ApiStatus.Internal
-public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker, ToolWindowExternalDecorator {
+public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker, ToolWindowExternalDecorator, DisposableWindow {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
 
   static final int DIVIDER_WIDTH = 3;
@@ -46,6 +47,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private final @NotNull ToolWindowExternalDecoratorBoundsHelper myBoundsHelper = new ToolWindowExternalDecoratorBoundsHelper(this);
 
   private final Disposable myDisposable = Disposer.newDisposable();
+  private boolean myDisposed = false;
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
@@ -77,7 +79,6 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       // The problem is that Window.setLocation() doesn't work properly wjen the dialod is displayable.
       // Therefore we use native WM decoration.
       contentPane.add(decorator, BorderLayout.CENTER);
-      getRootPane().putClientProperty("Window.style", "small");
     }
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -171,6 +172,12 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
 
     super.dispose();
+    myDisposed = true;
+  }
+
+  @Override
+  public boolean isWindowDisposed() {
+    return myDisposed;
   }
 
   @NotNull
@@ -191,10 +198,20 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     myBoundsHelper.setBounds(getBounds());
   }
 
+  @NotNull
   @Override
-  public void setBounds(@NotNull Rectangle r) {
+  public Rectangle getVisibleWindowBounds() {
+    var result = getBounds();
+    JBInsets.removeFrom(result, ToolWindowExternalDecoratorKt.getInvisibleInsets(this));
+    return result;
+  }
+
+  @Override
+  public void setVisibleWindowBounds(@NotNull Rectangle r) {
     myBoundsHelper.setBounds(r);
-    super.setBounds(r);
+    var newBounds = new Rectangle(r);
+    JBInsets.addTo(newBounds, ToolWindowExternalDecoratorKt.getInvisibleInsets(this));
+    super.setBounds(newBounds);
   }
 
   @NotNull
@@ -218,7 +235,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       if (LOG.isDebugEnabled()) {
         LOG.debug("Applying floating tool window " + info.getId() + " bounds from window info: " + bounds);
       }
-      setBounds(bounds);
+      setVisibleWindowBounds(bounds);
     }
     else {
       if (LOG.isDebugEnabled()) {

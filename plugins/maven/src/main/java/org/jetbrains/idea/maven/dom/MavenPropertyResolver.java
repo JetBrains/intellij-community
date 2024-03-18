@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -17,10 +18,7 @@ import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +63,7 @@ public final class MavenPropertyResolver {
   public static Map<String, String> collectPropertyMapFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
     var result = new HashMap<String, String>();
 
-    collectPropertyMapFromDOM(projectDom.getProperties(), result);
+    collectPropertyMapFromDOM(ReadAction.compute(()->projectDom.getProperties()), result);
 
     if (project != null) {
       collectPropertiesForActivatedProfiles(project, projectDom, result);
@@ -77,7 +75,8 @@ public final class MavenPropertyResolver {
   private static void collectPropertiesForActivatedProfiles(@NotNull MavenProject project,
                                                             MavenDomProjectModel projectDom, Map<String, String> result) {
     Collection<String> activeProfiles = project.getActivatedProfilesIds().getEnabledProfiles();
-    for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
+    List<MavenDomProfile> profiles = ReadAction.compute(() -> projectDom.getProfiles().getProfiles());
+    for (MavenDomProfile each : profiles) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null || !activeProfiles.contains(idTag.getValue().getTrimmedText())) continue;
       collectPropertyMapFromDOM(each.getProperties(), result);

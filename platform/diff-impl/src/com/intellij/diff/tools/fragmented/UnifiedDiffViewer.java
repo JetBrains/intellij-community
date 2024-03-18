@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -11,7 +11,6 @@ import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
@@ -81,7 +80,7 @@ import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
-public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter, EditorDiffViewer {
+public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorDiffViewer {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull protected final UnifiedDiffPanel myPanel;
@@ -158,7 +157,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-    myContentPanel.setTitle(createTitles());
+    DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
 
     UiNotifyConnector.installOn(getComponent(), new Activatable() {
       @Override
@@ -166,6 +165,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
         myMarkupUpdater.scheduleUpdate();
       }
     });
+
+    for (EditorEx editor : getEditors()) {
+      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
+    }
   }
 
   @Override
@@ -332,9 +335,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
     final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
-    UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
+    UnifiedDiffState builder = ReadAction.compute(() -> {
       indicator.checkCanceled();
-      return new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide).exec();
+      return new SimpleUnifiedFragmentBuilder(document1, document2, myMasterSide).exec(fragments);
     });
 
     return apply(builder, texts, indicator);
@@ -383,7 +386,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   }
 
   @NotNull
-  protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
+  protected Runnable apply(@NotNull UnifiedDiffState builder,
                            CharSequence @NotNull [] texts,
                            @NotNull ProgressIndicator indicator) {
     final DocumentContent content1 = getContent1();
@@ -903,11 +906,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     return myStatusPanel;
   }
 
-  @Override
-  public int getTotalDifferences() {
-    return getNonSkippedDiffChanges().size();
-  }
-
   @RequiresEdt
   public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
     if (myReadOnlyLockSet && respectReadOnlyLock) return false;
@@ -1170,7 +1168,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
       doScrollToLine(myScrollToLine.first, new LogicalPosition(myScrollToLine.second, 0));
       return true;

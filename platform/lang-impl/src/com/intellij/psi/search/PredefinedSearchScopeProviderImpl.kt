@@ -11,9 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
@@ -35,12 +33,16 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.scope.EditorSelectionLocalSearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.usages.Usage
+import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -68,8 +70,10 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
                                         currentSelection: Boolean,
                                         usageView: Boolean,
                                         showEmptyScopes: Boolean): Promise<List<SearchScope>> {
-    val context = ScopeCollectionContext.collectContext(
-      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    val context = SlowOperations.knownIssue("IDEA-345912, EA-1076769").use {
+      ScopeCollectionContext.collectContext(
+        project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    }
 
     val promise = AsyncPromise<List<SearchScope>>()
     ReadAction.nonBlocking<Collection<SearchScope>>()
@@ -83,6 +87,24 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
       .submit(AppExecutorUtil.getAppExecutorService())
 
     return promise
+  }
+
+  override suspend fun getPredefinedScopesSuspend(
+    project: Project,
+    dataContext: DataContext?,
+    suggestSearchInLibs: Boolean,
+    prevSearchFiles: Boolean,
+    currentSelection: Boolean,
+    usageView: Boolean,
+    showEmptyScopes: Boolean,
+  ): List<SearchScope> {
+    val context = ScopeCollectionContext.collectContextSuspend(
+      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes
+    )
+    val restScopes = readAction {
+      context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes)
+    }
+    return context.result + restScopes
   }
 
   private data class ScopeCollectionContext(val psiFile: PsiFile?,
@@ -125,6 +147,39 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
     }
 
     companion object {
+
+      suspend fun collectContextSuspend(
+        project: Project,
+        dataContext: DataContext?,
+        suggestSearchInLibs: Boolean,
+        prevSearchFiles: Boolean,
+        usageView: Boolean,
+        showEmptyScopes: Boolean,
+      ): ScopeCollectionContext {
+        val result: MutableCollection<SearchScope> = LinkedHashSet()
+
+        readAction {
+          addCommonScopes(result, project, suggestSearchInLibs, dataContext, showEmptyScopes)
+        }
+
+        val scopesFromUsageView = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (usageView) getScopesFromUsageViewSuspend(project, prevSearchFiles) else emptyList()
+        }
+
+        val selectedTextEditor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          FileEditorManager.getInstance(project).getSelectedTextEditor()
+        }
+
+        return readAction {
+          val psiFile = selectedTextEditor?.let {
+            PsiDocumentManager.getInstance(project).getPsiFile(it.getDocument())
+          }
+          val currentFile = fillFromDataContext(dataContext, result, psiFile)
+          val selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile)
+          ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result)
+        }
+      }
+
       // in EDT
       fun collectContext(project: Project,
                          dataContext: DataContext?,
@@ -134,46 +189,7 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
                          showEmptyScopes: Boolean): ScopeCollectionContext {
         val result: MutableCollection<SearchScope> = LinkedHashSet()
 
-        result.add(GlobalSearchScope.everythingScope(project))
-        result.add(GlobalSearchScope.projectScope(project))
-
-        if (suggestSearchInLibs) {
-          result.add(GlobalSearchScope.allScope(project))
-        }
-
-        val adjustedContext = dataContext ?: SimpleDataContext.getProjectContext(project)
-        for (each in SearchScopeProvider.EP_NAME.extensions) {
-          result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
-        }
-
-        if (ModuleUtil.hasTestSourceRoots(project)) {
-          result.add(GlobalSearchScopesCore.projectProductionScope(project))
-          result.add(GlobalSearchScopesCore.projectTestScope(project))
-        }
-
-        result.add(ScratchesSearchScope.getScratchesScope(project))
-
-        val recentFilesScope = recentFilesScope(project, false)
-        if (!SearchScope.isEmptyScope(recentFilesScope)) {
-          result.add(recentFilesScope)
-        }
-        else if (showEmptyScopes) {
-          result.add(LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()))
-        }
-
-        val recentModFilesScope = recentFilesScope(project, true)
-        ContainerUtil.addIfNotNull(
-          result, if (!SearchScope.isEmptyScope(recentModFilesScope)) recentModFilesScope
-        else if (showEmptyScopes) LocalSearchScope(
-          PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName())
-        else null)
-
-        val openFilesScope = GlobalSearchScopes.openFilesScope(project)
-        ContainerUtil.addIfNotNull(
-          result, if (openFilesScope !== GlobalSearchScope.EMPTY_SCOPE) openFilesScope
-        else if (showEmptyScopes) LocalSearchScope(
-          PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText())
-        else null)
+        addCommonScopes(result, project, suggestSearchInLibs, dataContext, showEmptyScopes)
 
         val selectedTextEditor = if (ApplicationManager.getApplication().isDispatchThread())
           FileEditorManager.getInstance(project).getSelectedTextEditor()
@@ -188,6 +204,87 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         val scopesFromUsageView = if (usageView) getScopesFromUsageView(project, prevSearchFiles) else emptyList()
 
         return ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result)
+      }
+
+      private fun addCommonScopes(
+        result: MutableCollection<SearchScope>,
+        project: Project,
+        suggestSearchInLibs: Boolean,
+        dataContext: DataContext?,
+        showEmptyScopes: Boolean,
+      ) {
+        addGlobalScopes(result, project, suggestSearchInLibs)
+        addExtensionScopes(dataContext, project, result)
+        addTestAndScratchesScopes(project, result)
+        addRecentFilesScope(project, result, showEmptyScopes)
+        addRecentlyModifiedFilesScope(project, result, showEmptyScopes)
+        addOpenFilesScope(project, result, showEmptyScopes)
+      }
+
+      private fun addGlobalScopes(
+        result: MutableCollection<SearchScope>,
+        project: Project,
+        suggestSearchInLibs: Boolean,
+      ) {
+        result.add(GlobalSearchScope.everythingScope(project))
+        result.add(GlobalSearchScope.projectScope(project))
+        if (suggestSearchInLibs) {
+          result.add(GlobalSearchScope.allScope(project))
+        }
+      }
+
+      private fun addExtensionScopes(
+        dataContext: DataContext?,
+        project: Project,
+        result: MutableCollection<SearchScope>,
+      ) {
+        val adjustedContext = dataContext ?: SimpleDataContext.getProjectContext(project)
+        for (each in SearchScopeProvider.EP_NAME.extensionList) {
+          result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
+        }
+      }
+
+      private fun addTestAndScratchesScopes(project: Project,
+                                            result: MutableCollection<SearchScope>) {
+        if (ModuleUtil.hasTestSourceRoots(project)) {
+          result.add(GlobalSearchScopesCore.projectProductionScope(project))
+          result.add(GlobalSearchScopesCore.projectTestScope(project))
+        }
+        result.add(ScratchesSearchScope.getScratchesScope(project))
+      }
+
+      private fun addRecentFilesScope(project: Project,
+                                      result: MutableCollection<SearchScope>,
+                                      showEmptyScopes: Boolean) {
+        val recentFilesScope = recentFilesScope(project, false)
+        if (!SearchScope.isEmptyScope(recentFilesScope)) {
+          result.add(recentFilesScope)
+        }
+        else if (showEmptyScopes) {
+          result.add(LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()))
+        }
+      }
+
+      private fun addRecentlyModifiedFilesScope(project: Project,
+                                                result: MutableCollection<SearchScope>,
+                                                showEmptyScopes: Boolean) {
+        val recentModFilesScope = recentFilesScope(project, true)
+        ContainerUtil.addIfNotNull(
+          result, if (!SearchScope.isEmptyScope(recentModFilesScope)) recentModFilesScope
+        else if (showEmptyScopes) LocalSearchScope(
+          PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName())
+        else null)
+      }
+
+      private fun addOpenFilesScope(project: Project,
+                                    result: MutableCollection<SearchScope>,
+                                    showEmptyScopes: Boolean) {
+        val openFilesScope = GlobalSearchScopes.openFilesScope(project)
+        ContainerUtil.addIfNotNull(
+          result, if (openFilesScope !== GlobalSearchScope.EMPTY_SCOPE) openFilesScope
+        else if (showEmptyScopes) LocalSearchScope(
+          PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText())
+        else null)
       }
     }
   }
@@ -259,62 +356,80 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
 
     // in EDT
     private fun getScopesFromUsageView(project: Project, prevSearchFiles: Boolean): Collection<SearchScope> {
+      val selectedUsageView = getSelectedAndCompletedUsageView(project) ?: return emptyList()
       val scopes = LinkedHashSet<SearchScope>()
-
-      val selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView()
-      if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
-        val usages: MutableSet<Usage> = selectedUsageView.getUsages().toMutableSet()
-        usages.removeAll(selectedUsageView.getExcludedUsages())
-
-        if (prevSearchFiles) {
-          val files = collectFiles(usages, true)
-          if (!files.isEmpty()) {
-            val prev: GlobalSearchScope = object : GlobalSearchScope(project) {
-              private var myFiles: Set<VirtualFile>? = null
-              override fun getDisplayName(): String {
-                return IdeBundle.message("scope.files.in.previous.search.result")
-              }
-
-              @Synchronized
-              override fun contains(file: VirtualFile): Boolean {
-                if (myFiles == null) {
-                  myFiles = collectFiles(usages, false)
-                }
-                return myFiles!!.contains(file)
-              }
-
-              override fun isSearchInModuleContent(aModule: Module): Boolean {
-                return true
-              }
-
-              override fun isSearchInLibraries(): Boolean {
-                return true
-              }
-            }
-            scopes.add(prev)
-          }
-        }
-        else {
-          val results: MutableList<PsiElement> = ArrayList(usages.size)
-          for (usage in usages) {
-            if (usage is PsiElementUsage) {
-              val element = usage.getElement()
-              if (element != null && element.isValid() && element.getContainingFile() != null) {
-                results.add(element)
-              }
-            }
-          }
-
-          if (!results.isEmpty()) {
-            scopes.add(LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")))
-          }
-        }
-      }
-
+      addPreviousSearchScopes(selectedUsageView, prevSearchFiles, project, scopes)
       return scopes
     }
 
-    // in EDT
+    private suspend fun getScopesFromUsageViewSuspend(project: Project, prevSearchFiles: Boolean): Collection<SearchScope> {
+      val selectedUsageView = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        getSelectedAndCompletedUsageView(project)
+      } ?: return emptyList()
+      val scopes = LinkedHashSet<SearchScope>()
+      readAction {
+        addPreviousSearchScopes(selectedUsageView, prevSearchFiles, project, scopes)
+      }
+      return scopes
+    }
+
+    private fun getSelectedAndCompletedUsageView(project: Project): UsageView? =
+      UsageViewManager.getInstance(project).getSelectedUsageView()?.takeIf { !it.isSearchInProgress }
+
+    private fun addPreviousSearchScopes(
+      selectedUsageView: UsageView,
+      prevSearchFiles: Boolean,
+      project: Project,
+      scopes: LinkedHashSet<SearchScope>,
+    ) {
+      val usages: MutableSet<Usage> = selectedUsageView.getUsages().toMutableSet()
+      usages.removeAll(selectedUsageView.getExcludedUsages())
+
+      if (prevSearchFiles) {
+        val files = collectFiles(usages, true)
+        if (!files.isEmpty()) {
+          val prev: GlobalSearchScope = object : GlobalSearchScope(project) {
+            private var myFiles: Set<VirtualFile>? = null
+            override fun getDisplayName(): String {
+              return IdeBundle.message("scope.files.in.previous.search.result")
+            }
+
+            @Synchronized
+            override fun contains(file: VirtualFile): Boolean {
+              if (myFiles == null) {
+                myFiles = collectFiles(usages, false)
+              }
+              return myFiles!!.contains(file)
+            }
+
+            override fun isSearchInModuleContent(aModule: Module): Boolean {
+              return true
+            }
+
+            override fun isSearchInLibraries(): Boolean {
+              return true
+            }
+          }
+          scopes.add(prev)
+        }
+      }
+      else {
+        val results: MutableList<PsiElement> = ArrayList(usages.size)
+        for (usage in usages) {
+          if (usage is PsiElementUsage) {
+            val element = usage.getElement()
+            if (element != null && element.isValid() && element.getContainingFile() != null) {
+              results.add(element)
+            }
+          }
+        }
+
+        if (!results.isEmpty()) {
+          scopes.add(LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")))
+        }
+      }
+    }
+
     private fun fillFromDataContext(dataContext: DataContext?,
                                     result: MutableCollection<SearchScope>,
                                     psiFile: PsiFile?): PsiFile? {
@@ -366,9 +481,9 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         component = component.content
       }
 
-      val hierarchyBrowserBase = component as HierarchyBrowserBase
-      val elements = hierarchyBrowserBase.getAvailableElements()
-      if (elements.isNotEmpty()) {
+      val hierarchyBrowserBase = component as? HierarchyBrowserBase
+      val elements = hierarchyBrowserBase?.getAvailableElements()
+      if (!elements.isNullOrEmpty()) {
         result.add(LocalSearchScope(elements, LangBundle.message("predefined.search.scope.hearchy.scope.display.name", name)))
       }
     }

@@ -1,4 +1,5 @@
 // IGNORE_K2
+/* KTIJ-25617 */
 // WITH_STDLIB
 // AFTER-WARNING: Variable 'x' is never used
 fun <T> foo() {

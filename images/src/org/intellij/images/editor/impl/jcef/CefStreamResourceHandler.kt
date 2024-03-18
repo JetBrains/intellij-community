@@ -13,7 +13,10 @@ import org.cef.network.CefResponse
 import java.io.IOException
 import java.io.InputStream
 
-class CefStreamResourceHandler(private val myStream: InputStream, private val myMimeType: String, parent: Disposable): CefResourceHandler, Disposable {
+class CefStreamResourceHandler(private val myStream: InputStream,
+                               private val myMimeType: String,
+                               parent: Disposable,
+                               private val headers: Map<String, String> = mapOf()) : CefResourceHandler, Disposable {
   init {
     Disposer.register(parent, this)
   }
@@ -26,6 +29,9 @@ class CefStreamResourceHandler(private val myStream: InputStream, private val my
   override fun getResponseHeaders(response: CefResponse, responseLength: IntRef, redirectUrl: StringRef) {
     response.mimeType = myMimeType
     response.status = 200
+    for (header in headers) {
+      response.setHeaderByName(header.key, header.value, true /* overwrite */)
+    }
   }
 
   override fun readResponse(dataOut: ByteArray, bytesToRead: Int, bytesRead: IntRef, callback: CefCallback): Boolean {

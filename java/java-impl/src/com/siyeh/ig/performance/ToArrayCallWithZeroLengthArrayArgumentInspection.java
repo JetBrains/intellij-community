@@ -23,7 +23,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.dropdown;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
+public final class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
   private static final CallMatcher COLLECTION_TO_ARRAY =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(1);
 

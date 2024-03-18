@@ -29,7 +29,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
+public final class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean considerStaticFinalConstant = false;

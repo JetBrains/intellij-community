@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.*
-import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -66,7 +66,7 @@ class DesktopLayout(
 
   /**
    * Sets new `anchor` and `id` for the specified tool window.
-   * Also, the method properly updates order of all other tool windows.
+   * Also, the method properly updates the order of all other tool windows.
    */
   fun setAnchor(info: WindowInfoImpl,
                 newPaneId: String,
@@ -75,7 +75,7 @@ class DesktopLayout(
     var newOrder = suppliedNewOrder
     val affected = ArrayList<WindowInfoImpl>()
 
-    // if order isn't defined then the window will be the last in the stripe
+    // if order isn't defined, then the window will be the last in the stripe
     if (newOrder == -1) {
       newOrder = getMaxOrder(newPaneId, newAnchor) + 1
     }
@@ -96,8 +96,8 @@ class DesktopLayout(
     return affected
   }
 
-  fun readExternal(layoutElement: Element, isNewUi: Boolean, isFromPersistentSettings: Boolean = true) {
-    val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
+  fun readExternal(layoutElement: Element, isFromPersistentSettings: Boolean = true) {
+    val infoBinding = jdomSerializer.getBeanBinding(WindowInfoImpl::class.java)
 
     val list = mutableListOf<WindowInfoImpl>()
     for (element in layoutElement.getChildren(WindowInfoImpl.TAG)) {
@@ -117,8 +117,7 @@ class DesktopLayout(
 
     val unifiedWeightsElement = layoutElement.getChild(UnifiedToolWindowWeights.TAG)
     if (unifiedWeightsElement != null) {
-      val unifiedWeightsBinding = XmlSerializer.getBeanBinding(UnifiedToolWindowWeights::class.java)
-      unifiedWeightsBinding.deserializeInto(unifiedWeights, unifiedWeightsElement)
+      jdomSerializer.deserializeInto(unifiedWeights, unifiedWeightsElement)
     }
 
     normalizeOrder(list)
@@ -190,7 +189,7 @@ internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 
 }
 
 /**
- * Normalizes order of windows in the array. Order of first window will be `0`.
+ * Normalizes the order of windows in the array. Order of a first window will be `0`.
  */
 private fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
   list.sortWith(windowInfoComparator)

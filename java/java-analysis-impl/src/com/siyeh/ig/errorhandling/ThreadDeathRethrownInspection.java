@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadDeathRethrownInspection extends BaseInspection {
+public final class ThreadDeathRethrownInspection extends BaseInspection {
 
   @Override
   @NotNull

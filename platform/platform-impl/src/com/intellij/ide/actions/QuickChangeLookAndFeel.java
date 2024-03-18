@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
   private final Alarm switchAlarm = new Alarm();
@@ -38,11 +38,11 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
-    for (List<UIThemeLookAndFeelInfo> list : ThemeListProvider.Companion.getInstance().getShownThemes()) {
+    for (Groups.GroupInfo<UIThemeLookAndFeelInfo> groupInfo : ThemeListProvider.Companion.getInstance().getShownThemes().getInfos()) {
       if (group.getChildrenCount() > 0) {
         group.addSeparator();
       }
-      for (UIThemeLookAndFeelInfo lf : list) {
+      for (UIThemeLookAndFeelInfo lf : groupInfo.getItems()) {
         group.add(new LafChangeAction(lf, initialLaf == lf));
       }
     }
@@ -108,7 +108,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   /**
    * @deprecated use {@link #switchLafAndUpdateUI(LafManager, UIManager.LookAndFeelInfo, boolean)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan,
                                           @NotNull UIManager.LookAndFeelInfo lf,
                                           boolean async,

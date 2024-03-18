@@ -63,6 +63,7 @@ public final class DocRenderItemUpdater implements Runnable {
     List<CustomFoldRegion> toProcess = new ArrayList<>(myQueue.keySet());
     Object2IntMap<Editor> memoMap = new Object2IntOpenHashMap<>();
     toProcess.sort(Comparator.comparingInt(i -> -Math.abs(i.getStartOffset() - getVisibleOffset(i.getEditor(), memoMap))));
+    Map<Editor, List<Runnable>> editorTasks = new HashMap<>();
     do {
       CustomFoldRegion region = toProcess.remove(toProcess.size() - 1);
       boolean updateContent = myQueue.remove(region);
@@ -73,12 +74,22 @@ public final class DocRenderItemUpdater implements Runnable {
           keeper.savePosition();
           return keeper;
         });
-        ((DocRenderer)region.getRenderer()).update(true, updateContent, null);
+        var tasks = editorTasks.computeIfAbsent(editor, e -> new ArrayList<>());
+        ((DocRenderer)region.getRenderer()).update(true, updateContent, tasks);
+        if (tasks.size() > 20) {
+          runFoldingTasks(editor, tasks);
+        }
       }
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
+    editorTasks.entrySet().forEach((entry -> runFoldingTasks(entry.getKey(), entry.getValue())));
     keepers.values().forEach(k -> k.restorePosition(false));
     if (!myQueue.isEmpty()) SwingUtilities.invokeLater(ThreadContext.captureThreadContext(this));
+  }
+
+  private static void runFoldingTasks(@NotNull Editor editor, @NotNull List<Runnable> tasks) {
+    editor.getFoldingModel().runBatchFoldingOperation(() -> tasks.forEach(Runnable::run), true, false);
+    tasks.clear();
   }
 
   private static int getVisibleOffset(Editor editor, Object2IntMap<Editor> memoMap) {

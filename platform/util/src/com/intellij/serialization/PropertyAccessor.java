@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,36 +17,37 @@ import java.lang.reflect.Type;
 public final class PropertyAccessor implements MutableAccessor {
   private static final Logger LOG = Logger.getInstance(PropertyAccessor.class);
 
-  private final String myName;
-  private final Class<?> myType;
-  private final Method myReadMethod;
-  private final Method myWriteMethod;
-  private final Type myGenericType;
+  private final String name;
+  private final Class<?> type;
+  private final Method readMethod;
+  private final Method writeMethod;
+  private final Type genericType;
 
   PropertyAccessor(@NotNull String name, @NotNull Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
-    myName = name;
-    myType = type;
-    myReadMethod = readMethod;
-    myWriteMethod = writeMethod;
-    myGenericType = myReadMethod.getGenericReturnType();
+    this.name = name;
+    this.type = type;
+    this.readMethod = readMethod;
+    this.writeMethod = writeMethod;
+    genericType = readMethod.getGenericReturnType();
 
     try {
-      myReadMethod.setAccessible(true);
-      if (myWriteMethod != null) {
-        myWriteMethod.setAccessible(true);
+      this.readMethod.setAccessible(true);
+      if (writeMethod != null) {
+        writeMethod.setAccessible(true);
       }
     }
-    catch (SecurityException ignored) { }
+    catch (SecurityException ignored) {
+    }
   }
 
   public @NotNull String getGetterName() {
-    return myReadMethod.getName();
+    return readMethod.getName();
   }
 
   @Override
   public Object read(@NotNull Object o) {
     try {
-      return myReadMethod.invoke(o);
+      return readMethod.invoke(o);
     }
     catch (IllegalAccessException e) {
       throw new SerializationException(e);
@@ -59,41 +60,41 @@ public final class PropertyAccessor implements MutableAccessor {
 
   @Override
   public Object readUnsafe(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return myReadMethod.invoke(o);
+    return readMethod.invoke(o);
   }
 
   @Override
   public int readInt(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return (int)myReadMethod.invoke(o);
+    return (int)readMethod.invoke(o);
   }
 
   @Override
   public long readLong(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return (long)myReadMethod.invoke(o);
+    return (long)readMethod.invoke(o);
   }
 
   @Override
   public float readFloat(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return (float)myReadMethod.invoke(o);
+    return (float)readMethod.invoke(o);
   }
 
   @Override
   public double readDouble(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return (double)myReadMethod.invoke(o);
+    return (double)readMethod.invoke(o);
   }
 
   @Override
   public boolean readBoolean(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return (boolean)myReadMethod.invoke(o);
+    return (boolean)readMethod.invoke(o);
   }
 
   @Override
   public void set(@NotNull Object host, @Nullable Object value) {
-    if (myWriteMethod == null) {
-      throw new SerializationException(host.getClass().getName() + "::" + myName + " lacks a setter");
+    if (writeMethod == null) {
+      throw new SerializationException(host.getClass().getName() + "::" + name + " lacks a setter");
     }
     try {
-      myWriteMethod.invoke(host, value);
+      writeMethod.invoke(host, value);
     }
     catch (IllegalAccessException e) {
       throw new SerializationException(e);
@@ -102,14 +103,14 @@ public final class PropertyAccessor implements MutableAccessor {
       Throwable cause = e.getCause();
       // see KotlinXmlSerializerTest.nullInMap
       if (cause instanceof NullPointerException &&
-          myGenericType instanceof Class &&
-          ((Class<?>)myGenericType).isEnum() &&
+          genericType instanceof Class &&
+          ((Class<?>)genericType).isEnum() &&
           cause.getMessage().contains("Parameter specified as non-null is null:")) {
-        Object[] constants = ((Class<?>)myGenericType).getEnumConstants();
+        Object[] constants = ((Class<?>)genericType).getEnumConstants();
         if (constants.length > 0) {
           try {
             LOG.warn("Cannot set enum value, will be set to first enum value", e);
-            myWriteMethod.invoke(host, constants[0]);
+            writeMethod.invoke(host, constants[0]);
             return;
           }
           catch (IllegalAccessException | InvocationTargetException e1) {
@@ -154,34 +155,37 @@ public final class PropertyAccessor implements MutableAccessor {
 
   @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
-    T annotation = myReadMethod.getAnnotation(annotationClass);
-    if (annotation == null && myWriteMethod != null) {
-      annotation = myWriteMethod.getAnnotation(annotationClass);
-    }
-    return annotation;
+    T annotation = readMethod.getAnnotation(annotationClass);
+    return annotation != null || writeMethod == null ? annotation : writeMethod.getAnnotation(annotationClass);
+  }
+
+  @Override
+  public <T extends Annotation> boolean isAnnotationPresent(@NotNull Class<T> annotationClass) {
+    boolean isPresent = readMethod.isAnnotationPresent(annotationClass);
+    return isPresent || writeMethod == null ? isPresent : writeMethod.isAnnotationPresent(annotationClass);
   }
 
   @Override
   public @NotNull String getName() {
-    return myName;
+    return name;
   }
 
   @Override
   public @NotNull Class<?> getValueClass() {
-    return myType;
+    return type;
   }
 
   @Override
   public @NotNull Type getGenericType() {
-    return myGenericType;
+    return genericType;
   }
 
   @Override
   public boolean isWritable() {
-    return myWriteMethod != null && myWriteMethod.isAccessible();
+    return writeMethod != null && writeMethod.isAccessible();
   }
 
   public @NonNls String toString() {
-    return "PropertyAccessor(name=" + myName + ", class=" + myReadMethod.getDeclaringClass().getName() + ")";
+    return "PropertyAccessor(name=" + name + ", class=" + readMethod.getDeclaringClass().getName() + ")";
   }
 }

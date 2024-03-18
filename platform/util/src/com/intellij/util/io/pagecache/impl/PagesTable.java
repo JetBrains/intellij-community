@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.IntRef;
@@ -347,7 +347,8 @@ public final class PagesTable {
 
   @VisibleForTesting
   public Int2IntMap collectProbeLengthsHistogram() {
-    final Int2IntMap histo = new Int2IntOpenHashMap();
+    @SuppressWarnings("SSBasedInspection")
+    Int2IntOpenHashMap histo = new Int2IntOpenHashMap();
     for (int i = 0; i < pages.length(); i++) {
       final PageImpl page = pages.get(i);
       if (page != null) {

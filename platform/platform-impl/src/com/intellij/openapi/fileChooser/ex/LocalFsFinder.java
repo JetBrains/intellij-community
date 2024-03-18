@@ -263,7 +263,7 @@ public final class LocalFsFinder implements Finder {
     private final Path myFile;
 
     /** @deprecated please use {@link #IoFile(Path)} instead */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public IoFile(@NotNull File file) {
       this(file.toPath());
     }

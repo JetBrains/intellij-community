@@ -25,7 +25,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- *
+ * Compare persistent [int->int] map implementations: BTree-based vs ExtendibleHashMap based on memory-mapped files
  */
 @BenchmarkMode({Mode.AverageTime, Mode.SampleTime})
 @OutputTimeUnit(NANOSECONDS)
@@ -99,17 +99,6 @@ public class IntToIntMapsBenchmark {
         file.delete();
       }
     }
-
-    private static Int2IntOpenHashMap generateKeyValues(int keysCount) {
-      final Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
-      final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-      for (int i = 0; i < keysCount; i++) {
-        final int key = rnd.nextInt();
-        final int value = rnd.nextInt();
-        keyValues.put(key, value);
-      }
-      return keyValues;
-    }
   }
 
   @State(Scope.Benchmark)
@@ -125,7 +114,7 @@ public class IntToIntMapsBenchmark {
     @Setup
     public void setup() throws Exception {
       file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
-      map = ExtendibleMapFactory.defaults().open(file.toPath());
+      map = ExtendibleMapFactory.largeSize().open(file.toPath());
 
 
       generatedKeyValues = generateKeyValues(TOTAL_KEYS);
@@ -144,17 +133,17 @@ public class IntToIntMapsBenchmark {
         file.delete();
       }
     }
+  }
 
-    private static Int2IntOpenHashMap generateKeyValues(int keysCount) {
-      final Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
-      final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-      for (int i = 0; i < keysCount; i++) {
-        final int key = rnd.nextInt();
-        final int value = rnd.nextInt();
-        keyValues.put(key, value);
-      }
-      return keyValues;
+  private static Int2IntOpenHashMap generateKeyValues(int keysCount) {
+    final Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    for (int i = 0; i < keysCount; i++) {
+      final int key = rnd.nextInt();
+      final int value = rnd.nextInt();
+      keyValues.put(key, value);
     }
+    return keyValues;
   }
 
 
@@ -220,7 +209,7 @@ public class IntToIntMapsBenchmark {
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .mode(Mode.SampleTime)
-      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*EMap.*")
+      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*")
       .threads(1)
       .build();
 

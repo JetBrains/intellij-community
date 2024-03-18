@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InstantiationOfUtilityClassInspection extends BaseInspection {
+public final class InstantiationOfUtilityClassInspection extends BaseInspection {
 
   @Override
   @NotNull

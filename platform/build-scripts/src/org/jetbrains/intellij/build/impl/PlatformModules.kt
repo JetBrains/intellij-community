@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -19,7 +21,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.*
@@ -52,7 +53,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
-  "intellij.platform.elevation",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.inspect",
   // lvcs.xml - convert into product module
@@ -77,6 +77,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.usageView.impl",
   "intellij.platform.ml.impl",
 
+  "intellij.platform.runtime.product",
   "intellij.platform.bootstrap",
 
   "intellij.relaxng",
@@ -91,6 +92,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.smart.update",
 
   "intellij.platform.collaborationTools",
+  "intellij.platform.collaborationTools.auth.base",
   "intellij.platform.collaborationTools.auth",
 
   "intellij.platform.markdown.utils",
@@ -143,7 +145,8 @@ private fun addModule(relativeJarPath: String,
                       layout: PlatformLayout) {
   layout.withModules(moduleNames.asSequence()
                        .filter { !productLayout.excludedModuleNames.contains(it) }
-                       .map { ModuleItem(moduleName = it, relativeOutputFile = relativeJarPath, reason = "addModule") }.toList())
+                       .map { ModuleItem(moduleName = it, relativeOutputFile = relativeJarPath, reason = "addModule") }
+                       .toList())
 }
 
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
@@ -181,9 +184,12 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
 
   addModule(UTIL_RT_JAR, listOf(
     "intellij.platform.util.rt",
+  ), productLayout = productLayout, layout = layout)
+  // trove is not used by JB Client - fix RuntimeModuleRepositoryChecker assert
+  addModule("trove.jar", listOf(
     "intellij.platform.util.trove",
   ), productLayout = productLayout, layout = layout)
-  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
+  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
 
   // maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(
@@ -314,34 +320,36 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   return layout
 }
 
+fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp"
+
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
-  val jpsJavaExtensionService = JpsJavaExtensionService.getInstance()
-  val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules,
-                                                                       productLayout = context.productProperties.productLayout)
+  val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(
+    modules = enabledPluginModules,
+    productLayout = context.productProperties.productLayout,
+  )
+
+  val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
   for (plugin in pluginLayoutsByJpsModuleNames) {
     if (plugin.auto) {
       continue
     }
 
     for (moduleName in plugin.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
-        val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
-        if (libraryReference.parentReference is JpsModuleReference) {
+      val module = context.findRequiredModule(moduleName)
+      for (element in helper.getLibraryDependencies(module)) {
+        val libRef = element.libraryReference
+        if (libRef.parentReference is JpsModuleReference) {
           continue
         }
 
-        if (jpsJavaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+        val libName = libRef.libraryName
+        if (plugin.hasLibrary(libName) || isLibraryAlwaysPackedIntoPlugin(libName)) {
           continue
         }
 
-        val libraryName = element.libraryReference.libraryName
-        if (plugin.hasLibrary(libraryName)) {
-          continue
-        }
-
-        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libraryName, LibraryPackMode.MERGED)
-        result.addOrGet(ProjectLibraryData(libraryName, packMode, reason = "<- $moduleName"))
+        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED)
+        result.addOrGet(ProjectLibraryData(libName, packMode, reason = "<- $moduleName"))
           .dependentModules
           .computeIfAbsent(plugin.directoryName) { mutableListOf() }
           .add(moduleName)
@@ -465,13 +473,15 @@ private fun compute(list: List<Pair<String, PersistentList<String>>>,
 
 // result _must be_ consistent, do not use Set.of or HashSet here
 private suspend fun getProductPluginContentModules(context: BuildContext, productPluginSourceModuleName: String): Set<ModuleItem> {
+  val result = LinkedHashSet<ModuleItem>()
+
   val content = withContext(Dispatchers.IO) {
     var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
-      file = context.findFileInModuleSources(productPluginSourceModuleName,
-                                             "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+      file = context.findFileInModuleSources(moduleName = productPluginSourceModuleName,
+                                             relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
       if (file == null) {
-        context.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
+        Span.current().addEvent("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
         return@withContext null
       }
     }
@@ -479,10 +489,22 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
     readXmlAsModel(file).getChild("content")
   } ?: return emptySet()
 
-  val modules = content.children("module")
-  val result = LinkedHashSet<ModuleItem>()
-  for (module in modules) {
-    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = "modules.jar", reason = "productModule"))
+  collectProductModules(content, result)
+
+  withContext(Dispatchers.IO) {
+    val file = context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+    file?.let { readXmlAsModel(it).getChild("content") }
+  }?.let {
+    collectProductModules(it, result)
   }
+
   return result
+}
+
+private fun collectProductModules(content: XmlElement, result: LinkedHashSet<ModuleItem>) {
+  for (module in content.children("module")) {
+    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue,
+                          relativeOutputFile = "modules.jar",
+                          reason = "productModule"))
+  }
 }

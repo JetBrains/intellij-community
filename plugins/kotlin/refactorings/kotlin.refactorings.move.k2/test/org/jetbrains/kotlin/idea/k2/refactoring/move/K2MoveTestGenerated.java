@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
@@ -333,6 +333,11 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveFile/typeRefWithArguments/typeRefWithArguments.test");
     }
 
+    @TestMetadata("kotlin/moveFile/withoutUsages/withoutUsages.test")
+    public void testKotlin_moveFile_withoutUsages_WithoutUsages() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveFile/withoutUsages/withoutUsages.test");
+    }
+
     @TestMetadata("kotlin/moveMethod/moveToClass/companionHasReference/companionHasReference.test")
     public void testKotlin_moveMethod_moveToClass_companionHasReference_CompanionHasReference() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveMethod/moveToClass/companionHasReference/companionHasReference.test");
@@ -516,6 +521,16 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
     @TestMetadata("kotlin/moveTopLevelDeclarations/classAlreadyInaccessible/classAlreadyInaccessible.test")
     public void testKotlin_moveTopLevelDeclarations_classAlreadyInaccessible_ClassAlreadyInaccessible() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/classAlreadyInaccessible/classAlreadyInaccessible.test");
+    }
+
+    @TestMetadata("kotlin/moveTopLevelDeclarations/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test")
+    public void testKotlin_moveTopLevelDeclarations_createDirInProjectNonPkgDirStructure_CreateDirInProjectNonPkgDirStructure() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test");
+    }
+
+    @TestMetadata("kotlin/moveTopLevelDeclarations/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test")
+    public void testKotlin_moveTopLevelDeclarations_createDirInProjectPkgDirStructure_CreateDirInProjectPkgDirStructure() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test");
     }
 
     @TestMetadata("kotlin/moveTopLevelDeclarations/functionAlreadyInaccessible/functionAlreadyInaccessible.test")
@@ -821,6 +836,11 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
     @TestMetadata("kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test")
     public void testKotlin_moveTopLevelDeclarations_objectAlreadyInaccessible_ObjectAlreadyInaccessible() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
+    }
+
+    @TestMetadata("kotlin/moveTopLevelDeclarations/operationReference/operationReference.test")
+    public void testKotlin_moveTopLevelDeclarations_operationReference_OperationReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/operationReference/operationReference.test");
     }
 
     @TestMetadata("kotlin/moveTopLevelDeclarations/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test")

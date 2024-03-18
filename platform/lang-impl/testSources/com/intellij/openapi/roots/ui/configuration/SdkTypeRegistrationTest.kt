@@ -16,8 +16,8 @@ class SdkTypeRegistrationTest : HeavyPlatformTestCase() {
       val sdk = sdkTable.createSdk("foo", MockSdkType.getInstance())
       val modificator = sdk.sdkModificator
       modificator.sdkAdditionalData = MockSdkAdditionalData("bar")
-      modificator.commitChanges()
       runWriteAction {
+        modificator.commitChanges()
         sdkTable.addJdk(sdk, testRootDisposable)
       }
       assertEquals("foo", assertOneElement(sdkTable.getSdksOfType(MockSdkType.getInstance())).name)

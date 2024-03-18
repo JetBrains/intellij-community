@@ -90,7 +90,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
         return conversion;
       }
     }
-    return PsiTypesUtil.getDefaultValueOfType(type);
+    return PsiTypesUtil.getDefaultValueOfType(type, true);
   }
 
   @NonNls

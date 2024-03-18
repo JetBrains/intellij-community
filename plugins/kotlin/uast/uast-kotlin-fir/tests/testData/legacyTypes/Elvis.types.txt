@@ -22,7 +22,8 @@ UFile (package = ) [public final class ElvisKt {...]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("Lorem ipsum")] : PsiType:String
                                                 UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                                 USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String
-                                                ULiteralExpression (value = "Lorem ipsum") ["Lorem ipsum"] : PsiType:String
+                                                UPolyadicExpression (operator = +) ["Lorem ipsum"] : PsiType:String
+                                                    ULiteralExpression (value = "Lorem ipsum") ["Lorem ipsum"] : PsiType:String
                                     UIfExpression [if (varc4aef569 != null) varc4aef569 else foo("dolor sit amet")]
                                         UBinaryExpression (operator = !=) [varc4aef569 != null]
                                             USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569]
@@ -31,7 +32,8 @@ UFile (package = ) [public final class ElvisKt {...]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("dolor sit amet")] : PsiType:String
                                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String
-                                            ULiteralExpression (value = "dolor sit amet") ["dolor sit amet"] : PsiType:String
+                                            UPolyadicExpression (operator = +) ["dolor sit amet"] : PsiType:String
+                                                ULiteralExpression (value = "dolor sit amet") ["dolor sit amet"] : PsiType:String
                         UIfExpression [if (var243c51a0 != null) var243c51a0 else bar().toString()]
                             UBinaryExpression (operator = !=) [var243c51a0 != null]
                                 USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0]

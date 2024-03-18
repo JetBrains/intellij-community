@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention {
+public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

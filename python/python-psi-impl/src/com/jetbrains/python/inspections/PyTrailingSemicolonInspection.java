@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyTrailingSemicolonInspection extends PyInspection {
+public final class PyTrailingSemicolonInspection extends PyInspection {
 
   @NotNull
   @Override

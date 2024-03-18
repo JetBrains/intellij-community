@@ -79,49 +79,49 @@ public abstract class UnboxableTypeRenderer extends CompoundRendererProvider {
     return true;
   }
 
-  public static class BooleanRenderer extends UnboxableTypeRenderer {
+  public static final class BooleanRenderer extends UnboxableTypeRenderer {
     public BooleanRenderer() {
       super(CommonClassNames.JAVA_LANG_BOOLEAN);
     }
   }
 
-  public static class ByteRenderer extends UnboxableTypeRenderer {
+  public static final class ByteRenderer extends UnboxableTypeRenderer {
     public ByteRenderer() {
       super(CommonClassNames.JAVA_LANG_BYTE);
     }
   }
 
-  public static class CharacterRenderer extends UnboxableTypeRenderer {
+  public static final class CharacterRenderer extends UnboxableTypeRenderer {
     public CharacterRenderer() {
       super(CommonClassNames.JAVA_LANG_CHARACTER);
     }
   }
 
-  public static class ShortRenderer extends UnboxableTypeRenderer {
+  public static final class ShortRenderer extends UnboxableTypeRenderer {
     public ShortRenderer() {
       super(CommonClassNames.JAVA_LANG_SHORT);
     }
   }
 
-  public static class IntegerRenderer extends UnboxableTypeRenderer {
+  public static final class IntegerRenderer extends UnboxableTypeRenderer {
     public IntegerRenderer() {
       super(CommonClassNames.JAVA_LANG_INTEGER);
     }
   }
 
-  public static class LongRenderer extends UnboxableTypeRenderer {
+  public static final class LongRenderer extends UnboxableTypeRenderer {
     public LongRenderer() {
       super(CommonClassNames.JAVA_LANG_LONG);
     }
   }
 
-  public static class FloatRenderer extends UnboxableTypeRenderer {
+  public static final class FloatRenderer extends UnboxableTypeRenderer {
     public FloatRenderer() {
       super(CommonClassNames.JAVA_LANG_FLOAT);
     }
   }
 
-  public static class DoubleRenderer extends UnboxableTypeRenderer {
+  public static final class DoubleRenderer extends UnboxableTypeRenderer {
     public DoubleRenderer() {
       super(CommonClassNames.JAVA_LANG_DOUBLE);
     }

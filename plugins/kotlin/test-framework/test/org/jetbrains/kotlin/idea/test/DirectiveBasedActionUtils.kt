@@ -13,6 +13,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,10 +23,17 @@ import kotlin.test.assertTrue
 
 
 object DirectiveBasedActionUtils {
-    const val DISABLE_ERRORS_DIRECTIVE = "// DISABLE-ERRORS"
-    const val DISABLE_WARNINGS_DIRECTIVE = "// DISABLE-WARNINGS"
-    const val ENABLE_WARNINGS_DIRECTIVE = "// ENABLE-WARNINGS"
-    const val ACTION_DIRECTIVE = "// ACTION:"
+    const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE-ERRORS"
+    const val DISABLE_WARNINGS_DIRECTIVE: String = "// DISABLE-WARNINGS"
+    const val ENABLE_WARNINGS_DIRECTIVE: String = "// ENABLE-WARNINGS"
+
+    /**
+     * If present in the test data file, checks that
+     * - the corresponding quickfix is available at the <caret>,         t
+     * - all other quickfixes with names not mentioned in "//ACTION" are not available.
+     * When no "// ACTION" directives are present in the file, quickfixes are not checked.
+     */
+    const val ACTION_DIRECTIVE: String = "// ACTION:"
 
     fun checkForUnexpectedErrors(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
@@ -125,10 +133,17 @@ object DirectiveBasedActionUtils {
     }
 
     fun checkAvailableActionsAreExpected(file: File, availableActions: Collection<IntentionAction>) {
+        checkAvailableActionsAreExpected(file, availableActions, emptyList())
+    }
+
+    fun checkAvailableActionsAreExpected(
+        file: File, availableActions: Collection<IntentionAction>, actionsToExclude: List<String>,
+    ) {
         val fileText = file.readText()
         checkAvailableActionsAreExpected(
             fileText,
             availableActions,
+            actionsToExclude,
         ) { expectedActionsDirectives, actualActionsDirectives ->
             if (expectedActionsDirectives != actualActionsDirectives) {
                 assertEqualsToFile(
@@ -164,9 +179,11 @@ object DirectiveBasedActionUtils {
     private fun checkAvailableActionsAreExpected(
         fileText: String,
         availableActions: Collection<IntentionAction>,
+        actionsToExclude: List<String> = emptyList(),
         assertion: (expectedDirectives: List<String>, actualActionsDirectives: List<String>) -> Unit,
     ) {
         val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, ACTION_DIRECTIVE).sorted()
+        if (expectedActions.isEmpty()) return // do not check for available fixes if there are no //ACTION
 
         UsefulTestCase.assertEmpty(
             "Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
@@ -177,10 +194,18 @@ object DirectiveBasedActionUtils {
             return
         }
 
-        val actualActions = availableActions.map { it.text }.sorted()
+        val actualActions = availableActions.map { it.text }.filterOutElementsToExclude(actionsToExclude).sorted()
         val actualActionsDirectives = filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" }
-        val expectedActionsDirectives = expectedActions.map { "$ACTION_DIRECTIVE $it" }
+        val expectedActionsDirectives = expectedActions.filterOutElementsToExclude(actionsToExclude).map { "$ACTION_DIRECTIVE $it" }
         assertion(expectedActionsDirectives, actualActionsDirectives)
+    }
+
+    // TODO: Some missing K2 actions are missing. We filter out them out to avoid the test failure caused by the exact action list match.
+    //       Remove this list when they are ready. See ACTIONS_NOT_IMPLEMENTED and ACTIONS_DIFFERENT_FROM_K1 in AbstractK2QuickFixTest.
+    private fun List<String>.filterOutElementsToExclude(elementsToExclude: List<String>) = if (elementsToExclude.isEmpty()) {
+        this
+    } else {
+        filter { element -> !elementsToExclude.any { element == it } }
     }
 
     //TODO: hack, implemented because irrelevant actions behave in different ways on build server and locally

@@ -2,6 +2,7 @@
 package git4idea.ui.toolbar
 
 import com.intellij.icons.ExpUiIcons
+import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
@@ -50,7 +51,16 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     }
     else {
       updatePlaceholder(project, null)
-      val group = ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
+
+      val group = if (project.isTrusted()) {
+        ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
+      }
+      else {
+        @Suppress("DialogTitleCapitalization")
+        val separator = Separator(GitBundle.message("action.main.toolbar.git.project.not.trusted.separator.text"))
+        val trustProjectAction = ActionManager.getInstance().getAction("ShowTrustProjectDialog")
+        DefaultActionGroup(separator, trustProjectAction)
+      }
       val place = ActionPlaces.getPopupPlace(ActionPlaces.VCS_TOOLBAR_WIDGET)
       JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, event.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)

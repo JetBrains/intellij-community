@@ -26,7 +26,7 @@ import java.util.Objects;
 import static com.intellij.psi.util.PsiPrecedenceUtil.EQUALITY_PRECEDENCE;
 import static com.intellij.psi.util.PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE;
 
-public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECTS_EQUALS = CallMatcher.staticCall(
     CommonClassNames.JAVA_UTIL_OBJECTS, "equals").parameterCount(2);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
@@ -25,7 +25,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.Alarm
 import com.intellij.util.SlowOperations
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -34,6 +33,7 @@ import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
 
@@ -195,7 +195,7 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   if (dotIdea != null) {
     val dotIdeaVcsPath = VcsContextFactory.getInstance().createFilePath(dotIdea, true)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, dotIdeaVcsPath) ?: return NotIgnored
-    val filePattern = "${dotIdea.systemIndependentPath}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
+    val filePattern = "${dotIdea.invariantSeparatorsPathString}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
     return getCheckerForFile(project, dotIdeaVcsPath)
              ?.isFilePatternIgnored(vcsRootForIgnore, filePattern) ?: NotIgnored
   }

@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static java.util.Collections.emptySet;
 import static org.junit.Assert.*;
 
 public class PreferencesTest {
@@ -88,6 +89,14 @@ public class PreferencesTest {
     assertNotNull(preferences.getIndentationRules().getIncreaseIndentPattern());
   }
 
+  @Test
+  public void loadOnEnterRules() {
+    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.RESTRUCTURED_TEXT);
+    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.rst")));
+    assertNotNull(preferences.getOnEnterRules());
+    assertFalse(preferences.getOnEnterRules().isEmpty());
+  }
+
   @NotNull
   private static PreferencesRegistry loadPreferences(@NotNull String bundleName) {
     Iterator<TextMatePreferences> preferences = TestUtil.readBundle(bundleName).readPreferences().iterator();
@@ -98,9 +107,10 @@ public class PreferencesTest {
       preferencesRegistry.addPreferences(new Preferences(next.getScopeName(),
                                                          next.getHighlightingPairs(),
                                                          next.getSmartTypingPairs(),
-                                                         Collections.emptySet(),
+                                                         emptySet(),
                                                          null,
-                                                         next.getIndentationRules()));
+                                                         next.getIndentationRules(),
+                                                         next.getOnEnterRules()));
     }
     return preferencesRegistry;
   }
@@ -112,6 +122,7 @@ public class PreferencesTest {
     Set<TextMateBracePair> surroundingPairs = new HashSet<>();
     Set<Character> autoCloseBefore = new HashSet<>();
     IndentationRules indentationRules = IndentationRules.empty();
+    Set<OnEnterRule> onEnterRules = new HashSet<>();
 
     for (Preferences preference : preferences) {
       final Set<TextMateBracePair> localHighlightingPairs = preference.getHighlightingPairs();
@@ -133,13 +144,17 @@ public class PreferencesTest {
           autoCloseBefore.add(c);
         }
       }
+      if (preference.getOnEnterRules() != null){
+        onEnterRules.addAll(preference.getOnEnterRules());
+      }
     }
     return new Preferences("",
                            highlightingPairs,
                            smartTypingPairs,
                            surroundingPairs,
                            Strings.nullize(Strings.join(autoCloseBefore, "")),
-                           indentationRules);
+                           indentationRules,
+                           onEnterRules);
   }
 
   private static <T> Set<T> newHashSet(T... pairs) {

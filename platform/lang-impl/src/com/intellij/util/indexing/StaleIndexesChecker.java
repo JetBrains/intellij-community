@@ -13,11 +13,12 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.REUSE_DELETED_FILE_IDS;
 
 public final class StaleIndexesChecker {
   private static final Logger LOG = Logger.getInstance(StaleIndexesChecker.class);
@@ -27,12 +28,13 @@ public final class StaleIndexesChecker {
     return IS_IN_STALE_IDS_DELETION.get() == Boolean.TRUE;
   }
 
+  public static boolean shouldCheckStaleIndexesOnStartup() {
+    return REUSE_DELETED_FILE_IDS && (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
+  }
+
   static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent, ?> index,
                                                    IntSet knownStaleIds,
                                                    boolean onStartup) throws StorageException {
-    if (!ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isEAP()) {
-      return IntSets.EMPTY_SET;
-    }
     IndexExtension<?, ?, FileContent> extension = index.getExtension();
     IndexId<?, ?> indexId = extension.getName();
     LOG.assertTrue(indexId.equals(StubUpdatingIndex.INDEX_ID));

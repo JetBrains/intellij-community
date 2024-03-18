@@ -1,40 +1,47 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
-import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRSubmitReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.coroutines.cancellation.CancellationException
+
+private val LOG: Logger = logger<GHPRReviewFlowViewModel>()
 
 class GHPRReviewFlowViewModelImpl internal constructor(
   parentCs: CoroutineScope,
@@ -46,7 +53,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val dataProvider: GHPRDetailsDataProvider,
   private val stateData: GHPRStateDataProvider,
   private val changesData: GHPRChangesDataProvider,
-  reviewDataProvider: GHPRReviewDataProvider
+  private val reviewVmHelper: GHPRReviewViewModelHelper
 ) : GHPRReviewFlowViewModel {
   private val cs = parentCs.childScope()
 
@@ -70,17 +77,24 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val author = details.author
     val reviews = details.reviews
     val reviewers = details.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer)
-    getReviewsByReviewers(author, reviews, reviewers)
+    GHReviewersUtils.getReviewsByReviewers(author, reviews, reviewers, ghostUser)
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val reviewState: SharedFlow<ReviewState> = detailsState.map {
-    when (it.reviewDecision) {
+  private val isApproved: SharedFlow<Boolean> = combine(reviewerReviews, mergeabilityState) { reviews, state ->
+    val requiredApprovingReviewsCount = state?.requiredApprovingReviewsCount ?: 0
+    val approvedReviews = reviews.count { it.value == ReviewState.ACCEPTED }
+    return@combine if (requiredApprovingReviewsCount == 0) approvedReviews > 0 else approvedReviews >= requiredApprovingReviewsCount
+  }.modelFlow(cs, LOG)
+
+  override val reviewState: SharedFlow<ReviewState> = combine(detailsState, isApproved) { detailsState, isApproved ->
+    if (isApproved) return@combine ReviewState.ACCEPTED
+    return@combine when (detailsState.reviewDecision) {
       GHPullRequestReviewDecision.APPROVED -> ReviewState.ACCEPTED
       GHPullRequestReviewDecision.CHANGES_REQUESTED -> ReviewState.WAIT_FOR_UPDATES
       GHPullRequestReviewDecision.REVIEW_REQUIRED -> ReviewState.NEED_REVIEW
       null -> ReviewState.NEED_REVIEW
     }
-  }.shareIn(cs, SharingStarted.Lazily, 1)
+  }.modelFlow(cs, LOG)
 
   override val role: SharedFlow<ReviewRole> = detailsState.map { details ->
     when {
@@ -90,8 +104,8 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
-  override val pendingComments: Flow<Int> = _pendingCommentsState.asSharedFlow()
+  override val pendingReview: StateFlow<ComputedResult<GHPullRequestPendingReview?>> = reviewVmHelper.pendingReviewState
+  override val pendingComments: Flow<Int> = pendingReview.map { it.result?.getOrNull()?.commentsCount ?: 0 }
 
   override val repositoryRestrictions = RepositoryRestrictions(securityService)
 
@@ -114,6 +128,14 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   override val isRebaseEnabled: Flow<Boolean> = mergeabilityState.map {
     it?.isRestricted == false && repositoryRestrictions.isRebaseAllowed &&
     it.canBeRebased && userCanMergeReview
+  }
+
+  override var submitReviewInputHandler: (suspend (GHPRSubmitReviewViewModel) -> Unit)? = null
+
+  override fun submitReview() {
+    val handler = submitReviewInputHandler
+    checkNotNull(handler) { "UI handler was not set" }
+    reviewVmHelper.submitReview(handler)
   }
 
   override fun mergeReview() = runAction {
@@ -199,37 +221,6 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val reviewers = requestedReviewers.first()
     val delta = CollectionDelta(reviewers, reviewers + securityService.currentUser)
     dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
-  }
-
-  init {
-    reviewDataProvider.addPendingReviewListener(cs.nestedDisposable()) {
-      reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
-        _pendingCommentsState.value = pendingComments?.commentsCount ?: 0
-      }
-    }
-    reviewDataProvider.resetPendingReview()
-  }
-
-  private fun getReviewsByReviewers(author: GHActor?,
-                                    reviews: List<GHPullRequestReview>,
-                                    reviewers: List<GHPullRequestRequestedReviewer>): MutableMap<GHPullRequestRequestedReviewer, ReviewState> {
-    val result = mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>()
-    reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state } // latest review state by reviewer
-      .forEach { (reviewer, reviewState) ->
-        if (reviewer != author) {
-          if (reviewState == GHPullRequestReviewState.APPROVED) {
-            result[reviewer] = ReviewState.ACCEPTED
-          }
-          if (reviewState == GHPullRequestReviewState.CHANGES_REQUESTED) {
-            result[reviewer] = ReviewState.WAIT_FOR_UPDATES
-          }
-        }
-      }
-
-    reviewers.forEach { requestedReviewer ->
-      result[requestedReviewer] = ReviewState.NEED_REVIEW
-    }
-    return result
   }
 
   private fun runAction(action: suspend () -> Unit) {

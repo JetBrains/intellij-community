@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.monitoring;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -26,7 +26,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 16);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 17);
 
   private static final LongEventField FIELD_WAIT_MS = Long("wait_ms");  // -1 for synchronous refresh/events
 

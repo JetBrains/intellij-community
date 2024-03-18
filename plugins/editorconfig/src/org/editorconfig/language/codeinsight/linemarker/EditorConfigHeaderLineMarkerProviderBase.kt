@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.messages.EditorConfigBundle
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
-abstract class EditorConfigHeaderLineMarkerProviderBase : LineMarkerProvider {
+abstract class EditorConfigHeaderLineMarkerProviderBase : LineMarkerProvider, DumbAware {
   final override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
   final override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     val headers = elements.mapNotNull { it as? EditorConfigHeader }

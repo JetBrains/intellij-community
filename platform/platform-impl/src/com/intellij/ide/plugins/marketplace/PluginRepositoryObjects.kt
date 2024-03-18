@@ -101,7 +101,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.organization = organization
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId ?: nearestUpdate?.id
-
+    pluginNode.isPaid = isPaid
     if (cdate != null) pluginNode.date = cdate
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
@@ -109,11 +109,15 @@ internal class MarketplaceSearchPluginData(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal class NearestUpdate(
+class NearestUpdate(
   @get:JsonProperty("id")
   val id: String? = null,
+  @get:JsonProperty("xmlId")
+  val pluginId: String = "",
   @get:JsonProperty("products")
   val products: List<String> = emptyList(),
+  @get:JsonProperty("updateCompatibility")
+  val updateCompatibility: Map<String, Long> = emptyMap(),
   @get:JsonProperty("isCompatible")
   val compatible: Boolean = true
 )
@@ -194,7 +198,9 @@ data class IntellijPluginMetadata(
   val licenseUrl: String? = null,
   val bugtrackerUrl: String? = null,
   val documentationUrl: String? = null,
-  val sourceCodeUrl: String? = null) {
+  val sourceCodeUrl: String? = null,
+  val reportPluginUrl: String? = null
+) {
 
   fun toPluginNode(pluginNode: PluginNode) {
     if (vendor != null) {
@@ -207,6 +213,7 @@ data class IntellijPluginMetadata(
     pluginNode.bugtrackerUrl = bugtrackerUrl
     pluginNode.documentationUrl = documentationUrl
     pluginNode.sourceCodeUrl = sourceCodeUrl
+    pluginNode.reportPluginUrl = reportPluginUrl
   }
 }
 

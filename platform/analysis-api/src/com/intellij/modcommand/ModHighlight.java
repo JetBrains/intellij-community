@@ -11,10 +11,10 @@ import java.util.List;
 /**
  * A command that highlights the corresponding ranges in the editor if applicable. May do nothing if editor is not opened.
  * 
- * @param virtualFile virtual file to apply highlighting at
+ * @param file virtual file to apply highlighting at
  * @param highlights highlights to apply
  */
-public record ModHighlight(@NotNull VirtualFile virtualFile, @NotNull List<@NotNull HighlightInfo> highlights) implements ModCommand {
+public record ModHighlight(@NotNull VirtualFile file, @NotNull List<@NotNull HighlightInfo> highlights) implements ModCommand {
   @Override
   public boolean isEmpty() {
     return highlights().isEmpty();

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.RenameCodeVisionSupport
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -215,8 +216,15 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
   val markerRange: TextRange
   val availabilityRange: TextRange?
 
-  when (refactoringData) {
-    is SuggestedRenameData -> {
+  when {
+    refactoringData is SuggestedRenameData && RenameCodeVisionSupport.isEnabledFor(psiFile.fileType) -> {
+      refactoringAvailable = false
+      tooltip = ""
+      markerRange = TextRange.EMPTY_RANGE
+      availabilityRange = null
+    }
+
+    refactoringData is SuggestedRenameData -> {
       refactoringAvailable = true
       tooltip = RefactoringBundle.message(
         "suggested.refactoring.rename.gutter.icon.tooltip",
@@ -228,7 +236,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
       availabilityRange = markerRange
     }
 
-    is SuggestedChangeSignatureData -> {
+    refactoringData is SuggestedChangeSignatureData -> {
       refactoringAvailable = true
       tooltip = RefactoringBundle.message(
         "suggested.refactoring.change.signature.gutter.icon.tooltip",
@@ -240,7 +248,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
       availabilityRange = refactoringSupport.changeSignatureAvailabilityRange(refactoringData.anchor)
     }
 
-    null -> {
+    else -> {
       refactoringAvailable = false
       tooltip = SuggestedRefactoringAvailabilityIndicator.disabledRefactoringTooltip
       markerRange = refactoringSupport.nameRange(anchor)!!

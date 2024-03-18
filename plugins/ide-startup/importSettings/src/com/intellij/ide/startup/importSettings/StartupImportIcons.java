@@ -72,6 +72,9 @@ public final class StartupImportIcons {
     /** 20x20 */ public static final @NotNull Icon RR_20 = load("ideIcons/RR_20.svg", 1365215482, 0);
     /** 24x24 */ public static final @NotNull Icon RR_24 = load("ideIcons/RR_24.svg", -1347118583, 0);
     /** 48x48 */ public static final @NotNull Icon RR_48 = load("ideIcons/RR_48.svg", -1842561134, 0);
+    /** 20x20 */ public static final @NotNull Icon Writerside_20 = load("ideIcons/Writerside_20.svg", 89548907, 0);
+    /** 24x24 */ public static final @NotNull Icon Writerside_24 = load("ideIcons/Writerside_24.svg", 2013081357, 0);
+    /** 48x48 */ public static final @NotNull Icon Writerside_48 = load("ideIcons/Writerside_48.svg", -1907506261, 0);
     /** 20x20 */ public static final @NotNull Icon WS_20 = load("ideIcons/WS_20.svg", -1898489258, 0);
     /** 24x24 */ public static final @NotNull Icon WS_24 = load("ideIcons/WS_24.svg", -1152695022, 0);
     /** 48x48 */ public static final @NotNull Icon WS_48 = load("ideIcons/WS_48.svg", -1820788555, 0);

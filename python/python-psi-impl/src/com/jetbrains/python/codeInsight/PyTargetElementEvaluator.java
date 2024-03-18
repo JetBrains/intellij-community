@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PyTargetElementEvaluator implements TargetElementEvaluator {
+public final class PyTargetElementEvaluator implements TargetElementEvaluator {
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return false;

@@ -15,20 +15,20 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private var myShortcutsManager: MavenShortcutsManager? = null
+
 
   override fun setUp() {
     super.setUp()
-    myShortcutsManager = MavenShortcutsManager.getInstance(myProject)
-    myShortcutsManager!!.doInit(myProject)
+    myShortcutsManager = MavenShortcutsManager.getInstance(project)
+    myShortcutsManager!!.doInit(project)
     initProjectsManager(true)
   }
 
   public override fun tearDown() {
     try {
-      MavenKeymapExtension.clearActions(myProject)
+      MavenKeymapExtension.clearActions(project)
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -69,7 +69,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
     assertEmptyKeymap()
     val goal = "clean"
-    assignShortcut(myProjectPom, goal, "alt shift X")
+    assignShortcut(projectPom, goal, "alt shift X")
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -85,7 +85,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
 
-    assertKeymapContains(myProjectPom, goal)
+    assertKeymapContains(projectPom, goal)
   }
 
   @Test
@@ -99,7 +99,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
     assertEmptyKeymap()
 
     val goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test"
-    assignShortcut(myProjectPom, goal, "alt shift X")
+    assignShortcut(projectPom, goal, "alt shift X")
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -115,9 +115,8 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    resolvePlugins()
 
-    assertKeymapContains(myProjectPom, goal)
+    assertKeymapContains(projectPom, goal)
   }
 
   @Test
@@ -148,10 +147,9 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
     val goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test"
-    assignShortcut(myProjectPom, goal, "alt shift X")
-    resolvePlugins()
+    assignShortcut(projectPom, goal, "alt shift X")
 
-    assertKeymapContains(myProjectPom, goal)
+    assertKeymapContains(projectPom, goal)
   }
 
   @Test
@@ -214,7 +212,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
     assertKeymapContains(p1, goal)
     assertKeymapContains(p2, goal)
 
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> { p1.delete(this) }
+    WriteCommandAction.writeCommandAction(project).run<IOException> { p1.delete(this) }
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
@@ -289,7 +287,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
   private val projectActions: List<String?>
     get() {
-      val prefix = MavenKeymapExtension.getActionPrefix(myProject, null)
+      val prefix = MavenKeymapExtension.getActionPrefix(project, null)
       return ActionManager.getInstance().getActionIdList(prefix!!)
     }
 }

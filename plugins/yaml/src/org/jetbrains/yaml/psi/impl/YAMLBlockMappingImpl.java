@@ -77,7 +77,9 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
     final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
     if (whereInsert == null) {
       add(generator.createEol());
-      add(generator.createIndent(indent));
+      if (indent != 0) {
+        add(generator.createIndent(indent));
+      }
       add(key);
       return;
     }

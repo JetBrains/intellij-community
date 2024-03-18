@@ -26,7 +26,7 @@ import static com.intellij.codeInsight.completion.JavaCompletionContributor.isIn
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
 
   // MethodHandle for constructors and methods
   private static final Set<String> METHOD_HANDLE_FACTORY_NAMES = Set.of(

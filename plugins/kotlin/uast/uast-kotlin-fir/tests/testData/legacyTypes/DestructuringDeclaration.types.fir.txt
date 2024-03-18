@@ -8,7 +8,8 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                     ULocalVariable (name = var268d41a5) [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] : PsiType:Pair<? extends String, ? extends Integer>
-                            ULiteralExpression (value = "foo") ["foo"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["foo"] : PsiType:String
+                                ULiteralExpression (value = "foo") ["foo"] : PsiType:String
                             ULiteralExpression (value = 1) [1] : PsiType:int
                     ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: java.lang.String = var268d41a5.<anonymous class>()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -29,7 +30,8 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "UNCHECKED_CAST")]
                             UNamedExpression (name = names) [names = "UNCHECKED_CAST"]
-                                ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] : PsiType:String
+                                UPolyadicExpression (operator = +) ["UNCHECKED_CAST"] : PsiType:String
+                                    ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] : PsiType:String
                         UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] : PsiType:Pair<? extends String, ? extends String>
                             USimpleNameReferenceExpression (identifier = data) [data] : PsiType:Object
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]

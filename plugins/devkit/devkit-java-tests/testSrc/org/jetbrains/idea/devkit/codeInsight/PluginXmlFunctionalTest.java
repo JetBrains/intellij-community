@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -70,7 +71,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
     myInspection = new PluginXmlDomInspection();
-    myFixture.enableInspections(myInspection);
+    myFixture.enableInspections(myInspection, new XmlUnresolvedReferenceInspection());
     RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
   }
 

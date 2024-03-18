@@ -25,7 +25,7 @@ fragment mergeRequest on MergeRequest {
     headSha
   }
 
-  approved # Not available in community
+  approvalsRequired # Not available in community
   conflicts
   headPipeline {
     ...pipeline

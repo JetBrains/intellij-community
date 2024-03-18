@@ -8,8 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class EncodingImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testEncodingDefinedByProperty() = runBlocking {
     val text = byteArrayOf(-12, -59, -53, -45, -44) // Russian text in koi8-r encoding.

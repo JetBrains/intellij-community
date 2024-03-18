@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 interface AsyncSpanExporter {
   suspend fun export(spans: Collection<SpanData>)
 
-  fun forceFlush() {}
+  suspend fun flush() {}
 
-  fun shutdown() {}
+  suspend fun shutdown() {}
 }

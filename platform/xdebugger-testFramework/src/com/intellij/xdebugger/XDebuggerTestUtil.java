@@ -21,7 +21,6 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
@@ -47,14 +46,18 @@ public class XDebuggerTestUtil {
   XDebuggerTestUtil() {
   }
 
-  @Nullable
-  public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
   computeLineBreakpointVariants(Project project, VirtualFile file, int line) {
+    return computeLineBreakpointVariants(project, file, line, 0);
+  }
+
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
+  computeLineBreakpointVariants(Project project, VirtualFile file, int line, int column) {
     return ReadAction.compute(() -> {
       List<XLineBreakpointType> types = StreamEx.of(XDebuggerUtil.getInstance().getLineBreakpointTypes())
                                                 .filter(type -> type.canPutAt(file, line, project))
                                                 .collect(Collectors.toCollection(SmartList::new));
-      return XDebuggerUtilImpl.getLineBreakpointVariants(project, types, XSourcePositionImpl.create(file, line));
+      return XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, types, XSourcePositionImpl.create(file, line, column));
     });
   }
 
@@ -239,7 +242,7 @@ public class XDebuggerTestUtil {
         return future.get(remaining, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException e) {
-        return null;
+        throw new InterruptedException();
       }
       catch (ExecutionException e) {
         Throwable cause = e.getCause();
@@ -252,8 +255,12 @@ public class XDebuggerTestUtil {
   }
 
   public static boolean waitFor(@NotNull Semaphore semaphore, long timeoutInMillis) {
-    return waitFor(remaining -> semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS) ? Boolean.TRUE : null,
-                   timeoutInMillis) == Boolean.TRUE;
+    return waitFor(remaining -> {
+      if (semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS)) {
+        return true;
+      }
+      throw new InterruptedException();
+    }, timeoutInMillis) == Boolean.TRUE;
   }
 
   private static <T> @Nullable T waitFor(@NotNull ThrowableConvertor<? super Long, T, ? extends InterruptedException> waitFunction,
@@ -263,10 +270,7 @@ public class XDebuggerTestUtil {
     for (long remaining = timeoutInMillis; remaining > 0; remaining = end - System.currentTimeMillis()) {
       try {
         // 10ms is the sleep interval used by ProgressIndicatorUtils for busy-waiting.
-        T result = waitFunction.convert(Math.min(10, remaining));
-        if (result != null) {
-          return result;
-        }
+        return waitFunction.convert(Math.min(10, remaining));
       }
       catch (InterruptedException ignored) {
       }

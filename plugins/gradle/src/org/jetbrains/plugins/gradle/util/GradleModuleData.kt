@@ -101,5 +101,5 @@ fun ModuleData.isBuildSrcModule() = getProperty("buildSrcModule")?.toBoolean() ?
 fun ModuleData.setBuildSrcModule() = setProperty("buildSrcModule", true.toString())
 
 private fun Module.findMainModuleDataNode(): DataNode<out ModuleData>? {
-  return CachedModuleDataFinder.getInstance(project).findMainModuleData(this)
+  return CachedModuleDataFinder.findMainModuleData(this)
 }

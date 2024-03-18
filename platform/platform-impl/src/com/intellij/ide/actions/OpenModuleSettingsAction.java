@@ -20,11 +20,6 @@ public final class OpenModuleSettingsAction extends EditSourceAction {
     }
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
   static boolean isModuleInProjectViewPopup(@NotNull AnActionEvent e) {
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace())) {
       return isModuleInContext(e);

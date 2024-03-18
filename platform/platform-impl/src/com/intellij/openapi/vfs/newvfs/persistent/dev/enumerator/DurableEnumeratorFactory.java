@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,10 +31,10 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
   public static final StorageFactory<? extends AppendOnlyLog> DEFAULT_VALUES_LOG_FACTORY = AppendOnlyLogFactory
     .withDefaults()
     .pageSize(DEFAULT_PAGE_SIZE)
-    .cleanFileIfIncompatible()
+    .cleanIfFileIncompatible()
     .failIfDataFormatVersionNotMatch(DurableEnumerator.DATA_FORMAT_VERSION);
 
-  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults()
+  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.mediumSize()
     .cleanIfFileIncompatible()
     .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP);
 
@@ -112,19 +112,38 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             //If hashToId map is durable, but its factory configured to 'create an empty map if (corrupted, inconsistent,
             // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
             // durable maps
+            //If hashToId is really non-durable (see DEFAULT_IN_MEMORY_MAP_FACTORY) than this branch refill the map.
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
-              LOG.warn("[" + name + "]: .valueToId map is out-of-sync with .valuesLog data -> rebuilding it");
-              //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+
+              boolean durableMap = !(valueHashToId instanceof NonDurableNonParallelIntToMultiIntMap);
+
+              //this branch is a warning for durable maps, but regular for non-durable:
+              if (durableMap) {
+                LOG.warn("[" + name + "]: .valueHashToId map is out-of-sync with .valuesLog data (records count don't match) " +
+                         "-> rebuilding the map (impl: " + valueHashToId.getClass() + ")");
+              }
+
+              //MAYBE RC: valueHashToId could be build/load async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
+
+              if (durableMap) {
+                LOG.warn("[" + name + "]: .valueHashToId was rebuilt (" + valueHashToId.size() + " records)");
+              }
+              else {
+                LOG.info("[" + name + "]: .valueHashToId (in memory) was filled (" + valueHashToId.size() + " records)");
+              }
             }
             //TODO RC: what if valuesLog was recovered? -- could it be the .hashToId map is somehow wasClosedProperly,
-            //         but is inconsistent with valuesLog? It seems like there is a chance that value is appended to
-            //         the log, and inserted into the map -- but one of the previous values in the log wasn't committed,
-            //         and even record header wasn't written -- and because of that whole region after that
-            //         allocated-but-not-yet-started record is lost -- so the id put in the map is now invalid.
+            //         but still is inconsistent with valuesLog? It seems it could: current implementation of append-only-log
+            //         _could_ sometimes lose the written-and-commited record: i.e. one of the previous values in the log
+            //         wasn't committed, and even record header wasn't written -- and because of that whole region after
+            //         that allocated-but-not-yet-started record is lost (see more detailed discussion in the implementation
+            //         class). So there _is_ a chance that value is appended to the log, and valueId is inserted into the map,
+            //         but value record is lost on crash, so the id put in the map is now invalid.
             //         So we should either modify AppendOnlyLog so that it doesn't allow that (e.g. we could not return
-            //         from allocateRecord until at least header is written) -- or we should rebuild the map even if
-            //         the map itself wasClosedProperly, but AppendOnlyLog was recovered, and recovered region >0
+            //         from allocateRecord until at least header is written -- again, see discussion in the impl class) -- or
+            //         we should always rebuild the map if AppendOnlyLog was recovered, _and_ the recovered region >0 -- even
+            //         if the map itself wasClosedProperly=true.
 
             //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
             //      (both requires .open(path,CREATE_NEW) method)

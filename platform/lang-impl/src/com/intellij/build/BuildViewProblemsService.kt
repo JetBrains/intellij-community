@@ -8,11 +8,13 @@ import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 
+@Service(Service.Level.PROJECT)
 class BuildViewProblemsService(override val project: Project) : ProblemsProvider {
 
   override fun dispose() {

@@ -37,11 +37,6 @@ public class GreclipseJpsCompilerSettings extends JpsCompositeElementBase<Grecli
     return new GreclipseJpsCompilerSettings(mySettings);
   }
 
-  @Override
-  public void applyChanges(@NotNull GreclipseJpsCompilerSettings modified) {
-    mySettings = modified.mySettings;
-  }
-
   @Nullable
   public static GreclipseSettings getSettings(@NotNull JpsProject project) {
     GreclipseJpsCompilerSettings extension = project.getContainer().getChild(ROLE);

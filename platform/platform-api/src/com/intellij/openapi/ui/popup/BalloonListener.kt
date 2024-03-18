@@ -10,7 +10,7 @@ fun interface BalloonListener {
     /**
      * Notification about showing balloon
      */
-    @JvmStatic
+    @JvmField
     @Topic.AppLevel
     val TOPIC: Topic<BalloonListener> = Topic(BalloonListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
   }

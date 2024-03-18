@@ -6,6 +6,7 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
@@ -31,7 +32,8 @@ internal val SettingsMutators: List<SettingsMutator<*>> = listOf(
     KotlinVariablesModeSettingsMutator,
     JvmTargetSettingsMutator,
     ForceRankingSettingsMutator,
-    ReflectionPatchingMutator
+    ReflectionPatchingMutator,
+    ShowLibraryStackFramesMutator,
 )
 
 private class DebuggerSettingsMutator<T : Any>(
@@ -92,6 +94,14 @@ private object ReflectionPatchingMutator : SettingsMutator<Boolean>(DebuggerPref
     override fun setValue(value: Boolean, project: Project): Boolean {
         val oldValue = ReflectionCallClassPatcher.isEnabled
         ReflectionCallClassPatcher.isEnabled = value
+        return oldValue
+    }
+}
+
+private object ShowLibraryStackFramesMutator : SettingsMutator<Boolean>(DebuggerPreferenceKeys.SHOW_LIBRARY_STACK_FRAMES) {
+    override fun setValue(value: Boolean, project: Project): Boolean {
+        val oldValue = XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames
+        XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = value
         return oldValue
     }
 }

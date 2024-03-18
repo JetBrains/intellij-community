@@ -8,7 +8,7 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaIdIndexer extends LexerBasedIdIndexer {
+public final class JavaIdIndexer extends LexerBasedIdIndexer {
   @NotNull
   @Override
   public Lexer createLexer(@NotNull final OccurrenceConsumer consumer) {

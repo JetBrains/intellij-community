@@ -167,9 +167,13 @@ public final class PluginInstallOperation {
       if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         PluginNode descriptor = allPlugins.get(node.getPluginId());
         node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
+        String oldUrl = node.getDownloadUrl();
         if (descriptor != null) {
           node.setDownloadUrl(descriptor.getDownloadUrl());
         }
+        LOG.info("updateUrls for node: " +
+                 node.getPluginId() + " | " + node.getVersion() + " | " + oldUrl +
+                 " to: " + node.getRepositoryName() + " | " + node.getDownloadUrl());
       }
     }
   }

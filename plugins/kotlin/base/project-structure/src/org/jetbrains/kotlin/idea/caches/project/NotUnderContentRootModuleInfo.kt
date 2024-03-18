@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.NonSourceModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo as NewNotUnderContentRootModuleInfo
 
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo' instead.")
+@ApiStatus.ScheduledForRemoval
 abstract class NotUnderContentRootModuleInfo : IdeaModuleInfo, NonSourceModuleInfoBase {
     companion object {
         @JvmField

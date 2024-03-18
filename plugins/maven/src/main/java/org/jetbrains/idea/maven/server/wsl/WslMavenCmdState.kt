@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.wsl
 
 import com.intellij.build.events.MessageEvent
@@ -61,6 +61,7 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
       wslParams.programParametersList.add(item)
     }
     wslParams.charset = parameters.charset
+    wslParams.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
     wslParams.vmParametersList.add("-classpath")
     wslParams.vmParametersList.add(parameters.classPath.pathList
                                      .mapNotNull(myWslDistribution::getWslPath).joinToString(":"))

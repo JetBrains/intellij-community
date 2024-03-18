@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -15,9 +15,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
@@ -31,7 +29,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -64,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -220,6 +218,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       processVMDeathEvent(suspendContext, event);
                     }
                     else if (event instanceof ClassPrepareEvent) {
+                      if (eventSet.size() > 1) {
+                        // check for more than one different thread
+                        if (StreamEx.of(eventSet).select(ClassPrepareEvent.class).map(ClassPrepareEvent::thread).toSet().size() > 1) {
+                          LOG.error("Two different threads in ClassPrepareEvents: " + eventSet);
+                        }
+                      }
                       if (notifiedClassPrepareEventRequestors == null) {
                         notifiedClassPrepareEventRequestors = new HashSet<>(eventSet.size());
                       }
@@ -233,6 +237,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
                     }
                     else if (event instanceof LocatableEvent) {
                       preloadEventInfo(((LocatableEvent)event));
+                      if (eventSet.size() > 1) {
+                        // check for more than one different thread
+                        if (StreamEx.of(eventSet).select(LocatableEvent.class).map(LocatableEvent::thread).toSet().size() > 1) {
+                          LOG.error("Two different threads in LocatableEvents: " + eventSet);
+                        }
+                      }
                       //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
                       //ModificationWatchpointEvent, StepEvent, WatchpointEvent
                       if (event instanceof StepEvent) {
@@ -434,9 +444,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
         if (session != null) {
-          // reload to make sure that source positions are initialized
-          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().reloadBreakpoints();
-
           session.initBreakpoints();
         }
       });
@@ -608,6 +615,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return (RequestHint)event.request().getProperty("hint");
   }
 
+  @Nullable
   private static Object getCommandToken(Event event) {
     return event.request().getProperty("commandToken");
   }
@@ -640,12 +648,17 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // Don't try to check breakpoint's condition or evaluate its log expression,
         // because these evaluations may lead to skipping of more important stepping events,
         // see IDEA-336282.
-        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
-          ThreadReference filteredThread = getRequestsManager().getFilterThread();
-          if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
-            notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
-            suspendManager.voteResume(suspendContext);
-            return;
+        boolean filterWasUsed = false;
+        boolean shouldIgnoreThreadFiltering = requestor == null || !requestor.shouldIgnoreThreadFiltering();
+        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && shouldIgnoreThreadFiltering) {
+          LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
+          if (filter != null) {
+            if (myPreparingToSuspendAll || !filter.checkSameThread(thread, suspendContext)) {
+              notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+              suspendManager.voteResume(suspendContext);
+              return;
+            }
+            filterWasUsed = true;
           }
         }
 
@@ -735,8 +748,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
-          suspendManager.voteSuspend(suspendContext);
-          showStatusText(DebugProcessEvents.this, event);
+          Function<SuspendContextImpl, Boolean> performOnSuspendAll = requestor.callbackAfterReplacementForAllThreadSuspendContext();
+          if (filterWasUsed && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && performOnSuspendAll != null) {
+            // Do not vote to resume.
+            // Instead, create an auxiliary request to correctly stop all threads as soon as possible.
+            // [SuspendOtherThreadsRequestor] will resume this suspendContext when the request hits.
+            // Resume will be without voting.
+            SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(DebugProcessEvents.this, suspendContext, performOnSuspendAll);
+          }
+          else {
+            suspendManager.voteSuspend(suspendContext);
+            showStatusText(DebugProcessEvents.this, event);
+          }
         }
       }
     });
@@ -751,20 +774,26 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void notifySkippedBreakpoints(@Nullable LocatableEvent event, SkippedBreakpointReason reason) {
-    if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
-      var message = switch (reason) {
-        case EVALUATION -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.evaluation", event.location());
-        case OTHER_VM -> JavaDebuggerBundle.message("message.breakpoint.skipped.other.vm", event.location());
-        case STEPPING -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.stepping.in.another.thread", event.location());
-      };
-      XDebuggerManagerImpl.getNotificationGroup()
-        .createNotification(message, MessageType.WARNING)
-        .addAction(NotificationAction.createSimpleExpiring(JavaDebuggerBundle.message("message.breakpoint.skipped.learn.more"), () -> {
-          BrowserUtil.browse("https://www.jetbrains.com/help/idea/?skipped.breakpoints");
-        }))
-        .notify(getProject());
-    }
+    if (event == null) return;
+
+    // IDE user is not intended to see notifications about our synthetic breakpoints.
+    final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
+    if (requestor instanceof SyntheticBreakpoint) return;
+
+    if (!myNotificationsCoolDown.compareAndSet(false, true)) return;
+
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
+    var message = switch (reason) {
+      case EVALUATION -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.evaluation", event.location());
+      case OTHER_VM -> JavaDebuggerBundle.message("message.breakpoint.skipped.other.vm", event.location());
+      case STEPPING -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.stepping.in.another.thread", event.location());
+    };
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification(message, MessageType.WARNING)
+      .addAction(NotificationAction.createSimpleExpiring(JavaDebuggerBundle.message("message.breakpoint.skipped.learn.more"), () -> {
+        BrowserUtil.browse("https://www.jetbrains.com/help/idea/?skipped.breakpoints");
+      }))
+      .notify(getProject());
   }
 
   @Nullable

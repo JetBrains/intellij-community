@@ -31,7 +31,7 @@ import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class StandardVariableNamesInspection extends BaseInspection {
+public final class StandardVariableNamesInspection extends BaseInspection {
 
 
   @NonNls static final Map<String, String> s_expectedTypes =

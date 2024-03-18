@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -74,7 +74,10 @@ import java.util.function.Supplier;
  * <p><b>NOTE:</b> for performance critical parts of code of for the checks
  * which should not be enabled under some circumstances it is likely better to use standard Java assertions
  * via {@code assert statement : message} construction.</p>
+ *
+ * @deprecated use Kotlin with its {@link kotlin.PreconditionsKt#check}/{@link kotlin.PreconditionsKt#require} functions
  */
+@Deprecated
 @ApiStatus.Experimental
 public final class Checks {
 

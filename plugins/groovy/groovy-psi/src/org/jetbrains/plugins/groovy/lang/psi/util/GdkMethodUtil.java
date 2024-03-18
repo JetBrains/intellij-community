@@ -65,11 +65,11 @@ public final class GdkMethodUtil {
   @NlsSafe public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
 
   private static final Map<String, String> AST_TO_EXPR_MAPPER =
-    Map.of("org.codehaus.groovy.ast.expr.ClosureExpression", "groovy.lang.Closure",
-           "org.codehaus.groovy.ast.expr.ListExpression", "java.util.List",
-           "org.codehaus.groovy.ast.expr.MapExpression", "java.util.Map",
-           "org.codehaus.groovy.ast.expr.TupleExpression", "groovy.lang.Tuple",
-           "org.codehaus.groovy.ast.expr.MethodCallExpression", "java.lang.Object");
+    Map.of("org.codehaus.groovy.ast.expr.ClosureExpression", GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
+           "org.codehaus.groovy.ast.expr.ListExpression", CommonClassNames.JAVA_UTIL_LIST,
+           "org.codehaus.groovy.ast.expr.MapExpression", CommonClassNames.JAVA_UTIL_MAP,
+           "org.codehaus.groovy.ast.expr.TupleExpression", GroovyCommonClassNames.GROOVY_LANG_TUPLE,
+           "org.codehaus.groovy.ast.expr.MethodCallExpression", CommonClassNames.JAVA_LANG_OBJECT);
 
   private static final String MACRO_ORIGIN_INFO = "Macro method";
 

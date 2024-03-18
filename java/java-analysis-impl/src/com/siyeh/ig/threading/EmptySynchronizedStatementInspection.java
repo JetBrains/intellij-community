@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptySynchronizedStatementInspection extends BaseInspection {
+public final class EmptySynchronizedStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -24,7 +24,7 @@ import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STRING_REPLACE = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING,
                                                                                   "replace", "replaceFirst", "replaceAll");
   private static final int MAX_QUALIFIER_LENGTH = 1000;

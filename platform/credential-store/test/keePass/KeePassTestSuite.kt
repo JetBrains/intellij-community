@@ -1,9 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.com.intellij.credentialStore.keePass.KeePassClearTest
-import com.intellij.credentialStore.com.intellij.credentialStore.keePass.KeePassImportTest
-import com.intellij.credentialStore.com.intellij.credentialStore.keePass.KeePassSetMasterPasswordTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -33,7 +34,7 @@ public abstract class TestClassesFilter {
   }
 
   protected static boolean matchesAnyPattern(Collection<Pattern> patterns, String className) {
-    return patterns.stream().anyMatch(pattern -> pattern.matcher(className).matches());
+    return ContainerUtil.exists(patterns, pattern -> pattern.matcher(className).matches());
   }
 
   public static class And extends TestClassesFilter {

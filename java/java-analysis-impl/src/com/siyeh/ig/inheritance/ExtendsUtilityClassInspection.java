@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ExtendsUtilityClassInspection extends BaseInspection {
+public final class ExtendsUtilityClassInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreUtilityClasses = false;

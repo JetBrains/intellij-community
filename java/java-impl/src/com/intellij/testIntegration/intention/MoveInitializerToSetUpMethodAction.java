@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMethodAction {
+public final class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMethodAction {
   private static final Logger LOG = Logger.getInstance(MoveInitializerToSetUpMethodAction.class);
 
   @Override

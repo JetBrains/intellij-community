@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * See also {@link UiDslUnnamedConfigurable.Simple} for more flexible alternative.
+ * @deprecated Use identical {@link BeanConfigurable} for replacement
  */
+@Deprecated(forRemoval = true)
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private @NlsContexts.BorderTitle String myTitle;
@@ -227,6 +229,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
   }
 
+  @ApiStatus.Internal
   public static @Nullable String getConfigurableTitle(@NotNull UnnamedConfigurable configurable) {
     if (configurable instanceof BeanConfigurable<?>) {
       return ((BeanConfigurable<?>)configurable).getTitle();

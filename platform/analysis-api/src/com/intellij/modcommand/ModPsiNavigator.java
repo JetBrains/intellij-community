@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,63 +32,17 @@ public interface ModPsiNavigator {
    *
    * @param offset offset to move to
    */
-  void moveTo(int offset);
+  void moveCaretTo(int offset);
 
   /**
    * Navigates to a given element
    *
    * @param element element to navigate to
    */
-  void moveTo(@NotNull PsiElement element);
-
-  /**
-   * Moves caret to a previous occurrence of character ch. Do nothing if no such occurrence is found 
-   * @param ch character to find
-   */
-  void moveToPrevious(char ch);
+  void moveCaretTo(@NotNull PsiElement element);
 
   /**
    * @return current caret offset
    */
   int getCaretOffset();
-
-  static @NotNull ModPsiNavigator fromEditor(@NotNull Editor editor) {
-    return new ModPsiNavigator() {
-      @Override
-      public void select(@NotNull PsiElement element) {
-        select(element.getTextRange());
-      }
-
-      @Override
-      public void select(@NotNull TextRange range) {
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
-
-      @Override
-      public void moveTo(int offset) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-
-      @Override
-      public void moveTo(@NotNull PsiElement element) {
-        moveTo(element.getTextRange().getStartOffset());
-      }
-
-      @Override
-      public void moveToPrevious(char ch) {
-        Document document = editor.getDocument();
-        int offset = editor.getCaretModel().getOffset();
-        CharSequence sequence = document.getCharsSequence();
-        while (offset > 0 && sequence.charAt(offset) != ch) {
-          offset--;
-        }
-        editor.getCaretModel().moveToOffset(offset);
-      }
-
-      @Override
-      public int getCaretOffset() {
-        return editor.getCaretModel().getOffset();
-      }
-    };
-  }
 }

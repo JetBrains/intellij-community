@@ -39,12 +39,6 @@ public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase
     }
   }
 
-  public void testDoNotCheckDoubleMessage() {
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(
-      () -> doTest("<warning descr=\"Magic problem\">just some text</warning>", new MyDoubleInspection())
-    );
-  }
-
   public void testExpectedDuplicationWasNotFound() {
     try {
       ExpectedHighlightingData.expectedDuplicatedHighlighting(

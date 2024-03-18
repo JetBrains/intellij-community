@@ -3,5 +3,6 @@
   "type": "MOVE_KOTLIN_METHOD",
   "methodToMove": "foo",
   "methodParameter": "o",
+  "enabledInK1": "true",
   "enabledInK2": "false"
 }

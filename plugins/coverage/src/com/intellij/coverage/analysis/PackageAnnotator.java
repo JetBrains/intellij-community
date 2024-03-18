@@ -8,16 +8,10 @@ import com.intellij.coverage.JavaCoverageOptionsProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -57,7 +51,7 @@ public final class PackageAnnotator {
     IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
 
     JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
-    myIgnoreImplicitConstructor = optionsProvider.ignoreImplicitConstructors();
+    myIgnoreImplicitConstructor = optionsProvider.getIgnoreImplicitConstructors();
   }
 
   private synchronized ProjectData getUnloadedClassesProjectData() {
@@ -73,48 +67,6 @@ public final class PackageAnnotator {
     return outputRoot;
   }
 
-  public PackageAnnotator.ClassCoverageInfo visitClass(PsiClass psiClass) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (module != null) {
-      final boolean isInTests = ProjectRootManager.getInstance(module.getProject()).getFileIndex()
-        .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
-      final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-      if (moduleExtension == null) return null;
-      final String outputPathUrl = isInTests ? moduleExtension.getCompilerOutputUrlForTests() : moduleExtension.getCompilerOutputUrl();
-      final File outputPath = outputPathUrl != null ? new File(VfsUtilCore.urlToPath(outputPathUrl)) : null;
-
-      if (outputPath != null) {
-        final String qualifiedName = psiClass.getQualifiedName();
-        if (qualifiedName == null) return null;
-        final String packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(qualifiedName));
-        final File packageRoot = findRelativeFile(packageVMName, outputPath);
-        if (packageRoot.exists()) {
-          final File[] files = packageRoot.listFiles();
-          if (files != null) {
-            final PackageAnnotator.ClassCoverageInfo result = new PackageAnnotator.ClassCoverageInfo();
-            for (File child : files) {
-              if (AnalysisUtils.isClassFile(child)) {
-                String simpleName = AnalysisUtils.getClassName(child);
-                String classFqVMName = AnalysisUtils.buildVMName(packageVMName, simpleName);
-                String toplevelClassSrcFQName = AnalysisUtils.getSourceToplevelFQName(classFqVMName);
-                if (toplevelClassSrcFQName.equals(qualifiedName)) {
-                  final String className = AnalysisUtils.internalNameToFqn(classFqVMName);
-                  final PackageAnnotator.ClassCoverageInfo coverageInfo = collectClassCoverageInformation(child, psiClass, className);
-                  if (coverageInfo != null) {
-                    result.append(coverageInfo);
-                  }
-                }
-              }
-            }
-            return result;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-
   /**
    * Collect coverage for classes with the same top level name.
    * @param toplevelClassSrcFQName Top level element name
@@ -129,33 +81,29 @@ public final class PackageAnnotator {
     final Ref<VirtualFile> containingFileRef = new Ref<>();
     final Ref<PsiClass> psiClassRef = new Ref<>();
     if (myProject.isDisposed()) return null;
-    final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
-      if (myProject.isDisposed()) return null;
+    DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+      if (myProject.isDisposed()) return;
       final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(toplevelClassSrcFQName, mySuite.getSearchScope(myProject));
-      if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
+      if (aClass == null || !aClass.isValid()) return;
       psiClassRef.set(aClass);
       PsiElement element = aClass.getNavigationElement();
-      containingFileRef.set(PsiUtilCore.getVirtualFile(element));
-      if (containingFileRef.isNull()) {
-        LOG.info("No virtual file found for: " + aClass);
-        return null;
-      }
-      return mySuite.getCoverageEngine().acceptedByFilters(element.getContainingFile(), mySuite);
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      containingFileRef.set(file);
     });
-
-    if (isInSource == null || !isInSource.booleanValue()) return null;
+    PsiClass psiClass = psiClassRef.get();
+    if (psiClass == null) return null;
     VirtualFile virtualFile = containingFileRef.get();
     var topLevelClassCoverageInfo = new PackageAnnotator.ClassCoverageInfo();
     VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
     for (Map.Entry<String, File> e : children.entrySet()) {
       File file = e.getValue();
-      if (virtualFile == null && !ContainerUtil.exists(JavaCoverageEngineExtension.EP_NAME.getExtensions(),
+      if (virtualFile == null && !ContainerUtil.exists(JavaCoverageEngineExtension.EP_NAME.getExtensionList(),
                                                        extension -> extension.keepCoverageInfoForClassWithoutSource(mySuite, file))) {
         continue;
       }
       String simpleName = e.getKey();
       String classFqName = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName));
-      var info = collectClassCoverageInformation(file, psiClassRef.get(), classFqName);
+      var info = collectClassCoverageInformation(file, psiClass, classFqName);
       if (info == null) continue;
       topLevelClassCoverageInfo.append(info);
     }
@@ -164,17 +112,19 @@ public final class PackageAnnotator {
 
   @Nullable
   private PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable File classFile,
-                                                                             @Nullable PsiClass psiClass,
+                                                                             @NotNull PsiClass psiClass,
                                                                              String className) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
     if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
       ClassData fullClassData = collectNonCoveredClassInfo(classFile, className, getUnloadedClassesProjectData());
-      if (classData == null) {
-        classData = fullClassData;
-      }
-      else {
-        classData.merge(fullClassData);
+      if (fullClassData != null) {
+        if (classData == null) {
+          classData = fullClassData;
+        }
+        else {
+          classData.merge(fullClassData);
+        }
       }
     }
 
@@ -182,7 +132,7 @@ public final class PackageAnnotator {
   }
 
   @Nullable
-  private static ClassCoverageInfo getSummaryInfo(@Nullable PsiClass psiClass, @Nullable ClassData classData, boolean ignoreImplicitConstructor) {
+  private static ClassCoverageInfo getSummaryInfo(@NotNull PsiClass psiClass, @Nullable ClassData classData, boolean ignoreImplicitConstructor) {
     if (classData == null || classData.getLines() == null) return null;
     ClassCoverageInfo info = new ClassCoverageInfo();
     boolean isDefaultConstructorGenerated = false;

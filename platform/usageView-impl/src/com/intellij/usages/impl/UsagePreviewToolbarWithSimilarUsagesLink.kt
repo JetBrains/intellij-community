@@ -14,7 +14,7 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.usages.UsageView
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.usages.similarity.clustering.UsageCluster
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logLinkToSimilarUsagesLinkFromUsagePreviewClicked
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil

@@ -2,21 +2,26 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.configurationStore.StreamProvider;
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.MultiMap;
+import kotlin.jvm.functions.Function3;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -35,16 +40,25 @@ final class FTManager {
 
   private final String name;
   private final boolean isInternal;
+  private final Path templatePath;
   private final Path templateDir;
   private final @Nullable FTManager original;
   private final Map<String, FileTemplateBase> templates;
   private volatile List<FileTemplateBase> sortedTemplates;
   private final List<DefaultTemplate> defaultTemplates;
+  private final StreamProvider streamProvider;
 
-  FTManager(@NotNull @NonNls String name, @NotNull Path defaultTemplatesDirName, List<DefaultTemplate> defaultTemplates, boolean isInternal) {
+  FTManager(@NotNull @NonNls String name,
+            @NotNull Path defaultTemplatesDirName,
+            @NotNull Path templateDir,
+            List<DefaultTemplate> defaultTemplates,
+            boolean isInternal,
+            StreamProvider streamProvider) {
     this.name = name;
     this.isInternal = isInternal;
-    templateDir = defaultTemplatesDirName;
+    this.streamProvider = streamProvider;
+    templatePath = defaultTemplatesDirName;
+    this.templateDir = templateDir;
     original = null;
     this.defaultTemplates = defaultTemplates;
     templates = new HashMap<>(defaultTemplates.size());
@@ -61,15 +75,17 @@ final class FTManager {
   FTManager(@NotNull FTManager original) {
     this.original = original;
     name = original.getName();
+    templatePath = original.templatePath;
     templateDir = original.templateDir;
     isInternal = original.isInternal;
     templates = new HashMap<>(original.templates);
     defaultTemplates = List.copyOf(original.defaultTemplates);
+    streamProvider = original.streamProvider;
   }
 
   @TestOnly
-  public FTManager(@NotNull @NonNls String name, @NotNull Path defaultTemplatesDirName) {
-    this(name, defaultTemplatesDirName, Collections.emptyList(), false);
+  FTManager(@NotNull @NonNls String name, @NotNull Path templateDir) {
+    this(name, Path.of("test"), templateDir, Collections.emptyList(), false, FileTemplatesLoaderKt.streamProvider(null));
   }
 
   public @NotNull String getName() {
@@ -203,35 +219,28 @@ final class FTManager {
   }
 
   public void loadCustomizedContent() {
-    List<Path> templateWithDefaultExtension = new ArrayList<>();
+    List<String> templateWithDefaultExtension = new ArrayList<>();
     Set<String> processedNames = new HashSet<>();
     List<FileTemplateBase> children = new ArrayList<>();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(templateDir,
-                                                                 file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
-      FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-      for (Path file : stream) {
-        String fileName = file.getFileName().toString();
-        // check it here and not in filter to reuse fileName
-        if (fileTypeManager.isFileIgnored(fileName)) {
-          continue;
-        }
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (!processTemplates((fileName, stream, aBoolean) -> {
+      // check it here and not in filter to reuse fileName
+      if (fileTypeManager.isFileIgnored(fileName)) {
+        return true;
+      }
 
-        if (fileName.endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
-          templateWithDefaultExtension.add(file);
-        }
-        else {
-          processedNames.add(fileName);
-          FileTemplateBase template = addTemplateFromFile(fileName, file);
-          if (fileName.contains(FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX)) {
-            children.add(template);
-          }
+      if (fileName.endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
+        templateWithDefaultExtension.add(fileName);
+      }
+      else {
+        processedNames.add(fileName);
+        FileTemplateBase template = addTemplateFromFile(fileName, stream);
+        if (template != null && fileName.contains(FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX)) {
+          children.add(template);
         }
       }
-    }
-    catch (NoSuchFileException ignored) {
-    }
-    catch (IOException e) {
-      LOG.error(e);
+      return true;
+    })) {
       return;
     }
 
@@ -243,16 +252,20 @@ final class FTManager {
       }
     }
 
-    for (Path file : templateWithDefaultExtension) {
-      String name = file.getFileName().toString();
+    for (String fileName : templateWithDefaultExtension) {
       // cut default template extension
-      name = name.substring(0, name.length() - TEMPLATE_EXTENSION_SUFFIX.length());
+      String name = StringUtil.trimEnd(fileName, TEMPLATE_EXTENSION_SUFFIX);
       if (!processedNames.contains(name)) {
-        addTemplateFromFile(name, file);
+        addTemplateFromFile(name, null);
       }
+      deleteFile(fileName);
+    }
+  }
 
+  private void deleteFile(String fileName) {
+    if (!streamProvider.delete(getSpec(fileName), RoamingType.DEFAULT)) {
       try {
-        Files.delete(file);
+        Files.delete(templateDir.resolve(fileName));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -260,27 +273,80 @@ final class FTManager {
     }
   }
 
+  private boolean processTemplates(Function3<String, InputStream, Boolean, Boolean> processor) {
+    if (!streamProvider.processChildren(getSpec(""), RoamingType.DEFAULT, s -> true, processor)) {
+      if (processLocal(processor)) return false;
+    }
+    return true;
+  }
+
+  private boolean processLocal(Function3<String, InputStream, Boolean, Boolean> processor) {
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(templateDir,
+                                                                 file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
+      for (Path path : directoryStream) {
+        try (InputStream stream = Files.newInputStream(path)) {
+          processor.invoke(path.getFileName().toString(), stream, false);
+        }
+      }
+    }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return true;
+    }
+    return false;
+  }
+
+  @NotNull
+  private @NonNls String getSpec(String fileName) {
+    return FileUtil.toSystemIndependentName(templatePath.resolve(fileName).toString());
+  }
+
   private static @NotNull String getParentName(FileTemplateBase child) {
     String name = child.getQualifiedName();
     return name.substring(0, name.indexOf(FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX));
   }
 
-  private FileTemplateBase addTemplateFromFile(@NotNull String fileName, @NotNull Path file) {
+  private @Nullable FileTemplateBase addTemplateFromFile(@NotNull String fileName, @Nullable InputStream stream) {
     Pair<String, String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
     if (templateQName.isEmpty()) {
       return null;
     }
+    FileTemplateBase template = addTemplate(templateQName, extension);
+    template.setText(stream != null ? readText(stream) : readFile(fileName));
+    return template;
+  }
+
+  private String readFile(@NotNull String fileName) {
+    Ref<String> ref = Ref.create();
+    if (streamProvider.read(getSpec(fileName), RoamingType.DEFAULT, inputStream -> {
+      if (inputStream != null) {
+        ref.set(readText(inputStream));
+      }
+      return null;
+    })) {
+      return ref.get();
+    }
     try {
-      FileTemplateBase template = addTemplate(templateQName, extension);
-      template.setText(Files.readString(file));
-      return template;
+      return Files.readString(templateDir.resolve(fileName));
     }
     catch (IOException e) {
       LOG.error(e);
       return null;
     }
+  }
+
+  private static @Nullable String readText(@NotNull InputStream stream) {
+    try {
+      return StreamUtil.readText(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   public void saveTemplates() {
@@ -289,19 +355,12 @@ final class FTManager {
 
   private void saveTemplates(boolean removeDeleted) {
     final Set<String> allNames = new HashSet<>();
-    final Map<String, Path> templatesOnDisk = new HashMap<>();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(templateDir, file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
-      for (Path file : stream) {
-        String fileName = file.getFileName().toString();
-        templatesOnDisk.put(fileName, file);
-        allNames.add(fileName);
-      }
-    }
-    catch (NoSuchFileException ignored) {
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    final Set<String> templatesOnDisk = new HashSet<>();
+    processLocal((name, stream, aBoolean) -> {
+      templatesOnDisk.add(name);
+      allNames.add(name);
+      return true;
+    });
 
     final Map<String, FileTemplateBase> templatesToSave = new HashMap<>();
 
@@ -325,40 +384,24 @@ final class FTManager {
 
     final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
     for (String name : allNames) {
-      final Path customizedTemplateFile = templatesOnDisk.get(name);
       final FileTemplateBase templateToSave = templatesToSave.get(name);
-      if (customizedTemplateFile == null) {
+      if (!templatesOnDisk.contains(name)) {
         // template was not saved before
-        try {
-          saveTemplate(templateDir, templateToSave, lineSeparator);
-        }
-        catch (IOException e) {
-          LOG.error("Unable to save template " + name, e);
-        }
+        saveTemplate(templateToSave, lineSeparator);
       }
       else if (templateToSave == null) {
         // template was removed
         if (removeDeleted) {
-          try {
-            Files.delete(customizedTemplateFile);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          deleteFile(name);
         }
       }
       else {
         // both customized content on disk and corresponding template are present
-        try {
-          String diskText = StringUtilRt.convertLineSeparators(Files.readString(customizedTemplateFile));
-          String templateText = templateToSave.getText();
-          if (!diskText.equals(templateText)) {
-            // save only if texts differ to avoid unnecessary file touching
-            saveTemplate(templateDir, templateToSave, lineSeparator);
-          }
-        }
-        catch (IOException e) {
-          LOG.error("Unable to save template " + name, e);
+        String diskText = readFile(name);
+        String templateText = templateToSave.getText();
+        if (!templateText.equals(diskText)) {
+          // save only if texts differ to avoid unnecessary file touching
+          saveTemplate(templateToSave, lineSeparator);
         }
       }
     }
@@ -377,15 +420,24 @@ final class FTManager {
   /** Save template to file. If template is new, it is saved to specified directory. Otherwise, it is saved to file from which it was read.
    *  If template was not modified, it is not saved.
    */
-  private static void saveTemplate(@NotNull Path parentDir, @NotNull FileTemplate template, @NotNull String lineSeparator) throws IOException {
-    final Path templateFile = parentDir.resolve(encodeFileName(template.getName(), template.getExtension()));
-    try (OutputStream fileOutputStream = startWriteOrCreate(templateFile);
-         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8)) {
-      String content = template.getText();
-      if (!lineSeparator.equals("\n")) {
-        content = StringUtilRt.convertLineSeparators(content, lineSeparator);
+  private void saveTemplate(@NotNull FileTemplate template, @NotNull String lineSeparator) {
+    String fileName = encodeFileName(template.getName(), template.getExtension());
+    String content = template.getText();
+    if (!lineSeparator.equals("\n")) {
+      content = StringUtilRt.convertLineSeparators(content, lineSeparator);
+    }
+    if (streamProvider.getEnabled()) {
+      streamProvider.write(getSpec(fileName), content.getBytes(StandardCharsets.UTF_8), RoamingType.DEFAULT);
+    }
+    else {
+      final Path templateFile = templateDir.resolve(fileName);
+      try (OutputStream fileOutputStream = startWriteOrCreate(templateFile);
+           OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8)) {
+        outputStreamWriter.write(content);
       }
-      outputStreamWriter.write(content);
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

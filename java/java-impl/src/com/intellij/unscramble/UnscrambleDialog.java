@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -169,7 +169,7 @@ public class UnscrambleDialog extends DialogWrapper {
   private UnscrambleSupport getSavedUnscrambler() {
     final String savedUnscramblerName = getPropertyValue(PROPERTY_UNSCRAMBLER_NAME_USED);
     UnscrambleSupport selectedUnscrambler = null;
-    for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensions()) {
+    for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensionList()) {
       if (Comparing.strEqual(unscrambleSupport.getPresentableName(), savedUnscramblerName)) {
         selectedUnscrambler = unscrambleSupport;
       }
@@ -229,7 +229,7 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   private void populateRegisteredUnscramblerList() {
-    for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensions()) {
+    for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensionList()) {
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
     myUnscrambleChooser.setRenderer(SimpleListCellRenderer.create(

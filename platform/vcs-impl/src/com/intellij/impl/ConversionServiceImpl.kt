@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.impl
 
 import com.intellij.conversion.*
+import com.intellij.conversion.impl.CachedConversionResult
 import com.intellij.conversion.impl.ConversionContextImpl
 import com.intellij.conversion.impl.ConversionRunner
 import com.intellij.conversion.impl.ProjectConversionUtil
@@ -24,11 +27,11 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal class ConversionServiceImpl : ConversionService() {
+private class ConversionServiceImpl : ConversionService() {
   override suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     try {
-      val context = ConversionContextImpl(projectPath)
-      val runners = isConversionNeeded(context)
+      val context = ConversionContextImpl(projectPath = projectPath)
+      val (_, runners) = isConversionNeeded(context)
       if (runners.isEmpty()) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED
       }
@@ -74,8 +77,8 @@ internal class ConversionServiceImpl : ConversionService() {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }
 
-    val context = ConversionContextImpl(projectPath)
-    val converters = isConversionNeeded(context)
+    val context = ConversionContextImpl(projectPath = projectPath)
+    val (conversionResult, converters) = isConversionNeeded(context)
     if (converters.isEmpty()) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }
@@ -85,7 +88,7 @@ internal class ConversionServiceImpl : ConversionService() {
     }
     else {
       withContext(Dispatchers.EDT) {
-        val dialog = ConvertProjectDialog(context, converters)
+        val dialog = ConvertProjectDialog(context, conversionResult, converters)
         dialog.show()
         if (dialog.isConverted) {
           ConversionResultImpl(converters)
@@ -107,7 +110,7 @@ internal class ConversionServiceImpl : ConversionService() {
     return result
   }
 
-  override fun saveConversionResult(projectPath: Path) {
+  override suspend fun saveConversionResult(projectPath: Path) {
     try {
       ConversionContextImpl(projectPath).saveConversionResult()
     }
@@ -176,15 +179,16 @@ internal class ConversionServiceImpl : ConversionService() {
 
 private val LOG = logger<ConversionServiceImpl>()
 
-private suspend fun isConversionNeeded(context: ConversionContextImpl): List<ConversionRunner> {
+private suspend fun isConversionNeeded(context: ConversionContextImpl): Pair<CachedConversionResult?, List<ConversionRunner>> {
   try {
-    val oldMap = context.projectFileTimestamps
+    val conversionResult = context.loadConversionResult()
+    val oldMap = conversionResult.projectFilesTimestamps
     var changed = false
     if (oldMap.isEmpty()) {
       LOG.debug("conversion will be performed because no information about project files")
     }
     else {
-      val newMap = CoroutineTracerShim.coroutineTracer.span("conversion: project files collecting") { context.allProjectFiles }
+      val newMap = CoroutineTracerShim.coroutineTracer.span("conversion: project files collecting") { context.getAllProjectFiles() }
       LOG.debug("Checking project files")
       val iterator = Object2LongMaps.fastIterator(newMap)
       while (iterator.hasNext()) {
@@ -199,12 +203,13 @@ private suspend fun isConversionNeeded(context: ConversionContextImpl): List<Con
         }
       }
     }
+
     val performedConversionIds: Set<String>
     if (changed) {
-      performedConversionIds = emptySet()
+      performedConversionIds = java.util.Set.of()
     }
     else {
-      performedConversionIds = context.appliedConverters
+      performedConversionIds = conversionResult.appliedConverters
       LOG.debug { "Project files are up to date. Applied converters: $performedConversionIds" }
     }
 
@@ -218,11 +223,11 @@ private suspend fun isConversionNeeded(context: ConversionContextImpl): List<Con
         }
       }
     }
-    return runners
+    return conversionResult to runners
   }
   catch (e: CannotConvertException) {
     LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e)
-    return emptyList()
+    return null to emptyList()
   }
 }
 

@@ -48,11 +48,6 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
   }
 
   @Override
-  protected @NotNull Icon getDisabledIcon(@NotNull JBImageIcon icon, boolean base) {
-    return calculateDisabledIcon(icon, base);
-  }
-
-  @Override
   protected @NotNull Icon getScaled2xIcon(@NotNull Icon icon) {
     Computable<Icon> superCall = () -> super.getScaled2xIcon(icon);
 

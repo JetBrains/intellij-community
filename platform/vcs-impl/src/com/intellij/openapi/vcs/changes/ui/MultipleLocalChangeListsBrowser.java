@@ -78,7 +78,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final List<FilePath> myUnversioned = new ArrayList<>();
 
   @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
-  private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
                                   @NotNull Collection<AbstractVcs> affectedVcses,
@@ -94,9 +93,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeList = changeListManager.getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
-
-    myRollbackDialogAction = new RollbackDialogAction();
-    myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
     if (!changeListManager.areChangeListsEnabled()) {
       myChangeListChooser.setVisible(false);
@@ -148,9 +144,10 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private AnAction createRollbackGroup(boolean popup) {
     List<? extends AnAction> rollbackActions = createAdditionalRollbackActions();
     if (rollbackActions.isEmpty()) {
-      return myRollbackDialogAction;
+      return new RollbackDialogAction();
     }
-    DefaultActionGroup group = new DefaultActionGroup(myRollbackDialogAction);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new RollbackDialogAction());
     group.addAll(rollbackActions);
     ActionUtil.copyFrom(group, IdeActions.CHANGES_VIEW_ROLLBACK);
     group.setPopup(popup);

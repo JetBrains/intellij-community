@@ -33,7 +33,7 @@ public final class ImplementOrExtendFix extends PsiUpdateModCommandAction<PsiCla
 
     PsiElement e = implementOrExtend(parentClass, subclass);
     if (myExternal && e != null) {
-      updater.moveTo(e);
+      updater.moveCaretTo(e);
     }
   }
 

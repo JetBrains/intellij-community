@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testRename() = runBlocking {
     importProjectAsync(
@@ -43,10 +45,10 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
     val dir = createProjectSubDir("aaa/bbb/res")
 
     val bbb = dir.getParent()
-    myFixture.renameElement(PsiManager.getInstance(myFixture.getProject()).findDirectory(bbb)!!, "Z")
+    fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
 
 
-    val text = PsiManager.getInstance(myFixture.getProject()).findFile(myProjectPom)!!.getText()
+    val text = PsiManager.getInstance(fixture.getProject()).findFile(projectPom)!!.getText()
     assert(text.contains("<directory>aaa/Z/res</directory>"))
     assert(text.contains("<directory>aaa/Z/res</directory>"))
     assert(text.contains("<directory>aaa/Z/res</directory>"))
@@ -80,6 +82,6 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
     createProjectSubDir("aaa/res1")
     createProjectSubDir("aaa/res2")
 
-    assertCompletionVariants(myProjectPom, "res1", "res2")
+    assertCompletionVariants(projectPom, "res1", "res2")
   }
 }

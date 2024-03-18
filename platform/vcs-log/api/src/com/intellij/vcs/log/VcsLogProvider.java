@@ -142,8 +142,8 @@ public interface VcsLogProvider {
    * @return file history handler or null if unsupported.
    */
   @Nullable
-  default VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return null;
+  default VcsLogFileHistoryHandler getFileHistoryHandler(Project project) {
+    return VcsLogFileHistoryHandler.getByVcs(project, getSupportedVcs());
   }
 
   /**

@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Path
 import java.util.regex.Pattern
 
@@ -22,8 +22,8 @@ object KotlinPluginBuilder {
    * Module which contains META-INF/plugin.xml
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
+  const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend"
 
-  @SuppressWarnings("SpellCheckingInspection")
   val MODULES: List<String> = persistentListOf(
     "kotlin.plugin.common",
     "kotlin.plugin.k1",
@@ -46,7 +46,6 @@ object KotlinPluginBuilder {
     "kotlin.base.analysis-api.utils",
     "kotlin.base.compiler-configuration-ui",
     "kotlin.base.obsolete-compat",
-    "kotlin.base.resources",
     "kotlin.base.statistics",
     "kotlin.base.fe10.plugin",
     "kotlin.base.fe10.analysis",
@@ -56,16 +55,16 @@ object KotlinPluginBuilder {
     "kotlin.base.fe10.obsolete-compat",
     "kotlin.base.fe10.project-structure",
     "kotlin.core",
+    "kotlin.ide",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
-    "kotlin.line-indent-provider",
     "kotlin.jvm",
     "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.k1",
     "kotlin.compiler-plugins.parcelize.k2",
     "kotlin.compiler-plugins.parcelize.gradle",
-    "kotlin.compiler-plugins.allopen.common",
+    "kotlin.compiler-plugins.allopen.common.k1",
     "kotlin.compiler-plugins.allopen.gradle",
     "kotlin.compiler-plugins.allopen.maven",
     "kotlin.compiler-plugins.compiler-plugin-support.common",
@@ -81,8 +80,8 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.sam-with-receiver.common",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
-    "kotlin.compiler-plugins.assignment.common-k1",
-    "kotlin.compiler-plugins.assignment.common-k2",
+    "kotlin.compiler-plugins.assignment.common.k1",
+    "kotlin.compiler-plugins.assignment.common.k2",
     "kotlin.compiler-plugins.assignment.gradle",
     "kotlin.compiler-plugins.assignment.maven",
     "kotlin.compiler-plugins.lombok.gradle",
@@ -92,9 +91,9 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.android-extensions-stubs",
 Android Studio: workaround for b/218317110 */
     "kotlin.completion.api",
-    "kotlin.completion.impl-shared",
-    "kotlin.completion.impl-k1",
-    "kotlin.completion.impl-k2",
+    "kotlin.completion.impl.shared",
+    "kotlin.completion.impl.k1",
+    "kotlin.completion.impl.k2",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
     "kotlin.gradle.gradle",
@@ -111,19 +110,19 @@ Android Studio: workaround for b/218317110 */
     "kotlin.repl",
     "kotlin.git",
     "kotlin.base.injection",
-    "kotlin.injection",
-    "kotlin.injection-k2",
+    "kotlin.injection.k1",
+    "kotlin.injection.k2",
     "kotlin.scripting",
     "kotlin.coverage",
     "kotlin.ml-completion",
     "kotlin.copyright",
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
-    "kotlin.j2k.post-processing",
-    "kotlin.j2k.idea",
-    "kotlin.j2k.old",
-    "kotlin.j2k.old.post-processing",
-    "kotlin.j2k.new",
+    "kotlin.j2k.k1.shared",
+    "kotlin.j2k.k1.new.post-processing",
+    "kotlin.j2k.k1.old",
+    "kotlin.j2k.k1.old.post-processing",
+    "kotlin.j2k.k1.new",
     "kotlin.onboarding",
     "kotlin.plugin-updater",
     "kotlin.preferences",
@@ -131,7 +130,7 @@ Android Studio: workaround for b/218317110 */
     "kotlin.project-wizard.cli",
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
-    "kotlin.project-wizard.idea-k1",
+    "kotlin.project-wizard.idea.k1",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
     "kotlin.project-wizard.compose",
@@ -157,36 +156,36 @@ Android Studio: workaround for b/218317110 */
     "kotlin.base.fir.project-structure",
     "kotlin.code-insight.api",
     "kotlin.code-insight.utils",
-    "kotlin.code-insight.intentions-shared",
-    "kotlin.code-insight.inspections-shared",
+    "kotlin.code-insight.intentions.shared",
+    "kotlin.code-insight.inspections.shared",
     "kotlin.code-insight.impl-base",
     "kotlin.code-insight.descriptions",
-    "kotlin.code-insight.intentions-k1",
-    "kotlin.code-insight.intentions-k2",
-    "kotlin.code-insight.inspections-k1",
-    "kotlin.code-insight.inspections-k2",
+    "kotlin.code-insight.intentions.k1",
+    "kotlin.code-insight.intentions.k2",
+    "kotlin.code-insight.inspections.k1",
+    "kotlin.code-insight.inspections.k2",
     "kotlin.code-insight.k1",
     "kotlin.code-insight.k2",
-    "kotlin.code-insight.override-implement-shared",
-    "kotlin.code-insight.override-implement-k1",
-    "kotlin.code-insight.override-implement-k2",
-    "kotlin.code-insight.live-templates-shared",
-    "kotlin.code-insight.live-templates-k1",
-    "kotlin.code-insight.live-templates-k2",
-    "kotlin.code-insight.postfix-templates-k1",
-    "kotlin.code-insight.postfix-templates-k2",
-    "kotlin.code-insight.structural-search-k1",
-    "kotlin.code-insight.structural-search-k2",
-    "kotlin.code-insight.line-markers-shared",
-    "kotlin.code-insight.line-markers-k2",
+    "kotlin.code-insight.override-implement.shared",
+    "kotlin.code-insight.override-implement.k1",
+    "kotlin.code-insight.override-implement.k2",
+    "kotlin.code-insight.live-templates.shared",
+    "kotlin.code-insight.live-templates.k1",
+    "kotlin.code-insight.live-templates.k2",
+    "kotlin.code-insight.postfix-templates.k1",
+    "kotlin.code-insight.postfix-templates.k2",
+    "kotlin.code-insight.structural-search.k1",
+    "kotlin.code-insight.structural-search.k2",
+    "kotlin.code-insight.line-markers.shared",
+    "kotlin.code-insight.line-markers.k2",
     "kotlin.fir",
     "kotlin.searching.k2",
     "kotlin.searching.base",
     "kotlin.highlighting.shared",
     "kotlin.highlighting.k1",
     "kotlin.highlighting.k2",
-    "kotlin.uast.uast-kotlin-fir",
-    "kotlin.uast.uast-kotlin-idea-fir",
+    "kotlin.uast.uast-kotlin.k2",
+    "kotlin.uast.uast-kotlin-idea.k2",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
     "kotlin.refactorings.common",
@@ -198,7 +197,13 @@ Android Studio: workaround for b/218317110 */
     "kotlin.bundled-compiler-plugins-support",
   )
 
-  @SuppressWarnings("SpellCheckingInspection")
+  private val MODULES_SHARED_WITH_CLIENT = persistentListOf(
+    "kotlin.base.resources",
+    "kotlin.base.code-insight.minimal",
+    "kotlin.highlighting.minimal",
+    "kotlin.formatter.minimal"
+    )
+
   private val LIBRARIES = persistentListOf(
     "kotlinc.analysis-api-providers",
     "kotlinc.analysis-project-structure",
@@ -240,18 +245,23 @@ Android Studio: workaround for b/218317110 */
   )
 
   @JvmStatic
-  fun kotlinPlugin(ultimateSources: KotlinUltimateSources): PluginLayout {
+  fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return kotlinPlugin(
       kind = KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
       ultimateSources = ultimateSources,
+      addition = addition,
     )
   }
 
   @JvmStatic
-  fun kotlinPlugin(kind: KotlinPluginKind, ultimateSources: KotlinUltimateSources): PluginLayout {
+  fun kotlinPlugin(kind: KotlinPluginKind, ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
       spec.directoryName = "Kotlin"
       spec.mainJarName = "kotlin-plugin.jar"
+
+      for (moduleName in MODULES_SHARED_WITH_CLIENT) {
+        spec.withModule(moduleName, "kotlin-plugin-shared.jar")
+      }
 
       for (moduleName in MODULES) {
         spec.withModule(moduleName)
@@ -300,13 +310,13 @@ Android Studio: workaround for b/218317110 */
 
       spec.withPatch { patcher, context ->
         val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-        val jars = library.getFiles(JpsOrderRootType.COMPILED)
+        val jars = library.getPaths(JpsOrderRootType.COMPILED)
         if (jars.size != 1) {
           throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
         }
 
-        consumeDataByPrefix(jars[0].toPath(), "META-INF/extensions/") { name, data ->
-          patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
+        consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
+          patcher.patchModuleOutput(moduleName = MAIN_KOTLIN_PLUGIN_MODULE, path = name, content = data)
         }
       }
 
@@ -316,14 +326,13 @@ Android Studio: workaround for b/218317110 */
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("kotlinx-collections-immutable", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("javaslang")
+      spec.withProjectLibrary("javax-inject")
 
       spec.withGeneratedResources { targetDir, context ->
         val distLibName = "kotlinc.kotlin-dist"
         val library = context.project.libraryCollection.findLibrary(distLibName)!!
-        val jars = library.getFiles(JpsOrderRootType.COMPILED)
+        val jars = library.getPaths(JpsOrderRootType.COMPILED)
         if (jars.size != 1) {
           throw IllegalStateException("$distLibName is expected to have only one jar")
         }
@@ -333,11 +342,10 @@ Android Studio: workaround for b/218317110 */
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
 /* Android Studio: our build number format differs from upstream.
-          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|\\d+\\.SNAPSHOT.*)\$").matcher(ideBuildVersion)
+          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
 */        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+__BUILD_NUMBER__)\$").matcher(ideBuildVersion)
           if (ijBuildNumber.matches()) {
             // IJ installer configurations.
-            // In this environment, ideBuildVersion matches ^(\d+)\.([\d.]+|\d+\.SNAPSHOT.*)\$
             return "$ideBuildVersion-$kind"
           }
 
@@ -346,7 +354,7 @@ Android Studio: workaround for b/218317110 */
             // In this environment, ideBuildVersion equals to build number.
             // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
             val version = ideBuildVersion.replace("IJ", kind.toString())
-            context.messages.info("Kotlin plugin IJ version: $version")
+            Span.current().addEvent("Kotlin plugin IJ version: $version")
             return version
           }
 
@@ -403,6 +411,8 @@ Android Studio: workaround for b/218317110 */
           else -> {}
         }
       }
+
+      addition?.invoke(spec)
     }
   }
 
@@ -410,7 +420,7 @@ Android Studio: workaround for b/218317110 */
     val result = oldText.replaceFirst(Regex(regex), newText)
     if (result == oldText) {
       if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
-        // Locally e.g. in 'Update IDE from Sources' allow data to be already present
+        // Locally, e.g., in 'Update IDE from Sources' allow data to be already present
         return result
       }
 
@@ -419,10 +429,14 @@ Android Studio: workaround for b/218317110 */
     return result
   }
 
-  suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
-    val buildContext = BuildContextImpl.createContext(communityHome = communityHome, projectHome = home, productProperties = properties)
-    buildContext.options.enableEmbeddedJetBrainsClient = false
-    BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
+  suspend fun build(home: Path, properties: ProductProperties) {
+    val context = BuildContextImpl.createContext(
+      setupTracer = true,
+                                                      projectHome = home,
+                                                      productProperties = properties,
+      options = BuildOptions(enableEmbeddedJetBrainsClient = false),
+    )
+    createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
 
   enum class KotlinUltimateSources {
@@ -432,5 +446,15 @@ Android Studio: workaround for b/218317110 */
 
   enum class KotlinPluginKind {
     IJ, AS, MI, Fleet,
+  }
+
+  /**
+   * A special plugin for JetBrains Client
+   */
+  fun kotlinFrontendPlugin(): PluginLayout {
+    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
+      spec.withModules(MODULES_SHARED_WITH_CLIENT)
+      spec.withProjectLibrary("kotlinc.kotlin-compiler-common", LibraryPackMode.STANDALONE_MERGED)
+    }
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.html.HtmlFileImpl
 import com.intellij.psi.util.siblings
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asSafely
@@ -27,7 +27,7 @@ class Html5TagAndAttributeNamesProviderTest : BasePlatformTestCase() {
     val version = Regex("VERSION = ([0-9]+)").find(contents)?.groups?.get(1)?.value?.toIntOrNull() ?: 0
     val expectedContents = generateFile(version)
     if (expectedContents != contents) {
-      throw FileComparisonFailure(
+      throw FileComparisonFailedError(
         "Looks like HTML5 schema was updated, so Html5TagAndAttributeNamesProvider needs to be updated as well. Copy version change!!!",
         contents, generateFile(version + 1), location)
     }

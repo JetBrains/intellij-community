@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -28,7 +29,7 @@ import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.debugger.PyDebugProcess
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 import javax.swing.JComponent
@@ -201,13 +202,11 @@ class PyDataView(private val project: Project) : DumbAware {
       content.icon = PythonIcons.Python.PythonConsole
       content.description = PyBundle.message("debugger.data.view.connected.to.python.console")
     }
-    if (frameAccessor is PyDebugProcess) {
+    else if (frameAccessor is PyDebugProcess) {
       content.icon = AllIcons.Toolwindows.ToolWindowDebugger
       content.description = PyBundle.message("debugger.data.view.connected.to.debug.session", frameAccessor.session.sessionName)
     }
-    // ToDo restore empty text.
-    //  info.setText(PyBundle.message("debugger.data.view.empty.tab"))
-    content.setPreferredFocusableComponent(panel.sliceTextField)
+
     content.setActions(DefaultActionGroup(NewViewerAction(frameAccessor)), "DataView", panel)
     panel.addListener(PyDataViewerPanel.Listener {
       content.displayName = it
@@ -268,6 +267,6 @@ class PyDataView(private val project: Project) : DumbAware {
       PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
     }
 
-    fun getInstance(project: Project): PyDataView = project.getService(PyDataView::class.java)
+    fun getInstance(project: Project): PyDataView = project.service<PyDataView>()
   }
 }

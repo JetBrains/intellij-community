@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.ui.NonFocusableCheckBox
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
@@ -39,6 +40,7 @@ class KotlinVariableInplaceIntroducer(
   private val doNotChangeVar: Boolean,
   val expressionType: KotlinType?,
   private val noTypeInference: Boolean,
+  @Nls title: String,
   project: Project,
   editor: Editor,
   private val postProcess: (KtDeclaration) -> Unit
@@ -46,7 +48,7 @@ class KotlinVariableInplaceIntroducer(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,
     occurrences = occurrencesToReplace,
-    title = KotlinIntroduceVariableHandler.INTRODUCE_VARIABLE,
+    title = title,
     project = project,
     editor = editor,
 ) {

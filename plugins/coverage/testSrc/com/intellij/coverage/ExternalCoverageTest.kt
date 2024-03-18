@@ -7,11 +7,17 @@ import com.intellij.rt.coverage.util.CoverageReport
 import com.intellij.rt.coverage.util.ProjectDataLoader
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 
+@RunWith(JUnit4::class)
 class ExternalCoverageTest : CoverageIntegrationBaseTest() {
+  @Test
   fun `test watching externally added coverage`(): Unit = runBlocking {
-    val  ijSuite = loadIJSuiteCopy()
+    assertNoSuites()
+    val ijSuite = loadIJSuiteCopy()
     val ijSuiteFile = File(ijSuite.suites[0].coverageDataFileProvider.coverageDataFilePath)
 
     openSuiteAndWait(ijSuite)
@@ -34,5 +40,8 @@ class ExternalCoverageTest : CoverageIntegrationBaseTest() {
     val classData = projectData.getClassData("foo.bar.BarClass")
     val lineData = classData.getLineData(9)
     Assert.assertEquals(LineCoverage.FULL, lineData.status.toByte())
+
+    closeSuite(ijSuite)
+    assertNoSuites()
   }
 }

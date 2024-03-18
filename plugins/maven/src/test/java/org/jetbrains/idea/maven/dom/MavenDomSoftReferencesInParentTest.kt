@@ -17,17 +17,26 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
-    VirtualFileManager.getInstance().syncRefresh()
+    withContext(Dispatchers.EDT) {
+      VirtualFileManager.getInstance().syncRefresh()
+    }
+    Unit
   }
 
   @Test
@@ -72,18 +81,15 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    setFileContent(myProjectPom, createPomXml("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>jar</packaging>
-                       <build>
-                       <sourceDirectory><error>foo1</error></sourceDirectory>
-                       <testSourceDirectory><error>foo2</error></testSourceDirectory>
-                       <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
-                       </build>
-                       """.trimIndent()), false)
 
-    checkHighlighting()
+    checkHighlighting(projectPom,
+                      Highlight(text = "foo1"),
+                      Highlight(text = "foo2"),
+                      Highlight(text = "foo3"))
+
+  }
+
+  private suspend fun getDocument(f: VirtualFile): Document {
+    return readAction { fixture.getDocument(findPsiFile(f)) }
   }
 }

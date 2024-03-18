@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@Deprecated("Use AbstractKotlinInlayHintsProvider instead")
 abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     override val previewText: String? = ""

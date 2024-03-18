@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstImportedNameDefiner;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ import java.util.List;
  * Name definer that defines names imported somehow from other modules.
  *
  */
-public interface PyImportedNameDefiner extends PyElement {
+public interface PyImportedNameDefiner extends PyAstImportedNameDefiner, PyElement {
   /**
    * Iterate over possibly resolved PSI elements available via this imported name definer.
    *

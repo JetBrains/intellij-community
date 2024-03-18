@@ -6,6 +6,7 @@ import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -22,6 +23,12 @@ interface Fe10QuickFixProvider {
     fun createPostponedUnresolvedReferencesQuickFixes(sameTypeDiagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
 
     fun createUnresolvedReferenceQuickFixes(sameTypeDiagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
+
+    /**
+     * Produces fixes for diagnostics from different factories lazily to avoid creation of redundant quick fixes,
+     * e.g. in case only the first suitable fix is required.
+     */
+    fun createUnresolvedReferenceQuickFixesForElement(element: KtElement): Map<PsiElement, Sequence<IntentionAction>>
 
     fun createSuppressFix(element: KtElement, suppressionKey: String, hostKind: AnnotationHostKind): SuppressIntentionAction
 }

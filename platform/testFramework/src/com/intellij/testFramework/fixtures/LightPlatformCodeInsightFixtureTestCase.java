@@ -4,6 +4,6 @@ package com.intellij.testFramework.fixtures;
 /**
  * @deprecated Please use {@link BasePlatformTestCase}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class LightPlatformCodeInsightFixtureTestCase extends BasePlatformTestCase {
 }

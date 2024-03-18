@@ -31,7 +31,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> null: null
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Kotlin_Light_Method: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it

@@ -98,6 +98,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         }
       }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   protected JavaSdkVersion getJdkVersion() {
@@ -117,6 +118,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   protected void addGroovyLibrary(final Module to) {
     GroovyProjectDescriptors.LIB_GROOVY_2_4.addTo(to)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   @Override

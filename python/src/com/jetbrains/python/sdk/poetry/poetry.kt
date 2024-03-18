@@ -61,7 +61,7 @@ import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemDependent
@@ -78,7 +78,7 @@ const val POETRY_PATH_SETTING: String = "PyCharm.Poetry.Path"
 const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
 
 // TODO: Provide a special icon for poetry
-val POETRY_ICON = PythonIcons.Python.Virtualenv
+val POETRY_ICON = PythonIcons.Python.Origami
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
@@ -193,8 +193,8 @@ fun setupPoetrySdkUnderProgress(project: Project?,
   }
 
   return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
-    isPoetry = true
     associateWithModule(module ?: project?.modules?.firstOrNull(), newProjectPath)
+    isPoetry = true
     //        project?.let { project ->
     //            existingSdks.find {
     //                it.associatedModulePath == projectPath && isPoetry(project, it) && it.homePath == homePath

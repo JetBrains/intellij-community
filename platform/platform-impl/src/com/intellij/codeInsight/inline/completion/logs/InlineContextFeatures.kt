@@ -10,17 +10,21 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object InlineContextFeatures {
-  fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
+
+  fun capture(psiFile: PsiFile, editor: Editor, offset: Int): List<EventPair<*>> {
+    val contextFeatures = mutableListOf<EventPair<*>>()
     try {
       doCapture(psiFile, editor, offset, contextFeatures)
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       LOG.error(e)
     }
+    return contextFeatures
   }
 
   private fun doCapture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
@@ -65,7 +69,7 @@ object InlineContextFeatures {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
 
-    psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
+    psiFile.findElementAt(offset - 1)?.let { contextFeatures.addPsiParents(it) }
     contextFeatures.addTypingFeatures()
   }
 
@@ -87,14 +91,10 @@ object InlineContextFeatures {
   }
 
   private fun MutableList<EventPair<*>>.addPsiParents(element: PsiElement) {
-    // First parent is always referenceExpression
-    val curParent: PsiElement = element.parent ?: return
-    val firstParent = curParent.parent
-    if (firstParent == null || firstParent is PsiFileSystemItem) return
-    add(FIRST_PARENT.with(firstParent::class.java))
-    val secondParent = firstParent.parent
-    if (secondParent == null || secondParent is PsiFileSystemItem) return
-    add(SECOND_PARENT.with(secondParent::class.java))
+    element.parents(false)
+      .take(PARENT_FEATURES.size)
+      .withIndex()
+      .forEach { (i, element) -> add(PARENT_FEATURES[i].with(element.javaClass)) }
   }
 
   private fun MutableList<EventPair<*>>.addTypingFeatures() {
@@ -106,7 +106,7 @@ object InlineContextFeatures {
     }
   }
 
-  val KEY: Key<MutableList<EventPair<*>>> = Key.create("inline_context_features")
+  val KEY: Key<List<EventPair<*>>> = Key.create("inline_context_features")
   private val LOG = logger<InlineContextFeatures>()
 
   val LINE_NUMBER = EventFields.Int("line_number")
@@ -121,7 +121,7 @@ object InlineContextFeatures {
   val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
   val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
   val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
-  val FIRST_PARENT = EventFields.Class("first_parent")
-  val SECOND_PARENT = EventFields.Class("second_parent")
   val TIME_SINCE_LAST_TYPING = EventFields.Long("time_since_last_typing")
+
+  val PARENT_FEATURES = listOf("first", "second", "third", "forth", "fifth").map { EventFields.Class("${it}_parent") }.toTypedArray()
 }

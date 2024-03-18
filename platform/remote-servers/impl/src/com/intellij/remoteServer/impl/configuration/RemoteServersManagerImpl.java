@@ -3,10 +3,7 @@ package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.remoteServer.ServerType;
@@ -28,7 +25,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(name = "RemoteServers", storages = @Storage(value = "remote-servers.xml", roamingType = RoamingType.DISABLED))
+@State(name = "RemoteServers",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "remote-servers.xml", roamingType = RoamingType.DISABLED))
 public final class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
   private final List<RemoteServer<?>> myServers = new CopyOnWriteArrayList<>();

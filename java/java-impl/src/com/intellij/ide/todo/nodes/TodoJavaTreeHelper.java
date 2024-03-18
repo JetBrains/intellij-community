@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TodoJavaTreeHelper extends TodoTreeHelper {
+public final class TodoJavaTreeHelper extends TodoTreeHelper {
 
   public TodoJavaTreeHelper(final Project project) {
     super(project);

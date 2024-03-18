@@ -1,30 +1,32 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
 import com.intellij.testIntegration.TestFramework
 import com.intellij.util.Function
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
-import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -40,27 +42,21 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
          * On other side Gradle has its own built-in support for JUnit but doesn't allow fine-tuning behaviour.
          * As of now launching ignored tests (for Gradle) is impossible.
          */
-        private fun KtNamedDeclaration.isIgnoredForGradleModule(module: Module, includeSlowProviders: Boolean): Boolean {
-            val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf { module.isGradleModule } ?: return false
+        private fun KtNamedDeclaration.isIgnoredForGradleConfiguration(includeSlowProviders: Boolean): Boolean {
+            val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf {
+                RunManager.getInstance(getProject()).selectedConfiguration?.type?.id == "GradleRunConfiguration"
+            } ?: return false
             val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false
-
-            val testFramework = TestFramework.EXTENSION_NAME.extensionList.firstOrNull {
-                if (includeSlowProviders) {
-                    it !is KotlinPsiBasedTestFramework
+            
+            return TestFramework.EXTENSION_NAME.extensionList.any {
+                if (includeSlowProviders && it !is KotlinPsiBasedTestFramework) {
+                    val lightMethod = ktNamedFunction.toLightMethods().firstOrNull()
+                    it?.isIgnoredMethod(lightMethod) == true
                 } else if (it is KotlinPsiBasedTestFramework) {
-                    it.isTestClass(ktClassOrObject)
+                    it.isTestClass(ktClassOrObject) && it.isIgnoredMethod(ktNamedFunction)
                 } else {
                     false
                 }
-            }
-
-            return when {
-              testFramework is KotlinPsiBasedTestFramework -> testFramework.isIgnoredMethod(ktNamedFunction)
-              includeSlowProviders -> {
-                  val lightMethod = ktNamedFunction.toLightMethods().firstOrNull() ?: return false
-                  testFramework?.isIgnoredMethod(lightMethod) == true
-              }
-              else -> false
             }
         }
 
@@ -140,7 +136,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
         if (!declaration.isUnderKotlinSourceRootTypes()) return null
 
-        if (declaration.isIgnoredForGradleModule(module, includeSlowProviders)) return null
+        if (declaration.isIgnoredForGradleConfiguration(includeSlowProviders)) return null
 
         return targetPlatform.idePlatformKind.tooling.getTestIcon(declaration, includeSlowProviders)?.let {
             Info(

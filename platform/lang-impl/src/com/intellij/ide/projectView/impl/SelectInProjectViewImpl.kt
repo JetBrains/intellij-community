@@ -20,9 +20,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.OverflowSemaphore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.VisibleForTesting

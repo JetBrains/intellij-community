@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
@@ -13,10 +13,13 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -109,16 +112,19 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     myMessagePool.addListener(this)
   }
 
-  private fun loadDevelopersList(): Job? {
-    val configurable = ErrorReportConfigurable.getInstance()
-    val developers = configurable.developerList
-    setDevelopers(developers)
-    return if (developers.isUpToDateAt()) null
-    else ITNProxy.cs.launch {
+  private fun loadDevelopersList(): Job {
+    return service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       runCatching {
+        val configurable = serviceAsync<ErrorReportConfigurable>()
+        val developers = configurable.getDeveloperList()
+        setDevelopers(developers)
+        if (developers.isUpToDateAt()) {
+          return@launch
+        }
+
         val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
         withContext(Dispatchers.EDT) {
-          configurable.developerList = updatedDevelopers
+          configurable.setDeveloperList(updatedDevelopers)
           setDevelopers(updatedDevelopers)
         }
       }.onFailure { e ->
@@ -132,36 +138,42 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
   }
 
-  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
-    val account = submitter.reporterAccount
-    withContext(Dispatchers.EDT) {
-      if (account != null) {
-        myCredentialLabel.isVisible = true
-        myCredentialLabel.text = if (account.isEmpty()) {
-          DiagnosticBundle.message("error.dialog.submit.anonymous")
-        }
-        else {
-          DiagnosticBundle.message("error.dialog.submit.named", account)
+  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {
+    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+      val account = submitter.reporterAccount
+      withContext(Dispatchers.EDT) {
+        if (account != null) {
+          myCredentialLabel.isVisible = true
+          myCredentialLabel.text = if (account.isEmpty()) {
+            DiagnosticBundle.message("error.dialog.submit.anonymous")
+          }
+          else {
+            DiagnosticBundle.message("error.dialog.submit.named", account)
+          }
         }
       }
     }
   }
 
-  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
-    val notice = submitter.privacyNoticeText
-    withContext(Dispatchers.EDT) {
-      if (notice != null) {
-        myPrivacyNotice.panel.isVisible = true
-        val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
-        myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
-        myPrivacyNotice.setPrivacyPolicy(notice)
+  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) {
+    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+      val notice = submitter.privacyNoticeText
+      withContext(Dispatchers.EDT) {
+        if (notice != null) {
+          myPrivacyNotice.panel.isVisible = true
+          val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
+          myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
+          myPrivacyNotice.setPrivacyPolicy(notice)
+        }
       }
     }
   }
 
   private fun setDevelopers(developers: DeveloperList) {
-    myAssigneeCombo.model = CollectionComboBoxModel(developers.developers)
-    myDevListTimestamp = developers.timestamp
+    UIUtil.invokeLaterIfNeeded {
+      myAssigneeCombo.model = CollectionComboBoxModel(developers.developers)
+      myDevListTimestamp = developers.timestamp
+    }
   }
 
   private fun selectMessage(defaultMessage: LogMessage?): Int {
@@ -203,7 +215,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     myForeignPluginWarningLabel = SwingHelper.createHtmlViewer(false, null, null, null)
     val toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, DefaultActionGroup(BackAction(), ForwardAction()), true)
-    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.border = JBUI.Borders.empty()
     (toolbar as ActionToolbarImpl).setForceMinimumSize(true)
     toolbar.setTargetComponent(myCountLabel)
@@ -386,7 +398,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private fun updateControls() {
     loadingDecorator.startLoading(false)
     updateControlsJob.cancel(null)
-    updateControlsJob = ITNProxy.cs.launch(Dispatchers.EDT) {
+    updateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       val cluster = selectedCluster()
       val submitter = cluster.submitter
       cluster.messages.forEach { it.isRead = true }
@@ -570,7 +582,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     message.devListTimestamp = myDevListTimestamp
     message.isSubmitting = true
 
-    ITNProxy.cs.launch {
+    service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       val notice = submitter.privacyNoticeText
       if (notice != null) {
         val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
@@ -960,7 +972,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
         }
         if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl), pluginIdMap) { descriptor ->
             when {
-              descriptor!!.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
+              descriptor.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
               else FileVisitResult.CONTINUE
               else -> FileVisitResult.SKIP_SUBTREE
             }

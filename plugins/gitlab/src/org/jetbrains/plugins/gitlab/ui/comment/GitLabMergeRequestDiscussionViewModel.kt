@@ -4,36 +4,38 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
+import java.net.URL
+import java.util.*
 
-interface GitLabMergeRequestDiscussionViewModel {
+interface GitLabMergeRequestDiscussionViewModel : CodeReviewResolvableItemViewModel {
   val id: GitLabId
   val notes: Flow<List<NoteItem>>
 
-  val resolveVm: GitLabDiscussionResolveViewModel?
   val replyVm: Flow<GitLabDiscussionReplyViewModel?>
 
-  val position: Flow<GitLabNotePosition?>
+  val position: StateFlow<GitLabNotePosition?>
 
   sealed interface NoteItem {
-    val id: Any
-
-    class Note(val vm: GitLabNoteViewModel) : NoteItem {
-      override val id: Any = vm.id
-    }
-
-    class Expander(val collapsedCount: Int, val expand: () -> Unit) : NoteItem {
-      override val id: Any = "EXPANDER$collapsedCount"
-    }
+    data class Note(val vm: GitLabNoteViewModel) : NoteItem
+    data class Expander(val collapsedCount: Int, val expand: () -> Unit) : NoteItem
   }
 }
 
@@ -42,19 +44,21 @@ private val LOG = logger<GitLabMergeRequestDiscussionViewModel>()
 internal class GitLabMergeRequestDiscussionViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   currentUser: GitLabUserDTO,
-  discussion: GitLabMergeRequestDiscussion,
-  glProject: GitLabProjectCoordinates
+  private val discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val taskLauncher = SingleCoroutineLauncher(cs)
+  override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   override val id: GitLabId = discussion.id
 
   private val expandRequested = MutableStateFlow(false)
 
-  override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+  override val isResolved: StateFlow<Boolean> = discussion.resolved
+  override val canChangeResolvedState: StateFlow<Boolean> = MutableStateFlow(discussion.canResolve)
 
   override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
@@ -70,7 +74,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
       initialNotesSize = it.size
     }
   }.mapModelsToViewModels { note ->
-    GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject)
+    GitLabNoteViewModelImpl(project, this, projectData, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser)
   }.combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
       notes.map { NoteItem.Note(it) }
@@ -85,31 +89,47 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   }.modelFlow(cs, LOG)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val position: Flow<GitLabNotePosition?> = discussion.firstNote().flatMapLatest {
-    it?.position ?: flowOf(null)
-  }.distinctUntilChanged().modelFlow(cs, LOG)
+  override val position: StateFlow<GitLabNotePosition?> =
+    discussion.notes.map(List<GitLabMergeRequestNote>::firstOrNull).flatMapLatest {
+      it?.position ?: flowOf(null)
+    }.stateInNow(cs, discussion.notes.value.firstOrNull()?.position?.value)
 
-  private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
-    notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
+  override fun changeResolvedState() {
+    taskLauncher.launch {
+      try {
+        discussion.changeResolvedState()
+      }
+      catch (e: Exception) {
+        if (e is CancellationException) throw e
+        //TODO: handle???
+      }
+    }
+  }
 }
 
-class GitLabMergeRequestDraftDiscussionViewModelBase(
+class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   project: Project,
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
   glProject: GitLabProjectCoordinates
-) : GitLabMergeRequestDiscussionViewModel {
+) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   override val id: GitLabId = note.id
+  override val author: GitLabUserDTO = note.author
+  override val createdAt: Date? = note.createdAt
+  override val isDraft: Boolean = true
+  override val serverUrl: URL = glProject.serverPath.toURL()
 
-  override val notes: Flow<List<NoteItem>> = flowOf(
-    listOf(NoteItem.Note(GitLabNoteViewModelImpl(project, cs, note, flowOf(true), glProject)))
-  )
+  override val actionsVm: GitLabNoteAdminActionsViewModel? =
+    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+  override val reactionsVm: GitLabReactionsViewModel? = null
 
-  override val position: Flow<GitLabNotePosition?> = note.position
+  override val body: Flow<String> = note.body
+  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
 
-  override val resolveVm: GitLabDiscussionResolveViewModel? = null
-  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> = flowOf(null)
+  override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
+
+  val position: StateFlow<GitLabNotePosition?> = note.position
 }

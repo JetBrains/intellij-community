@@ -35,7 +35,6 @@ class VcsLogFileHistoryProviderImpl(project: Project) : VcsLogFileHistoryProvide
 
 class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    if (!Registry.`is`("vcs.history.show.directory.history.in.log")) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     return createPathsFilter(project, dataManager.logProviders, paths) != null
   }
@@ -57,7 +56,7 @@ class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileH
     if (firstTime) {
       val filters = VcsLogFilterObject.collection(pathsFilter, hashFilter)
       ui = VcsProjectLog.getInstance(project).openLogTab(filters) ?: return
-      ui.properties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true)
+      ui.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = true
     }
     selectRowWhenOpen(logManager, hash, root, ui!!, firstTime)
   }
@@ -116,7 +115,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
 
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     val logProvider = dataManager.logProviders[root]
-    if (logProvider?.diffHandler == null || logProvider.fileHistoryHandler == null) return false
+    if (logProvider?.diffHandler == null || logProvider.getFileHistoryHandler(project) == null) return false
     return dataManager.index.isIndexingEnabled(root) || Registry.`is`("vcs.force.new.history")
   }
 

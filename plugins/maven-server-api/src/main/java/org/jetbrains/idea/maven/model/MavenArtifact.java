@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -51,8 +52,6 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   private transient volatile boolean myFileUnresolved;
   private transient volatile String myLibraryNameCache;
   private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
-
-  private static final Predicate<File> ourDefaultFileExists = File::exists;
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -143,24 +142,16 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return myType;
   }
 
-  /**
-   * @deprecated use MavenArtifactUtilKt#resolved
-   */
-  @Deprecated
   public boolean isResolved() {
-    return isResolved(ourDefaultFileExists);
+    return isResolved(null);
   }
 
-  /**
-   * @deprecated use MavenArtifactUtilKt#resolved
-   */
-  @Deprecated
-  public boolean isResolved(Predicate<? super File> fileExists) {
+  public boolean isResolved(Predicate<File> fileExistsPredicate) {
     if (myResolved && !myStubbed) {
       long currentTime = System.currentTimeMillis();
 
       if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
-        if (!fileExists.test(myFile)) {
+        if (!fileExists(fileExistsPredicate, myFile)) {
           return false; // Don't cache result if file is not exist.
         }
 
@@ -171,6 +162,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     }
 
     return false;
+  }
+
+  private static boolean fileExists(Predicate<File> fileExistsPredicate, File f) {
+    return null == fileExistsPredicate ? Files.exists(f.toPath()) : fileExistsPredicate.test(f);
   }
 
   public boolean isResolvedArtifact() {

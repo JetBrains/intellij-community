@@ -26,7 +26,6 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <statistics.counterUsagesCollector implementationClass="com.intellij.lang.ant.AntActionsUsagesCollector"/>
 
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
-    <projectService serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>

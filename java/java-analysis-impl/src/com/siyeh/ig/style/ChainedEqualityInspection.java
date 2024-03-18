@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ChainedEqualityInspection extends BaseInspection {
+public final class ChainedEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull

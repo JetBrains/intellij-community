@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.transformations
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
@@ -45,10 +46,18 @@ fun disableAssertOnRecursion(disposable: Disposable) {
   })
 }
 
+/**
+ * In dumb mode only transformations that are marked as [com.intellij.openapi.project.DumbAware] are executed.
+ */
 fun transformDefinition(definition: GrTypeDefinition): TransformationResult {
   return RecursionManager.doPreventingRecursion(definition, false) {
     val transformationContext = TransformationContextImpl(definition)
-    for (transformation in AstTransformationSupport.EP_NAME.extensions) {
+    val project = definition.project
+    if (DumbService.isDumb(project)) {
+      DumbService.getDumbAwareExtensions(project, AstTransformationSupport.EP_NAME)
+    } else {
+      AstTransformationSupport.EP_NAME.extensionList
+    }.forEach { transformation ->
       ProgressManager.checkCanceled()
       transformation.applyTransformation(transformationContext)
     }

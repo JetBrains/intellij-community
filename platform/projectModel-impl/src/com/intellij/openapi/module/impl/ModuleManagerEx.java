@@ -3,9 +3,13 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 @ApiStatus.Internal
 public abstract class ModuleManagerEx extends ModuleManager {
@@ -18,6 +22,9 @@ public abstract class ModuleManagerEx extends ModuleManager {
     return (ModuleManagerEx)getInstance(project);
   }
 
-  public void unloadNewlyAddedModulesIfPossible(@NotNull MutableEntityStorage builder, @NotNull MutableEntityStorage unloadedEntityBuilder) {
+  public Pair<List<String>, List<String>> calculateUnloadModules(@NotNull MutableEntityStorage builder, @NotNull MutableEntityStorage unloadedEntityBuilder) {
+    return new Pair<>(Collections.emptyList(), Collections.emptyList());
   }
+
+  public void updateUnloadedStorage(@NotNull List<String> modulesToLoad, @NotNull List<String> modulesToUnload) { }
 }

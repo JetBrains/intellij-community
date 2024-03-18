@@ -11,7 +11,7 @@ class FooImpl extends Foo<String> {
 
     @Override
     public @Nullable String getSmth() {
-        return null;
+        return "";
     }
 }
 

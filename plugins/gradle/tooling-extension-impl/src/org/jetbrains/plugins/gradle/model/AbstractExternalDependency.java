@@ -19,40 +19,58 @@ import java.util.*;
 public abstract class AbstractExternalDependency implements ExternalDependency {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final DefaultExternalDependencyId myId;
+  private final @NotNull DefaultExternalDependencyId myId;
   private String myScope;
-  private final Collection<ExternalDependency> myDependencies;
+  private @NotNull Collection<? extends ExternalDependency> myDependencies;
   private String mySelectionReason;
   private int myClasspathOrder;
   private boolean myExported;
 
   public AbstractExternalDependency() {
-    this(new DefaultExternalDependencyId(), null, null);
+    this(new DefaultExternalDependencyId());
   }
 
-  public AbstractExternalDependency(ExternalDependencyId id,
-                                    String selectionReason,
-                                    Collection<? extends ExternalDependency> dependencies) {
+  public AbstractExternalDependency(ExternalDependencyId id) {
+    this(id, null, null);
+  }
+
+  public AbstractExternalDependency(
+    ExternalDependencyId id,
+    String selectionReason,
+    Collection<? extends ExternalDependency> dependencies
+  ) {
+    this(id, selectionReason, dependencies, null, 0, false);
+  }
+
+  public AbstractExternalDependency(
+    ExternalDependencyId id,
+    String selectionReason,
+    Collection<? extends ExternalDependency> dependencies,
+    String scope,
+    int classpathOrder,
+    boolean exported
+  ) {
     myId = new DefaultExternalDependencyId(id);
     mySelectionReason = selectionReason;
-    myDependencies = dependencies == null ? new ArrayList<>(0) : ModelFactory.createCopy(dependencies);
+    myDependencies = ModelFactory.createCopy(dependencies);
+    myScope = scope;
+    myClasspathOrder = classpathOrder;
+    myExported = exported;
   }
 
   public AbstractExternalDependency(ExternalDependency dependency) {
     this(
       dependency.getId(),
       dependency.getSelectionReason(),
-      dependency.getDependencies()
+      dependency.getDependencies(),
+      dependency.getScope(),
+      dependency.getClasspathOrder(),
+      dependency.getExported()
     );
-    myScope = dependency.getScope();
-    myClasspathOrder = dependency.getClasspathOrder();
-    myExported = dependency.getExported();
   }
 
-  @NotNull
   @Override
-  public ExternalDependencyId getId() {
+  public @NotNull ExternalDependencyId getId() {
     return myId;
   }
 
@@ -131,10 +149,13 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     this.myScope = scope;
   }
 
-  @NotNull
   @Override
-  public Collection<ExternalDependency> getDependencies() {
+  public @NotNull Collection<? extends ExternalDependency> getDependencies() {
     return myDependencies;
+  }
+
+  public void setDependencies(@NotNull Collection<? extends ExternalDependency> dependencies) {
+    myDependencies = dependencies;
   }
 
   @Override
@@ -157,8 +178,8 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
            equal(myDependencies, that.myDependencies);
   }
 
-  private static boolean equal(@NotNull Collection<ExternalDependency> dependencies1,
-                               @NotNull Collection<ExternalDependency> dependencies2) {
+  private static boolean equal(@NotNull Collection<? extends ExternalDependency> dependencies1,
+                               @NotNull Collection<? extends ExternalDependency> dependencies2) {
     final DependenciesIterator iterator1 = new DependenciesIterator(dependencies1);
     final DependenciesIterator iterator2 = new DependenciesIterator(dependencies2);
     return GradleContainerUtil.match(iterator1, iterator2, new BooleanBiFunction<AbstractExternalDependency, AbstractExternalDependency>() {
@@ -189,7 +210,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     private final ArrayDeque<ExternalDependency> myToProcess;
     private final ArrayList<Integer> myProcessedStructure;
 
-    private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
+    private DependenciesIterator(@NotNull Collection<? extends ExternalDependency> dependencies) {
       mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
       myToProcess = new ArrayDeque<>(dependencies);
       myProcessedStructure = new ArrayList<>();

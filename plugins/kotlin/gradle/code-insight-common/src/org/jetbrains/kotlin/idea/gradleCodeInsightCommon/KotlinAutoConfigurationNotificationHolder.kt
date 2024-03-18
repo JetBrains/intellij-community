@@ -115,7 +115,6 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
         manualConfigurationStarted = true
     }
 
-
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
@@ -128,16 +127,23 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
             return@create
         }
 
+        fun expireNotificationIfConfigured() {
+            if (manualConfigurationStarted) {
+                notification.expire()
+            }
+        }
+
         val configurators = getAbleToRunConfigurators(module).toList()
         manualConfigurationStarted = false
         if (configurators.size > 1) {
-            KotlinSetupEnvironmentNotificationProvider.createConfiguratorsPopup(project, configurators).showInBestPositionFor(e.dataContext)
+            KotlinSetupEnvironmentNotificationProvider
+                .createConfiguratorsPopup(project, configurators) {
+                    expireNotificationIfConfigured()
+                }.showInBestPositionFor(e.dataContext)
         } else if (configurators.size == 1) {
             configurators.first().configure(project, emptyList())
         }
-        if (manualConfigurationStarted) {
-            notification.expire()
-        }
+        expireNotificationIfConfigured()
     }
 
     private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
@@ -154,12 +160,13 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
             KotlinProjectConfigurationBundle.message("auto.configure.kotlin.undo.not-possible.title")
         )
     }
+
     private fun undoAction(project: Project) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("undo.configuration.action")
     ) { _, notification ->
         val undoManager = UndoManager.getInstance(project)
         if (undoManager.isUndoAvailable(null)) {
-            val undoActionName= undoManager.getUndoActionNameAndDescription(null).first
+            val undoActionName = undoManager.getUndoActionNameAndDescription(null).first
             val undoAutoconfigureKotlinName =
                 ActionsBundle.message("action.undo.text", KotlinIdeaGradleBundle.message("command.name.configure.kotlin.automatically"))
             if (undoActionName == undoAutoconfigureKotlinName) {

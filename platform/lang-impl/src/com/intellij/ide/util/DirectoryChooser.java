@@ -409,6 +409,10 @@ public class DirectoryChooser extends DialogWrapper {
       return myDirectory;
     }
 
+    public @Nullable String getPostfix() {
+      return myPostfix;
+    }
+
     public @NlsSafe @NotNull String getRelativeToProjectPath() {
       return myRelativeToProjectPath;
     }

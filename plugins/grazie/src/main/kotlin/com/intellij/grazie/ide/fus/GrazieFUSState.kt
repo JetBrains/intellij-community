@@ -15,9 +15,42 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  private val GROUP = EventLogGroup("grazie.state", 7)
+  private val ENABLE_LANGUAGE = GROUP.registerEvent(
+    "enabled.language",
+    EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() }
+  )
+
+  private val RULE = GROUP.registerEvent(
+    "rule",
+    EventFields.PluginInfo,
+    EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java),
+    EventFields.Enabled
+  )
+
+  private val DOCUMENTATION_FIELD = EventFields.StringValidatedByEnum("documentation", "state")
+
+  private val COMMENTS_FIELD = EventFields.StringValidatedByEnum("comments", "state")
+
+  private val LITERALS_FIELD = EventFields.StringValidatedByEnum("literals", "state")
+
+  private val COMMIT_FIELD = EventFields.StringValidatedByEnum("commit", "state")
+
+  private val USER_CHANGE_FIELD = EventFields.StringValidatedByEnum("userChange", "state")
+
+  private val LANGUAGE_FIELD = EventFields.StringValidatedByCustomRule("language", LangCustomRuleValidator::class.java)
+
+  private val CHECKING_CONTEXT = GROUP.registerVarargEvent(
+    "checkingContext",
+    LANGUAGE_FIELD,
+    USER_CHANGE_FIELD,
+    DOCUMENTATION_FIELD,
+    COMMENTS_FIELD,
+    LITERALS_FIELD,
+    COMMIT_FIELD
+  )
+
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(): Set<MetricEvent> {
     val metrics = HashSet<MetricEvent>()
@@ -58,28 +91,5 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     checkDomain(COMMIT_FIELD) { it.isCheckInCommitMessagesEnabled }
 
     return metrics
-  }
-
-  companion object {
-    private val GROUP = EventLogGroup("grazie.state", 7)
-    private val ENABLE_LANGUAGE = GROUP.registerEvent("enabled.language",
-                                                      EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() })
-    private val RULE = GROUP.registerEvent("rule",
-                                           EventFields.PluginInfo,
-                                           EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java),
-                                           EventFields.Enabled)
-    private val DOCUMENTATION_FIELD = EventFields.StringValidatedByEnum("documentation", "state")
-    private val COMMENTS_FIELD = EventFields.StringValidatedByEnum("comments", "state")
-    private val LITERALS_FIELD = EventFields.StringValidatedByEnum("literals", "state")
-    private val COMMIT_FIELD = EventFields.StringValidatedByEnum("commit", "state")
-    private val USER_CHANGE_FIELD = EventFields.StringValidatedByEnum("userChange", "state")
-    private val LANGUAGE_FIELD = EventFields.StringValidatedByCustomRule("language", LangCustomRuleValidator::class.java)
-    private val CHECKING_CONTEXT = GROUP.registerVarargEvent("checkingContext",
-                                                             LANGUAGE_FIELD,
-                                                             USER_CHANGE_FIELD,
-                                                             DOCUMENTATION_FIELD,
-                                                             COMMENTS_FIELD,
-                                                             LITERALS_FIELD,
-                                                             COMMIT_FIELD)
   }
 }

@@ -53,9 +53,10 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                      <version>1</version>
                      """
 
+
   override fun setUp() {
     super.setUp()
-    ideCompilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
+    ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     javacCompiler = ideCompilerConfiguration.defaultCompiler
     eclipseCompiler = ideCompilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler } as EclipseCompiler
     AcceptedLanguageLevelsSettings.allowLevel(testRootDisposable, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1])
@@ -275,7 +276,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun doTestPreview(compilerArgs: String?) {
-    val feature = LanguageLevel.HIGHEST.toJavaVersion().feature
+    val feature = LanguageLevel.HIGHEST.feature()
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -334,7 +335,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   open fun testSettingTargetLevel() = runBlocking {
-    JavacConfiguration.getOptions(myProject,
+    JavacConfiguration.getOptions(project,
                                   JavacConfiguration::class.java).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5"
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
@@ -350,7 +351,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     TestCase.assertEquals("-Xmm500m -Xms128m",
-                          JavacConfiguration.getOptions(myProject,
+                          JavacConfiguration.getOptions(project,
                                                         JavacConfiguration::class.java).ADDITIONAL_OPTIONS_STRING.trim { it <= ' ' })
     TestCase.assertEquals("1.3", ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project")))
   }
@@ -655,7 +656,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldResolveEclipseCompilerOnAutoDetect() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(eclipsePom)
     importProjectAsync()
@@ -666,7 +667,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldResolveEclipseAndSwitchToJavacCompiler() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(eclipsePom)
     importProjectAsync()
@@ -681,7 +682,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldResolveEclipseAndStayOnEclipseCompiler() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(eclipsePom)
     importProjectAsync()
@@ -695,7 +696,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldSwitchToEclipseAfterJavac() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(javacPom)
     importProjectAsync()
@@ -709,13 +710,13 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldNoSwitchToJavacIfFlagDisabled() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(eclipsePom)
     importProjectAsync()
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = false
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = false
 
     createProjectPom(javacPom)
     importProjectAsync()
@@ -725,14 +726,14 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldNotSwitchToJavacCompilerIfAutoDetectDisabled() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(eclipsePom)
     importProjectAsync()
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
     createProjectPom(javacPom)
-    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = false
+    MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler = false
     importProjectAsync()
 
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)

@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 public class HtmlEmmetPerformanceTest extends BasePlatformTestCase {
   public void testPerformance() throws Exception {
     final String fileContent = FileUtil.loadFile(new File(getTestDataPath() + "/performance.html"), StandardCharsets.UTF_8);
-    PlatformTestUtil.startPerformanceTest(getTestName(true), 3000, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(true), () -> {
       for (int i = 0; i < 50; i++) {
         myFixture.configureByText(HtmlFileType.INSTANCE, fileContent);
         PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(myFixture.getDocument(myFixture.getFile()));
@@ -32,7 +32,7 @@ public class HtmlEmmetPerformanceTest extends BasePlatformTestCase {
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         UIUtil.dispatchAllInvocationEvents();
       }
-    }).useLegacyScaling().assertTiming();
+    }).start();
     myFixture.checkResultByFile("performance_after.html");
   }
 

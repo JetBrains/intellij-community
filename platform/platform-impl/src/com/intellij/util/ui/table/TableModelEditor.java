@@ -4,6 +4,7 @@ package com.intellij.util.ui.table;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -229,7 +230,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   public @NotNull JComponent createComponent() {
     return toolbarDecorator.addExtraAction(
-      new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
+      new DumbAwareAction(IdeBundle.message("button.copy"), null, PlatformIcons.COPY_ICON) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TableUtil.stopEditing(table);
@@ -246,6 +247,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
         }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!table.getSelectedObjects().isEmpty());
+        }
+
         @Override
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.EDT;

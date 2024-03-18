@@ -46,6 +46,8 @@ public interface ShowUsagesActionHandler {
 
   void beforeClose(@NonNls String reason);
 
+  boolean navigateToSingleUsageImmediately();
+
   @NotNull List<EventPair<?>> buildFinishEventData(@Nullable UsageInfo selectedUsage);
 
   static @PopupAdvertisement @Nullable String getSecondInvocationHint(@NotNull ShowUsagesActionHandler actionHandler) {

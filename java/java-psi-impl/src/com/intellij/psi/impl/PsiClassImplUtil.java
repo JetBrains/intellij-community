@@ -239,10 +239,11 @@ public final class PsiClassImplUtil {
   public static Icon getClassIcon(int flags, @NotNull PsiClass aClass, @Nullable Icon symbolIcon) {
     Icon base = LastComputedIconCache.get(aClass, flags);
     if (base == null) {
-      if (symbolIcon == null) {
-        symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      Icon baseSymbolIcon = symbolIcon;
+      if (baseSymbolIcon == null) {
+        baseSymbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, symbolIcon, 0);
+      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, baseSymbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 
@@ -317,7 +318,7 @@ public final class PsiClassImplUtil {
       return true;
     }
     String name = method.getName();
-    if ("premain".equals(name) || "agentmain".equals(name)) return false;
+    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
@@ -1070,13 +1071,18 @@ public final class PsiClassImplUtil {
   public static boolean isClassEquivalentTo(@NotNull PsiClass aClass, PsiElement another) {
     if (aClass == another) return true;
     if (!(another instanceof PsiClass)) return false;
-    String name1 = aClass.getName();
-    if (name1 == null) return false;
     if (!another.isValid()) return false;
-    String name2 = ((PsiClass)another).getName();
-    if (name2 == null) return false;
-    if (name1.hashCode() != name2.hashCode()) return false;
-    if (!name1.equals(name2)) return false;
+    boolean isImplicitClass = aClass instanceof PsiImplicitClass;
+    boolean anotherImplicitClass = another instanceof PsiImplicitClass;
+    if (isImplicitClass != anotherImplicitClass) return false;
+    if (!isImplicitClass) {
+      String name1 = aClass.getName();
+      if (name1 == null) return false;
+      String name2 = ((PsiClass)another).getName();
+      if (name2 == null) return false;
+      if (name1.hashCode() != name2.hashCode()) return false;
+      if (!name1.equals(name2)) return false;
+    }
     String qName1 = aClass.getQualifiedName();
     String qName2 = ((PsiClass)another).getQualifiedName();
     if (qName1 == null || qName2 == null) {
@@ -1125,6 +1131,11 @@ public final class PsiClassImplUtil {
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);
     boolean lib2 = fileIndex2.isInLibraryClasses(vfile2);
+    if (lib1 && lib2) {
+      LanguageLevel ver1 = JavaMultiReleaseUtil.getVersion(vfile1);
+      LanguageLevel ver2 = JavaMultiReleaseUtil.getVersion(vfile2);
+      if (ver1 != ver2) return false;
+    }
 
     //if copy from another project, fileIndex of correct project should be requested
     return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex2.isInSource(vfile2) || lib2);

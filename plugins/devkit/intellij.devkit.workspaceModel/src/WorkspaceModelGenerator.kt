@@ -14,12 +14,17 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 private val LOG = logger<WorkspaceModelGenerator>()
@@ -39,7 +44,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
           CodeWriter.generate(
             project, module, sourceRoot.file!!,
             processAbstractTypes = module.withAbstractTypes,
-            explicitApiEnabled = module.explicitApiEnabled
+            explicitApiEnabled = module.explicitApiEnabled,
+            isTestModule = module.isTestModule // TODO(It doesn't work for all modules)
           ) {
             createGeneratedSourceFolder(module, sourceRoot)
           }
@@ -102,8 +108,9 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
 
   private val Module.explicitApiEnabled: Boolean
     get() {
-      val something: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
-      return something?.compilerArguments?.explicitApi == ExplicitApiMode.STRICT.state
+      val facetSettings: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
+      val compilerArguments = facetSettings?.compilerSettings?.additionalArgumentsAsList
+      return compilerArguments?.contains("-Xexplicit-api=${ExplicitApiMode.STRICT.state}") == true
     }
 
   companion object {

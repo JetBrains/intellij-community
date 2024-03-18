@@ -14,7 +14,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
 
-internal fun JBTextArea.adjustBehaviourForFeedbackForm() {
+fun JBTextArea.adjustBehaviourForFeedbackForm() {
   wrapStyleWord = true
   lineWrap = true
   addKeyListener(object : KeyAdapter() {
@@ -32,12 +32,11 @@ internal fun JBTextArea.adjustBehaviourForFeedbackForm() {
   })
 }
 
-internal const val TEXT_AREA_ROW_SIZE = 5
-internal const val TEXT_AREA_COLUMN_SIZE = 42
+const val TEXT_AREA_ROW_SIZE = 5
 internal const val TEXT_FIELD_EMAIL_COLUMN_SIZE = 25
 internal const val COMBOBOX_COLUMN_SIZE = 25
 
-internal val EMAIL_REGEX = Regex(".+@.+\\..+")
+internal val EMAIL_REGEX = Regex("^[a-zA-Z0-9\\\\._%+!$&*=^|~#{}-]+@([a-zA-Z0-9\\\\-]+\\.)+([a-zA-Z]{2,22})$")
 internal fun Row.feedbackAgreement(project: Project?, @NlsContexts.DetailedDescription agreementText: String, systemInfo: () -> Unit) {
   comment(agreementText, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP) {
     when (it.description) {
@@ -49,7 +48,7 @@ internal fun Row.feedbackAgreement(project: Project?, @NlsContexts.DetailedDescr
   }
 }
 
-internal fun createBoldJBLabel(@NlsContexts.Label label: String): JBLabel {
+fun createBoldJBLabel(@NlsContexts.Label label: String): JBLabel {
   return JBLabel(label).apply {
     font = JBFont.create(font.deriveFont(Font.BOLD), false)
   }

@@ -5,13 +5,13 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment.gradleJava
 
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AnnotationBasedPluginProjectResolverExtension
 import org.jetbrains.kotlin.idea.gradleTooling.model.assignment.AssignmentModel
 
 class AssignmentProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<AssignmentModel>() {
     companion object {
-        val KEY = Key<AssignmentModel>("AssignmentModel")
+        val KEY = Key.create(AssignmentModel::class.java, 1)
     }
 
     override val modelClass get() = AssignmentModel::class.java

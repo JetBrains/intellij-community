@@ -59,7 +59,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
 
       @Override
       protected void executeCommand(Runnable runnable, String name, Object groupId) {
-        myHistory.onCommandStarted();
+        myHistory.onCommandStarted(groupId);
         runnable.run();
         myHistory.onSelectionChanged();
         myHistory.onCommandFinished(getProject(), groupId);
@@ -98,7 +98,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   }
 
   public void testNoHistoryRecording() {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onCommandFinished(getProject(), null);
 
     assertFalse(myHistory.isBackAvailable());
@@ -194,7 +194,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   }
 
   private void makeNavigationChange(MyState newState) {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onSelectionChanged();
     myHistory.onCommandFinished(getProject(), null);
     myEditorState = newState;

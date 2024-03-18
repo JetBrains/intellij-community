@@ -40,7 +40,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
@@ -58,6 +57,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -366,7 +367,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
       if (doc != null) {
         TextRange textRange = psiElement.getTextRange();
-        String date = DateFormatUtil.formatDateTime(new Date());
+        String date = DateTimeFormatter.ISO_DATE_TIME.format(LocalTime.now());
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();

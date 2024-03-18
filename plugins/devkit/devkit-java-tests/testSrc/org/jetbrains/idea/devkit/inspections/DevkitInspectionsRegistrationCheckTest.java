@@ -28,8 +28,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
             "CancellationCheckInLoops",
             "ThreadingConcurrency",
             "CallingMethodShouldBeRequiresBlockingContext",
-            "IncorrectProcessCanceledExceptionHandling",
-            "UsePlatformProcessAwaitExit");
+            "IncorrectProcessCanceledExceptionHandling");
 
   /**
    * Validates all DevKit inspections that are disabled by default match the expected known set.

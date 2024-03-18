@@ -4,7 +4,7 @@
     <fileType name="Jupyter"
               language="Jupyter"
               extensions="ipynb"
-              implementationClass="org.jetbrains.plugins.notebooks.jupyter.JupyterFileType"
+              implementationClass="com.intellij.jupyter.core.jupyter.JupyterFileType"
               fieldName="INSTANCE"/>
     <iconMapper mappingFile="JupyterCoreIconMappings.json"/>
   </extensions>

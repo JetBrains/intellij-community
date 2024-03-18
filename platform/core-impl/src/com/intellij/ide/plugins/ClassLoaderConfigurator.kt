@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -176,6 +176,14 @@ class ClassLoaderConfigurator(
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
     for (dependency in module.pluginDependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
+      if (!isKotlinPlugin(module.pluginId) &&
+          isKotlinPlugin(dependency.pluginId) &&
+          isKotlinPluginK2Mode() &&
+          !pluginCanWorkInK2Mode(module)
+        ) {
+        // disable dependencies which optionally deepened on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
+        continue
+      }
       if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
         continue
       }

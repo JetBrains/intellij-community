@@ -7,6 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
-public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
+public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate implements DumbAware {
   private static final Condition<PsiElement> CONSTRUCTOR = expression -> {
     PsiReferenceExpression ref = expression instanceof PsiMethodCallExpression call ? call.getMethodExpression() :
                                  expression instanceof PsiReferenceExpression r ? r :
@@ -26,19 +28,21 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
 
     PsiExpression qualifier = ref.getQualifierExpression();
 
-    JavaResolveResult result = ref.advancedResolve(true);
-    PsiElement element = result.getElement();
+    return DumbService.getInstance(ref.getProject()).computeWithAlternativeResolveEnabled(() -> {
+      JavaResolveResult result = ref.advancedResolve(true);
+      PsiElement element = result.getElement();
 
-    //todo implement proper support for Foo<Bar>, Foo.new Bar()
-    if (qualifier != null && (!(qualifier instanceof PsiReferenceExpression) || element == null)) return false;
+      //todo implement proper support for Foo<Bar>, Foo.new Bar()
+      if (qualifier != null && (!(qualifier instanceof PsiReferenceExpression) || element == null)) return false;
 
-    if (element == null) return true;
-    if (!(element instanceof PsiClass cls)) return false;
-    PsiMethod[] constructors = cls.getConstructors();
-    if (constructors.length == 0) return true;
-    PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
-    // Check whether there's at least one accessible constructor
-    return !ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, cls));
+      if (element == null) return true;
+      if (!(element instanceof PsiClass cls)) return false;
+      PsiMethod[] constructors = cls.getConstructors();
+      if (constructors.length == 0) return true;
+      PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+      // Check whether there's at least one accessible constructor
+      return !ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, cls));
+    });
   };
 
   protected NewExpressionPostfixTemplate() {

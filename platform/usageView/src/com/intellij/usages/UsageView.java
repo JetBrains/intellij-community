@@ -47,19 +47,8 @@ public interface UsageView extends Disposable {
   void close();
   boolean isSearchInProgress();
 
-  /**
-   * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
-   */
-  @Deprecated(forRemoval = true)
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
-
-  /**
-   * @deprecated see {@link UsageView#setRerunAction(Action)}
-   */
-  @Deprecated(forRemoval = true)
-  default void setReRunActivity(@NotNull Runnable runnable) {}
 
   /**
    * @param rerunAction this action is used to provide non-standard search restart. Disabled action makes toolbar button disabled too.

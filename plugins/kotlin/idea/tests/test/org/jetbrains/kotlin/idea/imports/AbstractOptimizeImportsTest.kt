@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
 abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String {
@@ -16,10 +16,7 @@ abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
         try {
             val optimizer = KotlinImportOptimizer().processFile(file)
             optimizer.run()
-            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
-            if (message != null) {
-                TestCase.assertEquals(message, optimizer.userNotificationInfo)
-            }
+            userNotificationInfo = optimizer.userNotificationInfo
             return OptimizedImportsBuilder.testLog.toString()
         } finally {
             OptimizedImportsBuilder.testLog = null

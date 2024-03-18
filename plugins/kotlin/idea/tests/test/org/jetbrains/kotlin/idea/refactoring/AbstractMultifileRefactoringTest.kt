@@ -77,7 +77,15 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         FileDocumentManager.getInstance().saveAllDocuments()
-        PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile) { file -> !KotlinTestUtils.isMultiExtensionName(file.name) }
+        PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile, ::fileFilter, ::fileNameMapper)
+    }
+
+    protected open fun fileFilter(file: VirtualFile): Boolean {
+        return !KotlinTestUtils.isMultiExtensionName(file.name)
+    }
+
+    protected open fun fileNameMapper(file: VirtualFile): String {
+        return file.name
     }
 }
 
@@ -86,11 +94,13 @@ fun runRefactoringTest(
     config: JsonObject,
     rootDir: VirtualFile,
     project: Project,
-    action: AbstractMultifileRefactoringTest.RefactoringAction
+    action: AbstractMultifileRefactoringTest.RefactoringAction,
+    alternativeConflicts: String? = null
 ) {
     val mainFilePath = config.getNullableString("mainFile") ?: config.getAsJsonArray("filesToMove").first().asString
 
-    val conflictFile = File(File(path).parentFile, "conflicts.txt")
+    val conflictFile = alternativeConflicts?.let { File(File(path).parentFile, alternativeConflicts) }?.takeIf { it.exists() }
+        ?: File(File(path).parentFile, "conflicts.txt")
 
     val mainFile = rootDir.findFileByRelativePath(mainFilePath)!!
     val mainPsiFile = PsiManager.getInstance(project).findFile(mainFile)!!

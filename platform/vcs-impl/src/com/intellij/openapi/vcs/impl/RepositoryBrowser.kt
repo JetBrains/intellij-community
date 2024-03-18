@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.icons.ExpUiIcons
@@ -69,7 +69,6 @@ object RepositoryBrowser {
       id = TOOLWINDOW_ID,
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
-      canWorkInDumbMode = true,
       stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") },
       icon = getIcon()
     ))

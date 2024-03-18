@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyKeywordArgument;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyKeywordArgumentManipulator extends AbstractElementManipulator<PyKeywordArgument> {
+public final class PyKeywordArgumentManipulator extends AbstractElementManipulator<PyKeywordArgument> {
   @Override
   public PyKeywordArgument handleContentChange(@NotNull PyKeywordArgument element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     final ASTNode keywordNode = element.getKeywordNode();

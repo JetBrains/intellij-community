@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -238,8 +238,9 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       //noinspection unchecked
       return (InvertedIndexValueIterator<Value>)EmptyValueIterator.INSTANCE;
     }
-    Map<Value, Object> mapping = ObjectUtils.notNull(asMapping(),
-                                                     Collections.singletonMap(wrapValue(asValue()), myInputIdMappingValue));
+
+    Map<Value, Object> value = asMapping();
+    Map<Value, Object> mapping = value == null ? Collections.singletonMap(wrapValue(asValue()), myInputIdMappingValue) : value;
     return new InvertedIndexValueIterator<Value>() {
       private Value current;
       private Object currentValue;

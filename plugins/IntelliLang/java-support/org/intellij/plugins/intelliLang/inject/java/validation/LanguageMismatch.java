@@ -24,7 +24,9 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiStringTemplateUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CollectionUtils;
@@ -77,7 +79,7 @@ public class LanguageMismatch extends LocalInspectionTool {
 
   void checkExpression(PsiExpression expression, ProblemsHolder holder, Pair<String, ? extends Set<String>> annotationName) {
     final PsiType type = expression.getType();
-    if (type == null || !PsiUtilEx.isStringOrStringArray(type)) {
+    if (type == null || !PsiUtilEx.isInjectionTargetType(type)) {
       return;
     }
 
@@ -99,20 +101,24 @@ public class LanguageMismatch extends LocalInspectionTool {
               }
             }
             else if (CHECK_NON_ANNOTATED_REFERENCES) {
-              final PsiElement var =
+              final PsiElement decl =
                   PsiTreeUtil.getParentOfType(expression, PsiVariable.class, PsiExpressionList.class, PsiAssignmentExpression.class);
               // only nag about direct assignment or passing the reference as parameter
-              if (var instanceof PsiVariable) {
-                if (((PsiVariable)var).getInitializer() != expression) {
+              if (decl instanceof PsiVariable variable) {
+                if (variable.getInitializer() != expression) {
+                  return;
+                }
+                if (JavaPsiStringTemplateUtil.isStrTemplate(expression)) {
+                  // Allow reassigning STR processor to apply language for standard concatenation
                   return;
                 }
               }
-              else if (var instanceof PsiExpressionList list) {
+              else if (decl instanceof PsiExpressionList list) {
                 if (!ArrayUtil.contains(expression, list.getExpressions())) {
                   return;
                 }
               }
-              else if (var instanceof PsiAssignmentExpression a) {
+              else if (decl instanceof PsiAssignmentExpression a) {
                 if (a.getRExpression() != expression) {
                   return;
                 }

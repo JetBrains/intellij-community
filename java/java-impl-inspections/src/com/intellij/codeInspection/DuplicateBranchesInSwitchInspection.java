@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -9,6 +8,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
@@ -145,9 +145,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
                                  @NotNull DuplicateBranchesInSwitchInspection.LevelType state,
                                  @NotNull LocalQuickFix @NotNull ... fixes) {
       PsiElement[] elements = duplicate.myStatements;
-      if (elements.length == 0) {
-        return;
-      }
       if (state == LevelType.NO) {
         return;
       }
@@ -480,7 +477,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myLabelToMergeWith);
         if (prevElement != null) moveTarget = prevElement;
       }
-      if (PsiUtil.isLanguageLevel14OrHigher(moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
+      if (PsiUtil.isAvailable(JavaFeature.SWITCH_EXPRESSION, moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
           myBranchToDelete.canCopyCaseValues(myBranchToMergeWith) && !SwitchUtils.isCaseNull(labelStatement) &&
           !SwitchUtils.isDefaultLabel(labelStatement)) {
         for (PsiElement element : myBranchPrefixToMove) {
@@ -1082,7 +1079,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements,
-                                   element -> element instanceof PsiPattern && (!HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
+                                   element -> element instanceof PsiPattern && (!PsiUtil.isAvailable(
+                                     JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, element) ||
                                                                                 JavaPsiPatternUtil.containsNamedPatternVariable(element)) ||
                                               element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }

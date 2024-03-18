@@ -25,7 +25,7 @@ import java.util.*;
 
 import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
-public class PyModuleNameIndex extends ScalarIndexExtension<String> {
+public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.module.name");
 
   @NotNull

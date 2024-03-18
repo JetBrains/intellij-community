@@ -217,11 +217,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public synchronized void onStart(@NotNull ExternalSystemTaskId id) {
-    }
-
-
-    @Override
     public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
       try {
         myManager.onEnvironmentPrepared(id);

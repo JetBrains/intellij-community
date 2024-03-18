@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
 import com.intellij.lang.ASTNode
@@ -12,8 +12,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.jetbrains.python.requirements.lexer.RequirementsLexerAdapter
-import com.jetbrains.python.requirements.psi.RequirementsTypes
-import com.jetbrains.python.requirements.psi.parser.RequirementsParser
 
 
 class RequirementsParserDefinition : ParserDefinition {
@@ -28,7 +26,7 @@ class RequirementsParserDefinition : ParserDefinition {
   }
 
   override fun createParser(project: Project): PsiParser {
-    return RequirementsParser()
+    return com.jetbrains.python.requirements.psi.parser.RequirementsParser()
   }
 
   override fun getFileNodeType(): IFileElementType {
@@ -44,7 +42,7 @@ class RequirementsParserDefinition : ParserDefinition {
   }
 
   override fun createElement(node: ASTNode): PsiElement {
-    return RequirementsTypes.Factory.createElement(node)
+    return com.jetbrains.python.requirements.psi.RequirementsTypes.Factory.createElement(node)
   }
 
   companion object {

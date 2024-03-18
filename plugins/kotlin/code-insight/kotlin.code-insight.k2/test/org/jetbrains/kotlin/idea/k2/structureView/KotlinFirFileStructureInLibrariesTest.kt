@@ -12,7 +12,7 @@ import java.io.File
 
 class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {
     override val fileExtension: String
-        get() = TODO("Not yet implemented")
+        get() = error("`configureDefault` should not be called")
 
     override fun isFirPlugin(): Boolean {
         return true
@@ -32,7 +32,7 @@ class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("structureView/onLibrary")
 
-    fun testPairOutput(): Unit {
+    fun testPairOutput() {
         val libraryElement = myFixture.findClass("kotlin.Pair").navigationElement
         myFixture.openFileInEditor(libraryElement.containingFile.virtualFile)
         popupFixture.update()

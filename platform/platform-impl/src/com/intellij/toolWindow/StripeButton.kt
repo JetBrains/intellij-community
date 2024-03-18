@@ -83,7 +83,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     HelpTooltip.dispose(this)
     val tooltip = HelpTooltip()
     tooltip.setTitle(toolWindow.stripeTitleProvider)
-    val activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)
+    val activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindow.id)
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId))
     tooltip.installOn(this)
   }
@@ -274,7 +274,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private fun updateText(toolWindow: ToolWindowImpl) {
     var text = toolWindow.stripeTitle
     if (UISettings.getInstance().showToolWindowsNumbers) {
-      val mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.id)
+      val mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(toolWindow.id)
       if (mnemonic != -1) {
         text = mnemonic.toChar().toString() + ": " + text
         setMnemonic2(mnemonic)

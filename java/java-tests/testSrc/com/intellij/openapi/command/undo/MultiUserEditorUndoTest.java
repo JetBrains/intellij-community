@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeWithMe.ClientId;
@@ -322,7 +322,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
                                       @NotNull Disposable disposable) {
     ClientSessionsManager<ClientSession> sessionsManager = getClientSessionsManager(componentManager);
     sessionsManager.registerSession(disposable, session);
-    session.registerServices();
+    session.registerComponents();
     BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
       session.preloadServices(scope);
       return Unit.INSTANCE;

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import java.io.IOException
@@ -9,6 +10,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
+@Service
 class PluginStartupApplicationService : Disposable {
     private var aliveFlagPath: String? = null
 

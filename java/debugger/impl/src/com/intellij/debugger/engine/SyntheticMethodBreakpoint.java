@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.breakpoints.WildcardMethodBreakpoint;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Method;
@@ -11,7 +12,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 
 import java.util.Objects;
 
-public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint {
+public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint implements SyntheticBreakpoint {
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
   private final String mySignature;
   private String mySuspendPolicy;

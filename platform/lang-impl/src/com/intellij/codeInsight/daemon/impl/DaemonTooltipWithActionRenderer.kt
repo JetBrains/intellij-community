@@ -269,7 +269,9 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
 
   private class SettingsActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), HintManagerImpl.ActionToIgnore, DumbAware {
     init {
-      isPopup = true
+      templatePresentation.isPopupGroup = true
+      templatePresentation.icon = AllIcons.Actions.More
+      templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     }
   }
 
@@ -280,16 +282,13 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
   private fun createSettingsComponent(hintHint: HintHint,
                                       reloader: TooltipReloader,
                                       hasMore: Boolean): JComponent {
-    val presentation = Presentation()
-    presentation.icon = AllIcons.Actions.More
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     val actions = mutableListOf<AnAction>()
     actions.add(ShowActionsAction(reloader, tooltipAction != null))
     val docAction = ShowDocAction(reloader, hasMore)
     actions.add(docAction)
     val actionGroup = SettingsActionGroup(actions)
     val buttonSize = 20
-    val settingsButton = ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(buttonSize, buttonSize))
+    val settingsButton = ActionButton(actionGroup, null, ActionPlaces.UNKNOWN, Dimension(buttonSize, buttonSize))
     settingsButton.setNoIconsInPopup(true)
     settingsButton.border = JBUI.Borders.empty()
     settingsButton.isOpaque = false

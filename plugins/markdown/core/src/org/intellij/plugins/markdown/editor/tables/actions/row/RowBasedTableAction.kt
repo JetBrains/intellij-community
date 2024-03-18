@@ -20,9 +20,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
  */
 internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false) : AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
-    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
-    val offset = event.getRequiredData(CommonDataKeys.CARET).offset
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
+    val offset = event.getData(CommonDataKeys.CARET)?.offset ?: return
     val document = editor.document
     val tableAndRow = findTableAndRow(event, file, document, offset)
     requireNotNull(tableAndRow)

@@ -6,7 +6,8 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.Java11Shim
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentHashSetOf
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -110,10 +111,11 @@ private fun tryReadBrokenPluginsFile(brokenPluginsStorage: Path): Map<PluginId, 
       val result = HashMap<PluginId, Set<String>>(count)
       for (i in 0 until count) {
         val pluginId = PluginId.getId(stream.readUTF())
-        val versions = Array<String>(stream.readUnsignedShort()) {
-          stream.readUTF()
-        }
-        result.put(pluginId, Java11Shim.INSTANCE.setOf(versions))
+        result.put(pluginId, persistentHashSetOf<String>().mutate { r ->
+          repeat(stream.readUnsignedShort()) {
+            r.add(stream.readUTF())
+          }
+        })
       }
       return result
     }

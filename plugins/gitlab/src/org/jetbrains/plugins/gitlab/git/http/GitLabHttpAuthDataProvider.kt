@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
+import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -26,9 +27,14 @@ class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
     val matchingServer = runBlockingMaybeCancellable {
       findKnownMatchingServer(url)
     } ?: return null
+
     return runBlockingMaybeCancellable {
-      getAuthData(project, url, matchingServer, login)
-    } ?: throw ProcessCanceledException()
+      when (val loginResult = getLoginResult(project, url, matchingServer, login)) {
+        is LoginResult.Success -> AuthData(loginResult.account.name, loginResult.token)
+        is LoginResult.OtherMethod -> null
+        is LoginResult.Failure -> throw ProcessCanceledException()
+      }
+    }
   }
 
   @RequiresBackgroundThread
@@ -36,9 +42,14 @@ class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
     val matchingServer = runBlockingMaybeCancellable {
       findKnownMatchingServer(url)
     } ?: return null
+
     return runBlockingMaybeCancellable {
-      getAuthData(project, url, matchingServer, null)
-    } ?: throw ProcessCanceledException()
+      when (val loginResult = getLoginResult(project, url, matchingServer, null)) {
+        is LoginResult.Success -> AuthData(loginResult.account.name, loginResult.token)
+        is LoginResult.OtherMethod -> null
+        is LoginResult.Failure -> throw ProcessCanceledException()
+      }
+    }
   }
 }
 
@@ -55,13 +66,13 @@ private suspend fun findKnownMatchingServer(url: String): GitLabServerPath? {
   }
 }
 
-private suspend fun getAuthData(project: Project, url: String, server: GitLabServerPath, login: String?): AuthData? {
+private suspend fun getLoginResult(project: Project, url: String, server: GitLabServerPath, login: String?): LoginResult {
   val accountManager = service<GitLabAccountManager>()
   val accountsWithTokens = accountManager.accountsState.value
     .filter { it.server == server }
     .associateWith { accountManager.findCredentials(it) }
 
-  return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+  val loginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accountsWithTokens.size) {
       0 -> {
         GitLabLoginUtil.logInViaToken(project, null, server, login, accountManager::isAccountUnique)
@@ -69,23 +80,21 @@ private suspend fun getAuthData(project: Project, url: String, server: GitLabSer
       1 -> {
         // apparently the token is missing or incorrect, otherwise this account should've been provided by silent provider
         val account = accountsWithTokens.keys.first()
-        val token = accountsWithTokens[account]
-                    ?: GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
-                    ?: return@withContext null
-        account to token
+        GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
       }
       else -> {
-        val account =
-          GitLabLoginUtil.chooseAccount(project, null, GitLabBundle.message("account.choose.git.description", url), accountsWithTokens.keys)
-          ?: return@withContext null
-        val token = accountsWithTokens[account]
-                    ?: GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
-                    ?: return@withContext null
-        account to token
+        val description = GitLabBundle.message("account.choose.git.description", url)
+        val account = GitLabLoginUtil.chooseAccount(project, null, description, accountsWithTokens.keys)
+                      ?: return@withContext LoginResult.Failure
+        accountsWithTokens[account]?.let { token -> LoginResult.Success(account, token) }
+        ?: GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
       }
     }
-  }?.let { (account, token) ->
-    accountManager.updateAccount(account, token)
-    AuthData(account.name, token)
   }
+
+  if (loginResult is LoginResult.Success) {
+    accountManager.updateAccount(loginResult.account, loginResult.token)
+  }
+
+  return loginResult
 }

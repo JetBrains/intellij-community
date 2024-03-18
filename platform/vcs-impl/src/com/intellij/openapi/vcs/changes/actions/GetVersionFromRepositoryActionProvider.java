@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public class GetVersionFromRepositoryActionProvider implements AnActionExtensionProvider {
   @Override
@@ -34,7 +33,8 @@ public class GetVersionFromRepositoryActionProvider implements AnActionExtension
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    if (changes == null) return;
 
     boolean isEnabled = project != null && changes.length > 0;
     e.getPresentation().setEnabledAndVisible(isEnabled);
@@ -43,13 +43,14 @@ public class GetVersionFromRepositoryActionProvider implements AnActionExtension
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = Objects.requireNonNull(e.getProject());
-    Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
-
+    Project project = e.getProject();
+    if (project == null) return;
+    Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    if (changes == null) return;
     List<GetVersionAction.FileRevisionProvider> fileContentProviders = ContainerUtil.map(changes, change -> {
       return new MyFileContentProvider(change);
     });
-    GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders, null);
+    GetVersionAction.doGet(project, VcsBundle.message("activity.name.get"), fileContentProviders, null);
   }
 
   private static class MyFileContentProvider implements GetVersionAction.FileRevisionProvider {

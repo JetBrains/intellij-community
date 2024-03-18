@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.application.options.codeStyle.properties.*
+import com.intellij.openapi.project.Project
 import org.editorconfig.Utils
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
@@ -11,7 +12,7 @@ import org.editorconfig.language.schema.descriptors.impl.*
 private const val EXCEPT_NONE_REGEXP = "(^(?!none).*|.{4}.+)"
 
 internal class IntellijConfigOptionDescriptorProvider : EditorConfigOptionDescriptorProvider {
-  override fun getOptionDescriptors(): List<EditorConfigOptionDescriptor> =
+  override fun getOptionDescriptors(project: Project): List<EditorConfigOptionDescriptor> =
     if (!Utils.isFullIntellijSettingsSupport()) emptyList() else getAllOptions()
 
   override fun requiresFullSupport(): Boolean = Utils.isFullIntellijSettingsSupport()

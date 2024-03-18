@@ -98,7 +98,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
 
     return VfsUtilCore.inputStreamSkippingBOM(
       preloadedContent == null ?
-      getPersistence().getInputStream(this) :
+      owningPersistentFS().getInputStream(this) :
       new DataInputStream(new UnsyncByteArrayInputStream(preloadedContent)),
       this
     );
@@ -114,7 +114,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     checkNotTooLarge(null);
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
     if (preloadedContent != null) return preloadedContent;
-    byte[] bytes = getPersistence().contentsToByteArray(this, cacheContent);
+    byte[] bytes = owningPersistentFS().contentsToByteArray(this, cacheContent);
     if (!isCharsetSet()) {
       // optimisation: take the opportunity to not load bytes again in getCharset()
       // use getFileTypeByFile(..., bytes) to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
@@ -137,14 +137,14 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   public @NotNull OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     checkNotTooLarge(requestor);
-    return VfsUtilCore.outputStreamAddingBOM(getPersistence().getOutputStream(this, requestor, modStamp, timeStamp), this);
+    return VfsUtilCore.outputStreamAddingBOM(owningPersistentFS().getOutputStream(this, requestor, modStamp, timeStamp), this);
   }
 
   @Override
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
     // NB not using VirtualFile.getOutputStream() to avoid unneeded BOM skipping/writing
-    try (OutputStream outputStream = getPersistence().getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
+    try (OutputStream outputStream = owningPersistentFS().getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
     }
   }

@@ -475,6 +475,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public @Nullable String getFullIdeProductCode() {
+    return System.getProperty("intellij.platform.full.ide.product.code");
+  }
+
+  @Override
   public String getProductUrl() {
     return myProductUrl;
   }

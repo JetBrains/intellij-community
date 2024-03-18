@@ -15,9 +15,10 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.refactoring.getBodyScope
@@ -131,7 +132,7 @@ class KotlinChangeSignatureConflictSearcher(
             }
 
             if (parametersScope != null) {
-                if (kind === KotlinMethodDescriptor.Kind.PRIMARY_CONSTRUCTOR && valOrVar !== KotlinValVar.None) {
+                if (kind === Kind.PRIMARY_CONSTRUCTOR && valOrVar !== KotlinValVar.None) {
                     for (property in parametersScope.getVariablesFromImplicitReceivers(Name.identifier(parameterName))) {
                         val propertyDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(property) ?: continue
                         if (propertyDeclaration.parent !is KtParameterList) {

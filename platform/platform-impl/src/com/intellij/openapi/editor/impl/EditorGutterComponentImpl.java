@@ -34,6 +34,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,11 +45,13 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLineComponent;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
@@ -161,6 +165,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final JBValue GAP_BETWEEN_ICONS = JBVG.value(3);
   private static final JBValue GAP_BETWEEN_AREAS = JBVG.value(5);
   private static final JBValue GAP_BETWEEN_ANNOTATIONS = JBVG.value(5);
+  static final JBValue EMPTY_ANNOTATION_AREA_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.emptyAnnotationAreaWidth());
+  static final JBValue GAP_AFTER_VCS_MARKERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterVcsMarkersWidth());
+  static final JBValue GAP_AFTER_LINE_NUMBERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterLineNumbersWidth());
+  private static final JBValue GAP_AFTER_ICONS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterIconsWidth());
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
@@ -336,6 +344,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void updateUI() {
+    JBVG.updateCachedValues();
     super.updateUI();
     setRenderingHints();
     reinitSettings(true);
@@ -421,7 +430,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       Color caretRowColor = getCaretRowColor();
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
       paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
-
+      paintStickyLineBackground(g, clip);
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -446,8 +455,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         paintCurrentAccessibleLine(g);
 
         if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
-          g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-          LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+          if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on sticky lines panel
+            g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+            LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+          }
         }
       }
       finally {
@@ -463,10 +474,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void debugGutterAreas(Graphics2D g) {
     if (!debug()) return;
     Point p = MouseInfo.getPointerInfo().getLocation();
-    SwingUtilities.convertPointFromScreen(p, this.myEditor.getComponent());
+    SwingUtilities.convertPointFromScreen(p, this);
     if (p.x >= 0 && p.x <= getWidth()) {
       int off = 0;
-      for (EditorGutterLayout.GutterArea area : myLayout.getLayout()) {
+      List<EditorGutterLayout.GutterArea> layout = isMirrored() ? ContainerUtil.reverse(myLayout.getLayout()) : myLayout.getLayout();
+      for (EditorGutterLayout.GutterArea area : layout) {
         int x = off;
         off += area.width();
         if (off >= p.x) {
@@ -476,8 +488,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           g.setFont(JBUI.Fonts.smallFont().lessOn(2f));
           int y = SwingUtilities.convertPoint(myEditor.getComponent(), p, myEditor.getScrollPane()).y;
           g.drawString(String.valueOf(area.width()), x, y + g.getClipBounds().y - 10);
+
+          showToolTip(area.toString(), p, Balloon.Position.below); //NON-NLS
           break;
         }
+      }
+    }
+  }
+
+  private void paintStickyLineBackground(Graphics2D g, Rectangle clip) {
+    if (ExperimentalUI.isNewUI() && myEditor.isStickyLinePainting() && myEditor.isStickyLineHovered()) {
+      Color hoveredColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      if (hoveredColor != null) {
+        g.setColor(hoveredColor);
+        g.fillRect(0, clip.y, getWidth(), clip.height);
       }
     }
   }
@@ -626,6 +650,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void paintFoldingTree(@NotNull Graphics g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+    if (myEditor.isStickyLinePainting()) {
+      // suppress folding icons on sticky lines panel
+      return;
+    }
     if (isFoldingOutlineShown()) {
       doPaintFoldingTree((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
     }
@@ -654,6 +682,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return null;
     }
     if (!Registry.is("highlight.caret.line.at.custom.fold") && isCaretAtCustomFolding()) {
+      return null;
+    }
+    if (myEditor.isStickyLinePainting()) {
+      // suppress gutter caret row background on sticky lines panel
       return null;
     }
     return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
@@ -750,7 +782,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           if (lineToDisplay != null) {
             int y = visLinesIterator.getY();
             if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line number
-              y = viewportStartY;
+              if (!myEditor.isStickyLinePainting()) { // suppress shifting line number of wrapped line on sticky lines panel IDEA-345706
+                y = viewportStartY;
+              }
             }
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
@@ -761,7 +795,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             }
 
             if (colorUnderCaretRow != null && caretLogicalLine == logicalLine) {
-              g.setColor(colorUnderCaretRow);
+              if (!myEditor.isStickyLinePainting()) { // suppress gutter line number under caret on sticky lines panel
+                g.setColor(colorUnderCaretRow);
+              }
             }
 
             Icon iconOnTheLine = null;
@@ -782,6 +818,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                   hoverIcon = (Icon)activeIcon;
                 }
               }
+            }
+            if (myEditor.isStickyLinePainting()) {
+              // suppress breakpoint icon to print line number on sticky lines panel
+              iconOnTheLine = null;
             }
 
             if (iconOnTheLine == null && hoverIcon == null) {
@@ -1068,7 +1108,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     for (Int2ObjectMap.Entry<List<GutterMark>> entry : Int2ObjectMaps.fastIterable(myLineToGutterRenderers)) {
       List<GutterMark> newValue = entry.getValue();
       for (GutterMarkPreprocessor preprocessor : gutterMarkPreprocessors) {
-        newValue = preprocessor.processMarkers(entry.getValue());
+        newValue = preprocessor.processMarkers(newValue);
       }
       // don't allow more than 4 icons per line
       entry.setValue(ContainerUtil.getFirstItems(newValue, 4));
@@ -1193,11 +1233,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                     int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    boolean stickyLinePainting = myEditor.isStickyLinePainting();
     try {
       List<RangeHighlighter> highlighters = new ArrayList<>();
       processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
-        LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-        if (renderer != null) highlighters.add(highlighter);
+        LineMarkerRenderer r = highlighter.getLineMarkerRenderer();
+        if (r != null) {
+          // suppress gutter line markers on sticky lines panel
+          if (!stickyLinePainting || (r instanceof LineMarkerRendererEx rx && rx.isSticky())) {
+            highlighters.add(highlighter);
+          }
+        }
       });
 
       ContainerUtil.sort(highlighters, Comparator.comparingInt(RangeHighlighter::getLayer));
@@ -1210,7 +1256,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
     }
 
-    paintIcons(firstVisibleLine, lastVisibleLine, g);
+    if (!stickyLinePainting) { // suppress gutter icons on sticky lines panel
+      paintIcons(firstVisibleLine, lastVisibleLine, g);
+    }
   }
 
   private void paintIcons(final int firstVisibleLine, final int lastVisibleLine, final Graphics2D g) {
@@ -1727,7 +1775,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return PaintUtil.alignToInt(sw, ctx, PaintUtil.devValue(1, ctx) > 2 ? RoundingMode.FLOOR : RoundingMode.ROUND, null);
   }
 
-  private int getFoldingAreaOffset() {
+  @Override
+  public int getFoldingAreaOffset() {
     return myLayout.getFoldingAreaOffset();
   }
 
@@ -1904,7 +1953,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getGapAfterIconsArea() {
-    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? EditorUIUtil.scaleWidth(4, myEditor) : getGapBetweenAreas() : 0;
+    return isRealEditor() && areIconsShown()
+           ? ExperimentalUI.isNewUI()
+             ? EditorUIUtil.scaleWidth(GAP_AFTER_ICONS_WIDTH.get(), myEditor)
+             : getGapBetweenAreas()
+           : 0;
   }
 
   private boolean isMirrored() {
@@ -2234,7 +2287,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private boolean isPopupAction(MouseEvent e) {
     GutterIconRenderer renderer = getGutterRenderer(e);
-    return renderer != null && renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
+    return renderer != null && renderer.getClickAction() == null && getPopupMenuActions(renderer, e) != null;
   }
 
   @Override
@@ -2408,9 +2461,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
+    }
+
+    @NotNull
+    @Override
+    public ActionRemoteBehavior getBehavior() {
+      return ActionRemoteBehavior.BackendOnly;
     }
 
     @Override
@@ -2518,74 +2577,83 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void invokePopup(MouseEvent e) {
     int logicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
     Point point = e.getPoint();
-    PointInfo info = getPointInfo(point);
+    PointInfo info = e instanceof StickyLineComponent.MyMouseEvent ? null : getPointInfo(point);
     if (info != null) {
       logGutterIconClick(info.renderer);
     }
-    myLastActionableClick = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
-    final ActionManager actionManager = ActionManager.getInstance();
-    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
-      final List<AnAction> addActions = getTextAnnotationPopupActions(logicalLineAtCursor);
-      if (!addActions.isEmpty()) {
-        e.consume();
-        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(
-          EditorBundle.messagePointer("editor.annotations.action.group.name"));
-        for (AnAction addAction : addActions) {
-          actionGroup.add(addAction);
-        }
-        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP, actionGroup).getComponent();
-        menu.show(this, e.getX(), e.getY());
-      }
+    ClickInfo clickInfo = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
+    EditorMouseEventArea editorArea = myEditor.getMouseEventArea(e);
+    myLastActionableClick = clickInfo;
+
+    AnAction rightButtonAction = info == null ? null : info.renderer.getRightButtonClickAction();
+    if (rightButtonAction != null) {
+      e.consume();
+      performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext(), info);
+      return;
+    }
+    EditorMouseEvent editorMouseEvent = new EditorMouseEvent(
+      myEditor, e, editorArea, 0, new LogicalPosition(logicalLineAtCursor, 0),
+      new VisualPosition(0, 0), true, null, null, null);
+    ActionGroup group;
+    if (info != null) {
+      group = getPopupMenuActions(info.renderer, e);
     }
     else {
-      if (info != null) {
-        AnAction rightButtonAction = info.renderer.getRightButtonClickAction();
-        if (rightButtonAction != null) {
-          e.consume();
-          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext(), info);
-        }
-        else {
-          ActionGroup actionGroup = info.renderer.getPopupMenuActions();
-          if (actionGroup != null) {
-            e.consume();
-            if (checkDumbAware(actionGroup)) {
-              addLoadingIconForGutterMark(info);
-              actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup)
-                .getComponent()
-                .show(this, e.getX(), e.getY());
-            }
-            else {
-              notifyNotDumbAware();
-            }
-          }
-        }
-      }
-      else {
-        ActionGroup group = null;
-        if (ExperimentalUI.isNewUI() &&
-            myEditor.getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA &&
-            getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup) {
-          group = (ActionGroup)getClientProperty("line.number.hover.icon.context.menu");
-        }
+      group = getPopupActionGroup(editorMouseEvent);
+    }
+    if (group == null) {
+      // nothing
+    }
+    else if (!checkDumbAware(group)) {
+      notifyNotDumbAware();
+    }
+    else {
+      if (info != null) addLoadingIconForGutterMark(info);
+      String place = editorArea == EditorMouseEventArea.ANNOTATIONS_AREA ?
+                     ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP : ActionPlaces.EDITOR_GUTTER_POPUP;
+      showGutterContextMenu(group, e, place);
+    }
+  }
 
-        if (group == null) {
-          group = myCustomGutterPopupGroup;
-        }
-        if (group == null && myShowDefaultGutterPopup) {
-          group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
-        }
-        if (group != null) {
-          showGutterContextMenu(group, e);
+  private static @Nullable ActionGroup getPopupMenuActions(@NotNull GutterIconRenderer renderer, @NotNull MouseEvent e) {
+    return renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer
+            ? ((LineMarkerInfo.LineMarkerGutterIconRenderer<?>)renderer).getPopupMenuActions(e)
+            : renderer.getPopupMenuActions();
+  }
+
+  @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    List<AnAction> actions;
+    if (event.getArea() == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      actions = getTextAnnotationPopupActions(event.getLogicalPosition().line);
+    }
+    else {
+      actions = new ArrayList<>();
+      if (ExperimentalUI.isNewUI() &&
+          event.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA &&
+          getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup g) {
+        actions.add(g);
+      }
+      if (myCustomGutterPopupGroup != null) {
+        actions.add(Separator.getInstance());
+        actions.add(myCustomGutterPopupGroup);
+      }
+      else if (myShowDefaultGutterPopup) {
+        ActionGroup g = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        if (g != null) {
+          actions.add(Separator.getInstance());
+          actions.add(g);
         }
       }
     }
+    if (actions.isEmpty()) return null;
+    return new EditorMousePopupActionGroup(actions, event);
   }
 
   private static final String EDITOR_GUTTER_CONTEXT_MENU_KEY = "editor.gutter.context.menu";
 
-  private void showGutterContextMenu(@NotNull ActionGroup group, MouseEvent e) {
+  private void showGutterContextMenu(@NotNull ActionGroup group, MouseEvent e, String place) {
     e.consume();
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
+    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
     putClientProperty(EDITOR_GUTTER_CONTEXT_MENU_KEY, popupMenu);
     popupMenu.getComponent().addPopupMenuListener(new PopupMenuListenerAdapter() {
       @Override
@@ -2797,6 +2865,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
+  private void onHover(boolean hovered) {
+    if (ExperimentalUI.isNewUI()) {
+      myHovered = hovered;
+      updateFoldingOutlineVisibility();
+    }
+  }
+
   private static int getInitialLineNumberWidth() {
     if (ExperimentalUI.isNewUI()) {
       //have a placeholder for breakpoints
@@ -2834,9 +2909,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
-      if (component instanceof EditorGutterComponentImpl gutter && ExperimentalUI.isNewUI()) {
-        gutter.myHovered = hovered;
-        gutter.updateFoldingOutlineVisibility();
+      if (component instanceof EditorGutterComponentImpl gutter) {
+        gutter.onHover(hovered);
       }
     }
   };
@@ -2861,11 +2935,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public @Nullable UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+  public @NotNull UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    List<PropertyBean> result = new ArrayList<>();
+    result.add(new PropertyBean("Use 'ide.debug.gutter.area' Registry to debug painting areas", null, true));
+
     Point point = event.getPoint();
     PointInfo pointInfo = getPointInfo(point);
     if (pointInfo != null) {
-      List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Clicked Renderer", pointInfo.renderer, true));
       result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(pointInfo.renderer), true));
       result.add(new PropertyBean("Accessible Name", pointInfo.renderer.getAccessibleName()));
@@ -2882,13 +2958,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     ActiveGutterRenderer gutterRenderer = getActiveRendererByMouseEvent(event);
     if (gutterRenderer != null) {
-      List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Clicked Renderer", gutterRenderer));
       result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(gutterRenderer)));
       return new UiInspectorInfo("ActiveGutterRenderer", result, null);
     }
 
-    return null;
+    return new UiInspectorInfo(null, result, null);
   }
 
   private final class LineNumbersRepainter implements CaretListener {

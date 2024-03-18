@@ -4,7 +4,7 @@ package com.jetbrains.python.testing
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.util.Processor
-import com.jetbrains.extensions.python.inherits
+import com.jetbrains.python.extensions.inherits
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction

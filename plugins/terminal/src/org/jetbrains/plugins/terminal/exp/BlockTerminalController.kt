@@ -13,11 +13,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
+import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
 class BlockTerminalController(
   private val project: Project,
-  private val session: TerminalSession,
+  private val session: BlockTerminalSession,
   private val outputController: TerminalOutputController,
   private val promptController: TerminalPromptController,
   private val selectionController: TerminalSelectionController,
@@ -33,7 +35,8 @@ class BlockTerminalController(
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
-    outputController.startCommandBlock(null)
+    // The prompt is empty for the initial block, but better to use explicit null here
+    outputController.startCommandBlock(command = null, prompt = null)
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
   }
@@ -45,19 +48,27 @@ class BlockTerminalController(
   @RequiresEdt
   fun startCommandExecution(command: String) {
     if (command.isBlank()) {
-      outputController.insertEmptyLine()
       promptController.reset()
+      outputController.insertEmptyLine()
     }
     else startCommand(command)
+    // report event even if it is an empty command, because it will be reported as a separate command type
+    TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isBlockTerminal = true)
   }
 
   private fun startCommand(command: String) {
-    outputController.startCommandBlock(command)
-    promptController.promptIsVisible = false
-    session.executeCommand(command)
-  }
-
-  override fun commandStarted(command: String) {
+    outputController.startCommandBlock(command, promptController.promptRenderingInfo)
+    // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
+    // If the command is finished very fast, the prompt will be shown back before repainting.
+    // So it will look like it was not hidden at all.
+    val disposable = Disposer.newDisposable()
+    outputController.outputModel.addListener(object : TerminalOutputListener {
+      override fun blockCreated(block: CommandBlock) {
+        promptController.promptIsVisible = false
+        Disposer.dispose(disposable)
+      }
+    }, disposable)
+    session.commandManager.sendCommandToExecute(command)
     session.model.isCommandRunning = true
   }
 
@@ -65,8 +76,8 @@ class BlockTerminalController(
     finishCommandBlock(exitCode = 0)
   }
 
-  override fun commandFinished(command: String, exitCode: Int, duration: Long) {
-    finishCommandBlock(exitCode)
+  override fun commandFinished(event: CommandFinishedEvent) {
+    finishCommandBlock(event.exitCode)
   }
 
   private fun finishCommandBlock(exitCode: Int) {
@@ -74,11 +85,6 @@ class BlockTerminalController(
 
     val model = session.model
     model.isCommandRunning = false
-
-    // prepare terminal for the next command
-    model.withContentLock {
-      model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
-    }
 
     invokeLater {
       promptController.reset()

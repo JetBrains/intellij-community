@@ -864,11 +864,6 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public boolean equals(Object obj) {
-      return obj == this;
-    }
-
-    @Override
     public String toString() {
       return "{}";
     }

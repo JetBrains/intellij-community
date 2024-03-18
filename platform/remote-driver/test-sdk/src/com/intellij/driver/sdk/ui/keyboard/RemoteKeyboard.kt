@@ -11,6 +11,7 @@ class RemoteKeyboard(private val robot: Robot) {
   fun down() = key(KeyEvent.VK_DOWN)
   fun up() = key(KeyEvent.VK_UP)
   fun backspace() = key(KeyEvent.VK_BACK_SPACE)
+  fun tab() = key(KeyEvent.VK_TAB)
 
   fun hotKey(vararg keyCodes: Int) {
     keyCodes.forEach {

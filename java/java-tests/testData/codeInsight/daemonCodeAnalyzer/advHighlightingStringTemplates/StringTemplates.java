@@ -1,3 +1,5 @@
+import java.io.*;
+
 class X {
 
   void processorMissing() {
@@ -119,5 +121,35 @@ class X {
   public static void voidExpression() {
     String a = STR."\{<error descr="Expression with type 'void' not allowed as string template embedded expression">voidExpression()</error>}";
     System.out.println(a);
+  }
+
+  interface AnyProcessor extends StringTemplate.Processor<Object, Throwable> {}
+
+  interface FooProcessor extends AnyProcessor {
+    @Override
+    Object process(StringTemplate stringTemplate) throws Ex, IOException;
+  }
+
+  interface BarProcessor extends AnyProcessor {
+    @Override
+    Object process(StringTemplate stringTemplate) throws Ex2, EOFException, FileNotFoundException;
+  }
+
+  interface FooBarProcessor extends FooProcessor, BarProcessor {}
+
+  static void test(FooBarProcessor fooBarProcessor) {
+    System.out.println(<error descr="Unhandled exception: java.lang.Throwable">fooBarProcessor.""</error>);
+  }
+
+  static class IntegerProcessor implements StringTemplate.Processor<Object, RuntimeException> {
+    @Override
+    public Integer process(StringTemplate template) {
+      return 1;
+    }
+  }
+
+  void myTest() {
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">Integer x = new IntegerProcessor()."hello";</error>
+    System.out.println(x);
   }
 }

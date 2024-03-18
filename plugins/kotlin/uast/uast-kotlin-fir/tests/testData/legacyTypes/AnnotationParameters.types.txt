@@ -17,7 +17,8 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
             UAnnotation (fqName = WithDefaultValue) [@WithDefaultValue]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem")]
                 UNamedExpression (name = value) [value = "Lorem"]
-                    ULiteralExpression (value = "Lorem") ["Lorem"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["Lorem"] : PsiType:String
+                        ULiteralExpression (value = "Lorem") ["Lorem"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return 5]
                     ULiteralExpression (value = 5) [5] : PsiType:int
@@ -30,9 +31,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
                 UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")]
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")]
-                        ULiteralExpression (value = "Lorem") ["Lorem"] : PsiType:String
-                        ULiteralExpression (value = "Ipsum") ["Ipsum"] : PsiType:String
-                        ULiteralExpression (value = "Dolor") ["Dolor"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["Lorem"] : PsiType:String
+                            ULiteralExpression (value = "Lorem") ["Lorem"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["Ipsum"] : PsiType:String
+                            ULiteralExpression (value = "Ipsum") ["Ipsum"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["Dolor"] : PsiType:String
+                            ULiteralExpression (value = "Dolor") ["Dolor"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return Unit]
                     USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:Unit
@@ -52,9 +56,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                 UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]]
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] : PsiType:String[]
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
-                        ULiteralExpression (value = "a") ["a"] : PsiType:String
-                        ULiteralExpression (value = "b") ["b"] : PsiType:String
-                        ULiteralExpression (value = "c") ["c"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["a"] : PsiType:String
+                            ULiteralExpression (value = "a") ["a"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["b"] : PsiType:String
+                            ULiteralExpression (value = "b") ["b"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["c"] : PsiType:String
+                            ULiteralExpression (value = "c") ["c"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return 3]
                     ULiteralExpression (value = 3) [3] : PsiType:int

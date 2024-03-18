@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.conversion.copy
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile

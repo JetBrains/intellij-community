@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  */
 public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMaplet<K, V>{
   private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
-  private static final int CACHE_SIZE = 128;
+  private static final int CACHE_SIZE = 512;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
   private final SLRUCache<K, Collection<V>> myCache;

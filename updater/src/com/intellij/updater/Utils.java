@@ -22,6 +22,8 @@ public final class Utils {
 
   private static final CopyOption[] COPY_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
   private static final CopyOption[] COPY_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING};
+  private static final CopyOption[] MOVE_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.ATOMIC_MOVE};
+  private static final CopyOption[] MOVE_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING};
 
   private static final boolean WIN_UNPRIVILEGED = IS_WINDOWS && Boolean.getBoolean("idea.unprivileged.process");
 
@@ -32,7 +34,7 @@ public final class Utils {
       String path = System.getProperty("java.io.tmpdir");
       if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
 
-      Path dir = Paths.get(path);
+      Path dir = Path.of(path);
       if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
 
       if (REQUIRED_FREE_SPACE > 0) {
@@ -63,9 +65,12 @@ public final class Utils {
   }
 
   public static void delete(File file) throws IOException {
-    Path start = file.toPath();
-    if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
-      Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+    delete(file.toPath());
+  }
+
+  public static void delete(Path file) throws IOException {
+    if (Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+      Files.walkFileTree(file, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
           tryDelete(file);
@@ -119,13 +124,13 @@ public final class Utils {
     return file.canExecute();
   }
 
-  public static void setExecutable(File file) throws IOException {
-    setExecutable(file, true);
+  public static void setExecutable(Path file) throws IOException {
+    setExecutable(file.toFile());
   }
 
-  public static void setExecutable(File file, boolean executable) throws IOException {
+  public static void setExecutable(File file) throws IOException {
     LOG.info("Setting executable permissions for: " + file);
-    if (!file.setExecutable(executable, false)) {
+    if (!file.setExecutable(true, false)) {
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
@@ -141,15 +146,17 @@ public final class Utils {
   public static void createLink(String target, File link) throws IOException {
     Path path = link.toPath();
     Files.deleteIfExists(path);
-    Files.createSymbolicLink(path, Paths.get(target));
+    Files.createSymbolicLink(path, Path.of(target));
   }
 
   public static void copy(File from, File to, boolean overwrite) throws IOException {
-    String message = from + (overwrite ? " over " : " into ") + to;
-    LOG.info(message);
+    copy(from.toPath(), to.toPath(), overwrite);
+  }
 
-    Path src = from.toPath(), dst = to.toPath();
-    BasicFileAttributes attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+  public static void copy(Path src, Path dst, boolean overwrite) throws IOException {
+    LOG.info(src + (overwrite ? " over " : " into ") + dst);
+
+    var attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
     if (attrs.isDirectory()) {
       Files.createDirectories(dst);
     }
@@ -167,7 +174,7 @@ public final class Utils {
   public static void copyDirectory(Path from, Path to) throws IOException {
     LOG.info(from + " into " + to);
 
-    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(from, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (dir != from || !Files.exists(to)) {
@@ -191,6 +198,16 @@ public final class Utils {
         return FileVisitResult.CONTINUE;
       }
     });
+  }
+
+  public static void move(Path src, Path dst, boolean overwrite) throws IOException {
+    Files.createDirectories(dst.getParent());
+    Files.move(src, dst, overwrite ? MOVE_REPLACE : MOVE_STANDARD);
+  }
+
+  public static void writeString(Path file, String data) throws IOException {
+    Files.createDirectories(file.getParent());
+    Files.writeString(file, data);
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {
@@ -271,11 +288,11 @@ public final class Utils {
     return new BufferedInputStream(zipFile.getInputStream(entry));
   }
 
-  // always collect files and folders - to avoid cases such as IDEA-152249
+  // always collect files and folders to avoid cases such as IDEA-152249
   public static LinkedHashSet<String> collectRelativePaths(Path root) throws IOException {
     LinkedHashSet<String> result = new LinkedHashSet<>();
 
-    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(root, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         if (dir != root) {

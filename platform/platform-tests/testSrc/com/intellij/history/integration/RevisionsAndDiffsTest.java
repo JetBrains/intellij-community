@@ -288,7 +288,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    List<Difference> dd = prev.getDifferencesWith(recent);
+    List<Difference> dd = Revision.getDifferencesBetween(prev, recent);
     assertEquals(1, dd.size());
 
     Difference d = dd.get(0);
@@ -306,7 +306,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    List<Difference> dd = prev.getDifferencesWith(recent);
+    List<Difference> dd = Revision.getDifferencesBetween(prev, recent);
     assertEquals(1, dd.size());
 
     Difference d = dd.get(0);
@@ -321,7 +321,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
 
     List<Revision> rr = getRevisionsFor(dir);
 
-    assertTrue(rr.get(0).getDifferencesWith(rr.get(2)).isEmpty());
+    assertTrue(Revision.getDifferencesBetween(rr.get(0), rr.get(2)).isEmpty());
   }
 
   public void testDoesNotIncludeNotModifiedDifferences() throws IOException {
@@ -337,7 +337,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    List<Difference> dd = prev.getDifferencesWith(recent);
+    List<Difference> dd = Revision.getDifferencesBetween(prev, recent);
     assertEquals(1, dd.size());
 
     Difference d = dd.get(0);
@@ -377,5 +377,33 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     LocalHistory.getInstance().putSystemLabel(myProject, "3", -1);
 
     assertEquals(6, getRevisionsFor(f).size());
+  }
+
+  public void testDeleteAndRestoreInTheSameChangeSet() throws Exception {
+    String fileName = "foo.txt";
+
+    VirtualFile file = createFile(fileName);
+
+    getVcs().beginChangeSet();
+    delete(file);
+    VirtualFile restoredFile = createFile(fileName);
+    getVcs().endChangeSet("delete and create file");
+
+    assertEquals(3, getRevisionsFor(restoredFile).size());
+  }
+
+  public void testRenameAndDeleteInTheSameChangeSet() throws Exception {
+    String oldFileName = "old.foo.txt";
+    String newFileName = "new.foo.txt";
+
+    VirtualFile file = createFile(oldFileName);
+
+    getVcs().beginChangeSet();
+    rename(file, newFileName);
+    delete(file);
+    getVcs().endChangeSet("renamed and deleted file");
+    VirtualFile restoredFile = createFile(newFileName);
+
+    assertEquals(4, getRevisionsFor(restoredFile).size());
   }
 }

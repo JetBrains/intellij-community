@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -24,19 +10,18 @@ import org.jetbrains.annotations.Nullable;
 public interface FileChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = PathChooserDialog.PREFER_LAST_OVER_EXPLICIT;
 
-  /**
-   * @deprecated Please use {@link #choose(Project, VirtualFile...)} because
-   * it supports several selections
-   */
-  @Deprecated
-  VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project);
+  /** @deprecated use {@link #choose(Project, VirtualFile...)} instead */
+  @Deprecated(forRemoval = true)
+  default VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
+    return toSelect != null ? choose(project, toSelect) : choose(project);
+  }
 
   /**
-   * Choose one or more files
+   * Choose one or more files.
    *
-   * @param project  use this project (you may pass null if you already set project in ctor)
-   * @param toSelect files to be selected automatically.
-   * @return files chosen by user
+   * @param project  use this project (you may pass {@code null} if you already set a project in the constructor/factory)
+   * @param toSelect files to be pre-selected
+   * @return files chosen by a user, or an empty array if the dialog was canceled
    */
   VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect);
 }

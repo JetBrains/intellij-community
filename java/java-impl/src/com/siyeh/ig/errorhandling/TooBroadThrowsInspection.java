@@ -20,7 +20,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class TooBroadThrowsInspection extends BaseInspection {
+public final class TooBroadThrowsInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyWarnOnRootExceptions = false;

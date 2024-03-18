@@ -27,6 +27,9 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.toMultiMap
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -37,18 +40,39 @@ import javax.swing.JComponent
  * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
  */
 internal class GeneralVcsSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project) {
+  /**
+   * Allowed values: 'confirmations', anything else is considered to be 'other'.
+   */
+  @Attribute("location")
+  var location: String? = "other"
+
   companion object {
     val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcsSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
   }
+
+  fun getLocationEnum(): Location = when (location?.lowercase()) {
+    "confirmations" -> Location.Confirmations
+    else -> Location.Other
+  }
+}
+
+enum class Location {
+  Confirmations,
+  Other
 }
 
 class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
   "project.propVCSSupport.Confirmation"
 ), Configurable.WithEpDependencies {
+  private val extensions: MultiMap<Location, UnnamedConfigurable> by lazy {
+    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensionList(project)
+      .mapNotNull { ext -> ext.createConfigurable()?.let { ext.getLocationEnum() to it } }
+      .toMultiMap()
+  }
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
-    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensionList(project).mapNotNull { it.createConfigurable() }
+    extensions.values().toList()
 
   override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 
@@ -126,6 +150,10 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             checkBox(cdShowReadOnlyStatusDialog(project))
           }
         }
+
+        extensions.get(Location.Confirmations).forEach { configurable ->
+          appendDslConfigurable(configurable)
+        }
       }
 
       group(message("settings.general.changes.group.title")) {
@@ -184,7 +212,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         label(message("settings.checkbox.rows"))
       }
 
-      for (configurable in configurables) {
+      extensions.get(Location.Other).forEach { configurable ->
         appendDslConfigurable(configurable)
       }
     }

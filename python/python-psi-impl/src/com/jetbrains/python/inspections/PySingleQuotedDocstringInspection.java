@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * Inspection to detect docstrings not using triple double-quoted string
  */
-public class PySingleQuotedDocstringInspection extends PyInspection {
+public final class PySingleQuotedDocstringInspection extends PyInspection {
 
   @NotNull
   @Override

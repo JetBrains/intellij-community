@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class ExpectedTypeMacro extends Macro {
+public final class ExpectedTypeMacro extends Macro {
 
   @Override
   public String getName() {

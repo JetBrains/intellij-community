@@ -1,11 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
-
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -15,39 +18,46 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.extensions.useOrLogError
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.ideFingerprint
+import com.intellij.platform.settings.SettingsController
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.system.CpuArch
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -83,22 +93,15 @@ internal suspend fun loadApp(app: ApplicationImpl,
                              initAwtToolkitAndEventQueueJob: Job): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
-      initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+      val pluginSet = span("plugin descriptor init waiting") {
+        pluginSetDeferred.await().await()
+      }
+
+      span("app component registration") {
+        app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
+      }
       // ApplicationManager.getApplication may be used in ApplicationInitializedListener constructor
       ApplicationManager.setApplication(app)
-    }
-
-    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
-      initServiceContainerJob.join()
-      try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-      }
     }
 
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
@@ -111,6 +114,24 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
 
     initServiceContainerJob.join()
+
+    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
+      try {
+        TelemetryManager.setTelemetryManager(
+          TelemetryManagerImpl(coroutineScope = app.getCoroutineScope(), isUnitTestMode = app.isUnitTestMode))
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+      }
+    }
+
+    app.getCoroutineScope().launch {
+      // precompute after plugin model loaded
+      ideFingerprint()
+    }
 
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
@@ -137,18 +158,36 @@ internal suspend fun loadApp(app: ApplicationImpl,
       }
 
       val preloadJob = launch(CoroutineName("critical services preloading")) {
-        preloadCriticalServices(app = app,
-                                asyncScope = asyncScope,
-                                appRegistered = appRegisteredJob,
-                                initLafJob = initLafJob,
-                                initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob)
+        preloadCriticalServices(
+          app = app,
+          asyncScope = asyncScope,
+          appRegistered = appRegisteredJob,
+          initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob,
+        )
+        asyncScope.launch {
+          launch {
+            app.serviceAsync<LogLevelConfigurationManager>()
+          }
+
+          if (!app.isHeadlessEnvironment) {
+            preloadNonHeadlessServices(app = app, initLafJob = initLafJob)
+          }
+        }
       }
 
-      preInitApp(app = app,
-                 asyncScope = asyncScope,
-                 initLafJob = initLafJob,
-                 euaTaskDeferred = euaTaskDeferred,
-                 loadIconMapping = loadIconMapping)
+      val cssInit = initLafManagerAndCss(
+        app = app,
+        asyncScope = asyncScope,
+        initLafJob = initLafJob,
+        loadIconMapping = loadIconMapping,
+      )
+
+      if (!app.isHeadlessEnvironment) {
+        euaTaskDeferred?.await()?.let {
+          cssInit?.join()
+          it()
+        }
+      }
 
       preloadJob.join()
       LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
@@ -158,6 +197,10 @@ internal suspend fun loadApp(app: ApplicationImpl,
       getAppInitializedListeners(app)
     }
 
+    asyncScope.launch {
+      enableCoroutineDumpAndJstack()
+    }
+
     appRegisteredJob.join()
     initConfigurationStoreJob.join()
 
@@ -165,17 +208,19 @@ internal suspend fun loadApp(app: ApplicationImpl,
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
-        callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
+        callAppInitialized(listeners = appInitializedListeners, asyncScope = app.getCoroutineScope())
       }
     }
 
     asyncScope.launch {
-      launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
+      // do not use launch here - don't overload CPU, let some room for JIT and other CPU-intensive tasks during start-up
+
+      span("checkThirdPartyPluginsAllowed") {
         checkThirdPartyPluginsAllowed()
       }
 
       // doesn't block app start-up
-      launch(CoroutineName("post app init tasks")) {
+      span("post app init tasks") {
         runPostAppInitTasks()
       }
 
@@ -188,29 +233,98 @@ internal suspend fun loadApp(app: ApplicationImpl,
   }
 }
 
-private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
-  val pluginSet = span("plugin descriptor init waiting") {
-    pluginSetDeferred.await().await()
-  }
+private suspend fun preloadNonHeadlessServices(
+  app: ApplicationImpl,
+  initLafJob: Job,
+) {
+  coroutineScope {
+    launch { // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+      initLafJob.join()
 
-  span("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
-  }
-}
-
-private suspend fun preInitApp(app: ApplicationImpl,
-                               asyncScope: CoroutineScope,
-                               initLafJob: Job,
-                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?,
-                               loadIconMapping: Job?) {
-  val cssInit = coroutineScope {
-    if (!app.isHeadlessEnvironment) {
-      asyncScope.launch(CoroutineName("FUS class preloading")) {
-        // preload FUS classes (IDEA-301206)
-        ActionsEventLogGroup.GROUP.id
+      launch(CoroutineName("CustomActionsSchema preloading")) {
+        app.serviceAsync<CustomActionsSchema>()
       }
     }
 
+    // wants PathMacros
+    launch(CoroutineName("GeneralSettings preloading")) {
+      app.serviceAsync<GeneralSettings>()
+    }
+
+    launch(CoroutineName("actionConfigurationCustomizer preloading")) {
+      @Suppress("ControlFlowWithEmptyBody")
+      for (ignored in ActionConfigurationCustomizer.EP.lazySequence()) {
+        // just preload
+      }
+    }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-341318
+    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
+      // ActionManager can use UISettings (KeymapManager doesn't use, but just to be sure)
+      initLafJob.join()
+    }
+
+    launch(CoroutineName("KeymapManager preloading")) {
+      app.serviceAsync<KeymapManager>()
+    }
+
+    launch(CoroutineName("ActionManager preloading")) {
+      app.serviceAsync<ActionManager>()
+    }
+
+    app.serviceAsync<ScreenReaderStateManager>()
+  }
+}
+
+private suspend fun enableCoroutineDumpAndJstack() {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean() || (SystemInfoRt.isWindows && CpuArch.isArm64())) {
+    return
+  }
+
+  var isInstalled = false
+  span("coroutine debug probes init") {
+    try {
+      enableCoroutineDump()
+        .onFailure { e ->
+          if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+            LOG.warn("Cannot enable coroutine debug dump", e)
+          }
+          else {
+            LOG.error("Cannot enable coroutine debug dump", e)
+          }
+        }
+        .onSuccess {
+          isInstalled = true
+        }
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot enable coroutine debug dump", e)
+    }
+  }
+
+  if (isInstalled) {
+    enableJstack()
+  }
+}
+
+private suspend fun enableJstack() {
+  span("coroutine jstack configuration") {
+    JBR.getJstack()?.includeInfoFrom {
+      """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+    }
+  }
+}
+
+private suspend fun initLafManagerAndCss(
+  app: ApplicationImpl,
+  asyncScope: CoroutineScope,
+  initLafJob: Job,
+  loadIconMapping: Job?,
+): Job? {
+  return coroutineScope {
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
     span("init laf waiting") {
@@ -224,8 +338,9 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
-    launch {
-      // used by LafManager
+    launch(CoroutineName("UISettings preloading")) {
+      // used by LafManager in EDT - preload it in non-EDT
+      app.serviceAsync<NotRoamableUiSettings>()
       app.serviceAsync<UISettings>()
     }
 
@@ -246,32 +361,29 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
   }
-
-  if (!app.isHeadlessEnvironment) {
-    euaTaskDeferred?.await()?.let {
-      cssInit?.join()
-      it()
-    }
-  }
 }
 
 suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configDir = PathManager.getConfigDir()
 
-  span("beforeApplicationLoaded") {
-    for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-      launch {
-        runCatching {
-          listener.beforeApplicationLoaded(app, configDir)
-        }.getOrLogException(logger<AppStarter>())
+  coroutineScope {
+    launch(CoroutineName("preload SettingsController")) {
+      // preload
+      app.serviceAsync<SettingsController>()
+    }
+
+    span("beforeApplicationLoaded") {
+      for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
+        extension.useOrLogError {
+          it.beforeApplicationLoaded(app, configDir)
+        }
       }
     }
-  }
 
-  span("init app store") {
-    // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-    app.stateStore.setPath(configDir)
-    LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+    span("init app store") {
+      // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
+      app._getComponentStore().setPath(configDir)
+    }
   }
 }
 
@@ -300,10 +412,11 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
   ZipFilePool.POOL = null
 }
 
+@VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = point.extensionList
+  val result = point.asSequence().toList()
   point.reset()
   return result
 }
@@ -323,35 +436,33 @@ private fun CoroutineScope.runPostAppInitTasks() {
 
 // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
 private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineScope): Deferred<ApplicationStarter> {
-  val commandName = args.firstOrNull()
-  // first argument maybe a project path
-  if (commandName == null) {
-    return asyncScope.async(CoroutineName("app starter creation")) { IdeStarter() }
-  }
-  else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName)) {
-    return asyncScope.async(CoroutineName("app starter creation")) { createDefaultAppStarter() }
-  }
-
-  return span("app custom starter creation") {
-    val starter = findStarter(commandName) ?: createDefaultAppStarter()
-    if (AppMode.isHeadless() && !starter.isHeadless) {
-      val message = IdeBundle.message(
-        "application.cannot.start.in.a.headless.mode",
-        when {
-          starter is IdeStarter -> 0
-          else -> 1
-        },
-        commandName,
-        if (args.isEmpty()) 0 else 1,
-        args.joinToString(" ")
-      )
-      StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
-      exitProcess(AppExitCodes.NO_GRAPHICS)
+  val commandName = args.firstOrNull()  // the first argument maybe a project path
+  return when {
+    commandName == null -> {
+      asyncScope.async(CoroutineName("app starter creation")) { IdeStarter() }
     }
-
-    // must be executed before container creation
-    starter.premain(args)
-    CompletableDeferred(starter)
+    args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName) -> {
+      asyncScope.async(CoroutineName("app starter creation")) { createDefaultAppStarter() }
+    }
+    else -> {
+      span("app custom starter creation") {
+        val starter = findStarter(commandName) ?: createDefaultAppStarter()
+        if (AppMode.isHeadless() && !starter.isHeadless) {
+          val message = IdeBundle.message(
+            "application.cannot.start.in.a.headless.mode",
+            if (starter is IdeStarter) 0 else 1,
+            commandName,
+            if (args.isEmpty()) 0 else 1,
+            args.joinToString(" ")
+          )
+          StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+          exitProcess(AppExitCodes.NO_GRAPHICS)
+        }
+        // must be executed before container creation
+        starter.premain(args)
+        CompletableDeferred(starter)
+      }
+    }
   }
 }
 
@@ -388,7 +499,8 @@ private fun addActivateAndWindowsCliListeners() {
       try {
         result.future.await().exitCode
       }
-      catch (e: Exception) {
+      catch (t: Throwable) {
+        LOG.error(t)
         AppExitCodes.ACTIVATE_ERROR
       }
     }
@@ -427,22 +539,20 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
 
 private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
 
-fun findStarter(key: String): ApplicationStarter? {
-  @Suppress("DEPRECATION")
-  return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
-}
+@Suppress("DEPRECATION")
+fun findStarter(key: String): ApplicationStarter? =
+  ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
 
 /**
- * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file. It should be used instead of deprecated
- * [ApplicationStarter.commandName].
+ * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file.
+ * It should be used instead of deprecated [ApplicationStarter.commandName].
  */
 val ApplicationStarter.commandNameFromExtension: String?
-  get() {
-    val extension = ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).filterableLazySequence().find {
-      it.implementationClassName == javaClass.name
-    }
-    return extension?.id
-  }
+  get() =
+    ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME)
+      .filterableLazySequence()
+      .find { it.implementationClassName == javaClass.name }
+      ?.id
 
 @VisibleForTesting
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {

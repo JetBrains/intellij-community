@@ -165,7 +165,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       Disposer.register(this, () -> finalEditHandlers.remove(this));
     });
 
-    initGuardedBlocks(shreds);
+    initGuardedBlocks(myNewDocument, myOrigDocument, shreds);
 
     myOrigDocument.addDocumentListener(this, this);
     myNewDocument.addDocumentListener(this, this);
@@ -312,7 +312,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     closeEditor();
   }
 
-  private void initGuardedBlocks(Place shreds) {
+  static void initGuardedBlocks(@NotNull Document newDocument, @NotNull Document origDocument, Place shreds) {
     int origOffset = -1;
     int curOffset = 0;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
@@ -320,16 +320,16 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       int start = shred.getRange().getStartOffset() + shred.getPrefix().length();
       int end = shred.getRange().getEndOffset() - shred.getSuffix().length();
       if (curOffset < start) {
-        RangeMarker guard = myNewDocument.createGuardedBlock(curOffset, start);
+        RangeMarker guard = newDocument.createGuardedBlock(curOffset, start);
         if (curOffset == 0 && shred == shreds.get(0)) guard.setGreedyToLeft(true);
-        String padding = origOffset < 0 ? "" : myOrigDocument.getText().substring(origOffset, hostRangeMarker.getStartOffset());
+        String padding = origOffset < 0 ? "" : origDocument.getText().substring(origOffset, hostRangeMarker.getStartOffset());
         guard.putUserData(REPLACEMENT_KEY, fixQuotes(padding));
       }
       curOffset = end;
       origOffset = hostRangeMarker.getEndOffset();
     }
-    if (curOffset < myNewDocument.getTextLength()) {
-      RangeMarker guard = myNewDocument.createGuardedBlock(curOffset, myNewDocument.getTextLength());
+    if (curOffset < newDocument.getTextLength()) {
+      RangeMarker guard = newDocument.createGuardedBlock(curOffset, newDocument.getTextLength());
       guard.setGreedyToRight(true);
       guard.putUserData(REPLACEMENT_KEY, "");
     }

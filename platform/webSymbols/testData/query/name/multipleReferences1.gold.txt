@@ -29,7 +29,7 @@
       matchedName: "html/special-items/the-a",
       origin: "filter@1.0.0 (<none>)",
       complete: true,
-      description: "<p>special</p>",
+      description: "<p>special",
       priority: NORMAL,
       segments: [
        {
@@ -42,7 +42,7 @@
       matchedName: "html/extra-items/the-a",
       origin: "filter@1.0.0 (<none>)",
       complete: true,
-      description: "<p>extra</p>",
+      description: "<p>extra",
       priority: NORMAL,
       segments: [
        {

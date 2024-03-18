@@ -13,6 +13,7 @@ import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.table.size
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 

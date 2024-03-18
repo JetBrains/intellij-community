@@ -19,7 +19,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class JBFont extends Font {
-  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(() -> { return labelFont().getSize2D(); });
+  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(false, () -> { return labelFont().getSize2D(); });
   private final JBFontScaler myFontScaler;
   private Font myScaledFont;
 
@@ -66,6 +66,10 @@ public class JBFont extends Font {
 
   public static int labelFontSize() {
     return labelFont().getSize();
+  }
+
+  public static float labelFontSize2D() {
+    return labelFont().getSize2D();
   }
 
   private static Font labelFont() {

@@ -12,7 +12,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.*;
@@ -53,14 +52,6 @@ final class PatternHighlightingModel {
     }
     if (resolveResult.getInferenceError() != null) {
       String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
-      errorSink.accept(info);
-      return true;
-    }
-    PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
-    if (recordClass.hasTypeParameters() && ref != null && ref.getTypeParameterCount() == 0 &&
-        PsiUtil.getLanguageLevel(deconstructionPattern).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
-      String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
       errorSink.accept(info);
       return true;
@@ -220,9 +211,6 @@ final class PatternHighlightingModel {
   static RecordExhaustivenessResult checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> elements,
                                                               @NotNull PsiType selectorType,
                                                               @NotNull PsiElement context) {
-    if (PsiUtil.getLanguageLevel(context) == LanguageLevel.JDK_20_PREVIEW) {
-      return PatternHighlightingModelJava20Preview.checkRecordExhaustiveness(elements);
-    }
     return checkRecordPatternExhaustivenessForDescription(preparePatternDescription(elements), selectorType, context);
   }
 
@@ -989,66 +977,6 @@ final class PatternHighlightingModel {
 
     boolean canBeAdded() {
       return canBeAdded;
-    }
-
-    void merge(RecordExhaustivenessResult result) {
-      if (!this.isExhaustive && !this.canBeAdded) {
-        return;
-      }
-      if (!result.isExhaustive) {
-        this.isExhaustive = false;
-      }
-      if (!result.canBeAdded) {
-        this.canBeAdded = false;
-      }
-      for (Map.Entry<PsiType, Set<List<PsiType>>> newEntry : result.missedBranchesByType.entrySet()) {
-        missedBranchesByType.merge(newEntry.getKey(), newEntry.getValue(),
-                                   (lists, lists2) -> {
-                                     HashSet<List<PsiType>> result1 = new HashSet<>();
-                                     result1.addAll(lists);
-                                     result1.addAll(lists2);
-                                     return result1;
-                                   });
-      }
-      if (!this.canBeAdded) {
-        missedBranchesByType.clear();
-      }
-    }
-
-    void addNextType(PsiType recordType, PsiType nextClass) {
-      if (!this.canBeAdded) {
-        return;
-      }
-      Set<List<PsiType>> branches = missedBranchesByType.get(recordType);
-      if (branches == null) {
-        return;
-      }
-      for (List<PsiType> classes : branches) {
-        classes.add(nextClass);
-      }
-    }
-
-    void addNewBranch(@NotNull PsiType recordType,
-                      @Nullable PsiType classForNextBranch,
-                      @NotNull List<? extends PsiType> types) {
-      if (!this.canBeAdded) {
-        return;
-      }
-      List<PsiType> nextBranch = new ArrayList<>();
-      for (int i = types.size() - 1; i >= 1; i--) {
-        nextBranch.add(types.get(i));
-      }
-      if (classForNextBranch != null) {
-        nextBranch.add(classForNextBranch);
-      }
-      HashSet<List<PsiType>> newBranchSet = new HashSet<>();
-      newBranchSet.add(nextBranch);
-      this.missedBranchesByType.merge(recordType, newBranchSet,
-                                      (lists, lists2) -> {
-                                        HashSet<List<PsiType>> set = new HashSet<>(lists);
-                                        set.addAll(lists2);
-                                        return set;
-                                      });
     }
 
     void addBranches(List<? extends PatternDescription> patterns) {

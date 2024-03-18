@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -27,15 +28,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
+public final class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   @NotNull
   @Override
-  public final String getFamilyName() {
+  public String getFamilyName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method");
   }
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     return getConstructorOrClass(context.findLeaf()) != null
            ? Presentation.of(getFamilyName()).withIcon(AllIcons.Actions.RefactoringBulb)
            : null;
@@ -48,7 +50,9 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     if (constructorOrClass == null) return ModCommand.nop();
 
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
-      .select(PsiClass.class).filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
+      .select(PsiClass.class)
+      .filter(cls -> !(cls instanceof PsiImplicitClass))
+      .filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
       .toList();
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
     List<ModCommandAction> options =
@@ -59,7 +63,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
           PsiIdentifier identifier = cls.getNameIdentifier();
           return identifier == null ? cls.getTextRange() : identifier.getTextRange();
         }));
-    return new ModChooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
+    return ModCommand.chooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
   }
 
   private static void invoke(@NotNull PsiClass cls,
@@ -235,13 +239,14 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiClass containingClass = ClassUtils.getContainingClass(element);
     if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
-    if (lBrace != null && element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
+    if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
     if (containingClass.getConstructors().length > 0) return null;
     return containingClass;
   }
 
   private static boolean isSuitableClass(PsiClass containingClass) {
     return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum() && !containingClass.isRecord() &&
-            !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && containingClass.getQualifiedName() != null;
+           !(containingClass instanceof PsiImplicitClass) && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && 
+           containingClass.getQualifiedName() != null;
   }
 }

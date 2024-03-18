@@ -11,8 +11,10 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-@State(name = "Trusted.Paths", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
-@Service(Service.Level.APP)
+@State(name = "Trusted.Paths",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
 
   companion object {

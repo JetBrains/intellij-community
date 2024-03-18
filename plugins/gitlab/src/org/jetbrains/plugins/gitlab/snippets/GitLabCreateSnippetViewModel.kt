@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
@@ -53,8 +54,10 @@ internal class GitLabCreateSnippetViewModel(
    * By default, this will be the first account found by [GitLabAccountManager].
    */
   val glAccount: MutableStateFlow<GitLabAccount?> = run {
-    val server = project.service<GitLabProjectsManager>().knownRepositoriesState.value.first().repository.serverPath
-    val account = glAccounts.value.find { it.server == server } ?: glAccounts.value.firstOrNull()
+    val server = project.service<GitLabProjectsManager>().knownRepositoriesState.value.firstOrNull()?.repository?.serverPath
+    val account = project.service<GitLabProjectDefaultAccountHolder>().account
+                  ?: glAccounts.value.find { it.server == server }
+                  ?: glAccounts.value.firstOrNull()
     MutableStateFlow(account)
   }
 

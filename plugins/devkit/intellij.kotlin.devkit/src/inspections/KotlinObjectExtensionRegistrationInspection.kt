@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -43,8 +43,9 @@ internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInsp
     val className = stringValue
     if (className.isNullOrBlank()) return false
     val normalizedClassName = ExtensionUtil.getNormalizedClassName(className) ?: return false
+    val fqName = FqName(normalizedClassName).takeIf { it.shortName().identifier.isNotEmpty() } ?: return false
     val kotlinAsJavaSupport = project.getService(KotlinAsJavaSupport::class.java) ?: return false
-    val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(FqName(normalizedClassName), this.resolveScope)
+    val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(fqName, this.resolveScope)
     return classOrObjectDeclarations.size == 1 && classOrObjectDeclarations.firstOrNull() is KtObjectDeclaration
   }
 }

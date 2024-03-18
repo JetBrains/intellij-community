@@ -335,11 +335,6 @@ public final class BasicJavaAstTreeUtil {
     return findParent(e, elementType);
   }
 
-  public static boolean isTextBlock(@Nullable ASTNode expression) {
-    return findChildByType(expression, JavaTokenType.TEXT_BLOCK_LITERAL) != null;
-  }
-
-
   @Nullable
   public static ASTNode getMethodExpression(@Nullable ASTNode element) {
     if (!is(element, BASIC_METHOD_CALL_EXPRESSION)) {
@@ -347,7 +342,6 @@ public final class BasicJavaAstTreeUtil {
     }
     return element.getFirstChildNode();
   }
-
 
   @Nullable
   public static ASTNode getExpressionList(@Nullable ASTNode element) {

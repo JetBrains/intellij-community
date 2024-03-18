@@ -11,8 +11,6 @@ import org.junit.Test
 import java.io.File
 
 class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
 
@@ -31,7 +29,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldNotFailOnAddingNewContentRootWithAPomFile() = runBlocking {
-    val newRootDir = File(myDir, "newRoot")
+    val newRootDir = File(dir, "newRoot")
     newRootDir.mkdirs()
 
     val pomFile = File(newRootDir, "pom.xml")
@@ -48,7 +46,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
     // cannot make it work die to order of document listeners
 
     projectsManager.listenForExternalChanges()
-    val d = FileDocumentManager.getInstance().getDocument(myProjectPom)
+    val d = FileDocumentManager.getInstance().getDocument(projectPom)
     writeAction {
       d!!.setText(createPomXml("""
                                 <groupId>test</groupId>
@@ -63,8 +61,6 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
                                 </dependencies>
                                 """.trimIndent()))
     }
-
-    resolveDependenciesAndImport()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }

@@ -218,8 +218,32 @@ public final class ActionHint {
     }
 
     assert comment != null : commenter;
-    // "quick fix action text to perform" "should be available"
-    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)(?:-(\\w+))?\".*", Pattern.DOTALL);
+    return parse(file, contents, Pattern.quote(comment), exactMatch);
+  }
+
+  /**
+   * Parse given file with given contents extracting ActionHint of it.
+   * <p>
+   * Currently the following syntax is supported:
+   * </p>
+   * {@code $commentPrefix "quick-fix name or intention text[|->next step]" "true|false|<ProblemHighlightType>[-preview]"}
+   * <p>
+   * If {@link ProblemHighlightType} enum value is specified instead of true/false
+   * (e.g. {@code "INFORMATION"}), then
+   * it's expected that the action is present and it's a quick-fix with given highlight type.
+   * </p>
+   *
+   * @param file PsiFile associated with contents (used to determine the language)
+   * @param contents file contents
+   * @param commentPrefix any custom specific prefix, could be a regexp
+   * @param exactMatch if false then action hint matches prefix like in {@link CodeInsightTestFixture#filterAvailableIntentions(String)}
+   * @return ActionHint object
+   * @throws AssertionError if action hint is absent or has invalid format
+   */
+  @NotNull
+  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents, @NotNull String commentPrefix, boolean exactMatch) {
+    // $commentPrefix "quick fix action text to perform" "should be available"
+    Pattern pattern = Pattern.compile("^" + commentPrefix + " \"([^\n]*)\" \"(\\w+)(?:-(\\w+))?\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
     TestCase.assertTrue("No comment found in " + file.getVirtualFile(), matcher.matches());
     final String text = matcher.group(1);

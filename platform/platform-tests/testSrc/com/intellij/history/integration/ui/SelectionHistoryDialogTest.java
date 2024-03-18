@@ -6,7 +6,6 @@ import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
-import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
@@ -45,8 +44,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     initModelOnSecondLineAndSelectRevisions(0, 1);
 
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), dm.getTitle());
-    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()), dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.txt"));
-    assertTrue(dm.getRightTitle(new NullRevisionsProgress()), dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - ff.txt"));
+    assertTrue(dm.getLeftTitle(RevisionProcessingProgress.EMPTY), dm.getLeftTitle(RevisionProcessingProgress.EMPTY).endsWith(" - f.txt"));
+    assertTrue(dm.getRightTitle(RevisionProcessingProgress.EMPTY), dm.getRightTitle(RevisionProcessingProgress.EMPTY).endsWith(" - ff.txt"));
   }
 
   public void testCalculationProgress() {
@@ -73,8 +72,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDiffContents() {
     initModelOnSecondLineAndSelectRevisions(0, 1);
 
-    DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
-    DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
+    DiffContent left = dm.getLeftDiffContent(RevisionProcessingProgress.EMPTY);
+    DiffContent right = dm.getRightDiffContent(RevisionProcessingProgress.EMPTY);
 
     assertContent("b", left);
     assertContent("bc", right);
@@ -83,9 +82,9 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDiffContentsAndTitleForCurrentRevision() {
     initModelOnSecondLineAndSelectRevisions(0, 0);
 
-    assertEquals("Current", dm.getRightTitle(new NullRevisionsProgress()));
+    assertEquals("Current", dm.getRightTitle(RevisionProcessingProgress.EMPTY));
 
-    DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
+    DiffContent right = dm.getRightDiffContent(RevisionProcessingProgress.EMPTY);
 
     assertContent("bcd", right);
     assertTrue(right instanceof DocumentFragmentContent);
@@ -100,8 +99,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
     initModelOnSecondLineAndSelectRevisions(3, 3);
 
-    assertContent("b", dm.getLeftDiffContent(new NullRevisionsProgress()));
-    assertContent("bcd", dm.getRightDiffContent(new NullRevisionsProgress()));
+    assertContent("b", dm.getLeftDiffContent(RevisionProcessingProgress.EMPTY));
+    assertContent("bcd", dm.getRightDiffContent(RevisionProcessingProgress.EMPTY));
   }
 
   public void testRevert() throws Exception {

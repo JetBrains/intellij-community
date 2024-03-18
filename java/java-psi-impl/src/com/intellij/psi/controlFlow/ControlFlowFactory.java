@@ -74,7 +74,7 @@ public final class ControlFlowFactory implements Disposable {
     public int hashCode() {
       int result = policy.hashCode();
       result = 31 * result + (options.hashCode());
-      result = 31 * result + (int)(modificationCount ^ (modificationCount >>> 32));
+      result = 31 * result + Long.hashCode(modificationCount);
       return result;
     }
 

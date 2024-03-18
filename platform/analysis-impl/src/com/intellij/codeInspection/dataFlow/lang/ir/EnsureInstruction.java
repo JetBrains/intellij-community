@@ -110,6 +110,11 @@ public class EnsureInstruction extends Instruction {
   }
 
   @Override
+  public boolean isLinear() {
+    return myTransferValue == null;
+  }
+
+  @Override
   public int @NotNull [] getSuccessorIndexes() {
     if (myTransferValue == null) {
       return new int[]{getIndex() + 1};

@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
-public class MethodDeclarationRangeHandler implements DeclarationRangeHandler {
+public final class MethodDeclarationRangeHandler implements DeclarationRangeHandler {
   @Override
   @NotNull
   public TextRange getDeclarationRange(@NotNull final PsiElement container) {

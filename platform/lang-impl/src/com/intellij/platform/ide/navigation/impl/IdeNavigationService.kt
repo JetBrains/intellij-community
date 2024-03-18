@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
 import com.intellij.codeInsight.navigation.activateFileIfOpen
@@ -23,9 +23,9 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
-import com.intellij.util.OverflowSemaphore
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -67,7 +67,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   private suspend fun doNavigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
-    val requests = navigatables.mapWithProgress(concurrent = true) {
+    val requests = navigatables.mapWithProgress {
       readAction {
         it.navigationRequest()
       }
@@ -120,7 +120,7 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
   }
 
   withContext(Dispatchers.EDT) {
-    navigateNonSource(request = nonSourceRequest, options = options)
+    navigateNonSource(project = project, request = nonSourceRequest, options = options)
   }
   return true
 }
@@ -137,9 +137,7 @@ private suspend fun navigateToSource(project: Project, request: NavigationReques
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            request.navigatable.navigate(options.requestFocus)
-          }
+          IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
         }
         return true
       }
@@ -188,7 +186,7 @@ private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigat
                             openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
 }
 
-private suspend fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
+private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {
   EDT.assertIsEdt()
 
   return when (request) {
@@ -199,9 +197,7 @@ private suspend fun navigateNonSource(request: NavigationRequest, options: Navig
     }
     is RawNavigationRequest -> {
       check(!request.canNavigateToSource)
-      blockingContext {
-        request.navigatable.navigate(options.requestFocus)
-      }
+      IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
     }
     else -> {
       error("Non-source request expected here, got: $request")

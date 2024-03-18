@@ -172,7 +172,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
 
   @Test
-  @Ignore // the test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.
+  @Ignore("The test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.")
   @TargetVersions("6.7+")
   fun `update toolchain in build script should update it in IDEA`() {
     VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class PyVariableNameIndex extends StringStubIndexExtension<PyTargetExpression> {
+public final class PyVariableNameIndex extends StringStubIndexExtension<PyTargetExpression> {
   public static final StubIndexKey<String, PyTargetExpression> KEY = StubIndexKey.createIndexKey("Py.variable.shortName");
 
   @Override

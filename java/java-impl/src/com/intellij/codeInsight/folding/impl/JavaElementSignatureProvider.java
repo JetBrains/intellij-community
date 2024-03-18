@@ -12,7 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
+public final class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance(JavaElementSignatureProvider.class);
 
   @Override

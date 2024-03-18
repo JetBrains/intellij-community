@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduceparameterobject;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -24,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -139,7 +139,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       if (bean != null && bean.getField() != null) {
         getter = GenerateMembersUtil.suggestGetterName(bean.getField());
       }
-      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && HighlightingFeature.RECORDS.isAvailable(context)) {
+      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && PsiUtil.isAvailable(JavaFeature.RECORDS, context)) {
         getter = paramInfo.getName();
       }
       else {

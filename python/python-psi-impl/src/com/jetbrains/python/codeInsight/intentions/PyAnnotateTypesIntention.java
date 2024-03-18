@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
+public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -57,7 +57,7 @@ final class RunManagerSettingsImpl implements RunManagerSettings {
     }
 
     for (Path file : getSharedConfigurationFiles()) {
-      result.addAll(JDOMUtil.getChildren(context.getOrCreateFile(file).getRootElement(), CONFIGURATION_ELEMENT));
+      result.addAll(JDOMUtil.getChildren(context.getOrCreateFile$intellij_platform_lang_impl(file).getRootElement(), CONFIGURATION_ELEMENT));
     }
 
     return result;

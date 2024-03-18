@@ -56,7 +56,7 @@ object GitConflictsUtil {
   }
 
   internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>) {
-    showMergeWindow(project, handler, selectedConflicts, { root -> isReversedRoot(project, root) })
+    showMergeWindow(project, handler, selectedConflicts) { root -> isReversedRoot(project, root) }
   }
 
   internal fun showMergeWindow(project: Project,

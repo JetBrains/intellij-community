@@ -53,7 +53,9 @@
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
-    <group id="Git.Reword.ToolbarActions"/>
+    <group id="Git.Reword.ToolbarActions">
+      <reference ref="Vcs.ShowMessageHistory" />
+    </group>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
@@ -208,6 +210,10 @@
     </group>
 
     <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
+      <action id="git.branches.popup.filter.by.action" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction"/>
+      <action id="git.branches.popup.filter.by.repository" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository"/>
+      <separator/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
@@ -324,6 +330,20 @@
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
+    <action id="Git.Log.GitUseSharedLogAction" class="git4idea.actions.GitUseSharedLogAction" internal="true"/>
+    <action id="Git.Log.GitDumpLogIndexDataAction" class="git4idea.actions.GitDumpLogIndexDataAction" internal="true"/>
+    <group id="Git.Log.ShareLogIndexData" internal="true">
+      <reference id="Git.Log.GitUseSharedLogAction"/>
+      <reference id="Git.Log.GitDumpLogIndexDataAction"/>
+    </group>
+
+    <group id="Git.Log.Internal" internal="true">
+      <reference id="Git.Log.ShareLogIndexData"/>
+      <separator/>
+      <reference id="Git.Log.Show.Command"/>
+      <add-to-group group-id="Vcs.Log.Internal" anchor="last"/>
+    </group>
+
     <action id="Git.OpenExcludeFile" class="git4idea.ignore.actions.OpenGitExcludeAction"/>
     <group id="Git.Ignore.File" class="git4idea.ignore.actions.GitIgnoreFileActionGroup">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
@@ -351,7 +371,7 @@
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitStageAcceptTheirsAction"/>
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitStageAcceptYoursAction"/>
-    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction"/>
+    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction" icon="AllIcons.Vcs.Merge"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.ToggleCommitAll" class="git4idea.index.actions.GitToggleCommitAllAction">
@@ -368,7 +388,7 @@
     <action id="Git.Stage.Stash.Files" class="git4idea.index.actions.GitStageStashFilesAction"/>
 
     <group id="Git.ChangesView.Conflicts">
-      <action id="Git.ChangesView.Merge" class="git4idea.merge.GitMergeConflictAction"/>
+      <action id="Git.ChangesView.Merge" class="git4idea.merge.GitMergeConflictAction" icon="AllIcons.Vcs.Merge"/>
       <action id="Git.ChangesView.AcceptTheirs" class="git4idea.merge.GitAcceptTheirsAction"/>
       <action id="Git.ChangesView.AcceptYours" class="git4idea.merge.GitAcceptYoursAction"/>
       <separator/>
@@ -473,21 +493,19 @@
       <reference id="LocalHistory.ShowHistory"/>
     </group>
 
-    <action id="git4idea.actions.GitUseSharedLogAction"
-            class="git4idea.actions.GitUseSharedLogAction"
-            internal="true"/>
-    <action id="git4idea.actions.GitDumpLogIndexDataAction"
-            class="git4idea.actions.GitDumpLogIndexDataAction"
-            internal="true"/>
-    <group id="git4idea.actions.ShareLogIndexData" internal="true">
-      <reference id="git4idea.actions.GitUseSharedLogAction"/>
-      <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
-      <add-to-group group-id="Vcs.Log.Internal"/>
-    </group>
-
     <group id="MainToolbarVCSGroup">
       <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
+      <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget"/>
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
+    </group>
+
+    <group id="GitMergeRebaseWidgetGroup">
+      <reference id="Git.ResolveConflicts"/>
+      <reference id="Git.Rebase.Continue"/>
+      <reference id="Git.Rebase.Abort"/>
+      <reference id="Git.Merge.Abort"/>
+      <reference id="Git.CherryPick.Abort"/>
+      <reference id="Git.Revert.Abort"/>
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
@@ -561,7 +579,7 @@
                  description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS."/>
     <registryKey key="git.use.setsid.for.native.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid' for remote operations.
-                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
+                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications. IDEA-201054"/>
     <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
     <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
@@ -584,8 +602,8 @@
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
     <registryKey key="git.detect.wsl.executables" defaultValue="true"
                  description="Search for available executables in WSL on Windows"/>
-    <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
-                 description="Show toolwindow tab with stashes and shelves together"/>
+    <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
+                 description="Show toolwindow tab with stashes"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speed up worktree cleanup."/>
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
@@ -618,12 +636,15 @@
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitUserNameCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCRLFCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitLargeFileCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitDetachedRootCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitFileNameCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.rebase.GitRebaseCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsLogCommitStatusProvider implementation="git4idea.log.GitCommitSignatureStatusProvider"/>
+    <vcsLogFileHistoryHandler implementation="git4idea.history.GitLogHistoryHandler" order="last"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher"/>
     <vcs.branchStateProvider implementation="git4idea.branch.GitBranchStateProvider"/>
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
@@ -635,6 +656,7 @@
     <statistics.counterUsagesCollector implementationClass="git4idea.GitRefreshUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="git4idea.GitOperationsCollector"/>
     <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
+    <statistics.actionIdsHolder implementation="git4idea.GitActionIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <gitRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializerImpl"/>
     <gitSilentFileAdder implementation="git4idea.repo.GitSilentFileAdderProviderImpl"/>
@@ -644,17 +666,17 @@
     <vcs.unversionedFilesHolder implementation="git4idea.repo.GitUnversionedFilesHolder$Provider"/>
     <projectConfigurable id="vcs.Git" key="settings.git.option.group" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
+    <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
+                                 location="confirmations"/>
 
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
     <projectService serviceImplementation="git4idea.config.GitPullSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings"/>
-    <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl"/>
-    <projectService serviceImplementation="git4idea.actions.GitQuickActionsToolbarService"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
@@ -670,7 +692,7 @@
     <applicationService serviceImplementation="git4idea.DialogManager"/>
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
-    <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
+    <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
@@ -727,6 +749,7 @@
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
+    <lookup.charFilter implementation="git4idea.commit.GitCommitCompletionCharFilter"/>
 
     <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
     <virtualFileSystem key="git-compare-branches" implementationClass="git4idea.branch.GitCompareBranchesVirtualFileSystem"/>
@@ -756,7 +779,6 @@
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
-    <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
 
     <vcs.baseContentProvider implementation="git4idea.index.vfs.GitIndexVirtualFileBaseContentProvider"/>
@@ -779,13 +801,13 @@
                         displayNameSupplierClassName="git4idea.stash.ui.GitStashDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
-    <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 
-    <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
+    <advancedSetting default="false" id="git.search.everywhere.tab.enabled" groupKey="advanced.settings.git"/>
+    <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
     <warmupConfigurator implementation="git4idea.log.GitWarmupConfigurator"/>
@@ -815,6 +837,12 @@
                              -1 to disable check."/>
     <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
+
+    <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Git4Idea">
+    <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -827,10 +855,21 @@
     <extensionPoint interface="git4idea.config.GitProtectedBranchProvider" name="gitProtectedBranchProvider" dynamic="true"/>
     <extensionPoint interface="git4idea.update.GitPostUpdateHandler" name="gitPostUpdateHandler" dynamic="true"/>
     <extensionPoint interface="git4idea.ui.branch.GitCurrentBranchPresenter" name="gitCurrentBranchPresenter" dynamic="true"/>
+    <extensionPoint interface="git4idea.instant.InstantGitTokenProvider" name="instantGitTokenProvider" dynamic="true"/>
+    <extensionPoint interface="git4idea.annotate.GitAnnotationPerformanceListener" name="gitAnnotationPerformanceListener" dynamic="true"/>
+    <extensionPoint interface="git4idea.annotate.GitAnnotationProvider$GitRawAnnotationProvider" name="gitRawAnnotationProvider"
+                    dynamic="true" area="IDEA_PROJECT"/>
+    <extensionPoint interface="git4idea.push.GitPushNotificationCustomizer"
+                    name="gitPushNotificationCustomizer"
+                    dynamic="true"
+                    area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <projectListeners>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyStagingAreaListener"
+              topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
+              activeInHeadlessMode="false"/>
+    <listener class="git4idea.conflicts.MergeConflictResolveUtil$MyStagingAreaListener"
               topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
               activeInHeadlessMode="false"/>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"

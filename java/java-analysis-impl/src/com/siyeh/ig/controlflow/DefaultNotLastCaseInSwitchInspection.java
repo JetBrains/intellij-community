@@ -28,7 +28,7 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DefaultNotLastCaseInSwitchInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class DefaultNotLastCaseInSwitchInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

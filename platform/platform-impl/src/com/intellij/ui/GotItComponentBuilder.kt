@@ -4,7 +4,6 @@ package com.intellij.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -32,10 +31,13 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.svg.SvgAttributePatcher
+import com.intellij.util.SVGLoader
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -193,7 +195,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItComponentBuilder {
-    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(), isExternal = false)
+    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors), isExternal = false)
     linkAction = action
     return this
   }
@@ -202,17 +204,21 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItComponentBuilder {
-    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(), isExternal = true)
+    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors), isExternal = true)
     linkAction = { BrowserUtil.browse(url) }
     return this
   }
 
   private fun createLinkLabel(@Nls text: String, foreground: Color, isExternal: Boolean): LinkLabel<Unit> {
-    return object : LinkLabel<Unit>(text, if (isExternal) AllIcons.Ide.External_link_arrow else null) {
+    return object : LinkLabel<Unit>(text,
+                                    if (isExternal) AllIcons.Ide.External_link_arrow.colorizeIfPossible(foreground)
+                                    else null) {
       override fun getNormal(): Color = foreground
       override fun getHover(): Color = foreground
       override fun getVisited(): Color = foreground
       override fun getActive(): Color = foreground
+      override fun getUnderlineColor(): Color = JBUI.CurrentTheme.GotItTooltip.linkUnderline(useContrastColors, myUnderline, foreground)
+      override fun getUnderlineShift(): Int = 4
     }.also {
       if (isExternal) it.horizontalTextPosition = SwingConstants.LEFT
     }
@@ -473,7 +479,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
       val finalText = HtmlChunk.raw(header)
         .bold()
-        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.headerForeground())))
+        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.headerForeground(useContrastColors))))
         .wrapWith(HtmlChunk.html())
         .toString()
       panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insets(1, left, 0, 0))
@@ -521,8 +527,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
           putClientProperty("gotItButton.contrast", true)
         }
         else if (useContrastButton) {
-          // make the button bright blue as the default button
-          ClientProperty.put(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+          putClientProperty("gotItButton.contrast.only.button", true)
         }
         if (useContrastColors || useContrastButton) {
           foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
@@ -532,7 +537,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
       val secondaryButton = secondaryButtonText?.let { buttonText: @Nls String ->
         val link = ActionLink(buttonText)
-        link.foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors)
+        link.foreground = JBUI.CurrentTheme.GotItTooltip.secondaryActionForeground(useContrastColors)
         link.isFocusable = requestFocus
         if (requestFocus) {
           link.pressOnEnter()
@@ -617,7 +622,12 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     // returns dark icon if GotIt tooltip background is dark
     internal fun adjustIcon(icon: Icon, useContrastColors: Boolean): Icon {
-      return if (ColorUtil.isDark(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))) {
+      val fillColor = JBUI.CurrentTheme.GotItTooltip.iconFillColor(useContrastColors)
+      val borderColor = JBUI.CurrentTheme.GotItTooltip.iconBorderColor(useContrastColors)
+      return if (fillColor != null && borderColor != null) {
+        icon.colorizeIfPossible(fillColor, borderColor)
+      }
+      else if (ColorUtil.isDark(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))) {
         IconLoader.getDarkIcon(icon, true)
       }
       else icon
@@ -634,10 +644,13 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
-    val increasedLineSpacing = htmlBuilder.toString().let {
-      it.contains("""<span class="code">""") || it.contains("""<span class="shortcut">""")
+    val lineSpacing = htmlBuilder.toString().let {
+      if (it.contains("""<span class="code">""")
+          || it.contains("""<span class="shortcut">""")
+          || it.contains("""<icon src=""")) 0.2f
+      else 0.1f
     }
-    editorKit = createEditorKit(useContrastColors, if (increasedLineSpacing) 0.2f else 0.1f, iconsMap)
+    editorKit = createEditorKit(useContrastColors, lineSpacing, iconsMap)
 
     putClientProperty("caretWidth", 0)
 
@@ -662,9 +675,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
 
   private fun createEditorKit(useContrastColors: Boolean, lineSpacing: Float, iconsMap: Map<Int, Icon>): HTMLEditorKit {
     val styleSheet = StyleSheet()
-    val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
+    val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors))} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
-                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors))
+                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors),
+                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBorder(useContrastColors))
     val codeFont = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
     val codeStyles = InlineCodeExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.codeForeground(useContrastColors),
                                                    JBUI.CurrentTheme.GotItTooltip.codeBackground(useContrastColors),
@@ -688,7 +702,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
                                  ShortcutExtension(),
                                  InlineCodeExtension(),
                                  LineSpacingExtension(lineSpacing))
-      .build()
+      .build().apply {
+        // We need it, because otherwise code block or shortcut "boxes" are cut on the first row
+        border = JBEmptyBorder(1, 0, 0, 0)
+      }
   }
 
   private fun setTextAndUpdateLayout(builder: HtmlBuilder, width: Int? = null) {
@@ -751,10 +768,11 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
   }
 
   companion object {
-    fun getStyles(foreground: Color, background: Color): String {
+    fun getStyles(foreground: Color, background: Color, border: Color): String {
       return ".shortcut { font-weight: bold;" +
              " color: ${ColorUtil.toHtmlColor(foreground)};" +
-             " background-color: ${ColorUtil.toHtmlColor(background)} }"
+             " background-color: ${ColorUtil.toHtmlColor(background)};" +
+             " border-color: #${ColorUtil.toHex(border, true)} }"
     }
 
     fun patchShortcutTags(htmlText: @Nls String, needLogIncorrectInput: Boolean): @Nls String {
@@ -880,8 +898,8 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
     }
 
     companion object {
-      private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
-      private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0f
       private const val DEFAULT_ARC: Float = 8.0f
 
       private val SHORTCUT_PART_REGEX = Regex(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
@@ -991,7 +1009,7 @@ private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
 
     companion object {
       private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
-      private const val DEFAULT_VERTICAL_INDENT: Float = 0f
+      private const val DEFAULT_VERTICAL_INDENT: Float = -0.5f
       private const val DEFAULT_ARC: Float = 8.0f
     }
   }
@@ -1027,3 +1045,41 @@ private fun View.getFloatAttribute(key: Any, defaultValue: Float): Float {
 
 private val InlineView.borderColorAttr: Color? get() =
   attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }
+
+private fun Icon.colorizeIfPossible(fillColor: Color, borderColor: Color = fillColor): Icon =
+  (this as? CachedImageIcon)?.createWithPatcher(colorPatcher = object : SVGLoader.SvgElementColorPatcherProvider, SvgAttributePatcher {
+    private var lastColor = Int.MIN_VALUE
+    private var lastDigest: LongArray? = null
+
+    override fun digest(): LongArray {
+      val color = fillColor.rgb / 2 + borderColor.rgb / 2
+      if (color == lastColor) {
+        lastDigest?.let {
+          return it
+        }
+      }
+
+      val digest = longArrayOf(color.toLong(), 440413911775177385)
+      lastColor = color
+      lastDigest = digest
+      return digest
+    }
+
+    override fun patchColors(attributes: MutableMap<String, String>) {
+      setAttribute(attributes, "fill", fillColor)
+      setAttribute(attributes, "stroke", borderColor)
+    }
+
+    override fun attributeForPath(path: String) = this
+
+    private fun setAttribute(attributes: MutableMap<String, String>, key: String, color: Color) {
+      if (!attributes.containsKey(key) || attributes[key] == "none") return
+
+      attributes[key] = "rgb(${color.red},${color.green},${color.blue})"
+
+      val alpha = color.alpha
+      if (alpha != 255) {
+        attributes["$key-opacity"] = "${alpha / 255f}"
+      }
+    }
+  }) ?: this

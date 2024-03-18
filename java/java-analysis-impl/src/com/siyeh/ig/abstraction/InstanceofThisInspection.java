@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-public class InstanceofThisInspection extends BaseInspection {
+public final class InstanceofThisInspection extends BaseInspection {
   private static final CallMatcher OBJECT_GET_CLASS =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
 

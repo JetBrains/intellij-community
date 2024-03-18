@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-public class JavaCallReferenceProcessor implements CallReferenceProcessor {
+public final class JavaCallReferenceProcessor implements CallReferenceProcessor {
   @Override
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {
     PsiClass originalClass = data.getOriginalClass();

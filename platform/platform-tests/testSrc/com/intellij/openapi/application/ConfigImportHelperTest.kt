@@ -8,6 +8,8 @@ import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.TestFor
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -32,6 +34,7 @@ import java.util.function.Predicate
 import kotlin.io.path.isDirectory
 import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
+import kotlin.test.fail
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   private val LOG = logger<ConfigImportHelperTest>()
@@ -553,5 +556,34 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx2048m", "-Dunique.prop=some.val")
+  }
+
+  @TestFor(issues = ["IDEA-341860"])
+  @Test fun `don't ask for VM options restart, if they are actual`() {
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+
+    val otherXml = oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE)
+    Files.createDirectories(otherXml.parent)
+    otherXml.writeLines(listOf("aaaa"))
+    val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx3G", "-Dsome.prop=new.val"))
+
+    CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigDir).writeConfigMarkerFile(newConfigDir)
+
+    val oldVmOptionsFile = oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=old.val"))
+
+    val platformVmOptionsFile = newConfigDir.fileSystem.getPath(VMOptions.getPlatformOptionsFile().toString())
+    Files.createDirectories(platformVmOptionsFile.parent)
+    Files.write(platformVmOptionsFile, listOf("-Xmx2048m", "-Dsome.another.prop=another.val"))
+
+    try {
+      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+      assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx3G", "-Dsome.prop=new.val")
+    } catch (ex: Exception) {
+      if (ex.message?.contains("contain custom VM options") == true) {
+        fail("A restart must not be required!", ex)
+      }
+    }
+
   }
 }

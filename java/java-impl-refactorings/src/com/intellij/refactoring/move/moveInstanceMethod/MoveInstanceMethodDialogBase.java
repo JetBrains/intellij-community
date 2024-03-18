@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -98,7 +99,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   }
 
   protected boolean verifyTargetClass (PsiClass targetClass) {
-    if (targetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
+    if (targetClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
         final String message = JavaRefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil

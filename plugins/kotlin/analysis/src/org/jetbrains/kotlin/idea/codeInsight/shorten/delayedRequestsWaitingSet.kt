@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
@@ -48,6 +49,18 @@ fun Project.runRefactoringAndKeepDelayedRequests(action: () -> Unit) {
     }
 }
 
+// We need this function so that we can modify the options of the ShorteningRequest before shortening.
+// For example, it is used to enable fully shortening references to the same as their original references when copying and pasting.
+@ApiStatus.Internal
+fun Project.modifyExistingShorteningRequests(action: (ShorteningRequest) -> ShorteningRequest) {
+    val newRequests = delayedRefactoringRequests?.mapTo(mutableSetOf()) {
+        if (it is ShorteningRequest) {
+            action(it)
+        } else it
+    }
+    delayedRefactoringRequests = newRequests
+}
+
 private fun Project.getOrCreateRefactoringRequests(): MutableSet<DelayedRefactoringRequest> {
     var requests = delayedRefactoringRequests
     if (requests == null) {
@@ -70,7 +83,7 @@ fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile) {
     file.project.getOrCreateRefactoringRequests() += ImportRequest(elementToImport.createSmartPointer(), file.createSmartPointer())
 }
 
-fun performDelayedRefactoringRequests(project: Project) {
+fun performDelayedRefactoringRequests(project: Project, defaultOptions: Options = Options.DEFAULT) {
     project.delayedRefactoringRequests?.let { requests ->
         project.delayedRefactoringRequests = null
         PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -87,7 +100,7 @@ fun performDelayedRefactoringRequests(project: Project) {
         val elementToOptions = shorteningRequests.mapNotNull { req -> req.pointer.element?.let { it to req.options } }.toMap()
         val elements = elementToOptions.keys
         //TODO: this is not correct because it should not shorten deep into the elements!
-        ShortenReferences { elementToOptions[it] ?: Options.DEFAULT }.process(elements)
+        ShortenReferences { elementToOptions[it] ?: defaultOptions }.process(elements)
 
         val importInsertHelper = ImportInsertHelper.getInstance(project)
 

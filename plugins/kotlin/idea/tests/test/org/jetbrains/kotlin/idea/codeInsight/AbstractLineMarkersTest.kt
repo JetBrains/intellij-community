@@ -13,13 +13,15 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
 import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
@@ -222,17 +224,19 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                 if (FileUtil.loadFile(expectedFile).contains("<lineMarker") && markers.isEmpty()) {
                     throw AssertionError("Some line markers are expected, but nothing is present at all")
                 }
-            } catch (failure: FileComparisonFailure) {
-                throw failure
             } catch (error: AssertionError) {
+                if (error is FileComparisonData) {
+                    throw error
+                }
                 try {
                     val actualTextWithTestData = TagsTestDataUtil.insertInfoTags(markers, true, documentToAnalyze.text)
                     KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithTestData)
-                } catch (failure: FileComparisonFailure) {
-                    throw FileComparisonFailure(
+                } catch (failure: AssertionError) {
+                    if (failure !is FileComparisonData) throw failure
+                    throw FileComparisonFailedError(
                         error.message + "\n" + failure.message,
-                        failure.expected,
-                        failure.actual,
+                        failure.expectedStringPresentation,
+                        failure.actualStringPresentation,
                         failure.filePath
                     )
                 }

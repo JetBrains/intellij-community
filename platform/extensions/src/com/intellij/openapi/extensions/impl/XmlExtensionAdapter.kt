@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.xml.dom.XmlElement
@@ -54,6 +55,7 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
       }
       val element = extensionElement
       if (element != null) {
+        @Suppress("UsagesOfObsoleteApi")
         XmlSerializer.getBeanBinding(instance::class.java).deserializeInto(instance, element)
         extensionElement = null
       }
@@ -85,19 +87,20 @@ internal class SimpleConstructorInjectionAdapter(
   implementationClassName: String,
   pluginDescriptor: PluginDescriptor,
   descriptor: ExtensionDescriptor,
+  extensionElement: XmlElement?,
   implementationClassResolver: ImplementationClassResolver,
 ) : XmlExtensionAdapter(
   implementationClassName = implementationClassName,
   pluginDescriptor = pluginDescriptor,
   orderId = descriptor.orderId,
   order = descriptor.order,
-  extensionElement = descriptor.element,
+  extensionElement = extensionElement,
   implementationClassResolver = implementationClassResolver,
 ) {
   override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
     if (aClass.name != "org.jetbrains.kotlin.asJava.finder.JavaElementFinder") {
       try {
-        return super.instantiateClass(aClass, componentManager)
+        return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -110,10 +113,10 @@ internal class SimpleConstructorInjectionAdapter(
         if (!(cause is NoSuchMethodException || cause is IllegalArgumentException)) {
           throw e
         }
-        ExtensionPointImpl.LOG.error(
-          "Cannot create extension without pico container (class=" + aClass.name + ", constructors=" +
-          aClass.declaredConstructors.contentToString() + ")," +
-          " please remove extra constructor parameters", e)
+        logger<ExtensionPointImpl<*>>().error(
+          "Cannot create extension without pico container " +
+          "(class=${aClass.name}, constructors=${aClass.declaredConstructors.contentToString()}), " +
+          "please remove extra constructor parameters", e)
       }
     }
     return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)

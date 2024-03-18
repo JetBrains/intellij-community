@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableIntention<KtForExpression>(KtForExpression::class) {
+internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableModCommandIntention<KtForExpression>(KtForExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
     override fun getActionName(element: KtForExpression): String {
@@ -55,7 +55,7 @@ internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableI
         return loopRange.getKtType()?.isLoopRangeType() == true
     }
 
-    override fun apply(element: KtForExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtForExpression, context: ActionContext, updater: ModPsiUpdater) {
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
         val labelName = element.getLabelName()

@@ -11,7 +11,7 @@ import java.util.Objects;
 
 /**
  * An abstract class for a thing we can smart step into.
- *
+ * <p>
  * Should you need to support another Python expression as a smart step into target,
  * subclass this class and add the respective method override to {@code PySmartStepIntoVariantVisitor}.
  *

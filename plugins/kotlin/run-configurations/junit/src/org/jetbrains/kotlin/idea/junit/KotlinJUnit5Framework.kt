@@ -36,7 +36,7 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             return CachedValuesManager.getCachedValue(declaration) {
                 CachedValueProvider.Result.create(
                     checkJUnit5TestClass(declaration),
-                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                    OuterModelsModificationTrackerManager.getTracker(declaration.project)
                 )
             }
         }
@@ -49,7 +49,7 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             return CachedValuesManager.getCachedValue(ktClassOrObject) {
                 CachedValueProvider.Result.create(
                     checkJUnit5PotentialTestClass(ktClassOrObject) == YES,
-                    OuterModelsModificationTrackerManager.getInstance(ktClassOrObject.project).tracker
+                    OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
                 )
             }
         }

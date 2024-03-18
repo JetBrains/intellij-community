@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
@@ -9,35 +9,21 @@ class JavaLangObjectToString(context: DefaultExecutionContext) : BaseMirror<Obje
     private val toString by MethodDelegate<StringReference>("toString", "()Ljava/lang/String;")
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): String {
+        if (value is StringReference) {
+            return value.value()
+        }
         return toString.value(value, context)?.value() ?: ""
     }
 }
 
 class JavaUtilAbstractCollection(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfJavaLangAbstractCollection>("java.util.AbstractCollection", context) {
-    private val abstractList = JavaUtilAbstractList(context)
-    private val sizeMethod by MethodDelegate<IntegerValue>("size")
+    private val toArrayMethod by MethodDelegate<ArrayReference>("toArray", "()[Ljava/lang/Object;")
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfJavaLangAbstractCollection {
-        val list = mutableListOf<ObjectReference>()
-        val size = sizeMethod.value(value, context)?.intValue() ?: 0
-        for (index in 0 until size) {
-            val reference = abstractList.get(value, index, context) ?: continue
-            list.add(reference)
-        }
-        return MirrorOfJavaLangAbstractCollection(value, list)
+        val arrayValues = toArrayMethod.value(value, context)!!.values
+        return MirrorOfJavaLangAbstractCollection(value, arrayValues.map { it as ObjectReference }.toList())
     }
-}
-
-class JavaUtilAbstractList(context: DefaultExecutionContext) :
-        BaseMirror<ObjectReference, ObjectReference>("java.util.AbstractList", context) {
-    val getMethod by MethodDelegate<ObjectReference>("get")
-
-    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): Nothing? =
-            null
-
-    fun get(value: ObjectReference, index: Int, context: DefaultExecutionContext): ObjectReference? =
-            getMethod.value(value, context, context.vm.mirrorOf(index))
 }
 
 class WeakReference(context: DefaultExecutionContext) :

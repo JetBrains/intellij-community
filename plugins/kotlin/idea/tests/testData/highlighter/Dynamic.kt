@@ -1,4 +1,5 @@
 // IGNORE_K2
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 package testing
 
 fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">tst</symbolName>(<symbolName textAttributesKey="KOTLIN_PARAMETER">d</symbolName>: <error><symbolName>dynamic</symbolName></error>) {

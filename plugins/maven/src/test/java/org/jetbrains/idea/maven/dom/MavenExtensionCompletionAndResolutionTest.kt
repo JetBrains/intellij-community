@@ -1,15 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.LocalFileSystem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.junit.Test
 
 class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
+    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins")
   }
 
   override fun importProjectOnSetup(): Boolean {
@@ -31,7 +33,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT,
                                     "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo")
   }
 
@@ -52,7 +54,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        """.trimIndent())
 
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
                                     "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
                                     "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin")
   }
@@ -72,7 +74,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT,
                                     "maven-clean-plugin",
                                     "maven-jar-plugin",
                                     "maven-war-plugin",
@@ -99,8 +101,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                          </extensions>
                        </build>
                        """.trimIndent())
-    val variants = getDependencyCompletionVariants(
-      myProjectPom) { info: MavenRepositoryArtifactInfo -> info.getGroupId() + ":" + info.getArtifactId() }
+    val variants = getDependencyCompletionVariants(projectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
 
     assertContain(variants,
                   "org.apache.maven.plugins:maven-clean-plugin",
@@ -138,7 +139,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    assertResolved(myProjectPom, findPsiFile(f))
+    withContext(Dispatchers.EDT) { assertResolved(projectPom, findPsiFile(f)) }
   }
 
 
@@ -159,9 +160,11 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(myProjectPom)
-    assertNotNull(ref)
-    ref.resolve() // shouldn't throw;
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(projectPom)
+      assertNotNull(ref)
+      ref!!.resolve() // shouldn't throw;
+    }
     return@runBlocking
   }
 

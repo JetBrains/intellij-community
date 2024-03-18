@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,13 +12,13 @@ public final class StdFileTypes extends FileTypes {
   private StdFileTypes() { }
 
   /**
-   * @deprecated use {@link com.intellij.ide.highlighter.JavaFileType#INSTANCE} instead.
+   * @deprecated use {@link com.intellij.ide.highlighter.JavaFileType#INSTANCE} (Java plugin) instead.
    */
   @Deprecated
   public static volatile LanguageFileType JAVA = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JAVA");
 
   /**
-   * @deprecated use {@link com.intellij.ide.highlighter.JavaClassFileType#INSTANCE} instead.
+   * @deprecated use {@link com.intellij.ide.highlighter.JavaClassFileType#INSTANCE} (Java plugin) instead.
    */
   @Deprecated
   public static volatile FileType CLASS = FileTypeManager.getInstance().getStdFileType("CLASS");
@@ -67,7 +67,7 @@ public final class StdFileTypes extends FileTypes {
   public static volatile LanguageFileType JS = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JavaScript");
 
   /**
-   * @deprecated use {@link com.intellij.lang.properties.PropertiesFileType#INSTANCE} instead.
+   * @deprecated use {@link com.intellij.lang.properties.PropertiesFileType#INSTANCE} (Properties plugin) instead.
    */
   @Deprecated(forRemoval = true)
   public static volatile LanguageFileType PROPERTIES = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("Properties");

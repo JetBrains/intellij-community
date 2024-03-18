@@ -108,8 +108,7 @@ public final class GitPushRepoResult {
   /**
    * Returns the branch we were pushing to, in the full-name format, e.g. {@code refs/remotes/origin/master}.
    */
-  @NotNull
-  String getTargetBranch() {
+  public @NotNull String getTargetBranch() {
     return myTargetBranch;
   }
 

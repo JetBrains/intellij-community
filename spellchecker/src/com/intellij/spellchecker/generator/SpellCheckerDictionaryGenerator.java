@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.generator;
 
 import com.intellij.lang.Language;
@@ -147,7 +147,7 @@ public abstract class SpellCheckerDictionaryGenerator {
 
   protected abstract void processFile(PsiFile file, HashSet<String> seenNames);
 
-  protected void process(@NotNull final PsiElement element, @NotNull final HashSet<String> seenNames) {
+  protected void process(final @NotNull PsiElement element, final @NotNull HashSet<String> seenNames) {
     final int endOffset = element.getTextRange().getEndOffset();
 
     // collect leafs  (spell checker inspection works with leafs)
@@ -170,7 +170,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     }
   }
 
-  protected void processLeafsNames(@NotNull final PsiElement leafElement, @NotNull final HashSet<String> seenNames) {
+  protected void processLeafsNames(final @NotNull PsiElement leafElement, final @NotNull HashSet<String> seenNames) {
     final Language language = leafElement.getLanguage();
     SpellCheckingInspection.tokenize(leafElement, language, new TokenConsumer() {
       @Override
@@ -185,7 +185,7 @@ public abstract class SpellCheckerDictionaryGenerator {
           addSeenWord(seenNames, word, language);
         });
       }
-    });
+    }, null);
   }
 
   protected void addSeenWord(HashSet<String> seenNames, String word, Language language) {

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.kotlinx.metadata.jvm" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.8.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.8.0/kotlinx-metadata-jvm-0.8.0.jar">
+          <sha256sum>6030de49e7fc2ca8009e1221213035694b97494044aa99bcfb0c8e0e73984d4d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.8.0/kotlinx-metadata-jvm-0.8.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.8.0/kotlinx-metadata-jvm-0.8.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

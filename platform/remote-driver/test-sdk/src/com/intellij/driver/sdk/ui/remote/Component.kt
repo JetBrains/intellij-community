@@ -9,4 +9,5 @@ interface Component {
   val width: Int
   val height: Int
   fun isVisible(): Boolean
+  fun isEnabled(): Boolean
 }

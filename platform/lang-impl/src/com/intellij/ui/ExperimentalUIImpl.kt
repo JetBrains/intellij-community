@@ -13,13 +13,10 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
@@ -30,6 +27,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
+import com.intellij.util.ui.RestartDialog
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -110,7 +108,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       onValueChanged(newUI)
       if (suggestRestart) {
         shouldApplyOnClose = newUI
-        showRestartDialog()
+        RestartDialog.showRestartRequired()
       }
       else {
         saveNewValue(newUI)
@@ -219,28 +217,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       })
     }
   }
-
-  private fun showRestartDialog() {
-    val action = if (ApplicationManager.getApplication().isRestartCapable) {
-      IdeBundle.message("ide.restart.action")
-    }
-    else {
-      IdeBundle.message("ide.shutdown.action")
-    }
-    @Suppress("SpellCheckingInspection")
-    val result = Messages.showYesNoDialog(
-      /* message = */ IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
-                                        ApplicationNamesInfo.getInstance().fullProductName),
-      /* title = */ IdeBundle.message("dialog.title.restart.required"),
-      /* yesText = */ action,
-      /* noText = */ IdeBundle.message("ide.notnow.action"),
-      /* icon = */ Messages.getQuestionIcon()
-    )
-
-    if (result == Messages.YES) {
-      ApplicationManagerEx.getApplicationEx().restart(true)
-    }
-  }
 }
 
 private fun resetLafSettingsToDefault() {
@@ -252,6 +228,7 @@ private fun resetLafSettingsToDefault() {
   if (lafManager.autodetect) {
     lafManager.setPreferredLightLaf(defaultLightLaf)
     lafManager.setPreferredDarkLaf(defaultDarkLaf)
+    lafManager.resetPreferredEditorColorScheme()
   }
 }
 
@@ -303,6 +280,8 @@ private const val iconPathPrefix = "expui/"
 private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
   return object : IconPathPatcher() {
     private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
+    // https://youtrack.jetbrains.com/issue/IDEA-335974
+    private val useReflectivePath = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()
 
     override fun patchPath(path: String, classLoader: ClassLoader?): String? {
       val mappings = paths.get(classLoader) ?: return null
@@ -311,15 +290,16 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
         NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader)
       }
 
-      if (patchedPath != null && patchedPath.startsWith(iconPathPrefix)) {
-        // isRunningFromSources - don't care about broken "run from sources", dev mode should be used instead
-        val useReflective = classLoader !is PluginAwareClassLoader && !PluginManagerCore.isRunningFromSources()
-        if (useReflective) {
-          val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
-          builder.append(reflectivePathPrefix)
-          builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
-          return toReflectivePath(builder).toString()
-        }
+      // isRunningFromSources - don't care about broken "run from sources", dev mode should be used instead
+      if (patchedPath != null &&
+          useReflectivePath &&
+          classLoader !is PluginAwareClassLoader &&
+          patchedPath.startsWith(iconPathPrefix) &&
+          !PluginManagerCore.isRunningFromSources()) {
+        val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
+        builder.append(reflectivePathPrefix)
+        builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
+        return toReflectivePath(builder).toString()
       }
 
       return patchedPath

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import java.util.concurrent.ForkJoinPool;
@@ -38,7 +38,6 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
       }
     };
     thread.setName("JobScheduler FJ pool " + n + "/" + pool.getParallelism());
-    thread.setPriority(Thread.NORM_PRIORITY - 1);
     return thread;
   }
 

@@ -20,7 +20,7 @@ import javax.swing.JComponent
 private const val SPRING_NAME = "Spring"
 private const val SPRING_PLUGIN_ID = "com.intellij.spring"
 
-internal class PromoSpringModuleBuilder: ModuleBuilder(), PromoModuleBuilder {
+internal class PromoSpringModuleBuilder : ModuleBuilder(), PromoModuleBuilder {
   override fun isAvailable(): Boolean = Registry.`is`("idea.ultimate.features.hints.enabled")
 
   override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
@@ -35,34 +35,32 @@ internal class PromoSpringModuleBuilder: ModuleBuilder(), PromoModuleBuilder {
 
   override fun getCustomOptionsStep(context: WizardContext?, parentDisposable: Disposable?): ModuleWizardStep {
     return object : ModuleWizardStep() {
-      private val panel: JComponent = PromoPages.build(
-        PromoFeaturePage(
-          JavaUIIcons.IdeaUltimatePromo,
-          PluginAdvertiserService.ideaUltimate,
-          JavaUiBundle.message("feature.spring.description.html"),
-          listOf(
-            PromoFeatureListItem(
-              AllIcons.RunConfigurations.Application,
-              JavaUiBundle.message("feature.spring.run.config")
-            ),
-            PromoFeatureListItem(
-              AllIcons.FileTypes.Properties,
-              JavaUiBundle.message("feature.spring.config.files")
-            ),
-            PromoFeatureListItem(
-              AllIcons.Nodes.DataTables,
-              JavaUiBundle.message("feature.spring.data")
-            ),
-            PromoFeatureListItem(
-              AllIcons.FileTypes.Diagram,
-              JavaUiBundle.message("feature.spring.navigation")
-            )
+      val page = PromoFeaturePage(
+        JavaUIIcons.IdeaUltimatePromo,
+        PluginAdvertiserService.ideaUltimate,
+        JavaUiBundle.message("feature.spring.description.html"),
+        listOf(
+          PromoFeatureListItem(
+            AllIcons.RunConfigurations.Application,
+            JavaUiBundle.message("feature.spring.run.config")
           ),
-          FeaturePromoBundle.message("free.trial.hint"),
-          SPRING_PLUGIN_ID
+          PromoFeatureListItem(
+            AllIcons.FileTypes.Properties,
+            JavaUiBundle.message("feature.spring.config.files")
+          ),
+          PromoFeatureListItem(
+            AllIcons.Nodes.DataTables,
+            JavaUiBundle.message("feature.spring.data")
+          ),
+          PromoFeatureListItem(
+            AllIcons.FileTypes.Diagram,
+            JavaUiBundle.message("feature.spring.navigation")
+          )
         ),
-        FUSEventSource.NEW_PROJECT_WIZARD
-      ).withVisualPadding()
+        FeaturePromoBundle.message("free.trial.hint"),
+        SPRING_PLUGIN_ID
+      )
+      private val panel: JComponent = PromoPages.buildWithTryUltimate(page, source = FUSEventSource.NEW_PROJECT_WIZARD).withVisualPadding()
 
       override fun updateDataModel(): Unit = Unit
       override fun getComponent(): JComponent = panel

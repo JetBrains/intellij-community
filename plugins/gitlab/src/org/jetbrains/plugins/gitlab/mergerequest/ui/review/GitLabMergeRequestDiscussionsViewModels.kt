@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -16,15 +16,17 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiscussionViewModel>>
+private typealias DraftNotesFlow = Flow<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>
 private typealias NewDiscussionsFlow = Flow<Map<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, NewGitLabNoteViewModel>>
 
 interface GitLabMergeRequestDiscussionsViewModels {
   val discussions: DiscussionsFlow
-  val draftDiscussions: DiscussionsFlow
+  val draftNotes: DraftNotesFlow
   val newDiscussions: NewDiscussionsFlow
 
   fun requestNewDiscussion(position: NewDiscussionPosition, focus: Boolean)
@@ -52,6 +54,7 @@ private val LOG = logger<GitLabMergeRequestDiscussionsViewModelsImpl>()
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val project: Project,
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestDiscussionsViewModels {
@@ -60,13 +63,13 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()
-    .mapModelsToViewModels { GitLabMergeRequestDiscussionViewModelBase(project, this, currentUser, it, mergeRequest.glProject) }
+    .mapModelsToViewModels { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
     .modelFlow(cs, LOG)
 
-  override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes
+  override val draftNotes: DraftNotesFlow = mergeRequest.draftNotes
     .throwFailure()
     .mapFiltered { it.discussionId == null }
-    .mapModelsToViewModels { GitLabMergeRequestDraftDiscussionViewModelBase(project, this, it, mergeRequest.glProject) }
+    .mapModelsToViewModels { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest.glProject) }
     .modelFlow(cs, LOG)
 
 

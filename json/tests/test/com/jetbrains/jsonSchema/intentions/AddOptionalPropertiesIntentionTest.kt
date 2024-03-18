@@ -35,7 +35,7 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
               }
             },
             "e": {
-              "type": "object"
+              "type": "object",
               "example": {
                 "f": {
                   "g": 12345

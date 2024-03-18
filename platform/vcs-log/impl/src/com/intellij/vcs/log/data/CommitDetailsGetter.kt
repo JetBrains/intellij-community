@@ -33,15 +33,15 @@ class CommitDetailsGetter internal constructor(storage: VcsLogStorage,
   }
 
   @CalledInAny
-  override fun getCommitData(commitId: Int): VcsFullCommitDetails {
-    return getCommitDataIfAvailable(commitId) ?: placeholdersCache.get(commitId)!!
+  override fun getCachedDataOrPlaceholder(commitId: Int): VcsFullCommitDetails {
+    return getCachedData(commitId) ?: placeholdersCache.get(commitId)!!
   }
 
   @CalledInAny
-  override fun getCommitDataIfAvailable(commitId: Int) = cache.getIfPresent(commitId)
+  override fun getCachedData(commitId: Int) = cache.getIfPresent(commitId)
 
   @CalledInAny
-  override fun getCommitDataIfAvailable(commits: List<Int>) = Int2ObjectOpenHashMap(cache.getAllPresent(commits))
+  override fun getCachedData(commits: List<Int>) = Int2ObjectOpenHashMap(cache.getAllPresent(commits))
 
   @CalledInAny
   override fun saveInCache(commit: Int, details: VcsFullCommitDetails) = cache.put(commit, details)

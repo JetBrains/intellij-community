@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Predicate;
 
 public abstract class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
@@ -73,7 +75,8 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   private void init() {
     final Project project = getRootModel().getModule().getProject();
 
-    myCbModuleJdk = new JdkComboBox(project, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(),
+    Predicate<SdkTypeId> predicate = SimpleJavaSdkType.notSimpleJavaSdkType();
+    myCbModuleJdk = new JdkComboBox(project, myJdksModel, predicate::test,
                                     WslSdkFilter.filterSdkByWsl(project), WslSdkFilter.filterSdkSuggestionByWsl(project),
                                     null, jdk -> {
       final Sdk projectJdk = myJdksModel.getProjectSdk();

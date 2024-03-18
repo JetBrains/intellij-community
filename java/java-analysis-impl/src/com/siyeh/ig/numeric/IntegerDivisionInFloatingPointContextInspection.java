@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
+public final class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
   @NonNls
   static final Set<String> s_integralTypes = new HashSet<>(10);

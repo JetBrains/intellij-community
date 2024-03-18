@@ -17,13 +17,17 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testSeveralIfStatements() {
+    doTest();
+  }
+
   public void testNullUnsafe(){ doUnsafeNullTest(); }
 
   @NotNull IfCanBeSwitchInspection myInspection = new IfCanBeSwitchInspection();
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   @Nullable

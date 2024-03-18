@@ -51,14 +51,29 @@ public abstract class DiffElement<T> {
   @NotNull
   public abstract String getName();
 
+  /**
+   * Returns name to be used for displaying this item in UI
+   */
   @NlsSafe
   public String getPresentableName() {
     return getName();
   }
 
+  /**
+   * Returns path to be used for displaying this item in UI and logs
+   */
   @NlsSafe
   public String getPresentablePath() {
     return getPresentableName();
+  }
+
+  /**
+   * Returns the path of the element that is subjected to filtering.
+   * Filter operations will be executed based on the returned path.
+   */
+  @NlsSafe
+  public String getFilterablePath() {
+    return getPath();
   }
 
   public abstract long getSize();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.actions.DumpThreadsAction;
@@ -19,6 +19,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private long myLastInteraction;
   private boolean myShowing;
 
+  @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
     EDT.assertIsEdt();
     myComponent = component;

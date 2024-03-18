@@ -64,6 +64,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInIntentions;
+
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(ShowIntentionActionsHandler.class);
 
@@ -209,7 +211,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
             ActionContext actionContext = ActionContext.from(editor, psiFile);
             ThrowableComputable<Boolean, RuntimeException> computable =
               () -> ReadAction.nonBlocking(() -> modCommand.getPresentation(actionContext) != null)
-                .expireWhen(() -> project.isDisposed())
+                .expireWith(project)
                 .executeSynchronously();
             return ProgressManager.getInstance().runProcessWithProgressSynchronously(
               computable, LangBundle.message("command.check.availability.for", modCommand.getFamilyName()), true, project);
@@ -294,7 +296,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName,
-                                              int problemOffset) {
+                                              int fixOffset) {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
@@ -302,13 +304,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {
-        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, problemOffset);
+        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, fixOffset);
       }
       else {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
         CommandProcessor.getInstance().executeCommand(project, () ->
-          invokeIntention(action, pair.second, pair.first, problemOffset), commandName, null);
+          invokeIntention(action, pair.second, pair.first, fixOffset), commandName, null);
         checkPsiTextConsistency(hostFile);
       }
     }
@@ -318,13 +320,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static void invokeCommandAction(@NotNull PsiFile hostFile,
                                           @Nullable Editor hostEditor,
                                           @NotNull @NlsContexts.Command String commandName,
-                                          @NotNull ModCommandAction commandAction, int problemOffset) {
+                                          @NotNull ModCommandAction commandAction, int fixOffset) {
     record ContextAndCommand(@NotNull ActionContext context, @NotNull ModCommand command) { }
     ThrowableComputable<ContextAndCommand, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
           ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
           if (context == null) return null;
-          ActionContext adjusted = problemOffset >= 0 ? context.withOffset(problemOffset) : context;
+          ActionContext adjusted = fixOffset >= 0 ? context.withOffset(fixOffset) : context;
           return new ContextAndCommand(adjusted, commandAction.perform(adjusted));
         })
         .expireWhen(() -> hostFile.getProject().isDisposed())
@@ -334,7 +336,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (contextAndCommand == null) return;
     ActionContext context = contextAndCommand.context();
     Project project = context.project();
-    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
+    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage(), hostEditor, fixOffset);
     CommandProcessor.getInstance().executeCommand(project, () -> {
       ModCommandExecutor.getInstance().executeInteractively(context, contextAndCommand.command(), hostEditor);
     }, commandName, null);
@@ -371,22 +373,22 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (Registry.is("ide.check.stub.text.consistency") ||
         ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       if (hostFile.isValid()) {
-        StubTextInconsistencyException.checkStubTextConsistency(hostFile);
+        StubTextInconsistencyException.checkStubTextConsistency(hostFile, DeliberateAdditionalCheckInIntentions);
       }
     }
   }
 
-  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file, int problemOffset) {
-    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage());
+  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file, int fixOffset) {
+    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage(), editor, fixOffset);
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
     }
     SmartPsiFileRange originalOffset = null;
-    if (editor != null && problemOffset >= 0) {
+    if (editor != null && fixOffset >= 0) {
       originalOffset = SmartPointerManager.getInstance(file.getProject())
         .createSmartPsiFileRangePointer(file, TextRange.from(editor.getCaretModel().getOffset(), 0));
-      editor.getCaretModel().moveToOffset(problemOffset);
+      editor.getCaretModel().moveToOffset(fixOffset);
     }
     try {
       if (action.startInWriteAction()) {
@@ -397,7 +399,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
     }
     finally {
-      if (originalOffset != null && originalOffset.getRange() != null && editor.getCaretModel().getOffset() == problemOffset &&
+      if (originalOffset != null && originalOffset.getRange() != null && editor.getCaretModel().getOffset() == fixOffset &&
           TemplateManager.getInstance(file.getProject()).getActiveTemplate(editor) == null) {
         editor.getCaretModel().moveToOffset(originalOffset.getRange().getStartOffset());
       }

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.compareDescriptors
-import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
+import org.jetbrains.kotlin.idea.refactoring.introduce.K1ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
@@ -37,18 +37,6 @@ import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
-
-data class ExtractionOptions(
-    val inferUnitTypeForUnusedValues: Boolean = true,
-    val enableListBoxing: Boolean = false,
-    val extractAsProperty: Boolean = false,
-    val captureLocalFunctions: Boolean = false,
-    val canWrapInWith: Boolean = false
-) {
-    companion object {
-        val DEFAULT = ExtractionOptions()
-    }
-}
 
 data class ResolveResult(
     val originalRefExpr: KtSimpleNameExpression,
@@ -78,8 +66,8 @@ data class ExtractionData(
     val originalElements: List<PsiElement> = originalRange.elements
     val physicalElements = originalElements.map { it.substringContextOrThis }
 
-    val substringInfo: ExtractableSubstringInfo?
-        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo
+    val substringInfo: K1ExtractableSubstringInfo?
+        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo as? K1ExtractableSubstringInfo
 
     val insertBefore: Boolean = options.extractAsProperty
             || targetSibling.getStrictParentOfType<KtDeclaration>()?.let {

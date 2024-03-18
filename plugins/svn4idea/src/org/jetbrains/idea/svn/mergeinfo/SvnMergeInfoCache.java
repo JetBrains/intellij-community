@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.mergeinfo;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,6 +28,7 @@ import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
+@Service(Service.Level.PROJECT)
 public final class SvnMergeInfoCache {
 
   private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);

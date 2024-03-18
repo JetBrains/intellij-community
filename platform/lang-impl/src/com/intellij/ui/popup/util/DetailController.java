@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -49,20 +50,16 @@ public class DetailController {
   }
 
   @Nls
-  private String getTitle2Text(@Nls String fullText) {
-    int labelWidth = getLabel().getWidth();
+  private static String getTitle2Text(@Nullable @Nls String fullText, @NotNull JLabel label) {
+    int labelWidth = label.getWidth();
     if (fullText == null || fullText.length() == 0) return " ";
-    while (getLabel().getFontMetrics(getLabel().getFont()).stringWidth(fullText) > labelWidth) {
+    while (label.getFontMetrics(label.getFont()).stringWidth(fullText) > labelWidth) {
       int sep = fullText.indexOf(File.separatorChar, 4);
       if (sep < 0) return fullText;
       fullText = "..." + fullText.substring(sep);
     }
 
     return fullText;
-  }
-
-  private JLabel getLabel() {
-    return myMasterController.getPathLabel();
   }
 
   public ItemWrapper getSelectedItem() {
@@ -72,12 +69,17 @@ public class DetailController {
   public void doUpdateDetailView(boolean now) {
     final Object[] values = myMasterController.getSelectedItems();
     ItemWrapper wrapper = null;
+    JLabel label = myMasterController.getPathLabel();
     if (values != null && values.length == 1) {
       wrapper = (ItemWrapper)values[0];
-      getLabel().setText(getTitle2Text(wrapper.footerText()));
+      if (label != null) {
+        label.setText(getTitle2Text(wrapper.footerText(), label));
+      }
     }
     else {
-      getLabel().setText(" ");
+      if (label != null) {
+        label.setText(" ");
+      }
     }
     mySelectedItem = wrapper;
     myUpdateAlarm.cancelAllRequests();

@@ -4424,7 +4424,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-36444
-  public void testTextIOInferedWithContextManagerDecorator() {
+  public void testTextIOInferredWithContextManagerDecorator() {
     doTest("TextIO",
            """
              from contextlib import contextmanager
@@ -4438,6 +4438,71 @@ public class PyTypingTest extends PyTestCase {
              cm = open_file(__file__)
              with cm as file:
                  expr = file
+             """);
+  }
+
+  // PY-70484
+  public void testUnboundParamSpecFromUnresolvedArgumentReplacedWithArgsKwargs() {
+    doTest("(args: Any, kwargs: Any) -> str",
+           """
+             from typing import Callable, Any, ParamSpec
+                          
+             P = ParamSpec("P")
+                          
+             def deco(fn: Callable[P, Any]) -> Callable[P, str]:
+                 return ...
+                          
+             expr = deco(unresolved)
+             """);
+  }
+
+  // PY-70484
+  public void testUnboundParamSpecThatCannotBeBoundThroughParametersLeftIntact() {
+    doTest("((ParamSpec(\"P\")) -> Any) -> (ParamSpec(\"P\")) -> int",
+           """
+             from typing import Callable, Any, ParamSpec
+                          
+             P = ParamSpec("P")
+                          
+             def deco() -> Callable[[Callable[P, Any]], Callable[P, int]]
+                 return ...
+                          
+             expr = deco()
+             """);
+  }
+
+  public void testMixingUpConcatenateAndTypeVarTuple() {
+    doTest("(int, int, x: int, y: str) -> int",
+           """
+             from typing import TypeVarTuple, ParamSpec, Callable, Any, Concatenate, reveal_type
+                          
+             Ts = TypeVarTuple('Ts')
+             P = ParamSpec('P')
+                          
+                          
+             def f(prefix: tuple[*Ts], fn: Callable[P, Any]) -> Callable[Concatenate[*Ts, P], int]:
+                 ...
+                          
+             def g(x: int, y: str) -> bool:
+                 ...
+                          
+             expr = f((1, 2), g)
+             """);
+  }
+
+  public void testParamSpecInConcatenateMappedToAnotherParamSpec() {
+    doTest("(int, ParamSpec(\"P1\")) -> Any",
+           """
+             from typing import Callable, Any, ParamSpec, Concatenate
+                                
+             P1 = ParamSpec('P1')
+             P2 = ParamSpec('P2')
+                          
+             def f(fn: Callable[P1, Any]):
+                 expr = g(fn)
+                          
+             def g(fn: Callable[P2, Any]) -> Callable[Concatenate[int, P2], Any]:
+                ...
              """);
   }
 

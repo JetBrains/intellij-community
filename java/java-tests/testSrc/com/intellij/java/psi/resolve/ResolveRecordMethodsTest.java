@@ -14,12 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ResolveRecordMethodsTest extends LightResolveTestCase {
-  
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
-  }
 
   private PsiElement resolve() {
     PsiReference ref = findReferenceAtCaret("method/records/" + getTestName(false) + ".java");

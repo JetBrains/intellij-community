@@ -1,0 +1,3 @@
+data class MyDependency(val classifier: String) {
+    val abc: String get() = ""
+}

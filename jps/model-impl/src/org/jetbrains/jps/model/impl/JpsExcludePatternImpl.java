@@ -45,8 +45,4 @@ public final class JpsExcludePatternImpl extends JpsElementBase<JpsExcludePatter
   public JpsExcludePatternImpl createCopy() {
     return new JpsExcludePatternImpl(myBaseDirUrl, myPattern);
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsExcludePatternImpl modified) {
-  }
 }

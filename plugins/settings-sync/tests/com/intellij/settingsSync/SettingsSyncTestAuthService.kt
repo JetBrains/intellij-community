@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.settingsSync.auth.DummyJBAccountInfoService
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
 
@@ -17,12 +18,12 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     else null
   }
 
-  override fun getAccountInfoService(): JBAccountInfoService? {
-    return null
+  override fun getAccountInfoService(): JBAccountInfoService {
+    return DummyJBAccountInfoService
   }
 
   override val idToken: String?
-    get() = getAccountInfoService()?.idToken
+    get() = getAccountInfoService().idToken
 
   override fun login() {
   }

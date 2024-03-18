@@ -31,7 +31,7 @@ import java.io.IOException
  */
 internal class EditExternallyAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val imageFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     var executablePath = PropertiesComponent.getInstance().getValue(EditExternalImageEditorAction.EXT_PATH_KEY, "")
     if (!StringUtil.isEmpty(executablePath)) {
       EnvironmentUtil.getEnvironmentMap().forEach { (varName, varValue) ->

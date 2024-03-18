@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
-import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
@@ -67,6 +67,17 @@ object GithubApiContentHelper {
   @Throws(GithubJsonException::class)
   fun <T> readJsonList(reader: Reader, parameterClass: Class<T>): List<T> {
     return readJson(reader, jackson.typeFactory.constructCollectionType(List::class.java, parameterClass))
+  }
+
+  @JvmStatic
+  @Throws(GithubJsonException::class)
+  fun <T, U> readJsonMap(reader: Reader, gqlNaming: Boolean = false): Map<T, U> {
+    try {
+      return getObjectMapper(gqlNaming).readValue(reader, object : TypeReference<Map<T, U>>() {})
+    }
+    catch (e: JsonProcessingException) {
+      throw GithubJsonException("Can't parse GitHub response", e)
+    }
   }
 
   @Throws(GithubJsonException::class)

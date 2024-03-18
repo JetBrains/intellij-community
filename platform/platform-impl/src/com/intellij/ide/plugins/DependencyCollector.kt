@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -26,7 +27,7 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
   var implementation: String = ""
 
   companion object {
-    val EP_NAME: ExtensionPointName<DependencyCollectorBean> = ExtensionPointName.create("com.intellij.dependencyCollector")
+    val EP_NAME: ExtensionPointName<DependencyCollectorBean> = ExtensionPointName("com.intellij.dependencyCollector")
   }
 
   override fun getImplementationClassName(): String = implementation
@@ -108,14 +109,13 @@ internal val DependencySupportBean.id: @NlsSafe String
 internal val DependencySupportBean.displayNameOrId: @NlsSafe String
   get() = displayName.ifEmpty { id }
 
-internal class DependencyFeatureCollector : ProjectActivity {
-
+private class DependencyFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
-    PluginFeatureService.instance.collectFeatureMapping(
-      DEPENDENCY_SUPPORT_FEATURE,
-      DependencySupportBean.EP_NAME,
-      { it.id },
-      { it.displayNameOrId },
+    serviceAsync<PluginFeatureService>().collectFeatureMapping(
+      featureType = DEPENDENCY_SUPPORT_FEATURE,
+      ep = DependencySupportBean.EP_NAME,
+      idMapping = { it.id },
+      displayNameMapping = { it.displayNameOrId },
     )
   }
 }

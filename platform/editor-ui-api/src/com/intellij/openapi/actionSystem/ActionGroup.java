@@ -38,7 +38,7 @@ public abstract class ActionGroup extends AnAction {
    * popup set to {@code false}.
    */
   public ActionGroup() {
-    // avoid eagerly creating template presentation
+    // avoid template presentation creation
   }
 
   /**
@@ -55,7 +55,7 @@ public abstract class ActionGroup extends AnAction {
 
   public ActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName);
-    // avoid creating template presentation right on init
+    // avoid template presentation creation
     if (popup) {
       getTemplatePresentation().setPopupGroup(popup);
     }
@@ -87,33 +87,20 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * @return {@code true} if {@link #actionPerformed(AnActionEvent)} should be called.
-   * @deprecated Use {@link Presentation#isPerformGroup()} instead.
+   * A shortcut for {@code getTemplatePresentation().isPopupGroup()}
    */
-  @Deprecated(forRemoval = true)
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return false;
-  }
-
-  /**
-   * @see Presentation#isPopupGroup()}
-   */
-  @ApiStatus.NonExtendable
-  public boolean isPopup() {
+  public final boolean isPopup() {
     return getTemplatePresentation().isPopupGroup();
   }
 
   /**
-   * Sets the default value of the popup flag for the group.
+   * A shortcut for {@code getTemplatePresentation().setPopupGroup(popup)}
+   *
    * A popup group is shown as a popup in menus.
    * <p>
    * In the {@link AnAction#update(AnActionEvent)} method {@code event.getPresentation().setPopupGroup(value)}
    * shall be used instead of this method to control the popup flag for the particular event and place.
    * <p>
-   * If the {@link #isPopup()} method is overridden, this method could be useless.
-   *
-   * @param popup If {@code true} the group will be shown as a popup in menus.
-   * @see Presentation#setPopupGroup(boolean)
    */
   public final void setPopup(boolean popup) {
     getTemplatePresentation().setPopupGroup(popup);
@@ -165,6 +152,7 @@ public abstract class ActionGroup extends AnAction {
     return mySecondaryActions == null || !mySecondaryActions.contains(action);
   }
 
+  @ApiStatus.Internal
   protected final void replace(@NotNull AnAction originalAction, @NotNull AnAction newAction) {
     if (mySecondaryActions != null) {
       if (mySecondaryActions.contains(originalAction)) {
@@ -172,19 +160,5 @@ public abstract class ActionGroup extends AnAction {
         mySecondaryActions.add(newAction);
       }
     }
-  }
-
-  /** @deprecated Use {@link Presentation#setHideGroupIfEmpty(boolean)} instead. */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.NonExtendable
-  public boolean hideIfNoVisibleChildren() {
-    return getTemplatePresentation().isHideGroupIfEmpty();
-  }
-
-  /** @deprecated Use {@link Presentation#setDisableGroupIfEmpty(boolean)} instead. */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.NonExtendable
-  public boolean disableIfNoVisibleChildren() {
-    return getTemplatePresentation().isDisableGroupIfEmpty();
   }
 }

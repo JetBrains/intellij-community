@@ -13,6 +13,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,24 +32,35 @@ public class GitCommandResult {
   private final boolean myAuthenticationFailed;
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
+  protected final @Nullable @Nls String myRootName;
 
   public GitCommandResult(boolean startFailed,
                           int exitCode,
                           @NotNull List<String> errorOutput,
                           @NotNull List<String> output) {
-    this(startFailed, exitCode, false, errorOutput, output);
+    this(startFailed, exitCode, errorOutput, output, null);
+  }
+
+  public GitCommandResult(boolean startFailed,
+                          int exitCode,
+                          @NotNull List<String> errorOutput,
+                          @NotNull List<String> output,
+                          @Nullable @Nls String rootName) {
+    this(startFailed, exitCode, false, errorOutput, output, rootName);
   }
 
   private GitCommandResult(boolean startFailed,
                            int exitCode,
                            boolean authenticationFailed,
                            @NotNull List<String> errorOutput,
-                           @NotNull List<String> output) {
+                           @NotNull List<String> output,
+                           @Nullable @Nls String rootName) {
     myExitCode = exitCode;
     myStartFailed = startFailed;
     myAuthenticationFailed = authenticationFailed;
     myErrorOutput = errorOutput;
     myOutput = output;
+    myRootName = rootName;
   }
 
   /**
@@ -59,7 +71,8 @@ public class GitCommandResult {
                                 result.myExitCode,
                                 authenticationFailed,
                                 result.myErrorOutput,
-                                result.myOutput);
+                                result.myOutput,
+                                result.myRootName);
   }
 
   /**
@@ -79,6 +92,12 @@ public class GitCommandResult {
     return !myStartFailed && (Arrays.stream(ignoredErrorCodes).anyMatch(i -> i == myExitCode) || myExitCode == 0);
   }
 
+  /**
+   * NOTE: The returned lines will have line separators trimmed.
+   * This means that CRLF, LF and CR lines will not be distinguishable and "\r\r" will be reported as 3 empty lines.
+   *
+   * @see BufferingTextSplitter
+   */
   public @NotNull List<String> getOutput() {
     return Collections.unmodifiableList(myOutput);
   }
@@ -116,6 +135,12 @@ public class GitCommandResult {
     return Collections.singletonList(GitBundle.message("git.error.exit", myExitCode));
   }
 
+  /**
+   * NOTE: The returned string will have its line separators converted to "\n".
+   * This means that "\r\r" output from git will be reported as "\n\n" instead.
+   *
+   * @see BufferingTextSplitter
+   */
   public @NotNull @NlsSafe String getOutputAsJoinedString() {
     return StringUtil.join(myOutput, "\n");
   }
@@ -139,15 +164,20 @@ public class GitCommandResult {
    * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
    */
   public void throwOnError(int... ignoredErrorCodes) throws VcsException {
-    if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
+    if (success(ignoredErrorCodes)) return;
+    String errorMessage = getErrorOutputAsJoinedString();
+    if (myRootName != null) {
+      errorMessage = "[" + myRootName + "] " + errorMessage;
+    }
+    throw new VcsException(errorMessage);
   }
 
   static @NotNull GitCommandResult startError(@NotNull @Nls String error) {
-    return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList());
+    return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList(), null);
   }
 
   public static @NotNull GitCommandResult error(@NotNull @Nls String error) {
-    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
+    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList(), null);
   }
 
   /**

@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public enum BooleanExpressionKind {
     USELESS, USELESS_WITH_SIDE_EFFECTS, UNKNOWN
   }

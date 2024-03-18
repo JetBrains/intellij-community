@@ -22,7 +22,7 @@ interface ExtensionClassShouldNotBePublicProvider : JvmProvider {
   fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix>
 }
 
-private class ExtensionClassShouldNotBePublicProviderForJVM : ExtensionClassShouldNotBePublicProvider {
+internal class ExtensionClassShouldNotBePublicProviderForJVM : ExtensionClassShouldNotBePublicProvider {
   override fun isPublic(aClass: PsiClass): Boolean {
     return aClass.hasModifier(JvmModifier.PUBLIC)
   }

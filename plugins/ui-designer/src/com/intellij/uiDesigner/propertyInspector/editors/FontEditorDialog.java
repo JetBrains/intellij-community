@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
@@ -153,7 +153,7 @@ public class FontEditorDialog extends DialogWrapper {
     return myValue;
   }
 
-  public void setValue(@NotNull final FontDescriptor value) {
+  public void setValue(final @NotNull FontDescriptor value) {
     myValue = value;
     if (value.getSwingFont() != null) {
       myTabbedPane.setSelectedIndex(1);

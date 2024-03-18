@@ -12,10 +12,16 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   private final int myCommitCount;
   private final boolean myRefresh;
   private final @NotNull Collection<VcsRef> myPreviousRefs;
+  private final boolean myIsRefreshRefs;
 
   public RequirementsImpl(int count, boolean refresh, @NotNull Collection<VcsRef> previousRefs) {
+    this(count, refresh, previousRefs, true);
+  }
+
+  public RequirementsImpl(int count, boolean refresh, @NotNull Collection<VcsRef> previousRefs, boolean isRefreshRefs) {
     myCommitCount = count;
     myRefresh = refresh;
+    myIsRefreshRefs = isRefreshRefs;
     myPreviousRefs = previousRefs;
   }
 
@@ -27,6 +33,11 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   @Override
   public boolean isRefresh() {
     return myRefresh;
+  }
+
+  @Override
+  public boolean isRefreshRefs() {
+    return myIsRefreshRefs;
   }
 
   @Override

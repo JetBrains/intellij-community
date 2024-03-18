@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldBreakpoint
@@ -29,7 +29,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -49,7 +49,6 @@ import javax.swing.*;
 
 public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);
-  private boolean myIsStatic;
 
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
@@ -60,10 +59,6 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
   private FieldBreakpoint(Project project, @NotNull String fieldName, XBreakpoint breakpoint) {
     super(project, breakpoint);
     setFieldName(fieldName);
-  }
-
-  public boolean isStatic() {
-    return myIsStatic;
   }
 
   public @NlsSafe String getFieldName() {
@@ -110,6 +105,7 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
     return PositionUtil.getPsiElementAt(myProject, PsiField.class, sourcePosition);
   }
 
+  @RequiresBackgroundThread
   @Override
   public void reload() {
     super.reload();
@@ -120,10 +116,9 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
       if (psiClass != null) {
         getProperties().myClassName = psiClass.getQualifiedName();
       }
-      myIsStatic = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.STATIC));
-    }
-    if (myIsStatic) {
-      setInstanceFiltersEnabled(false);
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        setInstanceFiltersEnabled(false);
+      }
     }
   }
 

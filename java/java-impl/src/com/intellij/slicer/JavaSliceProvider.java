@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsageTransformer {
+public final class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsageTransformer {
   public static JavaSliceProvider getInstance() {
     return (JavaSliceProvider)LanguageSlicing.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
   }

@@ -164,6 +164,7 @@ public class MavenImportingSettingsForm {
   public void setData(MavenImportingSettings data, @Nullable Project project) {
     mySearchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
 
+    myWorkspaceImportCheckBox.setVisible(data.isNonWorkspaceImportAvailable());
     myWorkspaceImportCheckBox.setSelected(data.isWorkspaceImportEnabled());
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));

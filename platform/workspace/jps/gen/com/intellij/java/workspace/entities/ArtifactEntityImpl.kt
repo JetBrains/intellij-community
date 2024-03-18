@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -28,6 +27,8 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
@@ -46,7 +47,7 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
     internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
                                                                                                   ArtifactOutputPackagingElementEntity::class.java,
                                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE,
-                                                                                                  false)
+                                                                                                  true)
 
     private val connections = listOf<ConnectionId>(
       ROOTELEMENT_CONNECTION_ID,
@@ -57,14 +58,27 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val artifactType: String
-    get() = dataSource.artifactType
+    get() {
+      readField("artifactType")
+      return dataSource.artifactType
+    }
 
-  override val includeInProjectBuild: Boolean get() = dataSource.includeInProjectBuild
+  override val includeInProjectBuild: Boolean
+    get() {
+      readField("includeInProjectBuild")
+      return dataSource.includeInProjectBuild
+    }
   override val outputUrl: VirtualFileUrl?
-    get() = dataSource.outputUrl
+    get() {
+      readField("outputUrl")
+      return dataSource.outputUrl
+    }
 
   override val rootElement: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
@@ -76,7 +90,10 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
     get() = snapshot.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -334,11 +351,13 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Artifact
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ArtifactEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ArtifactEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = ArtifactEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
   }

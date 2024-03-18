@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
@@ -89,7 +89,7 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
         val expectedContent = StringUtil.convertLineSeparators(expectedPath.readText())
         val actualContent = StringUtil.convertLineSeparators(LoadTextUtil.loadText(file).toString())
         if (actualContent != expectedContent) {
-            throw FileComparisonFailure("build.gradle doesn't match", expectedContent, actualContent, expectedPath.path)
+            throw FileComparisonFailedError("build.gradle doesn't match", expectedContent, actualContent, expectedPath.path)
         }
     }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -14,6 +13,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -24,10 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 public final class JavaSuppressionUtil {
@@ -163,7 +160,7 @@ public final class JavaSuppressionUtil {
 
   @NotNull
   private static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(owner)) return Collections.emptyList();
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, owner)) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
     return getInspectionIdsSuppressedInAnnotation(modifierList);
   }
@@ -237,17 +234,18 @@ public final class JavaSuppressionUtil {
 
   public static void addSuppressAnnotation(@NotNull Project project,
                                            PsiElement container,
-                                           PsiModifierListOwner modifierOwner,
+                                           @NotNull PsiModifierListOwner modifierOwner,
                                            @NotNull String id) throws IncorrectOperationException {
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierOwner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     PsiAnnotation newAnnotation = createNewAnnotation(project, container, annotation, id);
     if (newAnnotation != null) {
-      if (annotation != null && annotation.isPhysical()) {
-        WriteCommandAction.runWriteCommandAction(project, null, null, () -> annotation.replace(newAnnotation), annotation.getContainingFile());
+      if (annotation != null) {
+        annotation.replace(newAnnotation);
       }
       else {
         PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
-        new AddAnnotationPsiFix(SUPPRESS_INSPECTIONS_ANNOTATION_NAME, modifierOwner, attributes).applyFix();
+        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(SUPPRESS_INSPECTIONS_ANNOTATION_NAME, attributes,
+                                                          Objects.requireNonNull(modifierOwner.getModifierList()));
       }
     }
   }
@@ -295,7 +293,7 @@ public final class JavaSuppressionUtil {
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
     if (version == null) return false;
     boolean is_1_5 = version.isAtLeast(JavaSdkVersion.JDK_1_5);
-    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
+    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file);
   }
 
   @Nullable

@@ -5,27 +5,29 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -40,7 +42,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 @State(name = "EntryPointsManager")
-public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element> {
+public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element>,
+                                                                                   OptionContainer {
   @ApiStatus.Internal
   public static final ExtensionPointName<EntryPoint> DEAD_CODE_EP_NAME = new ExtensionPointName<>("com.intellij.deadCode");
 
@@ -622,21 +625,31 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
-  public class AddImplicitlyWriteAnnotation implements IntentionAction, LocalQuickFix {
-    @NotNull
-    private final String myQualifiedName;
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return OptionContainer.super.getOptionController()
+      .withRootPane(() -> OptPane.pane(
+        OptPane.stringList("myWriteAnnotations", JavaBundle.message("separator.mark.field.as.implicitly.written.if.annotated.by"),
+                           new JavaClassValidator().annotationsOnly()),
+        OptPane.stringList("ADDITIONAL_ANNOTATIONS", JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"),
+                           new JavaClassValidator().annotationsOnly()))
+      );
+  }
 
-    public AddImplicitlyWriteAnnotation(@NotNull String qualifiedName) {myQualifiedName = qualifiedName;}
+  private static class AddAnnotation implements ModCommandAction {
+    private final @NotNull String myQualifiedName;
+    private final @NotNull String myBindId;
+    private final @NotNull @IntentionName String myMessage;
 
-    @Override
-    @NotNull
-    public String getText() {
-      return QuickFixBundle.message("fix.add.write.annotation.text",  myQualifiedName);
+    private AddAnnotation(@NotNull String qualifiedName, @NotNull String bindId, @NotNull @IntentionName String message) { 
+      myQualifiedName = qualifiedName; 
+      myBindId = bindId;
+      myMessage = message;
     }
 
     @Override
-    public @NotNull String getName() {
-      return getText();
+    public @NotNull Presentation getPresentation(@NotNull ActionContext context) {
+      return Presentation.of(myMessage);
     }
 
     @Override
@@ -646,59 +659,47 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      performAction(descriptor.getStartElement().getContainingFile());
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      return new IntentionPreviewInfo.Html(QuickFixBundle.message("fix.add.write.annotation.description", myQualifiedName));
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      return new IntentionPreviewInfo.Html(QuickFixBundle.message("fix.add.write.annotation.description", myQualifiedName));
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project1, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      performAction(file);
-    }
-
-    private void performAction(@NotNull PsiFile file) {
-      Project project = file.getProject();
-      VirtualFile vFile = file.getVirtualFile();
-      doAddAnnotation(project);
-      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
-        @Override
-        public void undo() {
-          if (myWriteAnnotations.removeAll(List.of(myQualifiedName))) {
-            ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-          }
-        }
-
-        @Override
-        public void redo() {
-          doAddAnnotation(project);
-        }
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      return ModCommand.updateOptionList(context.file(), myBindId, list -> {
+        list.add(myQualifiedName);
+        list.sort(null);
       });
     }
+  }
 
-    private void doAddAnnotation(@NotNull Project project) {
-      if (!myWriteAnnotations.contains(myQualifiedName)) {
-        myWriteAnnotations.add(myQualifiedName);
-        ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-      }
+  /**
+   * @param qualifiedName annotation qualified name
+   * @return an action that adds the specified annotation qualified name to the list of implicitly written fields annotations
+   */
+  public static @NotNull ModCommandAction createAddImplicitWriteAnnotation(@NotNull String qualifiedName) {
+    return new AddAnnotation(qualifiedName, "EntryPointsManager.myWriteAnnotations",
+                             QuickFixBundle.message("fix.add.write.annotation.text", qualifiedName));
+  }
+
+  /**
+   * @param qualifiedName annotation qualified name
+   * @return an action that adds the specified annotation qualified name to the list of entry point annotations
+   */
+  public static @NotNull ModCommandAction createAddEntryPointAnnotation(@NotNull String qualifiedName) {
+    return new AddAnnotation(qualifiedName, "EntryPointsManager.ADDITIONAL_ANNOTATIONS",
+                             QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName));
+  }
+
+  /**
+   * Provides bindId = "EntryPointsManager.myWriteAnnotations" and "EntryPointsManager.ADDITIONAL_ANNOTATIONS"
+   * lists to control entry points
+   */
+  public static final class Provider implements OptionControllerProvider {
+    @Override
+    public @NotNull OptionController forContext(@NotNull PsiElement context) {
+      Project project = context.getProject();
+      return getInstance(project).getOptionController()
+        .onValueSet((bindId, value) -> ProjectInspectionProfileManager.getInstance(project).fireProfileChanged());
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
+    public @NotNull String name() {
+      return "EntryPointsManager";
     }
   }
 }

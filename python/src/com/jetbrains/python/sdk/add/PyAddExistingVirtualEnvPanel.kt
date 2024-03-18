@@ -25,7 +25,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.awt.BorderLayout
 import javax.swing.Icon
 

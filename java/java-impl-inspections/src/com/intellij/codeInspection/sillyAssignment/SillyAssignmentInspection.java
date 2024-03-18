@@ -19,9 +19,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  protected LocalQuickFix createRemoveAssignmentFix(PsiExpression expression) {
+  private static LocalQuickFix createRemoveAssignmentFix(PsiExpression expression) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiVariable variable && variable.hasModifierProperty(PsiModifier.FINAL)) {
       return null;
@@ -80,7 +80,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     };
   }
 
-  private void checkSillyAssignment(@NotNull PsiAssignmentExpression assignment, @NotNull ProblemsHolder holder) {
+  private static void checkSillyAssignment(@NotNull PsiAssignmentExpression assignment, @NotNull ProblemsHolder holder) {
     if (assignment.getOperationTokenType() != JavaTokenType.EQ) return;
     PsiExpression leftExpression = assignment.getLExpression();
     PsiExpression rightExpression = assignment.getRExpression();

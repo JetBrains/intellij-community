@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -79,7 +81,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     .pageSize(PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION)
     .checkIfFileCompatibleEagerly(true)
-    .cleanFileIfIncompatible();
+    .cleanIfFileIncompatible();
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
     return VALUES_LOG_FACTORY.wrapStorageSafely(
@@ -193,6 +195,27 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   @Override
   public void close() throws IOException {
+    try {
+      //We must ensure scanning is finished _before_ we close valuesLog -- because we expect (e.g. in .closeAndUnsafelyUnmap()
+      // and/or .closeAndClean()) that closed enumerator does not use the file/mapped buffers anymore.
+
+      //BEWARE: Don't call valueHashToIdFuture.cancel() here!
+      //        Future.cancel() doesn't _require_ to actually cancel the running task (even with `interruptIfRunning) -- but
+      //        .cancel() makes .join()/.get() return immediately, (because 'result'=cancellation is already known).
+      //        By default .join() waits until task is finished -- successfully or exceptionally, doesn't matter, either
+      //        way if .join() terminates => task is not running anymore. But .cancel() breaks than invariant: since result
+      //        of the Future is already known (cancellation), .join()/.get() don't need to wait for task to actually finish
+      //        In this scenario it leads to SIGSEGV (Access Violation) if un-mmap follows close() -- while valueHash building
+      //        async task is still running.
+      valueHashToIdFuture.join();
+    }
+    catch (CancellationException e) {
+      //just ignore
+    }
+    catch (Throwable e) {
+      Logger.getInstance(DurableStringEnumerator.class).info(".valueHashToId computation failed", e);
+    }
+
     valuesLog.close();
   }
 

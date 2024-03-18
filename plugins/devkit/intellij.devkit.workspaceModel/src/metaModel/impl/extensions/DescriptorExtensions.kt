@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl.extensions
 
 import com.intellij.devkit.workspaceModel.metaModel.impl.*
-import com.intellij.devkit.workspaceModel.metaModel.impl.StandardNames
-import com.intellij.devkit.workspaceModel.metaModel.impl.standardTypes
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
@@ -34,7 +32,7 @@ private val entitiesSuperclassFqn = StandardNames.WORKSPACE_ENTITY
 
 internal val blobClasses: List<FqName> = arrayListOf(
   StandardNames.VIRTUAL_FILE_URL,
-  StandardNames.ENTITY_REFERENCE
+  StandardNames.ENTITY_POINTER
 )
 
 

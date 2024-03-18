@@ -2,7 +2,8 @@ UFile (package = ) [public final class PropertyInitializerWithoutSetterKt {...]
     UClass (name = PropertyInitializerWithoutSetterKt) [public final class PropertyInitializerWithoutSetterKt {...}]
         UField (name = withoutSetter) [@org.jetbrains.annotations.NotNull private static var withoutSetter: java.lang.String = "/sdcard"]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
+            UPolyadicExpression (operator = +) ["/sdcard"] : PsiType:String
+                ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
         UMethod (name = getWithoutSetter) [public static final fun getWithoutSetter() : java.lang.String {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return field]

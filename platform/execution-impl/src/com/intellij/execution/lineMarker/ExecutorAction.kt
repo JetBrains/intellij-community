@@ -100,12 +100,6 @@ class ExecutorAction private constructor(val origin: AnAction,
 
   override fun isDumbAware() = origin.isDumbAware
 
-  override fun isPopup() = origin !is ActionGroup || origin.isPopup
-
-  override fun hideIfNoVisibleChildren() = origin is ActionGroup && origin.hideIfNoVisibleChildren()
-
-  override fun disableIfNoVisibleChildren() = origin is ActionGroup && origin.disableIfNoVisibleChildren()
-
   override fun equals(other: Any?): Boolean {
     if (this === other) {
       return true

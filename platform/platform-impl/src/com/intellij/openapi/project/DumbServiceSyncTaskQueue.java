@@ -9,13 +9,14 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.util.Disposer;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DumbServiceSyncTaskQueue {
   private final Project myProject;
-  private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
+  private final MutableStateFlow<Boolean> myIsRunning = StateFlowKt.MutableStateFlow(false);
   private final DumbServiceMergingTaskQueue myTaskQueue;
 
   public DumbServiceSyncTaskQueue(@NotNull Project project, @NotNull DumbServiceMergingTaskQueue queue) {
@@ -58,7 +59,7 @@ public final class DumbServiceSyncTaskQueue {
         }
       }
       finally {
-        myIsRunning.set(false);
+        myIsRunning.setValue(false);
       }
     };
 
@@ -69,6 +70,14 @@ public final class DumbServiceSyncTaskQueue {
     else {
       ProgressManager.getInstance().runProcess(runnable, new EmptyProgressIndicator());
     }
+  }
+
+  public void cancelAllTasks() {
+    myTaskQueue.cancelAllTasks();
+  }
+
+  public void disposePendingTasks() {
+    myTaskQueue.disposePendingTasks();
   }
 
   private static void doRunTaskSynchronously(@NotNull QueuedDumbModeTask task) {
@@ -91,13 +100,13 @@ public final class DumbServiceSyncTaskQueue {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
       @Override
       public void afterWriteActionFinished(@NotNull Object action) {
-        try {
-          processQueue();
-        }
-        finally {
-          Disposer.dispose(listenerDisposable);
-        }
+        Disposer.dispose(listenerDisposable);
+        processQueue();
       }
     }, listenerDisposable);
+  }
+
+  public StateFlow<Boolean> isRunning() {
+    return myIsRunning;
   }
 }

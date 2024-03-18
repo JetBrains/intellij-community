@@ -10,8 +10,8 @@ class B {
 
 // MULTIRESOLVE
 
-// REF: (for T in dependency).getValue(R, KProperty<*>)
-// REF: (for T in dependency).setValue(R, KProperty<*>, Int)
+// REF: (dependency).T.getValue(R, KProperty<*>)
+// REF: (dependency).T.setValue(R, KProperty<*>, Int)
 
-// CLS_REF: (for T in dependency).getValue(R, kotlin.reflect.KProperty<*>)
-// CLS_REF: (for T in dependency).setValue(R, kotlin.reflect.KProperty<*>, kotlin.Int)
+// CLS_REF: (dependency).T.getValue(R, KProperty<*>)
+// CLS_REF: (dependency).T.setValue(R, KProperty<*>, Int)

@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiExpressionEvaluator implements ConstantExpressionEvaluator {
+public final class PsiExpressionEvaluator implements ConstantExpressionEvaluator {
 
   @Override
   public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {

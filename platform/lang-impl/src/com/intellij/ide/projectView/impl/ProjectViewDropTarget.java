@@ -12,9 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModeBlockedFunctionality;
-import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -119,12 +116,25 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return wrapper == null ? null : wrapper.getTreePaths();
   }
 
-  private static void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
-    target = getValidTarget(sources, target, handler);
-    if (target != null) {
-      sources = removeRedundant(sources, target, handler);
-      if (sources.length != 0) handler.doDrop(sources, target);
-    }
+  private void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
+    record ValidDropContext(TreePath @Nullable [] sources, @Nullable TreePath target) { }
+    ReadAction.nonBlocking(() -> {
+        TreePath validTarget = getValidTarget(sources, target, handler);
+        TreePath[] validSources = null;
+        if (validTarget != null) {
+          validSources = removeRedundant(sources, validTarget, handler);
+        }
+        return new ValidDropContext(validSources, validTarget);
+      })
+      .expireWith(myProject)
+      .finishOnUiThread(
+        ModalityState.defaultModalityState(),
+        context -> {
+          if (context.sources != null && context.sources.length != 0 && context.target != null) {
+            handler.doDrop(context.sources, context.target);
+          }
+        })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
@@ -378,13 +388,6 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       final PsiElement targetElement = context.targetElement();
       final PsiElement @Nullable [] sources = getPsiElements(context);
       if (targetElement == null || sources == null) return;
-
-      if (DumbService.isDumb(myProject)) {
-        DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.ProjectView);
-        Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.copy.refactoring.available.while.indexing.in.progress"),
-                                   LangBundle.message("dialog.title.indexing"), null);
-        return;
-      }
 
       final PsiDirectory psiDirectory;
       if (targetElement instanceof PsiDirectoryContainer directoryContainer) {

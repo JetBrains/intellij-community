@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@Service
 public final class FileInfoManager {
   public static FileInfoManager getFileInfoManager() {
     return ApplicationManager.getApplication().getService(FileInfoManager.class);

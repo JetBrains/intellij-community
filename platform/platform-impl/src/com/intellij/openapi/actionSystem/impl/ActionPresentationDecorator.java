@@ -4,7 +4,9 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,20 +17,24 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ActionPresentationDecorator {
   private static final Logger LOG = Logger.getInstance(ActionPresentationDecorator.class);
 
-  private static ActionPresentationDecorator OUR_INSTANCE;
+  private static volatile @Nullable ActionPresentationDecorator ourInstance;
 
   public abstract @NotNull @ActionText String decorateText(@NotNull AnAction action, @NotNull @ActionText String text);
 
-  public static synchronized void setInstance(@Nullable ActionPresentationDecorator instance) {
-    LOG.info("Action presentation decorator is set to " + instance);
-    OUR_INSTANCE = instance;
+  @RequiresEdt
+  public static void setInstance(@Nullable ActionPresentationDecorator decorator) {
+    LOG.info("ActionPresentationDecorator is set to " + decorator);
+    ourInstance = decorator;
   }
 
-  public static synchronized @Nullable ActionPresentationDecorator getInstance() {
-    return OUR_INSTANCE;
+  public static @Nullable ActionPresentationDecorator getInstance() {
+    return ourInstance;
   }
 
-  public static synchronized @ActionText String decorateTextIfNeeded(AnAction action, @ActionText String text) {
-    return OUR_INSTANCE == null || action == null || text == null ? text : OUR_INSTANCE.decorateText(action, text);
+  @RequiresEdt
+  @Contract("_,!null->!null;_,null->null")
+  public static @ActionText String decorateTextIfNeeded(@NotNull AnAction action, @ActionText String text) {
+    ActionPresentationDecorator instance = ourInstance;
+    return instance == null || text == null ? text : instance.decorateText(action, text);
   }
 }

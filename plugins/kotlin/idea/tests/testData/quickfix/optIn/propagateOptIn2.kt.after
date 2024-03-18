@@ -1,4 +1,5 @@
 // "Propagate 'UnstableApi' opt-in requirement to containing class 'Derived'" "true"
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class UnstableApi

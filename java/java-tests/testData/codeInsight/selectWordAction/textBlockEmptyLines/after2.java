@@ -1,7 +1,7 @@
 class Test {
-  String textBlock = <selection>"""
-
+  String textBlock = """
+<selection>
 
                      fo<caret>o
-                     """</selection>;
+</selection>                     """;
 }

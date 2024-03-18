@@ -23,7 +23,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
+public final class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
 
   @Override
   @NotNull

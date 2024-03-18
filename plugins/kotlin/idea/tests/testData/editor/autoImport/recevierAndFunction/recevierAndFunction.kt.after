@@ -1,0 +1,8 @@
+import pkg.Some
+import pkg.some
+
+fun Some.test() {
+    some()
+}
+
+// RUN_COUNT: 2

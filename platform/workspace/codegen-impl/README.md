@@ -19,7 +19,7 @@ The promotion process:
 - Before the promotion increase the version of the artifact at [build.gradle.kts](build.gradle.kts)
 - Run the corresponding [task](https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_IjWsmCodegenImplPublisher#all-projects) on TC
 - Check that the new version of the artifact was uploaded to [intellij-dependencies](https://jetbrains.team/p/ij/packages/maven/intellij-dependencies/com.jetbrains.intellij.platform/workspace-model-codegen-impl)
-- Increase the version of the generator the [Workspace Model](https://jetbrains.team/p/ij/repositories/intellij/files/786c6a41a3c6209c3b385c579ea5cbee5051a198/community/platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage/generatedCodeCompatibility.kt?tab=source&line=10&lines-count=1)
+- Increase the version of the generator the [Workspace Model](https://jetbrains.team/p/ij/repositories/ultimate/files/786c6a41a3c6209c3b385c579ea5cbee5051a198/community/platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage/generatedCodeCompatibility.kt?tab=source&line=10&lines-count=1)
 
 
 ### Known issues and different approaches

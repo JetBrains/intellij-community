@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -43,8 +43,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  @NotNull
-  public List<ComponentItem> getValues() {
+  public @NotNull List<ComponentItem> getValues() {
     return myItems;
   }
 
@@ -59,8 +58,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  @NotNull
-  public String getTextFor(final ComponentItem value) {
+  public @NotNull String getTextFor(final ComponentItem value) {
     if (value.isAnyComponent()) {
       return UIDesignerBundle.message("palette.non.palette.component");
     }

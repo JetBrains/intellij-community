@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -62,7 +62,7 @@ public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> 
 
   @Override
   public int getVersion() {
-    return 2;
+    return BASE_INDEX_VERSION + 2;
   }
 
   public static Collection<VirtualFile> getFiles(@NotNull Project project, @NotNull String idOrModule) {

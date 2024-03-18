@@ -7,7 +7,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Holds the [patch] between two commits in [fileHistory]
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * @param isCumulative [true] if [patch] is between start and end of [fileHistory] which spans from merge base to last commit,
  *                     [false] if it is a patch between a pair of adjacent commits in [fileHistory]
  */
-@Internal
+@ApiStatus.Experimental
 class GitTextFilePatchWithHistory(val patch: TextFilePatch, val isCumulative: Boolean, val fileHistory: GitFileHistory) {
 
   /**

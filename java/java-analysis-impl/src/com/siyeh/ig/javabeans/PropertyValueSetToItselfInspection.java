@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class PropertyValueSetToItselfInspection extends BaseInspection {
+public final class PropertyValueSetToItselfInspection extends BaseInspection {
 
   @NotNull
   @Override

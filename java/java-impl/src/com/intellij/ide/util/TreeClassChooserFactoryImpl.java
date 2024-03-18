@@ -97,7 +97,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                            final PsiFile initialFile,
                                            FileType fileType,
                                            TreeFileChooser.PsiFileFilter filter) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, null, false, false);
+    return createFileChooser(title, initialFile, fileType, filter, false);
   }
 
   @Override
@@ -108,7 +108,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                     @Nullable FileType fileType,
                                     @Nullable TreeFileChooser.PsiFileFilter filter,
                                     boolean disableStructureProviders) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, null, disableStructureProviders, false);
+    return createFileChooser(title, initialFile, fileType, filter, disableStructureProviders, false);
   }
 
 
@@ -120,6 +120,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                            @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders,
                                            boolean showLibraryContents) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, null, disableStructureProviders, showLibraryContents);
+    return TreeFileChooserFactory.getInstance(myProject)
+      .createFileChooser(title, initialFile, fileType, filter, disableStructureProviders, showLibraryContents);
   }
 }

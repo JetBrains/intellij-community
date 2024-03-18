@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
@@ -29,6 +29,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("classRedeclaration.kt")
         public void testClassRedeclaration() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
+        }
+
+        @TestMetadata("dataClassFromLibrary.kt")
+        public void testDataClassFromLibrary() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/dataClassFromLibrary.kt");
         }
 
         @TestMetadata("javaCodeInKotlinFile1.kt")
@@ -77,6 +82,29 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("SubclassOfDslClass.kt")
         public void testSubclassOfDslClass() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/focusMode")
+    public static class FocusMode extends AbstractK2HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/focusMode/script.kts");
+        }
+
+        @TestMetadata("SimpleClass.kt")
+        public void testSimpleClass() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/focusMode/SimpleClass.kt");
+        }
+
+        @TestMetadata("SimpleClassInFunction.kt")
+        public void testSimpleClassInFunction() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/focusMode/SimpleClassInFunction.kt");
         }
     }
 
@@ -138,6 +166,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("Annotations.kt")
         public void testAnnotations() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/Annotations.kt");
+        }
+
+        @TestMetadata("AnnotationsInDumbMode.kt")
+        public void testAnnotationsInDumbMode() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
         }
 
         @TestMetadata("AutoCreatedItParameter.kt")
@@ -238,6 +271,21 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")
         public void testPropertiesWithPropertyDeclarations() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
+        }
+
+        @TestMetadata("PropertiesWithPropertyDeclarationsInDumbMode.kt")
+        public void testPropertiesWithPropertyDeclarationsInDumbMode() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
+        }
+
+        @TestMetadata("RepeatableAnnotation.kt")
+        public void testRepeatableAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/RepeatableAnnotation.kt");
+        }
+
+        @TestMetadata("RepeatableAsAliasAnnotation.kt")
+        public void testRepeatableAsAliasAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/RepeatableAsAliasAnnotation.kt");
         }
 
         @TestMetadata("script.kts")

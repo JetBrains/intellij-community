@@ -15,6 +15,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -48,6 +49,7 @@ public class ExportingModulesTest extends JavaProjectTestCase {
 
       ModuleRootModificationUtil.addDependency(moduleC[0], moduleB[0]);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     final PsiClass pCClass =
       JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));

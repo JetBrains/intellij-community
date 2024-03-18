@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
 
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
@@ -167,10 +169,10 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     }
   }
 
-  @Test
-  fun `test compile-implementation dependency scope`() {
-    assertBuildScript(
-      GradleVersion.current() to ("""
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test compile-implementation dependency scope`(gradleVersion: GradleVersion) {
+    assertBuildScript(gradleVersion to ("""
         dependencies {
             implementation 'my-dep'
             runtimeOnly 'my-runtime-dep'
@@ -183,22 +185,6 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
             runtimeOnly("my-runtime-dep")
             testImplementation("my-test-dep")
             testRuntimeOnly("my-runtime-dep")
-        }
-      """.trimIndent()),
-
-      GradleVersion.version("3.0") to ("""
-        dependencies {
-            compile 'my-dep'
-            runtime 'my-runtime-dep'
-            testCompile 'my-test-dep'
-            testRuntime 'my-runtime-dep'
-        }
-      """.trimIndent() to """
-        dependencies {
-            compile("my-dep")
-            runtime("my-runtime-dep")
-            testCompile("my-test-dep")
-            testRuntime("my-runtime-dep")
         }
       """.trimIndent())
     ) {

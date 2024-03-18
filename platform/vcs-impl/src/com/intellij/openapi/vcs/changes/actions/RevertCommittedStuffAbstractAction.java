@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.history.ActivityId;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,12 +23,14 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
   private final boolean myReverse;
@@ -40,9 +43,9 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final VirtualFile baseDir = project.getBaseDir();
-    assert baseDir != null;
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile baseDir = Objects.requireNonNull(project.getBaseDir());
     final Change[] changes = getChanges(e, false);
     if (changes == null || changes.length == 0) return;
     final List<Change> changesList = new ArrayList<>();
@@ -75,7 +78,10 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
         try {
           List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
           List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.toNioPath(), myReverse, false);
-          new PatchApplier(project, baseDir, new ArrayList<>(patches), targetList, null).execute();
+          String activityName = myReverse ? VcsBundle.message("activity.name.rollback") : VcsBundle.message("activity.name.apply.patch");
+          ActivityId activityId = myReverse ? VcsActivity.Rollback : VcsActivity.ApplyPatch;
+          new PatchApplier(project, baseDir, new ArrayList<>(patches), targetList, null, false, null, null,
+                           activityName, activityId).execute();
         }
         catch (final VcsException ex) {
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {

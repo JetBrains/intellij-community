@@ -4,7 +4,6 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import org.gradle.api.Project;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,11 +33,11 @@ public class GradleSourceSetCache {
         .withGroup(Messages.SOURCE_SET_CACHE_GET_GROUP)
         .withTitle("Source set model isn't found")
         .withText(
-          "Source sets for " + GradleNegotiationUtil.getProjectDisplayName(project) + " wasn't collected. " +
+          "Source sets for " + project.getDisplayName() + " wasn't collected. " +
           "All source sets should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE + "."
         )
-        .withException(new IllegalStateException())
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return new DefaultGradleSourceSetModel();
     }
@@ -52,15 +51,15 @@ public class GradleSourceSetCache {
       context.getMessageReporter().createMessage()
         .withGroup(Messages.SOURCE_SET_CACHE_SET_GROUP)
         .withTitle("Source set model redefinition")
-        .withText("Source sets for " + GradleNegotiationUtil.getProjectDisplayName(project) + " was already collected.")
-        .withException(new IllegalStateException())
-        .withKind(Message.Kind.INTERNAL)
+        .withText("Source sets for " + project.getDisplayName() + " was already collected.")
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
   }
 
   /**
-   * Marks that project source set model is loaded with errors.
+   * Marks that a project source set model is loaded with errors.
    * This mark means that error for {@code project} is already processed and reported.
    */
   public void markSourceSetModelAsError(@NotNull Project project) {

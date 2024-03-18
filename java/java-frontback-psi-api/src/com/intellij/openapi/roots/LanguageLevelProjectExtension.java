@@ -18,6 +18,10 @@ public abstract class LanguageLevelProjectExtension {
     return project.getService(LanguageLevelProjectExtension.class);
   }
 
+  /**
+   * @return configured project language level.
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   */
   @NotNull
   public abstract LanguageLevel getLanguageLevel();
 

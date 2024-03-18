@@ -38,7 +38,7 @@ import java.util.function.BiPredicate;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TryWithIdenticalCatchesInspection extends BaseInspection {
+public final class TryWithIdenticalCatchesInspection extends BaseInspection {
   public boolean ignoreBlocksWithDifferentComments = true;
 
   @Override
@@ -61,8 +61,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return JavaFeature.MULTI_CATCH.isFeatureSupported(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.MULTI_CATCH);
   }
 
   @Override

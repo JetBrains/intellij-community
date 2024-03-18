@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
@@ -7,10 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
-import com.intellij.util.Processors;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -22,9 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
-
 
 public final class FilenameIndex {
   /** @deprecated Use {@link FilenameIndex} methods instead **/
@@ -33,7 +28,7 @@ public final class FilenameIndex {
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
   public static @NotNull String @NotNull [] getAllFilenames(@NotNull Project project) {
-    Set<String> names = CollectionFactory.createSmallMemoryFootprintSet();
+    Set<String> names = new HashSet<>();
     processAllFileNames((String s) -> {
       names.add(s);
       return true;
@@ -107,7 +102,7 @@ public final class FilenameIndex {
   }
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,
                                            boolean caseSensitively,
@@ -193,11 +188,14 @@ public final class FilenameIndex {
   public static @NotNull Collection<VirtualFile> getAllFilesByExt(@NotNull Project project,
                                                                   @NotNull String ext,
                                                                   @NotNull GlobalSearchScope searchScope) {
-    if (ext.isEmpty()) return Collections.emptyList();
+    if (ext.isEmpty()) {
+      return Java11Shim.INSTANCE.listOf();
+    }
+
     String dotExt = "." + ext;
     int len = ext.length() + 1;
 
-    Set<String> names = CollectionFactory.createSmallMemoryFootprintSet();
+    Set<String> names = new HashSet<>();
     for (String name : getAllFilenames(project)) {
       int length = name.length();
       if (length > len && name.substring(length - len).equalsIgnoreCase(dotExt)) {
@@ -210,7 +208,7 @@ public final class FilenameIndex {
   private static @NotNull Set<VirtualFile> getVirtualFilesByNames(@NotNull Set<String> names,
                                                                   @NotNull GlobalSearchScope scope,
                                                                   @Nullable IdFilter filter) {
-    Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
+    Set<VirtualFile> files = new HashSet<>();
     FileBasedIndex.getInstance().processFilesContainingAnyKey(NAME, names, scope, filter, null, file -> {
       files.add(file);
       return true;

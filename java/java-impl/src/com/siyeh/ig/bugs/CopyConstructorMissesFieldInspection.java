@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author Bas Leijdekkers
  */
-public class CopyConstructorMissesFieldInspection extends BaseInspection {
+public final class CopyConstructorMissesFieldInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -2,15 +2,14 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.InstalledPluginsState;
-import com.intellij.ide.plugins.PluginStateListener;
-import com.intellij.ide.plugins.PluginStateManager;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,15 +24,24 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 public class PluginUpdatesService {
+  private static final Logger LOG = Logger.getInstance(PluginUpdatesService.class);
   private static final List<PluginUpdatesService> SERVICES = new ArrayList<>();
   private static final Object ourLock = new Object();
-  private static Collection<IdeaPluginDescriptor> myCache;
-  private static boolean myPrepared;
-  private static boolean myPreparing;
-  private static boolean myReset;
+  private static final @NotNull Condition<IdeaPluginDescriptor> DEFAULT_FILTER = // only enabled plugins by default
+    descriptor -> !PluginManagerCore.isDisabled(descriptor.getPluginId());
+
+  // clients should receive filtered updates by default
+  private static @Nullable Collection<IdeaPluginDescriptor> ourAllUpdates;
+  private static @NotNull Condition<? super IdeaPluginDescriptor> ourFilter = DEFAULT_FILTER;
+  // ourFilteredUpdates is in sync with ourAllUpdates at all times
+  private static @Nullable Collection<IdeaPluginDescriptor> ourFilteredUpdates;
+  private static boolean ourPrepared;
+  private static boolean ourPreparing;
+  private static boolean ourReset;
 
   private Consumer<? super Integer> myCountCallback;
   private List<Consumer<? super Collection<IdeaPluginDescriptor>>> myUpdateCallbacks;
+  private boolean mySetFilter;
 
   static {
     PluginStateManager.addStateListener(new PluginStateListener() {
@@ -56,7 +64,7 @@ public class PluginUpdatesService {
     synchronized (ourLock) {
       SERVICES.add(service);
 
-      if (myPrepared) {
+      if (ourPrepared) {
         callback.accept(getCount());
         return service;
       }
@@ -73,8 +81,8 @@ public class PluginUpdatesService {
     synchronized (ourLock) {
       SERVICES.add(service);
 
-      if (myPrepared) {
-        callback.accept(myCache);
+      if (ourPrepared) {
+        callback.accept(ourFilteredUpdates);
       }
     }
 
@@ -88,8 +96,8 @@ public class PluginUpdatesService {
       }
       myUpdateCallbacks.add(callback);
 
-      if (myPrepared) {
-        callback.accept(myCache);
+      if (ourPrepared) {
+        callback.accept(ourFilteredUpdates);
         return;
       }
     }
@@ -98,15 +106,16 @@ public class PluginUpdatesService {
 
   private static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     synchronized (ourLock) {
-      if (!myPrepared || myCache == null) {
+      if (!ourPrepared || ourAllUpdates == null) {
         return;
       }
 
-      for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
+      for (Iterator<IdeaPluginDescriptor> I = ourAllUpdates.iterator(); I.hasNext(); ) {
         IdeaPluginDescriptor downloadedDescriptor = I.next();
 
         if (Objects.equals(downloadedDescriptor.getPluginId(), descriptor.getPluginId())) {
           I.remove();
+          syncFilteredUpdates();
 
           Integer countValue = getCount();
           for (PluginUpdatesService service : SERVICES) {
@@ -121,7 +130,7 @@ public class PluginUpdatesService {
 
   public void finishUpdate() {
     synchronized (ourLock) {
-      if (!myPrepared || myCache == null) {
+      if (!ourPrepared || ourAllUpdates == null) {
         return;
       }
 
@@ -138,7 +147,7 @@ public class PluginUpdatesService {
         service.runAllCallbacks(null);
       }
 
-      if (myPreparing) {
+      if (ourPreparing) {
         resetUpdates();
       }
       else {
@@ -148,11 +157,48 @@ public class PluginUpdatesService {
   }
 
   private static void resetUpdates() {
-    myReset = true;
+    ourReset = true;
+  }
+
+  public void setFilter(@NotNull Condition<? super IdeaPluginDescriptor> filter) {
+    synchronized (ourLock) {
+      if (!mySetFilter && ourFilter != DEFAULT_FILTER) {
+        LOG.warn("Filter already set to " + ourFilter + ", new filter " + filter + " will be ignored", new Throwable());
+        return;
+      }
+      mySetFilter = true;
+      setOurFilter(filter);
+    }
+  }
+
+  private static void setOurFilter(@NotNull Condition<? super IdeaPluginDescriptor> filter) {
+    ourFilter = filter;
+    reapplyFilter();
+  }
+
+  public static void reapplyFilter() {
+    synchronized (ourLock) {
+      syncFilteredUpdates();
+
+      for (PluginUpdatesService service : SERVICES) {
+        service.runAllCallbacks(null);
+      }
+
+      Integer countValue = getCount();
+      for (PluginUpdatesService service : SERVICES) {
+        service.runAllCallbacks(countValue);
+      }
+    }
   }
 
   public void dispose() {
-    dispose(this);
+    synchronized (ourLock) {
+      dispose(this);
+      if (mySetFilter) {
+        setOurFilter(DEFAULT_FILTER);
+        mySetFilter = false;
+      }
+    }
   }
 
   private static void dispose(@NotNull PluginUpdatesService service) {
@@ -160,9 +206,9 @@ public class PluginUpdatesService {
       SERVICES.remove(service);
 
       if (SERVICES.isEmpty()) {
-        myCache = null;
-        myPrepared = false;
-        myPreparing = false;
+        setAllUpdates(null);
+        ourPrepared = false;
+        ourPreparing = false;
       }
     }
   }
@@ -171,8 +217,8 @@ public class PluginUpdatesService {
     PluginId pluginId = descriptor.getPluginId();
 
     synchronized (ourLock) {
-      if (myPrepared && myCache != null) {
-        for (IdeaPluginDescriptor downloader : myCache) {
+      if (ourPrepared && ourFilteredUpdates != null) {
+        for (IdeaPluginDescriptor downloader : ourFilteredUpdates) {
           if (pluginId.equals(downloader.getPluginId())) {
             return true;
           }
@@ -185,7 +231,7 @@ public class PluginUpdatesService {
 
   public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
-      return !myPrepared || myPreparing || myCache == null ? null : myCache;
+      return !ourPrepared || ourPreparing || ourFilteredUpdates == null ? null : ourFilteredUpdates;
     }
   }
 
@@ -199,11 +245,11 @@ public class PluginUpdatesService {
 
   private static void calculateUpdates() {
     synchronized (ourLock) {
-      if (myPreparing) {
+      if (ourPreparing) {
         return;
       }
-      myPreparing = true;
-      myCache = null;
+      ourPreparing = true;
+      setAllUpdates(null);
     }
 
     // for example, if executed as part of Traverse UI - don't wait check updates
@@ -217,16 +263,16 @@ public class PluginUpdatesService {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
-          myPreparing = false;
+          ourPreparing = false;
 
-          if (myReset) {
-            myReset = false;
+          if (ourReset) {
+            ourReset = false;
             calculateUpdates();
             return;
           }
 
-          myPrepared = true;
-          myCache = cache;
+          ourPrepared = true;
+          setAllUpdates(cache);
 
           Integer countValue = getCount();
           for (PluginUpdatesService service : SERVICES) {
@@ -242,7 +288,7 @@ public class PluginUpdatesService {
 
     if (myUpdateCallbacks != null) {
       for (var callback : myUpdateCallbacks) {
-        callback.accept(countValue == null ? null : myCache);
+        callback.accept(countValue == null ? null : ourFilteredUpdates);
       }
     }
   }
@@ -254,6 +300,15 @@ public class PluginUpdatesService {
   }
 
   private static @Nullable Integer getCount() {
-    return myCache == null ? null : myCache.size();
+    return ourFilteredUpdates == null ? null : ourFilteredUpdates.size();
+  }
+
+  private static void setAllUpdates(@Nullable Collection<IdeaPluginDescriptor> updates) {
+    ourAllUpdates = updates;
+    syncFilteredUpdates();
+  }
+
+  private static void syncFilteredUpdates() {
+    ourFilteredUpdates = ourAllUpdates == null ? null : ContainerUtil.filter(ourAllUpdates, ourFilter);
   }
 }

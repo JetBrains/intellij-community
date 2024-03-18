@@ -21,7 +21,7 @@ package com.intellij.lang.java;
 
 import com.intellij.lang.DefaultWordCompletionFilter;
 
-public class JavaWordCompletionFilter extends DefaultWordCompletionFilter {
+public final class JavaWordCompletionFilter extends DefaultWordCompletionFilter {
   @Override
   public boolean isWordCompletionInDumbModeEnabled() {
     return false;

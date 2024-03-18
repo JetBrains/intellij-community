@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.diagnostic.PluginException
 
@@ -53,10 +54,10 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerCl
             area?.entries?.add(entry)
           }
           is ActionWithContent -> {
-            val area = this.currentClickArea ?: InlayMouseArea(dataPayload.actionData)
+            val area = this.currentClickArea ?: mouseAreaIfNotZombie(dataPayload.actionData)
             val entry = TextInlayPresentationEntry(dataPayload.content as String, clickArea = area, parentIndexToSwitch = parentIndexToSwitch)
             addEntry(entry)
-            area.entries.add(entry)
+            area?.entries?.add(entry)
           }
           else -> throw IllegalStateException("Illegal payload for text tag: $dataPayload")
         }
@@ -83,6 +84,15 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerCl
       //}
       else -> throw IllegalStateException("Unknown tag: $tag")
     }
+  }
+
+  private fun mouseAreaIfNotZombie(actionData: InlayActionData): InlayMouseArea? {
+    val inlayActionPayload = actionData.payload
+    if (inlayActionPayload is PsiPointerInlayActionPayload && inlayActionPayload.pointer is ZombieSmartPointer) {
+      // zombie pointer is not hoverable/clickable
+      return null
+    }
+    return InlayMouseArea(actionData)
   }
 
   private fun selectFromList(index: Byte, collapsed: Boolean) {

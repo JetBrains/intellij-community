@@ -11,6 +11,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -48,7 +49,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList list) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(context.file())) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, context.file())) return null;
     Presentation presentation = super.getPresentation(context, list);
     return presentation == null ? null : presentation.withPriority(PriorityAction.Priority.HIGH);
   }
@@ -79,7 +80,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
 
     @Override
     protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expression) {
-      if (!(PsiUtil.isLanguageLevel8OrHigher(expression) && areConvertible(expression.getType(), myType))) return null;
+      if (!(PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, expression) && areConvertible(expression.getType(), myType))) return null;
       return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
     }
   }

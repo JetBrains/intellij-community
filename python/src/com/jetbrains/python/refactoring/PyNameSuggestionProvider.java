@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
-public class PyNameSuggestionProvider implements NameSuggestionProvider {
+public final class PyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
     if (!(element instanceof PyElement)) return null;
@@ -59,7 +59,7 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @NotNull
-  protected String toCamelCase(@NotNull final String name, boolean uppercaseFirstLetter) {
+  private static String toCamelCase(@NotNull final String name, boolean uppercaseFirstLetter) {
     final List<String> strings = StringUtil.split(name, "_");
     if (strings.size() > 0) {
       final StringBuilder buf = new StringBuilder();

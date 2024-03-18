@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -273,6 +273,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
   }
 
+  /**
+   * removes (key, inputId) tuple from index: special case there inputId is mapped to a single value.
+   * We use artificial (key=inputId) for such case (see SingleEntryIndexer) so in that case key is
+   * unique: only single inputId could have key(=inputId) => removing that key means there could be
+   * no other (inputId,value) linked to it
+   */
   private void removeSingleValueDirectly(Key key, int inputId) throws IOException {
     assert myKeyIsUniqueForIndexedFile;
     ChangeTrackingValueContainer<Value> cached = readIfCached(key);

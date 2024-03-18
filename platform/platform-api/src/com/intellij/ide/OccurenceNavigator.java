@@ -38,11 +38,6 @@ public interface OccurenceNavigator extends ActionUpdateThreadAware {
     public @NotNull String getPreviousOccurenceActionName() {
       return "";
     }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return OccurenceNavigator.super.getActionUpdateThread();
-    }
   };
 
   class OccurenceInfo {

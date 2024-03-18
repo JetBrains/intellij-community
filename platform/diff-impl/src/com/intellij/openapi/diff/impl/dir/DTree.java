@@ -61,10 +61,12 @@ public class DTree {
   private DiffType myType;
   private boolean myVisible = true;
   private String myPath = null;
+  private String myRelativePath;
 
-  public DTree(@Nullable DTree parent, @NotNull String name, boolean container) {
+  public DTree(@Nullable DTree parent, @NotNull String name, boolean container, @Nullable String relativePath) {
     this.myParent = parent;
     this.myName = name;
+    myRelativePath = relativePath;
     isContainer = container;
   }
 
@@ -89,7 +91,7 @@ public class DTree {
     else if (myChildren.containsKey(name)) {
       node = myChildren.get(name);
     } else {
-      node = new DTree(this, element.getPresentableName(), element.isContainer());
+      node = new DTree(this, element.getPresentableName(), element.isContainer(), element.getFilterablePath());
       myChildren.put(name, node);
     }
 
@@ -209,7 +211,7 @@ public class DTree {
        return;
       }
       if (myType != DiffType.SEPARATOR && !"".equals(settings.getFilter())) {
-        if (!settings.getFilterPattern().matcher(getName()).matches()) {
+        if (!settings.getDirDiffFilter().pathMatches(myRelativePath)) {
           myVisible = false;
           return;
         }
@@ -316,7 +318,7 @@ public class DTree {
       if (parent != null) {
         myPath = parent.getPath() + getName() + (isContainer ? DiffElement.getSeparator() : "");
       } else {
-        myPath = getName() + (isContainer ? DiffElement.getSeparator() : "");
+        myPath = getName();
       }
     }
     return myPath;

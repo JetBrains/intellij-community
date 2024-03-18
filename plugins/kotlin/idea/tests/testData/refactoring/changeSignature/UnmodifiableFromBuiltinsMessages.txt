@@ -1,2 +1,2 @@
-Refactoring cannot be performed
-Cannot modify 'toFloat(): Float of kotlin.Number' declaration from 'kotlin.kotlin_builtins' file
+Cannot perform refactoring.
+Library declarations cannot be changed

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -47,7 +47,7 @@ internal class CanBePrimaryConstructorPropertyInspection
         return MovePropertyToConstructorInfo.create(element)
     }
 
-    override fun apply(element: KtProperty, context: MovePropertyToConstructorInfo, project: Project, editor: Editor?) {
-        element.moveToConstructor(context)
+    override fun apply(element: KtProperty, context: MovePropertyToConstructorInfo, project: Project, updater: ModPsiUpdater) {
+        element.moveToConstructor(context.toWritable(updater))
     }
 }

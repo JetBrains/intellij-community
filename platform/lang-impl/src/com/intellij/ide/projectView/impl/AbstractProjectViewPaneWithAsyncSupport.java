@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.PsiCopyPasteManager;
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripe;
 import com.intellij.ui.stripe.ErrorStripePainter;
@@ -39,13 +38,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Comparator;
-import java.util.StringTokenizer;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
@@ -242,42 +239,6 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
       if (color != null) return ErrorStripe.create(color, 1);
     }
     return null;
-  }
-
-  protected static final class MySpeedSearch extends TreeSpeedSearch {
-    private MySpeedSearch(JTree tree) {
-      super(tree, (Void)null);
-    }
-
-    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-    public static @NotNull MySpeedSearch installOn(JTree tree) {
-      MySpeedSearch search = new MySpeedSearch(tree);
-      search.setupListeners();
-      return search;
-    }
-
-    @Override
-    protected boolean isMatchingElement(Object element, String pattern) {
-      Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
-      if (userObject instanceof PsiDirectoryNode) {
-        String str = getElementText(element);
-        if (str == null) return false;
-        if (pattern.indexOf('.') >= 0) {
-          return compare(str, pattern);
-        }
-        StringTokenizer tokenizer = new StringTokenizer(str, ".");
-        while (tokenizer.hasMoreTokens()) {
-          String token = tokenizer.nextToken();
-          if (compare(token, pattern)) {
-            return true;
-          }
-        }
-        return false;
-      }
-      else {
-        return super.isMatchingElement(element, pattern);
-      }
-    }
   }
 
   @Override

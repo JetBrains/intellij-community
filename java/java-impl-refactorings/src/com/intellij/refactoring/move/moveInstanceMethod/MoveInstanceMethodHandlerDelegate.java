@@ -14,7 +14,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPack
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
+public final class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
     if (elements.length != 1) return false;

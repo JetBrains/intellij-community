@@ -12,52 +12,48 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-class MLCompletionSettingsCollector : CounterUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return COUNTER_GROUP
+internal object MLCompletionSettingsCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = COUNTER_GROUP
+
+  private val COUNTER_GROUP = EventLogGroup("ml.completion", 5)
+  private val rankerIdField: StringEventField =
+    EventFields.StringValidatedByCustomRule("ranker_id", MLRankingSettingsValidationRule::class.java)
+  private val enabledField: BooleanEventField = EventFields.Boolean("enabled")
+  private val enabledByDefaultField: BooleanEventField = EventFields.Boolean("enabled_by_default")
+  private val languageCheckboxUsedField: BooleanEventField = EventFields.Boolean("using_language_checkbox")
+
+  private val LANGUAGE_SETTINGS_CHANGED = COUNTER_GROUP.registerVarargEvent("ranking.settings.changed",
+                                                                            rankerIdField,
+                                                                            enabledField,
+                                                                            enabledByDefaultField,
+                                                                            languageCheckboxUsedField)
+
+  private val DECORATION_SETTINGS_CHANGED = COUNTER_GROUP.registerEvent("decorating.settings.changed", EventFields.Boolean("enabled"))
+  private val DECORATION_OPINION_PROVIDED = COUNTER_GROUP.registerEvent(
+    "decorating.opinion.provided", EventFields.Enum("opinion", DecorationOpinion::class.java)
+  )
+
+  @JvmStatic
+  fun rankingSettingsChanged(rankerId: String,
+                             enabled: Boolean,
+                             enabledByDefault: Boolean,
+                             usingLanguageCheckbox: Boolean) {
+    LANGUAGE_SETTINGS_CHANGED.log(
+      rankerIdField.with(rankerId),
+      enabledField.with(enabled),
+      enabledByDefaultField.with(enabledByDefault),
+      languageCheckboxUsedField.with(usingLanguageCheckbox)
+    )
   }
 
-  companion object {
-    private val COUNTER_GROUP = EventLogGroup("ml.completion", 5)
-    private val rankerIdField: StringEventField =
-      EventFields.StringValidatedByCustomRule("ranker_id", MLRankingSettingsValidationRule::class.java)
-    private val enabledField: BooleanEventField = EventFields.Boolean("enabled")
-    private val enabledByDefaultField: BooleanEventField = EventFields.Boolean("enabled_by_default")
-    private val languageCheckboxUsedField: BooleanEventField = EventFields.Boolean("using_language_checkbox")
+  @JvmStatic
+  fun decorationSettingChanged(enabled: Boolean) {
+    DECORATION_SETTINGS_CHANGED.log(enabled)
+  }
 
-    private val LANGUAGE_SETTINGS_CHANGED = COUNTER_GROUP.registerVarargEvent("ranking.settings.changed",
-                                                                              rankerIdField,
-                                                                              enabledField,
-                                                                              enabledByDefaultField,
-                                                                              languageCheckboxUsedField)
-
-    private val DECORATION_SETTINGS_CHANGED = COUNTER_GROUP.registerEvent("decorating.settings.changed", EventFields.Boolean("enabled"))
-    private val DECORATION_OPINION_PROVIDED = COUNTER_GROUP.registerEvent(
-      "decorating.opinion.provided", EventFields.Enum("opinion", DecorationOpinion::class.java)
-    )
-
-    @JvmStatic
-    fun rankingSettingsChanged(rankerId: String,
-                               enabled: Boolean,
-                               enabledByDefault: Boolean,
-                               usingLanguageCheckbox: Boolean) {
-      LANGUAGE_SETTINGS_CHANGED.log(
-        rankerIdField.with(rankerId),
-        enabledField.with(enabled),
-        enabledByDefaultField.with(enabledByDefault),
-        languageCheckboxUsedField.with(usingLanguageCheckbox)
-      )
-    }
-
-    @JvmStatic
-    fun decorationSettingChanged(enabled: Boolean) {
-      DECORATION_SETTINGS_CHANGED.log(enabled)
-    }
-
-    @JvmStatic
-    fun decorationOpinionProvided(project: Project?, opinion: DecorationOpinion) {
-      DECORATION_OPINION_PROVIDED.log(project, opinion)
-    }
+  @JvmStatic
+  fun decorationOpinionProvided(project: Project?, opinion: DecorationOpinion) {
+    DECORATION_OPINION_PROVIDED.log(project, opinion)
   }
 
   class MLRankingSettingsValidationRule : CustomValidationRule() {

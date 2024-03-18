@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileElement
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -27,7 +28,7 @@ import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.jetbrains.annotations.Nls
 
-class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor() {
+class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAware {
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
     return message("line.marker.name.code.preview")
   }

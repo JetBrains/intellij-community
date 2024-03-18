@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
@@ -163,32 +163,19 @@ private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.in
 
 private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
 
-class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
+internal fun reinitAllEditors() {
+  EditorFactory.getInstance().refreshAllEditors()
+}
+
+internal fun restartDaemons() {
+  for (project in ProjectManager.getInstance().openProjects) {
+    DaemonCodeAnalyzer.getInstance(project).settingsChanged()
+  }
+}
+
+internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
     const val ID: String = "preferences.editor"
-
-    private fun clearAllIdentifierHighlighters() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
-          if (fileEditor is TextEditor) {
-            val document = fileEditor.editor.document
-            IdentifierHighlighterPass.clearMyHighlights(document, project)
-          }
-        }
-      }
-    }
-
-    @JvmStatic
-    fun reinitAllEditors() {
-      EditorFactory.getInstance().refreshAllEditors()
-    }
-
-    @JvmStatic
-    fun restartDaemons() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        DaemonCodeAnalyzer.getInstance(project).settingsChanged()
-      }
-    }
   }
 
   override fun createConfigurables(): List<UnnamedConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
@@ -356,9 +343,20 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied()
     }
   }
+
+  private fun clearAllIdentifierHighlighters() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+        if (fileEditor is TextEditor) {
+          val document = fileEditor.editor.document
+          IdentifierHighlighterPass.clearMyHighlights(document, project)
+        }
+      }
+    }
+  }
 }
 
-private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
+internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
   companion object {
     const val ID = "preferences.editor.code.editing"
   }
@@ -458,22 +456,15 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
 
 private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: String, mode: CaretOptionMode, values: Array<E>) {
   row(label) {
-    val model: DefaultComboBoxModel<E?> = SeparatorAwareComboBoxModel()
-    var lastWasOsDefault = false
-    for (item in values) {
-      val isOsDefault = item.osDefault !== OsDefault.NONE
-      if (lastWasOsDefault && !isOsDefault) model.addElement(null)
-      lastWasOsDefault = isOsDefault
-      val insertionIndex = if (item.osDefault.isIdeDefault) 0 else model.size
-      model.insertElementAt(item, insertionIndex)
-    }
+    val itemWithSeparator: E = values.first { it.osDefault === OsDefault.NONE }
 
-    comboBox(model, SeparatorAwareListItemRenderer())
+    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItemRenderer(itemWithSeparator))
+      .applyToComponent { isSwingPopup = false }
       .align(AlignX.FILL)
       .bind(
         {
-          val item = it.selectedItem as? EditorCaretStopPolicyItem
-          item?.caretStopBoundary ?: mode.get(CaretStopOptionsTransposed.DEFAULT)
+          val item = it.selectedItem as EditorCaretStopPolicyItem
+          item.caretStopBoundary
         },
         { it, value -> it.selectedItem = mode.find(value) },
         MutableProperty(

@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
-  private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
+public class ClassTreeNode extends BasePsiMemberNode<PsiClass> implements FileNodeWithNestedFileNodes {
+  private final Collection<? extends AbstractTreeNode<?>> myNestedFileNodes;
   private boolean isAlwaysExpand;
 
   public ClassTreeNode(Project project, @NotNull PsiClass value, ViewSettings viewSettings) {
@@ -32,34 +33,48 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   public ClassTreeNode(Project project,
                        @NotNull PsiClass value,
                        ViewSettings viewSettings,
-                       @NotNull Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
+                       @NotNull Collection<? extends AbstractTreeNode<?>> nestedFileNodes) {
     super(project, value, viewSettings);
-    myMandatoryChildren = mandatoryChildren;
+    myNestedFileNodes = nestedFileNodes;
+  }
+
+  @Override
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getNestedFileNodes() {
+    return myNestedFileNodes;
   }
 
   @Override
   public Collection<AbstractTreeNode<?>> getChildrenImpl() {
-    PsiClass parent = getValue();
-    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(myMandatoryChildren);
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>(myNestedFileNodes);
+    result.addAll(computeChildren(getValue(), this.getSettings(), this.getProject(), this.isShowInnerClasses()));
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<AbstractTreeNode<?>> computeChildren(PsiClass parent,
+                                                                   ViewSettings settings,
+                                                                   Project project,
+                                                                   boolean showInnerClasses) {
+    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>();
     if (parent != null) {
       try {
-        boolean showMembers = getSettings().isShowMembers();
-        if (showMembers || isShowInnerClasses()) {
+        boolean showMembers = settings.isShowMembers();
+        if (showMembers || showInnerClasses) {
           for (PsiClass psi : parent.getInnerClasses()) {
             if (psi.isPhysical()) {
-              treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+              treeNodes.add(new ClassTreeNode(project, psi, settings));
             }
           }
         }
         if (showMembers) {
           for (PsiMethod psi : parent.getMethods()) {
             if (psi.isPhysical()) {
-              treeNodes.add(new PsiMethodNode(getProject(), psi, getSettings()));
+              treeNodes.add(new PsiMethodNode(project, psi, settings));
             }
           }
           for (PsiField psi : parent.getFields()) {
             if (psi.isPhysical()) {
-              treeNodes.add(new PsiFieldNode(getProject(), psi, getSettings()));
+              treeNodes.add(new PsiFieldNode(project, psi, settings));
             }
           }
         }

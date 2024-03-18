@@ -3,6 +3,7 @@ package com.jetbrains.env
 
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 
@@ -56,7 +57,8 @@ internal data class PyEnvTestSettings(
 /**
  * Env variables used to configure tests
  */
-private enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { it.name }) {
+@ApiStatus.Internal
+enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { it.name }) {
   /**
    * Path to folder with CPythons
    */

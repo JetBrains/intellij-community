@@ -2,22 +2,26 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.RangeMarkerImpl
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.max
+import kotlin.math.min
 
 class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
-  private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
-  private val blockStates: MutableMap<CommandBlock, List<BlockDecorationState>> = HashMap()
+  private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
+  private var allHighlightingsSnapshot: AllHighlightingsSnapshot? = null
 
   private val document: Document = editor.document
   private val listeners: MutableList<TerminalOutputListener> = CopyOnWriteArrayList()
@@ -30,50 +34,89 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun createBlock(command: String?): CommandBlock {
-    closeLastBlock()
+  fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
+    closeActiveBlock()
 
     if (document.textLength > 0) {
       document.insertString(document.textLength, "\n")
     }
-    val marker = document.createRangeMarker(document.textLength, document.textLength)
+    val startOffset = document.textLength
+    val marker = document.createRangeMarker(startOffset, startOffset)
     marker.isGreedyToRight = true
-    val block = CommandBlock(command, marker)
+
+    val block = CommandBlock(command, prompt, marker)
     blocks.add(block)
+
+    listeners.forEach { it.blockCreated(block) }
     return block
   }
 
   @RequiresEdt
-  fun closeLastBlock() {
-    val lastBlock = getLastBlock()
-    // restrict previous block expansion
-    if (lastBlock != null) {
-      lastBlock.range.isGreedyToRight = false
-      decorations[lastBlock]?.let {
-        it.backgroundHighlighter.isGreedyToRight = false
-        it.cornersHighlighter.isGreedyToRight = false
-        (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
-      }
+  fun closeActiveBlock() {
+    val activeBlock = getActiveBlock()
+    // restrict block expansion
+    if (activeBlock != null) {
+      activeBlock.range.isGreedyToRight = false
+      listeners.forEach { it.blockFinalized(activeBlock) }
     }
   }
 
   @RequiresEdt
   fun removeBlock(block: CommandBlock) {
-    document.deleteString(block.startOffset, block.endOffset)
-
-    block.range.dispose()
-    decorations[block]?.let {
-      Disposer.dispose(it.topInlay)
-      Disposer.dispose(it.bottomInlay)
-      it.commandToOutputInlay?.let { inlay -> Disposer.dispose(inlay) }
-      editor.markupModel.removeHighlighter(it.backgroundHighlighter)
-      editor.markupModel.removeHighlighter(it.cornersHighlighter)
+    val startBlockInd = blocks.indexOf(block)
+    check(startBlockInd >= 0)
+    val rangeToDelete = findBlockRangeToDelete(block)
+    for (blockInd in startBlockInd + 1 until blocks.size) {
+      deleteDocumentRangeInHighlightings(blocks[blockInd], rangeToDelete)
     }
 
     blocks.remove(block)
-    decorations.remove(block)
     highlightings.remove(block)
-    blockStates.remove(block)
+    allHighlightingsSnapshot = null
+
+    listeners.forEach { it.blockRemoved(block) }
+
+    // Remove the text after removing the highlightings because removing text will trigger rehighlight
+    // and there should be no highlightings at this moment.
+    document.deleteString(rangeToDelete.startOffset, rangeToDelete.endOffset)
+    block.range.dispose()
+  }
+
+  private fun findBlockRangeToDelete(block: CommandBlock): TextRange {
+    val blockRange = TextRange(block.startOffset, block.endOffset)
+    return if (blockRange.startOffset > 0) {
+      check(document.charsSequence[blockRange.startOffset - 1] == '\n')
+      // also remove the block separator between this block and the previous one
+      TextRange(blockRange.startOffset - 1, blockRange.endOffset)
+    }
+    else if (blockRange.endOffset < document.textLength) {
+      check(document.charsSequence[blockRange.endOffset] == '\n')
+      // also remove the block separator between this block and the next one
+      TextRange(blockRange.startOffset, blockRange.endOffset + 1)
+    }
+    else {
+      blockRange
+    }
+  }
+
+  @RequiresEdt
+  fun clearBlocks() {
+    val blocksCopy = blocks.reversed()
+    for (block in blocksCopy) {
+      removeBlock(block)
+    }
+    editor.document.setText("")
+  }
+
+  /**
+   * Active block is the last block if it is able to expand.
+   * @return null in three cases:
+   * 1. There are no blocks created yet.
+   * 2. Requested after user inserted an empty line, but before block for new command is created.
+   * 3. Requested after command is started, but before the block is created for it.
+   */
+  fun getActiveBlock(): CommandBlock? {
+    return blocks.lastOrNull()?.takeIf { !it.isFinalized }
   }
 
   fun getLastBlock(): CommandBlock? {
@@ -104,18 +147,13 @@ class TerminalOutputModel(val editor: EditorEx) {
   fun getBlocksSize(): Int = blocks.size
 
   @RequiresEdt
-  fun getDecoration(block: CommandBlock): BlockDecoration? {
-    return decorations[block]
-  }
-
-  @RequiresEdt
-  fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
-    decorations[block] = decoration
-  }
-
-  @RequiresEdt
-  fun getAllHighlightings(): List<HighlightingInfo> {
-    return highlightings.flatMap { it.value }
+  internal fun getHighlightingsSnapshot(): AllHighlightingsSnapshot {
+    var snapshot: AllHighlightingsSnapshot? = allHighlightingsSnapshot
+    if (snapshot == null) {
+      snapshot = AllHighlightingsSnapshot(editor.document, highlightings.flatMap { it.value })
+      allHighlightingsSnapshot = snapshot
+    }
+    return snapshot
   }
 
   @RequiresEdt
@@ -126,47 +164,186 @@ class TerminalOutputModel(val editor: EditorEx) {
   @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
+    allHighlightingsSnapshot = null
   }
 
   @RequiresEdt
-  fun getBlockState(block: CommandBlock): List<BlockDecorationState> {
-    return blockStates[block] ?: emptyList()
+  fun setBlockInfo(block: CommandBlock, info: CommandBlockInfo) {
+    blockInfos[block] = info
+    listeners.forEach { it.blockInfoUpdated(block, info) }
   }
 
   @RequiresEdt
-  fun addBlockState(block: CommandBlock, state: BlockDecorationState) {
-    val curStates = blockStates[block] ?: listOf()
-    if (curStates.find { it.name == state.name } == null) {
-      updateBlockStates(block, curStates, curStates.toMutableList() + state)
+  fun getBlockInfo(block: CommandBlock): CommandBlockInfo? {
+    return blockInfos[block]
+  }
+
+  @RequiresEdt
+  fun trimOutput() {
+    val maxCapacity = getMaxCapacity()
+    val textLength = document.textLength
+    if (textLength <= maxCapacity) {
+      return
+    }
+    val topBlockCountToRemove = findTopBlockCountToRemove(maxCapacity, textLength)
+    val topBlocksToRemove = blocks.subList(0, topBlockCountToRemove).toList()
+    topBlocksToRemove.forEach {
+      removeBlock(it)
+    }
+    trimTopBlock(maxCapacity)
+  }
+
+  private fun trimTopBlock(maxCapacity: Int) {
+    val textLength = document.textLength
+    val textLengthToRemove = textLength - maxCapacity
+    if (textLengthToRemove <= 0) {
+      return
+    }
+    val block = blocks.firstOrNull() ?: return
+    val outputStartOffset = block.outputStartOffset
+    val outputLengthToRemove = min(block.endOffset - outputStartOffset, textLengthToRemove)
+    deleteDocumentRange(block, TextRange(outputStartOffset, outputStartOffset + outputLengthToRemove))
+  }
+
+  private fun findTopBlockCountToRemove(maxCapacity: Int, textLength: Int): Int {
+    val firstRetainedBlockInd = blocks.indexOfFirst {
+      it.endOffset + maxCapacity > textLength
+    }
+    return firstRetainedBlockInd.coerceAtLeast(0)
+  }
+
+  @RequiresEdt
+  fun deleteDocumentRange(block: CommandBlock, deleteRange: TextRange) {
+    val startBlockInd = blocks.indexOf(block)
+    check(startBlockInd >= 0)
+    if (!deleteRange.isEmpty) {
+      for (blockInd in startBlockInd until blocks.size) {
+        deleteDocumentRangeInHighlightings(blocks[blockInd], deleteRange)
+      }
+      document.deleteString(deleteRange.startOffset, deleteRange.endOffset)
     }
   }
 
-  @RequiresEdt
-  fun removeBlockState(block: CommandBlock, stateName: String) {
-    val curStates = blockStates[block]
-    if (curStates?.find { it.name == stateName } != null) {
-      updateBlockStates(block, curStates, curStates.filter { it.name != stateName })
+  private fun deleteDocumentRangeInHighlightings(block: CommandBlock, deleteRange: TextRange) {
+    val highlightings = getHighlightings(block) ?: emptyList()
+    val updatedHighlightings: List<HighlightingInfo> = highlightings.mapNotNull {
+      when {
+        it.endOffset <= deleteRange.startOffset -> it
+        it.startOffset >= deleteRange.endOffset -> {
+          val newRangeStart = it.startOffset - deleteRange.length
+          HighlightingInfo(newRangeStart, newRangeStart + it.length, it.textAttributes)
+        }
+        else -> {
+          val intersectionLength = findIntersectionLength(it, deleteRange)
+          check(intersectionLength > 0)
+          val newRangeStart = min(it.startOffset, deleteRange.startOffset)
+          val newRangeEnd = newRangeStart + it.length - intersectionLength
+          if (newRangeStart != newRangeEnd)
+            HighlightingInfo(newRangeStart, newRangeEnd, it.textAttributes)
+          else
+            null // the whole highlighting is deleted
+        }
+      }
     }
+    putHighlightings(block, updatedHighlightings)
   }
 
-  private fun updateBlockStates(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {
-    blockStates[block] = newStates
-    listeners.forEach { it.blockDecorationStateChanged(block, oldStates, newStates) }
+  private fun findIntersectionLength(range1: HighlightingInfo, range2: TextRange): Int {
+    val intersectionLength = min(range1.endOffset, range2.endOffset) - max(range1.startOffset, range2.startOffset)
+    return max(intersectionLength, 0)
+  }
+
+  private fun getMaxCapacity(): Int {
+    return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
   }
 
   interface TerminalOutputListener {
+    fun blockCreated(block: CommandBlock) {}
     fun blockRemoved(block: CommandBlock) {}
-    fun blockDecorationStateChanged(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {}
+
+    /** Block length is finalized, so block bounds won't expand if the text is added before or after the block. */
+    fun blockFinalized(block: CommandBlock) {}
+    fun blockInfoUpdated(block: CommandBlock, newInfo: CommandBlockInfo) {}
   }
 }
 
-data class CommandBlock(val command: String?, val range: RangeMarker) {
+internal class AllHighlightingsSnapshot(private val document: Document, highlightings: List<HighlightingInfo>) {
+  private val allSortedHighlightings: List<HighlightingInfo> = buildAndSortHighlightings(document, highlightings)
+
+  val size: Int
+    get() = allSortedHighlightings.size
+
+  operator fun get(index: Int): HighlightingInfo = allSortedHighlightings[index]
+
+  /**
+   * @return index of a highlighting containing the `documentOffset` (`highlighting.startOffset <= documentOffset < highlighting.endOffset`).
+   *         If no such highlighting is found:
+   *           - returns 0 for negative `documentOffset`
+   *           - total count of highlightings for `documentOffset >= document.textLength`
+   */
+  fun findHighlightingIndex(documentOffset: Int): Int {
+    if (documentOffset <= 0) return 0
+    val searchKey = HighlightingInfo(documentOffset, documentOffset, TextAttributes.ERASE_MARKER)
+    val binarySearchInd = Collections.binarySearch(allSortedHighlightings, searchKey) { a, b ->
+      a.startOffset.compareTo(b.startOffset)
+    }
+    return if (binarySearchInd >= 0) binarySearchInd
+    else {
+      val insertionIndex = -binarySearchInd - 1
+      if (insertionIndex == 0 || insertionIndex == allSortedHighlightings.size && documentOffset >= document.textLength) {
+        insertionIndex
+      }
+      else {
+        insertionIndex - 1
+      }
+    }
+  }
+}
+
+private fun buildAndSortHighlightings(document: Document, highlightings: List<HighlightingInfo>): List<HighlightingInfo> {
+  val sortedHighlightings = highlightings.sortedBy { it.startOffset }
+  val documentLength = document.textLength
+  val result: MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2 + 1)
+  var startOffset = 0
+  for (highlighting in sortedHighlightings) {
+    if (highlighting.startOffset < 0 || highlighting.endOffset > documentLength) {
+      logger<TerminalOutputModel>().error("Terminal highlightings range should be within document")
+    }
+    if (startOffset > highlighting.startOffset) {
+      logger<TerminalOutputModel>().error("Terminal highlightings should not overlap")
+    }
+    if (startOffset < highlighting.startOffset) {
+      result.add(HighlightingInfo(startOffset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
+    }
+    result.add(highlighting)
+    startOffset = highlighting.endOffset
+  }
+  if (startOffset < documentLength) {
+    result.add(HighlightingInfo(startOffset, documentLength, TextAttributes.ERASE_MARKER))
+  }
+  return result
+}
+
+data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, val range: RangeMarker) {
   val startOffset: Int
     get() = range.startOffset
   val endOffset: Int
     get() = range.endOffset
+  val commandStartOffset: Int
+    get() = range.startOffset + if (withPrompt) prompt!!.text.length + 1 else 0
   val outputStartOffset: Int
-    get() = range.startOffset + if (!command.isNullOrEmpty()) command.length + 1 else 0
+    get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
   val textRange: TextRange
     get() = range.textRange
+
+  val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
+  val withCommand: Boolean = !command.isNullOrEmpty()
+
+  /** If block is finalized it means that its length won't be expanded if some text is added before or after it */
+  val isFinalized: Boolean
+    get() = !range.isGreedyToRight
 }
+
+data class CommandBlockInfo(val exitCode: Int)
+
+internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

@@ -27,10 +27,5 @@ public interface MakeStaticRefactoring<T extends PsiTypeParameterListOwner> exte
 
   boolean isReplaceUsages();
 
-  String getClassParameterName();
-
   List<PsiField> getFields();
-
-  @Nullable
-  String getParameterNameForField(PsiField field);
 }

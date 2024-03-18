@@ -8,7 +8,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.stubs.createFacet
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.load.java.ReportLevel
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms

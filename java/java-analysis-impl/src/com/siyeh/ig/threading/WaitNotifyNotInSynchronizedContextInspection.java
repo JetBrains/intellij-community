@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection {
+public final class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection {
 
   @Override
   @NotNull

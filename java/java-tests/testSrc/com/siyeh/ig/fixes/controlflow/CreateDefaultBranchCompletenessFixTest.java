@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class CreateDefaultBranchCompletenessFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new SwitchStatementsWithoutDefaultInspection[]{new SwitchStatementsWithoutDefaultInspection()};
+    return new LocalInspectionTool[]{new SwitchStatementsWithoutDefaultInspection()};
   }
 
   @Override
@@ -23,7 +23,7 @@ public class CreateDefaultBranchCompletenessFixTest extends LightQuickFixParamet
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @NotNull

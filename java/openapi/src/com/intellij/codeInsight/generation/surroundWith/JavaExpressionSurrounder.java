@@ -4,6 +4,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -22,8 +23,8 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
   @Override
   public boolean isApplicable(PsiElement @NotNull [] elements) {
     return elements.length == 1 &&
-           elements[0] instanceof PsiExpression &&
-           isApplicable((PsiExpression)elements[0]);
+           elements[0] instanceof PsiExpression expr &&
+           DumbService.getInstance(expr.getProject()).computeWithAlternativeResolveEnabled(() -> isApplicable(expr));
   }
 
   /**

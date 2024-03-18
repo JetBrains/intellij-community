@@ -1,18 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Experimental
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.platform.util.progress.ProgressReporter
+import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 suspend fun <T> withBackgroundProgress(
   project: Project,
@@ -34,7 +33,9 @@ suspend fun <T> withBackgroundProgress(
 
 /**
  * Shows a background progress indicator, and runs the specified [action].
- * The action receives [ProgressReporter] in the coroutine context, reporter updates are reflected in the UI during the execution.
+ * The action receives [a fresh progress step][com.intellij.platform.util.progress.currentProgressStep] in the coroutine context,
+ * which can be used via [reportProgress], [reportSequentialProgress], [reportRawProgress].
+ * Corresponding reporter updates are reflected in the UI during the execution.
  * The progress is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
@@ -65,7 +66,9 @@ suspend fun <T> withModalProgress(
 
 /**
  * Shows a modal progress indicator, and runs the specified [action].
- * The action receives [ProgressReporter] in the coroutine context, reporter updates are reflected in the UI during the execution.
+ * The action receives [a fresh progress step][com.intellij.platform.util.progress.currentProgressStep] in the coroutine context,
+ * which can be used via [reportProgress], [reportSequentialProgress], [reportRawProgress].
+ * Corresponding reporter updates are reflected in the UI during the execution.
  * The progress dialog is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
@@ -102,7 +105,9 @@ fun <T> runWithModalProgressBlocking(
 
 /**
  * Shows a modal progress indicator, and runs the specified [action].
- * The action receives [ProgressReporter] in the coroutine context, reporter updates are reflected in the UI during the execution.
+ * The action receives [a fresh progress step][com.intellij.platform.util.progress.currentProgressStep] in the coroutine context,
+ * which can be used via [reportProgress], [reportSequentialProgress], [reportRawProgress].
+ * Corresponding reporter updates are reflected in the UI during the execution.
  * The progress dialog is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *

@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
@@ -9,12 +10,14 @@ import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.util.ExceptionUtil;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
+  private static final Logger LOG = Logger.getInstance(DaemonProgressIndicator.class);
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile Throwable myCancellationCause;
@@ -66,7 +69,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void cancel() {
-    cancel("daemon progress cancelled with no specified reason");
+    cancel("");
   }
 
   public final void cancel(@NotNull String reason) {
@@ -79,6 +82,13 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
     if (tryCancel()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("doCancel(" + this +
+                  (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
+                  (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) +
+                  ")"
+        );
+      }
       myCancellationCause = cause;
       if (cause != null) {
         myTraceableDisposable.killExceptionally(cause);

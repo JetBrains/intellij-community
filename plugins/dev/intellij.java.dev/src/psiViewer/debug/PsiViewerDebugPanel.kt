@@ -129,6 +129,15 @@ class PsiViewerDebugPanel(
     JavaDevBundle.message("psi.viewer.toggle.watch.mode.description"),
     AllIcons.Debugger.Watch,
   ) {
+    init {
+      if (PsiViewerDebugSettings.getInstance().watchMode) {
+        debugSession.addSessionListener(watchListener)
+      }
+      else {
+        debugSession.removeSessionListener(watchListener)
+      }
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun isSelected(e: AnActionEvent): Boolean = watchMode
@@ -197,7 +206,7 @@ class PsiViewerDebugPanel(
                 JavaDevBundle.message("psi.viewer.debug.evaluation.failed"),
                 NotificationType.ERROR,
               )
-              LOG.error("Failed to evaluate PSI expression", e)
+              LOG.warn("Failed to evaluate PSI expression", e)
             }
 
           }
@@ -326,6 +335,7 @@ class PsiViewerDebugPanel(
 
   override fun dispose() {
     if (!editor.isDisposed()) EditorFactory.getInstance().releaseEditor(editor)
+    debugSession.removeSessionListener(watchListener)
   }
 
   internal companion object {

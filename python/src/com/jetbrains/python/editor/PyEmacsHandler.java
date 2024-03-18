@@ -28,7 +28,7 @@ import java.util.List;
  * <p/>
  * Thread-safe.
  */
-public class PyEmacsHandler implements EmacsProcessingHandler {
+public final class PyEmacsHandler implements EmacsProcessingHandler {
 
   private static final TokenSet COMPOUND_STATEMENT_TYPES = TokenSet.create(
     PyElementTypes.IF_STATEMENT, PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.ELSE_KEYWORD,

@@ -5,15 +5,18 @@ UFile (package = ) [public final enum Style {...]
         UEnumConstant (name = SYSTEM) [@null SYSTEM("system")] = Undetermined
             UAnnotation (fqName = null) [@null]
             USimpleNameReferenceExpression (identifier = Style) [Style] = external Style()
-            ULiteralExpression (value = "system") ["system"] = "system"
+            UPolyadicExpression (operator = +) ["system"] = "system"
+                ULiteralExpression (value = "system") ["system"] = "system"
         UEnumConstant (name = USER) [@null USER("user")] = Undetermined
             UAnnotation (fqName = null) [@null]
             USimpleNameReferenceExpression (identifier = Style) [Style] = external Style()
-            ULiteralExpression (value = "user") ["user"] = "user"
+            UPolyadicExpression (operator = +) ["user"] = "user"
+                ULiteralExpression (value = "user") ["user"] = "user"
         UEnumConstant (name = INTERNAL) [@null INTERNAL("internal")] = Undetermined
             UAnnotation (fqName = null) [@null]
             USimpleNameReferenceExpression (identifier = Style) [Style] = external Style()
-            ULiteralExpression (value = "internal") ["internal"] = "internal"
+            UPolyadicExpression (operator = +) ["internal"] = "internal"
+                ULiteralExpression (value = "internal") ["internal"] = "internal"
         UEnumConstant (name = UNKNOWN) [@null UNKNOWN(null)] = Undetermined
             UAnnotation (fqName = null) [@null]
             USimpleNameReferenceExpression (identifier = Style) [Style] = external Style()

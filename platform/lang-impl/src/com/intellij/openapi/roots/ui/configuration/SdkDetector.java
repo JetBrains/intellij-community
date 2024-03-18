@@ -6,12 +6,15 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +59,7 @@ public class SdkDetector {
                                         @NotNull Disposable lifetime,
                                         @NotNull ModalityState callbackModality,
                                         @NotNull DetectedSdkListener listener) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     if (!isDetectorEnabled()) {
       return;
     }
@@ -155,19 +158,16 @@ public class SdkDetector {
     }
   }
 
-  private static void detectAllSdks(
-    @NotNull ProgressIndicator indicator,
-    @NotNull DetectedSdkListener callback
-  ) {
+  private static void detectAllSdks(@NotNull ProgressIndicator indicator, @NotNull DetectedSdkListener callback) {
     try {
       callback.onSearchStarted();
       indicator.setIndeterminate(false);
-      var types = SdkType.getAllTypes();
-      for (int i = 0; i < types.length; i++) {
-        indicator.setFraction((float)i / types.length);
+      List<SdkType> types = SdkType.getAllTypeList();
+      for (int i = 0; i < types.size(); i++) {
+        indicator.setFraction((float)i / types.size());
         indicator.checkCanceled();
         if (isDetectorEnabled()) {
-          detect(types[i], indicator, callback);
+          detect(types.get(i), indicator, callback);
         }
       }
     }

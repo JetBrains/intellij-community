@@ -4,6 +4,5 @@ class P
 
 val foo: O get() = if (true) O() else P()<caret>
 
-/* IGNORE_K2 */
-
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

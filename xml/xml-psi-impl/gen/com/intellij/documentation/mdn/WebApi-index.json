@@ -135,7 +135,7 @@
   "htmlhyperlinkelementutils.search": "htmlareaelement.search",
   "htmlhyperlinkelementutils.tostring": "htmlareaelement.tostring",
   "htmlhyperlinkelementutils.username": "htmlareaelement.username",
-  "htmlorsvgelement.autofocus": "htmlselectelement.autofocus",
+  "htmlorsvgelement.autofocus": "htmlelement.autofocus",
   "htmlorsvgelement.blur": "htmlelement.blur",
   "htmlorsvgelement.dataset": "htmlelement.dataset",
   "htmlorsvgelement.focus": "htmlelement.focus",

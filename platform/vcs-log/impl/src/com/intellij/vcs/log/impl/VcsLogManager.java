@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
@@ -46,7 +46,8 @@ public class VcsLogManager implements Disposable {
 
   protected final @NotNull Project myProject;
   private final @NotNull VcsLogTabsProperties myUiProperties;
-  private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
+  private final @Nullable BiConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
+  private final @NotNull String myName;
 
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogColorManager myColorManager;
@@ -56,19 +57,28 @@ public class VcsLogManager implements Disposable {
   private boolean myDisposed;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
-    this(project, uiProperties, findLogProviders(roots, project), true, null);
+    this(project, uiProperties, findLogProviders(roots, project));
+  }
+
+  private VcsLogManager(@NotNull Project project,
+                       @NotNull VcsLogTabsProperties uiProperties,
+                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+    this(project, uiProperties, logProviders, "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders), true, false, null);
   }
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                       @NotNull String name,
                        boolean scheduleRefreshImmediately,
-                       @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
+                       boolean isIndexEnabled,
+                       @Nullable BiConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
+    myName = name;
 
-    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), this);
+    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), isIndexEnabled, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
@@ -190,6 +200,10 @@ public class VcsLogManager implements Disposable {
     return myPostponableRefresher.getLogWindowsInformation();
   }
 
+  public @NonNls @NotNull String getName() {
+    return myName;
+  }
+
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                                             @NotNull PostponableLogRefresher refresher,
                                             @NotNull Disposable disposableParent) {
@@ -261,7 +275,7 @@ public class VcsLogManager implements Disposable {
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
     // the above method first disposes ui in EDT, then disposes everything else in a background
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
+    LOG.debug("Disposed " + myName);
   }
 
   @RequiresEdt
@@ -277,7 +291,7 @@ public class VcsLogManager implements Disposable {
     public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
         if (myRecreateMainLogHandler != null) {
-          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.accept(source, throwable));
         }
         else {
           LOG.error(source != null ? "Vcs Log exception from " + source : throwable.getMessage(), throwable);

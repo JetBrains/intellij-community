@@ -33,6 +33,7 @@
       "profileRed.svg": "actions/profileRed.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
+      "shortcutFilter.svg": "actions/shortcutFilter.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
       "rerunAutomatically.svg": "actions/rerunAutomatically.svg",
@@ -98,17 +99,37 @@
     },
     "codeWithMe": {
       "cwmAccess.svg": "codeWithMe/cwmAccess.svg",
+      "cwmCamAvatarOff.svg": "codeWithMe/cwmCamAvatarOff.svg",
+      "cwmCamAvatarOn.svg": "codeWithMe/cwmCamAvatarOn.svg",
+      "cwmCamOff.svg": "codeWithMe/cwmCamOff.svg",
+      "cwmCamOn.svg": "codeWithMe/cwmCamOn.svg",
       "cwmDisableCall.svg": "codeWithMe/cwmDisableCall.svg",
       "cwmEnableCall.svg": "codeWithMe/cwmEnableCall.svg",
       "cwmIconModificator.svg": "codeWithMe/cwmIconModificator.svg",
       "cwmIconModificatorMenu.svg": "codeWithMe/cwmIconModificatorMenu.svg",
       "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
-      "cwmUsers.svg": "users.svg"
+      "cwmMicAvatarOff.svg": "codeWithMe/cwmMicAvatarOff.svg",
+      "cwmMicAvatarOn.svg": "codeWithMe/cwmMicAvatarOn.svg",
+      "cwmMicOff.svg": "codeWithMe/cwmMicOff.svg",
+      "cwmMicOn.svg": "codeWithMe/cwmMicOn.svg",
+      "cwmPermissionEdit.svg": "codeWithMe/cwmPermissionEdit.svg",
+      "cwmPermissionFull.svg": "codeWithMe/cwmPermissionFull.svg",
+      "cwmPermissions.svg": "codeWithMe/cwmPermissions.svg",
+      "cwmPermissionsDenied.svg": "codeWithMe/cwmPermissionsDenied.svg",
+      "cwmPermissionsGranted.svg": "codeWithMe/cwmPermissionsGranted.svg",
+      "cwmPermissionView.svg": "codeWithMe/cwmPermissionView.svg",
+      "cwmScreenInBrowserOff.svg": "codeWithMe/cwmScreenInBrowserOff.svg",
+      "cwmScreenInBrowserOn.svg": "codeWithMe/cwmScreenInBrowserOn.svg",
+      "cwmScreenOff.svg": "codeWithMe/cwmScreenOff.svg",
+      "cwmScreenOn.svg": "codeWithMe/cwmScreenOn.svg",
+      "cwmUsers.svg": "users.svg",
+      "cwmVerified.svg": "codeWithMe/cwmVerified.svg"
     },
     "debugger": {
       "addToWatch.svg": "debugger/addToWatch.svg",
       "dbPrimitive.svg": "debugger/db_primitive.svg",
       "frame.svg": "debugger/frame.svg",
+      "selfReference.svg": "debugger/selfreference.svg",
       "threads.svg": "debugger/threads.svg",
       "value.svg": "debugger/value.svg",
       "watch.svg": "debugger/watch.svg"
@@ -147,22 +168,12 @@
       "inlayRenameInCommentsActive.svg": "actions/inlayRenameInCommentsActive.svg",
       "inlayRenameInNoCodeFiles.svg": "actions/inlayRenameInNoCodeFiles.svg",
       "inlayRenameInNoCodeFilesActive.svg": "actions/inlayRenameInNoCodeFilesActive.svg",
-      "inlaySettings.svg": "general/inlayGear.svg",
+      "inlaySettings.svg": "actions/inlayGear.svg",
       "intentionBulb.svg": "actions/intentionBulb.svg",
       "intentionBulbGrey.svg": "actions/intentionBulbGrey.svg",
       "quickfixBulb.svg": "actions/quickfixBulb.svg",
       "quickfixOffBulb.svg": "actions/quickfixOffBulb.svg"
     },
-    "empty.svg": [
-      "nodes/finalMark.svg",
-      "nodes/junitTestMark.svg",
-      "nodes/locked.svg",
-      "nodes/runnableMark.svg",
-      "nodes/shared.svg",
-      "nodes/staticMark.svg",
-      "nodes/symlink.svg",
-      "nodes/tabAlert.svg"
-    ],
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
       "addAny.svg": "fileTypes/addAny.svg",
@@ -190,6 +201,7 @@
         "fileTypes/java.svg",
         "fileTypes/javaOutsideSource.svg"
       ],
+      "javaClass.svg": "fileTypes/javaClass.svg",
       "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
@@ -198,6 +210,7 @@
       "jspx.svg": "fileTypes/jspx.svg",
       "less.svg": "icons/less.svg",
       "manifest.svg": "fileTypes/manifest.svg",
+      "microsoftWindows.svg": "fileTypes/microsoftWindows.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",
@@ -311,6 +324,7 @@
       "expandAll.svg": "actions/expandall.svg",
       "export.svg": "toolbarDecorator/export.svg",
       "filter.svg": "general/filter.svg",
+      "greenCheckmark.svg": "general/greenCheckmark.svg",
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
       "history.svg": [
@@ -387,6 +401,7 @@
       "successDialog.svg": "general/successDialog.svg",
       "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
+      "questionMark.svg": "general/contextHelp.svg",
       "warningDialog.svg": "general/warningDialog.svg"
     },
     "graph": {
@@ -513,8 +528,16 @@
       "webService.svg": "javaee/WebService.svg",
       "webServiceClient.svg": "javaee/WebServiceClient.svg"
     },
+    "language": {
+      "php.svg": "language/php.svg",
+      "scala.svg": "language/scala.svg"
+    },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
+      "accessLocal.svg": "nodes/c_plocal.svg",
+      "accessPrivate.svg": "nodes/c_private.svg",
+      "accessProtected.svg": "nodes/c_protected.svg",
+      "accessPublic.svg": "nodes/c_public.svg",
       "alias.svg": "nodes/alias.svg",
       "annotation.svg": "nodes/annotationtype.svg",
       "annotationFolder.svg": "modules/annotation.svg",
@@ -604,7 +627,16 @@
       "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg",
-      "webFolder.svg": "nodes/webFolder.svg"
+      "webFolder.svg": "nodes/webFolder.svg",
+      "finalMark.svg": "nodes/finalMark.svg",
+      "junitTestMark.svg": "nodes/junitTestMark.svg",
+      "locked.svg": "nodes/locked.svg",
+      "processMark.svg": "nodes/processMark.svg",
+      "runnableMark.svg": "nodes/runnableMark.svg",
+      "shared.svg": "nodes/shared.svg",
+      "staticMark.svg": "nodes/staticMark.svg",
+      "symlink.svg": "nodes/symlink.svg",
+      "tabAlert.svg": "nodes/tabAlert.svg"
     },
     "objectBrowser": {
       "compactEmptyPackages.svg": "objectBrowser/compactEmptyPackages.svg",
@@ -781,6 +813,7 @@
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "toolWindowJsonPath.svg": "toolwindows/toolWindowJsonPath.svg",
       "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
+      "toolWindowDataView.svg": "toolwindows/toolWindowDataView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
       "web.svg": [
         "toolwindows/webToolWindow.svg",

@@ -27,7 +27,7 @@ open class KDocTemplate : Template<StringBuilder> {
         insert(description)
 
         if (!containerInfo.isEmpty()) {
-            append("<div class='bottom'>")
+            append("<div class='$CLASS_BOTTOM'>")
             insert(containerInfo)
             append("</div>")
         }

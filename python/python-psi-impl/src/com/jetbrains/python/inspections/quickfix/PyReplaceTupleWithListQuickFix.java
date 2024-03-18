@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
+public class PyReplaceTupleWithListQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,15 +33,14 @@ public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     assert element instanceof PyAssignmentStatement;
     PyExpression[] targets = ((PyAssignmentStatement)element).getTargets();
     if (targets.length == 1 && targets[0] instanceof PySubscriptionExpression subscriptionExpression) {
       if (subscriptionExpression.getOperand() instanceof PyReferenceExpression referenceExpression) {
         final TypeEvalContext context = TypeEvalContext.userInitiated(project, element.getContainingFile());
         final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-        element = referenceExpression.followAssignmentsChain(resolveContext).getElement();
+        element = updater.getWritable(referenceExpression.followAssignmentsChain(resolveContext).getElement());
         if (element instanceof PyParenthesizedExpression) {
           final PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
           replaceWithListLiteral(element, (PyTupleExpression)expression);

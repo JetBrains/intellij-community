@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.onboarding
 
 import com.intellij.internal.statistic.DeviceIdManager
-import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_IDEA_USER_DATE
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_IDEA_USER_DURATION
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_DURATION
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_RESET
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_SURVEY_DELAY
@@ -11,7 +11,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.GregorianCalendar
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -23,7 +23,9 @@ class KotlinNewUserTrackerTest {
         return Duration.between(Instant.ofEpochSecond(this), Instant.now()) < Duration.ofSeconds(30)
     }
 
-    private fun createInstance(installationDate: LocalDate? = NEW_IDEA_USER_DATE.minusDays(1)): KotlinNewUserTracker {
+    private fun createInstance(
+        installationDate: LocalDate? = LocalDate.now().minusDays(NEW_IDEA_USER_DURATION.toDays() + 1)
+    ): KotlinNewUserTracker {
         val installationId = installationDate?.let {
             val calendar = GregorianCalendar.from(installationDate.atStartOfDay(ZoneId.systemDefault()))
             DeviceIdManager.generateId(calendar, 'B')
@@ -44,18 +46,18 @@ class KotlinNewUserTrackerTest {
     }
 
     @Test
-    fun `Existing idea users should not be marked as new if they open a kotlin file for the first time`() {
+    fun `Existing idea users should be marked as new if they open a kotlin file for the first time`() {
         val instance = createInstance()
         instance.onKtFileOpened()
         assertTrue(instance.state.firstKtFileOpened.isRecentEpochTimestamp())
         assertTrue(instance.state.lastKtFileOpened.isRecentEpochTimestamp())
-        assertFalse(instance.isNewKtUser())
+        assertTrue(instance.isNewKtUser())
         assertFalse(instance.shouldShowNewUserDialog())
     }
 
     @Test
     fun `New idea users should be marked as new if they open a kotlin file for the first time`() {
-        val instance = createInstance(NEW_IDEA_USER_DATE.atStartOfDay().toLocalDate().plusDays(1))
+        val instance = createInstance(LocalDate.now().plusDays(1))
         instance.onKtFileOpened()
         assertTrue(instance.state.firstKtFileOpened.isRecentEpochTimestamp())
         assertTrue(instance.state.lastKtFileOpened.isRecentEpochTimestamp())
@@ -116,10 +118,20 @@ class KotlinNewUserTrackerTest {
     }
 
     @Test
-    fun `Never be a new user if DeviceId could not be read`() {
+    fun `Never be a new idea user if DeviceId could not be read`() {
         val instance = createInstance(null)
-        assertFalse(instance.isNewKtUser())
-        instance.onKtFileOpened()
-        assertFalse(instance.isNewKtUser())
+        assertFalse(instance.isNewIdeaUser())
+    }
+
+    @Test
+    fun `New IDEA users should be detected as new if they have recently installed IDEA`() {
+        val instance = createInstance(LocalDate.now().minusDays(NEW_IDEA_USER_DURATION.toDays() - 2))
+        assertTrue(instance.isNewIdeaUser())
+    }
+
+    @Test
+    fun `New IDEA users should no longer be classed as new if they have installed IDEA too long ago`() {
+        val instance = createInstance(LocalDate.now().minusDays(NEW_IDEA_USER_DURATION.toDays() + 2))
+        assertFalse(instance.isNewIdeaUser())
     }
 }

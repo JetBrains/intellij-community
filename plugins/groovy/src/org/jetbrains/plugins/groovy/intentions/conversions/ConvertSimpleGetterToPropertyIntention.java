@@ -1,14 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -26,14 +25,14 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class ConvertSimpleGetterToPropertyIntention extends Intention {
+public class ConvertSimpleGetterToPropertyIntention extends GrPsiUpdateIntention {
 
   private static final String[] MODIFIERS_TO_CHECK = {
     PsiModifier.STATIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED
   };
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrMethod method = (GrMethod)element.getParent();
 
     GrOpenBlock block = method.getBlock();
@@ -63,12 +62,12 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
     GrTypeElement returnTypeElement = method.getReturnTypeElementGroovy();
     PsiType returnType = returnTypeElement == null ? null : returnTypeElement.getType();
 
-    GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(
+    GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(context.project()).createFieldDeclaration(
       ArrayUtilRt.toStringArray(modifiers), fieldName, value, returnType
     );
 
     PsiElement replaced = method.replace(declaration);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
+    JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced);
   }
 
   @NotNull

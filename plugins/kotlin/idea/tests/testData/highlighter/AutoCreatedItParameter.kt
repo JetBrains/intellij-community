@@ -1,3 +1,4 @@
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</symbolName>() {
     val <symbolName textAttributesKey="KOTLIN_LOCAL_VARIABLE">vect</symbolName> = <symbolName textAttributesKey="KOTLIN_CONSTRUCTOR">MyIterable</symbolName><<symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName>>()
     <symbolName textAttributesKey="KOTLIN_LOCAL_VARIABLE">vect</symbolName>.<symbolName textAttributesKey="KOTLIN_FUNCTION_CALL">filter</symbolName> { <symbolName textAttributesKey="KOTLIN_CLOSURE_DEFAULT_PARAMETER">it</symbolName> != 2 }.<symbolName textAttributesKey="KOTLIN_FUNCTION_CALL">forEach</symbolName> { <symbolName textAttributesKey="KOTLIN_CLOSURE_DEFAULT_PARAMETER">it</symbolName>.<symbolName textAttributesKey="KOTLIN_FUNCTION_CALL">toString</symbolName>() }

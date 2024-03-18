@@ -11,8 +11,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class MavenMigrateTest : KotlinMavenImportingTestCase() {
-    override fun runInDispatchThread() = false
-
     fun testMigrateApiAndLanguageVersions() = runBlocking {
         val notifications = doMigrationTest(
             before = """
@@ -81,7 +79,7 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
         )
     }
 
-    private suspend fun doMigrationTest(before: String, after: String): List<Notification> = catchNotificationsAsync(myProject) {
+    private suspend fun doMigrationTest(before: String, after: String): List<Notification> = catchNotificationsAsync(project) {
         importProjectAsync(before)
         importProjectAsync(after)
     }

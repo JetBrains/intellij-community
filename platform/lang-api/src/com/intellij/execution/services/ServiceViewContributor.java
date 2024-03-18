@@ -4,12 +4,17 @@ package com.intellij.execution.services;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface ServiceViewContributor<T> {
   ExtensionPointName<ServiceViewContributor<?>> CONTRIBUTOR_EP_NAME =
     ExtensionPointName.create("com.intellij.serviceViewContributor");
+
+  static <V extends ServiceViewContributor<?>> @Nullable V findRootContributor(@NotNull Class<V> contributorClass) {
+    return CONTRIBUTOR_EP_NAME.findExtension(contributorClass);
+  }
 
   @NotNull
   ServiceViewDescriptor getViewDescriptor(@NotNull Project project);

@@ -13,6 +13,9 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -21,6 +24,8 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,11 +34,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Objects.requireNonNull;
 
 @ApiStatus.NonExtendable
-public class HyperlinkAnnotator implements Annotator {
+public class HyperlinkAnnotator implements Annotator, DumbAware {
 
   private static final Key<@Nls String> messageKey = Key.create("hyperlink.message");
 
@@ -41,15 +46,16 @@ public class HyperlinkAnnotator implements Annotator {
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (holder.isBatchMode()) return;
 
-    for (PsiHighlightedReference reference : PsiSymbolReferenceService.getService().getReferences(element, PsiHighlightedReference.class)) {
-      TextRange range = reference.getAbsoluteRange();
-      String message = reference.highlightMessage();
-      AnnotationBuilder annotationBuilder = message == null ? holder.newSilentAnnotation(reference.highlightSeverity())
-                                                            : holder.newAnnotation(reference.highlightSeverity(), message);
-      reference.highlightReference(annotationBuilder.range(range)).create();
-    }
-
     if (WebReference.isWebReferenceWorthy(element)) {
+      // asking for references on every element is too expensive, only ask for it on potential external reference hosts
+      // not only slow, but also creates a lot of cached values and SoftReference instances in all elements
+      for (var reference : PsiSymbolReferenceService.getService().getReferences(element, PsiHighlightedReference.class)) {
+        String message = reference.highlightMessage();
+        AnnotationBuilder annotationBuilder = message == null ? holder.newSilentAnnotation(reference.highlightSeverity())
+                                                              : holder.newAnnotation(reference.highlightSeverity(), message);
+        reference.highlightReference(annotationBuilder.range(reference.getAbsoluteRange())).create();
+      }
+
       annotateContributedReferences(element, holder);
     }
   }
@@ -69,12 +75,23 @@ public class HyperlinkAnnotator implements Annotator {
     }
   }
 
-  @NotNull
-  private static List<PsiReference> getReferences(@NotNull PsiElement element) {
-    return CachedValuesManager.getCachedValue(element, () -> {
-      List<PsiReference> references = PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
-      return Result.create(unmodifiableOrEmptyList(references), PsiModificationTracker.MODIFICATION_COUNT);
-    });
+  private static final Key<ParameterizedCachedValue<List<PsiReference>, PsiElement>> REFS_KEY = Key.create("HyperlinkAnnotator");
+  private static final ParameterizedCachedValueProvider<List<PsiReference>, PsiElement> REFS_PROVIDER = element -> {
+    List<PsiReference> references;
+    try {
+      references = PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
+    }
+    catch (IndexNotReadyException ignored) {
+      return Result.create(emptyList(), DumbService.getInstance(element.getProject()));
+    }
+
+    if (references.isEmpty()) references = emptyList();
+    return Result.create(references, PsiModificationTracker.MODIFICATION_COUNT);
+  };
+
+  private static @NotNull List<PsiReference> getReferences(@NotNull PsiElement element) {
+    return CachedValuesManager.getManager(element.getProject())
+      .getParameterizedCachedValue(element, REFS_KEY, REFS_PROVIDER, false, element);
   }
 
   private static boolean annotateHyperlinks(@NotNull PsiElement element,

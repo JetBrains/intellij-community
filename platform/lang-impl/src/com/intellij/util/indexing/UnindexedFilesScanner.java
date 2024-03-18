@@ -24,9 +24,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
+import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler;
+import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependencies.FutureScanningRequestToken;
@@ -36,6 +39,7 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.*;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -56,9 +60,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
+import static com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt.usePersistentFilesFilter;
 
 @ApiStatus.Internal
 public class UnindexedFilesScanner extends FilesScanningTaskBase {
+
+  private static final int DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0);
+
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
@@ -83,6 +91,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   private final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
+  private final boolean myAllowSkippingFilterFilling;
   private final String myIndexingReason;
   private final ScanningType myScanningType;
   private final PushedFilePropertiesUpdater myPusher;
@@ -96,24 +105,25 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file-based index extensions for all project files until at least one of UnindexedFilesScanner-s finishes without cancellation.
     // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, false, null, null, null, ScanningType.FULL);
+    this(project, false, false, false, null, null, null, ScanningType.FULL);
   }
 
   public UnindexedFilesScanner(@NotNull Project project, @Nullable String indexingReason) {
-    this(project, false, false, null, null, indexingReason, ScanningType.FULL);
+    this(project, false, false, false, null, null, indexingReason, ScanningType.FULL);
   }
 
   public UnindexedFilesScanner(@NotNull Project project,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable DependenciesIndexedStatusService.StatusMark mark,
                                @Nullable String indexingReason) {
-    this(project, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
+    this(project, false, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
          predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
   }
 
   public UnindexedFilesScanner(@NotNull Project project,
                                boolean startSuspended,
                                boolean onProjectOpen,
+                               boolean allowSkippingFilterFilling,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable StatusMark mark,
                                @Nullable String indexingReason,
@@ -122,13 +132,17 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
+    myAllowSkippingFilterFilling = allowSkippingFilterFilling;
     myIndexingReason = (indexingReason != null) ? indexingReason : "<unknown>";
     myScanningType = scanningType;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
     LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
-    LOG.assertTrue(!myOnProjectOpen || myPredefinedIndexableFilesIterators == null, "Should request full scanning on project open");
+    LOG.assertTrue(!myOnProjectOpen ||
+                   myPredefinedIndexableFilesIterators == null ||
+                   TestModeFlags.get(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY) == Boolean.TRUE,
+                   "Should request full scanning on project open");
     myFutureScanningRequestToken = project.getService(ProjectIndexingDependenciesService.class).newFutureScanningToken();
 
     if (isFullIndexUpdate()) {
@@ -168,6 +182,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     return new UnindexedFilesScanner(
       myProject,
       myStartSuspended,
+      false,
       false,
       mergeIterators(myPredefinedIndexableFilesIterators, oldTask.myPredefinedIndexableFilesIterators),
       StatusMark.mergeStatus(myProvidedStatusMark, oldTask.myProvidedStatusMark),
@@ -422,6 +437,12 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myFutureScanningRequestToken.markSuccessful();
     projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken);
 
+    ProjectIndexableFilesFilterHolder filterHolder = myIndex.getIndexableFilesFilterHolder();
+    FilesFilterScanningHandler filterHandler = isIndexableFilesFilterUpToDate(project, filterHolder, scanningRequest, projectIndexingDependenciesService)
+                                               ? new IdleFilesFilterScanningHandler(filterHolder)
+                                               : new UpdatingFilesFilterScanningHandler(filterHolder);
+    filterHandler.scanningStarted(project, isFullIndexUpdate());
+
     List<IndexableFileScanner.@NotNull ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
@@ -475,7 +496,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
           scanningStatistics.startFileChecking();
           for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
             UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
-                                                                   rootAndFiles.getFirst(), scanningRequest);
+                                                                   rootAndFiles.getFirst(), scanningRequest, filterHandler);
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
             if (!rootIterator.mayBeUsed()) {
@@ -519,9 +540,19 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     finally {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
-        projectIndexingDependenciesService.completeToken(scanningRequest);
+        projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate());
+        filterHandler.scanningCompleted(project);
       }
     }
+  }
+
+  private boolean isIndexableFilesFilterUpToDate(@NotNull Project project,
+                                                 @NotNull ProjectIndexableFilesFilterHolder filterHolder,
+                                                 @NotNull ScanningRequestToken scanningRequest,
+                                                 @NotNull ProjectIndexingDependenciesService service) {
+    return myOnProjectOpen && myAllowSkippingFilterFilling && usePersistentFilesFilter() &&
+           filterHolder.wasDataLoadedFromDisk(project) &&
+           scanningRequest.getAppIndexingRequestId().toInt() == service.getAppIndexingRequestIdOfLastScanning();
   }
 
   @Override
@@ -538,9 +569,16 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
 
   protected @NotNull ProjectScanningHistory performScanningAndIndexing(@NotNull CheckCancelOnlyProgressIndicator indicator,
                                                                        @NotNull IndexingProgressReporter progressReporter) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && DELAY_IN_TESTS_MS > 0) {
+      // This is to ease discovering races, when a test needs indexes, but forgot to wait for smart mode (see IndexingTestUtil)
+      // It's better to install assert into FileBasedIndexImpl about access without explicit "wait" or "nowait" action, but this is
+      // not feasible at the moment. At the moment just keep things easy. Most tests cannot tolerate DELAY_IN_TESTS_MS delay.
+      // Test will run a bit slower, but behavior will be more stable
+      LockSupport.parkNanos(DELAY_IN_TESTS_MS * 1_000_000L);
+    }
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
-    myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
+    myIndex.filesUpdateStarted();
     IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
@@ -558,7 +596,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
     finally {
       ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject);
-      myIndex.filesUpdateFinished(myProject);
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
         DependenciesIndexedStatusService.getInstance(myProject)
           .indexingFinished(!scanningHistory.getTimes().getWasInterrupted(), markRef.get());
@@ -581,13 +618,14 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance()).getFirst();
       for (IndexableFilesIterator iterator : iterators) {
-        new UnindexedFilesScanner(project, startSuspended, true, List.of(iterator), null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN)
+        new UnindexedFilesScanner(project, startSuspended, true, false, List.of(iterator), null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN)
           .queue();
       }
       project.putUserData(CONTENT_SCANNED, true);
     }
     else {
-      new UnindexedFilesScanner(project, startSuspended, true, null, null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN)
+      boolean allowSkippingFilterFilling = project.getService(ProjectIndexingDependenciesService.class).isScanningCompleted();
+      new UnindexedFilesScanner(project, startSuspended, true, allowSkippingFilterFilling, null, null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN)
         .queue();
     }
   }

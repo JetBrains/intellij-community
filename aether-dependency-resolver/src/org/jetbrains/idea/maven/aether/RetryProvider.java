@@ -85,7 +85,7 @@ public final class RetryProvider {
       }
       catch (Exception e) {
         if (i == maxAttempts) {
-          logger.error("Retry attempts limit exceeded, tried " + maxAttempts + " times. Cause: " + e.getMessage(), e);
+          logger.warn("Retry attempts limit exceeded, tried " + maxAttempts + " times. Cause: " + e.getMessage(), e);
           throw e;
         }
         logger.warn("Attempt " + i + " of " + maxAttempts + " failed, retrying in " + effectiveDelay + "ms. Cause: " + e.getMessage(), e);

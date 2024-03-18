@@ -7,6 +7,7 @@ import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -16,19 +17,25 @@ import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class NewUiOnboardingStartupActivity : ProjectActivity {
+private class NewUiOnboardingStartupActivity : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
-    val propertiesComponent = PropertiesComponent.getInstance()
-    rememberNewUiOnFirstStartup(propertiesComponent)
+    val propertyManager = serviceAsync<PropertiesComponent>()
+    rememberNewUiOnFirstStartup(propertyManager)
 
     if (NewUiOnboardingUtil.shouldProposeOnboarding()) {
-      propertiesComponent.unsetValue(ExperimentalUI.NEW_UI_SWITCH)
+      propertyManager.unsetValue(ExperimentalUI.NEW_UI_SWITCH)
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
-      propertiesComponent.setValue(ONBOARDING_PROPOSED_VERSION, version)
+      propertyManager.setValue(ONBOARDING_PROPOSED_VERSION, version)
 
       project.putUserData(TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT, true)
       withContext(Dispatchers.EDT) {
-        NewUiOnboardingService.getInstance(project).showOnboardingDialog()
+        project.serviceAsync<NewUiOnboardingService>().showOnboardingDialog()
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -30,7 +30,12 @@ import javax.swing.SwingConstants
 
 private val LOG = logger<UISettings>()
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false, category = SettingsCategory.UI)
+@State(
+  name = "UISettings",
+  storages = [(Storage("ui.lnf.xml", usePathMacroManager = false))],
+  useLoadedStateAsExisting = false,
+  category = SettingsCategory.UI,
+)
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().service<NotRoamableUiSettings>())
 
@@ -115,7 +120,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var separateMainMenu: Boolean
-    get() = (SystemInfoRt.isWindows || SystemInfoRt.isXWindow) && state.separateMainMenu
+    get() = !SystemInfoRt.isMac && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
     }
@@ -156,6 +161,24 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showToolWindowsNumbers = value
     }
 
+  var showToolWindowsNames: Boolean
+    get() = state.showToolWindowsNames
+    set(value) {
+      state.showToolWindowsNames = value
+    }
+
+  var toolWindowLeftSideCustomWidth: Int
+    get() = state.toolWindowLeftSideCustomWidth
+    set(value) {
+      state.toolWindowLeftSideCustomWidth = value
+    }
+
+  var toolWindowRightSideCustomWidth: Int
+    get() = state.toolWindowRightSideCustomWidth
+    set(value) {
+      state.toolWindowRightSideCustomWidth = value
+    }
+
   var showEditorToolTip: Boolean
     get() = state.showEditorToolTip
     set(value) {
@@ -168,13 +191,13 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showNavigationBar = value
     }
 
-  var navBarLocation : NavBarLocation
+  var navBarLocation: NavBarLocation
     get() = state.navigationBarLocation
     set(value) {
       state.navigationBarLocation = value
     }
 
-  val showNavigationBarInBottom : Boolean
+  val showNavigationBarInBottom: Boolean
     get() = showNavigationBar && navBarLocation == NavBarLocation.BOTTOM
 
   var showMembersInNavigationBar: Boolean
@@ -592,6 +615,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
     }
 
+    @JvmStatic
+    fun setupFractionalMetrics(component: JComponent) {
+      component.putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
+    }
+
     /**
      * This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
      * when preferred size of component is calculated, [.setupComponentAntialiasing] method should be called from
@@ -720,7 +748,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
     migrateFontParameters()
 
-    // Check tab placement in editor
+    // check tab placement in the editor
     val editorTabPlacement = state.editorTabPlacement
     if (editorTabPlacement != TABS_NONE &&
         editorTabPlacement != SwingConstants.TOP &&
@@ -738,7 +766,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.alphaModeRatio = 0.5f
     }
 
-    fireUISettingsChanged()
+    if (LoadingState.APP_READY.isOccurred) {
+      fireUISettingsChanged()
+    }
   }
 
   override fun getStateModificationCount(): Long {
@@ -783,7 +813,18 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   }
 
   private fun migrateFontParameters() {
-    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
+    val presentationModeFontSize = state.presentationModeFontSize
+    val notRoamableOptions = notRoamableOptions
+    if (notRoamableOptions.presentationModeIdeScale != 0f) {
+      return
+    }
+
+    notRoamableOptions.presentationModeIdeScale = if (presentationModeFontSize == 24 || notRoamableOptions.fontSize == 0f) {
+      UISettingsUtils.defaultScale(isPresentation = true)
+    }
+    else {
+      presentationModeFontSize.toFloat() / notRoamableOptions.fontSize
+    }
   }
 
   //<editor-fold desc="Deprecated stuff.">

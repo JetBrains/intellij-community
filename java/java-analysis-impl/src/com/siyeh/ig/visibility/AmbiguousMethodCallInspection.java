@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AmbiguousMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class AmbiguousMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

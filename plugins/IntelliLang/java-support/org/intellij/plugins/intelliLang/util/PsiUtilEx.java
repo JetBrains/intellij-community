@@ -73,6 +73,12 @@ public final class PsiUtilEx {
     }
     return CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText(false));
   }
+  
+  public static boolean isInjectionTargetType(@NotNull PsiType type) {
+    if (isStringOrStringArray(type)) return true;
+    PsiClass classType = PsiUtil.resolveClassInClassTypeOnly(type);
+    return classType != null && CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR.equals(classType.getQualifiedName());
+  }
 
   public static boolean isStringOrStringArray(@NotNull PsiType type) {
     if (type instanceof PsiArrayType) {
@@ -95,13 +101,13 @@ public final class PsiUtilEx {
   public static boolean isLanguageAnnotationTarget(final PsiModifierListOwner owner) {
     if (owner instanceof PsiMethod) {
       final PsiType returnType = ((PsiMethod)owner).getReturnType();
-      if (returnType == null || !isStringOrStringArray(returnType)) {
+      if (returnType == null || !isInjectionTargetType(returnType)) {
         return false;
       }
     }
     else if (owner instanceof PsiVariable) {
       final PsiType type = ((PsiVariable)owner).getType();
-      if (!isStringOrStringArray(type)) {
+      if (!isInjectionTargetType(type)) {
         return false;
       }
     }

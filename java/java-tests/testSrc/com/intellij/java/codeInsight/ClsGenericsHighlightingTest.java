@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -79,6 +80,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
   protected static void commitLibraryModel(ModifiableRootModel model, String testDataPath, String @NotNull ... libraryPath) {

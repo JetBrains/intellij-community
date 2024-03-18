@@ -33,8 +33,7 @@ public final class JvmFacadeImpl implements JvmFacade {
   }
 
   @Override
-  @NotNull
-  public List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public @NotNull List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> CollectionFactory.createConcurrentWeakValueMap());
     return map.computeIfAbsent(qualifiedName, fqn -> doFindClassesWithJavaFacade(fqn, scope));
   }
@@ -64,8 +63,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     return result == null ? Collections.emptyList() : result;
   }
 
-  @NotNull
-  public List<JvmClass> findClassesWithoutJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public @NotNull List<JvmClass> findClassesWithoutJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<JvmClass> result = null;
     for (JvmElementProvider provider : filteredProviders()) {
       List<? extends JvmClass> providedClasses = provider.getClasses(qualifiedName, scope);
@@ -81,8 +79,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     return result == null ? Collections.emptyList() : result;
   }
 
-  @NotNull
-  private static List<JvmClass> sortByScope(@NotNull List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
+  private static @NotNull List<JvmClass> sortByScope(@NotNull List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
     if (classes.size() == 1) return classes;
     classes.sort(JvmClassUtil.createScopeComparator(scope));
     return classes;
@@ -94,8 +91,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     }
   }
 
-  @NotNull
-  private List<JvmElementProvider> filteredProviders() {
-    return myDumbService.filterByDumbAwareness(JvmElementProvider.EP_NAME.getExtensions(myJavaPsiFacade.getProject()));
+  private @NotNull List<JvmElementProvider> filteredProviders() {
+    return myDumbService.filterByDumbAwareness(JvmElementProvider.EP_NAME.getExtensionList(myJavaPsiFacade.getProject()));
   }
 }

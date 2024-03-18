@@ -10,13 +10,19 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
+import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 class TerminalEnterHandler(private val originalHandler: EditorActionHandler) : BaseEnterHandler() {
   override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val promptController = dataContext.promptController
-    if (promptController != null) {
+    val session = dataContext.terminalSession
+    if (promptController != null && session != null) {
       val offset = editor.caretModel.offset
-      if (offset == 0 || editor.document.getText(TextRange(offset - 1, offset)) != "\\") {
+      val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)
+      if (offset == 0
+          || shellSupport == null
+          || editor.document.getText(TextRange(offset - 1, offset)) != shellSupport.lineContinuationChar.toString()) {
         promptController.handleEnterPressed()
         return
       }

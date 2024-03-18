@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight.template.postfix.templates;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class OptionalPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -87,6 +88,7 @@ public class OptionalPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  @NeedsIndex.SmartMode(reason = "Requires nullability analysis")
   public void testNotNullMethodCall() {
     myFixture.addClass("package org.jetbrains.annotations;" +
                        "public @interface NotNull {}");

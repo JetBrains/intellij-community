@@ -8,8 +8,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-@Service(Service.Level.APP)
-@State(name = "StatusBar", storages = [Storage(value = "ide.general.xml")])
+@State(name = "StatusBar", category = SettingsCategory.UI, storages = [Storage(value = "ide.general.xml")])
 class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarState>(StatusBarState()) {
   companion object {
     @JvmStatic

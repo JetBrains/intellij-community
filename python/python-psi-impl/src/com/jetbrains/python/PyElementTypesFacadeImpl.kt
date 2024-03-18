@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.jetbrains.python.psi.impl.*
 import com.jetbrains.python.PyElementTypesFacade
+import com.jetbrains.python.psi.PyElementType
 import java.util.function.Function
 
 

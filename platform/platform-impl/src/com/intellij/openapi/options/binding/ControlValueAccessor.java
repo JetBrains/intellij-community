@@ -15,9 +15,15 @@
  */
 package com.intellij.openapi.options.binding;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author Dmitry Avdeev
+ *
+ * @deprecated Use Kotlin UI DSL with bindings
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public abstract class ControlValueAccessor<V> extends ValueAccessor<V> {
 
   public abstract boolean isEnabled();

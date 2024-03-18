@@ -20,7 +20,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ParameterNamingConventionInspection extends
+public final class ParameterNamingConventionInspection extends
                                                  ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 1;

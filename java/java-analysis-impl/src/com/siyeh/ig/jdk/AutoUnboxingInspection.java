@@ -45,7 +45,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AutoUnboxingInspection extends BaseInspection {
+public final class AutoUnboxingInspection extends BaseInspection {
 
   @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
 

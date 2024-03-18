@@ -22,7 +22,7 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTreeGenerator implements TreeGenerator {
+public final class JavaTreeGenerator implements TreeGenerator {
   private static final Logger LOG = Logger.getInstance(JavaTreeGenerator.class);
 
   private static final JavaParserUtil.ParserWrapper MOD_LIST =

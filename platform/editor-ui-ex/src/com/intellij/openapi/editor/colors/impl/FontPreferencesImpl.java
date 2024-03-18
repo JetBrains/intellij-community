@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.util.NlsSafe;
@@ -128,25 +127,11 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     LOG.debug(ExceptionUtil.currentStackTrace());
   }
 
-  /**
-   * This method might return results different from {@link #getRealFontFamilies()} when
-   * {@link #getFallbackName(String, float, EditorColorsScheme) a font family unavailable at current environment}
-   * has been {@link #register(String, float) registered} at the current font preferences object.
-   * <p/>
-   * Effective fonts will hold fallback values for such font families then (exposed by the current method), 'real fonts' will
-   * be available via {@link #getRealFontFamilies()}.
-   *
-   * @return    effective font families to use
-   */
   @Override
   public @NotNull List<@NlsSafe String> getEffectiveFontFamilies() {
     return myEffectiveFontFamilies;
   }
 
-  /**
-   * @return    'real' font families
-   * @see #getEffectiveFontFamilies()
-   */
   @Override
   public @NotNull List<@NlsSafe String> getRealFontFamilies() {
     return myRealFontFamilies;
@@ -159,13 +144,11 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, float size) {
-    String fallbackFontFamily = AppEditorFontOptions.NEW_FONT_SELECTOR ? null : FontPreferences.getFallbackName(fontFamily, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
-    String effectiveFontFamily = fallbackFontFamily == null ? fontFamily : fallbackFontFamily;
-    if (!myEffectiveFontFamilies.contains(effectiveFontFamily)) {
-      myEffectiveFontFamilies.add(effectiveFontFamily);
+    if (!myEffectiveFontFamilies.contains(fontFamily)) {
+      myEffectiveFontFamilies.add(fontFamily);
     }
     setSize(fontFamily, size);
   }
@@ -181,14 +164,11 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    String fallbackFontFamily = AppEditorFontOptions.NEW_FONT_SELECTOR
-                                ? null : FontPreferences.getFallbackName(fontFamily, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
-    String effectiveFontFamily = fallbackFontFamily == null ? fontFamily : fallbackFontFamily;
-    if (!myEffectiveFontFamilies.contains(effectiveFontFamily)) {
-      myEffectiveFontFamilies.add(effectiveFontFamily);
+    if (!myEffectiveFontFamilies.contains(fontFamily)) {
+      myEffectiveFontFamilies.add(fontFamily);
     }
     notifyStateChanged();
   }

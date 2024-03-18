@@ -55,8 +55,8 @@ internal object JavaSettingsSerializer {
                                                  excludeOutput = excludeOutput != null,
                                                  entitySource = contentRotEntitySource
       ) {
-        this.compilerOutput = compilerOutput?.let { context.virtualFileUrlManager.fromUrl(it) }
-        this.compilerOutputForTests = compilerOutputForTests?.let { context.virtualFileUrlManager.fromUrl(it) }
+        this.compilerOutput = compilerOutput?.let { context.virtualFileUrlManager.getOrCreateFromUri(it) }
+        this.compilerOutputForTests = compilerOutputForTests?.let { context.virtualFileUrlManager.getOrCreateFromUri(it) }
         this.languageLevelId = languageLevel
       }
     }

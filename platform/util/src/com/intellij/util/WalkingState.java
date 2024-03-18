@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ public class WalkingState<T> {
   public void elementStarted(@NotNull T element) {
     isDown = true;
     if (!startedWalking) {
-      stopped = false;
       startedWalking = true;
       try {
         walkChildren(element);

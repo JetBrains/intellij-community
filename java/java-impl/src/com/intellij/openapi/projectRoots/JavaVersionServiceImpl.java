@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anna
  */
-public class JavaVersionServiceImpl extends JavaVersionService {
+public final class JavaVersionServiceImpl extends JavaVersionService {
   @Override
   public boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
     return JavaSdkVersionUtil.isAtLeast(element, version);

@@ -25,7 +25,7 @@ import com.siyeh.ig.resources.ResourceInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ConnectionResourceInspection extends ResourceInspection {
+public final class ConnectionResourceInspection extends ResourceInspection {
 
   @Override
   @NotNull

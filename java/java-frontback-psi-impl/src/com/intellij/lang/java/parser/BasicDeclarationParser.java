@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
@@ -409,19 +410,19 @@ public class BasicDeclarationParser {
     if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
         builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       LanguageLevel level = getLanguageLevel(builder);
-      return level.isAtLeast(LanguageLevel.JDK_16);
+      return JavaFeature.RECORDS.isSufficient(level);
     }
     return false;
   }
 
   private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
-    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) &&
+    return JavaFeature.SEALED_CLASSES.isSufficient(getLanguageLevel(builder)) &&
            tokenType == JavaTokenType.IDENTIFIER &&
            PsiKeyword.SEALED.equals(builder.getTokenText());
   }
 
-  private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
-    if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) ||
+   static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
+    if (!JavaFeature.SEALED_CLASSES.isSufficient(getLanguageLevel(builder)) ||
         tokenType != JavaTokenType.IDENTIFIER ||
         !"non".equals(builder.getTokenText()) ||
         builder.lookAhead(1) != JavaTokenType.MINUS ||
@@ -484,7 +485,7 @@ public class BasicDeclarationParser {
                                                        boolean constructor) {
     parseParameterList(builder);
 
-    eatBrackets(builder, constructor ? "expected.semicolon" : null);
+    eatBrackets(builder, constructor ? "expected.lbrace" : null);
 
     myParser.getReferenceParser()
       .parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, myJavaElementTypeContainer.THROWS_LIST, JavaTokenType.COMMA);
@@ -703,7 +704,7 @@ public class BasicDeclarationParser {
   @Nullable
   public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
     int flags = BasicReferenceParser.ELLIPSIS;
-    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_11)) flags |= BasicReferenceParser.VAR_TYPE;
+    if (JavaFeature.VAR_LAMBDA_PARAMETER.isSufficient(getLanguageLevel(builder))) flags |= BasicReferenceParser.VAR_TYPE;
     return parseListElement(builder, typed, flags, myJavaElementTypeContainer.PARAMETER);
   }
 

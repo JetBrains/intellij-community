@@ -33,7 +33,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 
-public class LoggerInitializedWithForeignClassInspection extends BaseInspection {
+public final class LoggerInitializedWithForeignClassInspection extends BaseInspection {
 
   @NonNls private static final String DEFAULT_FACTORY_CLASS_NAMES =
     // Log4J 1
@@ -58,8 +58,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     "getLogger," +
     // Log4J 2
     "getLogger";
-  protected final List<String> loggerFactoryClassNames = new ArrayList<>();
-  protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
+  private final List<String> loggerFactoryClassNames = new ArrayList<>();
+  private final List<String> loggerFactoryMethodNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
   public String loggerClassName = DEFAULT_FACTORY_CLASS_NAMES;
   @SuppressWarnings("PublicField")

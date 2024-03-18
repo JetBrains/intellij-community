@@ -438,6 +438,7 @@ public final class VcsUtil {
   @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
+    if (project.isDisposed()) return root.getName();
     return ProjectLevelVcsManager.getInstance(project).getShortNameForVcsRoot(root);
   }
 

@@ -2,23 +2,23 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 object WorkspaceModelInitialTestContent {
-  private val initialContent: AtomicReference<EntityStorageSnapshot?> = AtomicReference(null)
+  private val initialContent: AtomicReference<ImmutableEntityStorage?> = AtomicReference(null)
 
   @Volatile
   var hasInitialContent = false
     private set
 
-  fun peek(): EntityStorageSnapshot? = initialContent.get()
-  internal fun pop(): EntityStorageSnapshot? = initialContent.getAndSet(null)
+  fun peek(): ImmutableEntityStorage? = initialContent.get()
+  internal fun pop(): ImmutableEntityStorage? = initialContent.getAndSet(null)
 
   @TestOnly
-  fun <R> withInitialContent(storage: EntityStorageSnapshot, block: () -> R): R {
+  fun <R> withInitialContent(storage: ImmutableEntityStorage, block: () -> R): R {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       error("For test purposes only")
     }
@@ -28,7 +28,7 @@ object WorkspaceModelInitialTestContent {
     }
 
     val previousPropertyValue = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
-    if (storage !== EntityStorageSnapshot.empty()) {
+    if (storage !== ImmutableEntityStorage.empty()) {
       System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.IDEA_CE_PREFIX)
     }
     hasInitialContent = true
@@ -37,7 +37,7 @@ object WorkspaceModelInitialTestContent {
     }
     finally {
       hasInitialContent = false
-      if (storage !== EntityStorageSnapshot.empty()) {
+      if (storage !== ImmutableEntityStorage.empty()) {
         System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, previousPropertyValue)
       }
       if (initialContent.getAndSet(null) != null) {

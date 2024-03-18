@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.impl.FileSource;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -14,27 +15,46 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import java.nio.file.Path;
 import java.util.*;
 
-class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
+final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   // className -> {imports; static_imports}
   private final Map<String, Pair<Collection<String>, Collection<String>>> myImportRefs = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, Set<Usage>> myAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
+  private final Map<Path, Set<Usage>> myPerSourceAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
+  private final GraphConfiguration myGraphConfig;
+
+  BackendCallbackToGraphDeltaAdapter(GraphConfiguration graphConfig) {
+    myGraphConfig = graphConfig;
+  }
+
   @Override
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
 
-    String nodeName = builder.getReferenceID().getNodeName();
+    JvmNodeReferenceID nodeID = builder.getReferenceID();
+    String nodeName = nodeID.getNodeName();
     addConstantUsages(builder, nodeName, myConstantRefs.remove(nodeName));
     Pair<Collection<String>, Collection<String>> imports = myImportRefs.remove(nodeName);
     if (imports != null) {
       addImportUsages(builder, imports.getFirst(), imports.getSecond());
     }
-
+    Set<Usage> additional = myAdditionalUsages.remove(nodeName);
+    if (additional != null) {
+      for (Usage usage : additional) {
+        if (!nodeID.equals(usage.getElementOwner())) {
+          builder.addUsage(usage);
+        }
+      }
+    }
+    for (Usage usage : Iterators.flat(Iterators.map(sources, src -> myPerSourceAdditionalUsages.remove(Path.of(src))))) {
+      builder.addUsage(usage);
+    }
     var node = builder.getResult();
     if (!node.isPrivate()) {
-      myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, s -> new FileSource(Path.of(s))), new SmartList<>())));
+      myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, myGraphConfig.getPathMapper()::toNodeSource), new SmartList<>())));
     }
   }
 
@@ -64,9 +84,22 @@ class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
     }
   }
 
+  @Override
+  public void registerUsage(String className, Usage usage) {
+    myAdditionalUsages.computeIfAbsent(className.replace('.', '/'), k -> Collections.synchronizedSet(new HashSet<>())).add(usage);
+  }
+
+  @Override
+  public void registerUsage(Path source, Usage usage) {
+    myPerSourceAdditionalUsages.computeIfAbsent(source, k -> Collections.synchronizedSet(new HashSet<>())).add(usage);
+  }
+
   private static void addImportUsages(JvmClassNodeBuilder builder, Collection<String> classImports, Collection<String> staticImports) {
     for (final String anImport : classImports) {
-      if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+      if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+        builder.addUsage(new ImportPackageOnDemandUsage(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/')));
+      }
+      else {
         builder.addUsage(new ClassUsage(anImport.replace('.', '/')));
       }
     }

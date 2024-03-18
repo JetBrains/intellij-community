@@ -3,6 +3,8 @@ package com.intellij.lang;
 
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -22,6 +24,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
    * @see Language#getID()
    */
   @Attribute("language")
+  @RequiredElement(allowEmpty = true)
   public String language;
 
   @Attribute("implementationClass")
@@ -57,7 +60,8 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
   }
 
   @Override
-  public String getKey() {
-    return language;
+  public @NotNull String getKey() {
+    // empty string means any language
+    return StringUtilRt.notNullize(language);
   }
 }

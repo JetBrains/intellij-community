@@ -6,6 +6,15 @@
               hashBangs="python"
               implementationClass="com.jetbrains.python.PythonFileType"
               fieldName="INSTANCE"/>
-    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
+    <fileType name="PythonStub"
+              language="PythonStub"
+              extensions="pyi"
+              implementationClass="com.jetbrains.python.pyi.PyiFileType"
+              fieldName="INSTANCE"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
+                    interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

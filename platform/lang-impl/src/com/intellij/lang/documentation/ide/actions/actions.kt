@@ -6,7 +6,7 @@ import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationHistory
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -70,7 +70,7 @@ private fun documentationTargetsInner(dataProvider: DataProvider): List<Document
   }
   val targetElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider)
   if (targetElement != null) {
-    return listOf(psiDocumentationTarget(targetElement, null))
+    return psiDocumentationTargets(targetElement, null)
   }
   return emptyList()
 }
@@ -84,9 +84,7 @@ fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<Docum
   if (lookup != null) {
     val lookupElement = lookup.currentItem
                         ?: return null
-    val target = ideTargetProvider.documentationTarget(editor, file, lookupElement)
-                 ?: return null
-    return listOf(target)
+    return ideTargetProvider.documentationTargets(editor, file, lookupElement)
   }
   return ContainerUtil.nullize(ideTargetProvider.documentationTargets(editor, file, offset))
 }

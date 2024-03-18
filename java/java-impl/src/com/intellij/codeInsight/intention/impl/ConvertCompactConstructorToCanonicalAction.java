@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ConvertCompactConstructorToCanonicalAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ConvertCompactConstructorToCanonicalAction extends PsiUpdateModCommandAction<PsiElement> {
   public ConvertCompactConstructorToCanonicalAction() {
     super(PsiElement.class);
   }
@@ -36,7 +36,7 @@ public class ConvertCompactConstructorToCanonicalAction extends PsiUpdateModComm
       offset += body.getTextRangeInParent().getStartOffset() - oldBody.getTextRangeInParent().getStartOffset();
     }
     method.replace(prototype);
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 
   /**

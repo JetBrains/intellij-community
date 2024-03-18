@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class IterableStreamConversionRule extends TypeConversionRule {
+public final class IterableStreamConversionRule extends TypeConversionRule {
   @Nullable
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from,

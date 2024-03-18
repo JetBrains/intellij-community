@@ -7,5 +7,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <myEp implementation="MyInspection"/>
     <myEp implementation="MakeNotPublic"/>
+    <myEp implementation="VisibleForTestingAnnotation"/>
   </extensions>
 </idea-plugin>

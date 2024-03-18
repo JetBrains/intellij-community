@@ -1,0 +1,7 @@
+// IGNORE_K2
+fun foo(x: String) {
+    when (x) {
+        <caret> -> {}
+        else -> {}
+    }
+}

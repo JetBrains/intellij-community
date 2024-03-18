@@ -24,7 +24,7 @@ import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NonFinalStaticVariableUsedInClassInitializationInspection
+public final class NonFinalStaticVariableUsedInClassInitializationInspection
   extends BaseInspection {
 
   @Override

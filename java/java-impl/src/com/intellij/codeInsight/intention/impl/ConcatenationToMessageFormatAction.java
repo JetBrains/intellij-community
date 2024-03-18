@@ -9,6 +9,7 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -27,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ConcatenationToMessageFormatAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ConcatenationToMessageFormatAction extends PsiUpdateModCommandAction<PsiElement> {
   public ConcatenationToMessageFormatAction() {
     super(PsiElement.class);
   }
@@ -64,7 +65,7 @@ public class ConcatenationToMessageFormatAction extends PsiUpdateModCommandActio
     }
     PsiExpression formatArgument = factory.createExpressionFromText(expressionText, null);
     argumentList.add(formatArgument);
-    if (PsiUtil.isLanguageLevel5OrHigher(context.file())) {
+    if (PsiUtil.isAvailable(JavaFeature.VARARGS, context.file())) {
       for (PsiExpression arg : args) {
         argumentList.add(arg);
       }

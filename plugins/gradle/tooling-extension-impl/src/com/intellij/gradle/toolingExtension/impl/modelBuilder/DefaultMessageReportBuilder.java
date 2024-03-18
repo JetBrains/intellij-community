@@ -5,10 +5,7 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.DefaultMessageBuilder;
-import org.jetbrains.plugins.gradle.tooling.Message;
-import org.jetbrains.plugins.gradle.tooling.MessageReportBuilder;
-import org.jetbrains.plugins.gradle.tooling.MessageReporter;
+import org.jetbrains.plugins.gradle.tooling.*;
 
 @ApiStatus.Internal
 public class DefaultMessageReportBuilder implements MessageReportBuilder {
@@ -19,8 +16,10 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
   private @Nullable String myText = null;
   private @Nullable String myGroup = null;
   private @Nullable Exception myException = null;
-  private @NotNull Message.Kind myKind = Message.Kind.INFO;
+  private @Nullable Message.Kind myKind = null;
   private @Nullable Message.FilePosition myFilePosition = null;
+
+  private boolean myInternal = false;
 
   public DefaultMessageReportBuilder(@NotNull MessageReporter reporter) {
     myMessageReporter = reporter;
@@ -51,14 +50,32 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
   }
 
   @Override
+  public @NotNull MessageReportBuilder withGroup(ModelBuilderService group) {
+    myGroup = group.getClass().getName();
+    return this;
+  }
+
+  @Override
   public @NotNull MessageReportBuilder withException(Exception e) {
     myException = e;
     return this;
   }
 
   @Override
+  public @NotNull MessageReportBuilder withStackTrace() {
+    myException = new IllegalStateException();
+    return this;
+  }
+
+  @Override
   public @NotNull MessageReportBuilder withLocation(String filePath, int line, int column) {
     myFilePosition = new Message.FilePosition(filePath, line, column);
+    return this;
+  }
+
+  @Override
+  public @NotNull MessageReportBuilder withInternal() {
+    myInternal = true;
     return this;
   }
 
@@ -72,6 +89,7 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
       .withException(myException)
       .withLocation(myFilePosition)
       .withProject(project)
+      .withInternal(myInternal)
       .build()
     );
   }

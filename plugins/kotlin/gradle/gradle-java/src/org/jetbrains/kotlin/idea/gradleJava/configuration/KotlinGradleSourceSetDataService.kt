@@ -3,10 +3,10 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -23,21 +23,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
-import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -158,9 +151,7 @@ class KotlinGradleProjectDataService : AbstractProjectDataService<ModuleData, Vo
             ProjectCodeStyleImporter.apply(project, codeStyleStr)
         }
 
-        ApplicationManager.getApplication().executeOnPooledThread {
-            KotlinGradleFUSLogger.reportStatistics()
-        }
+        project.service<KotlinGradleFUSLogger>().scheduleReportStatistics()
     }
 }
 
@@ -219,22 +210,6 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val pluginId = moduleNode.kotlinGradleProjectDataOrNull?.platformPluginId
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
-}
-
-@Suppress("DEPRECATION_ERROR")
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use detectPlatformKindByPlugin() instead",
-    replaceWith = ReplaceWith("detectPlatformKindByPlugin(moduleNode)"),
-    level = DeprecationLevel.ERROR
-)
-fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind<*>? {
-    return when (moduleNode.kotlinGradleProjectDataOrFail.platformPluginId) {
-        "kotlin-platform-jvm" -> TargetPlatformKind.Jvm[JvmTarget.DEFAULT]
-        "kotlin-platform-js" -> TargetPlatformKind.JavaScript
-        "kotlin-platform-common" -> TargetPlatformKind.Common
-        else -> null
-    }
 }
 
 internal fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
@@ -340,10 +315,12 @@ private fun IKotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<Modul
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {
-        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputDir
+            ?: (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
     }
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "test" }?.let {
-        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputDir
+            ?: (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
     }
 }
 

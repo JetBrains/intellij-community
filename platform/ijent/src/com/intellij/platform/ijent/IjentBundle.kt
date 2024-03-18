@@ -12,6 +12,7 @@ private const val BUNDLE_FQN = "messages.IjentBundle"
 object IjentBundle {
   private val BUNDLE = DynamicBundle(IjentBundle::class.java, BUNDLE_FQN)
 
-  fun message(key: @PropertyKey(resourceBundle = BUNDLE_FQN) String, vararg params: Any): @Nls String =
+  @Nls
+  fun message(@PropertyKey(resourceBundle = BUNDLE_FQN) key: String, vararg params: Any): String =
     BUNDLE.getMessage(key, *params)
 }

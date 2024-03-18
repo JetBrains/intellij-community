@@ -29,7 +29,7 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
+public final class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
   private static final CallMatcher ITERABLE_FOR_EACH = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "forEach")
     .parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER);
   private static final CallMatcher MAP_KEY_SET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet")

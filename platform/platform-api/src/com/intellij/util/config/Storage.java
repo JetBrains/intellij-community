@@ -14,7 +14,7 @@ import java.util.Map;
  * @deprecated Use {@link PropertiesComponent} directly.
  * @see com.intellij.ui.JBSplitter
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface Storage {
   void put(String key, String value);
   String get(String key);

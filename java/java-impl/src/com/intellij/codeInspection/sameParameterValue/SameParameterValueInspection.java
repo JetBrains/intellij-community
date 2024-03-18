@@ -49,7 +49,7 @@ import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CO
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
+public final class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(SameParameterValueInspection.class);
   public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PROTECTED;
   public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;

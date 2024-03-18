@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(MergeFilterChainAction.class.getName());
   
   public MergeFilterChainAction() {

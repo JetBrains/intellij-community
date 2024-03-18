@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentOrReturnOfFieldWithMutableTypeInspectionMerger extends InspectionElementsMerger {
+public final class AssignmentOrReturnOfFieldWithMutableTypeInspectionMerger extends InspectionElementsMerger {
 
   @NotNull
   @Override

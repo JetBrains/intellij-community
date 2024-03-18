@@ -46,7 +46,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TooBroadScopeInspection extends BaseInspection {
+public final class TooBroadScopeInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField for externalization
@@ -78,7 +78,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
   }
 
-  protected boolean isMovable(PsiExpression expression) {
+  private boolean isMovable(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return true;

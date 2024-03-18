@@ -20,13 +20,14 @@
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplObsoleteInspection"
                      key="inspection.workspace.obsolete.model.display.name"/>
     <localInspection language="kotlin"
+                     shortName="WorkspaceImplAbsent"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplAbsentInspection"
-                     key="inspection.workspace.absent.model.display.name"/>
+                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplGenerationInspection"
+                     key="inspection.workspace.impl.generation.display.name"/>
     <localInspection language="kotlin"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
@@ -35,5 +36,8 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceEntityMutableFieldInspection"
                      key="inspection.workspace.mutable.field.display.name"/>
+    <notificationGroup id="Incompatible codegen api versions"
+                       displayType="BALLOON"
+                       key="notification.workspace.incompatible.codegen.api.versions"/>
   </extensions>
 </idea-plugin>

@@ -2,24 +2,27 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
+import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
 class TerminalPromptController(
   private val editor: EditorEx,
-  session: TerminalSession,
+  session: BlockTerminalSession,
   private val commandExecutor: TerminalCommandExecutor
-) : ShellCommandListener {
+) {
   private val commandHistoryManager: CommandHistoryManager
+  private val promptModel: TerminalPromptModel = TerminalPromptModel(session)
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
 
   val commandHistory: List<String>
@@ -29,12 +32,28 @@ class TerminalPromptController(
     if (newValue != oldValue) listeners.forEach { it.promptVisibilityChanged(newValue) }
   }
 
+  val promptRenderingInfo: PromptRenderingInfo
+    get() = promptModel.renderingInfo
+
+  val commandText: String
+    get() = editor.document.text
+
   init {
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
-    editor.putUserData(TerminalSession.KEY, session)
+    editor.putUserData(BlockTerminalSession.KEY, session)
+
+    val shellCommandExecutor = ShellCommandExecutorImpl(session)
+    editor.putUserData(ShellCommandExecutor.KEY, shellCommandExecutor)
+    val runtimeDataProvider = IJShellRuntimeDataProvider(session, shellCommandExecutor)
+    editor.putUserData(IJShellRuntimeDataProvider.KEY, runtimeDataProvider)
 
     commandHistoryManager = CommandHistoryManager(session)
-    session.addCommandListener(this)
+
+    promptModel.addListener(object : TerminalPromptStateListener {
+      override fun promptStateUpdated(renderingInfo: PromptRenderingInfo) {
+        listeners.forEach { it.promptContentUpdated(renderingInfo) }
+      }
+    }, disposable = session)
   }
 
   fun addListener(listener: PromptStateListener) {
@@ -48,21 +67,15 @@ class TerminalPromptController(
     }
   }
 
-  override fun directoryChanged(newDirectory: String) {
-    val newText = computePromptText(newDirectory)
-    listeners.forEach { it.promptLabelChanged(newText) }
-  }
-
-  fun computePromptText(directory: String): @NlsSafe String {
-    return if (directory != SystemProperties.getUserHome()) {
-      FileUtil.getLocationRelativeToUserHome(directory)
-    }
-    else "~"
-  }
-
   @RequiresEdt
   fun handleEnterPressed() {
     commandExecutor.startCommandExecution(editor.document.text)
+  }
+
+  @RequiresEdt
+  fun performPaste(dataContext: DataContext? = null) {
+    val context = dataContext ?: editor.dataContext
+    editor.pasteProvider.performPaste(context)
   }
 
   @RequiresEdt
@@ -75,6 +88,11 @@ class TerminalPromptController(
     listeners.forEach { it.commandHistoryStateChanged(showing = false) }
   }
 
+  @RequiresEdt
+  fun showCommandSearch() {
+    listeners.forEach { it.commandSearchRequested() }
+  }
+
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
       editor.document.addDocumentListener(listener, disposable)
@@ -83,8 +101,9 @@ class TerminalPromptController(
   }
 
   interface PromptStateListener {
-    fun promptLabelChanged(newText: @NlsSafe String) {}
+    fun promptContentUpdated(renderingInfo: PromptRenderingInfo) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
+    fun commandSearchRequested() {}
     fun promptVisibilityChanged(visible: Boolean) {}
   }
 

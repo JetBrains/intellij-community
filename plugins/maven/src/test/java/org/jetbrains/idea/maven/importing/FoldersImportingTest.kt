@@ -38,8 +38,7 @@ import java.io.IOException
 import java.util.function.Consumer
 
 class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
@@ -69,7 +68,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>1
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     assertModules("project")
     assertContentRoots("project", projectPath)
   }
@@ -91,7 +90,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     assertModules("project")
     assertSources("project", "src/main/java")
     assertDefaultResources("project")
@@ -110,9 +109,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
     writeAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
-        projectsTree.findProject(myProjectPom)!!,
+        projectsTree.findProject(projectPom)!!,
         getModule("project"),
-        ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)))
+        ProjectDataManager.getInstance().createModifiableModelsProvider(project)))
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE)
       adapter.addExcludedFolder(dir2.getPath())
       adapter.rootModel.commit()
@@ -124,7 +123,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       assertSources("project", "userSourceFolder")
     }
     assertExcludes("project", "target", "userExcludedFolder")
-    updateAllProjects()
+
+    // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     if (supportsImportOfNonExistingFolders()) {
       assertSources("project", "src/main/java")
     }
@@ -162,11 +163,12 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     resolveFoldersAndImport()
     assertSources("project", "src")
-    importProjectAsync("""
+    createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
+    updateAllProjects()
     assertSources("project", "src/main/java")
     assertDefaultResources("project")
   }
@@ -770,9 +772,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testDownloadingNecessaryPlugins() = runBlocking {
     try {
-      val helper = MavenCustomRepositoryHelper(myDir, "local1")
+      val helper = MavenCustomRepositoryHelper(dir, "local1")
       repositoryPath = helper.getTestDataPath("local1")
-      val pluginFile = File(getRepositoryPath(),
+      val pluginFile = File(repositoryPath,
                             "org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
       assertFalse(pluginFile.exists())
       importProjectAsync("""
@@ -808,7 +810,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     }
     finally {
       // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true)
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
   }
 
@@ -971,7 +973,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testAddingExistingGeneratedSources3() = runBlocking {
     createStdProjectFolders()
-    MavenProjectsManager.getInstance(myProject).importingSettings.setGeneratedSourcesFolder(
+    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.SUBFOLDER)
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     importProjectAsync("""
@@ -988,7 +990,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testOverrideAnnotationSources() = runBlocking {
     createStdProjectFolders()
-    MavenProjectsManager.getInstance(myProject).importingSettings.setGeneratedSourcesFolder(
+    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.GENERATED_SOURCE_FOLDER)
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
@@ -1006,7 +1008,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testOverrideAnnotationSourcesWhenAutodetect() = runBlocking {
     createStdProjectFolders()
-    MavenProjectsManager.getInstance(myProject).importingSettings.setGeneratedSourcesFolder(
+    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
@@ -1024,7 +1026,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testOverrideTestAnnotationSourcesWhenAutodetect() = runBlocking {
     createStdProjectFolders()
-    MavenProjectsManager.getInstance(myProject).importingSettings.setGeneratedSourcesFolder(
+    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
     createProjectSubFile("target/generated-test-sources/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-test-sources/test-annotations/com/B.java", "package com; class B {}")
@@ -1043,7 +1045,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testIgnoreGeneratedSources() = runBlocking {
     createStdProjectFolders()
-    MavenProjectsManager.getInstance(myProject).importingSettings.setGeneratedSourcesFolder(
+    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.IGNORE)
     createProjectSubFile("target/generated-sources/annotations/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
@@ -1240,11 +1242,11 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     "<version>1</version>")
     importProjectAsync()
     assertModules("project", "m1", "m2")
-    getInstance(myProject).setUnloadedModulesSync(listOf("m2"))
+    getInstance(project).setUnloadedModulesSync(listOf("m2"))
     assertModules("project", "m1")
     importProjectAsync()
     assertModules("project", "m1")
-    val m2 = getInstance(myProject).getUnloadedModuleDescription("m2")
+    val m2 = getInstance(project).getUnloadedModuleDescription("m2")
     assertNotNull(m2)
     assertEquals("m2", m2!!.getName())
   }
@@ -1344,8 +1346,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
           <testSourceDirectory>tests</testSourceDirectory>
         </build>
         """.trimIndent()))
-    File(myProjectRoot.getPath(), "m1/sources").mkdirs()
-    File(myProjectRoot.getPath(), "m1/tests").mkdirs()
+    File(projectRoot.getPath(), "m1/sources").mkdirs()
+    File(projectRoot.getPath(), "m1/tests").mkdirs()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -1468,8 +1470,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
           <sourceDirectory>../custom-sources</sourceDirectory>
         </build>
         """.trimIndent()))
-    File(myProjectRoot.getPath(), "pom-sources").mkdirs()
-    File(myProjectRoot.getPath(), "custom-sources").mkdirs()
+    File(projectRoot.getPath(), "pom-sources").mkdirs()
+    File(projectRoot.getPath(), "custom-sources").mkdirs()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -1676,7 +1678,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       }
     }
     testAssertions.accept(true)
-    updateAllProjects()
+
+    // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
     resolveFoldersAndImport()
     testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
@@ -1888,7 +1892,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     val parameters: CommonProgramRunConfigurationParameters = object : CommonProgramRunConfigurationParameters {
       override fun getProject(): Project {
-        return myProject
+        return project
       }
 
       override fun setProgramParameters(value: String?) {}
@@ -1912,7 +1916,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       }
     }
     assertModules("project", mn("project", "AA"), mn("project", "BB"))
-    val workingDir = ProgramParametersUtil.getWorkingDir(parameters, myProject, getModule(mn("project", "BB")))
+    val workingDir = ProgramParametersUtil.getWorkingDir(parameters, project, getModule(mn("project", "BB")))
     assertEquals(pomBB.canonicalFile!!.getParent().getPath(), workingDir)
   }
 

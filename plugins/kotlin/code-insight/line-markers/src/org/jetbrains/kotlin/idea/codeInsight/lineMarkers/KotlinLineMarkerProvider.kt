@@ -167,8 +167,8 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
 }
 
 object SuperDeclarationPopupHandler : GutterIconNavigationHandler<PsiElement> {
-    override fun navigate(e: MouseEvent, element: PsiElement) {
-        val declaration = element.getParentOfType<KtDeclaration>(false) ?: return
+    override fun navigate(e: MouseEvent, element: PsiElement?) {
+        val declaration = element?.getParentOfType<KtDeclaration>(false) ?: return
         KotlinGoToSuperDeclarationsHandler.gotoSuperDeclarations(declaration)?.show(RelativePoint(e))
     }
 }

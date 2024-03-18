@@ -19,29 +19,29 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (KotlinPlatformUtils.isAndroidStudio) {
-            return emptySet()
+      if (KotlinPlatformUtils.isAndroidStudio) {
+        return emptySet()
+      }
+
+      val metrics = mutableSetOf<MetricEvent>()
+      val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
+
+      // filling up scriptingAutoReloadEnabled Event
+      for (definition in ScriptDefinitionsManager.getInstance(project).allDefinitions) {
+        if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
+          val scriptingAutoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
+          metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
         }
+      }
 
-        val metrics = mutableSetOf<MetricEvent>()
-        val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
+      val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
+      val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
 
-        // filling up scriptingAutoReloadEnabled Event
-        for (definition in ScriptDefinitionsManager.getInstance(project).getAllDefinitions()) {
-            if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
-                val scriptingAutoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
-                metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
-            }
-        }
+      // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
+      metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
+      metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
 
-        val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
-        val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
-
-        // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
-        metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
-        metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
-
-        return metrics
+      return metrics
     }
 
     private val GROUP = EventLogGroup("kotlin.ide.settings", 4)

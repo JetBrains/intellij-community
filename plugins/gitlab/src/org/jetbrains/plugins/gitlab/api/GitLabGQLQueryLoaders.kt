@@ -9,12 +9,15 @@ internal object GitLabGQLQueryLoaders {
   private val loaderCache = mutableMapOf<GitLabServerMetadata, CachingGraphQLQueryLoader>()
 
   private val fragmentVersions = listOf(
+    GitLabVersion(13, 5),
+    GitLabVersion(13, 9),
+    GitLabVersion(13, 11),
     GitLabVersion(14, 0),
-    GitLabVersion(14, 3),
     GitLabVersion(14, 5),
     GitLabVersion(14, 7),
-    GitLabVersion(15, 4),
     GitLabVersion(15, 9),
+    GitLabVersion(16, 1),
+    GitLabVersion(16, 8)
   )
 
   val default: GraphQLQueryLoader by lazy {

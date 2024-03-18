@@ -76,9 +76,9 @@ final class ThumbnailViewImpl implements ThumbnailView {
   }
 
   @Override
-  public void setSelected(@NotNull VirtualFile file, boolean selected) {
+  public void setSelected(@NotNull VirtualFile file) {
     if (isVisible()) {
-      getUI().setSelected(file, selected);
+      getUI().setSelected(file);
     }
   }
 

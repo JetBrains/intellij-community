@@ -12,6 +12,8 @@ import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 
+import java.util.Map;
+
 public class YAMLMappingModificationTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
@@ -106,14 +108,40 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
   public void testSetValueScalar() {
     doValueTest("newValue");
   }
-  
+
+  public void testSetValueScalarWithSpaceBeforeColon() {
+    doValueTest("newValue");
+  }
+
   public void testSetValueCompound() {
     doValueTest("""
                   someKey:
                   - bla
                   - bla""");
   }
-  
+
+  public void testGenerateValueCompoundSequence() {
+    YAMLElementGenerator yamlGenerator = YAMLElementGenerator.getInstance(getProject());
+    YAMLKeyValue sequence = yamlGenerator.createYamlKeyValueWithSequence(
+      "someKey",
+      Map.of("abl", "1", "blah", "2", "acl", "3")
+    );
+    assertEquals("""
+                         someKey:
+                           abl: 1
+                           acl: 3
+                           blah: 2""", sequence.getText());
+  }
+
+  public void testSetValueCompoundSequence() {
+    doValueTest("""
+                         someKey:
+                           abl: 1
+                           acl: 3
+                           blah: 2""");
+  }
+
+
   private void doValueTest(final String valueText) {
     myFixture.configureByFile(getTestName(true) + ".yml");
     final int offset = myFixture.getCaretOffset();

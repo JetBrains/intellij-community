@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.tests.java.logging
 
+import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
@@ -123,6 +124,114 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
           }
         }
       }
-    """.trimIndent())
+      """.trimIndent())
+  }
+
+  fun `test fixes log4j2 change calls`() {
+      myFixture.testQuickFix(
+        testPreview = true,
+        lang = JvmLanguage.JAVA,
+        before = """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class Logging {
+          private static final Logger LOG = LogManager.getLogger();
+      
+          private static void request1(String i) {
+              String msg = "log messages2: {}";
+              if (LOG.is<caret>DebugEnabled()) {
+                  LOG.info(msg, i);
+              }
+          }
+      }""".trimIndent(),
+        after = """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class Logging {
+          private static final Logger LOG = LogManager.getLogger();
+      
+          private static void request1(String i) {
+              String msg = "log messages2: {}";
+              if (LOG.isDebugEnabled()) {
+                  LOG.debug(msg, i);
+              }
+          }
+      }""".trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.logging.condition.disagrees.with.log.statement.fix.name", 1)
+      )
+  }
+
+  fun `test fixes log4j2 change guards`() {
+      myFixture.testQuickFix(
+        testPreview = true,
+        lang = JvmLanguage.JAVA,
+        before = """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class Logging {
+          private static final Logger LOG = LogManager.getLogger();
+      
+          private static void request1(String i) {
+              String msg = "log messages2: {}";
+              if (LOG.is<caret>DebugEnabled()) {
+                  LOG.info(msg, i);
+              }
+          }
+      }""".trimIndent(),
+        after = """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class Logging {
+          private static final Logger LOG = LogManager.getLogger();
+      
+          private static void request1(String i) {
+              String msg = "log messages2: {}";
+              if (LOG.isInfoEnabled()) {
+                  LOG.info(msg, i);
+              }
+          }
+      }""".trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.logging.condition.disagrees.with.log.statement.fix.name", 0)
+      )
+  }
+
+  fun `test fixes slf4j change guards`() {
+      myFixture.testQuickFix(
+        testPreview = true,
+        lang = JvmLanguage.JAVA,
+        before = """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      
+      class Slf4J {
+        private final static Logger log = LoggerFactory.getLogger(Slf4J.class);
+        
+        private static void request1(String i) {
+            String msg = "log messages2: {}";
+            if (log.is<caret>DebugEnabled()) {
+                log.info(msg, i);
+            }
+        }
+      }""".trimIndent(),
+        after = """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      
+      class Slf4J {
+        private final static Logger log = LoggerFactory.getLogger(Slf4J.class);
+        
+        private static void request1(String i) {
+            String msg = "log messages2: {}";
+            if (log.isInfoEnabled()) {
+                log.info(msg, i);
+            }
+        }
+      }""".trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.logging.condition.disagrees.with.log.statement.fix.name", 0)
+      )
   }
 }

@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findDirectory
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.file.PsiDirectoryImpl
@@ -15,7 +15,7 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.utils.VcsTestUtil
 import io.opentelemetry.context.Context
-import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplateForTest
+import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 
 /**
  * Command to add Kotlin file to project
@@ -56,8 +56,8 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         VcsTestUtil.provisionVcsAddFileConfirmation(context.project, VcsTestUtil.VcsAddFileConfirmation.DO_NOTHING)
 
         ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
-            PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
-                val createdFile = createKotlinFileFromTemplateForTest(fileName, template, directory)
+            PerformanceTestSpan.TRACER.spanBuilder(NAME).use {
+                val createdFile = createKotlinFileFromTemplate(fileName, template, directory)
                 createdFile?.let {
                     LOG.info("Created kotlin file\n${createdFile.text}")
                 }

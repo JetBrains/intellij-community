@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static com.intellij.util.containers.ContainerUtil.*;
+
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage,
@@ -53,24 +55,25 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private final @NotNull UsageInfo myUsageInfo;
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
+  private @Nullable Segment myMergedNavigationRange;
   private final int myLineNumber;
   private final int myOffset;
   private volatile UsageNodePresentation myCachedPresentation;
   @Nullable private final VirtualFile myVirtualFile;
-  private final int myOffsetToCompareUsages;
+  private final @Nullable Segment myNavigationRange;
   private volatile UsageType myUsageType;
 
   private static class ComputedData {
     public final int offset;
     public final int lineNumber;
     public final VirtualFile virtualFile;
-    public final int offsetToCompareUsages;
+    public final @Nullable Segment navigationRange;
 
-    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, int offsetToCompareUsages) {
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable Segment navigationRange) {
       this.offset = offset;
       this.lineNumber = lineNumber;
       this.virtualFile = virtualFile;
-      this.offsetToCompareUsages = offsetToCompareUsages;
+      this.navigationRange = navigationRange;
     }
   }
 
@@ -89,30 +92,33 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
       int offset;
       int lineNumber;
-      int offsetToCompareUsages;
+      Segment navigationRange;
       if (document == null) {
         // element over light virtual file
-        offsetToCompareUsages = offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
+        offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
+        navigationRange = element == null || isNullOrBinary ? null : element.getTextRange();
         lineNumber = -1;
       }
       else {
-        int startOffset = myUsageInfo.getNavigationOffset();
-        if (startOffset == -1) {
-          offsetToCompareUsages = offset = element == null ? 0 : element.getTextOffset();
+        Segment range = myUsageInfo.getNavigationRange();
+        if (range == null || range.getStartOffset() == -1) {
+          offset = element == null ? 0 : element.getTextOffset();
+          navigationRange = element == null ? null : element.getTextRange();
           lineNumber = -1;
         }
         else {
           offset = -1;
-          offsetToCompareUsages = startOffset;
-          lineNumber = getLineNumber(document, startOffset);
+          navigationRange = range;
+          lineNumber = getLineNumber(document, range.getStartOffset());
         }
       }
-      return new ComputedData(offset, lineNumber, virtualFile, offsetToCompareUsages);
+      return new ComputedData(offset, lineNumber, virtualFile, navigationRange);
     });
     myOffset = data.offset;
     myLineNumber = data.lineNumber;
     myVirtualFile = data.virtualFile;
-    myOffsetToCompareUsages = data.offsetToCompareUsages;
+    myNavigationRange = data.navigationRange;
+    myMergedNavigationRange = data.navigationRange;
     myModificationStamp = getCurrentModificationStamp();
   }
 
@@ -296,7 +302,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public int getNavigationOffset() {
     Document document = getDocument();
     if (document == null) return -1;
-    int offset = getUsageInfo().getNavigationOffset();
+    int offset = myMergedNavigationRange != null ? myMergedNavigationRange.getStartOffset() : -1;
+    if (offset == -1) offset = getUsageInfo().getNavigationOffset();
     if (offset == -1) offset = myOffset;
     if (offset >= document.getTextLength()) {
       int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
@@ -311,7 +318,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public Segment getNavigationRange() {
     Document document = getDocument();
     if (document == null) return null;
-    Segment range = getUsageInfo().getNavigationRange();
+    Segment range = myMergedNavigationRange;
+    if (range == null) range = getUsageInfo().getNavigationRange();
     if (range == null) {
       ProperTextRange rangeInElement = getUsageInfo().getRangeInElement();
       range = myOffset < 0 ? new UnfairTextRange(-1,-1) : rangeInElement == null ? TextRange.from(myOffset,1) : rangeInElement.shiftRight(myOffset);
@@ -423,6 +431,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
+    myMergedNavigationRange =
+      getFirstItem(sorted(packNullables(myMergedNavigationRange, u2.myMergedNavigationRange), Segment.BY_START_OFFSET_THEN_END_OFFSET));
 
     // Invalidate cached presentation, so it'll be updated later
     // Do not reset it to still have something to present
@@ -435,6 +445,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ThreadingAssertions.assertEventDispatchThread();
     myMergedUsageInfos = myUsageInfo;
+    myMergedNavigationRange = myNavigationRange;
     resetCachedPresentation();
   }
 
@@ -466,7 +477,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       return byPath;
     }
 
-    return Integer.compare(myOffsetToCompareUsages, o.myOffsetToCompareUsages);
+    int offset = myMergedNavigationRange != null ? myMergedNavigationRange.getStartOffset() : -1;
+    int other = o.myMergedNavigationRange != null ? o.myMergedNavigationRange.getStartOffset() : -1;
+
+    return Integer.compare(offset, other);
   }
 
   @Override

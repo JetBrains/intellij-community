@@ -4,5 +4,6 @@
   "methodToMove": "foo",
   "sourceProperty": "b",
   "outerInstanceParameter": "a",
+  "enabledInK1": "true",
   "enabledInK2": "false"
 }

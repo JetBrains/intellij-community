@@ -456,7 +456,7 @@ public final class ImportUtils {
     return visitor.isReferenceFound();
   }
 
-  private static boolean isReferenceCorrectWithoutQualifier(@NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiMember member) {
+  public static boolean isReferenceCorrectWithoutQualifier(@NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiMember member) {
     final String referenceName = reference.getReferenceName();
     if (referenceName == null) {
       return false;

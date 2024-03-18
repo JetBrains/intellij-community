@@ -26,29 +26,34 @@ internal class EditorConfigEncodingInspection : LocalInspectionTool() {
     }
     val project = manager.project
     val virtualFile = file.virtualFile
-    if (virtualFile != null && isEnabled(CodeStyle.getSettings(project)) && virtualFile.isWritable) {
-      if (isHardcodedCharsetOrFailed(virtualFile)) {
-        return null
-      }
-      val encodingCache: EditorConfigEncodingCache = EditorConfigEncodingCache.getInstance()
-      if (encodingCache.isIgnored(virtualFile)) return null
-      val charsetData = encodingCache.getCharsetData(file.project, file.virtualFile, false)
-      if (charsetData != null) {
-        if (virtualFile.charset != charsetData.charset) {
-          return arrayOf(
-            manager.createProblemDescriptor(
-              file,
-              message("inspection.file.encoding.mismatch.descriptor", charsetData.charset.displayName()),
-              arrayOf(
-                ApplyEditorConfigEncodingQuickFix(),
-                IgnoreFileQuickFix()
-              ),
-              ProblemHighlightType.WARNING,
-              isOnTheFly,
-              false)
-          )
-        }
-      }
+    if (virtualFile == null || !isEnabled(CodeStyle.getSettings(project)) || !virtualFile.isWritable) {
+      return null
+    }
+
+    if (isHardcodedCharsetOrFailed(virtualFile)) {
+      return null
+    }
+
+    val encodingCache: EditorConfigEncodingCache = EditorConfigEncodingCache.getInstance()
+    if (encodingCache.isIgnored(virtualFile)) {
+      return null
+    }
+    val charsetData = encodingCache.getCharsetData(file.project, file.virtualFile, false) ?: return null
+
+    val charset = charsetData.getCharset()
+    if (charset != null && virtualFile.charset != charset) {
+      return arrayOf(
+        manager.createProblemDescriptor(
+          file,
+          message("inspection.file.encoding.mismatch.descriptor", charset.displayName()),
+          arrayOf(
+            ApplyEditorConfigEncodingQuickFix(),
+            IgnoreFileQuickFix()
+          ),
+          ProblemHighlightType.WARNING,
+          isOnTheFly,
+          false)
+      )
     }
     return null
   }

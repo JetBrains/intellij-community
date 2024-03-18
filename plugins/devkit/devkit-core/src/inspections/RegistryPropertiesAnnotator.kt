@@ -12,6 +12,7 @@ import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.impl.PropertyImpl
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
@@ -43,7 +44,7 @@ internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
-internal class RegistryPropertiesAnnotator : Annotator {
+internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
 
   @NonNls
   private val PLUGIN_GROUP_NAMES = setOf(

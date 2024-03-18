@@ -11,11 +11,10 @@ import java.io.PrintWriter
 import java.nio.charset.StandardCharsets
 
 abstract class ArtifactsDownloadingTestCase : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
-    val helper = MavenCustomRepositoryHelper(myDir, "plugins", "local1")
+    val helper = MavenCustomRepositoryHelper(dir, "plugins", "local1")
     helper.copy("plugins", "local1")
     repositoryPath = helper.getTestDataPath("local1")
   }

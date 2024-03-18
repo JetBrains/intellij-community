@@ -110,6 +110,7 @@ fun writeAboutJson(writer: JsonGenerator) {
   }
   writer.writeStringField("name", appName)
   writer.writeStringField("productName", ApplicationNamesInfo.getInstance().productName)
+  writer.writeStringField("edition", ApplicationNamesInfo.getInstance().editionName)
 
   val build = ApplicationInfo.getInstance().build
   writer.writeNumberField("baselineVersion", build.baselineVersion)

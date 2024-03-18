@@ -45,9 +45,11 @@ public class RestoreShelvedChange extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    List<ShelvedChangeList> lists = e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY);
+    if (lists == null || lists.isEmpty()) return;
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
-    List<ShelvedChangeList> lists = e.getRequiredData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY);
     Date currentDate = new Date(System.currentTimeMillis());
     lists.forEach(l -> shelveChangesManager.restoreList(l, currentDate));
   }

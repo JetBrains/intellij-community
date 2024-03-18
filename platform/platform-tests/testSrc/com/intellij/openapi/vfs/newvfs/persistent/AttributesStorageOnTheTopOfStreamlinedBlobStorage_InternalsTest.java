@@ -53,7 +53,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorage_InternalsTest {
 
     final int fileId = 1205454;
     for (int attributeId = 1; attributeId <= Byte.MAX_VALUE; attributeId++) {
-      for (int size = 1; size < AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN; size++) {
+      for (int size = 1; size < VFSAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN; size++) {
         buffer.clear();
 
         AttributesRecord.putDirectoryRecordHeader(buffer, fileId);

@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,7 +25,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public final class ProjectWindowActionGroup extends IdeDependentActionGroup {
+public final class ProjectWindowActionGroup extends IdeDependentActionGroup implements ActionRemoteBehaviorSpecification.Frontend {
   private ProjectWindowAction latest = null;
 
   public void addProject(@NotNull Project project) {

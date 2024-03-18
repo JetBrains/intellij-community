@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import java.io.File
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractK1HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
     override fun doTest(unused: String) {

@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class LambdaDeclarationRangeHandler implements DeclarationRangeHandler {
+public final class LambdaDeclarationRangeHandler implements DeclarationRangeHandler {
   @Override
   @NotNull
   public TextRange getDeclarationRange(@NotNull final PsiElement container) {

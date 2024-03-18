@@ -8,7 +8,8 @@ import inspections.wrapInSupplierFix.MyAnnotation
 import java.util.function.Supplier
 
 @MyAnnotation
-val topLevelAppServiceSupplier1: Supplier<MyService> = CachedSingletonsRegistry.lazy { ApplicationManager.getApplication().getService(MyService::class.java) }
+val topLevelAppServiceSupplier1: Supplier<MyService> =
+    CachedSingletonsRegistry.lazy { ApplicationManager.getApplication().getService(MyService::class.java) }
 
 
 // to test naming conflicts

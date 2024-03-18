@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class PublicStaticCollectionFieldInspection extends BaseInspection {
+public final class PublicStaticCollectionFieldInspection extends BaseInspection {
 
   final MethodMatcher myMethodMatcher = new MethodMatcher()
     .add(CommonClassNames.JAVA_UTIL_COLLECTIONS, "(empty|unmodifiable).*")

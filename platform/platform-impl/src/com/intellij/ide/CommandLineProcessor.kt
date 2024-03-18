@@ -14,8 +14,8 @@ import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -55,6 +55,7 @@ import kotlin.Result
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
   private const val OPTION_WAIT = "--wait"
+
   @JvmField
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
@@ -67,7 +68,7 @@ object CommandLineProcessor {
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       val options = OpenProjectTask {
         // do not check for .ipr files in the specified directory
-        // (@develar: it is existing behaviour, I am not fully sure that it is correct)
+        // (@develar: it is existing behavior, I am not fully sure that it is correct)
         preventIprLookup = true
         configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir = file, projectToClose = null)
       }
@@ -134,8 +135,7 @@ object CommandLineProcessor {
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
       }
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(Dispatchers.EDT) {
+      (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
     }
@@ -155,8 +155,7 @@ object CommandLineProcessor {
 
   @ApiStatus.Internal
   fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       processProtocolCommand(rawUri)
     }
   }
@@ -185,8 +184,7 @@ object CommandLineProcessor {
 
     if (cliResult.message != null) {
       val title = IdeBundle.message("ide.protocol.cannot.title")
-      @Suppress("DEPRECATION")
-      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message!!, NotificationType.WARNING)
+      Notification("System Messages", title, cliResult.message!!, NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
     }
@@ -212,12 +210,7 @@ object CommandLineProcessor {
         if (file != null) {
           val line = parameters["line"]?.lastOrNull()?.toIntOrNull() ?: -1
           val column = parameters["column"]?.lastOrNull()?.toIntOrNull() ?: -1
-          val (project) = openFileOrProject(file = file,
-                                            line = line,
-                                            column = column,
-                                            tempProject = false,
-                                            shouldWait = false,
-                                            lightEditMode = false)
+          val (project) = openFileOrProject(file, line, column, tempProject = false, shouldWait = false, lightEditMode = false)
           LifecycleUsageTriggerCollector.onProtocolOpenCommandHandled(project)
           return CliResult.OK
         }
@@ -226,9 +219,7 @@ object CommandLineProcessor {
     return CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query))
   }
 
-  suspend fun processExternalCommandLine(args: List<String>,
-                                         currentDirectory: String?,
-                                         focusApp: Boolean = false): CommandLineProcessorResult {
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?, focusApp: Boolean = false): CommandLineProcessorResult {
     val logMessage = StringBuilder()
     logMessage.append("External command line:").append('\n')
     logMessage.append("Dir: ").append(currentDirectory).append('\n')
@@ -287,35 +278,22 @@ object CommandLineProcessor {
   private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CliResult? {
     val command = args.first()
 
-    val starter = try {
-      findStarter(command) ?: return null
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      return null
-    }
+    val starter = findStarter(command) ?: return null
 
     if (!starter.canProcessExternalCommandLine()) {
       return CliResult(1, IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
                                             ApplicationNamesInfo.getInstance().productName))
     }
 
-    LOG.info("Processing command with $starter")
+    LOG.info("Processing command with ${starter}")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
       return starter.processExternalCommandLine(args, currentDirectory)
     }
 
-    val modalityState = if (requiredModality == ApplicationStarter.ANY_MODALITY) {
-      ModalityState.any()
-    }
-    else {
-      ModalityState.defaultModalityState()
-    }
-    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    @Suppress("ForbiddenInSuspectContextMethod")
+    val modality = if (requiredModality == ApplicationStarter.ANY_MODALITY) ModalityState.any() else ModalityState.defaultModalityState()
+    return withContext(Dispatchers.EDT + modality.asContextElement()) {
       starter.processExternalCommandLine(args, currentDirectory)
     }
   }

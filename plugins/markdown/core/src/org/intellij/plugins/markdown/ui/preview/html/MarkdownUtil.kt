@@ -40,7 +40,7 @@ object MarkdownUtil {
     val map = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
     map[MarkdownElementTypes.CODE_FENCE] = createCodeFenceProvider(project, file, cacheCollector)
     if (project != null) {
-      map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap, baseUri)
+      map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap)
       map[MarkdownElementTypes.PARAGRAPH] = ParagraphGeneratingProvider()
       map[MarkdownElementTypes.CODE_SPAN] = CodeSpanRunnerGeneratingProvider(project, file)
     }

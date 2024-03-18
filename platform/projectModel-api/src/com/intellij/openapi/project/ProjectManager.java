@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +23,7 @@ public abstract class ProjectManager {
   /**
    * @return {@code ProjectManager} instance
    */
+  @RequiresBlockingContext
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getService(ProjectManager.class);
   }

@@ -22,7 +22,7 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHandler {
+public final class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHandler {
 
   private static final Logger LOG = Logger.getInstance(RenameModuleAndDirectoryHandler.class);
 

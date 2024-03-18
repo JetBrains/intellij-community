@@ -6,7 +6,18 @@ fragment project on Project {
   httpUrlToRepo
   sshUrlToRepo
 
+  onlyAllowMergeIfAllDiscussionsAreResolved
+  onlyAllowMergeIfPipelineSucceeds
+  allowMergeOnSkippedPipeline
+
+  allowsMultipleMergeRequestAssignees
+  allowsMultipleMergeRequestReviewers
+
   userPermissions {
     createSnippet
+  }
+
+  repository {
+    rootRef
   }
 }

@@ -66,8 +66,8 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     return ActionManager.getInstance().getAction(RunToolbarEditConfigurationAction.ACTION_ID)
   }
 
-  override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
-    return RunToolbarSelectConfigAction(configuration, project)
+  override fun createFinalAction(project: Project, configuration: RunnerAndConfigurationSettings): AnAction {
+    return RunToolbarSelectConfigAction(project, configuration)
   }
 
   override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {
@@ -301,14 +301,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     protected open fun doShiftClick() {}
   }
 
-  private class RunToolbarSelectConfigAction(val configuration: RunnerAndConfigurationSettings,
-                                             val project: Project) : DumbAwareAction() {
+  private class RunToolbarSelectConfigAction(val project: Project,
+                                             val configuration: RunnerAndConfigurationSettings) : DumbAwareAction() {
     init {
-
-      var name = Executor.shortenNameIfNeeded(configuration.name)
-      if (name.isEmpty()) {
-        name = " "
-      }
+      var name = Executor.shortenNameIfNeeded(configuration.name).takeIf { it.isNotEmpty() } ?: " "
       val presentation = templatePresentation
       presentation.setText(name, false)
       presentation.description = ExecutionBundle.message("select.0.1", configuration.type.configurationTypeDescription, name)

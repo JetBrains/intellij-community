@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.icons.AllIcons;
@@ -8,10 +8,13 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -118,7 +121,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);
     //hide option if implement interface for 1.5 language level
     final boolean overrideVisible =
-      languageLevel.isAtLeast(LanguageLevel.JDK_1_6) || languageLevel.equals(LanguageLevel.JDK_1_5) && !toImplement;
+      JavaFeature.OVERRIDE_INTERFACE.isSufficient(languageLevel) || JavaFeature.ANNOTATIONS.isSufficient(languageLevel) && !toImplement;
 
     ClassMember[] selectElements = null;
     if (toImplement) {
@@ -231,11 +234,13 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     super.fillToolbarActions(group);
     if (myToImplement) return;
 
-    ToggleAction sortByOverridingAction = new MySortByOverridingAction();
-    if (mySortedByOverriding) {
-      changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
+    if (Registry.is("java.override.methods.enable.sort.by.overriding.action")) {
+      ToggleAction sortByOverridingAction = new MySortByOverridingAction();
+      if (mySortedByOverriding) {
+        changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
+      }
+      group.add(sortByOverridingAction, Constraints.FIRST);
     }
-    group.add(sortByOverridingAction, Constraints.FIRST);
 
     myMergeAction = new MyMergeAction();
     group.add(myMergeAction);
@@ -293,7 +298,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
-  private final class MyMergeAction extends ToggleAction {
+  private final class MyMergeAction extends DumbAwareToggleAction {
     private MyMergeAction() {
       super(JavaBundle.message("action.text.show.methods.to.implement"), JavaBundle.message(
         "action.text.show.methods.to.implement"), AllIcons.General.Show_to_implement);

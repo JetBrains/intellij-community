@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -20,8 +19,6 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
-import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
@@ -30,32 +27,32 @@ import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.ObjIntConsumer;
+import java.util.function.Supplier;
 import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
@@ -103,17 +100,34 @@ public final class FSRecordsImpl implements Closeable {
   private static final boolean USE_MRU_FILE_NAME_CACHE = "mru".equals(NAME_CACHE_IMPL);
 
 
-  private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-lock-free-page-cache");
+  private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-mmapped-file");
   public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(CONTENT_STORAGE_IMPL);
+  public static final boolean USE_CONTENT_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_STORAGE_IMPL);
 
   private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
   public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
+
+  /**
+   * Cutoff for VFSContentStorage: file content larger than this threshold store with compression.
+   * Range 4k-8k seems to be optimal, gauged by experiments on IntelliJ source tree:  with such thresholds only
+   * ~7-15% files are actually compressed, but total size is just ~10-20% more than if all files were compressed.
+   */
+  public static final int COMPRESS_CONTENT_IF_LARGER_THAN = SystemProperties.getIntProperty("vfs.content-storage.compress-if-larger", 8000);
+
+  /** Which compression to use for storing content: "zip" (java.util.zip), "lz4", "none" */
+  public static final String COMPRESSION_ALGO = System.getProperty("vfs.content-storage-compression", "lz4");
 
   /**
    * Reuse fileIds deleted in a previous session.
    * It is a quite natural thing to do, but that reuse regularly presents itself in edge-case bugs, so we consider getting rid of it
    */
   public static final boolean REUSE_DELETED_FILE_IDS = getBooleanProperty("vfs.reuse-deleted-file-ids", false);
+
+  /**
+   * Wrap {@link AlreadyDisposedException} in {@link ProcessCanceledException} if under progress indicator or Job.
+   * See containerUtil.isUnderIndicatorOrJob()
+   */
+  private static final boolean WRAP_ADE_IN_PCE = getBooleanProperty("vfs.wrap-ade-in-pce", true);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -155,7 +169,6 @@ public final class FSRecordsImpl implements Closeable {
     ExceptionUtil.rethrow(error);
   };
 
-
   public static ErrorHandler getDefaultErrorHandler() {
     if (VfsLog.isVfsTrackingEnabled()) {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
@@ -164,7 +177,6 @@ public final class FSRecordsImpl implements Closeable {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
     }
   }
-
 
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
@@ -183,8 +195,10 @@ public final class FSRecordsImpl implements Closeable {
    * is a better way to identify strings if nameId is not unique. Such a version of index will require a name itself,
    * as String, which is less available inside PersistentFSConnection.
    */
-  private final @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy;
+  private final @NotNull Supplier<InvertedNameIndex> invertedNameIndexLazy;
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
+  /** Statistics: how many times {@link #processFilesWithNames(Set, IntPredicate)} was called */
+  private final AtomicLong invertedNameIndexRequestsServed = new AtomicLong();
 
   private final @Nullable Closeable flushingTask;
 
@@ -201,7 +215,7 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  private final FineGrainedIdLock updateLock = new FineGrainedIdLock();
+  private final FileRecordLock updateLock = new FileRecordLock();
 
   private volatile boolean closed = false;
 
@@ -209,7 +223,7 @@ public final class FSRecordsImpl implements Closeable {
   private volatile Exception closedStackTrace = null;
 
   //@GuardedBy("this")
-  private final ObjectOpenHashSet<AutoCloseable> closeables = new ObjectOpenHashSet<>();
+  private final Set<AutoCloseable> closeables = new HashSet<>();
   private final CopyOnWriteArraySet<FileIdIndexedStorage> fileIdIndexedStorages = new CopyOnWriteArraySet<>();
 
   private static int nextMask(int value,
@@ -231,7 +245,7 @@ public final class FSRecordsImpl implements Closeable {
     final int mainVFSFormatVersion = 61;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
-           nextMask(true,  //former USE_CONTENT_HASHES, feel free to re-use
+           nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
            nextMask(true,  //former 'inline attributes', feel free to re-use
@@ -245,7 +259,6 @@ public final class FSRecordsImpl implements Closeable {
            nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0)))))))))))));
     //@formatter:on
   }
-
 
   /**
    * Factory
@@ -279,10 +292,7 @@ public final class FSRecordsImpl implements Closeable {
 
       PersistentFSConnection connection = initializationResult.connection;
 
-      NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(
-        AppExecutorUtil.getAppExecutorService(), connection.getRecords()
-      );
-
+      Supplier<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(connection.getRecords());
 
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts, " +
@@ -294,7 +304,6 @@ public final class FSRecordsImpl implements Closeable {
       PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?
                                               new PersistentFSTreeRawAccessor(attributeAccessor, recordAccessor, connection) :
                                               new PersistentFSTreeAccessor(attributeAccessor, recordAccessor, connection);
-
 
       try {
         treeAccessor.ensureLoaded();
@@ -309,8 +318,9 @@ public final class FSRecordsImpl implements Closeable {
         );
       }
       catch (Throwable e) {
-        try {//ensure async task is finished:
-          invertedNameIndexLazy.getValue();
+        try {
+          //ensure async task is finished:
+          invertedNameIndexLazy.get();
         }
         catch (Throwable scanningEx) {
           e.addSuppressed(scanningEx);
@@ -341,13 +351,12 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-
   private FSRecordsImpl(@NotNull PersistentFSConnection connection,
                         @NotNull PersistentFSContentAccessor contentAccessor,
                         @NotNull PersistentFSAttributeAccessor attributeAccessor,
                         @NotNull PersistentFSTreeAccessor treeAccessor,
                         @NotNull PersistentFSRecordAccessor recordAccessor,
-                        @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy,
+                        @NotNull Supplier<InvertedNameIndex> invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
                         @NotNull VFSInitializationResult initializationResult) {
@@ -390,6 +399,7 @@ public final class FSRecordsImpl implements Closeable {
   @Override
   public synchronized void close() {
     if (!closed) {
+      LOG.info("VFS closing");
       Exception stackTraceEx = new Exception("FSRecordsImpl close stacktrace");
 
       if (flushingTask != null) {
@@ -447,19 +457,23 @@ public final class FSRecordsImpl implements Closeable {
     return closed;
   }
 
-  @Contract("->fail")
   void checkNotClosed() {
     if (closed) {
       throw alreadyClosedException();
     }
   }
 
-  private @NotNull AlreadyDisposedException alreadyClosedException() {
-    AlreadyDisposedException alreadyClosed = new AlreadyDisposedException("VFS is already closed (disposed)");
+  private @NotNull RuntimeException alreadyClosedException() {
+    AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already closed (disposed)");
     if (closedStackTrace != null) {
-      alreadyClosed.addSuppressed(closedStackTrace);
+      alreadyDisposed.addSuppressed(closedStackTrace);
     }
-    return alreadyClosed;
+
+    if (!WRAP_ADE_IN_PCE) {
+      return alreadyDisposed;
+    }
+
+    return ContainerUtilKt.wrapAlreadyDisposedError(alreadyDisposed);
   }
 
 
@@ -566,10 +580,11 @@ public final class FSRecordsImpl implements Closeable {
     ids.add(fileId);
     for (int i = 0; i < ids.size(); i++) {
       int id = ids.getInt(i);
+      //FiXME RC: what if id is already deleted -> listIds(id) fails with 'attribute already deleted'?
       ids.addElements(ids.size(), listIds(id));
     }
     PersistentFSRecordsStorage records = connection.getRecords();
-    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.getValue();
+    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.get();
     // delete children first:
     for (int i = ids.size() - 1; i >= 0; i--) {
       int id = ids.getInt(i);
@@ -604,8 +619,9 @@ public final class FSRecordsImpl implements Closeable {
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
-    catch (IOException e) {
-      throw handleError(e);
+    catch (Throwable t) {
+      //not only IOException: almost everything thrown from .findOrCreateRootRecord() is a sign of VFS structure corruption
+      throw handleError(t);
     }
   }
 
@@ -633,6 +649,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Delete fileId from the roots catalog. Does NOT delete fileId record itself */
   void deleteRootRecord(int fileId) {
     try {
       treeAccessor.deleteRootRecord(fileId);
@@ -703,46 +720,34 @@ public final class FSRecordsImpl implements Closeable {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
-  /**
-   * Perform operation on children and save the list atomically:
-   * Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
-   * If everything is still valid (i.e. no one changed the list in the meantime), commit.
-   * Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-   * <p>
-   * TODO actually everything related to this method is kinda of guru code. Please, don't touch it, people are bad in parallel programming.
-   */
+  /** Perform operation on children and save the list atomically */
   @NotNull
   ListResult update(@NotNull VirtualFile parent,
                     int parentId,
                     @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
-    assert parentId > 0 : parentId;
-    ListResult children = list(parentId);
-    ListResult result = childrenConvertor.apply(children);
+    PersistentFSConnection.ensureIdIsValid(parentId);
 
     updateLock.lock(parentId);
     try {
-      ListResult toSave;
-      // optimization: if the children were never changed after list(), do not check for duplicates again
-      if (result.childrenWereChangedSinceLastList(this)) {
-        children = list(parentId);
-        toSave = childrenConvertor.apply(children);
-      }
-      else {
-        toSave = result;
-      }
+      ListResult children = list(parentId);
+      ListResult modifiedChildren = childrenConvertor.apply(children);
+
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
-      if (!toSave.equals(children)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
-        }
+      if (!modifiedChildren.equals(children)) {
+        //if (LOG.isDebugEnabled()) {
+        //  LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + modifiedChildren);
+        //}
         checkNotClosed();
-        updateSymlinksForNewChildren(parent, children, toSave);
-        treeAccessor.doSaveChildren(parentId, toSave);
+
+        //TODO RC: why we update symlinks here, under the lock?
+        updateSymlinksForNewChildren(parent, children, modifiedChildren);
+
+        treeAccessor.doSaveChildren(parentId, modifiedChildren);
         connection.markRecordAsModified(parentId);
       }
-      return toSave;
+      return modifiedChildren;
     }
     catch (ProcessCanceledException e) {
       // NewVirtualFileSystem.list methods can be interrupted now
@@ -781,11 +786,11 @@ public final class FSRecordsImpl implements Closeable {
             setParent(childToMove.getId(), toParentId);
           }
 
-          connection.markRecordAsModified(toParentId);
           treeAccessor.doSaveChildren(toParentId, childrenToMove);
+          connection.markRecordAsModified(toParentId);
 
-          connection.markRecordAsModified(fromParentId);
           treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
+          connection.markRecordAsModified(fromParentId);
         }
         catch (ProcessCanceledException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -806,9 +811,10 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== symlink manipulation: ========================================
 
-  private void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
-                                            @NotNull ListResult oldChildren,
-                                            @NotNull ListResult newChildren) {
+  @VisibleForTesting
+  void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+                                    @NotNull ListResult oldChildren,
+                                    @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(
       oldChildren.children, newChildren.children,
@@ -906,7 +912,8 @@ public final class FSRecordsImpl implements Closeable {
           nameIds.add(nameId);
         }
       }
-      return invertedNameIndexLazy.getValue().processFilesWithNames(nameIds, processor);
+      invertedNameIndexRequestsServed.incrementAndGet();
+      return invertedNameIndexLazy.get().processFilesWithNames(nameIds, processor);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1029,15 +1036,15 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  void setName(int fileId, @NotNull String name, int oldNameId) {
+  void setName(int fileId, @NotNull String name) {
     try {
       checkNotClosed();
       int nameId = getNameId(name);
 
-      connection.getRecords().setNameId(fileId, nameId);
+      int previousNameId = connection.getRecords().updateNameId(fileId, nameId);
       connection.markDirty();
 
-      invertedNameIndexLazy.getValue().updateFileName(fileId, nameId, oldNameId);
+      invertedNameIndexLazy.get().updateFileName(fileId, nameId, previousNameId);
       invertedNameIndexModCount.incrementAndGet();
     }
     catch (IOException e) {
@@ -1133,20 +1140,20 @@ public final class FSRecordsImpl implements Closeable {
                          int parentId,
                          @NotNull FileAttributes attributes,
                          @NotNull String name,
-                         boolean overwriteMissed) {
+                         boolean cleanAttributeRef) {
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
     try {
-      fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+      fillRecord(fileId, timestamp, length, flags, nameId, parentId, cleanAttributeRef);
     }
     catch (IOException e) {
       throw handleError(e);
     }
 
-    invertedNameIndexLazy.getValue().updateFileName(fileId, nameId, NULL_NAME_ID);
+    invertedNameIndexLazy.get().updateFileName(fileId, nameId, NULL_NAME_ID);
     invertedNameIndexModCount.incrementAndGet();
 
     return nameId;
@@ -1182,7 +1189,12 @@ public final class FSRecordsImpl implements Closeable {
   /** must be called under r or w lock */
   private @Nullable AttributeInputStream readAttribute(int fileId,
                                                        @NotNull FileAttribute attribute) throws IOException {
-    return attributeAccessor.readAttribute(fileId, attribute);
+    try {
+      return attributeAccessor.readAttribute(fileId, attribute);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   @NotNull
@@ -1222,7 +1234,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== file content accessors: ========================================
 
   @Nullable
-  DataInputStream readContent(int fileId) {
+  InputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -1249,9 +1261,9 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @NotNull
-  DataInputStream readContentById(int contentId) {
+  InputStream readContentById(int contentId) {
     try {
-      return contentAccessor.readContentDirectly(contentId);
+      return contentAccessor.readContentByContentId(contentId);
     }
     catch (InterruptedIOException ie) {
       //RC: goal is to just not go into handleError(), which likely marks VFS corrupted,
@@ -1292,10 +1304,6 @@ public final class FSRecordsImpl implements Closeable {
       public void close() {
         try {
           super.close();
-          if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
-            checkNotClosed();
-            connection.markRecordAsModified(fileId);
-          }
         }
         catch (IOException e) {
           throw handleError(e);
@@ -1372,7 +1380,7 @@ public final class FSRecordsImpl implements Closeable {
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
     if (e instanceof ClosedStorageException || closed) {
       // no connection means IDE is closing...
-      AlreadyDisposedException alreadyDisposed = alreadyClosedException();
+      RuntimeException alreadyDisposed = alreadyClosedException();
       alreadyDisposed.addSuppressed(e);
       throw alreadyDisposed;
     }
@@ -1408,7 +1416,7 @@ public final class FSRecordsImpl implements Closeable {
 
   @TestOnly
   void checkFilenameIndexConsistency() {
-    invertedNameIndexLazy.getValue().checkConsistency();
+    invertedNameIndexLazy.get().checkConsistency();
   }
 
   @NotNull
@@ -1430,6 +1438,10 @@ public final class FSRecordsImpl implements Closeable {
 
   public int corruptionsDetected() {
     return connection.corruptionsDetected();
+  }
+
+  public long invertedNameIndexRequestsServed() {
+    return invertedNameIndexRequestsServed.get();
   }
 
   //========== accessors for diagnostics & sanity checks: ========================
@@ -1455,35 +1467,33 @@ public final class FSRecordsImpl implements Closeable {
     return recordAccessor;
   }
 
-
   @VisibleForTesting
-  public static @NotNull NotNullLazyValue<InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull ExecutorService pool,
-                                                                                        @NotNull PersistentFSRecordsStorage recordsStorage) {
-    Future<InvertedNameIndex> fillUpInvertedNameIndexTask = pool.submit(() -> {
+  public static @NotNull Supplier<@NotNull InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage) {
+    CompletableFuture<InvertedNameIndex> fillUpInvertedNameIndexTask = PersistentFsConnectorHelper.INSTANCE.executor().async(() -> {
       InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
-      //fill up nameId->fileId index:
+      // fill up nameId->fileId index:
       int maxAllocatedID = recordsStorage.maxAllocatedID();
-      for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-        int flags = recordsStorage.getFlags(fileId);
-        int nameId = recordsStorage.getNameId(fileId);
-        if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
-          invertedNameIndex.updateDataInner(fileId, nameId);
+        for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+          int flags = recordsStorage.getFlags(fileId);
+          int nameId = recordsStorage.getNameId(fileId);
+          if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
+            invertedNameIndex.updateDataInner(fileId, nameId);
+          }
         }
-      }
       LOG.info("VFS scanned: file-by-name index was populated");
       return invertedNameIndex;
     });
 
-    //We don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
+    // We don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
     // So _there could be_ a data race, but it is a benign race.
-    return NotNullLazyValue.lazy(() -> {
+    return () -> {
       try {
-        return fillUpInvertedNameIndexTask.get();
+        return fillUpInvertedNameIndexTask.join();
       }
       catch (Throwable e) {
         throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
       }
-    });
+    };
   }
 
 

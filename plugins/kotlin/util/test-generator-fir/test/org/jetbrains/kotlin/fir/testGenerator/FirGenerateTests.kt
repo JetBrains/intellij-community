@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.dependents.AbstractModuleDependentsTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.sealedInheritors.AbstractSealedInheritorsProviderTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractGlobalSessionInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractLocalSessionInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
@@ -17,20 +18,24 @@ import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeyword
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFeaturesFirTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFirTest
-import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinScriptFindUsagesFirTest
+import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
+import org.jetbrains.kotlin.idea.fir.findUsages.*
+import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoDeclarationTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoRelatedSymbolMultiModuleTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
+import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
@@ -38,6 +43,7 @@ import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
@@ -57,6 +63,8 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
 }
+
+fun assembleK2Workspace(): TWorkspace = assembleWorkspace()
 
 fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
@@ -93,6 +101,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractModuleDependentsTest> {
             model("moduleDependents", pattern = DIRECTORY, isRecursive = false)
         }
+
+        testClass<AbstractSealedInheritorsProviderTest> {
+            model("sealedInheritors", pattern = DIRECTORY, isRecursive = false)
+        }
     }
 
     testGroup("compiler-plugins/parcelize/tests/k2", testDataPath = "../testData") {
@@ -107,7 +119,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir", testDataPath = "../idea/tests/testData") {
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2AddImportActionTest> {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
@@ -149,8 +161,26 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("navigation/gotoTypeDeclaration", pattern = TEST)
         }
 
+        testClass<AbstractFirGotoTest> {
+            model("navigation/gotoClass", testMethodName = "doClassTest")
+            model("navigation/gotoSymbol", testMethodName = "doSymbolTest")
+        }
+
+        testClass<AbstractFirGotoRelatedSymbolMultiModuleTest> {
+            model("navigation/relatedSymbols/multiModule", isRecursive = false, pattern = DIRECTORY)
+        }
+
+
         testClass<AbstractFirGotoDeclarationTest> {
             model("navigation/gotoDeclaration", pattern = TEST)
+        }
+
+        testClass<AbstractFirLiteralTextToKotlinCopyPasteTest> {
+            model("copyPaste/plainTextLiteral", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
+        }
+
+        testClass<AbstractFirLiteralKotlinToKotlinCopyPasteTest> {
+            model("copyPaste/literal", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
         }
 
         testClass<AbstractHighLevelQuickFixTest> {
@@ -185,11 +215,166 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/typeAddition", pattern = pattern)
             model("quickfix/typeMismatch/casts", pattern = pattern)
             model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
+            model("quickfix/typeMismatch/parameterTypeMismatch", pattern = pattern)
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
+            model("quickfix/typeMismatch/wrongPrimitive", pattern = pattern)
+            model("quickfix/typeMismatch", isRecursive = false, pattern = pattern)
             model("quickfix/toString", pattern = pattern)
             model("quickfix/specifySuperType", pattern = pattern)
             model("quickfix/convertToBlockBody", pattern = pattern)
             model("quickfix/supertypeInitialization", pattern = pattern)
+
+            model("quickfix/addAnnotationTarget", pattern = pattern, isIgnored = true)
+            model("quickfix/addAnnotationUseSiteTarget", pattern = pattern, isIgnored = true)
+            model("quickfix/addConstructorParameter", pattern = pattern, isIgnored = true)
+            model("quickfix/addConstructorParameterFromSuperTypeCall", pattern = pattern, isIgnored = true)
+            model("quickfix/addConversionCall", pattern = pattern, isIgnored = true)
+            model("quickfix/addCrossinline", pattern = pattern, isIgnored = true)
+            model("quickfix/addDataModifier", pattern = pattern, isIgnored = true)
+            model("quickfix/addDefaultConstructor", pattern = pattern, isIgnored = true)
+            model("quickfix/addElseBranchToIf", pattern = pattern, isIgnored = true)
+            model("quickfix/addEmptyArgumentList", pattern = pattern, isIgnored = true)
+            model("quickfix/addEqEqTrue", pattern = pattern, isIgnored = true)
+            model("quickfix/addFunModifier", pattern = pattern, isIgnored = true)
+            model("quickfix/addGenericUpperBound", pattern = pattern, isIgnored = true)
+            model("quickfix/addInline", pattern = pattern, isIgnored = true)
+            model("quickfix/addInlineToReifiedFunctionFix", pattern = pattern, isIgnored = true)
+            model("quickfix/addIsToWhenCondition", pattern = pattern, isIgnored = true)
+            model("quickfix/addJvmInline", pattern = pattern, isIgnored = true)
+            model("quickfix/addJvmStaticAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/addNewLineAfterAnnotations", pattern = pattern, isIgnored = true)
+            model("quickfix/addNoinline", pattern = pattern, isIgnored = true)
+            model("quickfix/addReifiedToTypeParameterOfFunctionFix", pattern = pattern, isIgnored = true)
+            model("quickfix/addReturnExpression", pattern = pattern, isIgnored = true)
+            model("quickfix/addReturnToLastExpressionInFunction", pattern = pattern, isIgnored = true)
+            model("quickfix/addReturnToUnusedLastExpressionInFunction", pattern = pattern, isIgnored = true)
+            model("quickfix/addRunBeforeLambda", pattern = pattern, isIgnored = true)
+            model("quickfix/addSemicolonBeforeLambdaExpression", pattern = pattern, isIgnored = true)
+            model("quickfix/addSpreadOperatorForArrayAsVarargAfterSam", pattern = pattern, isIgnored = true)
+            model("quickfix/addStarProjections", pattern = pattern, isIgnored = true)
+            model("quickfix/addSuspend", pattern = pattern, isIgnored = true)
+            model("quickfix/addTypeAnnotationToValueParameter", pattern = pattern, isIgnored = true)
+            model("quickfix/addUnsafeVarianceAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/addValVar", pattern = pattern, isIgnored = true)
+            model("quickfix/addVarianceModifier", pattern = pattern, isIgnored = true)
+            model("quickfix/assignToProperty", pattern = pattern, isIgnored = true)
+            model("quickfix/callFromPublicInline", pattern = pattern, isIgnored = true)
+            model("quickfix/canBeParameter", pattern = pattern, isIgnored = true)
+            model("quickfix/canBePrimaryConstructorProperty", pattern = pattern, isIgnored = true)
+            model("quickfix/castDueToProgressionResolveChange", pattern = pattern, isIgnored = true)
+            model("quickfix/changeObjectToClass", pattern = pattern, isIgnored = true)
+            model("quickfix/changeSignature", pattern = pattern, isIgnored = true)
+            model("quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern, isIgnored = true)
+            model("quickfix/changeToLabeledReturn", pattern = pattern, isIgnored = true)
+            model("quickfix/changeToMutableCollection", pattern = pattern, isIgnored = true)
+            model("quickfix/changeToUseSpreadOperator", pattern = pattern, isIgnored = true)
+            model("quickfix/compilerError", pattern = pattern, isIgnored = true)
+            model("quickfix/convertCollectionLiteralToIntArrayOf", pattern = pattern, isIgnored = true)
+            model("quickfix/convertIllegalEscapeToUnicodeEscape", pattern = pattern, isIgnored = true)
+            model("quickfix/convertJavaInterfaceToClass", pattern = pattern, isIgnored = true)
+            model("quickfix/convertLateinitPropertyToNotNullDelegate", pattern = pattern, isIgnored = true)
+            model("quickfix/convertPropertyInitializerToGetter", pattern = pattern, isIgnored = true)
+            model("quickfix/convertToAnonymousObject", pattern = pattern, isIgnored = true)
+            model("quickfix/convertToIsArrayOfCall", pattern = pattern, isIgnored = true)
+            model("quickfix/createFromUsage", pattern = pattern, isIgnored = true)
+            model("quickfix/createLabel", pattern = pattern, isIgnored = true)
+            model("quickfix/declarationCantBeInlined", pattern = pattern, isIgnored = true)
+            model("quickfix/declaringJavaClass", pattern = pattern, isIgnored = true)
+            model("quickfix/decreaseVisibility", pattern = pattern, isIgnored = true)
+            model("quickfix/deprecatedJavaAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = true)
+            model("quickfix/equalityNotApplicable", pattern = pattern, isIgnored = true)
+            model("quickfix/final", pattern = pattern, isIgnored = true)
+            model("quickfix/foldTryCatch", pattern = pattern, isIgnored = true)
+            model("quickfix/functionWithLambdaExpressionBody", pattern = pattern, isIgnored = true)
+            model("quickfix/implement", pattern = pattern, isIgnored = true)
+            model("quickfix/importAlias", pattern = pattern, isIgnored = true)
+            model("quickfix/increaseVisibility", pattern = pattern, isIgnored = true)
+            model("quickfix/initializeWithConstructorParameter", pattern = pattern, isIgnored = true)
+            model("quickfix/inlineClass", pattern = pattern, isIgnored = true)
+            model("quickfix/inlineTypeParameterFix", pattern = pattern, isIgnored = true)
+            model("quickfix/insertDelegationCall", pattern = pattern, isIgnored = true)
+            model("quickfix/isEnumEntry", pattern = pattern, isIgnored = true)
+            model("quickfix/javaClassOnCompanion", pattern = pattern, isIgnored = true)
+            model("quickfix/kdocMissingDocumentation", pattern = pattern, isIgnored = true)
+            model("quickfix/leakingThis", pattern = pattern, isIgnored = true)
+            model("quickfix/libraries", pattern = pattern, isIgnored = true)
+            model("quickfix/makeConstructorParameterProperty", pattern = pattern, isIgnored = true)
+            model("quickfix/makePrivateAndOverrideMember", pattern = pattern, isIgnored = true)
+            model("quickfix/makeTypeParameterReified", pattern = pattern, isIgnored = true)
+            model("quickfix/makeUpperBoundNonNullable", pattern = pattern, isIgnored = true)
+            model("quickfix/memberVisibilityCanBePrivate", pattern = pattern, isIgnored = true)
+            model("quickfix/migration", pattern = pattern, isIgnored = true)
+            model("quickfix/missingConstructorBrackets", pattern = pattern, isIgnored = true)
+            model("quickfix/moveMemberToCompanionObject", pattern = pattern, isIgnored = true)
+            model("quickfix/moveReceiverAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/moveToConstructorParameters", pattern = pattern, isIgnored = true)
+            model("quickfix/moveToSealedParent", pattern = pattern, isIgnored = true)
+            model("quickfix/moveTypeAliasToTopLevel", pattern = pattern, isIgnored = true)
+            model("quickfix/obsoleteKotlinJsPackages", pattern = pattern, isIgnored = true)
+            model("quickfix/optIn", pattern = pattern, isIgnored = true)
+            model("quickfix/optimizeImports", pattern = pattern, isIgnored = true)
+            model("quickfix/platformClasses", pattern = pattern, isIgnored = true)
+            model("quickfix/platformTypesInspection", pattern = pattern, isIgnored = true)
+            model("quickfix/primitiveCastToConversion", pattern = pattern, isIgnored = true)
+            model("quickfix/properties", pattern = pattern, isIgnored = true)
+            model("quickfix/protectedInFinal", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantConst", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantFun", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantIf", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantInline", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantLateinit", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantModalityModifier", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantSuspend", pattern = pattern, isIgnored = true)
+            model("quickfix/redundantVisibilityModifier", pattern = pattern, isIgnored = true)
+            model("quickfix/removeAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/removeArgument", pattern = pattern, isIgnored = true)
+            model("quickfix/removeAtFromAnnotationArgument", pattern = pattern, isIgnored = true)
+            model("quickfix/removeDefaultParameterValue", pattern = pattern, isIgnored = true)
+            model("quickfix/removeFinalUpperBound", pattern = pattern, isIgnored = true)
+            model("quickfix/removeNoConstructor", pattern = pattern, isIgnored = true)
+            model("quickfix/removeRedundantAssignment", pattern = pattern, isIgnored = true)
+            model("quickfix/removeRedundantInitializer", pattern = pattern, isIgnored = true)
+            model("quickfix/removeRedundantLabel", pattern = pattern, isIgnored = true)
+            model("quickfix/removeSingleLambdaParameter", pattern = pattern, isIgnored = true)
+            model("quickfix/removeSuspend", pattern = pattern, isIgnored = true)
+            model("quickfix/removeToStringInStringTemplate", pattern = pattern, isIgnored = true)
+            model("quickfix/removeTypeVariance", pattern = pattern, isIgnored = true)
+            model("quickfix/removeUnused", pattern = pattern)
+            model("quickfix/removeUnusedParameter", pattern = pattern, isIgnored = true)
+            model("quickfix/removeUnusedReceiver", pattern = pattern, isIgnored = true)
+            model("quickfix/removeUseSiteTarget", pattern = pattern, isIgnored = true)
+            model("quickfix/renameToRem", pattern = pattern, isIgnored = true)
+            model("quickfix/renameToUnderscore", pattern = pattern, isIgnored = true)
+            model("quickfix/renameUnresolvedReference", pattern = pattern, isIgnored = true)
+            model("quickfix/reorderParameters", pattern = pattern, isIgnored = true)
+            model("quickfix/replaceJvmFieldWithConst", pattern = pattern, isIgnored = true)
+            model("quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/simplifyComparison", pattern = pattern, isIgnored = true)
+            model("quickfix/smartCastImpossibleInIfThen", pattern = pattern, isIgnored = true)
+            model("quickfix/specifyOverrideExplicitly", pattern = pattern, isIgnored = true)
+            model("quickfix/specifySuperExplicitly", pattern = pattern, isIgnored = true)
+            model("quickfix/specifyTypeExplicitly", pattern = pattern, isIgnored = true)
+            model("quickfix/superTypeIsExtensionType", pattern = pattern, isIgnored = true)
+            model("quickfix/suppress", pattern = pattern, isIgnored = true)
+            model("quickfix/surroundWithNullCheck", pattern = pattern, isIgnored = true)
+            model("quickfix/suspiciousCollectionReassignment", pattern = pattern, isIgnored = true)
+            model("quickfix/tooLongCharLiteralToString", pattern = pattern, isIgnored = true)
+            model("quickfix/typeImports", pattern = pattern, isIgnored = true)
+            model("quickfix/typeInferenceExpectedTypeMismatch", pattern = pattern, isIgnored = true)
+            model("quickfix/typeOfAnnotationMember", pattern = pattern, isIgnored = true)
+            model("quickfix/typeParameters", pattern = pattern, isIgnored = true)
+            model("quickfix/typeProjection", pattern = pattern, isIgnored = true)
+            model("quickfix/unnecessaryLateinit", pattern = pattern, isIgnored = true)
+            model("quickfix/unusedSuppressAnnotation", pattern = pattern, isIgnored = true)
+            model("quickfix/useFullyqualifiedCall", pattern = pattern, isIgnored = true)
+            model("quickfix/variables", pattern = pattern, isRecursive = false, isIgnored = true)
+            model("quickfix/variables/changeToPropertyAccess", pattern = pattern, isRecursive = false, isIgnored = true)
+            model("quickfix/variables/changeToFunctionInvocation", pattern = pattern, isRecursive = false, isIgnored = true)
+            model("quickfix/wrapArgumentWithParentheses", pattern = pattern, isIgnored = true)
+            model("quickfix/wrapWhenExpressionInParentheses", pattern = pattern, isIgnored = true)
+            model("quickfix/wrongLongSuffix", pattern = pattern, isIgnored = true)
+            model("quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
@@ -206,6 +391,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+            model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
         }
 
         testClass<AbstractFirParameterInfoTest> {
@@ -215,17 +401,35 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             )
         }
 
+        testClass<AbstractK2AutoImportTest> {
+            model(
+                "editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
+        testClass<AbstractK2FilteringAutoImportTest> {
+            model(
+                "editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
         testClass<AbstractFirJvmOptimizeImportsTest> {
             model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractK2BytecodeToolWindowTest> {
-            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr")
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY)
+        }
+
+        testClass<AbstractK2ExternalAnnotationTest> {
+            model("externalAnnotations", pattern = KT_WITHOUT_DOTS)
         }
     }
 
-    testGroup("fir", testDataPath = "../completion/testData") {
+    testGroup("fir/tests", testDataPath = "../../completion/testData") {
         testClass<AbstractK2JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
@@ -281,11 +485,27 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirWithMppStdlibCompletionTest> {
             model("basic/stdlibWithCommon", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
+
+        // Smart completion does not work in K2, see KTIJ-26166
+        testClass<AbstractK2CompletionIncrementalResolveTest> {
+            model("incrementalResolve", excludedDirectories = listOf("smart"))
+        }
     }
 
-    testGroup("fir", testDataPath = "../code-insight/testData") {
+    testGroup("fir/tests", testDataPath = "../../code-insight/testData") {
         testClass<AbstractK2MultiModuleLineMarkerTest> {
             model("linemarkers", isRecursive = false, pattern = DIRECTORY)
+        }
+    }
+
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData") {
+        testClass<AbstractK2ProjectViewTest> {
+            model("projectView", pattern = TEST)
+        }
+
+        testClass<AbstractFirFoldingTest> {
+            model("folding/noCollapse")
+            model("folding/checkCollapse", testMethodName = "doSettingsFoldingTest")
         }
     }
 
@@ -296,9 +516,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractK2InplaceRenameTest> {
             model("refactoring/rename/inplace", pattern = KT, flatten = true)
         }
+        testClass<AbstractFirMultiModuleRenameTest> {
+            model("refactoring/renameMultiModule", pattern = TEST, flatten = true)
+        }
     }
 
-    testGroup("fir", testDataPath = "../idea/tests/testData/findUsages") {
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData/findUsages") {
         testClass<AbstractFindUsagesFirTest> {
             model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
             model("java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""))
@@ -330,7 +553,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir") {
+    testGroup("fir/tests") {
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
         }
@@ -349,6 +572,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractK2JvmBasicCompletionTestWithResolveExtension> {
             model("extensions/completion", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractAdditionalKDocResolutionProviderTest> {
+            model("resolve/additionalKDocReference", pattern = KT_WITHOUT_DOTS)
         }
     }
 

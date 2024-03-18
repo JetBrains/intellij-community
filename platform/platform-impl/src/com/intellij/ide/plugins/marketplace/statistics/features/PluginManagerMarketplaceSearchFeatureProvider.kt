@@ -10,26 +10,24 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 
-class PluginManagerMarketplaceSearchFeatureProvider {
-  companion object {
-    private val IS_SUGGESTED_DATA_KEY = EventFields.Boolean("isSuggested")
-    private val IS_STAFF_PICKS_DATA_KEY = EventFields.Boolean("isStaffPicks")
-    private val CUSTOM_REPOSITORY_COUNT_DATA_KEY = EventFields.Int("customRepositoryCount")
-    private val MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY = EventFields.Int("marketplaceCustomRepositoryCount")
-    private val SORT_BY_DATA_KEY = EventFields.Enum<SortBy>("sortBy")
-    private val VENDORS_LIST_FILTER_DATA_KEY = EventFields.StringListValidatedByCustomRule(
-      "vendorsListFilter", MarketplaceVendorsListValidator::class.java
-    )
-    private val TAGS_LIST_FILTER_DATA_KEY = EventFields.StringListValidatedByCustomRule(
-      "tagsListFilter", MarketplaceTagsListValidator::class.java
-    )
+object PluginManagerMarketplaceSearchFeatureProvider {
+  private val IS_SUGGESTED_DATA_KEY = EventFields.Boolean("isSuggested")
+  private val IS_STAFF_PICKS_DATA_KEY = EventFields.Boolean("isStaffPicks")
+  private val CUSTOM_REPOSITORY_COUNT_DATA_KEY = EventFields.Int("customRepositoryCount")
+  private val MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY = EventFields.Int("marketplaceCustomRepositoryCount")
+  private val SORT_BY_DATA_KEY = EventFields.Enum<SortBy>("sortBy")
+  private val VENDORS_LIST_FILTER_DATA_KEY = EventFields.StringListValidatedByCustomRule(
+    "vendorsListFilter", MarketplaceVendorsListValidator::class.java
+  )
+  private val TAGS_LIST_FILTER_DATA_KEY = EventFields.StringListValidatedByCustomRule(
+    "tagsListFilter", MarketplaceTagsListValidator::class.java
+  )
 
-    fun getFeaturesDefinition(): List<EventField<*>> {
-      return arrayListOf(
-        IS_SUGGESTED_DATA_KEY, IS_STAFF_PICKS_DATA_KEY, CUSTOM_REPOSITORY_COUNT_DATA_KEY, MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY,
-        SORT_BY_DATA_KEY, VENDORS_LIST_FILTER_DATA_KEY, TAGS_LIST_FILTER_DATA_KEY
-      )
-    }
+  fun getFeaturesDefinition(): Array<EventField<*>> {
+    return arrayOf(
+      IS_SUGGESTED_DATA_KEY, IS_STAFF_PICKS_DATA_KEY, CUSTOM_REPOSITORY_COUNT_DATA_KEY, MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY,
+      SORT_BY_DATA_KEY, VENDORS_LIST_FILTER_DATA_KEY, TAGS_LIST_FILTER_DATA_KEY
+    )
   }
 
   fun getSearchStateFeatures(query: SearchQueryParser.Marketplace): List<EventPair<*>> = buildList {

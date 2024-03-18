@@ -8,7 +8,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class NonFinalFieldInImmutableInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class NonFinalFieldInImmutableInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull

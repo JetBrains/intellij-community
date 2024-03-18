@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -37,13 +37,13 @@ import git4idea.commands.Git;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
-import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,19 +104,28 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     // NB: not specifying --tags, because it introduces great slowdown if there are many tags,
     // but makes sense only if there are heads without branch or HEAD labels (rare case). Such cases are partially handled below.
 
-    boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
+    boolean refresh = false, isRefreshRefs = false;
+
+    if (requirements instanceof VcsLogProviderRequirementsEx requirementsEx) {
+      refresh = requirementsEx.isRefresh();
+      isRefreshRefs = requirementsEx.isRefreshRefs();
+    }
 
     DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new ObjectOpenCustomHashSet<>(safeRefs, DONT_CONSIDER_SHA);
-    Set<VcsRef> branches = readBranches(repository);
-    addNewElements(allRefs, branches);
+    Set<VcsRef> branches = Collections.emptySet();
+
+    if (isRefreshRefs) {
+      branches = readBranches(repository);
+      addNewElements(allRefs, branches);
+    }
 
     Collection<VcsCommitMetadata> allDetails;
     Set<String> currentTagNames = null;
     DetailedLogData commitsFromTags = null;
-    if (!refresh) {
+    if (!refresh || !isRefreshRefs) {
       allDetails = data.getCommits();
     }
     else {
@@ -333,7 +342,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   private @NotNull Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    return computeWithSpan(myTracer, ReadBranches.getName(), span -> {
+    return computeWithSpan(myTracer, ReadingBranches.getName(), span -> {
       span.setAttribute("rootName", repository.getRoot().getName());
       VirtualFile root = repository.getRoot();
       repository.update();
@@ -418,44 +427,11 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     List<String> configParameters = new ArrayList<>();
     List<String> filterParameters = new ArrayList<>();
 
-    VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
-    VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
-    if (branchFilter != null || revisionFilter != null || range != null) {
-      boolean atLeastOneBranchExists = false;
-
-      if (branchFilter != null) {
-        Collection<GitBranch> branches = ContainerUtil
-          .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
-        Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = Collections.singletonList(GitUtil.HEAD);
-
-        for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
-          if (branchFilter.matches(branchName)) {
-            filterParameters.add(branchName);
-            atLeastOneBranchExists = true;
-          }
-        }
-      }
-      if (revisionFilter != null) {
-        for (CommitId commit : revisionFilter.getHeads()) {
-          if (commit.getRoot().equals(root)) {
-            filterParameters.add(commit.getHash().asString());
-            atLeastOneBranchExists = true;
-          }
-        }
-      }
-
-      if (range != null) {
-        filterParameters.add(range.getExclusiveRef() + ".." + range.getInclusiveRef());
-      }
-
-      if (range == null && !atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
-        return Collections.emptyList();
-      }
+    List<String> branchLikeFilterParameters = getBranchLikeFilterParameters(repository, filterCollection, range);
+    if (branchLikeFilterParameters.isEmpty()) {
+      return Collections.emptyList(); // no such branches in this repository => filter matches nothing
     }
-    else {
-      filterParameters.addAll(GitLogUtil.LOG_ALL);
-    }
+    filterParameters.addAll(branchLikeFilterParameters);
 
     VcsLogDateFilter dateFilter = filterCollection.get(DATE_FILTER);
     if (dateFilter != null) {
@@ -515,6 +491,46 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     return commits;
   }
 
+  @ApiStatus.Internal
+  public static List<String> getBranchLikeFilterParameters(@NotNull GitRepository repository,
+                                                           @NotNull VcsLogFilterCollection filterCollection,
+                                                           @Nullable VcsLogRangeFilter.RefRange range) {
+    VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
+    VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
+    if (branchFilter == null && revisionFilter == null && range == null) {
+      return GitLogUtil.LOG_ALL;
+    }
+
+    List<String> result = new ArrayList<>();
+
+    if (branchFilter != null) {
+      Collection<GitBranch> branches = ContainerUtil.newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(),
+                                                                                       repository.getBranches().getRemoteBranches()));
+      Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
+      Collection<String> predefinedNames = Collections.singletonList(GitUtil.HEAD);
+
+      for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
+        if (branchFilter.matches(branchName)) {
+          result.add(branchName);
+        }
+      }
+    }
+
+    if (revisionFilter != null) {
+      for (CommitId commit : revisionFilter.getHeads()) {
+        if (commit.getRoot().equals(repository.getRoot())) {
+          result.add(commit.getHash().asString());
+        }
+      }
+    }
+
+    if (range != null) {
+      result.add(range.getExclusiveRef() + ".." + range.getInclusiveRef());
+    }
+
+    return result;
+  }
+
   public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,
                                                 @NotNull List<? super String> filterParameters) {
     if (text != null) {
@@ -551,11 +567,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public @NotNull VcsLogDiffHandler getDiffHandler() {
     return new GitLogDiffHandler(myProject);
-  }
-
-  @Override
-  public @NotNull VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return new GitLogHistoryHandler(myProject);
   }
 
   @Override

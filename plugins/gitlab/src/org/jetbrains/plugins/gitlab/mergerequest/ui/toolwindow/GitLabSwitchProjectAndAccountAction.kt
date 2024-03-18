@@ -21,7 +21,8 @@ class GitLabSwitchProjectAndAccountAction : DumbAwareAction(GitLabBundle.message
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val toolwindowVm = (e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM) as GitLabToolWindowViewModel)
+    val toolwindowVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM) as?
+      GitLabToolWindowViewModel ?: return
 
     toolwindowVm.switchProject()
   }

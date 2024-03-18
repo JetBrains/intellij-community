@@ -8,6 +8,7 @@
 
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
       <option name="CARET_ROW_COLOR" value="fffae3"/>
+      <option name="GRID_STRIPE_COLOR" value="f5f8fe" />
       <option name="METHOD_SEPARATORS_COLOR" value="c0c0c0"/>
       <option name="WHITESPACES" value="adadad"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
@@ -112,6 +113,9 @@
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="00000080"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
+      <option name="Scrollbar.Tabs.TransparentThumbColor" value="ABABAB00"/>
+      <option name="Scrollbar.Tabs.ThumbColor" value="ABABABFF"/>
+      <option name="Scrollbar.Tabs.HoveredThumbColor" value="7F7F7FFF"/>
       <option name="ActionButton.hoverBackground" value="dfdfdf"/>
       <option name="ActionButton.pressedBackground" value="cfcfcf"/>
       <option name="ActionButton.iconTextForeground" value="6e6e6e"/>
@@ -633,6 +637,12 @@
           <option name="BACKGROUND" value="d8d8d8"/>
         </value>
       </option>
+      <option name="TERMINAL_CLASS_NAME_LOG_REFERENCE">
+        <value>
+          <option name="EFFECT_TYPE" value="5" />
+          <option name="EFFECT_COLOR" value="808080" />
+        </value>
+      </option>
       <option name="LIVE_TEMPLATE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -663,7 +673,7 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="e4e4ff" deuteranopia="D9E6FF" protanopia="D9E6FF"/>
-          <option name="ERROR_STRIPE_COLOR" value="baa8ff" deuteranopia="acb0bf" protanopia="acb0bf"/> 
+          <option name="ERROR_STRIPE_COLOR" value="baa8ff" deuteranopia="acb0bf" protanopia="acb0bf"/>
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
@@ -1272,7 +1282,7 @@
         </option>
         <option name="BLOCK_TERMINAL_GREEN_BRIGHT">
           <value>
-            <option name="FOREGROUND" value="55F255" />
+            <option name="FOREGROUND" value="3DCC3D" />
             <option name="BACKGROUND" value="4FE34F" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -1282,7 +1292,7 @@
         </option>
         <option name="BLOCK_TERMINAL_YELLOW_BRIGHT">
           <value>
-            <option name="FOREGROUND" value="FFF64D" />
+            <option name="FOREGROUND" value="D4BB00" />
             <option name="BACKGROUND" value="FFCD1A" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -1312,7 +1322,7 @@
         </option>
         <option name="BLOCK_TERMINAL_CYAN_BRIGHT">
           <value>
-            <option name="FOREGROUND" value="4DF6FF" />
+            <option name="FOREGROUND" value="31C4B3" />
             <option name="BACKGROUND" value="2EDCE5" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -1391,7 +1401,7 @@
             <option name="FOREGROUND" value="bc5150" />
           </value>
         </option>
-      
+
         <option name="BREADCRUMBS_DEFAULT">
            <value>
              <option name="FOREGROUND" value="585858"/>
@@ -1550,6 +1560,9 @@
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="8080808C"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="2626268C"/>
+      <option name="Scrollbar.Tabs.TransparentThumbColor" value="44434300"/>
+      <option name="Scrollbar.Tabs.ThumbColor" value="444343FF"/>
+      <option name="Scrollbar.Tabs.HoveredThumbColor" value="555453FF"/>
       <option name="ActionButton.hoverBackground" value="4c5052"/>
       <option name="ActionButton.pressedBackground" value="5c6164"/>
       <option name="ActionButton.iconTextForeground" value="bbbbbb"/>
@@ -2529,6 +2542,12 @@
       <option name="REGEXP_MATCHED_GROUPS">
         <value>
           <option name="BACKGROUND" value="6b6b6b"/>
+        </value>
+      </option>
+      <option name="TERMINAL_CLASS_NAME_LOG_REFERENCE">
+        <value>
+          <option name="EFFECT_TYPE" value="5" />
+          <option name="EFFECT_COLOR" value="808080" />
         </value>
       </option>
       <option name="SPY-JS.FUNCTION_SCOPE">

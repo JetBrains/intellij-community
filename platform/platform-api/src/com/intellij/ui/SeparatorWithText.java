@@ -20,6 +20,10 @@ import static javax.swing.SwingConstants.CENTER;
 import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
+/**
+ * @deprecated Use {@link com.intellij.ui.GroupHeaderSeparator} instead. (see UX-2329)
+ */
+@Deprecated
 public class SeparatorWithText extends JComponent implements Accessible {
   protected @NlsContexts.Separator String myCaption;
   protected int myPrefWidth;

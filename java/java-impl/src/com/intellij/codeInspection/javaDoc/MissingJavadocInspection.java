@@ -32,7 +32,7 @@ import java.util.function.Function;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class MissingJavadocInspection extends LocalInspectionTool {
+public final class MissingJavadocInspection extends LocalInspectionTool {
   private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
 
   public boolean IGNORE_DEPRECATED_ELEMENTS = false;
@@ -44,10 +44,10 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
 
-  protected static final String PACKAGE_LOCAL = "package";
-  protected static final String PUBLIC = PsiModifier.PUBLIC;
-  protected static final String PROTECTED = PsiModifier.PROTECTED;
-  protected static final String PRIVATE = PsiModifier.PRIVATE;
+  private static final String PACKAGE_LOCAL = "package";
+  static final String PUBLIC = PsiModifier.PUBLIC;
+  private static final String PROTECTED = PsiModifier.PROTECTED;
+  private static final String PRIVATE = PsiModifier.PRIVATE;
 
   @Override
   public @NotNull OptPane getOptionsPane() {

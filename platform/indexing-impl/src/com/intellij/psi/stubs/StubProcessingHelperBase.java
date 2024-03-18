@@ -14,9 +14,10 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubInconsistencyReporter.EnforcedInconsistencyType;
+import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +124,7 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
 
-    ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
+    ObjectStubTree<?> objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
     if (objectStubTree == null) {
       LOG.error("Stub index points to a file without indexed stubs: " + getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
@@ -147,12 +148,13 @@ public abstract class StubProcessingHelperBase {
     return processor.process((Psi)psiFile);
   }
 
-  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree,
+  private void inconsistencyDetected(@Nullable ObjectStubTree<?> stubTree,
                                      @NotNull PsiFileWithStubSupport psiFile,
                                      @NotNull String extraMessage) {
     try {
-      IndexStatisticGroup.reportStubIndexInconsistencyRegistered(psiFile.getProject());
-      StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+      StubTextInconsistencyException.checkStubTextConsistency(psiFile,
+                                                              SourceOfCheck.WrongTypePsiInStubHelper,
+                                                              EnforcedInconsistencyType.PsiOfUnexpectedClass);
       LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
     finally {

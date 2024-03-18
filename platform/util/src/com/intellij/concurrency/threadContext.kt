@@ -7,10 +7,7 @@ package com.intellij.concurrency
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.concurrency.captureCallableThreadContext
-import com.intellij.util.concurrency.capturePropagationAndCancellationContext
-import com.intellij.util.concurrency.captureRunnableThreadContext
-import com.intellij.util.concurrency.isCheckContextAssertions
+import com.intellij.util.concurrency.*
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -236,8 +233,12 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
   return context.fold(HashSet()) { acc, element ->
     when (element.key) {
       Job -> Unit
+      // It is normal to have multiple `BlockingJob` in the context.
+      // But treating them as separate leads to non-mergeable updates in MergingUpdateQueue
+      // An ideal solution would be to provide a way to merge several thread contexts under one, but there is no real need in it yet.
+      BlockingJob -> Unit
       CoroutineName -> Unit
-      @Suppress("INVISIBLE_MEMBER") kotlinx.coroutines.CoroutineId -> Unit
+      @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") kotlinx.coroutines.CoroutineId -> Unit
       else -> acc.add(element)
     }
     acc

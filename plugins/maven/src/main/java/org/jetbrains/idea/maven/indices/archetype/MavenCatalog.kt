@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices.archetype
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.staticOrBundled
 import org.jetbrains.idea.maven.utils.MavenWslUtil
@@ -12,6 +11,7 @@ import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.io.File
 import java.net.URL
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 sealed interface MavenCatalog {
 
@@ -48,7 +48,7 @@ sealed interface MavenCatalog {
   }
 
   data class Local(override val name: String, val path: Path) : MavenCatalog {
-    override val location: String = path.systemIndependentPath
+    override val location: String = path.invariantSeparatorsPathString
   }
 
   data class Remote(override val name: String, val url: URL) : MavenCatalog {

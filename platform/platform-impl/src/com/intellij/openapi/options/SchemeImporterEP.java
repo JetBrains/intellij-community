@@ -35,7 +35,7 @@ public final class SchemeImporterEP <S extends Scheme> extends SchemeConvertorEP
    */
   public static @NotNull <S extends Scheme> Collection<SchemeImporterEP<S>> getExtensions(Class<S> schemeClass) {
     List<SchemeImporterEP<S>> importers = new ArrayList<>();
-    for (SchemeImporterEP<?> importerEP : EP_NAME.getExtensions()) {
+    for (SchemeImporterEP<?> importerEP : EP_NAME.getExtensionList()) {
       if (schemeClass.getName().equals(importerEP.schemeClass)) {
         //noinspection unchecked
         importers.add((SchemeImporterEP<S>)importerEP);

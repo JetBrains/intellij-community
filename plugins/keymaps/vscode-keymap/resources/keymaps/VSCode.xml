@@ -582,10 +582,10 @@
   <action id="RecentProjectListGroup">
     <keyboard-shortcut first-keystroke="ctrl r"/>
   </action>
-  <action id="Markdown.Layout.PreviewOnly">
+  <action id="TextEditorWithPreview.Layout.PreviewOnly">
     <keyboard-shortcut first-keystroke="ctrl shift v"/>
   </action>
-  <action id="Markdown.Layout.EditorAndPreview">
+  <action id="TextEditorWithPreview.Layout.EditorAndPreview">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="v"/>
   </action>
   <action id="FindUsages">
@@ -660,5 +660,13 @@
     <keyboard-shortcut first-keystroke="control Y"/>
     <keyboard-shortcut first-keystroke="control shift Z"/>
     <keyboard-shortcut first-keystroke="alt shift BACK_SPACE"/>
+  </action>
+  <action id="EditorDownWithSelection">
+    <keyboard-shortcut first-keystroke="shift DOWN"/>
+    <keyboard-shortcut first-keystroke="control shift DOWN"/>
+  </action>
+  <action id="EditorUpWithSelection">
+    <keyboard-shortcut first-keystroke="shift UP"/>
+    <keyboard-shortcut first-keystroke="control shift UP"/>
   </action>
 </keymap>

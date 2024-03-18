@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
@@ -21,10 +22,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
@@ -40,7 +43,7 @@ import javax.swing.DefaultComboBoxModel
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
-class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
+internal class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
   MarkdownBundle.message("markdown.settings.name"),
   _id = ID
@@ -87,6 +90,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
             renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
           ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }.bottomGap(BottomGap.SMALL)
+        row(label = MarkdownBundle.message("markdown.settings.preview.font.size")) {
+          previewFontSizeField()
+        }
         row {
           checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
             .bindSelected(settings::isAutoScrollEnabled)
@@ -153,6 +159,17 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     }
   }
 
+  private fun Row.previewFontSizeField(): Cell<JBTextField> {
+    return intTextField(range = 0..300).bindIntText(
+      getter = { service<MarkdownPreviewSettings>().state.fontSize },
+      setter = { value ->
+        service<MarkdownPreviewSettings>().update { settings ->
+          settings.state.fontSize = value
+        }
+      }
+    )
+  }
+
   private fun validateCustomStylesheetPath(builder: ValidationInfoBuilder, textField: TextFieldWithBrowseButton): ValidationInfo? {
     val text = textField.text
     val file = runCatching { Path.of(text) }.getOrNull()
@@ -216,6 +233,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       project = project,
       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css")
     )
+    field.applyToComponent {
+      disposable?.let { Disposer.register(it, this@applyToComponent) }
+    }
     return field.validationOnInput(::validateCustomStylesheetPath).validationOnApply(::validateCustomStylesheetPath)
   }
 
@@ -235,6 +255,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
             onApply { component.apply() }
             onIsModified { component.isModified() }
             onReset { component.reset() }
+          }
+          .applyToComponent {
+            disposable?.let { Disposer.register(it, this@applyToComponent) }
           }
       }
     }

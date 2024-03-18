@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -12,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.tokenizer.*;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -63,23 +65,21 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return SPELL_CHECKING_INSPECTION_TOOL_NAME;
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     if (!Registry.is("spellchecker.inspection.enabled", true)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+    var scope = buildAllowedScopes();
 
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(@NotNull final PsiElement element) {
+      public void visitElement(final @NotNull PsiElement element) {
         if (holder.getResultCount() > 1000) return;
 
         final ASTNode node = element.getNode();
@@ -87,36 +87,33 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
           return;
         }
 
-        // Extract parser definition from element
         final Language language = element.getLanguage();
-        final IElementType elementType = node.getElementType();
-        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+        var strategy = getSpellcheckingStrategy(element, language);
+        if(strategy == null)
+          return;
 
-        // Handle selected options
-        if (parserDefinition != null) {
-          if (parserDefinition.getStringLiteralElements().contains(elementType)) {
-            if (!processLiterals) {
-              return;
-            }
-          }
-          else if (parserDefinition.getCommentTokens().contains(elementType)) {
-            if (!processComments) {
-              return;
-            }
-          }
-          else if (!processCode) {
-            return;
-          }
-        }
+        if(!strategy.elementFitsScope(element, scope))
+          return;
 
-        PsiFile containingFile = element.getContainingFile();
-        if (containingFile != null && Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
+        PsiFile containingFile = holder.getFile();
+        if (Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
           return;
         }
 
-        tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
+        tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)), scope);
       }
     };
+  }
+
+  private Set<SpellCheckingScope> buildAllowedScopes() {
+    var result = new HashSet<SpellCheckingScope>();
+    if(processLiterals)
+      result.add(SpellCheckingScope.Literals);
+    if(processComments)
+      result.add(SpellCheckingScope.Comments);
+    if(processCode)
+      result.add(SpellCheckingScope.Code);
+    return result;
   }
 
   /**
@@ -126,12 +123,18 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
-  public static void tokenize(@NotNull final PsiElement element, @NotNull final Language language, TokenConsumer consumer) {
+  public static void tokenize(@NotNull final PsiElement element,
+                              @NotNull final Language language,
+                              TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
     SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
     if (factoryByLanguage == null) {
       return;
     }
-    Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
+    tokenize(factoryByLanguage, element, consumer, allowedScopes);
+  }
+
+  private static void tokenize(SpellcheckingStrategy strategy, PsiElement element, TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
+    var tokenizer = strategy.getTokenizer(element, allowedScopes);
     //noinspection unchecked
     tokenizer.tokenize(element, consumer);
   }
@@ -139,7 +142,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   private static void addBatchDescriptor(PsiElement element,
                                          @NotNull TextRange textRange,
                                          @NotNull ProblemsHolder holder) {
-    SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes();
+    SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes(element);
     ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, false);
     holder.registerProblem(problemDescriptor);
   }
@@ -241,5 +244,11 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
     }
+  }
+
+  public enum SpellCheckingScope {
+    Comments,
+    Literals,
+    Code,
   }
 }

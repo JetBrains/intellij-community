@@ -34,12 +34,12 @@ class KotlinMultiLineEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() 
         val startOffset = body.children.first().startOffset
         val endOffset = body.children.last().endOffset
         val text = file.text.substring(startOffset, endOffset)
-        file.addChild(CodeToken(text, startOffset, METHOD_PROPERTIES))
+        file.addChild(CodeToken(text, startOffset, BODY))
       } else {
-        file.addChild(CodeToken(body.text, body.textOffset, METHOD_PROPERTIES))
+        file.addChild(CodeToken(body.text, body.textOffset, BODY))
       }
     }
   }
 }
 
-private val METHOD_PROPERTIES = SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.UNKNOWN) {}
+private val BODY = SimpleTokenProperties.create(TypeProperty.UNKNOWN, SymbolLocation.UNKNOWN) {}

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention {
+public final class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

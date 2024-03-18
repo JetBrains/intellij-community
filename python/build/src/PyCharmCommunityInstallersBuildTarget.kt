@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.pycharm.PyCharmBuildUtils
 import org.jetbrains.intellij.build.pycharm.PyCharmCommunityProperties
@@ -15,26 +16,25 @@ object PyCharmCommunityInstallersBuildTarget {
   fun main(args: Array<String>) {
     runBlocking(Dispatchers.Default) {
       val options = BuildOptions().apply {
-        // we cannot provide consistent build number for PyCharm Community if it's built separately so use *.SNAPSHOT number to avoid confusion
+        // we cannot provide a consistent build number for PyCharm Community
+        // if it's built separately so use *.SNAPSHOT number to avoid confusion
         buildNumber = null
 
         // do not bother external users about clean/incremental
         // just remove out/ directory for clean build
         incrementalCompilation = true
         useCompiledClassesFromProjectOutput = false
-        buildStepsToSkip.addAll(listOf(
+        buildStepsToSkip += listOf(
           BuildOptions.MAC_SIGN_STEP,
           PyCharmBuildUtils.SKELETONS_COPY_STEP,
-        ))
+        )
       }
-      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
       val context = BuildContextImpl.createContext(
-        communityHome = communityHome,
-        projectHome = communityHome.communityRoot,
-        productProperties = PyCharmCommunityProperties(communityHome.communityRoot),
+        projectHome = COMMUNITY_ROOT.communityRoot,
+        productProperties = PyCharmCommunityProperties(COMMUNITY_ROOT.communityRoot),
         options = options,
       )
-      BuildTasks.create(context).buildDistributions()
+      createBuildTasks(context).buildDistributions()
     }
   }
 }

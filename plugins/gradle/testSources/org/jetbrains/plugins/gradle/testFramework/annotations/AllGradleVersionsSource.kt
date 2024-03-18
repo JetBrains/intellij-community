@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 /**
  * Alias for [GradleTestSource] where [GradleTestSource.value] are predefined with
- * [org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS].
+ * [org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.getSupportedGradleVersions].
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)

@@ -5,6 +5,7 @@ package com.intellij.util.xml.model.gotosymbol;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -142,7 +143,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
         @Override
         public String getLocationString() {
-          return '(' + myPsiElement.getContainingFile().getName() + ')';
+          return ReadAction.nonBlocking(() -> '(' + myPsiElement.getContainingFile().getName() + ')').executeSynchronously();
         }
 
         @Override

@@ -2,14 +2,10 @@
 package com.intellij.platform.workspace.storage.tests.metadata.serialization.service
 
 import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
-import com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.NEW_VERSION_PACKAGE_NAME
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.deserialization
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.toCacheVersion
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.toCurrentVersion
-import it.unimi.dsi.fastutil.objects.Object2IntMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import java.util.concurrent.atomic.AtomicReference
 
 internal class TestClassToIntConverter(
   private val classToIntConverter: ClassToIntConverter

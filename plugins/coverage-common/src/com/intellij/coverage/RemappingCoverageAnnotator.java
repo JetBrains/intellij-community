@@ -31,7 +31,7 @@ public class RemappingCoverageAnnotator extends SimpleCoverageAnnotator {
                           @NotNull CoverageDataManager dataManager,
                           @NotNull ProjectData data,
                           Project project,
-                          Annotator annotator) {
+                          CoverageAnnotatorRunner annotator) {
     if (!contentRoot.isValid()) {
       return;
     }

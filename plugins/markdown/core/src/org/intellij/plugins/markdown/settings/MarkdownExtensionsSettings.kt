@@ -7,7 +7,6 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-@Service(Service.Level.APP)
 @State(name = "MarkdownExtensionsSettings", storages = [Storage("markdown.xml")], category = SettingsCategory.TOOLS)
 class MarkdownExtensionsSettings: SimplePersistentStateComponent<MarkdownExtensionsSettings.State>(State()) {
   class State: BaseState() {

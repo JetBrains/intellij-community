@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -43,10 +44,10 @@ public final class IntentionActionWithTextCaching
   private final Icon myIcon;
   @Nullable
   private final String myToolId;
-  private final int myProblemOffset;
+  private final @Nullable TextRange myFixRange;
 
   public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
-    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, -1, (actWithText, act) -> {
+    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, null, (actWithText, act) -> {
     });
   }
 
@@ -54,7 +55,7 @@ public final class IntentionActionWithTextCaching
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
                                  @Nullable String toolId,
-                                 int problemOffset,
+                                 @Nullable TextRange fixRange,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myToolId = toolId;
     myIcon = icon;
@@ -63,7 +64,7 @@ public final class IntentionActionWithTextCaching
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
-    myProblemOffset = problemOffset;
+    myFixRange = fixRange;
   }
 
   public @NotNull @IntentionName String getText() {
@@ -138,8 +139,12 @@ public final class IntentionActionWithTextCaching
 
   @Override
   public @Nullable ShortcutSet getShortcut() {
-    ShortcutSet shortcut = myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
-    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
+    return getShortcutSet(myAction);
+  }
+
+  public static @Nullable ShortcutSet getShortcutSet(@NotNull IntentionAction action) {
+    ShortcutSet shortcut = action instanceof ShortcutProvider ? ((ShortcutProvider)action).getShortcut() : null;
+    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(action);
   }
 
   @Override
@@ -183,8 +188,16 @@ public final class IntentionActionWithTextCaching
     return myToolId;
   }
 
-  public int getProblemOffset() {
-    return myProblemOffset;
+  public int getFixOffset() {
+    return myFixRange == null ? -1 : myFixRange.getStartOffset();
+  }
+
+  /**
+   * @return <code>null</code> if the action belong to the problem at the caret offset
+   */
+  @Nullable
+  public TextRange getFixRange() {
+    return myFixRange;
   }
 
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {

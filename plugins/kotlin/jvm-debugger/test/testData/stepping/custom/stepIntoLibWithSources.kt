@@ -6,6 +6,6 @@ fun main() {
     //Breakpoint!
     val text = StringReader("OK").readText()
 }
-
-// SMART_STEP_INTO_BY_INDEX: 2
+// the order is readText, StringReader() due to stepping filters prioritisation
+// SMART_STEP_INTO_BY_INDEX: 1
 // IGNORE_K2

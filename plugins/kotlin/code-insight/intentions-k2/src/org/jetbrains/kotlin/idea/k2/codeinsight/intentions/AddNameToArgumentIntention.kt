@@ -2,14 +2,14 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableNameFor
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddNameToArgumentIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
+    AbstractKotlinModCommandWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
     class Context(val argumentName: Name)
@@ -52,8 +52,8 @@ internal class AddNameToArgumentIntention :
         return getStableNameFor(element)?.let { Context(it) }
     }
 
-    override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
-        addArgumentName(element, context.argumentName)
+    override fun apply(element: KtValueArgument, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) =
+        addArgumentName(element, context.analyzeContext.argumentName)
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
         element is KtValueArgumentList || element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)

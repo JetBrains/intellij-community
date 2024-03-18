@@ -108,8 +108,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         ellipsis = true;
       }
 
-      if (PsiUtil.isJavaToken(child, JavaTokenType.QUEST) ||
-          child instanceof ASTNode && ((ASTNode)child).getElementType() == JavaElementType.DUMMY_ELEMENT && "any".equals(child.getText())) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.QUEST)) {
         assert type == null : this;
         PsiElement boundKind = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
         PsiElement boundType = PsiTreeUtil.skipWhitespacesAndCommentsForward(boundKind);
@@ -124,6 +123,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         }
         type = type.annotate(createProvider(annotations));
         break;
+      }
+      else {
+        if (child instanceof ASTNode) {
+          ((ASTNode)child).getElementType();
+        }
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.AND)) {

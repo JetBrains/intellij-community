@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
@@ -30,24 +30,22 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
 
 internal class JpsCompilationRunner(private val context: CompilationContext) {
-  private val compilationData = context.compilationData
+  private val compilationData: JpsCompilationData
+    get() = context.compilationData
 
   companion object {
     init {
       // Unset 'groovy.target.bytecode' which was possibly set by outside context
       // to get target bytecode version from corresponding java compiler settings
-      System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE)
+      System.clearProperty("groovy.target.bytecode")
       setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
       setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY,
                                    Runtime.getRuntime().availableProcessors().toString())
       setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
       setSystemPropertyIfUndefined(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
-      setSystemPropertyIfUndefined(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
+      setSystemPropertyIfUndefined("groovyc.asm.resolving.only", "false")
 
       // https://youtrack.jetbrains.com/issue/IDEA-269280
       System.setProperty("aether.connector.resumeDownloads", "false")
@@ -76,7 +74,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val names = LinkedHashSet<String>()
     spanBuilder("collect dependencies")
       .setAttribute(AttributeKey.longKey("moduleCount"), modules.size.toLong())
-      .use { span ->
+      .useWithoutActiveScope { span ->
         val requiredDependencies = ArrayList<String>()
         for (module in modules) {
           requiredDependencies.clear()
@@ -97,6 +95,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     runBuild(
       moduleSet = names, allModules = false, artifactNames = emptyList(),
       includeTests = false, resolveProjectDependencies = false,
+      generateRuntimeModuleRepository = true,
       canceledStatus = canceledStatus
     )
   }
@@ -141,6 +140,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              artifactNames = emptyList(),
              includeTests = true,
              resolveProjectDependencies = false,
+             generateRuntimeModuleRepository = true,
              canceledStatus = canceledStatus)
   }
 
@@ -150,15 +150,11 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              artifactNames = emptyList(),
              includeTests = false,
              resolveProjectDependencies = false,
+             generateRuntimeModuleRepository = true,
              canceledStatus = canceledStatus)
   }
 
-  @Deprecated("", ReplaceWith("buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)"))
-  fun buildArtifacts(artifactNames: Set<String>) {
-    buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)
-  }
-
-  fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
+  suspend fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
     val artifacts = getArtifactsWithIncluded(artifactNames)
     val missing = artifactNames.filter { name ->
       artifacts.none { it.name == name }
@@ -174,21 +170,21 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       }
     }
     val includedModules = getModulesIncludedInArtifacts(artifacts)
-    val modules = if (buildIncludedModules) includedModules
+    val modules = if (buildIncludedModules) {
+      includedModules
+    }
     else {
       includedModules.filter {
         val module = context.findRequiredModule(it)
         val outputDir = context.getModuleOutputDir(module)
-        if (outputDir.exists() &&
-            outputDir.isDirectory() &&
-            outputDir.listDirectoryEntries().isNotEmpty()) {
+        if (Files.isDirectory(outputDir) && Files.newDirectoryStream(outputDir).use { stream -> stream.any() }) {
           false
         }
         else {
           /**
            * See [compileMissingArtifactsModules]
            */
-          Span.current().addEvent("Compilation output of module $it is missing: $outputDir")
+          Span.current().addEvent("compilation output of module $it is missing: $outputDir")
           true
         }
       }
@@ -214,24 +210,24 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   }
 
   // FIXME: workaround for sporadically missing build artifacts, to be investigated
-  private fun compileMissingArtifactsModules(artifacts: Collection<JpsArtifact>) {
+  private suspend fun compileMissingArtifactsModules(artifacts: Collection<JpsArtifact>) {
     val modules = getModulesIncludedInArtifacts(artifacts)
     require(modules.isNotEmpty()) {
       "No modules found for artifacts ${artifacts.map { it.name }}"
     }
-    artifacts.forEach {
-      context.compilationData.builtArtifacts.remove(it.name)
+    for (artifact in artifacts) {
+      context.compilationData.builtArtifacts.remove(artifact.name)
     }
-    context.messages.block("Compiling modules for missing artifacts: ${modules.joinToString()}") {
+    spanBuilder("Compiling modules for missing artifacts: ${modules.joinToString()}").useWithScope {
       runBuild(moduleSet = modules,
                allModules = false,
                artifactNames = artifacts.map { it.name },
                includeTests = false,
                resolveProjectDependencies = false)
     }
-    artifacts.forEach {
-      if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
-        context.messages.error("${it.name} is expected to be built at ${it.outputFilePath}")
+    for (artifact in artifacts) {
+      if (artifact.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
+        context.messages.error("${artifact.name} is expected to be built at ${artifact.outputFilePath}")
       }
     }
   }
@@ -316,7 +312,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           .setAttribute("modules", moduleSet.joinToString(separator = ", "))
           .setAttribute("incremental", context.options.incrementalCompilation)
           .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
-          .useWithScope {
+          .use {
             Standalone.runBuild(
               { context.projectModel }, compilationData.dataStorageRoot.toFile(),
               mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),

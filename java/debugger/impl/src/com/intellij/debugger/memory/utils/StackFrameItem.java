@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
@@ -228,9 +229,14 @@ public class StackFrameItem {
     return new CapturedStackFrame(debugProcess, this);
   }
 
-  public static void setWithSeparator(XStackFrame frame, boolean withSeparator) {
-    if (frame instanceof CapturedStackFrame) {
-      ((CapturedStackFrame)frame).setWithSeparator(withSeparator);
+  public static boolean hasSeparatorAbove(XStackFrame frame) {
+    return frame instanceof XDebuggerFramesList.ItemWithSeparatorAbove frameWithSeparator &&
+           frameWithSeparator.hasSeparatorAbove();
+  }
+
+  public static void setWithSeparator(XStackFrame frame) {
+    if (frame instanceof XDebuggerFramesList.ItemWithSeparatorAbove frameWithSeparator) {
+      frameWithSeparator.setWithSeparator(true);
     }
   }
 
@@ -244,6 +250,7 @@ public class StackFrameItem {
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
+    private final boolean myShouldHide;
 
     private final String myPath;
     private final @NlsSafe String myMethodName;
@@ -265,6 +272,9 @@ public class StackFrameItem {
       myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
+
+      myShouldHide = myIsSynthetic || myIsInLibraryContent ||
+                     (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(location));
     }
 
     @Nullable
@@ -281,6 +291,11 @@ public class StackFrameItem {
     @Override
     public boolean isInLibraryContent() {
       return myIsInLibraryContent;
+    }
+
+    @Override
+    public boolean shouldHide() {
+      return myShouldHide;
     }
 
     @Override
@@ -312,7 +327,7 @@ public class StackFrameItem {
     }
 
     private SimpleTextAttributes getAttributes() {
-      if (isSynthetic() || isInLibraryContent()) {
+      if (shouldHide()) {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -328,6 +343,7 @@ public class StackFrameItem {
       return myWithSeparator;
     }
 
+    @Override
     public void setWithSeparator(boolean withSeparator) {
       myWithSeparator = withSeparator;
     }

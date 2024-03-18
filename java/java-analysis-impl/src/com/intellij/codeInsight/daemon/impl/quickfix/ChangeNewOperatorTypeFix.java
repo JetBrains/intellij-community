@@ -119,10 +119,11 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
       selection = selection.shiftRight(newExpression.getTextRange().getEndOffset());
       updater.select(selection);
     }
-    updater.moveTo(newExpression.getTextRange().getEndOffset() + caretOffset);
+    updater.moveCaretTo(newExpression.getTextRange().getEndOffset() + caretOffset);
   }
 
   public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, PsiType lType) {
+    if (PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass) return;
     expression = PsiUtil.deparenthesizeExpression(expression);
     if (!(expression instanceof PsiNewExpression newExpression)) return;
     final PsiType rType = expression.getType();

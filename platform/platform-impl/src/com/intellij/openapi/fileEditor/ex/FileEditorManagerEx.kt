@@ -29,6 +29,7 @@ import javax.swing.JComponent
 abstract class FileEditorManagerEx : FileEditorManager() {
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstanceEx(project: Project): FileEditorManagerEx = getInstance(project) as FileEditorManagerEx
 
     fun getInstanceExIfCreated(project: Project): FileEditorManagerEx? {

@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,8 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
 @Tag("descriptor")
 final class WslDistributionDescriptor {
   private static final int PROBE_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 60_000);
+
+  private static final Key<Boolean> CALCULATING_MOUNT_ROOT_COMMAND = new Key<>("CalculatingMountRootCommand");
 
   @Tag("id")
   private @NlsSafe String myId;
@@ -145,6 +148,8 @@ final class WslDistributionDescriptor {
 
     WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
     GeneralCommandLine commandLine = new GeneralCommandLine("pwd");
+    // Required to prevent recursion
+    commandLine.putUserData(CALCULATING_MOUNT_ROOT_COMMAND, true);
     // Use interoperability between Windows and Linux - the Linux process inherits the Windows working directory.
     commandLine.setWorkDirectory(windowsWorkingDirectory);
     String linuxWorkingDirectory = readWslOutputLine(options, commandLine, pi);
@@ -206,6 +211,14 @@ final class WslDistributionDescriptor {
     }
 
     return output.getStdoutLines();
+  }
+
+  /**
+   * Command line is used to calculate mount root
+   */
+  static boolean isCalculatingMountRootCommand(@NotNull GeneralCommandLine commandLine) {
+    Boolean data = commandLine.getUserData(CALCULATING_MOUNT_ROOT_COMMAND);
+    return data != null && data;
   }
 
   private static <T> T executeOrRunTask(@NotNull Function<? super @Nullable ProgressIndicator, ? extends T> commandRunner) {

@@ -313,6 +313,7 @@ public final class GroovyDslFileIndex {
       // because service init requires a read action
       // and there could be a deadlock with a write action waiting already on EDT
       // if current thread is inside a non-cancellable read action
+      //noinspection ResultOfMethodCallIgnored
       GdslScriptBase.getIdeaVersion();
       DslActivationStatus.getInstance();
 

@@ -28,7 +28,7 @@ class JavaLangLevelProjectCustomDataSynchronizer : ProjectCustomDataSynchronizer
     }.map { LanguageLevelHolder(LanguageLevelProjectExtension.getInstance(project).languageLevel) }
   }
 
-  override fun consumeValue(project: Project, value: LanguageLevelHolder) {
+  override suspend fun consumeValue(project: Project, value: LanguageLevelHolder) {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = value.languageLevel
   }
 }

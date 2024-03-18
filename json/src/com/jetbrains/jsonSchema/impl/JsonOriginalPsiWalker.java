@@ -41,6 +41,11 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
+  public boolean isQuotedString(@NotNull PsiElement element) {
+    return element instanceof JsonStringLiteral;
+  }
+
+  @Override
   public ThreeState isName(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof JsonObject) {
@@ -186,6 +191,12 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       public @NotNull String getPropertyName(PsiElement property) {
         assert property instanceof JsonProperty;
         return ((JsonProperty)property).getName();
+      }
+
+      @Override
+      public @NotNull PsiElement getPropertyNameElement(PsiElement property) {
+        assert property instanceof JsonProperty;
+        return ((JsonProperty)property).getNameElement();
       }
 
       @Override

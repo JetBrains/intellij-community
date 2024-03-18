@@ -19,7 +19,7 @@ public final class SelectionState{
   /** We do not need to handle our own events */
   private boolean myInsideChange;
 
-  public SelectionState(@NotNull final GuiEditor editor) {
+  public SelectionState(final @NotNull GuiEditor editor) {
     mySelectionHistory = new Stack<>();
     editor.addComponentSelectionListener(new MyComponentSelectionListener());
   }
@@ -56,7 +56,7 @@ public final class SelectionState{
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
 
     @Override
-    public void selectedComponentChanged(@NotNull final GuiEditor source) {
+    public void selectedComponentChanged(final @NotNull GuiEditor source) {
       if(myInsideChange){ // do not react on own events
         return;
       }

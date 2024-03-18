@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @author link
  */
-public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
+public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,

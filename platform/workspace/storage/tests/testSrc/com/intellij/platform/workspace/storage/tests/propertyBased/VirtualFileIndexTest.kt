@@ -5,8 +5,8 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -118,7 +118,7 @@ class VirtualFileIndexTest {
       tempdir
     }
 
-    manager.fromPath(file.toString())
+    file.toVirtualFileUrl(manager)
   }
 
   private val entityIdGenerator = Generator.from { env ->

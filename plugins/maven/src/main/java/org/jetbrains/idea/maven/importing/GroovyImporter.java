@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.util.PairConsumer;
 import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.plugins.groovy.GroovyPluginConfigurator;
+import org.jetbrains.idea.maven.plugins.groovy.GroovyPluginConfiguratorKt;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -21,10 +21,10 @@ public abstract class GroovyImporter extends MavenImporter {
   public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
     MavenPlugin plugin = mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID);
     if (plugin != null) {
-      GroovyPluginConfigurator.Companion.collectGroovyFolders(plugin, true).forEach(path -> {
+      GroovyPluginConfiguratorKt.collectGroovyFolders(plugin, true).forEach(path -> {
         result.consume(path, JavaSourceRootType.SOURCE);
       });
-      GroovyPluginConfigurator.Companion.collectGroovyFolders(plugin, false).forEach(path -> {
+      GroovyPluginConfiguratorKt.collectGroovyFolders(plugin, false).forEach(path -> {
         result.consume(path, JavaSourceRootType.TEST_SOURCE);
       });
     }
@@ -34,7 +34,7 @@ public abstract class GroovyImporter extends MavenImporter {
   public void collectExcludedFolders(MavenProject mavenProject, List<String> result) {
     MavenPlugin plugin = mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID);
     if (plugin != null) {
-      result.addAll(GroovyPluginConfigurator.Companion.collectIgnoredFolders(mavenProject, plugin));
+      result.addAll(GroovyPluginConfiguratorKt.collectIgnoredFolders(mavenProject, plugin));
     }
   }
 }

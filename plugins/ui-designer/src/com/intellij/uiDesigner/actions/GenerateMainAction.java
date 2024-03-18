@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -83,7 +83,7 @@ public class GenerateMainAction extends AnAction {
       return;
     }
 
-    @NonNls final StringBuilder mainBuilder = new StringBuilder("public static void main(String[] args) { ");
+    final @NonNls StringBuilder mainBuilder = new StringBuilder("public static void main(String[] args) { ");
     final JavaCodeStyleManager csm = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo nameInfo = csm.suggestVariableName(VariableKind.LOCAL_VARIABLE, "frame", null, null);
     String varName = nameInfo.names [0];

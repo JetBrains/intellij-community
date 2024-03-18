@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<PsiReferenceList> {
+public final class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<PsiReferenceList> {
   private static final int VERSION = 1;
   private static final JavaSuperClassNameOccurenceIndex ourInstance = new JavaSuperClassNameOccurenceIndex();
 

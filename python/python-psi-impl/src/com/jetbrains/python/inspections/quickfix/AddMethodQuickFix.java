@@ -12,10 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonTemplateRunner;
-import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -73,10 +70,14 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PsiElement pe = problemElement.getParent();
       String decoratorName = null; // set to non-null to add a decorator
       PyExpression[] args = PyExpression.EMPTY_ARRAY;
-      if (pe instanceof PyCallExpression) {
-        PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
+      if (pe instanceof PyCallExpression callExpression) {
+        PyArgumentList arglist = callExpression.getArgumentList();
         if (arglist == null) return;
         args = arglist.getArguments();
+        if (callExpression.getParent() instanceof PyPrefixExpression prefixExpression &&
+            prefixExpression.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
+          builder.makeAsync();
+        }
       }
       boolean madeInstance = false;
       if (callByClass) {

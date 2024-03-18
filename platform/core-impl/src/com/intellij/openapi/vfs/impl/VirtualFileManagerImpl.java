@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>(VirtualFileSystem.EP_NAME);
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
-  private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<VirtualFileManagerListener> virtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
@@ -174,13 +175,13 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @Override
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
-    myVirtualFileManagerListeners.add(listener);
+    virtualFileManagerListeners.add(listener);
     Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
   }
 
   @Override
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
-    myVirtualFileManagerListeners.remove(listener);
+    virtualFileManagerListeners.remove(listener);
   }
 
   @Override
@@ -216,16 +217,42 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   @ApiStatus.Internal
   public void fireBeforeRefreshStart(boolean asynchronous) {
     if (myRefreshCount++ == 0) {
-      ExtensionProcessingHelper.INSTANCE.forEachExtensionSafe(myVirtualFileManagerListeners, listener -> listener.beforeRefreshStart(asynchronous));
-      ExtensionProcessingHelper.INSTANCE.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.beforeRefreshStart(asynchronous));
+      for (VirtualFileManagerListener listener : virtualFileManagerListeners) {
+        try {
+          listener.beforeRefreshStart(asynchronous);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+      MANAGER_LISTENER_EP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
+        listener.beforeRefreshStart(asynchronous);
+        return Unit.INSTANCE;
+      });
     }
   }
 
   @ApiStatus.Internal
   public void fireAfterRefreshFinish(boolean asynchronous) {
     if (--myRefreshCount == 0) {
-      ExtensionProcessingHelper.INSTANCE.forEachExtensionSafe(myVirtualFileManagerListeners, listener -> listener.afterRefreshFinish(asynchronous));
-      ExtensionProcessingHelper.INSTANCE.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.afterRefreshFinish(asynchronous));
+      for (VirtualFileManagerListener listener : virtualFileManagerListeners) {
+        try {
+          listener.afterRefreshFinish(asynchronous);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+      MANAGER_LISTENER_EP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
+        listener.afterRefreshFinish(asynchronous);
+        return Unit.INSTANCE;
+      });
     }
   }
 

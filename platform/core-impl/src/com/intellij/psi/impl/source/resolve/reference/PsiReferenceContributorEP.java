@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiReferenceContributorEP extends CustomLoadingExtensionPointBean<PsiReferenceContributor> implements KeyedLazyInstance<PsiReferenceContributor> {
@@ -16,7 +17,7 @@ public final class PsiReferenceContributorEP extends CustomLoadingExtensionPoint
   public String implementationClass;
 
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return language;
   }
 

@@ -1,16 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.util.indexing.FileContent
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
+import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.metadata.ProtoBuf
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmNameResolver
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder.FileWithMetadata.Compatible as CompatibleMetadata
+import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
+import org.jetbrains.kotlin.name.FqName
 
 private val ALLOWED_METADATA_EXTENSIONS = listOf(
     JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION,
@@ -51,4 +59,34 @@ internal fun readProtoPackageData(kotlinJvmBinaryClass: KotlinJvmBinaryClass): P
     val data = header.data ?: header.incompatibleData ?: return null
     val strings = header.strings ?: return null
     return JvmProtoBufUtil.readPackageDataFrom(data, strings)
+}
+
+internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
+    val result = try {
+        KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, JvmMetadataVersion.INSTANCE, content) ?: return null
+    } catch (e: Exception) {
+        if (e is ControlFlowException) throw e
+
+        // If the class file cannot be read, e.g. when it is broken, we don't need to index it.
+        return null
+    }
+    val kotlinClass = result as? KotlinClassFinder.Result.KotlinClass ?: return null
+    return kotlinClass.kotlinJvmBinaryClass
+}
+
+internal val KotlinJvmBinaryClass.packageName: FqName
+    get() = classHeader.packageName?.let(::FqName) ?: classId.packageFqName
+
+internal fun FileContent.toCompatibleFileWithMetadata(): FileWithMetadata.Compatible? =
+    FileWithMetadata.forPackageFragment(file) as? FileWithMetadata.Compatible
+
+/**
+ * Returns the JRT module root (e.g. `jrt://jdk_home!/module.name`) for the given [VirtualFile].
+ */
+internal fun VirtualFile.getJrtModuleRoot(): VirtualFile? {
+    var currentFile = this
+    while (!JrtFileSystem.isModuleRoot(currentFile)) {
+        currentFile = currentFile.parent ?: return null
+    }
+    return currentFile
 }

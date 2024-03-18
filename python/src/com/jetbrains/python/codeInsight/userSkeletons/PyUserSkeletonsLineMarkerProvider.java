@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
+public final class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
   // TODO: Create an icon for a related user skeleton
   public static final Icon ICON = AllIcons.Gutter.Unique;
 

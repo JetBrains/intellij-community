@@ -14,7 +14,7 @@ java.FILE
           <empty list>
       SEMICOLON
   WHITE_SPACE
-  UNNAMED_CLASS
+  IMPLICIT_CLASS
     METHOD
       MODIFIER_LIST
         PUBLIC_KEYWORD

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.hunspell
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -10,15 +10,13 @@ import com.intellij.spellchecker.util.SpellCheckerBundle
 import java.io.FileNotFoundException
 import java.text.ParseException
 
-class HunspellDictionaryProvider : CustomDictionaryProvider {
-  companion object {
-    private val UNSUPPORTED_LANGUAGES = setOf("hu_HU")
+internal class HunspellDictionaryProvider : CustomDictionaryProvider {
+  private val UNSUPPORTED_LANGUAGES = setOf("hu_HU")
 
-    private fun isHunspellPluginInstalled(): Boolean {
-      val hunspellId = PluginId.getId("hunspell")
-      val ideaPluginDescriptor = PluginManagerCore.getPlugin(hunspellId)
-      return PluginManagerCore.isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled
-    }
+  private fun isHunspellPluginInstalled(): Boolean {
+    val hunspellId = PluginId.getId("hunspell")
+    val ideaPluginDescriptor = PluginManagerCore.getPlugin(hunspellId)
+    return PluginManagerCore.isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled
   }
 
   override fun get(path: String): Dictionary? {

@@ -24,7 +24,7 @@ public interface RefactoringEventListener {
   }
 
   /**
-   * Is fired when refactoring is completed, probably with conflicts.
+   * Is fired when refactoring is completed, possibly with conflicts.
    */
   void refactoringDone(@NotNull String refactoringId, @Nullable RefactoringEventData afterData);
 

@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
+public final class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
 
   @Override
   @NotNull

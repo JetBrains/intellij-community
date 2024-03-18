@@ -33,8 +33,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 
-open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) : JPanel(
-  BorderLayout()), Disposable {
+open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) :
+  JPanel(BorderLayout()), Disposable {
+
   val sliceTextField = createEditorField()
 
   protected val tablePanel = JPanel(BorderLayout())
@@ -105,10 +106,26 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   override fun dispose() = Unit
 
+  private fun isVariablePresentInStack(): Boolean {
+    val values = frameAccessor.loadFrame(null) ?: return true
+    for (i in 0 until values.size()) {
+      if (values.getValue(i) == debugValue) {
+        return true
+      }
+    }
+    return false
+  }
+
   private fun setupChangeListener() {
     frameAccessor.addFrameListener(object : PyFrameListener {
       override fun frameChanged() {
-        ApplicationManager.getApplication().executeOnPooledThread { updateModel() }
+        debugValue ?: return
+        ApplicationManager.getApplication().executeOnPooledThread {
+          // Could be that in changed frames our value is missing. (PY-66235)
+          if (isVariablePresentInStack()) {
+            updateModel()
+          }
+        }
       }
     })
   }
@@ -291,12 +308,8 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   }
 
   private fun setError(text: @NlsContexts.Label String, modifier: Boolean) {
-    var text = text
-    if (modifier) {
-      text = PyBundle.message("debugger.dataviewer.modifier.error", text)
-    }
     errorLabel.visible(true)
-    errorLabel.text(text)
+    errorLabel.text(if (modifier) PyBundle.message("debugger.dataviewer.modifier.error", text) else text)
     if (!modifier) {
       table?.setEmpty()
       for (listener in listeners) {

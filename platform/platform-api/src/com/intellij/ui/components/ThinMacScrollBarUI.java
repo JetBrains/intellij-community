@@ -2,14 +2,22 @@
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-final class ThinMacScrollBarUI extends MacScrollBarUI {
+@ApiStatus.Internal
+public class ThinMacScrollBarUI extends MacScrollBarUI {
+  public static final int DEFAULT_THICKNESS = 3;
   ThinMacScrollBarUI() {
-    super(3, 3, 3);
+    super(DEFAULT_THICKNESS, DEFAULT_THICKNESS, DEFAULT_THICKNESS);
+  }
+
+
+  public ThinMacScrollBarUI(int thickNess, int thicknessMax, int thicknessMin) {
+   super(thickNess, thicknessMax, thicknessMin);
   }
 
   @Override

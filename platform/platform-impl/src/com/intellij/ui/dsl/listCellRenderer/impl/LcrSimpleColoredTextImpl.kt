@@ -3,42 +3,27 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.dsl.checkTrue
+import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.awt.Insets
-import javax.accessibility.AccessibleContext
+import javax.swing.JComponent
 
 @ApiStatus.Internal
-internal class LcrSimpleColoredTextImpl : LcrCellBaseImpl() {
+internal class LcrSimpleColoredTextImpl(initParams: LcrTextInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap,
+                                        private val text: @Nls String,
+                                        private val selected: Boolean,
+                                        private val rowForeground: Color) :
+  LcrCellBaseImpl<LcrTextInitParams>(initParams, baselineAlign, beforeGap) {
 
-  override val component = object : SimpleColoredComponent() {
+  override val type = Type.SIMPLE_COLORED_TEXT
 
-    override fun getAccessibleContext(): AccessibleContext {
-      if (accessibleContext == null) {
-        accessibleContext = PatchedAccessibleSimpleColoredComponent()
-      }
-      return accessibleContext
-    }
+  override fun apply(component: JComponent) {
+    checkTrue(type.isInstance(component))
 
-    init {
-      @Suppress("UseDPIAwareInsets")
-      ipad = Insets(ipad.top, 0, ipad.bottom, 0)
-      isOpaque = false
-    }
-
-    /**
-     * Allows to set/reset custom accessibleName
-     */
-    private inner class PatchedAccessibleSimpleColoredComponent : AccessibleSimpleColoredComponent() {
-      override fun getAccessibleName(): String? {
-        return accessibleName
-      }
-    }
-  }
-
-  fun init(text: @Nls String, initParams: LcrTextInitParams, selected: Boolean, rowForeground: Color) {
+    component as SimpleColoredComponent
     component.clear()
     component.font = initParams.font
     val attributes = if (selected) SimpleTextAttributes(initParams.attributes!!.style, rowForeground) else initParams.attributes!!

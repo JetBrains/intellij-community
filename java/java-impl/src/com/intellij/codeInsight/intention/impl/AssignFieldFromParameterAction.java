@@ -8,6 +8,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<PsiParameter> {
+public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<PsiParameter> {
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {
@@ -108,7 +109,7 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
                                                        @NotNull PsiField field,
                                                        @NotNull PsiParameter parameter,
                                                        @NotNull Editor editor) throws IncorrectOperationException {
-    return addFieldAssignmentStatement(project, field, parameter, ModPsiNavigator.fromEditor(editor));
+    return addFieldAssignmentStatement(project, field, parameter, EditorUtil.asPsiNavigator(editor));
   }
 
   /**
@@ -157,7 +158,7 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
       inserted = (PsiStatement)methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
     }
     if (updater != null) {
-      updater.moveTo(inserted.getTextRange().getEndOffset());
+      updater.moveCaretTo(inserted.getTextRange().getEndOffset());
     }
     return inserted;
   }

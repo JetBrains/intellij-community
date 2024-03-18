@@ -16,7 +16,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
-public class CaseStatementsSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class CaseStatementsSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

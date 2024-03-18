@@ -31,6 +31,10 @@ object TerminalDataContextUtils {
     get() = getData(BlockTerminalController.KEY)
   val DataContext.selectionController: TerminalSelectionController?
     get() = getData(TerminalSelectionController.KEY)
+  val DataContext.terminalFocusModel: TerminalFocusModel?
+    get() = getData(TerminalFocusModel.KEY)
+  val DataContext.terminalSession: BlockTerminalSession?
+    get() = getData(BlockTerminalSession.DATA_KEY)
 
   val AnActionEvent.editor: Editor?
     get() = getData(CommonDataKeys.EDITOR)
@@ -44,6 +48,8 @@ object TerminalDataContextUtils {
     get() = getData(BlockTerminalController.KEY)
   val AnActionEvent.selectionController: TerminalSelectionController?
     get() = getData(TerminalSelectionController.KEY)
-  val AnActionEvent.terminalSession: TerminalSession?
-    get() = getData(TerminalSession.DATA_KEY)
+  val AnActionEvent.terminalFocusModel: TerminalFocusModel?
+    get() = getData(TerminalFocusModel.KEY)
+  val AnActionEvent.terminalSession: BlockTerminalSession?
+    get() = getData(BlockTerminalSession.DATA_KEY)
 }

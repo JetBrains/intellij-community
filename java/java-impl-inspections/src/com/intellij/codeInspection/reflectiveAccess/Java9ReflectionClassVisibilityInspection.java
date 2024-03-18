@@ -9,36 +9,39 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.MODULES);
+  }
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    final PsiFile file = holder.getFile();
-    if (PsiUtil.isLanguageLevel9OrHigher(file)) {
-      final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(file);
-      if (javaModule != null) {
-        return new JavaElementVisitor() {
-          @Override
-          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
+    final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(holder.getFile());
+    if (javaModule != null) {
+      return new JavaElementVisitor() {
+        @Override
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
 
-            if (isCallToMethod(expression, JAVA_LANG_CLASS, FOR_NAME) || isCallToMethod(expression, JAVA_LANG_CLASS_LOADER, LOAD_CLASS)) {
-              checkClassVisibility(expression, holder, javaModule);
-            }
+          if (isCallToMethod(expression, JAVA_LANG_CLASS, FOR_NAME) || isCallToMethod(expression, JAVA_LANG_CLASS_LOADER, LOAD_CLASS)) {
+            checkClassVisibility(expression, holder, javaModule);
           }
-        };
-      }
+        }
+      };
     }
 
     return PsiElementVisitor.EMPTY_VISITOR;

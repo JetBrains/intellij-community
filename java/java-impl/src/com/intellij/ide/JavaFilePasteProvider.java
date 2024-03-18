@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 
 
-public class JavaFilePasteProvider implements PasteProvider {
+public final class JavaFilePasteProvider implements PasteProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

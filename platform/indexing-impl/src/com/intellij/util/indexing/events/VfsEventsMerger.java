@@ -186,7 +186,7 @@ public final class VfsEventsMerger {
       builder.append("file: ").append(file.getPath()).append("; ")
         .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
-      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE ");
+      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("CONTENT_CHANGE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
       if ((eventMask & FILE_ADDED) != 0) builder.append("ADD ");
       return builder.toString().trim();
@@ -222,6 +222,13 @@ public final class VfsEventsMerger {
 
   public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file) {
     tryLog(eventName, file, null);
+  }
+
+  public static void tryLog(@NotNull String eventName, int fileId) {
+    tryLog(() -> {
+      return "event=" + eventName +
+             ",id=" + fileId;
+    });
   }
 
   public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file, @Nullable Supplier<String> additionalMessage) {

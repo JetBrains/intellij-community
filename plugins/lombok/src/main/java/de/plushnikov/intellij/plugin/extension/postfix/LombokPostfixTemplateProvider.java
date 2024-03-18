@@ -44,8 +44,7 @@ public class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
   @NotNull
   @Override
   public PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
-    Document document = copyFile.getViewProvider().getDocument();
-    assert document != null;
+    Document document = copyFile.getFileDocument();
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
     if (isSemicolonNeeded(copyFile, realEditor)) {

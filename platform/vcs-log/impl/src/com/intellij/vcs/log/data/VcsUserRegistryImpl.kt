@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.HashSetInterner
+import com.intellij.util.containers.Interner
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentBTreeEnumerator
@@ -26,7 +26,7 @@ internal class VcsUserRegistryImpl internal constructor(project: Project) : Disp
   private val _persistentEnumerator = AtomicReference<PersistentEnumeratorBase<VcsUser>?>()
   private val persistentEnumerator: PersistentEnumeratorBase<VcsUser>?
     get() = _persistentEnumerator.get()
-  private val interner = HashSetInterner<VcsUser>()
+  private val interner = Interner.createInterner<VcsUser>()
   private val mapFile = File(USER_CACHE_APP_DIR, project.locationHash + "." + STORAGE_VERSION)
 
   init {

@@ -48,7 +48,7 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
         fun consumeSentence(@Nls(capitalization=Nls.Capitalization.Sentence) <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
         
         fun test() {
-          consumeTitle(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization">message("property.lowercase")</warning>)
+          consumeTitle(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization"><caret>message("property.lowercase")</warning>)
           consumeSentence(this.<warning descr="String 'hello world' is not properly capitalized. It should have sentence capitalization">message("property.lowercase")</warning>)
           consumeTitle(message("property.titlecase"))
           consumeSentence(this.<warning descr="String 'Hello World' is not properly capitalized. It should have sentence capitalization">message("property.titlecase")</warning>)
@@ -56,6 +56,10 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
     myFixture.testHighlighting()
+    val action = myFixture.findSingleIntention("Properly capitalize")
+    assertEquals("""
+        property.lowercase=Hello World
+        property.titlecase=Hello World""".trimIndent(), myFixture.getIntentionPreviewText(action))
   }
 }
 

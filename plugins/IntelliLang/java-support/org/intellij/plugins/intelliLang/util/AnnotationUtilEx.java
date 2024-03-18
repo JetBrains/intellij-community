@@ -151,6 +151,20 @@ public final class AnnotationUtilEx {
         }
       }
     }
+    else if (parent instanceof PsiTemplateExpression templ) {
+      if (templ.getProcessor() instanceof PsiReferenceExpression ref && ref != element) {
+        PsiElement target = ref.resolve();
+        if (target instanceof PsiVariable var) {
+          visitor.visitVariable(var);
+        }
+      }
+      else if (templ.getProcessor() instanceof PsiCallExpression call && call != element) {
+        PsiMethod method = call.resolveMethod();
+        if (method != null) {
+          visitor.visitMethodReturnStatement(call, method);
+        }
+      }
+    }
     else if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
       return false;
     }

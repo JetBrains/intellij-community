@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyReadWriteAccessDetector extends ReadWriteAccessDetector {
+public final class PyReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
   public boolean isReadWriteAccessible(@NotNull PsiElement element) {
     return element instanceof PyTargetExpression || element instanceof PyReferenceExpression;

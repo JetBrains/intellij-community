@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -11,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
 
@@ -39,7 +37,11 @@ class NonSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info) {
+  public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info, Map<String, List<List<PsiType>>> alreadyExistedMethods) {
+    if (BuilderHandler.matchMethodWithParams(alreadyExistedMethods, calcBuilderMethodName(info), List.of(info.getFieldType()))) {
+      return Collections.emptyList();
+    }
+
     final String blockText = getAllMethodBody(info);
     final String methodName = calcBuilderMethodName(info);
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(info.getManager(), methodName)
@@ -51,8 +53,9 @@ class NonSingularHandler implements BuilderElementHandler {
       .withAnnotations(info.getAnnotations())
       .withWriteAccess()
       .withBodyText(blockText);
-    if(info.getVariable() instanceof PsiField psiField) {
-      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);
+    if (info.getVariable() instanceof PsiField psiField) {
+      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(),
+                                                        LombokCopyableAnnotations.COPY_TO_SETTER);
     }
 
     createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), methodBuilder);

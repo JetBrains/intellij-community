@@ -15,9 +15,15 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Represents psi element, which can be modified without caches reset.
+ * @deprecated because {@link PsiModificationTracker}.getOutOfCodeBlockModificationCount() was removed, there is no more code that calls the method
  */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public interface PsiModifiableCodeBlock {
   /**
    * @param place where change was detected

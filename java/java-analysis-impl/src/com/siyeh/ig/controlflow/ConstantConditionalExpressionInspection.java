@@ -32,7 +32,7 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConstantConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

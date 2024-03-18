@@ -11,15 +11,15 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.pythonSdk
-import icons.PythonIcons
 
 fun completePackageNames(project: Project, result: CompletionResultSet) {
   val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager
   val packages = repositoryManager.allPackages()
   val maxPriority = packages.size
   packages.asSequence().map {
-    LookupElementBuilder.create(it.lowercase()).withIcon(PythonIcons.Python.Python)
+    LookupElementBuilder.create(it.lowercase()).withIcon(PythonPsiApiIcons.Python)
   }.mapIndexed { index, lookupElementBuilder ->
     PrioritizedLookupElement.withPriority(lookupElementBuilder, (maxPriority - index).toDouble())
   }.forEach { result.addElement(it) }

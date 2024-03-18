@@ -763,7 +763,7 @@ class Test {
         myFixture.editor.document.insertString(offset, toPaste)
         TypingActionsExtension
           .findForContext(project, myFixture.editor)
-          .format(project, myFixture.editor, CodeInsightSettings.INDENT_BLOCK, offset, offset + toPaste.length(), column, false)
+          .format(project, myFixture.editor, CodeInsightSettings.INDENT_BLOCK, offset, offset + toPaste.length(), column, false, false)
       }
     }
     finally {

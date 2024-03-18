@@ -20,6 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 public interface LanguageLevelModuleExtension {
   void setLanguageLevel(LanguageLevel languageLevel);
+
+  /**
+   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level.
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   */
   @Nullable
   LanguageLevel getLanguageLevel();
 }

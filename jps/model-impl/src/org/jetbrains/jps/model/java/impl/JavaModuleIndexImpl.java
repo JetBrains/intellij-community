@@ -37,11 +37,6 @@ public class JavaModuleIndexImpl extends JpsElementBase<JavaModuleIndexImpl> imp
     return copy;
   }
 
-  @Override
-  public void applyChanges(@NotNull JavaModuleIndexImpl modified) {
-    // not supported
-  }
-
   @Nullable
   @Override
   public File getModuleInfoFile(@NotNull JpsModule module, boolean forTests) {

@@ -4,9 +4,12 @@ package com.intellij.testFramework.utils.inlays.declarative
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.lang.Language
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 
@@ -46,8 +49,20 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
 
     val dump = InlayDumpUtil.dumpHintsInternal(previewText, renderer = { renderer, _ ->
       renderer as DeclarativeInlayRenderer
-      renderer.presentationList.getEntries().joinToString(separator = "|") { entry -> (entry as TextInlayPresentationEntry).text }
+      renderer.presentationList.getEntries().joinToString(separator = "|") { entry ->
+        val text = (entry as TextInlayPresentationEntry).text
+        val actionData = entry.clickArea?.actionData
+        val payload = actionData?.payload
+        when (payload) {
+          is PsiPointerInlayActionPayload -> (payload.pointer.element?.let { customToStringProvider?.invoke(it) } ?: "") + text
+          is StringInlayActionPayload -> "[${payload.text}:${actionData.handlerId}]$text"
+          else -> text
+        }
+      }
     }, file = myFixture.file!!, editor = myFixture.editor, document = myFixture.getDocument(myFixture.file!!))
     assertEquals(expectedText.trim(), dump.trim())
   }
+
+  var customToStringProvider: ((PsiElement) -> String)? = null
+
 }

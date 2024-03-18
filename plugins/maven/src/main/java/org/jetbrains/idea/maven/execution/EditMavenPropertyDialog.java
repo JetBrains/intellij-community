@@ -88,4 +88,9 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   public Pair<String, String> getValue() {
     return Pair.create((String)myNameBox.getEditor().getItem(), myValueField.getText());
   }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "#org.jetbrains.idea.maven.execution.EditMavenPropertyDialog";
+  }
 }

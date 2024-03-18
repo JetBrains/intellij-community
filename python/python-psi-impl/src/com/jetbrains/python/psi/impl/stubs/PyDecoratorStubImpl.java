@@ -5,6 +5,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDeco
                                 final StubElement parent,
                                 final @NotNull List<String> positionalArguments,
                                 final @NotNull Map<String, String> namedArguments) {
-    super(parent, PyElementTypes.DECORATOR_CALL);
+    super(parent, PyStubElementTypes.DECORATOR_CALL);
     myQualifiedName = qualname;
     myHasArgumentList = hasArgumentList;
     myPositionalArguments = positionalArguments;

@@ -6,14 +6,11 @@ import com.intellij.coverage.view.CoverageViewManager
 import com.intellij.coverage.view.JavaCoverageViewExtension
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
-import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.java.coverage.JavaCoverageBundle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClassOwner
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 class XMLReportEngine : CoverageEngine() {
@@ -28,7 +25,7 @@ class XMLReportEngine : CoverageEngine() {
                                    trackTestFolders: Boolean,
                                    project: Project?): CoverageSuite? {
     if (covRunner !is XMLReportRunner) return null
-    return XMLReportSuite(this, name, coverageDataFileProvider, lastCoverageTimeStamp, trackTestFolders, covRunner, project)
+    return XMLReportSuite(name, project, covRunner, coverageDataFileProvider, lastCoverageTimeStamp, this)
   }
 
   override fun createCoverageSuite(covRunner: CoverageRunner,
@@ -38,7 +35,7 @@ class XMLReportEngine : CoverageEngine() {
 
   override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): XMLReportSuite? {
     if (coverageRunner !is XMLReportRunner) return null
-    return XMLReportSuite(this, coverageRunner)
+    return XMLReportSuite(this)
   }
 
   override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile) = psiFile is PsiClassOwner
@@ -60,13 +57,9 @@ class XMLReportEngine : CoverageEngine() {
 
   override fun createSrcFileAnnotator(file: PsiFile?, editor: Editor?) = XMLReportEditorAnnotator(file, editor)
   override fun isApplicableTo(conf: RunConfigurationBase<*>) = false
-  override fun canHavePerTestCoverage(conf: RunConfigurationBase<*>) = false
   override fun getPresentableText() = JavaCoverageBundle.message("coverage.xml.report.title")
   override fun getCoverageAnnotator(project: Project) = XMLReportAnnotator.getInstance(project)
-  override fun recompileProjectAndRerunAction(module: Module, suite: CoverageSuitesBundle, chooseSuiteAction: Runnable) = false
   override fun getQualifiedNames(sourceFile: PsiFile) = error("Should not be called")
-  override fun findTestsByNames(testNames: Array<out String>, project: Project) = error("Should not be called")
-  override fun getTestMethodName(element: PsiElement, testProxy: AbstractTestProxy) = error("Should not be called")
   override fun createCoverageEnabledConfiguration(conf: RunConfigurationBase<*>) = error("Should not be called")
 }
 

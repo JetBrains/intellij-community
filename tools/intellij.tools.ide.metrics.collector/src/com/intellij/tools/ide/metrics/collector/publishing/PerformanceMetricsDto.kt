@@ -44,10 +44,11 @@ data class PerformanceMetricsDto(
       methodName: String,
       buildNumber: BuildNumber,
       metrics: Collection<PerformanceMetrics.Metric>,
-      buildInfo: CIServerBuildInfo
+      buildInfo: CIServerBuildInfo,
+      generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
     ) = PerformanceMetricsDto(
       version = VERSION,
-      generated = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME),
+      generated = generated,
       project = projectName,
       projectURL = projectURL,
       os = SystemInfo.getOsNameAndVersion(),

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
+import git4idea.GitReference;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,9 +182,14 @@ public interface GitBrancher {
                   @NotNull List<? extends @NotNull GitRepository> repositories);
 
   /**
-   * Compares the current working tree with its state in the selected branch.
+   * Compares the current working tree with its state in the selected branch HEAD.
    */
   void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends @NotNull GitRepository> repositories);
+
+  /**
+   * Compares working tree states in the selected branch HEADs.
+   */
+  void showDiff(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends @NotNull GitRepository> repositories);
 
   /**
    * <p>Merges the given branch to the HEAD.</p>
@@ -191,10 +197,21 @@ public interface GitBrancher {
    * <p>If local changes prevent merging, proposes the "Smart merge" procedure (stash-merge-unstash).</p>
    * <p>If untracked files prevent merging, shows them in an error dialog.</p>
    *
-   * @param branchName    the branch to be merged into HEAD.
+   * @param reference   local/remote branch or tag to be merged into HEAD.
    * @param deleteOnMerge specify whether the branch should be automatically deleted or proposed to be deleted after merge.
    * @param repositories  repositories to operate on.
    */
+  void merge(@NotNull GitReference reference,
+             @NotNull DeleteOnMergeOption deleteOnMerge,
+             @NotNull List<? extends @NotNull GitRepository> repositories);
+
+  /**
+   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List)}
+   * @param branchName
+   * @param deleteOnMerge
+   * @param repositories
+   */
+  @Deprecated
   void merge(@NotNull String branchName,
              @NotNull DeleteOnMergeOption deleteOnMerge,
              @NotNull List<? extends @NotNull GitRepository> repositories);

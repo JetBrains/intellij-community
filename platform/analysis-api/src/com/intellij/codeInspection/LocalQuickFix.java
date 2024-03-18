@@ -93,7 +93,6 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     return List.of();
   }
 
-
   /**
    * @return an array with a single element {@code fix} or an empty array if the argument is null
    */

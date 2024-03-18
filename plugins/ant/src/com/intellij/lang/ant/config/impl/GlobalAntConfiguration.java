@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.PathUtil;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -71,13 +72,38 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
       }
     };
     AntInstallation.NAME.set(bundledAnt.getProperties(), getBundledAntName());
-    final File antHome = PathManager.findFileInLibDirectory(ANT_FILE);
+
+    File antHome = getBundledAntHome();
+
     AntInstallation.HOME_DIR.set(bundledAnt.getProperties(), antHome.getAbsolutePath());
     ArrayList<AntClasspathEntry> classpath = AntInstallation.CLASS_PATH.getModifiableList(bundledAnt.getProperties());
     File antLibDir = new File(antHome, LIB_DIR);
-    classpath.add(new AllJarsUnderDirEntry(antLibDir));
-    bundledAnt.updateVersion(new File(antLibDir, ANT_JAR_FILE_NAME));
+
+    File compiledJar = new File(antHome, ANT_JAR_FILE_NAME);
+    if (compiledJar.exists()) {
+      classpath.add(new SinglePathEntry(compiledJar));
+      bundledAnt.updateVersion(compiledJar);
+    }
+    else {
+      classpath.add(new AllJarsUnderDirEntry(antLibDir));
+      bundledAnt.updateVersion(new File(antLibDir, ANT_JAR_FILE_NAME));
+    }
+
     return bundledAnt;
+  }
+
+  private static @NotNull File getBundledAntHome() {
+    File antFile = PathManager.findFileInLibDirectory(ANT_FILE);
+    if (antFile.exists()) {
+      // probably running from source
+      return antFile;
+    }
+
+    String pluginJarPath = PathUtil.getJarPathForClass(AntInstallation.class);
+    File pluginLibRoot = new File(pluginJarPath).getParentFile();
+    File pluginRoot = pluginLibRoot.getParentFile();
+
+    return new File(pluginRoot, "dist");
   }
 
   @Override

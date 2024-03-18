@@ -15,15 +15,15 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class PyRemoveCallQuickFix implements LocalQuickFix {
+public class PyRemoveCallQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -31,20 +31,19 @@ public class PyRemoveCallQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement call = descriptor.getPsiElement();
-    assert call instanceof PyCallExpression;
-    if (call instanceof PyDecorator) {
-      call.delete();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    assert element instanceof PyCallExpression;
+    if (element instanceof PyDecorator) {
+      element.delete();
     }
     else {
-      final PyArgumentList argumentList = ((PyCallExpression)call).getArgumentList();
+      final PyArgumentList argumentList = ((PyCallExpression)element).getArgumentList();
       assert argumentList != null;
       argumentList.delete();
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       // regenerate element for Psi consistency, because it isn't PyCallExpression anymore
-      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(call), call.getText());
-      call.replace(expression);
+      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), element.getText());
+      element.replace(expression);
     }
   }
 }

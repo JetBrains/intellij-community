@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SplitDeclarationAndInitializationIntention extends MCIntention {
+public final class SplitDeclarationAndInitializationIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

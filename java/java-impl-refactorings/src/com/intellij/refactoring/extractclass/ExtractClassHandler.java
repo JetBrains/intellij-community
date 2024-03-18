@@ -78,8 +78,8 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
     if (!containingClass.getManager().isInProject(containingClass)) {
       return RefactorJBundle.message("the.selected.class.should.belong.to.project.sources");
     }
-    if (containingClass instanceof PsiUnnamedClass) {
-      return RefactorJBundle.message("refactoring.cannot.be.done.in.unnamed.class");
+    if (containingClass instanceof PsiImplicitClass) {
+      return RefactorJBundle.message("refactoring.cannot.be.done.in.implicit.class");
     }
     return null;
   }

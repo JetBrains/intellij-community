@@ -23,13 +23,12 @@ import org.jetbrains.annotations.ApiStatus
  * @param commitCount the number of commits to filter, when using VCS
  * @return filtered commits
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @RequiresBackgroundThread
 fun VcsLogData.filter(filters: VcsLogFilterCollection, commitCount: CommitCountStage = CommitCountStage.ALL): IntSet {
   return VcsLogFiltererImpl(this).filter(dataPack, filters, commitCount)
 }
 
-@ApiStatus.Internal
 @RequiresBackgroundThread
 private fun VcsLogFiltererImpl.filter(dataPack: DataPack,
                                       filters: VcsLogFilterCollection,

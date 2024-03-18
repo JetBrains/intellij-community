@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +19,7 @@ import java.util.Optional;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher CLEANER_REGISTER = CallMatcher.instanceCall(
     "java.lang.ref.Cleaner", "register"
@@ -94,7 +95,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
         }
         if (runnableExpr instanceof PsiNewExpression newExpression) {
           if (newExpression.getAnonymousClass() != null) {
-            if (PsiUtil.isLanguageLevel18OrHigher(trackedClass)) {
+            if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, trackedClass)) {
               PsiElement elementCapturingThis = getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass);
               if (elementCapturingThis != null) {
                 return elementCapturingThis;
@@ -109,7 +110,8 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           if (aClass == null) return null;
           if (aClass.getContainingClass() != trackedClass) return null;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
-          if (PsiUtil.isLanguageLevel18OrHigher(trackedClass) && getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
+          if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, trackedClass) && 
+              getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
           return classReference;
         }
         return null;

@@ -7,3 +7,5 @@ import pkg.getValue
 class Some(a: A) {
     val x1 by a
 }<caret>
+
+// IGNORE_K2

@@ -5,7 +5,11 @@ import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
@@ -33,57 +37,25 @@ public final class Presentation implements Cloneable {
   private static final Logger LOG = Logger.getInstance(Presentation.class);
 
   public static final Supplier<String> NULL_STRING = () -> null;
+  public static final Supplier<TextWithMnemonic> NULL_TEXT_WITH_MNEMONIC = () -> null;
 
-  /**
-   * Defines tool tip for button at toolbar or text for element at menu
-   * value: String
-   */
+  // Property keys for the PropertyChangeListener API
   public static final @NonNls String PROP_TEXT = "text";
-  /**
-   * Defines tool tip for button at toolbar or text for element at menu
-   * that includes mnemonic suffix, like "Git(G)"
-   * value: String
-   */
   public static final @NonNls String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
-  /**
-   * value: Integer
-   */
   public static final @NonNls String PROP_MNEMONIC_KEY = "mnemonicKey";
-  /**
-   * value: Integer
-   */
   public static final @NonNls String PROP_MNEMONIC_INDEX = "mnemonicIndex";
-  /**
-   * value: String
-   */
   public static final @NonNls String PROP_DESCRIPTION = "description";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_ICON = "icon";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
-  /**
-   * value: Boolean
-   */
   public static final @NonNls String PROP_VISIBLE = "visible";
-  /**
-   * The actual value is a Boolean.
-   */
   public static final @NonNls String PROP_ENABLED = "enabled";
+  // Do not add Key constants here, especially with PROP_ prefix. Find a better place.
 
-  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("value");
-  public static final @NonNls Key<@NlsSafe String> PROP_KEYBOARD_SHORTCUT_SUFFIX = Key.create("keyboardShortcutTextSuffix");
+  /** Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SECONDARY_TEXT} instead */
+  @Deprecated(forRemoval = true)
+  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
@@ -96,11 +68,12 @@ public final class Presentation implements Cloneable {
   private static final int IS_PERFORM_GROUP = 0x20;
   private static final int IS_HIDE_GROUP_IF_EMPTY = 0x40;
   private static final int IS_DISABLE_GROUP_IF_EMPTY = 0x80;
+  private static final int IS_APPLICATION_SCOPE = 0x100;
   private static final int IS_TEMPLATE = 0x1000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
   private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
-  private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = () -> null;
+  private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = NULL_TEXT_WITH_MNEMONIC;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   private @Nullable Supplier<? extends @Nullable Icon> icon;
@@ -198,7 +171,10 @@ public final class Presentation implements Cloneable {
 
   public @NotNull Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
                                                                  boolean mayContainMnemonic) {
-    if (mayContainMnemonic) {
+    if (text == NULL_STRING) {
+      return NULL_TEXT_WITH_MNEMONIC;
+    }
+    else if (mayContainMnemonic) {
       return () -> {
         String s = text.get();
         if (s == null) {
@@ -312,10 +288,18 @@ public final class Presentation implements Cloneable {
     return icon;
   }
 
-  public void copyIconIfUnset(@NotNull Presentation other) {
-    if (icon == null && other.icon != null) {
+  @ApiStatus.Internal // do not expose
+  void copyUnsetTemplateProperties(@NotNull Presentation other) {
+    if (icon == null) {
       icon = other.icon;
     }
+    if (Strings.isEmpty(getText()) && Strings.isNotEmpty(other.getText())) {
+      textWithMnemonicSupplier = other.textWithMnemonicSupplier;
+    }
+    if (Strings.isEmpty(descriptionSupplier.get()) && Strings.isNotEmpty(other.descriptionSupplier.get())) {
+      descriptionSupplier = other.descriptionSupplier;
+    }
+    myUserMap = myUserMap.plusAll(other.myUserMap);
   }
 
   public void setIcon(@Nullable Icon icon) {
@@ -457,6 +441,20 @@ public final class Presentation implements Cloneable {
    */
   public void setDisableGroupIfEmpty(boolean disable) {
     myFlags = BitUtil.set(myFlags, IS_DISABLE_GROUP_IF_EMPTY, disable);
+  }
+
+  /** @see Presentation#setApplicationScope(boolean)  */
+  public boolean isApplicationScope() {
+    return BitUtil.isSet(myFlags, IS_APPLICATION_SCOPE);
+  }
+
+  /**
+   * For an action presentation sets whether the action is to be performed in the application scope.
+   * In the application scope, action activities can outlast a project where the action is performed.
+   * The default is {@code false}.
+   */
+  public void setApplicationScope(boolean applicationScope) {
+    myFlags = BitUtil.set(myFlags, IS_APPLICATION_SCOPE, applicationScope);
   }
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,7 +15,7 @@ import java.awt.*;
 /**
  * Allows highlighting of file-related renderers and editor tabs with custom background colors.
  */
-public interface EditorTabColorProvider {
+public interface EditorTabColorProvider extends PossiblyDumbAware {
   ExtensionPointName<EditorTabColorProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorTabColorProvider");
 
   /**

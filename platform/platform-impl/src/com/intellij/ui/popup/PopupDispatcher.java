@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
+import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.stream.Stream;
@@ -97,6 +98,13 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
     }
   }
 
+  private static boolean dispatchInputMethodEvent(InputMethodEvent event) {
+    if (ourShowingStep == null) {
+      return false;
+    }
+    return ourShowingStep.dispatchInputMethodEvent(event);
+  }
+
   private static boolean disposeActiveWizard() {
     if (ourActiveWizardRoot != null) {
       ourActiveWizardRoot.disposeChildren();
@@ -158,6 +166,9 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
     if (event instanceof MouseEvent) {
       return dispatchMouseEvent(event);
     }
+    if (event instanceof InputMethodEvent) {
+      return dispatchInputMethodEvent((InputMethodEvent)event);
+    }
     return false;
   }
 
@@ -173,9 +184,5 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
   @Override
   public boolean close() {
     return disposeActiveWizard();
-  }
-
-  @Override
-  public void setRestoreFocusSilently() {
   }
 }

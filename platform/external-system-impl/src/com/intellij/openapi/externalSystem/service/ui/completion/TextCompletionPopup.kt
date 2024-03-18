@@ -17,6 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
+import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.*
@@ -33,8 +34,7 @@ class TextCompletionPopup<T>(
   fun update() {
     listModel.updateOriginalList()
 
-    width = textComponent.width
-    height = list.fixedCellHeight * maxOf(1, minOf(list.model.size, list.visibleRowCount))
+    size = Dimension(textComponent.width, list.fixedCellHeight * maxOf(1, minOf(list.model.size, list.visibleRowCount)))
 
     list.revalidate()
   }

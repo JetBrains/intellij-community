@@ -8,7 +8,7 @@ public final class YAMLLanguage extends Language {
   public static final YAMLLanguage INSTANCE = new YAMLLanguage();
 
   private YAMLLanguage() {
-    super("yaml");
+    super("yaml", "application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml");
   }
 
   @NotNull

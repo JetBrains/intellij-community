@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
 import com.intellij.dvcs.push.PrePushHandler
@@ -9,13 +9,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.config.GitSharedSettings
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.extension
+import kotlin.io.path.invariantSeparatorsPathString
 
 abstract class IssueIDPrePushHandler : PrePushHandler {
   abstract val paths: List<String>
@@ -29,7 +29,7 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
     files.asSequence()
       .map { file -> Path.of(file.path) }
       .any { path ->
-        val siPath = path.systemIndependentPath
+        val siPath = path.invariantSeparatorsPathString
         path.extension !in fileExtensionsNotToTrack
         && paths.any { siPath.contains(it) }
         && pathsToIgnore.none { siPath.contains(it) }

@@ -4,18 +4,22 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.tree.Operation;
+import com.jetbrains.jsonSchema.impl.tree.ProcessDefinitionsOperation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
+import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMergerKt.getJsonSchemaObjectMerger;
 
 public final class JsonSchemaVariantsTreeBuilder {
 
@@ -42,13 +46,21 @@ public final class JsonSchemaVariantsTreeBuilder {
         continue;
       }
       final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), true);
-      if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
-      else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
+      if (ThreeState.NO.equals(pair.getFirst())) {
+        node.nothingChild();
+      }
+      else if (ThreeState.YES.equals(pair.getFirst())) {
+        node.anyChild();
+      }
       else {
         // process step results
         assert pair.getSecond() != null;
-        if (node.getPosition().size() > 1 || !skipLastExpand) expandChildSchema(node, pair.getSecond(), service);
-        else node.setChild(pair.getSecond());
+        if (node.getPosition().size() > 1 || !skipLastExpand) {
+          expandChildSchema(node, pair.getSecond(), service);
+        }
+        else {
+          node.setChild(pair.getSecond());
+        }
       }
 
       queue.addAll(node.getChildren());
@@ -96,202 +108,31 @@ public final class JsonSchemaVariantsTreeBuilder {
     final String name = step.getFirstName();
     if (name != null) {
       return propertyStep(name, parent, processAllBranches);
-    } else {
+    }
+    else {
       final int index = step.getFirstIndex();
       assert index >= 0;
       return arrayOrNumericPropertyElementStep(index, parent);
     }
   }
 
-  abstract static class Operation {
-    final @NotNull List<JsonSchemaObject> myAnyOfGroup = new SmartList<>();
-    final @NotNull List<List<JsonSchemaObject>> myOneOfGroup = new SmartList<>();
-    protected final @NotNull List<Operation> myChildOperations;
-    protected final @NotNull JsonSchemaObject mySourceNode;
-    protected SchemaResolveState myState = SchemaResolveState.normal;
-
-    protected Operation(@NotNull JsonSchemaObject sourceNode) {
-      mySourceNode = sourceNode;
-      myChildOperations = new ArrayList<>();
-    }
-
-    protected abstract void map(@NotNull Set<JsonSchemaObject> visited);
-    protected abstract void reduce();
-
-    public void doMap(final @NotNull Set<JsonSchemaObject> visited) {
-      map(visited);
-      for (Operation operation : myChildOperations) {
-        operation.doMap(visited);
-      }
-    }
-
-    public void doReduce() {
-      if (!SchemaResolveState.normal.equals(myState)) {
-        myChildOperations.clear();
-        myAnyOfGroup.clear();
-        myOneOfGroup.clear();
-        return;
-      }
-
-      // lets do that to make the returned object smaller
-      myAnyOfGroup.forEach(Operation::clearVariants);
-      myOneOfGroup.forEach(list -> list.forEach(Operation::clearVariants));
-
-      for (Operation myChildOperation : myChildOperations) {
-        myChildOperation.doReduce();
-      }
-      reduce();
-      myChildOperations.clear();
-    }
-
-    private static void clearVariants(@NotNull JsonSchemaObject object) {
-      object.setAllOf(null);
-      object.setAnyOf(null);
-      object.setOneOf(null);
-    }
-
-    protected @Nullable Operation createExpandOperation(@NotNull JsonSchemaObject schema,
-                                                        @NotNull JsonSchemaService service) {
-      Operation forConflict = getOperationForConflict(schema, service);
-      if (forConflict != null) return forConflict;
-      if (schema.getAnyOf() != null) return new AnyOfOperation(schema, service);
-      if (schema.getOneOf() != null) return new OneOfOperation(schema, service);
-      if (schema.getAllOf() != null) return new AllOfOperation(schema, service);
-      return null;
-    }
-
-    private static @Nullable Operation getOperationForConflict(@NotNull JsonSchemaObject schema,
-                                                               @NotNull JsonSchemaService service) {
-      // in case of several incompatible operations, choose the most permissive one
-      List<JsonSchemaObject> anyOf = schema.getAnyOf();
-      List<JsonSchemaObject> oneOf = schema.getOneOf();
-      List<JsonSchemaObject> allOf = schema.getAllOf();
-      if (anyOf != null && (oneOf != null || allOf != null)) {
-        return new AnyOfOperation(schema, service) {{myState = SchemaResolveState.conflict;}};
-      }
-      else if (oneOf != null && allOf != null) {
-        return new OneOfOperation(schema, service) {{myState = SchemaResolveState.conflict;}};
-      }
-      return null;
-    }
-
-    protected static List<JsonSchemaObject> mergeOneOf(Operation op) {
-      return op.myOneOfGroup.stream().flatMap(List::stream).collect(Collectors.toList());
-    }
-  }
-
   // even if there are no definitions to expand, this object may work as an intermediate node in a tree,
   // connecting oneOf and allOf expansion, for example
-  private static final class ProcessDefinitionsOperation extends Operation {
-    private final JsonSchemaService myService;
-
-    private ProcessDefinitionsOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-      super(sourceNode);
-      myService = service;
-    }
-
-    @Override
-    public void map(final @NotNull Set<JsonSchemaObject> visited) {
-      JsonSchemaObject current = mySourceNode;
-      while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
-        final JsonSchemaObject definition = current.resolveRefSchema(myService);
-        if (definition == null) {
-          myState = SchemaResolveState.brokenDefinition;
-          return;
-        }
-        // this definition was already expanded; do not cycle
-        if (!visited.add(definition)) break;
-        current = JsonSchemaObject.merge(current, definition, current);
-      }
-      final Operation expandOperation = createExpandOperation(current, myService);
-      if (expandOperation != null) myChildOperations.add(expandOperation);
-      else myAnyOfGroup.add(current);
-    }
-
-    @Override
-    public void reduce() {
-      if (!myChildOperations.isEmpty()) {
-        assert myChildOperations.size() == 1;
-        final Operation operation = myChildOperations.get(0);
-        myAnyOfGroup.addAll(operation.myAnyOfGroup);
-        myOneOfGroup.addAll(operation.myOneOfGroup);
-      }
-    }
-  }
-
-  private static final class AllOfOperation extends Operation {
-    private final JsonSchemaService myService;
-
-    private AllOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-      super(sourceNode);
-      myService = service;
-    }
-
-    @Override
-    public void map(final @NotNull Set<JsonSchemaObject> visited) {
-      List<JsonSchemaObject> allOf = mySourceNode.getAllOf();
-      assert allOf != null;
-      myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
-    }
-
-    private static <T> int maxSize(List<List<T>> items) {
-      if (items.size() == 0) return 0;
-      int maxsize = -1;
-      for (List<T> item: items) {
-        int size = item.size();
-        if (maxsize < size) maxsize = size;
-      }
-      return maxsize;
-    }
-
-    @Override
-    public void reduce() {
-      myAnyOfGroup.add(mySourceNode);
-
-      for (Operation op : myChildOperations) {
-        if (!op.myState.equals(SchemaResolveState.normal)) continue;
-
-        final List<JsonSchemaObject> mergedAny = andGroups(op.myAnyOfGroup, myAnyOfGroup);
-
-        final List<List<JsonSchemaObject>> mergedExclusive =
-          new ArrayList<>(op.myAnyOfGroup.size() * maxSize(myOneOfGroup) +
-                          myAnyOfGroup.size() * maxSize(op.myOneOfGroup) +
-                          maxSize(myOneOfGroup) * maxSize(op.myOneOfGroup));
-
-        for (List<JsonSchemaObject> objects : myOneOfGroup) {
-          mergedExclusive.add(andGroups(op.myAnyOfGroup, objects));
-        }
-        for (List<JsonSchemaObject> objects : op.myOneOfGroup) {
-          mergedExclusive.add(andGroups(objects, myAnyOfGroup));
-        }
-        for (List<JsonSchemaObject> group : op.myOneOfGroup) {
-          for (List<JsonSchemaObject> otherGroup : myOneOfGroup) {
-            mergedExclusive.add(andGroups(group, otherGroup));
-          }
-        }
-
-        myAnyOfGroup.clear();
-        myOneOfGroup.clear();
-        myAnyOfGroup.addAll(mergedAny);
-        myOneOfGroup.addAll(mergedExclusive);
-      }
-    }
-  }
-
-  private static List<JsonSchemaObject> andGroups(@NotNull List<JsonSchemaObject> g1,
-                                                  @NotNull List<JsonSchemaObject> g2) {
+  public static List<JsonSchemaObject> andGroups(@NotNull List<? extends JsonSchemaObject> g1,
+                                                 @NotNull List<? extends JsonSchemaObject> g2) {
     List<JsonSchemaObject> result = new ArrayList<>(g1.size() * g2.size());
-    for (JsonSchemaObject s: g1) {
+    for (JsonSchemaObject s : g1) {
       result.addAll(andGroup(s, g2));
     }
     return result;
   }
 
   // here is important, which pointer gets the result: lets make them all different, otherwise two schemas of branches of oneOf would be equal
-  private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
+  public static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<? extends JsonSchemaObject> group) {
     List<JsonSchemaObject> list = new ArrayList<>(group.size());
-    for (JsonSchemaObject s: group) {
-      JsonSchemaObject schemaObject = JsonSchemaObject.merge(object, s, s);
+    for (JsonSchemaObject s : group) {
+      // fixme here it is crucial to avoid heavy merging just to get single property value
+      var schemaObject = getJsonSchemaObjectMerger().mergeObjects(object, s, s);
       if (schemaObject.isValidByExclusion()) {
         list.add(schemaObject);
       }
@@ -299,72 +140,24 @@ public final class JsonSchemaVariantsTreeBuilder {
     return list;
   }
 
-  private static class OneOfOperation extends Operation {
-    private final JsonSchemaService myService;
-
-    protected OneOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-      super(sourceNode);
-      myService = service;
-    }
-
-    @Override
-    public void map(final @NotNull Set<JsonSchemaObject> visited) {
-      List<JsonSchemaObject> oneOf = mySourceNode.getOneOf();
-      assert oneOf != null;
-      myChildOperations.addAll(ContainerUtil.map(oneOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
-    }
-
-    @Override
-    public void reduce() {
-      final List<JsonSchemaObject> oneOf = new SmartList<>();
-      for (Operation op : myChildOperations) {
-        if (!op.myState.equals(SchemaResolveState.normal)) continue;
-        oneOf.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
-        oneOf.addAll(andGroup(mySourceNode, mergeOneOf(op)));
-      }
-      // here it is not a mistake - all children of this node come to oneOf group
-      myOneOfGroup.add(oneOf);
-    }
-  }
-
-  private static class AnyOfOperation extends Operation {
-    private final JsonSchemaService myService;
-
-    protected AnyOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-      super(sourceNode);
-      myService = service;
-    }
-
-    @Override
-    public void map(final @NotNull Set<JsonSchemaObject> visited) {
-      List<JsonSchemaObject> anyOf = mySourceNode.getAnyOf();
-      assert anyOf != null;
-      myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
-    }
-
-    @Override
-    public void reduce() {
-      for (Operation op : myChildOperations) {
-        if (!op.myState.equals(SchemaResolveState.normal)) continue;
-
-        myAnyOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
-        for (List<JsonSchemaObject> group : op.myOneOfGroup) {
-          myOneOfGroup.add(andGroup(mySourceNode, group));
-        }
-      }
-    }
-  }
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {
-    return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null
-           || schema.getIfThenElse() != null;
+    boolean hasAggregators;
+    if (Registry.is("json.schema.object.v2")) {
+      hasAggregators =
+        schema.hasChildNode(ANY_OF) || schema.hasChildNode(ONE_OF) || schema.hasChildNode(ALL_OF) || schema.hasChildNode(IF);
+    }
+    else {
+      hasAggregators = schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null;
+    }
+    return hasAggregators || schema.getRef() != null || schema.getIfThenElse() != null;
   }
 
 
   private static @NotNull Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name,
                                                                           @NotNull JsonSchemaObject parent,
                                                                           boolean processAllBranches) {
-    final JsonSchemaObject child = parent.getProperties().get(name);
+    final JsonSchemaObject child = parent.getPropertyByName(name);
     if (child != null) {
       return Pair.create(ThreeState.UNSURE, child);
     }
@@ -389,7 +182,7 @@ public final class JsonSchemaVariantsTreeBuilder {
           JsonSchemaObject then = ifThenElse.getThen();
           //noinspection Duplicates
           if (then != null) {
-            childObject = then.getProperties().get(name);
+            childObject = then.getPropertyByName(name);
             if (childObject != null) {
               return Pair.create(ThreeState.UNSURE, childObject);
             }
@@ -397,7 +190,7 @@ public final class JsonSchemaVariantsTreeBuilder {
           JsonSchemaObject elseBranch = ifThenElse.getElse();
           //noinspection Duplicates
           if (elseBranch != null) {
-            childObject = elseBranch.getProperties().get(name);
+            childObject = elseBranch.getPropertyByName(name);
             if (childObject != null) {
               return Pair.create(ThreeState.UNSURE, childObject);
             }
@@ -417,14 +210,15 @@ public final class JsonSchemaVariantsTreeBuilder {
       return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
     }
     if (parent.getItemsSchemaList() != null) {
-      final List<JsonSchemaObject> list = parent.getItemsSchemaList();
+      final var list = parent.getItemsSchemaList();
       if (idx >= 0 && idx < list.size()) {
         return Pair.create(ThreeState.UNSURE, list.get(idx));
       }
     }
     final String keyAsString = String.valueOf(idx);
-    if (parent.getProperties().containsKey(keyAsString)) {
-      return Pair.create(ThreeState.UNSURE, parent.getProperties().get(keyAsString));
+    var propWithNameOrNull = parent.getPropertyByName(keyAsString);
+    if (propWithNameOrNull != null) {
+      return Pair.create(ThreeState.UNSURE, propWithNameOrNull);
     }
     final JsonSchemaObject matchingPatternPropertySchema = parent.getMatchingPatternPropertySchema(keyAsString);
     if (matchingPatternPropertySchema != null) {
@@ -454,11 +248,13 @@ public final class JsonSchemaVariantsTreeBuilder {
         if (idx == -1) {
           mySchemaId = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
           myRelativePath = "";
-        } else {
+        }
+        else {
           mySchemaId = ref.substring(0, idx);
           myRelativePath = ref.substring(idx);
         }
-      } else {
+      }
+      else {
         mySchemaId = null;
         myRelativePath = ref;
       }

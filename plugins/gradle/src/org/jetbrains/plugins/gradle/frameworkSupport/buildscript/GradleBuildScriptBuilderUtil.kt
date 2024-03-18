@@ -3,13 +3,14 @@
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
 
 fun GradleVersion.isGradleAtLeast(version: String): Boolean =
-  baseVersion >= GradleVersion.version(version)
+  GradleVersionUtil.isGradleAtLeast(this, version)
 
 fun GradleVersion.isGradleOlderThan(version: String): Boolean =
-  baseVersion < GradleVersion.version(version)
+  GradleVersionUtil.isGradleOlderThan(this, version)
 
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
   return when {
@@ -28,19 +29,7 @@ fun getJunit4Version(): String {
 }
 
 fun getJunit5Version(): String {
-  return "5.9.1"
-}
-
-fun isJavaLibraryPluginSupported(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.isGradleAtLeast("3.4")
-}
-
-fun isImplementationScopeSupported(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.isGradleAtLeast("3.4")
-}
-
-fun isRuntimeOnlyScopeSupported(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.isGradleAtLeast("3.4")
+  return "5.10.0"
 }
 
 fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean {

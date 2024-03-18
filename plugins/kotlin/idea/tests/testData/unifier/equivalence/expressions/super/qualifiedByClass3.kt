@@ -1,3 +1,4 @@
+// IGNORE_K2
 open class Z {
     open fun foo() {
 

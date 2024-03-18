@@ -96,6 +96,8 @@ public class MethodProcessorRunnable implements Runnable {
 
     DeadCodeHelper.removeGoTos(graph);
 
+    ExceptionDeobfuscator.duplicateMergedCatchBlocks(graph, cl);
+
     ExceptionDeobfuscator.removeCircularRanges(graph);
 
     ExceptionDeobfuscator.restorePopRanges(graph);
@@ -211,8 +213,9 @@ public class MethodProcessorRunnable implements Runnable {
     // FIXME: new edge type needed
     LabelHelper.replaceContinueWithBreak(root);
 
+    SwitchHelper.simplifySwitchesOnReferences(root, cl);
+    SwitchHelper.prepareForRules(root, cl);
     PatternHelper.replaceAssignmentsWithPatternVariables(root, cl);
-    SwitchHelper.simplifySwitchesOnString(root);
     cancellationManager.checkCanceled();
 
     mt.releaseResources();

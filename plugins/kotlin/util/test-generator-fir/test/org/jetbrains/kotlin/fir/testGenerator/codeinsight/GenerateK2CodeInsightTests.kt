@@ -15,6 +15,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2IntentionTests()
     generateK2StructureViewTests()
     generateK2PostfixTemplateTests()
+    generateK2LiveTemplateTests()
     generateK2LineMarkerTests()
 
     testGroup("code-insight/kotlin.code-insight.k2") {
@@ -40,7 +41,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
         }
         testClass<AbstractKotlinFirBreadcrumbsTest> {
-            model("../../../idea/tests/testData/codeInsight/breadcrumbs")
+            model("../../../idea/tests/testData/codeInsight/breadcrumbs", pattern = KT_OR_KTS)
         }
         testClass<AbstractKotlinFirUnwrapRemoveTest> {
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeExpression", testMethodName = "doTestExpressionRemover")

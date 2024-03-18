@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CallMatcher IS_INSTANCE =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_CLASS, "isInstance").parameterCount(1);
   private static final CallMatcher CAST =

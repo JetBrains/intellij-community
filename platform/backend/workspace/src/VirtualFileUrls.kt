@@ -2,19 +2,11 @@
 @file:JvmName("VirtualFileUrls")
 package com.intellij.platform.backend.workspace
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-
-/**
- * Returns instance of [VirtualFileUrlManager] corresponding to [project]. 
- * It should be used from Java code only, Kotlin code should use `VirtualFileUrlManager.getInstance(project)` extension function instead.
- */
-public fun getVirtualFileUrlManager(project: Project): VirtualFileUrlManager = project.service()
 
 /**
  * Returns instance of [VirtualFile] corresponding to this [VirtualFileUrl] or `null` if there is no a file with such URL in the Virtual 
@@ -33,4 +25,4 @@ public val VirtualFileUrl.virtualFile: VirtualFile?
  *
  * **Important Note:** method can return different instances of `VirtualFileUrl` for the same `VirtualFile`, e.g. if the file was moved.
  */
-public fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromUrl(this.url)
+public fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.getOrCreateFromUri(this.url)

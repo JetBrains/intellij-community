@@ -6,6 +6,11 @@
       headlessImplementation="com.intellij.platform.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
     />
 
+    <applicationService
+      serviceInterface="com.intellij.ide.plugins.PluginUtil"
+      serviceImplementation="com.intellij.ide.plugins.PluginUtilModernImpl"
+      overrides="true"
+    />
 <!-- Android Studio: b/282808067
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 Android Studio: b/282808067 -->
@@ -15,7 +20,7 @@ Android Studio: b/282808067 -->
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
-    <appStarter id="update" implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
+    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp"/>
     <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
@@ -137,7 +142,6 @@ Android Studio: b/282808067 -->
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
 
-    <registryKey defaultValue="false" os="windows" description="Using the experimental remote agent inside WSL to launch processes." key="wsl.use.remote.agent.for.launch.processes" restartRequired="false"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagementPolicy"
                         serviceImplementation="com.intellij.ide.plugins.DefaultPluginManagementPolicy"/>
 
@@ -157,13 +161,20 @@ Android Studio: b/282808067 -->
                  description="Use 'wsl.exe -l -v' to get distribution list. If it's disabled 'wsl.exe -l -q' will be used."/>
     <registryKey key="wsl.use.utf8.encoding" os="windows" defaultValue="true" restartRequired="false"
                  description="Use UTF-8 as default encoding for all WSL distributions, otherwise default console encoding will be used (see Preferences | Editor | General | Console )"/>
+    <registryKey key="wsl.fix.initial.tty.size.when.running.without.tty"
+                 restartRequired="false"
+                 description="Set initial Linux tty size to 100x100 for WSL processes not attached to Windows PTY (workaround for https://github.com/microsoft/WSL/issues/10701)"
+                 defaultValue="true"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
+                        serviceImplementation="com.intellij.execution.wsl.ProductionWslIjentManager"/>
+
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
     <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="true" restartRequired="true"
                  description="Obtain Windows host machine IP alternatively (not using the recommended 'cat /etc/resolv.conf | grep nameserver')."/>
 
-    <registryKey key="wsl.proxy.connect.localhost" os="windows" defaultValue="false" restartRequired="false"
+    <registryKey key="wsl.proxy.connect.localhost" os="windows" defaultValue="true" restartRequired="false"
                  description="Connect to 127.0.0.1 on WSLProxy instead of public WSL IP which might be inaccessible due to routing issues"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
@@ -184,12 +195,14 @@ Android Studio: b/282808067 -->
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
-    <vfs.asyncListener implementation="com.intellij.configurationStore.MyAsyncVfsListener"/>
+    <vfs.asyncListener implementation="com.intellij.configurationStore.StorageVfsListener"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                         serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
 
-    <applicationService serviceImplementation="com.intellij.configurationStore.DefaultProjectExportableAndSaveTrigger"/>
+    <projectService serviceInterface="com.intellij.configurationStore.ProjectIdManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectIdManagerImpl"
+                    testServiceImplementation="com.intellij.configurationStore.MockProjectIdManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
@@ -252,6 +265,7 @@ Android Studio: b/282808067 -->
 
     <cachesInvalidator implementation="com.intellij.openapi.vfs.newvfs.FSRecordsCacheInvalidator" order="after rootCachesInvalidator"/>
     <cachesInvalidator id="rootCachesInvalidator" implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
+    <logsPreprocessor implementation="com.intellij.ide.logsUploader.DefaultLogsProcessor"/>
 
     <applicationService serviceImplementation="com.intellij.ui.popup.LocalPopupComponentFactory"
                         serviceInterface="com.intellij.ui.popup.PopupComponentFactory"
@@ -331,13 +345,12 @@ Android Studio: b/282808067 -->
     <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
                                         implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightingSettingProvider"/>
 
-    <fileEditorProvider implementation="com.intellij.diff.editor.DiffEditorProvider"/>
+    <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
     <fileIconProvider implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
-    <diff.tools.combined.diffBlockFactory implementation="com.intellij.diff.tools.combined.CombinedSimpleDiffBlockFactory" order="last"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
 
@@ -404,6 +417,7 @@ Android Studio: b/282808067 -->
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.platform.ide.impl.customization.LegacyExternalProductResourceUrls"/>
+    <applicationService serviceImplementation="com.intellij.application.options.colors.FontPreviewService"/>
 
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"/>
 
@@ -438,11 +452,6 @@ Android Studio: b/282808067 -->
     <applicationService serviceInterface="com.intellij.credentialStore.CredentialStoreUiService"
                         serviceImplementation="com.intellij.credentialStore.CredentialStoreUiServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
-                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
-                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                         serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
@@ -462,10 +471,10 @@ Android Studio: b/282808067 -->
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.roots.impl.BundledResourceUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.roots.impl.BundledResourcePathValidationRule"/>
 
+    <statistics.applicationUsagesCollector implementation="com.intellij.ide.scratch.ScratchFilesUsagesCollector"/>
+
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.FeatureUsageUiEventsImpl"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
@@ -492,6 +501,8 @@ Android Studio: b/282808067 -->
 <!-- Android Studio: don't register IntelliJ fork
     <applicationService serviceImplementation="com.intellij.diagnostic.GcPauseWatcher"/>
 Android Studio: don't register IntelliJ fork -->
+    <applicationService serviceImplementation="com.intellij.diagnostic.WriteDelayDiagnosticsHandlerImpl"
+                        serviceInterface="com.intellij.openapi.application.WriteDelayDiagnostics$WriteDelayDiagnosticsHandler"/>
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl"/>
@@ -516,8 +527,6 @@ Android Studio: don't register IntelliJ fork -->
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileNavigator"
                         serviceImplementation="com.intellij.openapi.fileEditor.FileNavigatorImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.vcs.FileStatusFactory"
-                        serviceImplementation="com.intellij.openapi.vcs.FileStatusFactoryImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
@@ -528,12 +537,8 @@ Android Studio: don't register IntelliJ fork -->
                     serviceImplementation="com.intellij.ui.docking.impl.DockManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.SelectInEditorManager"
                     serviceImplementation="com.intellij.ide.impl.SelectInEditorManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.ui.RecentsManager"/>
     <projectService serviceInterface="com.intellij.ui.content.MessageView"
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
-
-    <projectService serviceImplementation="com.intellij.ui.tabs.PerTeamFileColorModelStorageManager"/>
-    <projectService serviceImplementation="com.intellij.ui.tabs.PerUserFileColorModelStorageManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
@@ -584,7 +589,7 @@ Android Studio: don't register IntelliJ fork -->
                        order="after PluginsWelcomeTab"/>
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
@@ -655,7 +660,6 @@ Android Studio: don't register IntelliJ fork -->
                              bundle="messages.IdeBundle"
                              key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
-    <applicationService serviceImplementation="com.intellij.notification.impl.NotificationCollector"/>
 
     <!-- Plugins -->
     <applicationConfigurable groupId="root"
@@ -838,14 +842,14 @@ Android Studio: don't register IntelliJ fork -->
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
-     <undoReportHandler implementation="com.intellij.openapi.command.impl.DefaultUndoReportHandler" order="last" id="default"/>
+    <undoReportHandler implementation="com.intellij.openapi.command.impl.DefaultUndoReportHandler" order="last" id="default"/>
 
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvider"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidator"/>
+    <statistics.validation.customValidationRuleFactory implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>
     <statistics.validation.customValidationRule
@@ -905,10 +909,14 @@ Android Studio: don't register IntelliJ fork -->
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.diff.impl.DiffUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
@@ -919,7 +927,6 @@ Android Studio: don't register IntelliJ fork -->
       implementationClass="com.intellij.openapi.editor.impl.EditorGutterComponentImpl$GutterIconClickCollectors"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
-    <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.WindowsDefenderStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
@@ -952,7 +959,8 @@ Android Studio: don't register IntelliJ fork -->
       implementationClass="com.intellij.internal.statistic.collectors.fus.ui.DialogsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
-    <statistics.counterUsagesCollector groupId="settings.changes" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.configurationStore.statistic.eventLog.SettingsChangesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.configurationStore.statistic.eventLog.SettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
@@ -970,7 +978,7 @@ Android Studio: don't register IntelliJ fork -->
 <!-- Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
 Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml -->
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider" />
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"
@@ -981,6 +989,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.notification.impl.NotificationSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.ReadmeShownUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileChooser.FileChooserUsageCollector"/>
 
     <applicationService
       serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
@@ -1011,7 +1020,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProviderActivity" order="last"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
-    <applicationService serviceImplementation="com.intellij.ide.ui.AppTopHitCache"/>
 
     <applicationService serviceInterface="com.intellij.ide.util.TipAndTrickManager"
                         serviceImplementation="com.intellij.ide.util.TipAndTrickManagerImpl"/>
@@ -1042,8 +1050,8 @@ Android Studio: b/285867050 -->
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider" id="LargeFileEditor"/>
-    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
-    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
+    <fileEditorProvider id="html-editor" implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
+    <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
 
@@ -1138,8 +1146,6 @@ Android Studio: b/285867050 -->
 
     <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
-
-    <projectService serviceImplementation="com.intellij.remote.RemoteMappingsManager"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsDialogFactory"/>
 
@@ -1251,10 +1257,6 @@ Android Studio: b/285867050 -->
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
-    <experimentalFeature id="new.project.wizard" percentOfUsers="100">
-      <description>New project wizard</description>
-    </experimentalFeature>
-
     <applicationService serviceInterface="com.intellij.ide.ui.ToolbarSettings"
                         serviceImplementation="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings"/>
 
@@ -1277,11 +1279,6 @@ Android Studio: b/285867050 -->
         <component>ToolbarClicksCollector</component>
       </components>
     </obsoleteStorage>
-    <obsoleteStorage file="statistics.main_menu.xml">
-      <components>
-        <component>MainMenuCollector</component>
-      </components>
-    </obsoleteStorage>
     <obsoleteStorage file="statistics.shortcuts.xml">
       <components>
         <component>ShortcutsCollector</component>
@@ -1301,7 +1298,6 @@ Android Studio: b/285867050 -->
         <component>ToolWindowsCollector</component>
         <component>ShortcutsCollector</component>
         <component>ToolbarClicksCollector</component>
-        <component>MainMenuCollector</component>
         <component>IntentionsCollector</component>
         <component>ActionsCollector</component>
         <component>FUSApplicationUsageTrigger</component>
@@ -1389,13 +1385,14 @@ Android Studio: b/285867050 -->
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.HotProjectReopenStartUpPerformanceCollector"/>
 
-    <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
-    <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity" order="first"/>
+    <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
+    <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
 
     <environmentKeyProvider implementation="com.intellij.ide.impl.ProjectOpenKeyProvider"/>
     <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>
 
 
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.IdeMainMenuActionCustomizer"/>
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.GlobalMenuLinux$MyActionTuner"/>
 
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductTitleInfoProvider"/>
@@ -1409,6 +1406,8 @@ Android Studio: b/285867050 -->
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
     <gutterMarkPreprocessor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringGutterMarkPreprocessor"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringFeatureUsage"/>
+    <codeInsight.codeVisionProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionSettingProvider"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
 
@@ -1426,7 +1425,7 @@ Android Studio: b/285867050 -->
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
-    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
+    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
@@ -1452,7 +1451,8 @@ Android Studio: b/285867050 -->
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle"
                        key="notification.group.shortcut.conflicts"/>
-    <notificationGroup id="Required Plugins" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.required.plugins"/>
+    <notificationGroup id="Required Plugins" displayType="STICKY_BALLOON" bundle="messages.IdeBundle"
+                       key="notification.group.required.plugins"/>
     <notificationGroup id="System Health" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.system.health"
                        notificationIds="mixed.bag.installation;implicit.plugin.directory.path;implicit.log.directory.path;
                                         bundled.jre.m1.arch.message;bundled.jre.version.message;code.cache.warn.message;
@@ -1507,6 +1507,10 @@ Android Studio: b/285867050 -->
                        key="notification.group.defender.config"/>
     <notificationGroup id="BrowserCfgProblems" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.browser.config.problems"/>
+    <notificationGroup id="Failed to generate module descriptors" displayType="BALLOON" bundle="messages.IdeBundle"
+                       key="notification.group.failed.to.generate.module.descriptors"/>
+    <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
+                       key="notification.group.advertiser.try.ultimate.installed"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1581,20 +1585,26 @@ Android Studio: b/285867050 -->
                      groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="false"
                      groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false"
+    <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="AS_DEFAULT_CODE"
+                     enumClass="com.intellij.lang.documentation.DocumentationSettings$InlineCodeHighlightingMode"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false"
                      groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.code.background" default="true"
+                     groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="search.everywhere.wait.for.contributors" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>
+    <advancedSetting id="search.everywhere.recent.at.top" default="true" groupKey="group.advanced.settings.se"/>
+    <applicationInitializedListener implementation="com.intellij.lang.documentation.ide.impl.QuickDocAutoPopupInEAPInitializer"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
                     serviceImplementation="com.intellij.presentation.impl.FilePresentationServiceImpl"/>
 
     <advancedSetting id="show.diff.as.editor.tab" default="true" bundle="messages.DiffBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="enable.combined.diff" default="false" bundle="messages.DiffBundle" groupKey="advanced.settings.vcs"/>
 
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
     <recoveryAction implementation="com.intellij.ide.actions.cache.RecoverVfsFromLogRecoveryAction"/>
@@ -1609,8 +1619,6 @@ Android Studio: b/285867050 -->
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.platform.ide.progress.TaskSupport"
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport" preload="true"/>
-    <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
-                 defaultValue="false"/>
     <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
@@ -1644,7 +1652,6 @@ Android Studio: b/285867050 -->
     <applicationConfigurable id="com.intellij.minimap" parentId="editor"
                              provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"
                              key="settings.name" bundle="messages.MinimapBundle"/>
-    <applicationService serviceImplementation="com.intellij.ide.minimap.MinimapService"/>
     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
     <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
 
@@ -1652,7 +1659,7 @@ Android Studio: b/285867050 -->
 
     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
 
-    <cachesInvalidator implementation="com.intellij.openapi.fileEditor.impl.text.foldingGrave.MarkupCacheInvalidator$InvalidationRequest"/>
+    <cachesInvalidator implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorCacheInvalidator$InvalidationRequest"/>
 
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
 
@@ -1671,6 +1678,10 @@ Android Studio: b/285867050 -->
     <registryKey key="search.everywhere.footer.extended.info"
                  defaultValue="true"
                  description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
+
+    <registryKey key="search.everywhere.preview"
+                 defaultValue="false"
+                 description="Enables preview of the selected element in the Search Everywhere"/>
 
     <registryKey key="search.everywhere.recents"
                  defaultValue="true"
@@ -1700,18 +1711,16 @@ Android Studio: b/285867050 -->
                  defaultValue="false"
                  description="Turn on the highlighting passes preload experiment"/>
 
+    <editorFloatingToolbarProvider
+      id="CloseSearchEverywherePreviewToolbar"
+      order="after DefaultFloatingToolbarProvider"
+      implementation="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreviewToolbar"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer"/>
 
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
                     configurationSchemaKey="plugins"/>
     <updateSettingsProvider implementation="com.intellij.openapi.updateSettings.impl.ConfigurationScriptPluginRepositoriesProvider"/>
-
-    <postStartupActivity implementation="com.intellij.ide.customize.transferSettings.TransferSettingsProjectActivity"/>
-    <notificationGroup displayType="STICKY_BALLOON" id="transferSettings"
-                       bundle="messages.IdeBundle" key="transfer.settings.notificationGroup"/>
-    <registryKey key="transferSettings.enabled"
-                 defaultValue="false"
-                 description="Enable Transfer Setting from VSCode sticky ballon"/>
 
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.OpenFileQuickAction"
                         listGroupID="MainToolbarQuickActions.General"/>
@@ -1723,17 +1732,9 @@ Android Studio: b/285867050 -->
                         listGroupID="MainToolbarQuickActions.General"/>
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.UndoRedoQuickAction"
                         listGroupID="MainToolbarQuickActions.General"/>
-    <registryKey key="transferSettings.vscode.showRunningInfo"
-                 defaultValue="false"
-                 description="Show info about possible running vscode instance"
-                 />
     <registryKey key="transferSettings.vscode.onlyCargoToml"
                  defaultValue="false"
                  description="Import only projects that contain cargo.toml file"
-    />
-    <registryKey key="transferSettings.vscode.showRust"
-                 defaultValue="false"
-                 description="Suggest rust"
     />
 
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction"
@@ -1748,6 +1749,18 @@ Android Studio: b/285867050 -->
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
+
+    <actionConfigurationCustomizer
+      implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
+
+    <applicationService serviceImplementation="com.intellij.credentialStore.PasswordSafeSettings" />
+    <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager" />
+    <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPaths" />
+    <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPathsSettings" />
+    <applicationService serviceImplementation="com.intellij.openapi.file.exclude.OverrideFileTypeManager" />
+    <applicationService serviceImplementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences" />
+    <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.KeymapFlagsStorage" />
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings" />
   </extensions>
 
   <applicationListeners>
@@ -1761,7 +1774,7 @@ Android Studio: b/285867050 -->
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ui.mac.MergeAllWindowsAction$RecentProjectsFullScreenTabSupport"
               topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.openapi.vcs.FileStatusFactoryImpl$PluginListener"
+    <listener class="com.intellij.openapi.vcs.FileStatusCleaner"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
@@ -1799,11 +1812,6 @@ Android Studio: b/285867050 -->
     <listener class="com.intellij.ide.ProjectWindowCustomizerListener"
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.ui.MacCustomAppIconStartupService" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"
-              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
-
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeAppInitListener" topic="com.intellij.ide.AppLifecycleListener"/>
 
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
@@ -1813,6 +1821,8 @@ Android Studio: b/285867050 -->
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionNewLineAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
 
   <projectListeners>
@@ -1822,8 +1832,6 @@ Android Studio: b/285867050 -->
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
-    <listener class="com.intellij.openapi.project.ProjectRootManagerOnEndOfDumbModeIncrementer"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.openapi.project.RefreshIconsOnEndOfDumbModeListener"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTemplateListener"

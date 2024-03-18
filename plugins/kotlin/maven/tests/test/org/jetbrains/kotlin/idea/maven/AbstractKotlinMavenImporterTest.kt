@@ -27,7 +27,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportListener
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -49,8 +48,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
@@ -80,15 +79,16 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
     private annotation class MppGoal
 
-    override fun runInDispatchThread() = false
-
     override fun setUp() {
         super.setUp()
-        if(KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
-            Assume.assumeFalse("Disable MPP import tests because Workspace model does not support it yet", this.javaClass.isAnnotationPresent(MppGoal::class.java))
+        if (KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
+            Assume.assumeFalse(
+                "Disable MPP import tests because Workspace model does not support it yet",
+                this.javaClass.isAnnotationPresent(MppGoal::class.java)
+            )
         }
         if (createStdProjectFolders) createStdProjectFolders()
-        myProject.messageBus.connect(testRootDisposable)
+        project.messageBus.connect(testRootDisposable)
             .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
                 override fun artifactDownloadingScheduled() {
                     artifactDownloadingScheduled.incrementAndGet()
@@ -96,9 +96,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
                 override fun artifactDownloadingFinished() {
                     artifactDownloadingFinished.incrementAndGet()
-                }
-
-                override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
                 }
             })
     }
@@ -108,8 +105,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             waitForScheduledArtifactDownloads()
         } finally {
             runAll(
-                ThrowableRunnable { resetCodeStyle(myProject) },
-                ThrowableRunnable { super.tearDown() },
+                    ThrowableRunnable { resetCodeStyle(project) },
+                    ThrowableRunnable { super.tearDown() },
             )
         }
     }
@@ -122,11 +119,16 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
-    protected suspend fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) = readAction {
+    protected suspend fun checkStableModuleName(
+        projectName: String,
+        expectedName: String,
+        platform: TargetPlatform,
+        isProduction: Boolean
+    ) = readAction {
         val module = getModule(projectName)
         val moduleInfo = if (isProduction) module.productionSourceInfo else module.testSourceInfo
 
-        val resolutionFacade = KotlinCacheService.getInstance(myProject).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)!!
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)!!
         val moduleDescriptor = resolutionFacade.moduleDescriptor
 
         Assert.assertEquals("<$expectedName>", moduleDescriptor.stableName?.asString())
@@ -138,7 +140,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         get() = facetSettings("project")
 
     protected fun assertImporterStatePresent() {
-        assertNotNull("Kotlin importer component is not present", myTestFixture.module.getService(KotlinImporterComponent::class.java))
+        assertNotNull("Kotlin importer component is not present", testFixture.module.getService(KotlinImporterComponent::class.java))
     }
 
     class SimpleKotlinProject5 : AbstractKotlinMavenImporterTest() {
@@ -379,8 +381,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             Assert.assertEquals(
-                KotlinStyleGuideCodeStyle.CODE_STYLE_ID,
-                CodeStyle.getSettings(myProject).kotlinCodeStyleDefaults()
+                KotlinOfficialStyleGuide.CODE_STYLE_ID,
+                CodeStyle.getSettings(project).kotlinCodeStyleDefaults()
             )
         }
     }
@@ -720,13 +722,14 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 )
             }
 
-            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(project))
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
             assertDefaultResources("project")
             assertDefaultTestResources("project")
         }
+
         @Test
         fun testDefaultJvmTargetFacetConfiguration() = runBlocking {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -1001,8 +1004,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             """
             )
 
-            assertNotEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
-            Assert.assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(project))
+            Assert.assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(project))
 
             assertModules("project")
             assertImporterStatePresent()
@@ -1162,8 +1165,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
          */
         @Test
         fun testFacetGetsExternalSource() = runBlocking {
-            // Disable test since we don't store this info anymore
-            if (KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) return@runBlocking
 
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
@@ -2068,7 +2069,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                             <apiVersion>1.0</apiVersion>
                             <args>
                                 <arg>-java-parameters</arg>
-                                <arg>-Xdump-declarations-to=dumpDir</arg>
+                                <arg>-Xjava-source-roots=javaDir</arg>
                                 <arg>-kotlin-home</arg>
                                 <arg>temp</arg>
                             </args>
@@ -2122,7 +2123,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                             <configuration>
                                 <jvmTarget>1.8</jvmTarget>
                                 <args>
-                                    <arg>-Xdump-declarations-to=dumpDir2</arg>
+                                    <arg>-Xjava-source-roots=javaDir2</arg>
                                 </args>
                             </configuration>
                         </plugin>
@@ -2248,7 +2249,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals(
-                    listOf("-Xdump-declarations-to=dumpDir2"),
+                    listOf("-Xjava-source-roots=javaDir2"),
                     compilerSettings!!.additionalArgumentsAsList
                 )
             }
@@ -2259,7 +2260,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals(
-                    listOf("-Xdump-declarations-to=dumpDir", "-java-parameters", "-kotlin-home", "temp2"),
+                    listOf("-java-parameters", "-Xjava-source-roots=javaDir", "-kotlin-home", "temp2"),
                     compilerSettings!!.additionalArgumentsAsList
                 )
             }
@@ -2278,10 +2279,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     }
 
     class JpsCompilerMultiModule : AbstractKotlinMavenImporterTest() {
-        override fun runInDispatchThread(): Boolean {
-            return false
-        }
-
         @Test
         fun testJpsCompilerMultiModule() = runBlocking {
             createProjectSubDirs(
@@ -2293,7 +2290,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             val kotlinMainPluginVersion = "1.5.10"
             val kotlinMavenPluginVersion1 = "1.6.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
-            val notifications = catchNotificationsAsync(myProject, "Kotlin JPS plugin") {
+            val notifications = catchNotificationsAsync(project, "Kotlin JPS plugin") {
                 val mainPom = createProjectPom(
                     """
                     <groupId>test</groupId>
@@ -2377,7 +2374,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertImporterStatePresent()
             assertEquals("", notifications.asText())
             // The highest of available versions should be picked
-            assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(project))
         }
     }
 
@@ -2385,7 +2382,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         @Test
         fun testJpsCompilerUnsupportedVersionDown() = runBlocking {
             val version = "1.1.0"
-            val notifications = catchNotificationsAsync(myProject) {
+            val notifications = catchNotificationsAsync(project) {
                 doUnsupportedVersionTest(version, KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler)
             }
 
@@ -2402,7 +2399,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         fun testJpsCompilerUnsupportedVersionUp() = runBlocking {
             val maxVersion = KotlinJpsPluginSettings.jpsMaximumSupportedVersion
             val versionToImport = KotlinVersion(maxVersion.major, maxVersion.minor, maxVersion.minor + 1)
-            val text = catchNotificationTextAsync(myProject, "Kotlin JPS plugin") {
+            val text = catchNotificationTextAsync(project, "Kotlin JPS plugin") {
                 doUnsupportedVersionTest(versionToImport.toString())
             }
 
@@ -2413,7 +2410,10 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
         }
 
-        private suspend fun doUnsupportedVersionTest(version: String, expectedFallbackVersion: String = KotlinJpsPluginSettings.rawBundledVersion) {
+        private suspend fun doUnsupportedVersionTest(
+            version: String,
+            expectedFallbackVersion: String = KotlinJpsPluginSettings.rawBundledVersion
+        ) {
             createProjectSubDirs("src/main/kotlin")
 
             importProjectAsync(
@@ -2441,24 +2441,24 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertImporterStatePresent()
 
             // Fallback to bundled to unsupported version
-            assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
-            assertEquals(expectedFallbackVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(project))
+            assertEquals(expectedFallbackVersion, KotlinJpsPluginSettings.jpsVersion(project))
         }
 
         @Test
         fun testDontShowNotificationWhenBuildIsDelegatedToMaven() = runBlocking {
-            val isBuildDelegatedToMaven = MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven
-            MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = true
+            val isBuildDelegatedToMaven = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
+            MavenRunner.getInstance(project).settings.isDelegateBuildToMaven = true
 
             try {
                 val version = "1.1.0"
-                val notifications = catchNotificationsAsync(myProject) {
+                val notifications = catchNotificationsAsync(project) {
                     doUnsupportedVersionTest(version, KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler)
                 }
 
                 assertNull(notifications.find { it.title == "Unsupported Kotlin JPS plugin version" })
             } finally {
-                MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = isBuildDelegatedToMaven
+                MavenRunner.getInstance(project).settings.isDelegateBuildToMaven = isBuildDelegatedToMaven
             }
         }
     }
@@ -2919,12 +2919,12 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             importProjectsAsync(pomMain, pomA, pomB)
             withContext(Dispatchers.EDT) {
-                myProject.waitIndexingComplete()
+                project.waitIndexingComplete()
             }
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
             val dependencies = readAction {
-                (dummyFile.toPsiFile(myProject) as KtFile).analyzeAndGetResult().moduleDescriptor.allDependencyModules
+                (dummyFile.toPsiFile(project) as KtFile).analyzeAndGetResult().moduleDescriptor.allDependencyModules
             }
             TestCase.assertTrue(dependencies.any { it.name.asString() == "<production sources for module module-with-java>" })
             TestCase.assertTrue(dependencies.any { it.name.asString() == "<test sources for module module-with-java>" })
@@ -3116,8 +3116,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             Assert.assertEquals(
-                KotlinObsoleteCodeStyle.CODE_STYLE_ID,
-                CodeStyle.getSettings(myProject).kotlinCodeStyleDefaults()
+                KotlinObsoleteStyleGuide.CODE_STYLE_ID,
+                CodeStyle.getSettings(project).kotlinCodeStyleDefaults()
             )
         }
     }
@@ -3438,13 +3438,13 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         fun testJDKImport() = runBlocking {
             val mockJdk = IdeaTestUtil.getMockJdk18()
             runWriteAction(ThrowableRunnable {
-                ProjectJdkTable.getInstance().addJdk(mockJdk, myTestFixture.testRootDisposable)
-                ProjectRootManager.getInstance(myProject).projectSdk = mockJdk
+                ProjectJdkTable.getInstance().addJdk(mockJdk, testFixture.testRootDisposable)
+                ProjectRootManager.getInstance(project).projectSdk = mockJdk
             })
 
             try {
                 createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
-                MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getImportingSettings().jdkForImporter =
+                MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter =
                     ExternalSystemJdkUtil.USE_INTERNAL_JAVA
 
                 val jdkHomePath = mockJdk.homePath
@@ -3496,7 +3496,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 Assert.assertEquals("java 1.8", moduleSDK.name)
                 Assert.assertEquals(jdkHomePath, moduleSDK.homePath)
             } finally {
-                runWriteAction(ThrowableRunnable { ProjectRootManager.getInstance(myProject).projectSdk = null })
+                runWriteAction(ThrowableRunnable { ProjectRootManager.getInstance(project).projectSdk = null })
             }
         }
     }
@@ -3601,7 +3601,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected suspend fun doJvmTarget6Test(version: String?): Pair<IKotlinFacetSettings, List<Notification>> {
         createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
-        val notifications = catchNotificationsAsync(myProject, "Kotlin Maven project import") {
+        val notifications = catchNotificationsAsync(project, "Kotlin Maven project import") {
             importProjectAsync(
                 """
                     <groupId>test</groupId>
@@ -3697,6 +3697,62 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
+        }
+    }
+
+    class InvalidJvmTarget : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testInvalidJvmTarget() = runBlocking {
+            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+            val kotlinMavenPluginVersion = "1.6.20"
+            importProjectAsync(
+                """
+            <groupId>test</groupId>
+            <artifactId>project</artifactId>
+            <version>1.0.0</version>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib</artifactId>
+                    <version>$kotlinVersion</version>
+                </dependency>
+            </dependencies>
+
+            <build>
+                <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-plugin</artifactId>
+                        <version>$kotlinMavenPluginVersion</version>
+
+                        <executions>
+                            <execution>
+                                <id>compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <jvmTarget>ILLEGAL_ITEM</jvmTarget>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            """
+            )
+
+            assertModules("project")
+            assertImporterStatePresent()
+
+            with(facetSettings) {
+                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            }
         }
     }
 

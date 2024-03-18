@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(a: Int): String {
     val a1 = a
     val x = "-$a1"

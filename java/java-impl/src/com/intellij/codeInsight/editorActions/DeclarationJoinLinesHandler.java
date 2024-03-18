@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(DeclarationJoinLinesHandler.class);
 
   @Override

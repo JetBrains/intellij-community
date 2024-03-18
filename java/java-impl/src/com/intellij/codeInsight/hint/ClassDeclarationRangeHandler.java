@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 
-public class ClassDeclarationRangeHandler implements DeclarationRangeHandler {
+public final class ClassDeclarationRangeHandler implements DeclarationRangeHandler {
   @Override
   @NotNull
   public TextRange getDeclarationRange(@NotNull final PsiElement container) {

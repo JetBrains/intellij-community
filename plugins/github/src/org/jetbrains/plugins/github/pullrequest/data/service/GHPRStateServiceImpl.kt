@@ -35,7 +35,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                                      baseRefUpdateRule: GHRefUpdateRule?): CompletableFuture<GHPRMergeabilityState> =
     progressManager.submitIOTask(progressIndicator) {
       val mergeabilityData = requestExecutor.execute(it, GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
-                             ?: error("Could not find pull request $pullRequestId.number")
+                             ?: error("Could not find pull request ${pullRequestId.number}")
       val builder = GHPRMergeabilityStateBuilder(headRefOid, prHtmlUrl, mergeabilityData)
       if (baseRefUpdateRule != null) {
         builder.withRestrictions(securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN), baseRefUpdateRule)

@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.internal.statistic.collectors.fus.DataContextUtils
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent.Companion.from
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -15,8 +17,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -45,12 +45,12 @@ class ActionsCollectorImpl : ActionsCollector() {
   }
 
   override fun onActionConfiguredByActionId(action: AnAction, actionId: String) {
-    ourAllowedList.registerDynamicActionId(action, actionId)
+    ActionsBuiltInAllowedlist.getInstance().registerDynamicActionId(action, actionId)
   }
 
   override fun recordUpdate(action: AnAction, event: AnActionEvent, durationMs: Long) {
     if (durationMs <= 5) return
-    val dataContext = getCachedDataContext(event.dataContext)
+    val dataContext = Utils.getCachedDataContext(event.dataContext)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     ActionsEventLogGroup.ACTION_UPDATED.log(project) {
       val info = getPluginInfo(action.javaClass)
@@ -100,14 +100,13 @@ class ActionsCollectorImpl : ActionsCollector() {
 
   companion object {
     const val DEFAULT_ID: String = "third.party"
-    private val ourAllowedList = ActionsBuiltInAllowedlist.getInstance()
     private val ourStats: MutableMap<AnActionEvent, Stats> = WeakHashMap()
 
     /** @noinspection unused
      */
     @JvmStatic
     fun recordCustomActionInvoked(project: Project?, actionId: String?, event: InputEvent?, context: Class<*>) {
-      val recorded = if (StringUtil.isNotEmpty(actionId) && ourAllowedList.isCustomAllowedAction(actionId!!)) actionId
+      val recorded = if (StringUtil.isNotEmpty(actionId) && ActionsBuiltInAllowedlist.getInstance().isCustomAllowedAction(actionId!!)) actionId
       else DEFAULT_ID
       ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, FusInputEvent(event, null))
     }
@@ -127,7 +126,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                                   submenu: Boolean,
                                   durationMs: Long,
                                   result: List<AnAction>?) {
-      val dataContext = getCachedDataContext(context)
+      val dataContext = Utils.getCachedDataContext(context)
       val project = CommonDataKeys.PROJECT.getData(dataContext)
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
         val info = getPluginInfo(action.javaClass)
@@ -158,6 +157,11 @@ class ActionsCollectorImpl : ActionsCollector() {
             add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.presentation)))
           }
           addAll(actionEventData(event))
+          if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
+            val isLookupActive = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
+              ?.let { LookupManager.getActiveLookup(it) } != null
+            add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
+          }
         }
         if (project != null && !project.isDisposed) {
           add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
@@ -221,25 +225,22 @@ class ActionsCollectorImpl : ActionsCollector() {
         return action.javaClass.name
       }
       if (actionId == null) {
-        actionId = ourAllowedList.getDynamicActionId(action)
+        actionId = ActionsBuiltInAllowedlist.getInstance().getDynamicActionId(action)
       }
       return actionId ?: action.javaClass.name
     }
 
     @JvmStatic
     fun canReportActionId(actionId: String): Boolean {
-      return ourAllowedList.isAllowedActionId(actionId)
+      return ActionsBuiltInAllowedlist.getInstance().isAllowedActionId(actionId)
     }
 
-    /** @noinspection unused
-     */
-    @JvmStatic
-    fun onActionLoadedFromXml(action: AnAction, actionId: String, plugin: IdeaPluginDescriptor?) {
-      ourAllowedList.addActionLoadedFromXml(actionId, plugin)
+    internal fun onActionLoadedFromXml(actionId: String, plugin: IdeaPluginDescriptor?) {
+      ActionsBuiltInAllowedlist.getInstance().addActionLoadedFromXml(actionId, plugin)
     }
 
     fun onActionsLoadedFromKeymapXml(keymap: Keymap, actionIds: Set<String?>) {
-      ourAllowedList.addActionsLoadedFromKeymapXml(keymap, actionIds)
+      ActionsBuiltInAllowedlist.getInstance().addActionsLoadedFromKeymapXml(keymap, actionIds)
     }
 
     /** @noinspection unused
@@ -247,8 +248,8 @@ class ActionsCollectorImpl : ActionsCollector() {
     @JvmStatic
     fun onBeforeActionInvoked(action: AnAction, event: AnActionEvent) {
       val project = event.project
-      val context = getCachedDataContext(event.dataContext)
-      val stats = Stats(project, getFileLanguage(context), getInjectedOrFileLanguage(project, context))
+      val context = Utils.getCachedDataContext(event.dataContext)
+      val stats = Stats(project, DataContextUtils.getFileLanguage(context), getInjectedOrFileLanguage(project, context))
       ourStats[event] = stats
     }
 
@@ -277,21 +278,13 @@ class ActionsCollectorImpl : ActionsCollector() {
       }
     }
 
-    private fun toReportedResult(result: AnActionResult): ObjectEventData {
-      if (result.isPerformed) {
-        return ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
-      }
-      if (result == AnActionResult.IGNORED) {
-        return ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
-      }
-      val error = result.failureCause
-      return if (error != null) {
-        ObjectEventData(
-          ActionsEventLogGroup.RESULT_TYPE.with("failed"),
-          ActionsEventLogGroup.ERROR.with(error.javaClass)
-        )
-      }
-      else ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("unknown"))
+    private fun toReportedResult(result: AnActionResult): ObjectEventData = when {
+      result.isPerformed -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
+      result.isIgnored -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
+      else -> ObjectEventData(
+        ActionsEventLogGroup.RESULT_TYPE.with("failed"),
+        ActionsEventLogGroup.ERROR.with(result.failureCause.javaClass)
+      )
     }
 
     private fun addLanguageContextFields(project: Project?,
@@ -299,20 +292,11 @@ class ActionsCollectorImpl : ActionsCollector() {
                                          contextBefore: Language?,
                                          injectedContextBefore: Language?,
                                          data: MutableList<EventPair<*>>) {
-      val dataContext = getCachedDataContext(event.dataContext)
-      val language = getFileLanguage(dataContext)
+      val dataContext = Utils.getCachedDataContext(event.dataContext)
+      val language = DataContextUtils.getFileLanguage(dataContext)
       data.add(EventFields.CurrentFile.with(language ?: contextBefore))
       val injectedLanguage = getInjectedOrFileLanguage(project, dataContext)
       data.add(EventFields.Language.with(injectedLanguage ?: injectedContextBefore))
-    }
-
-    /**
-     * Computing fields from data context might be slow and cause freezes.
-     * To avoid it, we report only those fields which were already computed
-     * in [AnAction.update] or [AnAction.actionPerformed]
-     */
-    private fun getCachedDataContext(dataContext: DataContext): DataContext {
-      return DataContext { dataId: String? -> Utils.getRawDataIfCached(dataContext, dataId!!) }
     }
 
     /**
@@ -321,7 +305,7 @@ class ActionsCollectorImpl : ActionsCollector() {
      */
     private fun getInjectedOrFileLanguage(project: Project?, dataContext: DataContext): Language? {
       val injected = getInjectedLanguage(dataContext, project)
-      return injected ?: getFileLanguage(dataContext)
+      return injected ?: DataContextUtils.getFileLanguage(dataContext)
     }
 
     private fun getInjectedLanguage(dataContext: DataContext, project: Project?): Language? {
@@ -337,25 +321,6 @@ class ActionsCollectorImpl : ActionsCollector() {
             return injectedFile.language
           }
         }
-      }
-      return null
-    }
-
-    /**
-     * Returns language from [CommonDataKeys.PSI_FILE] or by file type from [CommonDataKeys.VIRTUAL_FILE]
-     */
-    private fun getFileLanguage(dataContext: DataContext): Language? {
-      return CommonDataKeys.PSI_FILE.getData(dataContext)?.language ?: getFileTypeLanguage(dataContext)
-    }
-
-    /**
-     * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE]
-     */
-    private fun getFileTypeLanguage(dataContext: DataContext): Language? {
-      val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return null
-      val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
-      if (fileType is LanguageFileType) {
-        return fileType.language
       }
       return null
     }

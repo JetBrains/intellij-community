@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -10,6 +10,8 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.LightOrRealThreadInfo;
+import com.intellij.debugger.engine.RealThreadInfo;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -130,7 +132,8 @@ public class BreakpointManager {
       public void breakpointChanged(@NotNull XBreakpoint xBreakpoint) {
         Breakpoint<?> breakpoint = getJavaBreakpoint(xBreakpoint);
         if (breakpoint != null) {
-          fireBreakpointChanged(breakpoint);
+          breakpoint.scheduleReload();
+          breakpoint.updateUI();
         }
       }
     });
@@ -181,8 +184,8 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
-    return RunToCursorBreakpoint.create(myProject, position, ignoreBreakpoints);
+  public RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, boolean ignoreBreakpoints, boolean needReplaceWithAllThreadSuspendContext) {
+    return RunToCursorBreakpoint.create(myProject, position, ignoreBreakpoints, needReplaceWithAllThreadSuspendContext);
   }
 
   @Nullable
@@ -560,14 +563,32 @@ public class BreakpointManager {
     }
   }
 
+  /** @deprecated Use removeThreadFilter or version with LightOrRealThreadInfo parameter */
+  @Deprecated
   public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable ThreadReference newFilterThread) {
+    if (newFilterThread != null) {
+      applyThreadFilter(debugProcess, new RealThreadInfo(newFilterThread));
+    }
+    else {
+      removeThreadFilter(debugProcess);
+    }
+  }
+
+  public void removeThreadFilter(@NotNull final DebugProcessImpl debugProcess) {
+    applyThreadFilter(debugProcess, (LightOrRealThreadInfo)null);
+  }
+
+  public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable LightOrRealThreadInfo filter) {
     final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-    final ThreadReference oldFilterThread = requestManager.getFilterThread();
-    if (Comparing.equal(newFilterThread, oldFilterThread)) {
+    if (Comparing.equal(filter, requestManager.getFilterThread())) {
       // the filter already added
       return;
     }
-    requestManager.setFilterThread(newFilterThread);
+
+    final ThreadReference oldFilterThread = requestManager.getFilterRealThread();
+    final ThreadReference newFilterThread = filter == null ? null : filter.getRealThread();
+
+    requestManager.setThreadFilter(filter);
 
     if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
       return;
@@ -617,7 +638,7 @@ public class BreakpointManager {
     for (T request : requests) {
       try {
         // skip synthetic
-        if (RequestManagerImpl.findRequestor(request) instanceof SyntheticLineBreakpoint) {
+        if (RequestManagerImpl.findRequestor(request) instanceof SyntheticBreakpoint) {
           continue;
         }
         boolean wasEnabled = request.isEnabled();
@@ -640,15 +661,6 @@ public class BreakpointManager {
       .coalesceBy(this)
       .submit(AppExecutorUtil.getAppExecutorService())
       .onSuccess(b -> b.forEach(Breakpoint::updateUI));
-  }
-
-  public void reloadBreakpoints() {
-    ReadAction.run(() -> DebuggerUtilsImpl.forEachSafe(getBreakpoints(), Breakpoint::reload));
-  }
-
-  public void fireBreakpointChanged(Breakpoint breakpoint) {
-    breakpoint.reload();
-    breakpoint.updateUI();
   }
 
   @Nullable

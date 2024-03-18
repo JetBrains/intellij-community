@@ -3,12 +3,13 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class SoutPostfixTemplate extends JavaEditablePostfixTemplate {
+public class SoutPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public SoutPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("sout",
           "System.out.println($EXPR$);$END$",

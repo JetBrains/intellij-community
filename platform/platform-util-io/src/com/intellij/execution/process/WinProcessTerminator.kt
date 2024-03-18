@@ -4,6 +4,7 @@
 package com.intellij.execution.process
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -53,7 +54,7 @@ internal fun terminateWinProcessGracefully(processHandler: KillableProcessHandle
       }
       questionFoundOrTerminated.whenComplete { _, _ ->
         if (!processHandler.isProcessTerminated && isCmdBatchFile(processHandler, processService)) {
-          destroyIfAlive(processHandler)
+          destroy(processHandler)
         }
       }
     }
@@ -67,19 +68,17 @@ private fun awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated: Compl
                                                 processHandler: KillableProcessHandler) {
   try {
     questionFoundOrTerminated.get(10, TimeUnit.SECONDS)
+    destroy(processHandler)
   }
   catch (_: Exception) {
     // "Terminate batch job (Y/N)?" message hasn't been printed => the application might still be alive.
     // Graceful termination is done here. Now the process should be stopped forcibly.
-    return
+    logger<KillableProcessHandler>().info("Process hasn't been terminated gracefully: couldn't find \"Terminate batch job (Y/N)?\".")
   }
-  destroyIfAlive(processHandler)
 }
 
-private fun destroyIfAlive(processHandler: KillableProcessHandler) {
-  if (processHandler.process.isAlive) {
-    processHandler.process.destroy()
-  }
+private fun destroy(processHandler: KillableProcessHandler) {
+  processHandler.process.destroy() // If the process is not alive, no action is taken.
 }
 
 private fun isCmdBatchFile(processHandler: KillableProcessHandler, processService: ProcessService): Boolean {

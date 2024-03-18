@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -30,11 +30,9 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +48,6 @@ import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANC
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE;
 
 public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
-  private static final @NonNls String RESOLVE_HREF_ATTRIBUTE = "resolve";
-
   private final @NotNull Project myProject;
   private final @NotNull ProgressIndicator myProgressIndicator;
 
@@ -97,30 +93,21 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                             final @NotNull Collection<? extends GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    VcsNotifier.getInstance(myProject).notifyError(
-      UNRESOLVED_CONFLICTS, title, description,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification,
-                                    @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals(RESOLVE_HREF_ATTRIBUTE)) {
-            new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                showMergeDialog();
-              }
-            }.queue();
-          }
-        }
-
-        private void showMergeDialog() {
-          GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
-            setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
-            setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
-          new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
-        }
-      }
-    );
+    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description, NotificationType.ERROR)
+      .setDisplayId(UNRESOLVED_CONFLICTS)
+      .addAction(NotificationAction.createSimple(
+        GitBundle.messagePointer("branch.ui.handler.unmerged.files.error.resolve.conflicts.action.text"), () -> {
+          new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
+                setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
+                setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
+              new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            }
+          }.queue();
+        }))
+      .notify(myProject);
   }
 
   @Override
@@ -223,6 +210,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   private static @NotNull @NlsContexts.NotificationContent String unmergedFilesErrorNotificationDescription(String operationName) {
-    return GitBundle.message("branch.ui.handler.unmerged.files.error.notification", RESOLVE_HREF_ATTRIBUTE, operationName);
+    return GitBundle.message("branch.ui.handler.unmerged.files.error.notification.text", operationName);
   }
 }

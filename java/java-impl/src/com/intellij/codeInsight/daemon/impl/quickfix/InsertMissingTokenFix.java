@@ -1,14 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.ide.IdeBundle;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.Presentation;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.modcommand.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class InsertMissingTokenFix implements ModCommandAction {
   private final String myToken;
@@ -26,11 +25,15 @@ public class InsertMissingTokenFix implements ModCommandAction {
 
   @Override
   public @NotNull String getFamilyName() {
-    return IdeBundle.message("quickfix.text.insert.0", myToken);
+    return CommonQuickFixBundle.message("fix.insert.x", myToken);
   }
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommand.psiUpdate(context.file(), f -> f.getViewProvider().getDocument().insertString(context.offset(), myToken));
+    String oldText = context.file().getText();
+    int offset = context.offset();
+    String newText = oldText.substring(0, offset) + myToken + oldText.substring(offset);
+    return new ModUpdateFileText(context.file().getVirtualFile(), oldText, newText,
+                                 List.of(new ModUpdateFileText.Fragment(offset, 0, myToken.length())));
   }
 }

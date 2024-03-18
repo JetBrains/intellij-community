@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.facade;
 
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
@@ -222,12 +222,12 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
     return newInstance(graphCommits, new GraphColorGetterByHeadFactory<>(colorManager), headCommitsComparator, branchesCommitId);
   }
 
-  private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
+  private static class NotLoadedCommitsIdsGenerator<CommitId> implements Function<CommitId, @NotNull Integer> {
     @NotNull private final Int2ObjectMap<CommitId> myNotLoadedCommits = new Int2ObjectOpenHashMap<>();
 
     @NotNull
     @Override
-    public Integer fun(CommitId dom) {
+    public Integer apply(CommitId dom) {
       int nodeId = -(myNotLoadedCommits.size() + 2);
       myNotLoadedCommits.put(nodeId, dom);
       return nodeId;

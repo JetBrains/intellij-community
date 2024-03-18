@@ -15,6 +15,7 @@
  */
 package org.jetbrains.rpc
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
@@ -56,7 +57,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
 
     val sequence = handler.getUpdatedSequence(message)
-    callbackMap.put(sequence, callback)
+    callbackMap.put(sequence, decorateCallback(callback))
 
     val success: Boolean
     try {
@@ -74,6 +75,23 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
 
     if (!success) {
       failedToSend(sequence)
+    }
+  }
+
+  private fun decorateCallback(callback: RequestCallback<SUCCESS>): RequestCallback<SUCCESS> {
+    val currentId = ClientId.current
+    return object : RequestCallback<SUCCESS> {
+      override fun onSuccess(response: SUCCESS?, resultReader: ResultReader<SUCCESS>?) {
+        ClientId.withClientId(currentId) {
+          callback.onSuccess(response, resultReader)
+        }
+      }
+
+      override fun onError(error: Throwable) {
+        ClientId.withClientId(currentId) {
+          callback.onError(error)
+        }
+      }
     }
   }
 

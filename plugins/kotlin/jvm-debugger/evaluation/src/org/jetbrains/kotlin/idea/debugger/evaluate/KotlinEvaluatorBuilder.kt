@@ -39,6 +39,8 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -46,8 +48,9 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
-import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -65,6 +68,8 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConve
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -126,7 +131,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         try {
             val executionContext = ExecutionContext(context, frameProxy)
-            return evaluateSafe(executionContext)
+            return evaluateSafe(executionContext, codeFragment)
         } catch (e: CodeFragmentCodegenException) {
             evaluationException(e.reason)
         } catch (e: EvaluateException) {
@@ -150,9 +155,42 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun evaluateSafe(context: ExecutionContext): Any? {
+    private fun evaluateSafe(context: ExecutionContext, codeFragment: KtCodeFragment): Any? {
         val compiledData = getCompiledCodeFragment(context)
 
+        return try {
+            runEvaluation(context, compiledData).also {
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS)
+            }
+        } catch (e: Throwable) {
+            if (e !is EvaluateException && !isUnitTestMode()) {
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE)
+                if (isApplicationInternalMode()) {
+                    reportErrorWithAttachments(context, codeFragment, e,
+                                               prepareBytecodes(compiledData),
+                                               "Can't perform evaluation")
+                }
+            }
+            throw e
+        }
+    }
+
+    private fun prepareBytecodes(compiledData: CompiledCodeFragmentData): List<Pair<String, String>> {
+        // TODO run javap, if found valid java home?
+        val result = buildString {
+            for ((className, relativeFileName, bytes) in compiledData.classes) {
+                appendLine("Bytecode for $className in $relativeFileName:")
+                appendLine(bytes.joinToString())
+                appendLine()
+            }
+        }
+        return listOf("bytecodes.txt" to result)
+    }
+
+    private fun runEvaluation(
+        context: ExecutionContext,
+        compiledData: CompiledCodeFragmentData
+    ): Value? {
         val classLoadingResult = loadClassesSafely(context, compiledData.classes)
         val classLoaderRef = classLoadingResult.getOrNull()
 
@@ -196,7 +234,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         try {
-            return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
+            return if (KotlinPluginModeProvider.isK2Mode()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
         } catch (e: ExecutionException) {
             throw e.cause ?: e
         }
@@ -205,7 +243,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData {
         val stats = CodeFragmentCompilationStats()
         fun onFinish(status: StatisticsEvaluationResult) =
-            KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
+            KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
         try {
             patchCodeFragment(context, codeFragment, stats)
 
@@ -232,6 +270,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
             put(KtCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
             put(KtCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+            // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
+            put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
         }
 
         return analyze(codeFragment) {
@@ -549,7 +589,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         var LOG_COMPILATIONS: Boolean = false
 
         private fun logCompilation(codeFragment: KtCodeFragment) {
-            if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
+            val needLog = @Suppress("TestOnlyProblems") LOG_COMPILATIONS &&
+                    true != codeFragment.getUserData(KotlinPlatformUtils.suppressCodeFragmentCompilationLogging)
+            if (needLog) {
                 LOG.debug("Compile bytecode for ${codeFragment.text}")
             }
         }

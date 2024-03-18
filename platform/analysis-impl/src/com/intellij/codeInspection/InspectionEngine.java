@@ -49,7 +49,7 @@ public final class InspectionEngine {
                                                         @NotNull List<? extends PsiElement> elements,
                                                         Map<Class<?>, Collection<Class<?>>> targetPsiClasses) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
-    // if inspection returned empty visitor then it should be skipped
+    // if inspection returned an empty visitor, then it should be skipped
     if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
 
     List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
@@ -64,6 +64,9 @@ public final class InspectionEngine {
                                                          @NotNull ProblemsHolder holder,
                                                          boolean isOnTheFly,
                                                          @NotNull LocalInspectionToolSession session) {
+    if (!tool.isAvailableForFile(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if (visitor == null) {
@@ -80,7 +83,7 @@ public final class InspectionEngine {
                                      Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
                                      List<Class<?>> acceptingPsiTypes) {
     if (acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
-      for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+      for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
         element.accept(elementVisitor);
         ProgressManager.checkCanceled();
@@ -92,9 +95,8 @@ public final class InspectionEngine {
         return; // nothing to visit in this run
       }
 
-      for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+      for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
-
         if (accepts.contains(element.getClass())) {
           element.accept(elementVisitor);
           ProgressManager.checkCanceled();
@@ -284,7 +286,7 @@ public final class InspectionEngine {
                                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
     withSession(psiFile, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
-      List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
+      List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds, elementDialectIds);
 
       Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
 
@@ -455,7 +457,8 @@ public final class InspectionEngine {
   }
 
   public static @NotNull List<LocalInspectionToolWrapper> filterToolsApplicableByLanguage(@NotNull Collection<? extends LocalInspectionToolWrapper> tools,
-                                                                                          @NotNull Set<String> elementDialectIds) {
+                                                                                          @NotNull Set<String> elementDialectIdsForRegularTool,
+                                                                                          @NotNull Set<String> elementDialectIdsForWholeFileTool) {
     Map<String, Boolean> resultsWithDialects = new HashMap<>();
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
@@ -465,7 +468,7 @@ public final class InspectionEngine {
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
       return map.computeIfAbsent(toolLanguageId, __ ->
-        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, toolLanguageId, applyToDialects));
+        ToolLanguageUtil.isToolLanguageOneOf(tool.runForWholeFile() ? elementDialectIdsForWholeFileTool : elementDialectIdsForRegularTool, toolLanguageId, applyToDialects));
     });
   }
 

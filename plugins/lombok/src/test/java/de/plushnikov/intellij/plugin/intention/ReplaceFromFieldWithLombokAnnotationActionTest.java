@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -27,7 +28,7 @@ public class ReplaceFromFieldWithLombokAnnotationActionTest extends LombokIntent
   }
 
   @Override
-  public IntentionAction getIntentionAction() {
+  public ModCommandAction getAction() {
     return new ReplaceWithLombokAnnotationAction();
   }
 

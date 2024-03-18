@@ -72,7 +72,7 @@
      name: "event name",
      origin: "vue@3.0.0 (vue)",
      complete: true,
-     description: "<p>Optional event name</p>",
+     description: "<p>Optional event name",
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -90,7 +90,7 @@
      matchedName: "js/events/click",
      origin: "events@1.0.0 (<none>)",
      complete: true,
-     description: "<p>A click event</p>",
+     description: "<p>A click event",
      docUrl: "https://mdn.com/events/click",
      priority: NORMAL,
      segments: [

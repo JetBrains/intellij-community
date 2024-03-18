@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * User : ktisha
  */
-public class PyFillParagraphHandler extends ParagraphFillHandler {
+public final class PyFillParagraphHandler extends ParagraphFillHandler {
 
   @Override
   @NotNull

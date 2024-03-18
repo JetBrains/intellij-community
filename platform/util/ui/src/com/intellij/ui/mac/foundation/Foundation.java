@@ -258,7 +258,7 @@ public final @NonNls class Foundation {
   }
 
   public static @NlsSafe @Nullable String getNSErrorText(@Nullable ID error) {
-    if (error == null || error.byteValue() == 0) return null;
+    if (error == null || error.intValue() == 0) return null;
 
     String description = toStringViaUTF8(invoke(error, "localizedDescription"));
     String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));

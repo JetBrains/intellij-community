@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.project.Project
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -73,7 +74,7 @@ class SignatureBuilder(private val project: Project) {
     inputParameters.forEach { parameter ->
       val shouldBeFinal = when {
         useDefaultFinal -> parameter.references.none { reference -> PsiUtil.isAccessedForWriting(reference) }
-        ! PsiUtil.isLanguageLevel8OrHigher(element) -> parameter.references.any { reference -> isInsideAnonymousOrLocal(reference, scope) }
+        !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, element) -> parameter.references.any { reference -> isInsideAnonymousOrLocal(reference, scope) }
         else -> false
       }
       val methodParameter = parameterList.parameters.find { it.name == parameter.name }

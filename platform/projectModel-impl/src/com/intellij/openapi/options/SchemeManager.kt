@@ -34,13 +34,6 @@ abstract class SchemeManager<T> {
 
   abstract fun reload(retainFilter: ((scheme: T) -> Boolean)?)
 
-  @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
-  @ApiStatus.ScheduledForRemoval
-  fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
-    @Suppress("UNCHECKED_CAST")
-    addScheme(scheme as T, replaceExisting)
-  }
-
   fun addScheme(scheme: T) {
     addScheme(scheme, true)
   }

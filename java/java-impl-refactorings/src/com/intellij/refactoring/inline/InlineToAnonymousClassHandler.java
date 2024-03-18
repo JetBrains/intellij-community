@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 
-public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
+public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   static final ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
   PlatformPatterns.psiElement(PsiCatchSection.class)));
   static final ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(

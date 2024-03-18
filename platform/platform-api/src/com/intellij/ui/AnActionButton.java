@@ -65,6 +65,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   public AnActionButton() {
   }
 
+  /** @deprecated  Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
     final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action) :
@@ -146,6 +148,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
+  /** Use {@link com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(AnAction, AnActionEvent)} instead */
+  @ApiStatus.Obsolete
   public final @NotNull RelativePoint getPreferredPopupPoint() {
     RelativePoint result = CommonActionsPanel.getPreferredPopupPoint(this, myContextComponent);
     if (result != null) {
@@ -164,12 +168,16 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return myListeners.remove(l);
   }
 
+  /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static class CheckedAnActionButton extends AnActionButtonWrapper implements CheckedActionGroup {
     public CheckedAnActionButton(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
     }
   }
 
+  /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static class AnActionButtonWrapper extends AnActionButton implements ActionWithDelegate<AnAction> {
     private final AnAction myAction;
 
@@ -204,12 +212,16 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
+  /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static class ToggleableButtonWrapper extends AnActionButtonWrapper implements Toggleable {
     public ToggleableButtonWrapper(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
     }
   }
 
+  /** @deprecated Use regular <b>popup</b> {@link ActionGroup} instead */
+  @Deprecated(forRemoval = true)
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);
@@ -224,6 +236,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
+  /** @deprecated See {@link AnActionButtonWrapper} and {@link #getPreferredPopupPoint}*/
+  @Deprecated(forRemoval = true)
   public static final class AnActionEventWrapper extends AnActionEvent {
     private final AnActionButton myPeer;
 

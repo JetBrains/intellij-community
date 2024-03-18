@@ -4,6 +4,7 @@ package com.jetbrains.python.refactoring.move.moduleMembers;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
@@ -117,12 +118,21 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     });
 
     init();
+    initValidation();
   }
 
   @Override
   protected void setUpDialog() {
     super.setUpDialog();
     enlargeDialogHeightIfNecessary();
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    if (!areButtonsValid()) {
+      return new ValidationInfo(PyBundle.message("refactoring.move.module.members.error.selection.empty"));
+    }
+    return super.doValidate();
   }
 
   private void enlargeDialogHeightIfNecessary() {

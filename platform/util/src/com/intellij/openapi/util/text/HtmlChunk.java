@@ -41,6 +41,16 @@ public abstract class HtmlChunk {
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append(StringUtil.escapeXmlEntities(myContent).replaceAll("\n", "<br/>"));
     }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Text && Objects.equals(myContent, ((Text)o).myContent);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myContent);
+    }
   }
   
   private static final class Raw extends HtmlChunk {
@@ -53,6 +63,16 @@ public abstract class HtmlChunk {
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append(myContent);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Raw && Objects.equals(myContent, ((Raw)o).myContent);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myContent);
     }
   }
   
@@ -81,6 +101,15 @@ public abstract class HtmlChunk {
       return null;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Fragment && Objects.equals(myContent, ((Fragment)o).myContent);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myContent);
+    }
   }
   
   private static final class Nbsp extends HtmlChunk {
@@ -94,6 +123,16 @@ public abstract class HtmlChunk {
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append(StringUtil.repeat("&nbsp;", myCount));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Nbsp && myCount == ((Nbsp)o).myCount;
+    }
+
+    @Override
+    public int hashCode() {
+      return myCount;
     }
   }
 
@@ -263,6 +302,25 @@ public abstract class HtmlChunk {
       }
       return null;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Element element = (Element)o;
+      return Objects.equals(myTagName, element.myTagName) &&
+             Objects.equals(myAttributes, element.myAttributes) &&
+             Objects.equals(myChildren, element.myChildren);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hashCode(myTagName);
+      result = 31 * result + Objects.hashCode(myAttributes);
+      result = 31 * result + Objects.hashCode(myChildren);
+      return result;
+    }
   }
 
   private static final class IconElement extends Element {
@@ -281,6 +339,23 @@ public abstract class HtmlChunk {
         return myIcon;
       }
       return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      IconElement element = (IconElement)o;
+      return myId.equals(element.myId) && myIcon.equals(element.myIcon);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myId.hashCode();
+      result = 31 * result + myIcon.hashCode();
+      return result;
     }
   }
 

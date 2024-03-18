@@ -2,6 +2,7 @@ package com.intellij.ae.database.core.baseEvents.fus
 
 import com.intellij.ae.database.core.utils.InstantUtils
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager
+import com.intellij.internal.statistic.eventLog.ExternalEventLogListenerProviderExtension
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -73,7 +74,7 @@ internal class FusEventCatcherService(cs: CoroutineScope) {
     } ?: emptyList()
   }
 
-  // Must run under [catchersLock]
+  // must run under [catchersLock]
   private fun initCatchers() {
     assert(catchersLock.isLocked)
 
@@ -96,18 +97,15 @@ private class Listener : StatisticsEventLogListener {
   }
 }
 
-class AddStatisticsEventLogListenerTemporary : Disposable {
-  private val myListener = Listener()
-
-  init {
-    ApplicationManager.getApplication().let { application ->
-      if (!application.isUnitTestMode) {
-        application.service<EventLogListenersManager>().subscribe(myListener, "FUS")
-      }
-    }
+internal class FusExternalEventLogListenerProvider : ExternalEventLogListenerProviderExtension {
+  override fun forceLoggingAlwaysEnabled(): Boolean {
+    return true
   }
 
-  override fun dispose() {
-    ApplicationManager.getApplication().serviceIfCreated<EventLogListenersManager>()?.unsubscribe(myListener, "FUS")
+  override fun getEventLogListener(recorderId: String): StatisticsEventLogListener? {
+    if (recorderId == "FUS") {
+      return Listener()
+    }
+    else return null
   }
 }

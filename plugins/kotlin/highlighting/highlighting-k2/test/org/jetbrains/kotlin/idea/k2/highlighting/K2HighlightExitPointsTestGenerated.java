@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
@@ -61,6 +61,11 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
     @TestMetadata("forLoopNestedLabeledBreak.kt")
     public void testForLoopNestedLabeledBreak() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/forLoopNestedLabeledBreak.kt");
+    }
+
+    @TestMetadata("forLoopNestedLabeledBreak2.kt")
+    public void testForLoopNestedLabeledBreak2() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/forLoopNestedLabeledBreak2.kt");
     }
 
     @TestMetadata("forLoopNestedLabeledBreakOnLoop.kt")
@@ -126,6 +131,11 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
     @TestMetadata("inLambda2.kt")
     public void testInLambda2() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/inLambda2.kt");
+    }
+
+    @TestMetadata("inLambdaAndUsages.kt")
+    public void testInLambdaAndUsages() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/inLambdaAndUsages.kt");
     }
 
     @TestMetadata("inLambdaLastStatement1.kt")

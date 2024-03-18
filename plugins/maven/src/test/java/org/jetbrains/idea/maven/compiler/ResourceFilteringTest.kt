@@ -16,13 +16,16 @@
 package org.jetbrains.idea.maven.compiler
 
 import com.intellij.maven.testFramework.MavenCompilingTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.maven.model.impl.MavenIdBean
@@ -88,7 +91,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
 
     compileModules("project")
 
-    assert(!loadResult(myProjectPom, "target/classes/file.properties").contains("settings.localRepository"))
+    assert(!loadResult(projectPom, "target/classes/file.properties").contains("settings.localRepository"))
   }
 
   @Test
@@ -590,7 +593,9 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     assertResult("target/classes/file.properties", "value=1")
 
     WriteAction.runAndWait<IOException> { VfsUtil.saveText(filter, "xxx=2") }
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+    withContext(Dispatchers.EDT) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
     compileModules("project")
     assertResult("target/classes/file.properties", "value=2")
   }
@@ -652,8 +657,8 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   fun testUpdatingWhenPropertiesInModelAreChanged() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${project.name}")
 
-    val moduleManager = getInstance(myProject)
-    val mavenProjectsManager = MavenProjectsManager.getInstance(myProject)
+    val moduleManager = getInstance(project)
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1105,7 +1110,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                     """.trimIndent())
     compileModules("project")
 
-    assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"))
+    assertNotNull(projectPom.getParent().findFileByRelativePath("target/classes/file.xyz"))
   }
 
   @Test

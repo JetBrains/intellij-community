@@ -8,8 +8,6 @@ import org.junit.Test
 import java.io.File
 
 class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   private var remoteRepoDir: File? = null
 
   override fun setUp() {
@@ -21,7 +19,7 @@ class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
 
-    remoteRepoDir = File(myDir, "remote")
+    remoteRepoDir = File(dir, "remote")
     remoteRepoDir!!.mkdirs()
   }
 
@@ -157,14 +155,13 @@ ${repositoriesSection()}<dependencies>
 """)
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    resolveDependenciesAndImport()
     downloadArtifacts()
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
     assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
     assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
@@ -217,14 +214,13 @@ ${repositoriesSection()}<dependencies>
 """)
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    resolveDependenciesAndImport()
     downloadArtifacts()
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -256,13 +252,11 @@ ${repositoriesSection()}<dependencies>
                      """.trimIndent())
     removeFromLocalRepository("test")
 
-    resolveDependenciesAndImport()
-
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
   }
 
   private fun deployArtifact(groupId: String, artifactId: String, version: String, tail: String = "") {

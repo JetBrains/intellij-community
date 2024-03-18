@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -70,22 +69,27 @@ public class TextRange implements Segment, Serializable {
     return myStartOffset + myEndOffset;
   }
 
+  @Contract(pure = true)
   public boolean contains(@NotNull TextRange range) {
     return contains((Segment)range);
   }
 
+  @Contract(pure = true)
   public boolean contains(@NotNull Segment range) {
     return containsRange(range.getStartOffset(), range.getEndOffset());
   }
 
+  @Contract(pure = true)
   public boolean containsRange(int startOffset, int endOffset) {
     return getStartOffset() <= startOffset && endOffset <= getEndOffset();
   }
 
+  @Contract(pure = true)
   public static boolean containsRange(@NotNull Segment outer, @NotNull Segment inner) {
     return outer.getStartOffset() <= inner.getStartOffset() && inner.getEndOffset() <= outer.getEndOffset();
   }
 
+  @Contract(pure = true)
   public boolean containsOffset(int offset) {
     return myStartOffset <= offset && offset <= myEndOffset;
   }
@@ -95,23 +99,23 @@ public class TextRange implements Segment, Serializable {
     return "(" + myStartOffset + "," + myEndOffset + ")";
   }
 
+  @Contract(pure = true)
   public boolean contains(int offset) {
     return myStartOffset <= offset && offset < myEndOffset;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public String substring(@NotNull String str) {
+  public @NotNull String substring(@NotNull String str) {
     return str.substring(myStartOffset, myEndOffset);
   }
 
-  @NotNull
-  public CharSequence subSequence(@NotNull CharSequence str) {
+  @Contract(pure = true)
+  public @NotNull CharSequence subSequence(@NotNull CharSequence str) {
     return str.subSequence(myStartOffset, myEndOffset);
   }
 
-  @NotNull
-  public TextRange cutOut(@NotNull TextRange subRange) {
+  @Contract(pure = true)
+  public @NotNull TextRange cutOut(@NotNull TextRange subRange) {
     if (subRange.getStartOffset() > getLength()) {
       throw new IllegalArgumentException("SubRange: " + subRange + "; this=" + this);
     }
@@ -123,20 +127,20 @@ public class TextRange implements Segment, Serializable {
                          Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
   }
 
-  @NotNull
-  public TextRange shiftRight(int delta) {
+  @Contract(pure = true)
+  public @NotNull TextRange shiftRight(int delta) {
     if (delta == 0) return this;
     return new TextRange(myStartOffset + delta, myEndOffset + delta);
   }
 
-  @NotNull
-  public TextRange shiftLeft(int delta) {
+  @Contract(pure = true)
+  public @NotNull TextRange shiftLeft(int delta) {
     if (delta == 0) return this;
     return new TextRange(myStartOffset - delta, myEndOffset - delta);
   }
 
-  @NotNull
-  public TextRange grown(int lengthDelta) {
+  @Contract(pure = true)
+  public @NotNull TextRange grown(int lengthDelta) {
     if (lengthDelta == 0) {
       return this;
     }
@@ -144,54 +148,59 @@ public class TextRange implements Segment, Serializable {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TextRange from(int offset, int length) {
+  public static @NotNull TextRange from(int offset, int length) {
     return create(offset, offset + length);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TextRange create(int startOffset, int endOffset) {
+  public static @NotNull TextRange create(int startOffset, int endOffset) {
     return new TextRange(startOffset, endOffset);
   }
 
-  @NotNull
-  public static TextRange create(@NotNull Segment segment) {
+  @Contract(pure = true)
+  public static @NotNull TextRange create(@NotNull Segment segment) {
     return create(segment.getStartOffset(), segment.getEndOffset());
   }
 
+  @Contract(pure = true)
   public static boolean areSegmentsEqual(@NotNull Segment segment1, @NotNull Segment segment2) {
     return segment1.getStartOffset() == segment2.getStartOffset()
            && segment1.getEndOffset() == segment2.getEndOffset();
   }
 
-  @NotNull
-  public String replace(@NotNull String original, @NotNull String replacement) {
+  @Contract(pure = true)
+  public @NotNull String replace(@NotNull String original, @NotNull String replacement) {
     String beginning = original.substring(0, getStartOffset());
     String ending = original.substring(getEndOffset());
     return beginning + replacement + ending;
   }
 
+  @Contract(pure = true)
   public boolean intersects(@NotNull TextRange textRange) {
     return intersects((Segment)textRange);
   }
 
+  @Contract(pure = true)
   public boolean intersects(@NotNull Segment textRange) {
     return intersects(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Contract(pure = true)
   public boolean intersects(int startOffset, int endOffset) {
     return Math.max(myStartOffset, startOffset) <= Math.min(myEndOffset, endOffset);
   }
 
+  @Contract(pure = true)
   public boolean intersectsStrict(@NotNull TextRange textRange) {
     return intersectsStrict(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Contract(pure = true)
   public boolean intersectsStrict(int startOffset, int endOffset) {
     return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }
 
+  @Contract(pure = true)
   public TextRange intersection(@NotNull TextRange range) {
     if (equals(range)) {
       return this;
@@ -201,24 +210,26 @@ public class TextRange implements Segment, Serializable {
     return isProperRange(newStart, newEnd) ? new TextRange(newStart, newEnd) : null;
   }
 
+  @Contract(pure = true)
   public boolean isEmpty() {
     return myStartOffset >= myEndOffset;
   }
 
-  @NotNull
-  public TextRange union(@NotNull TextRange textRange) {
+  @Contract(pure = true)
+  public @NotNull TextRange union(@NotNull TextRange textRange) {
     if (equals(textRange)) {
       return this;
     }
     return new TextRange(Math.min(myStartOffset, textRange.getStartOffset()), Math.max(myEndOffset, textRange.getEndOffset()));
   }
 
+  @Contract(pure = true)
   public boolean equalsToRange(int startOffset, int endOffset) {
     return startOffset == myStartOffset && endOffset == myEndOffset;
   }
 
-  @NotNull
-  public static TextRange allOf(@NotNull String s) {
+  @Contract(pure = true)
+  public static @NotNull TextRange allOf(@NotNull String s) {
     return new TextRange(0, s.length());
   }
 

@@ -35,8 +35,8 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/aaa/A.java", "~/project/aaa/A.java"));
   }
 
-  public void testEmptyPaths() {
-    assertEquals(0, compare("", ""));
+  public void testRootPaths() {
+    assertEquals(0, compare("/", "/"));
   }
 
   public void testSamePrefixFolder() {
@@ -249,7 +249,7 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
 
   public void testTransitive() {
     List<String> paths = Arrays
-      .asList("", "/", "~", "/~", "/~/", "~/project/A.java", "~/project/B.java", "~/project/Z.java", "~/project/a.java", "~/project/b.java",
+      .asList("/", "~", "/~", "/~/", "~/project/A.java", "~/project/B.java", "~/project/Z.java", "~/project/a.java", "~/project/b.java",
               "~/project/z.java", "/aaa/", "/aaa-qwe/", "/ZZ.java", "A.java", "~/project/zzz/", "~/project/zzz", "~/project/zzz-qwe.java",
               "~/project/zzz-qwe.java/", "~/project/zzz-qwe.java/test", "~/project/aaa/", "~/project/aaa", "~/project/aaa",
               "~/project/aaa a", "~/project/aaa a/", "~/project/aaa a/bb", "~/project/aaa-qwe/", "~/project/aaa-qwe", "~/project/aaa-qwE",
@@ -275,23 +275,23 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
 
   public void testNaturalPerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Natural hierarchical comparator", 7000, () -> {
+    PlatformTestUtil.newPerformanceTest("Natural hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.NATURAL);
-    }).assertTiming();
+    }).start();
   }
 
   public void testCaseInsensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Case-insensitive hierarchical comparator", 4000, () -> {
+    PlatformTestUtil.newPerformanceTest("Case-insensitive hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
-    }).assertTiming();
+    }).start();
   }
 
   public void testCaseSensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Case-sensitive hierarchical comparator", 3000, () -> {
+    PlatformTestUtil.newPerformanceTest("Case-sensitive hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_SENSITIVE);
-    }).assertTiming();
+    }).start();
   }
 
   private static List<FilePath> generatePerformanceTestFilePaths() {

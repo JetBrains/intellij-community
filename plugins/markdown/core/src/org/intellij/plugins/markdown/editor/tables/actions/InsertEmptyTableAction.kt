@@ -62,8 +62,8 @@ class InsertEmptyTableAction: DumbAwareAction() {
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
     val hintComponent = TableGridComponent(selectedCallback = { rows, columns ->
       actuallyInsertTable(project, editor, file, rows, columns)
     })

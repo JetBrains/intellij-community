@@ -16,13 +16,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * This class stores the data annotations for coverage information in the editor.
@@ -31,25 +36,47 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CoverageDataAnnotationsManager implements Disposable {
   private final Project myProject;
   private final Object myAnnotationsLock = new Object();
+  private final ExecutorService myExecutor;
   private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
-  private final Map<Editor, Runnable> myRequests = new ConcurrentHashMap<>();
-
-  private Alarm myRequestsAlarm;
+  private final Map<Editor, Future<?>> myRequests = new ConcurrentHashMap<>();
+  private volatile CompletableFuture<?> myUpdateRequest = null;
 
   public CoverageDataAnnotationsManager(Project project) {
     myProject = project;
+    myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("CoverageDataAnnotationsManager Pool", 1);
   }
 
   public static CoverageDataAnnotationsManager getInstance(@NotNull Project project) {
     return project.getService(CoverageDataAnnotationsManager.class);
   }
 
+  @Override
+  public void dispose() {
+    clearAnnotations();
+  }
 
-  public void clearAnnotations() {
-    disposeAnnotators();
+  public synchronized void clearAnnotations() {
+    for (var it = myRequests.entrySet().iterator(); it.hasNext(); ) {
+      it.next().getValue().cancel(true);
+      it.remove();
+    }
+    myExecutor.execute(() -> {
+      synchronized (myAnnotationsLock) {
+        for (CoverageEditorAnnotator annotator : myAnnotators.values()) {
+          Disposer.dispose(annotator);
+        }
+        myAnnotators.clear();
+      }
+    });
   }
 
   public void update() {
+    myUpdateRequest = CompletableFuture.runAsync(this::updateInternal, myExecutor);
+  }
+
+  @RequiresBackgroundThread
+  public void updateInternal() {
+    if (CoverageDataManager.getInstance(myProject).activeSuites().isEmpty()) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     List<VirtualFile> openFiles = fileEditorManager.getOpenFilesWithRemotes();
     for (VirtualFile openFile : openFiles) {
@@ -61,24 +88,18 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       for (FileEditor fileEditor : allEditors) {
         if (fileEditor instanceof TextEditor textEditor) {
           Editor editor = textEditor.getEditor();
-          callShowLater(editor, psiFile);
+          runTask(editor, () -> show(editor, psiFile));
         }
       }
     }
   }
 
-  @NotNull
-  private synchronized Alarm getRequestsAlarm() {
-    if (myRequestsAlarm == null) {
-      myRequestsAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-    }
-    return myRequestsAlarm;
-  }
-
-  private void callShowLater(@NotNull Editor editor, PsiFile psiFile) {
-    Runnable task = () -> show(editor, psiFile);
-    myRequests.put(editor, task);
-    getRequestsAlarm().addRequest(task, 0);
+  private synchronized void runTask(@NotNull Editor editor, Runnable task) {
+    Future<?> future = myExecutor.submit(() -> {
+      myRequests.remove(editor);
+      task.run();
+    });
+    myRequests.put(editor, future);
   }
 
   @NotNull
@@ -89,7 +110,6 @@ public final class CoverageDataAnnotationsManager implements Disposable {
   }
 
   private void clearEditor(Editor editor) {
-    myRequests.remove(editor);
     CoverageEditorAnnotator annotator;
     synchronized (myAnnotationsLock) {
       annotator = myAnnotators.remove(editor);
@@ -99,30 +119,26 @@ public final class CoverageDataAnnotationsManager implements Disposable {
     }
   }
 
-  private void disposeAnnotators() {
-    synchronized (myAnnotationsLock) {
-      for (var entry : myAnnotators.entrySet()) {
-        myRequests.remove(entry.getKey());
-        Disposer.dispose(entry.getValue());
-      }
-      myAnnotators.clear();
-    }
-  }
-
   private void show(Editor editor, PsiFile psiFile) {
     for (CoverageSuitesBundle bundle : CoverageDataManager.getInstance(myProject).activeSuites()) {
       CoverageEngine engine = bundle.getCoverageEngine();
       if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
       if (!engine.acceptedByFilters(psiFile, bundle)) return;
+      if (engine.isInLibraryClasses(editor.getProject(), psiFile.getVirtualFile())) return;
 
       CoverageEditorAnnotator annotator = getOrCreateAnnotator(editor, psiFile, engine);
       annotator.showCoverage(bundle);
     }
   }
 
-  @Override
-  public void dispose() {
-    disposeAnnotators();
+  /**
+   * Returns a Future that ensures that all requests in the coverage data annotations manager are completed.
+   */
+  @TestOnly
+  @NotNull
+  public Future<?> getAllRequestsCompletion() {
+    if (myUpdateRequest == null) return CompletableFuture.runAsync(() -> { }, myExecutor);
+    return myUpdateRequest.thenRunAsync(() -> {}, myExecutor);
   }
 
 
@@ -138,7 +154,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
 
       PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile == null || !psiFile.isPhysical()) return;
-      manager.callShowLater(editor, psiFile);
+      manager.runTask(editor, () -> manager.show(editor, psiFile));
     }
 
     @Override
@@ -149,12 +165,12 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       CoverageDataAnnotationsManager manager = project.getServiceIfCreated(CoverageDataAnnotationsManager.class);
       if (manager == null) return;
 
-      Runnable request = manager.myRequests.remove(editor);
+      Future<?> request = manager.myRequests.remove(editor);
       if (request != null) {
-        manager.getRequestsAlarm().cancelRequest(request);
+        request.cancel(true);
       }
 
-      manager.getRequestsAlarm().addRequest(() -> manager.clearEditor(editor), 0);
+      manager.myExecutor.execute(() -> manager.clearEditor(editor));
     }
   }
 }

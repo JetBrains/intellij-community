@@ -49,7 +49,7 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
 /**
  * Annotates declarations that unconditionally override others without these being used.
  */
-public class PyRedeclarationInspection extends PyInspection {
+public final class PyRedeclarationInspection extends PyInspection {
 
   @NotNull
   @Override

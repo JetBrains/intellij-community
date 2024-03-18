@@ -147,7 +147,7 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (myShowGutterIconsJBCheckBox.isSelected() != editorSettings.areGutterIconsShown()) {
       editorSettings.setGutterIconsShown(myShowGutterIconsJBCheckBox.isSelected());
-      EditorOptionsPanel.reinitAllEditors();
+      EditorOptionsPanelKt.reinitAllEditors();
     }
     for (GutterIconDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));

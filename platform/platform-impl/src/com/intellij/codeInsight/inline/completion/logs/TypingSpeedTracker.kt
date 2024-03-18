@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.time.Instant
@@ -15,8 +17,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
+@ApiStatus.Internal
 @Service
-internal class TypingSpeedTracker {
+class TypingSpeedTracker {
   private var lastTypingTimestamp: Long? = null
   private val typingSpeeds: MutableMap<Duration, Float> = DECAY_DURATIONS.mapValues { 0F }.toMutableMap()
 
@@ -24,8 +27,8 @@ internal class TypingSpeedTracker {
 
   fun typingOccurred(currentTimestamp: Long = Instant.now().toEpochMilli()) {
     val duration = getTimeSinceLastTyping(currentTimestamp)
-    if (duration != null) {
-      val lastSpeed = 60 * 1000 / (duration + 1).toFloat()  // Symbols per minute
+    if (duration != null && duration > 0) {
+      val lastSpeed = 60 * 1000 / duration.toFloat()  // Symbols per minute
       for ((decayDuration, typingSpeed) in typingSpeeds) {
         val alpha = decayingFactor(duration, decayDuration)
         typingSpeeds[decayDuration] = alpha * typingSpeed + (1 - alpha) * lastSpeed
@@ -43,6 +46,9 @@ internal class TypingSpeedTracker {
       eventField.with(it)
     }
   }
+
+  @TestOnly
+  fun getTypingSpeed(decayDuration: Duration): Float? = typingSpeeds[decayDuration]
 
   class KeyListener : KeyAdapter() {
     override fun keyReleased(event: KeyEvent) {

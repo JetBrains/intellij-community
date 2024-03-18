@@ -21,10 +21,10 @@ class GithubNotificationIdsHolder : NotificationIdsHolder {
                   PULL_REQUEST_CREATION_ERROR,
                   PULL_REQUEST_CANNOT_COLLECT_DIFF_DATA,
                   PULL_REQUEST_CANNOT_FIND_REPO,
-                  PULL_REQUEST_CREATE,
                   PULL_REQUEST_CREATED,
                   PULL_REQUEST_CANNOT_PROCESS_REMOTE,
                   PULL_REQUEST_NO_CURRENT_BRANCH,
+                  PULL_REQUEST_BRANCH_UPDATE_FAILED,
                   REBASE_CANNOT_VALIDATE_UPSTREAM_REMOTE,
                   REBASE_UPSTREAM_IS_OWN_REPO,
                   REBASE_CANNOT_GER_USER_INFO,
@@ -64,10 +64,10 @@ class GithubNotificationIdsHolder : NotificationIdsHolder {
     const val PULL_REQUEST_CREATION_ERROR = "github.pull.request.creation.error"
     const val PULL_REQUEST_CANNOT_COLLECT_DIFF_DATA = "github.pull.request.cannot.collect.diff.data"
     const val PULL_REQUEST_CANNOT_FIND_REPO = "github.pull.request.cannot.find.repo"
-    const val PULL_REQUEST_CREATE = "github.pull.request.create"
     const val PULL_REQUEST_CREATED = "github.pull.request.created"
     const val PULL_REQUEST_CANNOT_PROCESS_REMOTE = "github.pull.request.cannot.process.remote"
     const val PULL_REQUEST_NO_CURRENT_BRANCH = "github.pull.request.no.current.branch"
+    const val PULL_REQUEST_BRANCH_UPDATE_FAILED = "github.pull.request.branch.update.failed"
     const val REBASE_CANNOT_VALIDATE_UPSTREAM_REMOTE = "github.rebase.cannot.validate.upstream.remote"
     const val REBASE_UPSTREAM_IS_OWN_REPO = "github.rebase.upstream.is.own.repo"
     const val REBASE_CANNOT_GER_USER_INFO = "github.rebase.cannot.get.user.info"

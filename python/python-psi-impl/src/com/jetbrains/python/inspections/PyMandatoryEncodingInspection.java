@@ -40,7 +40,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * User : catherine
  */
-public class PyMandatoryEncodingInspection extends PyInspection {
+public final class PyMandatoryEncodingInspection extends PyInspection {
 
   @NotNull
   @Override

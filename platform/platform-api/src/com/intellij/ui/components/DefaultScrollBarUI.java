@@ -40,7 +40,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private int myCachedValue;
   private int myOldValue;
 
-  protected final ScrollBarAnimationBehavior myAnimationBehavior;
+  protected final ScrollBarAnimationBehavior myAnimationBehavior = createWrapAnimationBehaviour();
 
   DefaultScrollBarUI() {
     this(ScrollSettings.isThumbSmallIfOpaque() ? 13 : 10, 14, 10);
@@ -50,9 +50,12 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myThickness = thickness;
     myThicknessMax = thicknessMax;
     myThicknessMin = thicknessMin;
-    myAnimationBehavior = new ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(),
-                                                                            myTrack.animator,
-                                                                            myThumb.animator);
+  }
+
+  protected ScrollBarAnimationBehavior createWrapAnimationBehaviour() {
+    return new ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(),
+                                                             myTrack.animator,
+                                                             myThumb.animator);
   }
 
   protected ScrollBarPainter.Thumb createThumbPainter() {

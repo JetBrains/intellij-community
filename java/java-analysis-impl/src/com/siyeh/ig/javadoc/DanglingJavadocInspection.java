@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class DanglingJavadocInspection extends BaseInspection {
+public final class DanglingJavadocInspection extends BaseInspection {
 
   public boolean ignoreCopyright = true;
 

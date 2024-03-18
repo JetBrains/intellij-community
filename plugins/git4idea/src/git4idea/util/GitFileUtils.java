@@ -253,7 +253,7 @@ public final class GitFileUtils {
    * @return the content of file if file is found
    * @throws VcsException if there is a problem with running git
    */
-  public static byte @NotNull [] getFileContent(@NotNull Project project,
+  public static byte @NotNull [] getFileContent(@Nullable Project project,
                                                 @NotNull VirtualFile root,
                                                 @NotNull @NonNls String revisionOrBranch,
                                                 @NotNull @NonNls String relativePath) throws VcsException {
@@ -264,8 +264,8 @@ public final class GitFileUtils {
     return h.run();
   }
 
-  public static void addTextConvParameters(@NotNull Project project, @NotNull GitBinaryHandler h, boolean addp) {
-    addTextConvParameters(GitExecutableManager.getInstance().tryGetVersion(project), h, addp);
+  public static void addTextConvParameters(@Nullable Project project, @NotNull GitBinaryHandler h, boolean addp) {
+    addTextConvParameters(GitExecutableManager.getInstance().tryGetVersion(project, h.getExecutable()), h, addp);
   }
 
   public static void addTextConvParameters(@Nullable GitVersion version, @NotNull GitBinaryHandler h, boolean addp) {

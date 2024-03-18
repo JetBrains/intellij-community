@@ -61,7 +61,7 @@ public final class Scopes {
       case PROJECT -> GlobalSearchScope.projectScope(project);
       case MODULE -> {
         final Module module = ModuleManager.getInstance(project).findModuleByName(descriptor);
-        yield (module != null) ? GlobalSearchScope.moduleScope(module) : null;
+        yield (module == null) ? null : GlobalSearchScope.moduleScope(module);
       }
       case DIRECTORY -> {
         final boolean recursive = StringUtil.startsWithChar(descriptor, '*');

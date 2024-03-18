@@ -34,6 +34,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
@@ -356,7 +357,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.before.update"));
-      myLocalHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("local.history.update.from.vcs"));
+      myLocalHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"), VcsActivity.Update);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
@@ -510,8 +511,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
-        LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
+        LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("activity.name.update")); // TODO check why this label is needed
         return;
       }
       boolean continueChain = false;

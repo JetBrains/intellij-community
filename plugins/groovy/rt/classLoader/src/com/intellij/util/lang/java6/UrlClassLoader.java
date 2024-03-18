@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -26,7 +26,7 @@ import java.util.*;
 public final class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
   private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<>();
-  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
+  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "false"));
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
@@ -89,7 +89,7 @@ public final class UrlClassLoader extends ClassLoader {
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
-    private boolean myUsePersistentClasspathIndex;
+    private boolean myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
     private boolean myAllowBootstrapResources;
     private boolean myLazyClassloadingCaches;
 
@@ -144,7 +144,7 @@ public final class UrlClassLoader extends ClassLoader {
      */
     @NotNull
     public Builder usePersistentClasspathIndexForLocalClassDirectories() {
-      myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
+      myUsePersistentClasspathIndex = true;
       return this;
     }
 

@@ -16,7 +16,7 @@ interface SuggestionGeneratorExecutorProvider {
   ): SuggestionGeneratorExecutor
 
   companion object {
-    private val EP_NAME: ExtensionPointName<SuggestionGeneratorExecutorProvider> =
+    val EP_NAME: ExtensionPointName<SuggestionGeneratorExecutorProvider> =
       ExtensionPointName("com.intellij.turboComplete.suggestionGeneratorExecutorProvider")
 
     fun hasAnyToCall(parameters: CompletionParameters): Boolean {

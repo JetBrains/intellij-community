@@ -1,18 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
-import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import kotlin.coroutines.resume
 
 fun <Y : Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?): Y {
   try {
@@ -54,11 +52,7 @@ suspend fun yieldAndWaitForDumbModeEnd(project: Project) {
   completeJustSubmittedDumbServiceTasks(project)
 
   runTaskAndLogTime("Awaiting smart mode") {
-    suspendCancellableCoroutine { cont ->
-      DumbService.getInstance(project).runWhenSmart(ContextAwareRunnable {
-        cont.resume(Unit)
-      })
-    }
+    project.waitForSmartMode()
   }
 
   yieldThroughInvokeLater()

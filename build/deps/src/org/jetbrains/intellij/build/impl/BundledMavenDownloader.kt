@@ -35,6 +35,8 @@ private val maven4Libs: List<String> = listOf(
   "org.jdom:jdom2:2.0.6.1",*/
 )
 
+private val mavenTelemetryDependencies = listOf("com.fasterxml.jackson.core:jackson-core:2.16.0")
+
 object BundledMavenDownloader {
   private val mutex = Mutex()
 
@@ -43,9 +45,11 @@ object BundledMavenDownloader {
     val communityRoot = BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory
     runBlocking(Dispatchers.Default) {
       val distRoot = downloadMavenDistribution(communityRoot)
+      val mavenTelemetryDependencies = downloadMavenTelemetryDependencies(communityRoot)
       val maven3DownloadedLibs = downloadMaven3Libs(communityRoot)
       val maven4DownloadedLibs = downloadMaven4Libs(communityRoot)
       println("Maven distribution extracted at $distRoot")
+      println("Maven telemetry dependencies at $mavenTelemetryDependencies")
       println("Maven 3 libs at $maven3DownloadedLibs")
       println("Maven 4 libs at $maven4DownloadedLibs")
     }
@@ -78,31 +82,39 @@ object BundledMavenDownloader {
   private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
     val root = communityRoot.communityRoot.resolve(path)
     Files.createDirectories(root)
+    val targetFileToUris = libs.associate { coordinates ->
+      val split = coordinates.split(':')
+      check(split.size == 3) {
+        "Expected exactly 3 coordinates: $coordinates"
+      }
+      val file = root.resolve("${split[1]}-${split[2]}.jar")
+      val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
+        mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
+        groupId = split[0],
+        artifactId = split[1],
+        version = split[2],
+        packaging = "jar"
+      )
+      file to uri
+    }
+
+    root.listDirectoryEntries().forEach { file ->
+      if (!targetFileToUris.containsKey(file)) {
+        BuildDependenciesUtil.deleteFileOrFolder(file)
+      }
+    }
+
+    val toDownload = targetFileToUris.filter { !Files.exists(it.key) }
+
+    if (toDownload.isEmpty()) return root
+
     val targetToSourceFiles = coroutineScope {
-      libs.map { coordinates ->
+      toDownload.map { (targetFile, uri) ->
         async {
-          val split = coordinates.split(':')
-          check(split.size == 3) {
-            "Expected exactly 3 coordinates: $coordinates"
-          }
-          val targetFile = root.resolve("${split[1]}-${split[2]}.jar")
-          val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
-            mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
-            groupId = split[0],
-            artifactId = split[1],
-            version = split[2],
-            packaging = "jar"
-          )
           targetFile to downloadFileToCacheLocation(uri.toString(), communityRoot)
         }
       }
     }.asSequence().map { it.getCompleted() }.toMap()
-
-    root.listDirectoryEntries().forEach {  file ->
-      if (!targetToSourceFiles.containsKey(file)) {
-        BuildDependenciesUtil.deleteFileOrFolder(file)
-      }
-    }
 
     withContext(Dispatchers.IO) {
       for (targetFile in targetToSourceFiles.keys) {
@@ -134,7 +146,7 @@ object BundledMavenDownloader {
 
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
     val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
-    val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
     mutex.withLock {
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
@@ -150,4 +162,7 @@ object BundledMavenDownloader {
     }
     return extractDir
   }
+
+  suspend fun downloadMavenTelemetryDependencies(communityRoot: BuildDependenciesCommunityRoot): Path =
+    downloadMavenLibs(communityRoot, "plugins/maven/maven-server-telemetry/lib", mavenTelemetryDependencies)
 }

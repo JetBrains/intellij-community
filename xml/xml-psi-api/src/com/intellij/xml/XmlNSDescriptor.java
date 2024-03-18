@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -8,7 +9,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface XmlNSDescriptor extends PsiMetaData {
+public interface XmlNSDescriptor extends PsiMetaData, PossiblyDumbAware {
   @Nullable
   XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag);
 

@@ -25,8 +25,7 @@ internal class KotlinJvmRunTaskData(val targetName: String, val taskName: String
          * is omitted in order to keep it simple.
          */
         fun findSuitableKotlinJvmRunTask(module: Module): KotlinJvmRunTaskData? {
-            val moduleDataFinder = CachedModuleDataFinder.getInstance(module.project)
-            val mainModuleDataNode = moduleDataFinder.findMainModuleData(module) ?: return null
+            val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(module) ?: return null
 
             /* Find all run carrier tasks (tasks implementing KotlinJvmRun */
             val allKotlinJvmRunTasks = ExternalSystemApiUtil.findAll(mainModuleDataNode, ProjectKeys.TASK)
@@ -38,7 +37,7 @@ internal class KotlinJvmRunTaskData(val targetName: String, val taskName: String
             We collect all SourceSets that declare a dependsOn as well. If any of those Source Sets can be executed
             by the run task, then the Source Set represented by 'module' can also!
              */
-            val sourceSetDataNode = moduleDataFinder.findModuleData(module)?.cast<GradleSourceSetData>() ?: return null
+            val sourceSetDataNode = CachedModuleDataFinder.findModuleData(module)?.cast<GradleSourceSetData>() ?: return null
             val allSourceSetDataNodes = ExternalSystemApiUtil.findAll(mainModuleDataNode, GradleSourceSetData.KEY)
             val sourceSetWithDependingSourceSetDataNodes = sourceSetDataNode.withClosure { currentSourceSetDataNode ->
                 val currentKotlinSourceSetData = currentSourceSetDataNode.kotlinSourceSetData

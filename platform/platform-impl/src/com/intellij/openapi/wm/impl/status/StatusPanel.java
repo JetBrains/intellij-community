@@ -180,7 +180,7 @@ final class StatusPanel extends JPanel {
         public void run() {
           assert statusMessage != null;
           String text = statusMessage.text();
-          if (myDirty || System.currentTimeMillis() - statusMessage.stamp() >= DateFormatUtil.MINUTE) {
+          if (myDirty || System.currentTimeMillis() - statusMessage.stamp() >= 60_000) {  // >= 1 min
             myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.stamp())) + ")";
             text += myTimeText;
           }

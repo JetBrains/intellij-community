@@ -10,22 +10,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
-
-import java.io.IOException;
 
 /**
  * @deprecated Use {@link CreateDirectoryPathFix} or {@link CreateFilePathFix} instead.
@@ -41,7 +35,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private boolean myIsAvailable;
   private long myIsAvailableTimeStamp;
 
-  // invoked from other module
+  // invoked from another module
   @SuppressWarnings("WeakerAccess")
   public CreateFileFix(boolean isDirectory,
                        @NotNull String newFileName,
@@ -106,7 +100,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    final PsiDirectory myDirectory = (PsiDirectory)startElement;
+    PsiDirectory myDirectory = (PsiDirectory)startElement;
     long current = System.currentTimeMillis();
 
     if (ApplicationManager.getApplication().isUnitTestMode() || current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
@@ -125,37 +119,10 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         myDirectory.createSubdirectory(myNewFileName);
       }
       else {
-        String newFileName = myNewFileName;
-        String newDirectories = null;
-        if (myNewFileName.contains("/")) {
-          int pos = myNewFileName.lastIndexOf('/');
-          newFileName = myNewFileName.substring(pos + 1);
-          newDirectories = myNewFileName.substring(0, pos);
+        var targetFile = CreateFilePathFix.createFileForFix(project, myDirectory, myNewFileName, getFileText());
+        if (targetFile !=null) {
+          openFile(project, targetFile.directory(), targetFile.newFile(), targetFile.text());
         }
-        PsiDirectory directory = myDirectory;
-        if (newDirectories != null) {
-          try {
-            VfsUtil.createDirectoryIfMissing(myDirectory.getVirtualFile(), newDirectories);
-            VirtualFile vfsDir = VfsUtil.findRelativeFile(myDirectory.getVirtualFile(),
-                                                          ArrayUtil.toStringArray(StringUtil.split(newDirectories, "/")));
-            directory = vfsDir == null ? null : myDirectory.getManager().findDirectory(vfsDir);
-            if (directory == null) throw new IOException("Couldn't create directory '" + newDirectories + "'");
-          }
-          catch (IOException e) {
-            throw new IncorrectOperationException(e.getMessage());
-          }
-        }
-        final PsiFile newFile = directory.createFile(newFileName);
-        String text = getFileText();
-
-        if (text != null) {
-          final FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(newFileName);
-          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + newFileName, type, text);
-          final PsiElement psiElement = CodeStyleManager.getInstance(project).reformat(psiFile);
-          text = psiElement.getText();
-        }
-
-        openFile(project, directory, newFile, text);
       }
     }
     catch (IncorrectOperationException e) {

@@ -3,13 +3,19 @@ package com.intellij.ide.actions
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
-class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
+class LayoutsGroup : DefaultActionGroup() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun update(e: AnActionEvent) { }
+}
+
+class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {
     CustomLayoutActionGroup(it)
@@ -27,6 +33,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
+    e.presentation.isVisible = e.place != ActionPlaces.ACTION_SEARCH // to avoid confusion with the upper level LayoutsGroup
     e.presentation.isPopupGroup = e.place != ActionPlaces.MAIN_MENU // to be used as a popup, e.g., in toolbars
   }
 
@@ -67,7 +74,12 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
       override fun update(e: AnActionEvent) {
         super.update(e)
-        e.presentation.isEnabled = manager.activeLayoutName != layoutName
+        e.presentation.text = if (manager.activeLayoutName == layoutName) {
+          ActionsBundle.message("action.CustomLayoutActionsGroup.Restore.text")
+        }
+        else {
+          ActionsBundle.message("action.CustomLayoutActionsGroup.Apply.text")
+        }
         e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
       }
 

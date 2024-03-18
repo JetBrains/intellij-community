@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.cache
 
 import com.intellij.ide.IdeBundle
@@ -32,8 +32,7 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.progressReporter
-import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.asSafely
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
@@ -156,7 +155,9 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       TaskCancellation.nonCancellable()
     ) {
       LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
-      recoverCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter(), calledOnVfsInit)
+      reportRawProgress { reporter ->
+        recoverCaches(queryContext, recoveryPoint.point, reporter, calledOnVfsInit)
+      }
     }
     if (restart) {
       LOG.info("restarting...")
@@ -197,7 +198,9 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
                                      TaskCancellation.nonCancellable()) {
           val recoveryPoint = getRecoveryPoints(queryContext).firstOrNull() ?: return@runWithModalProgressBlocking false
-          recoverCaches(queryContext, recoveryPoint.point, rawProgressReporter, true)
+          reportRawProgress { reporter ->
+            recoverCaches(queryContext, recoveryPoint.point, reporter, true)
+          }
           true
         }
       }

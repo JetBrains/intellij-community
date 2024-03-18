@@ -6,23 +6,29 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.occurrences.*;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
+import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implements JavaIntroduceFieldHandlerBase {
-  private static final MyOccurrenceFilter MY_OCCURRENCE_FILTER = new MyOccurrenceFilter();
   private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
   public IntroduceFieldHandler() {
@@ -36,20 +42,37 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
   @Override
   protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
+    return canIntroduceField(parentClass, selectedExpr.getType(), editor);
+  }
+
+  /**
+   * Checks if a field of the specified type can be created in the specified class.
+   *
+   * @param parentClass  the class to create a field in
+   * @param type  the type of the field that should be created
+   * @param editor  to show error message for, if a problem is found
+   * @return true, if a field can be introduced. false, if there is a problem.
+   */
+  static boolean canIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type, Editor editor) {
     if (parentClass.isInterface()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("cannot.introduce.field.in.interface"));
-      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
+      String message = JavaRefactoringBundle.message("cannot.introduce.field.in.interface");
+      showErrorMessage(parentClass.getProject(), editor, message);
       return false;
     }
-    else if (parentClass.isRecord()) {
-      final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(selectedExpr, parentClass);
-      boolean declareStatic = staticParentElement != null;
-      if (declareStatic) return true;
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("cannot.introduce.field.in.record"));
-      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
+      String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
+                                                     RefactoringUIUtil.getDescription(aClass, false),
+                                                     RefactoringUIUtil.getDescription(parentClass, false));
+      showErrorMessage(aClass.getProject(), editor, StringUtil.capitalize(message));
       return false;
     }
     return true;
+  }
+
+  private static void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
+    message = RefactoringBundle.getCannotRefactorMessage(message);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), HelpID.INTRODUCE_FIELD);
   }
 
   @Override
@@ -91,15 +114,16 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
     final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(getElement(expr, anchorElement), parentClass);
-    boolean declareStatic = staticParentElement != null;
+    boolean declareStatic = staticParentElement != null || parentClass != null && parentClass.isRecord();
 
     boolean isInSuperOrThis = false;
     if (!declareStatic) {
       for (int i = 0; !declareStatic && i < occurrences.length; i++) {
-        PsiExpression occurrence = occurrences[i];
-        isInSuperOrThis = isInSuperOrThis(occurrence);
-        declareStatic = isInSuperOrThis;
+        declareStatic = isInSuperOrThis = isInSuperOrThis(occurrences[i]);
       }
+    }
+    if (isInSuperOrThis && PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, expr != null ? expr : anchorElement)) {
+      isInSuperOrThis = false;
     }
     int occurrencesNumber = occurrences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
@@ -167,12 +191,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   static boolean isInSuperOrThis(PsiExpression occurrence) {
-    return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence) || !NotInThisCallFilter.INSTANCE.isOK(occurrence);
+    return !NotInConstructorCallFilter.INSTANCE.isOK(occurrence);
   }
 
   @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURRENCE_FILTER;
+    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : NotInConstructorCallFilter.INSTANCE;
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 
@@ -180,18 +204,17 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
+      showErrorMessage(project, editor, JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
       return false;
     }
     LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false){
       @Override
       protected Settings showRefactoringDialog(PsiClass aClass,
                                                PsiLocalVariable local,
-                                               PsiExpression[] occurences,
+                                               PsiExpression[] occurrences,
                                                boolean isStatic) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
-        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, local, statement);
+        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurrences, local, statement);
       }
 
       @Override
@@ -204,13 +227,6 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
   protected int getChosenClassIndex(List<PsiClass> classes) {
     return classes.size() - 1;
-  }
-
-  private static class MyOccurrenceFilter implements OccurrenceFilter {
-    @Override
-    public boolean isOK(@NotNull PsiExpression occurrence) {
-      return !isInSuperOrThis(occurrence);
-    }
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringNameText() {

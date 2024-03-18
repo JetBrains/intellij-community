@@ -11,8 +11,4 @@ sealed interface K2MoveSourceDescriptor<T : KtElement> {
     class FileSource(override val elements: Set<KtFile>) : K2MoveSourceDescriptor<KtFile>
 
     class ElementSource(override val elements: Set<KtNamedDeclaration>) : K2MoveSourceDescriptor<KtNamedDeclaration>
-
-    companion object {
-        fun FileSource(file: KtFile): FileSource = FileSource(setOf(file))
-    }
 }

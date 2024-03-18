@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -41,7 +42,7 @@ public class RedundantSlf4jDefinitionInspection extends LombokJavaInspectionBase
         if (initializer != null && containingClass != null) {
           if (initializer.getText().contains(format(LOGGER_INITIALIZATION, containingClass.getQualifiedName()))) {
             holder.registerProblem(field, LombokBundle.message("inspection.message.slf4j.logger.defined.explicitly"),
-                                   new UseSlf4jAnnotationQuickFix(field, containingClass));
+                                   LocalQuickFix.from(new UseSlf4jAnnotationQuickFix(field, containingClass)));
           }
         }
       }

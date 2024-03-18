@@ -18,8 +18,7 @@ package com.intellij.ide.diff;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PatternUtil;
+import com.intellij.util.FilePatternFilter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author Konstantin Bulenkov
@@ -61,7 +59,7 @@ public class DirDiffSettings {
   public final HashMap<Object, Object> customSettings = new HashMap<>();
 
   private String filter = "";
-  private Pattern filterPattern = PatternUtil.fromMask("*");
+  private FilePatternFilter myDirDiffFilter;
 
   public String getFilter() {
     return filter;
@@ -69,11 +67,11 @@ public class DirDiffSettings {
 
   public void setFilter(String filter) {
     this.filter = filter;
-    filterPattern = PatternUtil.fromMask(StringUtil.isEmpty(filter) ? "*" : filter);
+    myDirDiffFilter = FilePatternFilter.parseFilter(filter, "&", "|", 0);
   }
 
-  public Pattern getFilterPattern() {
-    return filterPattern;
+  public FilePatternFilter getDirDiffFilter() {
+    return myDirDiffFilter;
   }
 
   public enum CompareMode {

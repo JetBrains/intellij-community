@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class FieldNamingConventionMerger extends AbstractNamingConventionMerger<PsiField> {
+public final class FieldNamingConventionMerger extends AbstractNamingConventionMerger<PsiField> {
   public FieldNamingConventionMerger() {
     super(new FieldNamingConventionInspection());
   }

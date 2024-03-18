@@ -11,19 +11,9 @@ public class ExpressionParser extends BasicExpressionParser {
   }
 
 
-  @Override
-  public PsiBuilder.Marker parseArgumentList(PsiBuilder builder) {
-    return super.parseArgumentList(builder);
-  }
-
   @Nullable
   @Override
   public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
     return super.parseCaseLabel(builder);
-  }
-
-  @Override
-  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
-    return super.parse(builder);
   }
 }

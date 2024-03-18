@@ -171,14 +171,6 @@ public final class GitRebaseUtils {
     return true;
   }
 
-  /**
-   * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
-   */
-  @Deprecated
-  public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
-    return getRebaseDir(project, root) != null;
-  }
-
   public static @Nullable File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root);
     if (repository == null) return null;
@@ -314,6 +306,19 @@ public final class GitRebaseUtils {
     catch (IOException e) {
       throw new VcsException(GitBundle.message("rebase.couldnt.resolve.file", fileName), e);
     }
+  }
+
+  /**
+   * @see git4idea.commands.GitImpl#REBASE_CONFIG_PARAMS
+   */
+  public static GitRebaseEditorHandler createRebaseEditor(@NotNull Project project,
+                                                          @NotNull VirtualFile root,
+                                                          boolean forInteractiveRebase) {
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, root);
+    if (!forInteractiveRebase) {
+      editor.setRebaseEditorShown();
+    }
+    return editor;
   }
 
   /**

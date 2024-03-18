@@ -92,7 +92,7 @@ class ConcurrentBitSetTest {
     PlatformTestUtil.assumeEnoughParallelism();
     int L = 128;
     int N = 10_000;
-    PlatformTestUtil.startPerformanceTest("testStressFineGrainedSmallSetModifications", 22_000, () -> tortureParallelSetClear(L, N)).assertTiming();
+    PlatformTestUtil.newPerformanceTest("testStressFineGrainedSmallSetModifications", () -> tortureParallelSetClear(L, N)).start();
   }
 
   @Test
@@ -102,7 +102,7 @@ class ConcurrentBitSetTest {
     // todo ARM64 is slow for some reason
     int N = CpuArch.isArm64() ? 300 : 1000;
 
-    PlatformTestUtil.startPerformanceTest("testStressCoarseGrainedBigSet", 100_000, () -> tortureParallelSetClear(L, N)).assertTiming();
+    PlatformTestUtil.newPerformanceTest("testStressCoarseGrainedBigSet", () -> tortureParallelSetClear(L, N)).start();
   }
 
   private static void tortureParallelSetClear(int L, int N) {
@@ -196,7 +196,7 @@ class ConcurrentBitSetTest {
     int N = 100_000;
 
     ExecutorService executor = create4ThreadsExecutor();
-    PlatformTestUtil.startPerformanceTest("testParallelReadPerformance", 35_000, ()-> {
+    PlatformTestUtil.newPerformanceTest("testParallelReadPerformance", ()-> {
       Semaphore threadReady = new Semaphore();
       Set<Thread> threadUsed = ConcurrentCollectionFactory.createConcurrentSet();
       boundedParallelRun(executor, threadUsed, threadReady, N, __-> {
@@ -207,7 +207,7 @@ class ConcurrentBitSetTest {
         assertEquals(expectedSum, r);
       });
     // really must not depend on CPU core number
-    })/*.usesAllCPUCores()*/.assertTiming();
+    })/**/.start();
   }
 
   @Test

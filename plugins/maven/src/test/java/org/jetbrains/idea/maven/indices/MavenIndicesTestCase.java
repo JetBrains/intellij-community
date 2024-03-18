@@ -22,7 +22,7 @@ public abstract class MavenIndicesTestCase extends MavenMultiVersionImportingTes
   @Override
   protected void tearDown() throws Exception {
     try {
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().closeAllConnectorsAndWait();
     }
     catch (Throwable e) {
       addSuppressedException(e);

@@ -34,12 +34,12 @@ public final class ExtractLightMethodObjectHandler {
   /**
    * @deprecated use LightMethodObjectExtractedData.REFERENCE_METHOD instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<PsiMethod> REFERENCE_METHOD = LightMethodObjectExtractedData.REFERENCE_METHOD;
   /**
    * @deprecated use LightMethodObjectExtractedData.REFERENCED_TYPE instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<PsiType> REFERENCED_TYPE = LightMethodObjectExtractedData.REFERENCED_TYPE;
 
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);

@@ -7,7 +7,7 @@ fun bar() {
     foo()
 }
 
-// ADDITIONAL_BREAKPOINT: common.kt / expect fun foo(): Int / fun / 1
+// ADDITIONAL_BREAKPOINT: common.kt / expect fun foo(): Int / fun
 
 // EXPRESSION: x
 // RESULT: 1: I

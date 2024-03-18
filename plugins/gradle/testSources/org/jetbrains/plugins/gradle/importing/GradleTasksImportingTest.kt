@@ -14,8 +14,11 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
   fun `test basic tasks importing`() {
     createSettingsFile("include 'subproject'")
     importProject()
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     assertThat(findTasks(projectPath).map { it.name })
       .contains("help", "init", "wrapper", "projects", "tasks", "properties")
@@ -34,8 +37,11 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
       }
     """.trimIndent())
     importProject()
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     assertThat(findTasks(projectPath)).isNotEmpty
     assertThat(findTasks(path("project1"))).isNotEmpty

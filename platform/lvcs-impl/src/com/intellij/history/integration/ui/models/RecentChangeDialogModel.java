@@ -18,13 +18,11 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.RecentChange;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.List;
 
 public final class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   private final RecentChange myChange;
@@ -36,9 +34,9 @@ public final class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   }
 
   @Override
-  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
-    return Pair.create(myChange.getRevisionAfter(),
-                       Collections.singletonList(new RevisionItem(myChange.getRevisionBefore())));
+  protected @NotNull RevisionData collectRevisionData() {
+    return new RevisionData(myChange.getRevisionAfter(),
+                            Collections.singletonList(new RevisionItem(myChange.getRevisionBefore())));
   }
 
   @Override

@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class ImportFromSourcesProvider extends ProjectImportProvider {
+public final class ImportFromSourcesProvider extends ProjectImportProvider {
 
   public ImportFromSourcesProvider() {
     super(new ProjectFromSourcesBuilderImpl(null, null)); // fake

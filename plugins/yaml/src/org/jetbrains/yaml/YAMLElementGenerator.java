@@ -16,6 +16,8 @@ import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class YAMLElementGenerator {
   private final Project myProject;
@@ -41,6 +43,15 @@ public class YAMLElementGenerator {
       }
     }
     return sb.toString();
+  }
+
+  public YAMLKeyValue createYamlKeyValueWithSequence(@NotNull String keyName, @NotNull Map<String, String> elementsMap) {
+    String yamlString = elementsMap
+      .entrySet().stream()
+      .sorted(Map.Entry.comparingByKey())
+      .map(entry -> "%s: %s".formatted(entry.getKey(), entry.getValue()))
+      .collect(Collectors.joining("\n"));
+    return createYamlKeyValue(keyName, yamlString);
   }
 
   @NotNull

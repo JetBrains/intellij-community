@@ -130,7 +130,7 @@ public abstract class FilterComponent extends JPanel {
     filter();
   }
 
-  protected void userTriggeredFilter() {
+  public void userTriggeredFilter() {
     myFilter.addCurrentTextToHistory();
     filter();
   }

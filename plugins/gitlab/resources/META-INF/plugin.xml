@@ -39,6 +39,8 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
+    <plugin id="org.jetbrains.plugins.yaml"/>
+    <plugin id="com.intellij.modules.json"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -65,10 +67,7 @@
     <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
-    <diff.actions.ShowDiffAction.ExtensionProvider
-      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
-      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.gitlab.ui.GitLabCiConfigIconProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
@@ -80,15 +79,13 @@
 
     <editorFactoryListener
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
-    <iw.actionProvider
-      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestEditorReviewModeActionProvider"/>
 
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
-    <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
     <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
     <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
+    <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale" key="gitlab.viewed.state.stale.timeout"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">
@@ -107,6 +104,7 @@
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$BranchPresenter"/>
+    <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationCustomizer"/>
   </extensions>
 
   <actions>
@@ -174,10 +172,19 @@
       <reference id="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
+    <group id="GitLab.Merge.Request.Timeline.Error.Popup">
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
     <group id="GitLab.Merge.Request.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="EditSource"/>
+      <action id="GitLab.Merge.Request.Changes.MarkViewed"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesViewedAction"/>
+      <action id="GitLab.Merge.Request.Changes.MarkNotViewed"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesNotViewedAction"/>
       <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
         <reference id="ChangesView.GroupBy"/>
       </group>
@@ -232,18 +239,5 @@
       </action>
       <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
-
-    <action id="GitLab.Merge.Request.Review.Editor.Show.Diff"
-            class="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestShowFileDiffAction">
-      <add-to-group group-id="EditorPopupMenu"/>
-    </action>
   </actions>
-
-  <projectListeners>
-    <listener class="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationListener"
-              topic="git4idea.push.GitPushListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"/>
-  </projectListeners>
-
 </idea-plugin>

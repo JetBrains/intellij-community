@@ -24,7 +24,9 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
     return key == null ? null : getAttributes(key, true);
   }
 
-  public @Nullable TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
+  @Override
+  public @Nullable TextAttributes getAttributes(TextAttributesKey key, boolean useDefaults) {
+    if (key == null) return null;
     TextAttributes attrs = attributesMap.get(key.getExternalName());
     if (attrs != null) return attrs;
 

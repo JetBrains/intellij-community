@@ -3,7 +3,6 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.*;
@@ -43,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyDocumentationBuilder {
@@ -119,11 +119,21 @@ public class PyDocumentationBuilder {
       // FactoryMap's entrySet() returns pairs without particular order even for LinkedHashMap
       for (@NlsSafe String header : ContainerUtil.concat(topSections, remainingSections)) {
         mySections.append(HtmlChunk.tag("tr").children(
-          HtmlChunk.text(header).wrapWith(DocumentationMarkup.SECTION_HEADER_CELL),
-          mySectionsMap.get(header).wrapWith(DocumentationMarkup.SECTION_CONTENT_CELL)
+          HtmlChunk.text(header).wrapWith(SECTION_HEADER_CELL),
+          mySectionsMap.get(header).wrapWith(SECTION_CONTENT_CELL)
         ));
       }
     }
+
+    for (PythonDocumentationQuickInfoProvider point : PythonDocumentationQuickInfoProvider.EP_NAME.getExtensionList()) {
+      final String info = point.getHoverAdditionalQuickInfo(myContext, outerElement);
+      if (info != null) {
+        myBody.br();
+        myBody.append(info);
+        break;
+      }
+    }
+
 
     if (myBody.isEmpty() && myContent.isEmpty()) {
       return null; // got nothing substantial to say!
@@ -136,14 +146,14 @@ public class PyDocumentationBuilder {
         definitionBuilder.append(myProlog);
       }
       if (!myBody.isEmpty()) {
-        definitionBuilder.append(myBody.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
+        definitionBuilder.append(myBody.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT));
       }
       result.append(definitionBuilder);
       if (!myContent.isEmpty()) {
-        result.append(myContent.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
+        result.append(myContent.wrapWith(CONTENT_ELEMENT));
       }
       if (!mySectionsMap.isEmpty()) {
-        result.append(mySections.wrapWith(DocumentationMarkup.SECTIONS_TABLE));
+        result.append(mySections.wrapWith(SECTIONS_TABLE));
       }
       return result.wrapWithHtmlBody().toString();
     }
@@ -374,8 +384,7 @@ public class PyDocumentationBuilder {
       if (containing instanceof PyFile) {
         final HtmlChunk linkToModule = getLinkToModule((PyFile)containing);
         if (linkToModule != null) {
-          myProlog.append(HtmlChunk.div()
-                            .setClass("bottom")
+          myProlog.append(BOTTOM_ELEMENT
                             .children(
                               HtmlChunk.icon("AllIcons.Nodes.Package", AllIcons.Nodes.Package),
                               HtmlChunk.nbsp(),
@@ -409,8 +418,7 @@ public class PyDocumentationBuilder {
       if (!isProperty && pyClass != null) {
         final HtmlChunk link = getLinkToClass(pyClass, true);
         if (link != null) {
-          myProlog.append(HtmlChunk.div()
-                            .setClass("bottom")
+          myProlog.append(BOTTOM_ELEMENT
                             .children(
                               HtmlChunk.icon("AllIcons.Nodes.Class", AllIcons.Nodes.Class),
                               HtmlChunk.nbsp(),

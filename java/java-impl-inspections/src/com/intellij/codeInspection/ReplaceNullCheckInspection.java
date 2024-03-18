@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
   private static final int MINIMAL_WARN_DELTA_SIZE = 30;
 

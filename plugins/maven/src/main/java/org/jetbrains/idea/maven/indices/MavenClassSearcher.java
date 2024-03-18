@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
@@ -14,27 +15,17 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
 
   @Override
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
-    String patternForQuery = preparePattern(pattern);
-
-    MavenIndicesManager m = MavenIndicesManager.getInstance(project);
-    Set<MavenArtifactInfo> infos = m.getIndex()
-      .getIndices().stream()
-      .flatMap(i -> i.search(patternForQuery, 50).stream())
-      .collect(Collectors.toSet());
-
-    ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternForQuery, maxResult));
-    results.sort(Comparator.comparing(MavenClassSearchResult::getClassName));
-    return results;
+    var repos = MavenIndexUtils.getAllRepositories(project);
+    return MavenLuceneIndexer.getInstance().searchSync(pattern, repos, maxResult);
   }
 
-  private static String preparePattern(String pattern) {
+  public static String preparePattern(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().isEmpty()) {
       return "";
@@ -57,7 +48,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
     return newPattern.toString();
   }
 
-  private static Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
+  public static Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.isEmpty() || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }
@@ -112,7 +103,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
         }
         else {
           List<String> versions = ContainerUtil.append(ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion()),
-          each.getVersion());
+                                                       each.getVersion());
           MavenRepositoryArtifactInfo artifactInfo = new MavenRepositoryArtifactInfo(
             each.getGroupId(), each.getArtifactId(),
             versions);

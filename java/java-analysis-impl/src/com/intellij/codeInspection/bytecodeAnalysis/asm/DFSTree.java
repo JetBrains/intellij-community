@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 public final class DFSTree {
@@ -37,7 +38,11 @@ public final class DFSTree {
   }
 
   private static void iterate(LongOpenHashSet set, EdgeVisitor visitor) {
-    set.forEach(packed -> visitor.visit((int)(packed >>> 32), (int)(packed)));
+    LongIterator iterator = set.iterator();
+    while (iterator.hasNext()) {
+      long packed = iterator.nextLong();
+      visitor.visit((int)(packed >>> 32), (int)(packed));
+    }
   }
 
   private static void putEdge(LongOpenHashSet set, int from, int to) {

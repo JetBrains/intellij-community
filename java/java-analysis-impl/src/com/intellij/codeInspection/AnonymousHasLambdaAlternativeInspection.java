@@ -16,9 +16,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
-public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousHasLambdaAlternativeInspection.class);
 
   static final class AnonymousLambdaAlternative {
@@ -45,12 +46,14 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
                                    "new Thread(() -> {…})")
   };
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.THREAD_LOCAL_WITH_INITIAL);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.THREAD_LOCAL_WITH_INITIAL.isFeatureSupported(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {

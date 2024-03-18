@@ -28,7 +28,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   private fun findThisComponent(): Component {
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
-            errorMessage = "Can't find component with '${data.xpath}' in ${searchContext.context}") {
+            errorMessage = "Can't find component with '${data.xpath}' in ${data.parentSearchContext.context.takeIf { it.isNotEmpty() } ?: "whole hierarchy"}") {
       data.parentSearchContext.findAll(data.xpath).size == 1
     }
     return data.parentSearchContext.findAll(data.xpath).first()
@@ -68,11 +68,21 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return robotService.findAllText(component).single(predicate).let { UiText(this, it) }
   }
 
+  fun present(): Boolean {
+    return robotService.findAll(data.xpath).isNotEmpty()
+  }
+
+  fun notPresent(): Boolean {
+    return robotService.findAll(data.xpath).isEmpty()
+  }
+
   fun hasText(predicate: (TextData) -> Boolean): Boolean {
     return robotService.findAllText(component).any(predicate)
   }
 
   fun isVisible(): Boolean = component.isVisible()
+
+  fun isEnabled(): Boolean = component.isEnabled()
 
   fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
     return robotService.findAllText(component).filter(predicate).map { UiText(this, it) }
@@ -80,6 +90,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun findAllText(): List<UiText> {
     return robotService.findAllText(component).map { UiText(this, it) }
+  }
+
+  fun hasVisibleComponent(component: UiComponent): Boolean {
+    val components = searchContext.findAll(component.data.xpath)
+    if (components.isEmpty()) return false
+    return components.any { it.isVisible() }
   }
 
   // Mouse

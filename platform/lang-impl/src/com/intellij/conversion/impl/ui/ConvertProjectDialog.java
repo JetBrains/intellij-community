@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.conversion.CannotConvertException;
+import com.intellij.conversion.impl.CachedConversionResult;
 import com.intellij.conversion.impl.ConversionContextImpl;
 import com.intellij.conversion.impl.ConversionRunner;
 import com.intellij.conversion.impl.ProjectConversionUtil;
@@ -28,32 +29,34 @@ import java.util.Set;
 
 public final class ConvertProjectDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ConvertProjectDialog.class);
+  private final CachedConversionResult conversionResult;
   private JPanel myMainPanel;
   private JTextPane myTextPane;
   private boolean myConverted;
-  private final ConversionContextImpl myContext;
-  private final List<ConversionRunner> myConversionRunners;
-  private final Path myBackupDir;
-  private final Set<Path> myAffectedFiles;
+  private final ConversionContextImpl context;
+  private final List<ConversionRunner> conversionRunners;
+  private final Path backupDir;
+  private final Set<Path> affectedFiles;
   private boolean myNonExistingFilesMessageShown;
 
-  public ConvertProjectDialog(ConversionContextImpl context, List<ConversionRunner> conversionRunners) {
+  public ConvertProjectDialog(ConversionContextImpl context, CachedConversionResult conversionResult, List<ConversionRunner> conversionRunners) {
     super(true);
+    this.conversionResult = conversionResult;
     setTitle(IdeBundle.message("dialog.title.convert.project"));
     setModal(true);
-    myContext = context;
-    myConversionRunners = conversionRunners;
-    myAffectedFiles = new HashSet<>();
+    this.context = context;
+    this.conversionRunners = conversionRunners;
+    affectedFiles = new HashSet<>();
     for (ConversionRunner conversionRunner : conversionRunners) {
-      conversionRunner.collectAffectedFiles(myAffectedFiles);
+      conversionRunner.collectAffectedFiles(affectedFiles);
     }
 
-    myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
+    backupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
     StringBuilder message = new StringBuilder();
     message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getFileName().toString(),
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
-    message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.toString()));
+    message.append(IdeBundle.message("conversion.dialog.text.2", backupDir.toString()));
     Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
@@ -80,7 +83,7 @@ public final class ConvertProjectDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final List<Path> nonexistentFiles = myContext.getNonExistingModuleFiles();
+    final List<Path> nonexistentFiles = context.getNonExistingModuleFiles();
     if (!nonexistentFiles.isEmpty() && !myNonExistingFilesMessageShown) {
       final String filesString = getFilesString(nonexistentFiles);
       final String message = IdeBundle.message("message.text.files.do.not.exist", filesString);
@@ -98,16 +101,16 @@ public final class ConvertProjectDialog extends DialogWrapper {
         return;
       }
 
-      ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
-      Set<String> appliedConverters = myContext.getAppliedConverters();
-      for (ConversionRunner runner : myConversionRunners) {
+      ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir(), backupDir);
+      Set<String> appliedConverters = conversionResult.appliedConverters;
+      for (ConversionRunner runner : conversionRunners) {
         if (!appliedConverters.contains(runner.getProviderId()) && runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
         }
       }
-      myContext.saveFiles(myAffectedFiles);
+      context.saveFiles(affectedFiles);
       myConverted = true;
       super.doOKAction();
     }
@@ -147,7 +150,7 @@ public final class ConvertProjectDialog extends DialogWrapper {
   }
 
   private @NotNull List<Path> getReadOnlyFiles() {
-    return ConversionRunner.getReadOnlyFiles(myAffectedFiles);
+    return ConversionRunner.getReadOnlyFiles(affectedFiles);
   }
 
   private static void unlockFiles(@NotNull List<? extends Path> files) {

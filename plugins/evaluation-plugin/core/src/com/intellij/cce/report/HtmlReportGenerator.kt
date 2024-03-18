@@ -217,7 +217,7 @@ class HtmlReportGenerator(
     }</a>\""
 
   private fun getReportLink(repRef: Map.Entry<String, ReferenceInfo>): String =
-    "\"<a href='${getHtmlRelativePath(dirs.filterDir, repRef.value.pathToReport)}' target='_blank'>${File(repRef.key).name}</a>\""
+    "\"<a href='${getHtmlRelativePath(dirs.filterDir, repRef.value.pathToReport)}' target='_blank'>${repRef.key}</a>\""
 
   private fun getHtmlRelativePath(base: Path, path: Path): String {
     return base.relativize(path).toString().replace(File.separatorChar, '/')

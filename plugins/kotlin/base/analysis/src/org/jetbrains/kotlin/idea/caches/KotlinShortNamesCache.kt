@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -25,12 +26,15 @@ import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache() {
@@ -176,7 +180,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         scope: GlobalSearchScope,
         filter: IdFilter?
     ): Boolean {
-        if (disableSearch.get()) return true
+        if (disableSearch.get() || DumbService.isDumb(project)) return true
         val allFunctionsProcessed =
           KotlinFunctionShortNameIndex.processElements(
             name,
@@ -270,7 +274,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         scope: GlobalSearchScope,
         filter: IdFilter?
     ): Boolean {
-        if (disableSearch.get()) return true
+        if (disableSearch.get() || DumbService.isDumb(project)) return true
         return KotlinPropertyShortNameIndex.processElements(
           name,
           project,

@@ -3,28 +3,27 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.write
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isHidden
+import kotlin.io.path.writeBytes
 
 class MockStreamProvider(private val dir: Path) : StreamProvider {
   override val isExclusive = true
 
   override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-    dir.resolve(fileSpec).write(content)
+    dir.resolve(fileSpec).writeBytes(content)
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-    val file = dir.resolve(fileSpec)
     try {
-      file.inputStream().use(consumer)
+      this.dir.resolve(fileSpec).inputStream().use(consumer)
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       consumer(null)
     }
     return true
@@ -40,7 +39,7 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
 
         // we ignore empty files as well - delete if corrupted
         if (attributes.size() == 0L) {
-          file.delete()
+          file.deleteIfExists()
           continue
         }
 
@@ -54,7 +53,7 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-    dir.resolve(fileSpec).delete()
+    dir.resolve(fileSpec).deleteIfExists()
     return true
   }
 }

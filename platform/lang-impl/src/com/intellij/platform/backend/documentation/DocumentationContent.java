@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.documentation;
 
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
@@ -25,6 +25,6 @@ public interface DocumentationContent {
     @Nls @NotNull String html,
     @NotNull Map<@NotNull String, ? extends @NotNull Image> images
   ) {
-    return new DocumentationContentData(html, imageResolver(images));
+    return new DocumentationContentData(html, imageResolver(images), null, null);
   }
 }

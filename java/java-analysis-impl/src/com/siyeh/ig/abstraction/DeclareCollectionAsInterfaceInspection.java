@@ -35,7 +35,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
+public final class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

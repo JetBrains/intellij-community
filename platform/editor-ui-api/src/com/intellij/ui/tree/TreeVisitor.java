@@ -16,6 +16,18 @@ public interface TreeVisitor {
   @NotNull
   Action visit(@NotNull TreePath path);
 
+  /**
+   * Returns the thread on which the visitor should be called.
+   * <p>
+   *   The caller isn't required to obey this. The rule of thumb is, if the tree model
+   *   is an async model that has a background part, then it must call visit() on the thread
+   *   specified by the return value of this method. However, if the tree model is
+   *   a pure EDT model (a simple model, or a fast model, or some unit test stub),
+   *   then it'll call visit() on the EDT regardless of the return value of this method.
+   * </p>
+   *
+   * @return the thread on which the visitor should be called
+   */
   @ApiStatus.Experimental
   default @NotNull TreeVisitor.VisitThread visitThread() {
     return VisitThread.EDT;

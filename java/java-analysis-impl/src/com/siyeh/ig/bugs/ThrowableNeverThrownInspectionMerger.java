@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowableNeverThrownInspectionMerger extends InspectionElementsMerger {
+public final class ThrowableNeverThrownInspectionMerger extends InspectionElementsMerger {
 
   @NotNull
   @Override

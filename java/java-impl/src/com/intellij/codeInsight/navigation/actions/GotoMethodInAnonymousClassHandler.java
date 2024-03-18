@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class GotoMethodInAnonymousClassHandler extends GotoDeclarationHandlerBase {
+public final class GotoMethodInAnonymousClassHandler extends GotoDeclarationHandlerBase {
 
   @Override
   @Nullable

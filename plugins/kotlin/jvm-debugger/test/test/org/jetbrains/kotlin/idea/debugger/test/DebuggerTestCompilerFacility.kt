@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 data class TestCompileConfiguration(
-    val useIrBackend: Boolean,
     val lambdasGenerationScheme: JvmClosureGenerationScheme,
     val languageVersion: LanguageVersion?,
     val enabledLanguageFeatures: Collection<LanguageFeature>,
@@ -193,9 +192,6 @@ open class DebuggerTestCompilerFacility(
         )
         if (compileConfig.languageVersion != null) {
             options.add("-language-version=${compileConfig.languageVersion}")
-        }
-        if (!compileConfig.useIrBackend) {
-            options.add("-Xuse-old-backend")
         }
         options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
         return options

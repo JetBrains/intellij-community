@@ -16,18 +16,10 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.jetbrains.python.ast.PyAstNamedElementContainer;
 
 /**
  * PSI element that contains named children that are visible in the current scope.
  */
-public interface PyNamedElementContainer extends PsiElement {
-  /**
-   * Return named children visible in the current scope.
-   */
-  @NotNull
-  List<PsiNamedElement> getNamedElements();
+public interface PyNamedElementContainer extends PyAstNamedElementContainer, PsiElement {
 }

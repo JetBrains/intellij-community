@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -24,6 +25,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySou
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
@@ -32,7 +34,6 @@ import com.intellij.testFramework.OpenProjectTaskBuilder
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
@@ -67,7 +68,7 @@ class DelayedProjectSynchronizerTest {
   @Before
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
@@ -91,11 +92,12 @@ class DelayedProjectSynchronizerTest {
   }
 
   private fun checkSerializersConsistency(project: Project) {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
-    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    val unloadedEntitiesStorage = workspaceModel.internal.currentSnapshotOfUnloadedEntities
     serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage,
-                                 VirtualFileUrlManager.getInstance(project))
+                                 workspaceModel.getVirtualFileUrlManager())
   }
 
   @Test
@@ -105,7 +107,7 @@ class DelayedProjectSynchronizerTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
 
-    assertTrue("xxx" !in storage.entities(ModuleEntity::class.java).map { it.name })
+    assertTrue("xxx" !in storage.entities<ModuleEntity>().map { it.name })
 
     saveToCache(projectData)
 
@@ -167,11 +169,11 @@ class DelayedProjectSynchronizerTest {
                                               configLocation, projectFile)
     serializers.checkConsistency(configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
 
-    assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
+    assertThat(projectData.storage.entities<ModuleEntity>().map {
       assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
     }.toList())
-      .containsAll(loadedProjectData.storage.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
+      .containsAll(loadedProjectData.storage.entities<ModuleEntity>().map { it.entitySource }.toList())
     assertThat(projectData.storage.entities(LibraryEntity::class.java).map {
       assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
@@ -202,11 +204,11 @@ class DelayedProjectSynchronizerTest {
                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                 fileInDirectorySourceNames = fileInDirectorySourceNames)
 
-    assertThat(originalBuilder.entities(ModuleEntity::class.java).map {
+    assertThat(originalBuilder.entities<ModuleEntity>().map {
       assertTrue(it.entitySource is JpsImportedEntitySource)
       it.entitySource
     }.toList())
-      .containsAll(builderForAnotherProject.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
+      .containsAll(builderForAnotherProject.entities<ModuleEntity>().map { it.entitySource }.toList())
     assertThat(originalBuilder.entities(LibraryEntity::class.java).map {
       assertTrue(it.entitySource is JpsImportedEntitySource)
       it.entitySource
@@ -234,7 +236,7 @@ class DelayedProjectSynchronizerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    DelayedProjectSynchronizer.backgroundPostStartupProjectLoading(project)
+    DelayedProjectSynchronizer.Util.backgroundPostStartupProjectLoading(project)
     return project
   }
 
@@ -251,7 +253,8 @@ class DelayedProjectSynchronizerTest {
     return EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(currentProject)
+      urlRelativizer = JpsProjectUrlRelativizer(currentProject),
+      ""
     )
   }
 

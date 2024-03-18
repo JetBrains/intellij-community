@@ -8,8 +8,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.options.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.inspectopedia.extractor.data.Inspection;
@@ -18,6 +17,7 @@ import com.intellij.inspectopedia.extractor.data.Plugin;
 import com.intellij.inspectopedia.extractor.data.Plugins;
 import com.intellij.inspectopedia.extractor.utils.HtmlUtils;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -97,6 +97,11 @@ final class InspectopediaExtractor implements ApplicationStarter {
 
       availablePlugins.put(IDE_NAME, new Plugin(IDE_NAME, IDE_NAME, IDE_VERSION));
 
+      final InspectionMetaInformationService
+        service = ApplicationManager.getApplication().getService(InspectionMetaInformationService.class);
+
+      final MetaInformationState inspectionsExtraState = service == null ? null : (MetaInformationState)service.getState(null);
+
       for (final ScopeToolState scopeToolState : scopeToolStates) {
 
         final InspectionToolWrapper<?, ?> wrapper = scopeToolState.getTool();
@@ -118,13 +123,16 @@ final class InspectopediaExtractor implements ApplicationStarter {
         catch (Throwable t) {
           LOG.info("Cannot create options panel " + wrapper.getShortName(), t);
         }
+        final MetaInformation metaInformation = inspectionsExtraState == null ? null : inspectionsExtraState.getInspections().get(wrapper.getID());
+        final List<Integer> cweIds = metaInformation == null ? null : metaInformation.getCweIds();
+
         final String language = wrapper.getLanguage();
         final String briefDescription = HtmlUtils.cleanupHtml(description[0], language);
         final String extendedDescription = description.length > 1 ? HtmlUtils.cleanupHtml(description[1], language) : null;
         final Inspection inspection = new Inspection(wrapper.getShortName(), wrapper.getDisplayName(), wrapper.getDefaultLevel().getName(),
                                                      language, briefDescription,
                                                      extendedDescription, Arrays.asList(wrapper.getGroupPath()), wrapper.applyToDialects(),
-                                                     wrapper.isCleanupTool(), wrapper.isEnabledByDefault(), panelInfo);
+                                                     wrapper.isCleanupTool(), wrapper.isEnabledByDefault(), panelInfo, cweIds);
 
         availablePlugins.get(pluginId).addInspection(inspection);
       }

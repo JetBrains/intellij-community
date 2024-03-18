@@ -1849,4 +1849,20 @@ ita<caret>
     }
   }
 
+  void "test show popup when completing property key"() {
+    myFixture.createFile('PropertyKey.properties', 'foo.bar = 1')
+    myFixture.configureByText 'a.java', """
+import org.jetbrains.annotations.PropertyKey;
+
+public class Foo {
+    public static void message(@PropertyKey(resourceBundle = "PropertyKey") String key) {}
+    
+    void test() {
+        message("fo<caret>");
+    }
+}
+"""
+    type 'o'
+    assert lookup
+  }
 }

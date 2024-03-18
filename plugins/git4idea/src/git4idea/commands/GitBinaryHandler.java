@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +21,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -87,8 +89,12 @@ public class GitBinaryHandler extends GitHandler {
   protected void waitForProcess() {
     int exitCode;
     try {
-      mySteamSemaphore.acquire(2);
-      myProcess.waitFor();
+      while (!mySteamSemaphore.tryAcquire(2, 50, TimeUnit.MILLISECONDS)) {
+        ProgressManager.checkCanceled();
+      }
+      while (!myProcess.waitFor(50, TimeUnit.MILLISECONDS)) {
+        ProgressManager.checkCanceled();
+      }
       exitCode = myProcess.exitValue();
     }
     catch (InterruptedException e) {

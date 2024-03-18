@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -49,6 +50,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
@@ -61,6 +63,7 @@ import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.exp.BlockTerminalPromotionService;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
@@ -74,6 +77,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+@Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
   private final static Key<TerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
   private static final Logger LOG = Logger.getInstance(TerminalToolWindowManager.class);
@@ -97,9 +101,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public TerminalToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = ApplicationManager.getApplication()
-      .getService(DefaultTerminalRunnerFactory.class)
-      .create(project);
+    myTerminalRunner = DefaultTerminalRunnerFactory.getInstance().create(project);
   }
 
   @Override
@@ -187,25 +189,44 @@ public final class TerminalToolWindowManager implements Disposable {
     return createNewSession(myTerminalRunner, null, true, true);
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
-    return createLocalShellWidget(workingDirectory, tabName, true, true);
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, true, true));
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus) {
-    return createLocalShellWidget(workingDirectory, tabName, requestFocus, true);
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, requestFocus, true));
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus,
                                                              boolean deferSessionStartUntilUiShown) {
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown));
+  }
+
+  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
+                                                   @Nullable @Nls String tabName,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
-    TerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
-    return (ShellTerminalWidget)Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
+    return createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
   }
 
   private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
@@ -320,7 +341,7 @@ public final class TerminalToolWindowManager implements Disposable {
       });
     }
     updateTabTitle(widget.getTerminalTitle(), toolWindow, content);
-    setupTerminalWidget(toolWindow, widget, content);
+    setupTerminalWidget(toolWindow, terminalRunner, widget, content);
 
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, widget);
@@ -338,6 +359,7 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   private void setupTerminalWidget(@NotNull ToolWindow toolWindow,
+                                   @NotNull AbstractTerminalRunner<?> runner,
                                    @NotNull TerminalWidget widget,
                                    @NotNull Content content) {
     MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
@@ -361,7 +383,25 @@ public final class TerminalToolWindowManager implements Disposable {
       }
 
       @Override
-      public void onTerminalStarted() { }
+      public void onTerminalStarted() {
+        boolean shouldShowPromotion = runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion();
+        boolean blockTerminalSupported = terminalWidget instanceof ShellTerminalWidget shellWidget &&
+                                         isBlockTerminalSupported(shellWidget.getStartupOptions());
+        // show the promotion only if the current runner allows it and block terminal can be used with the shell started now
+        if (shouldShowPromotion && blockTerminalSupported) {
+          BlockTerminalPromotionService.INSTANCE.showPromotionOnce(myProject, widget);
+        }
+      }
+
+      /** Checks whether new terminal can be used with the shell, started with the provided options */
+      private static boolean isBlockTerminalSupported(ShellStartupOptions options) {
+        if (options == null) return false;
+        List<String> command = options.getShellCommand();
+        String shellPath = ContainerUtil.getFirstItem(command);
+        if (shellPath == null) return false;
+        String shellName = PathUtil.getFileName(shellPath);
+        return LocalTerminalDirectRunner.isBlockTerminalSupported(shellName);
+      }
 
       @Override
       public void onPreviousTabSelected() {
@@ -470,7 +510,7 @@ public final class TerminalToolWindowManager implements Disposable {
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
       TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), startupOptions, true);
-      setupTerminalWidget(myToolWindow, newWidget, container.getContent());
+      setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, container.getContent());
       container.split(!vertically, newWidget);
     }
   }

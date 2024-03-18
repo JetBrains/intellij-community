@@ -24,7 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaImplementationTextSelectioner implements ImplementationTextSelectioner {
+public final class JavaImplementationTextSelectioner implements ImplementationTextSelectioner {
   private static final Logger LOG = Logger.getInstance(JavaImplementationTextSelectioner.class);
 
   @Override

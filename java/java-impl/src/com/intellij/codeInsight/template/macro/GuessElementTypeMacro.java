@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class GuessElementTypeMacro extends Macro {
+public final class GuessElementTypeMacro extends Macro {
   @Override
   public String getName() {
     return "guessElementType";

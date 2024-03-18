@@ -2,6 +2,8 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -46,7 +48,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
     return (hex.length() == 1 ? "\\x0" : "\\x") + hex;
   }
 
-  private static class ReplaceWithHexEscapeFix implements LocalQuickFix {
+  private static class ReplaceWithHexEscapeFix extends PsiUpdateModCommandQuickFix {
     private final String myHex;
 
     ReplaceWithHexEscapeFix(String hex) {
@@ -68,12 +70,11 @@ public class OctalEscapeInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof RegExpChar)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof RegExpChar regExpChar)) {
         return;
       }
-      RegExpReplacementUtil.replaceInContext(element, buildReplacementText((RegExpChar)element));
+      RegExpReplacementUtil.replaceInContext(element, buildReplacementText(regExpChar));
     }
   }
 }

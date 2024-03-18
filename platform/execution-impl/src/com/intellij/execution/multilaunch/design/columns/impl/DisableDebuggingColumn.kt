@@ -9,13 +9,12 @@ import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvider
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvidersContainer
-import java.awt.Component
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
+import com.intellij.util.ui.JBUI
+import java.awt.*
 import java.awt.event.ItemEvent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTable
+import javax.swing.*
 import javax.swing.table.DefaultTableCellRenderer
 
 class DisableDebuggingColumn : ExecutableTableColumn<Boolean>("") {
@@ -82,11 +81,11 @@ class DisableDebuggingColumn : ExecutableTableColumn<Boolean>("") {
     private val component: ColumnComponent,
     isSelected: Boolean,
     hasFocus: Boolean
-  ) : JPanel(GridBagLayout()), TooltipProvidersContainer {
+  ) : JPanel(BorderLayout()), TooltipProvidersContainer {
     init {
       background = UIUtil.getTableBackground(isSelected, hasFocus)
       foreground = UIUtil.getTableForeground(isSelected, hasFocus)
-      add(component, GridBagConstraints())
+      add(component, BorderLayout.CENTER)
     }
 
     override fun getTooltipProviders() = listOf(component)
@@ -96,8 +95,9 @@ class DisableDebuggingColumn : ExecutableTableColumn<Boolean>("") {
     value: Boolean,
     isSelected: Boolean,
     hasFocus: Boolean
-  ) : JBCheckBox(null, value), TooltipProvider {
+  ) : JCheckBox("", value), TooltipProvider {
     init {
+      horizontalAlignment = SwingConstants.CENTER
       background = UIUtil.getTableBackground(isSelected, hasFocus)
       foreground = UIUtil.getTableForeground(isSelected, hasFocus)
     }

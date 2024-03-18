@@ -75,32 +75,6 @@ public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsEle
     return new JpsElementCollectionImpl<>(this);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsElementCollectionImpl<E> modified) {
-    Set<E> toRemove = new LinkedHashSet<>(myElements);
-    List<E> toAdd = new ArrayList<>();
-    final Map<E, E> copyToOriginal = modified.myCopyToOriginal;
-    for (E element : modified.myElements) {
-      final E original = copyToOriginal != null ? copyToOriginal.get(element) : null;
-      if (original != null) {
-        //noinspection unchecked
-        ((BulkModificationSupport<E>)original.getBulkModificationSupport()).applyChanges(element);
-        toRemove.remove(original);
-      }
-      else {
-        //noinspection unchecked
-        final E copy = (E)element.getBulkModificationSupport().createCopy();
-        toAdd.add(copy);
-      }
-    }
-    for (E e : toRemove) {
-      removeChild(e);
-    }
-    for (E e : toAdd) {
-      addChild(e);
-    }
-  }
-
   private final class JpsElementIterable<X extends JpsTypedElement<P>, P extends JpsElement> implements Iterable<X> {
     private final JpsElementType<? extends JpsElement> myType;
 

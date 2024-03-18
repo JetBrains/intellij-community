@@ -22,7 +22,7 @@ import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormally;
 
-public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandAction {
+public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandAction {
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
@@ -33,6 +33,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiElement element = context.findLeaf();
     if (element == null) return null;
     PsiSwitchLabelStatementBase labelStatement = findLabelStatement(context, element);
@@ -145,7 +146,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
       }
     }
     if (result != null) {
-      updater.moveTo(result);
+      updater.moveCaretTo(result);
     }
   }
 

@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.FileTypeUtils;
 
-public class JavaVetoRenameCondition implements Condition<PsiElement> {
+public final class JavaVetoRenameCondition implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement element) {
     if (element instanceof LightMethod) {

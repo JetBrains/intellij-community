@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -24,12 +25,13 @@ class PresentationAssistantQuickSettingsGroup: DefaultActionGroup(), DumbAware {
 internal class PresentationAssistantQuickSettingsSizeGroup: DefaultActionGroup(IdeBundle.message("presentation.assistant.quick.settings.size.group"), PresentationAssistantPopupSize.entries.map {
   PresentationAssistantQuickSettingsSize(it)
 }), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isPopup(): Boolean = true
+  init {
+    templatePresentation.isPopupGroup = true
+  }
 }
 
 internal class PresentationAssistantQuickSettingsSize(val size: PresentationAssistantPopupSize): DumbAwareToggleAction(size.displayName) {
-  private val configuration = PresentationAssistant.INSTANCE.configuration
+  private val configuration = service<PresentationAssistant>().configuration
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -37,8 +39,9 @@ internal class PresentationAssistantQuickSettingsSize(val size: PresentationAssi
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      configuration.popupSize = size.value
-      PresentationAssistant.INSTANCE.updatePresenter()
+      val presentationAssistant = service<PresentationAssistant>()
+      presentationAssistant.configuration.popupSize = size.value
+      presentationAssistant.updatePresenter()
     }
   }
 }
@@ -47,19 +50,20 @@ internal class PresentationAssistantQuickSettingsPositionGroup: DefaultActionGro
   Supplier { IdeBundle.message("presentation.assistant.quick.settings.position.group") },
   PresentationAssistantPopupAlignment.entries.map { PresentationAssistantQuickSettingsPosition(it) }
 ), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isPopup(): Boolean = true
+  init {
+    templatePresentation.isPopupGroup = true
+  }
 }
 
 internal class PresentationAssistantQuickSettingsPosition(val position: PresentationAssistantPopupAlignment): DumbAwareToggleAction(position.displayName) {
-  private val configuration = PresentationAssistant.INSTANCE.configuration
+  private val configuration = service<PresentationAssistant>().configuration
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun isSelected(e: AnActionEvent): Boolean =
     configuration.alignmentIfNoDelta?.let {
       it.y == position.y && it.x == position.x
-    } ?: false
+    } == true
 
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -67,20 +71,21 @@ internal class PresentationAssistantQuickSettingsPosition(val position: Presenta
       configuration.verticalAlignment = position.y
       configuration.horizontalAlignment = position.x
       configuration.resetDelta()
-      PresentationAssistant.INSTANCE.updatePresenter()
+      service<PresentationAssistant>().updatePresenter()
     }
   }
 }
 
 internal class PresentationAssistantQuickSettingsThemeGroup: DefaultActionGroup(IdeBundle.message("presentation.assistant.quick.settings.theme.group"), PresentationAssistantTheme.entries.map {
   PresentationAssistantQuickSettingsTheme(it)
-}), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isPopup(): Boolean = true
+}) {
+  init {
+    templatePresentation.isPopupGroup = true
+  }
 }
 
 internal class PresentationAssistantQuickSettingsTheme(val theme: PresentationAssistantTheme): DumbAwareToggleAction(theme.displayName) {
-  private val configuration = PresentationAssistant.INSTANCE.configuration
+  private val configuration = service<PresentationAssistant>().configuration
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -89,7 +94,7 @@ internal class PresentationAssistantQuickSettingsTheme(val theme: PresentationAs
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
       configuration.theme = theme.value
-      PresentationAssistant.INSTANCE.updatePresenter()
+      service<PresentationAssistant>().updatePresenter()
     }
   }
 }

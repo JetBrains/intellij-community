@@ -20,6 +20,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,8 +48,9 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myAnonOrLocalClass = anonOrLocalClass;
     myShowCanBeStatic = showCanBeStatic;
 
-    setTitle(anonOrLocalClass instanceof PsiAnonymousClass ? JavaRefactoringBundle.message("anonymousToInner.refactoring.name") :
-             JavaRefactoringBundle.message("localToInner.refactoring.name"));
+    setTitle(anonOrLocalClass instanceof PsiAnonymousClass
+             ? JavaRefactoringBundle.message("anonymousToInner.refactoring.name")
+             : JavaRefactoringBundle.message("localToInner.refactoring.name"));
 
     for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
@@ -230,5 +232,10 @@ class AnonymousToInnerDialog extends DialogWrapper{
   @Override
   protected String getHelpId() {
     return HelpID.ANONYMOUS_TO_INNER;
+  }
+
+  @Override
+  protected @Nullable String getDimensionServiceKey() {
+    return "anonymous.to.inner.dialog";
   }
 }

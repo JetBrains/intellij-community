@@ -14,24 +14,28 @@ sealed interface EmbeddingIndexingTask {
     private val callback: () -> Unit = {}
   ) : EmbeddingIndexingTask {
     override suspend fun run(index: DiskSynchronizedEmbeddingSearchIndex) {
+      if (!EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return
       val embeddings = generateEmbeddings(texts) ?: return
       index.addEntries(ids zip embeddings)
       callback()
     }
   }
 
+  @Suppress("unused")
   class AddDiskSynchronized(
     private val ids: List<String>,
     private val texts: List<String>,
     private val callback: () -> Unit = {}
   ) : EmbeddingIndexingTask {
     override suspend fun run(index: DiskSynchronizedEmbeddingSearchIndex) {
+      if (!EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return
       val embeddings = generateEmbeddings(texts) ?: return
       (ids zip embeddings).forEach { index.addEntry(it.first, it.second) }
       callback()
     }
   }
 
+  @Suppress("unused")
   class DeleteDiskSynchronized(
     private val ids: List<String>,
     private val callback: () -> Unit = {}
@@ -42,6 +46,7 @@ sealed interface EmbeddingIndexingTask {
     }
   }
 
+  @Suppress("unused")
   class RenameDiskSynchronized(
     private val oldId: String,
     private val newId: String,

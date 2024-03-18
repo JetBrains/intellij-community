@@ -124,6 +124,6 @@ class Test8 {
 
   void other() {
     System.out.println(s.hashCode());
-    System.out.println(s2.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException' (unknown nullability)">hashCode</warning>());
+    System.out.println(s2.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
   }
 }

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> {
+public final class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> {
   private static final JavaShortClassNameIndex ourInstance = new JavaShortClassNameIndex();
 
   public static JavaShortClassNameIndex getInstance() {

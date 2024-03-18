@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
@@ -41,7 +40,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffType;
@@ -149,13 +147,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   public static void showPopupAt(@NotNull Editor editor,
                                  @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
-                                 @NotNull CheckedDisposable childDisposable) {
+                                 @NotNull Disposable popupDisposable) {
     LightweightHint hint = new LightweightHint(panel);
-    Disposer.register(childDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
-    HintListener closeListener = __ -> {
-      if (!childDisposable.isDisposed()) Disposer.dispose(childDisposable);
-    };
-    hint.addHintListener(closeListener);
+    Disposer.register(popupDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
+    hint.addHintListener(e -> Disposer.dispose(popupDisposable));
     hint.setForceLightweightPopup(true);
 
     int line = editor.getCaretModel().getLogicalPosition().line;
@@ -172,7 +167,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                 HintManager.HIDE_BY_ESCAPE;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
-    ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
+    ApplicationManager.getApplication().getMessageBus().connect(popupDisposable)
       .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
         @Override
         public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
@@ -186,7 +181,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       });
 
     if (!hint.isVisible()) {
-      closeListener.hintHidden(new EventObject(hint));
+      Disposer.dispose(popupDisposable);
     }
   }
 

@@ -2,9 +2,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -18,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
@@ -92,7 +92,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private JPanel myContentPane;
   private TableView<Item> myTable;
-  private final AnActionButton myRemoveButton;
+  private final AnAction myRemoveButton;
   private JLabel myMessageLabel;
   private HoverHyperlinkLabel myFixLink;
   private JPanel myTablePanel;
@@ -175,7 +175,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myFixLink = new HoverHyperlinkLabel(null);
   }
 
-  protected ValidatingTableEditor(AnActionButton @Nullable ... extraButtons) {
+  protected ValidatingTableEditor(AnAction @Nullable ... extraButtons) {
     ToolbarDecorator decorator =
       ToolbarDecorator.createDecorator(myTable).disableRemoveAction().disableUpAction().disableDownAction();
     decorator.setAddAction(new AnActionButtonRunnable() {
@@ -187,33 +187,32 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     });
 
 
-    myRemoveButton = new AnActionButton(ApplicationBundle.message("button.remove"), IconUtil.getRemoveIcon()) {
+    myRemoveButton = new DumbAwareAction(ApplicationBundle.message("button.remove"), null, IconUtil.getRemoveIcon()) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(myTable.getSelectedRow() != -1);
+      }
+
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeSelected();
       }
+
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
       }
     };
-    myRemoveButton.setShortcut(CustomShortcutSet.fromString("alt DELETE")); //NON-NLS
+    myRemoveButton.setShortcutSet(CustomShortcutSet.fromString("alt DELETE"));
     decorator.addExtraAction(myRemoveButton);
 
     if (extraButtons != null) {
-      for (AnActionButton extraButton : extraButtons) {
+      for (AnAction extraButton : extraButtons) {
         decorator.addExtraAction(extraButton);
       }
     }
 
     myTablePanel.add(decorator.createPanel(), BorderLayout.CENTER);
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
 
     myTable.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
     myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
@@ -332,15 +331,10 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       }
       getTableModel().setItems(new ArrayList<>(items));
     }
-    updateButtons();
   }
 
   public void setTableHeader(JTableHeader header) {
     myTable.setTableHeader(header);
-  }
-
-  private void updateButtons() {
-    myRemoveButton.setEnabled(myTable.getSelectedRow() != -1);
   }
 
   public void updateMessage(int index, @Nullable Item override) {

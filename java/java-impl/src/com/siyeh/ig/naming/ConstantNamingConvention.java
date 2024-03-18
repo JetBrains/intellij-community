@@ -22,7 +22,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 
-public class ConstantNamingConvention extends NamingConvention<PsiField> {
+public final class ConstantNamingConvention extends NamingConvention<PsiField> {
 
   static final @NonNls String CONSTANT_NAMING_CONVENTION_SHORT_NAME = "ConstantNamingConvention";
 

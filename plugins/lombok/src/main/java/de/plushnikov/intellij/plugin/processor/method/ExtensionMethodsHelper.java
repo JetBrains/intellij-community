@@ -11,7 +11,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokExtensionMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -126,8 +126,7 @@ public final class ExtensionMethodsHelper {
     PsiSubstitutor substitutor = result.getSubstitutor();
 
     final LombokExtensionMethod lightMethod = new LombokExtensionMethod(staticMethod);
-    lightMethod
-      .addModifiers(PsiModifier.PUBLIC);
+    lightMethod.addModifiers(PsiModifier.PUBLIC);
     PsiParameter @NotNull [] parameters = staticMethod.getParameterList().getParameters();
 
     if (targetClass.isInterface()) {
@@ -155,32 +154,5 @@ public final class ExtensionMethodsHelper {
     lightMethod.setNavigationElement(staticMethod);
     lightMethod.setContainingClass(targetClass);
     return lightMethod;
-  }
-
-  private static class LombokExtensionMethod extends LombokLightMethodBuilder implements PsiExtensionMethod {
-    private final @NotNull PsiMethod myStaticMethod;
-
-    LombokExtensionMethod(@NotNull PsiMethod staticMethod) {
-      super(staticMethod.getManager(), staticMethod.getName());
-      myStaticMethod = staticMethod;
-    }
-
-    @Override
-    public boolean isEquivalentTo(final PsiElement another) { return myStaticMethod.isEquivalentTo(another); }
-
-    @Override
-    public @NotNull PsiMethod getTargetMethod() {
-      return myStaticMethod;
-    }
-
-    @Override
-    public @Nullable PsiParameter getTargetReceiverParameter() {
-      return myStaticMethod.getParameterList().getParameter(0);
-    }
-
-    @Override
-    public @Nullable PsiParameter getTargetParameter(int index) {
-      return myStaticMethod.getParameterList().getParameter(index + 1);
-    }
   }
 }

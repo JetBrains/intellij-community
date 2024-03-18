@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -11,18 +10,17 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -37,6 +35,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -51,8 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
   @Nullable private volatile QualifiedName myQualifiedName;
@@ -62,7 +59,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub) {
-    super(stub, PyElementTypes.TARGET_EXPRESSION);
+    super(stub, PyStubElementTypes.TARGET_EXPRESSION);
   }
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub, IStubElementType nodeType) {
@@ -81,31 +78,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (stub != null) {
       return stub.getName();
     }
-    ASTNode node = getNameElement();
-    return node != null ? node.getText() : null;
-  }
-
-  @Override
-  public int getTextOffset() {
-    final ASTNode nameElement = getNameElement();
-    return nameElement != null ? nameElement.getStartOffset() : getTextRange().getStartOffset();
-  }
-
-  @Override
-  @Nullable
-  public ASTNode getNameElement() {
-    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-  }
-
-  @Override
-  public PsiElement getNameIdentifier() {
-    final ASTNode nameElement = getNameElement();
-    return nameElement == null ? null : nameElement.getPsi();
-  }
-
-  @Override
-  public String getReferencedName() {
-    return getName();
+    return PyTargetExpression.super.getName();
   }
 
   @Override
@@ -215,31 +188,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Nullable
   @Override
-  public PyAnnotation getAnnotation() {
-    PsiElement topTarget = this;
-    while (topTarget.getParent() instanceof PyParenthesizedExpression) {
-      topTarget = topTarget.getParent();
-    }
-    final PsiElement parent = topTarget.getParent();
-    if (parent != null) {
-      final PyAssignmentStatement assignment = as(parent, PyAssignmentStatement.class);
-      if (assignment != null) {
-        final PyExpression[] targets = assignment.getRawTargets();
-        if (targets.length == 1 && targets[0] == topTarget) {
-          return assignment.getAnnotation();
-        }
-      }
-      else if (parent instanceof PyTypeDeclarationStatement) {
-        return ((PyTypeDeclarationStatement)parent).getAnnotation();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String getAnnotationValue() {
-    return getAnnotationContentFromStubOrPsi(this);
+    final PyAnnotationOwnerStub stub = getStub();
+    if (stub != null) {
+      return stub.getAnnotation();
+    }
+    return PyTargetExpression.super.getAnnotationValue();
   }
 
   @Nullable
@@ -493,12 +447,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Override
-  public PyExpression getQualifier() {
-    ASTNode qualifier = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
-    return qualifier != null ? (PyExpression)qualifier.getPsi() : null;
-  }
-
   @Nullable
   @Override
   public QualifiedName asQualifiedName() {
@@ -553,38 +501,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
       return Collections.emptyList();
     }
-  }
-
-  @Nullable
-  @Override
-  public PyExpression findAssignedValue() {
-    PyPsiUtils.assertValid(this);
-    return CachedValuesManager.getCachedValue(this,
-                                              () -> Result
-                                    .create(findAssignedValueInternal(), PsiModificationTracker.MODIFICATION_COUNT));
-  }
-
-  @Nullable
-  private PyExpression findAssignedValueInternal() {
-    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
-    if (assignment != null) {
-      final List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-      for (final Pair<PyExpression, PyExpression> pair : mapping) {
-        PyExpression assigned_to = pair.getFirst();
-        if (assigned_to == this) {
-          return pair.getSecond();
-        }
-      }
-    }
-    final PyImportElement importElement = PsiTreeUtil.getParentOfType(this, PyImportElement.class);
-    if (importElement != null) {
-      return importElement.getImportReferenceExpression();
-    }
-    final PyAssignmentExpression assignmentExpression = as(getParent(), PyAssignmentExpression.class);
-    if (assignmentExpression != null) {
-      return assignmentExpression.getAssignedValue();
-    }
-    return null;
   }
 
   @Nullable
@@ -669,14 +585,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return null;
     }
 
-    final PsiElement parent = PsiTreeUtil.getParentOfType(this, PyFunction.class, PyClass.class);
-    if (parent instanceof PyClass) {
-      return (PyClass)parent;
-    }
-    if (parent instanceof PyFunction) {
-      return ((PyFunction)parent).getContainingClass();
-    }
-    return null;
+    return PyTargetExpression.super.getContainingClass();
   }
 
   @Override
@@ -691,29 +600,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (stub != null) {
       return stub.getDocString();
     }
-    return DocStringUtil.getDocStringValue(this);
+    return PyTargetExpression.super.getDocStringValue();
   }
 
   @Nullable
   @Override
   public StructuredDocString getStructuredDocString() {
     return DocStringUtil.getStructuredDocString(this);
-  }
-
-  @Nullable
-  @Override
-  public PyStringLiteralExpression getDocStringExpression() {
-    final PsiElement parent = getParent();
-    if (parent instanceof PyAssignmentStatement || parent instanceof PyTypeDeclarationStatement) {
-      final PsiElement nextSibling = PyPsiUtils.getNextNonCommentSibling(parent, true);
-      if (nextSibling instanceof PyExpressionStatement) {
-        final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
-        if (expression instanceof PyStringLiteralExpression) {
-          return (PyStringLiteralExpression)expression;
-        }
-      }
-    }
-    return null;
   }
 
   @Override
@@ -726,35 +619,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
-  }
-
-  @Nullable
-  @Override
-  public PsiComment getTypeComment() {
-    PsiComment comment = null;
-    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
-    if (assignment != null) {
-      final PyExpression assignedValue = assignment.getAssignedValue();
-      if (assignedValue != null && !PsiTreeUtil.isAncestor(assignedValue, this, false)) {
-        comment = as(PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(assignedValue), PsiComment.class);
-      }
-    }
-    else {
-      PyStatementListContainer forOrWith = null;
-      final PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
-      if (forPart != null && PsiTreeUtil.isAncestor(forPart.getTarget(), this, false)) {
-        forOrWith = forPart;
-      }
-      final PyWithItem withPart = PsiTreeUtil.getParentOfType(this, PyWithItem.class);
-      if (withPart != null && PsiTreeUtil.isAncestor(withPart.getTarget(), this, false)) {
-        forOrWith = as(withPart.getParent(), PyWithStatement.class);
-      }
-
-      if (forOrWith != null) {
-        comment = PyUtil.getCommentOnHeaderLine(forOrWith);
-      }
-    }
-    return comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null ? comment : null;
   }
 
   @Nullable

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableClassInSecureContextMerger extends InspectionElementsMerger {
+public final class SerializableClassInSecureContextMerger extends InspectionElementsMerger {
   @NotNull
   @Override
   public String getMergedToolName() {

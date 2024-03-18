@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -121,7 +121,7 @@ public final class FilePatternPackageSet extends PatternBasedPackageSet {
 
   @Override
   public @NotNull PackageSet createCopy() {
-    return new FilePatternPackageSet(myModulePatternText, myPathPattern);
+    return new FilePatternPackageSet(myModulePatternText, myPathPattern, myProjectFiles);
   }
 
   @Override
@@ -137,9 +137,7 @@ public final class FilePatternPackageSet extends PatternBasedPackageSet {
       buf.append("[").append(myModulePatternText).append("]");
     }
 
-    if (buf.length() > 0) {
-      buf.append(':');
-    }
+    buf.append(':');
 
     buf.append(myPathPattern);
     return buf.toString();

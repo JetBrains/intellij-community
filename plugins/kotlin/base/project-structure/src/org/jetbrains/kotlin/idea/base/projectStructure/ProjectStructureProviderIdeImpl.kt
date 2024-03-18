@@ -6,24 +6,19 @@ import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
-import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.analysis.project.structure.impl.KtCodeFragmentModuleImpl
+import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl.Companion.getKtModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
-import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -36,6 +31,16 @@ interface KtModuleFactory {
     }
 
     fun createModule(moduleInfo: ModuleInfo): KtModule?
+}
+
+@ApiStatus.Internal
+interface ProjectStructureInsightsProvider {
+    companion object {
+        val EP_NAME: ExtensionPointName<ProjectStructureInsightsProvider> =
+            ExtensionPointName.create("org.jetbrains.kotlin.projectStructureInsightsProvider")
+    }
+
+    fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean
 }
 
 @ApiStatus.Internal
@@ -70,19 +75,87 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
 
             // KTIJ-27159: to distinguish between libraries with the same content
             is KtSourceModule -> contextualModule
+
+            // KTIJ-27977: a JAR might be shared between several libraries
+            is KtLibraryModule, is KtLibrarySourceModule -> contextualModule
+
             else -> null
         }
 
-        return if (anchorElement != null) {
-            cachedKtModule(anchorElement, crucialContextualModule)
-        } else {
-            calculateKtModule(element, crucialContextualModule)
+        if (anchorElement != null) {
+            val containingFile = anchorElement.containingFile
+            if (containingFile !is KtFile || containingFile.danglingFileResolutionMode == null) {
+                return cachedKtModule(anchorElement, crucialContextualModule)
+            }
         }
+
+        return computeModule(element, crucialContextualModule)
+    }
+
+    override fun getNotUnderContentRootModule(project: Project): KtNotUnderContentRootModule {
+        val moduleInfo = NotUnderContentRootModuleInfo(project, file = null)
+        return NotUnderContentRootModuleByModuleInfo(moduleInfo)
+    }
+
+    private fun isInSpecialSrcDir(psiElement: PsiElement): Boolean =
+        ProjectStructureInsightsProvider.EP_NAME.extensionList.any { it.isInSpecialSrcDirectory(psiElement) }
+
+    fun <T> computeModule(
+        psiElement: PsiElement,
+        contextualModule: T? = null
+    ): KtModule where T : KtModule, T : KtModuleByModuleInfoBase {
+        val containingFile = psiElement.containingFile
+        val virtualFile = containingFile?.virtualFile
+
+        if (containingFile != null) {
+            computeSpecialModule(containingFile)?.let { return it }
+        }
+
+        val moduleInfo = computeModuleInfoForOrdinaryModule(psiElement, contextualModule, virtualFile)
+
+        if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
+            val originalFile = getOutsiderFileOrigin(project, virtualFile)
+            return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
+        }
+
+        return getKtModuleByModuleInfo(moduleInfo)
+    }
+
+    private fun <T> computeModuleInfoForOrdinaryModule(
+        psiElement: PsiElement,
+        contextualModule: T?,
+        virtualFile: VirtualFile?
+    ): ModuleInfo where T : KtModule, T : KtModuleByModuleInfoBase {
+        val infoProvider = ModuleInfoProvider.getInstance(project)
+
+        val config = ModuleInfoProvider.Configuration(
+            createSourceLibraryInfoForLibraryBinaries = false,
+            preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) &&
+                    (!RootKindFilter.projectSources.matches(psiElement) || this.isInSpecialSrcDir(psiElement)),
+            contextualModuleInfo = contextualModule?.ideaModuleInfo,
+        )
+
+        val baseModuleInfo = infoProvider.firstOrNull(psiElement, config)
+        if (baseModuleInfo != null) {
+            return baseModuleInfo
+        }
+
+        if (contextualModule != null) {
+            val noContextConfig = config.copy(contextualModuleInfo = null)
+            val noContextModuleInfo = infoProvider.firstOrNull(psiElement, noContextConfig)
+            if (noContextModuleInfo != null) {
+                return noContextModuleInfo
+            }
+        }
+
+        return NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
     }
 
     companion object {
         // TODO maybe introduce some cache?
-        fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule = createKtModuleByModuleInfo(moduleInfo)
+        fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
+            return createKtModuleByModuleInfo(moduleInfo)
+        }
     }
 }
 
@@ -94,7 +167,8 @@ private fun <T> cachedKtModule(
         val project = anchorElement.project
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KtModule> { context ->
-                calculateKtModule(anchorElement, context)
+                val projectStructureProvider = ProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
+                projectStructureProvider.computeModule(anchorElement, context)
             },
             ProjectRootModificationTracker.getInstance(project),
             JavaLibraryModificationTracker.getInstance(project),
@@ -109,7 +183,7 @@ private fun <T> cachedKtModule(
 }
 
 private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
-    for (extension in KtModuleFactory.EP_NAME.extensions) {
+    for (extension in KtModuleFactory.EP_NAME.extensionList) {
         extension.action()
     }
 }
@@ -129,34 +203,5 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 }
 
-private fun <T> calculateKtModule(
-    psiElement: PsiElement,
-    contextualModule: T? = null
-): KtModule where T : KtModule, T : KtModuleByModuleInfoBase {
-    val containingFile = psiElement.containingFile
-    val virtualFile = containingFile?.virtualFile
-    val project = psiElement.project
-    val config = ModuleInfoProvider.Configuration(
-        createSourceLibraryInfoForLibraryBinaries = false,
-        preferModulesFromExtensions = (contextualModule is KtScriptModule) || (virtualFile?.nameSequence?.endsWith(".kts") == true),
-        contextualModuleInfo = contextualModule?.ideaModuleInfo,
-    )
-
-    val infoProvider = ModuleInfoProvider.getInstance(project)
-    val moduleInfo = infoProvider.firstOrNull(psiElement, config)
-        ?: contextualModule?.let { config.copy(contextualModuleInfo = null) }?.let { infoProvider.firstOrNull(psiElement, it) }
-        ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
-
-    if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
-        val originalFile = getOutsiderFileOrigin(project, virtualFile)
-        return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
-    }
-
-    val moduleByModuleInfo = getKtModuleByModuleInfo(moduleInfo)
-
-    if (containingFile is KtCodeFragment) {
-        return KtCodeFragmentModuleImpl(containingFile, moduleByModuleInfo)
-    }
-
-    return moduleByModuleInfo
-}
+private fun <T> isScriptOrItsDependency(contextualModule: T?, virtualFile: VirtualFile?) where T : KtModule, T : KtModuleByModuleInfoBase =
+    (contextualModule is KtScriptModule) || (virtualFile?.nameSequence?.endsWith(STD_SCRIPT_EXT) == true)

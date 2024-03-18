@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaDocTokenType;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefinitionStrategy {
+public final class JavaWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefinitionStrategy {
   public JavaWhiteSpaceFormattingStrategy() {
     // Java also recognizes '\f' AKA form-feed as a white space character.
     super('\u000c');

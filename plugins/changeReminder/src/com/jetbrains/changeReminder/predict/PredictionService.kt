@@ -2,6 +2,7 @@
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing.haveEqualElements
@@ -24,6 +25,7 @@ import git4idea.history.subscribeForGitHistoryTraverserCreation
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 
+@Service(Service.Level.PROJECT)
 internal class PredictionService(val project: Project) : Disposable {
   private var isDisposed = false
 

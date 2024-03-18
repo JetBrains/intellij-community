@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
@@ -48,6 +48,7 @@ class TotalLatencyMetric : LatencyMetric("Total Latency") {
 class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetric("Mean Latency") {
   override val valueType = MetricValueType.DOUBLE
   override val description: String = "Average latency by all invocations"
+  override val showByDefault: Boolean = true
 
   override fun compute(sample: List<Double>): Double = sample.average()
 

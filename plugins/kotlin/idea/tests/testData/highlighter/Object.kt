@@ -1,3 +1,4 @@
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 package testing
 
 object <symbolName textAttributesKey="KOTLIN_OBJECT">O</symbolName> {

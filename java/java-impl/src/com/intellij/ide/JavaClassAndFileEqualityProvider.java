@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
+public final class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
 
   @Override
   protected boolean areEqual(@NotNull SearchEverywhereFoundElementInfo newItemInfo,

@@ -1,8 +1,5 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
-                    interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider"
                     interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"
                     dynamic="true"/>
@@ -48,5 +45,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
                     serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
+
+    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
   </extensions>
 </idea-plugin>

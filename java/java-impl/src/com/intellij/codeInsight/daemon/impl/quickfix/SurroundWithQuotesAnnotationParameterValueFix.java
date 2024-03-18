@@ -42,7 +42,7 @@ public class SurroundWithQuotesAnnotationParameterValueFix extends PsiUpdateModC
     newText = "\"" + newText + "\"";
     PsiElement newToken = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(newText, null);
     final PsiElement newElement = value.replace(newToken);
-    updater.moveTo(newElement.getTextOffset() + newElement.getTextLength());
+    updater.moveCaretTo(newElement.getTextOffset() + newElement.getTextLength());
   }
 
   @NotNull

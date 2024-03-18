@@ -1,17 +1,14 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.NOTIFICATION_GROUP
@@ -26,13 +23,14 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
   override fun installPlugins(pluginsToInstall: List<PluginId>) {
     if (pluginsToInstall.isEmpty())
       return
-    ApplicationManager.getApplication().invokeAndWait {
-      val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall) { pluginId, indicator -> createDownloader(pluginId, indicator) }
-      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          prepareRunnable, SettingsSyncBundle.message("installing.plugins.indicator"), true, null)) {
+    val pluginInstallation = object : Task.Backgroundable(null, SettingsSyncBundle.message("installing.plugins.indicator"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall, indicator) { pluginId, indicator -> createDownloader(pluginId, indicator) }
+        prepareRunnable.run()
         installCollected(prepareRunnable.getInstallers())
       }
     }
+    ProgressManager.getInstance().run(pluginInstallation)
   }
 
   private fun installCollected(installers: List<PluginDownloader>) {
@@ -87,6 +85,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
 
   internal class PrepareInstallationRunnable(
     private val pluginIds: List<PluginId>,
+    private val indicator: ProgressIndicator,
     val dwnldPreparer: (pluginId: PluginId, indicator: ProgressIndicator) -> PluginDownloader?
   ) : Runnable {
 
@@ -94,7 +93,6 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
 
     @RequiresBackgroundThread
     override fun run() {
-      val indicator = ProgressManager.getInstance().progressIndicator
       pluginIds.forEach {
         prepareToInstall(it, indicator)
         indicator.checkCanceled()

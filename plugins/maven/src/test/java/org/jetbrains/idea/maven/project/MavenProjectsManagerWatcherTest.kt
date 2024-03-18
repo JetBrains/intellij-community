@@ -17,9 +17,8 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
-  private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
 
-  override fun runInDispatchThread() = false
+  private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
 
   override fun setUp() = runBlocking {
     super.setUp()
@@ -69,7 +68,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   fun testSaveDocumentChangesBeforeAutoImport() = runBlocking {
     assertNoPendingProjectForReload()
     assertModules("project")
-    replaceContent(myProjectPom, createPomXml(
+    replaceContent(projectPom, createPomXml(
       """
             ${createPomContent("test", "project")}<packaging>pom</packaging>
             <modules><module>module</module></modules>
@@ -77,7 +76,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     createModulePom("module", createPomContent("test", "module"))
     scheduleProjectImportAndWait()
     assertModules("project", "module")
-    replaceDocumentString(myProjectPom, "<modules><module>module</module></modules>", "")
+    replaceDocumentString(projectPom, "<modules><module>module</module></modules>", "")
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
@@ -149,18 +148,15 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
                                  </dependencies>
                              </profile>
                          </profiles>
-                       
                        """.trimIndent())
     scheduleProjectImportAndWait()
     assertRootProjects("project")
     assertModules("project")
-    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit4"),
-                                                                 listOf("junit5"))
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit4"), listOf("junit5"))
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWait()
     assertMavenProjectDependencies("test:project:1", "junit:junit:4.12")
-    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit5"),
-                                                                 listOf("junit4"))
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit5"), listOf("junit4"))
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWait()
     assertMavenProjectDependencies("test:project:1", "org.junit.jupiter:junit-jupiter-engine:5.9.1")
@@ -180,7 +176,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun replaceContent(file: VirtualFile, content: String) {
-    WriteCommandAction.runWriteCommandAction(myProject, ThrowableComputable<Any?, IOException?> {
+    WriteCommandAction.runWriteCommandAction(project, ThrowableComputable<Any?, IOException?> {
       VfsUtil.saveText(file, content)
       null
     } as ThrowableComputable<*, IOException?>)
@@ -188,7 +184,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   private fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
     val fileDocumentManager = FileDocumentManager.getInstance()
-    WriteCommandAction.runWriteCommandAction(myProject) {
+    WriteCommandAction.runWriteCommandAction(project) {
       val document = fileDocumentManager.getDocument(file!!)
       val text = document!!.text
       val startOffset = text.indexOf(oldString)

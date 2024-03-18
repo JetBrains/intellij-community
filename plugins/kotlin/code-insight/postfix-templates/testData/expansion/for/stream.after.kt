@@ -1,7 +1,7 @@
 import java.util.stream.Stream
 
 fun test(stream: Stream<String>) {
-    for (item in stream) {
-        
+    for (<selection>item<caret></selection> in stream) {
+
     }
 }

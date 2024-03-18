@@ -23,7 +23,7 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 </properties>
 """
         )
-        TestCase.assertTrue(myProject.modules.none { it.hasKotlinPluginEnabled() })
+        TestCase.assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
     }
 
     @Test
@@ -48,7 +48,7 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 </dependencies>
 """
         )
-        TestCase.assertTrue(myProject.modules.none { it.hasKotlinPluginEnabled() })
+        TestCase.assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
     }
 
     @Test
@@ -122,7 +122,7 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 </dependencies>
 """
         )
-        TestCase.assertEquals(myProject.modules.count { it.hasKotlinPluginEnabled() }, 1)
+        TestCase.assertEquals(project.modules.count { it.hasKotlinPluginEnabled() }, 1)
     }
 
     @Test
@@ -212,7 +212,7 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 
         importProjectsAsync(projectPom, submodulePom)
 
-        val kotlinModules = myProject.modules.filter { it.hasKotlinPluginEnabled() }
+        val kotlinModules = project.modules.filter { it.hasKotlinPluginEnabled() }
         TestCase.assertEquals(1, kotlinModules.size)
         TestCase.assertEquals("submodule", kotlinModules.first().name)
     }
@@ -323,7 +323,7 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 
         importProjectsAsync(projectPom, submoduleAPom, submoduleBPom)
 
-        val kotlinModules = myProject.modules.filter { it.hasKotlinPluginEnabled() }
+        val kotlinModules = project.modules.filter { it.hasKotlinPluginEnabled() }
         TestCase.assertEquals(1, kotlinModules.size)
         TestCase.assertEquals("submoduleA", kotlinModules.first().name)
     }

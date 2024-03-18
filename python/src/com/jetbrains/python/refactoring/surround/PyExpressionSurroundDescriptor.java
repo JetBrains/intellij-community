@@ -10,7 +10,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.surround.surrounders.expressions.*;
 import org.jetbrains.annotations.NotNull;
 
-public class PyExpressionSurroundDescriptor implements SurroundDescriptor {
+public final class PyExpressionSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] SURROUNDERS = {new PyWithParenthesesSurrounder(), new PyIfExpressionSurrounder(),
     new PyWhileExpressionSurrounder(), new PyIsNoneSurrounder(), new PyIsNotNoneSurrounder(), new PyLenExpressionStatementSurrounder()};
 

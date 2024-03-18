@@ -6,6 +6,7 @@ package com.intellij.serviceContainer
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.ThreeState
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
 import org.picocontainer.ComponentAdapter
@@ -21,7 +22,6 @@ import kotlin.Comparator
 import kotlin.Pair
 import kotlin.RuntimeException
 import kotlin.Suppress
-import kotlin.check
 import kotlin.let
 
 private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
@@ -51,8 +51,7 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
                                                     sortedMatchingConstructors = sortedMatchingConstructors,
                                                     requestorKey = requestorKey,
                                                     pluginId = pluginId,
-                                                    componentManager = componentManager,
-                                                    isExtensionSupported = false)
+                                                    componentManager = componentManager)
     constructor = result.first
     parameterTypes = result.second
   }
@@ -123,8 +122,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
                                                sortedMatchingConstructors: Array<Constructor<*>>,
                                                requestorKey: Any,
                                                pluginId: PluginId,
-                                               componentManager: ComponentManagerImpl,
-                                               isExtensionSupported: Boolean): Pair<Constructor<*>, Array<Class<*>>> {
+                                               componentManager: ComponentManagerImpl): Pair<Constructor<*>, Array<Class<*>>> {
   var conflicts: MutableSet<Constructor<*>>? = null
   var unsatisfiableDependencyTypes: MutableSet<Array<Class<*>>>? = null
   var greediestConstructor: Constructor<*>? = null
@@ -167,8 +165,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
                        requestorClass = aClass,
                        requestorConstructor = constructor,
                        expectedType = expectedType,
-                       pluginId = pluginId,
-                       isExtensionSupported = isExtensionSupported)) {
+                       pluginId = pluginId)) {
         continue
       }
 
@@ -217,19 +214,10 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
     }
     !unsatisfiableDependencyTypes.isNullOrEmpty() -> {
       // second (and final) round
-      if (isExtensionSupported) {
-        throw PluginException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
-                              "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.",
-                              pluginId)
-      }
-      else {
-        return getGreediestSatisfiableConstructor(aClass = aClass,
-                                                  sortedMatchingConstructors = sortedMatchingConstructors,
-                                                  requestorKey = requestorKey,
-                                                  pluginId = pluginId,
-                                                  componentManager = componentManager,
-                                                  isExtensionSupported = true)
-      }
+      throw PluginException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
+                            "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.",
+                            pluginId)
+
     }
     else -> {
       throw PluginException("The specified parameters not match any of the following constructors: " +
@@ -264,15 +252,7 @@ private fun resolveInstance(componentManager: ComponentManagerImpl,
                                   pluginId = pluginId)
                 ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType, pluginId)
   return when {
-    adapter is BaseComponentAdapter -> {
-      check(!useInstanceContainer)
-      // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
-      adapter.getInstance(adapter.componentManager, null)
-    }
-    adapter is HolderAdapter -> {
-      check(useInstanceContainer)
-      adapter.componentInstance
-    }
+    adapter is HolderAdapter -> adapter.componentInstance
     componentManager.parent == null -> adapter.componentInstance
     else -> componentManager.getComponentInstance(adapter.componentKey)
   }
@@ -282,17 +262,14 @@ private fun handleUnsatisfiedDependency(componentManager: ComponentManagerImpl,
                                         requestorClass: Class<*>,
                                         expectedType: Class<*>,
                                         pluginId: PluginId): Any? {
-  val extension = componentManager.extensionArea.findExtensionByClass(expectedType) ?: return null
-  val message = doNotUseConstructorInjectionsMessage("requestorClass=${requestorClass.name}, extensionClass=${expectedType.name}")
-  val app = componentManager.getApplication()
-  @Suppress("SpellCheckingInspection")
-  if (app != null && app.isUnitTestMode && pluginId.idString != "org.jetbrains.kotlin" && pluginId.idString != "Lombook Plugin") {
-    throw PluginException(message, pluginId)
+  // TeamCity plugin wants DefaultDebugExecutor in constructor
+  if (requestorClass.name == "com.intellij.execution.executors.DefaultDebugExecutor") {
+    return componentManager.extensionArea.getExtensionPointIfRegistered<Any>("com.intellij.executor")
+      ?.findExtension(requestorClass, false, ThreeState.YES)
   }
-  else {
-    LOG.warn(message)
-  }
-  return extension
+
+  throw PluginException(doNotUseConstructorInjectionsMessage("requestorClass=${requestorClass.name}, extensionClass=${expectedType.name}"),
+                        pluginId)
 }
 
 private fun isResolvable(componentManager: ComponentManagerImpl,
@@ -300,19 +277,15 @@ private fun isResolvable(componentManager: ComponentManagerImpl,
                           requestorClass: Class<*>,
                           requestorConstructor: Constructor<*>,
                           expectedType: Class<*>,
-                          pluginId: PluginId,
-                          isExtensionSupported: Boolean): Boolean {
-  if (expectedType === ComponentManager::class.java ||
-      expectedType === CoroutineScope::class.java ||
-      findTargetAdapter(componentManager = componentManager,
-                        expectedType = expectedType,
-                        requestorKey = requestorKey,
-                        requestorClass = requestorClass,
-                        requestorConstructor = requestorConstructor,
-                        pluginId = pluginId) != null) {
-    return true
-  }
-  return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
+                          pluginId: PluginId): Boolean {
+  return expectedType === ComponentManager::class.java ||
+         expectedType === CoroutineScope::class.java ||
+         findTargetAdapter(componentManager = componentManager,
+                           expectedType = expectedType,
+                           requestorKey = requestorKey,
+                           requestorClass = requestorClass,
+                           requestorConstructor = requestorConstructor,
+                           pluginId = pluginId) != null
 }
 
 private fun findTargetAdapter(componentManager: ComponentManagerImpl,

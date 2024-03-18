@@ -29,14 +29,16 @@ internal abstract class UltimateConfigurableProvider(private val clazz: KClass<o
 }
 
 private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatureListItem>, pluginId: String): JComponent {
-  return PromoPages.build(PromoFeaturePage(
-    JavaUIIcons.IdeaUltimatePromo,
-    PluginAdvertiserService.ideaUltimate,
-    title,
-    items,
-    FeaturePromoBundle.message("free.trial.hint"),
-    pluginId
-  ))
+  return PromoPages.buildWithTryUltimate(
+    PromoFeaturePage(
+      JavaUIIcons.IdeaUltimatePromo,
+      PluginAdvertiserService.ideaUltimate,
+      title,
+      items,
+      FeaturePromoBundle.message("free.trial.hint"),
+      pluginId
+    )
+  )
 }
 
 internal class PromoDatabaseConfigurableProvider : UltimateConfigurableProvider(PromoDatabaseConfigurable::class)

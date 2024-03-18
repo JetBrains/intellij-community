@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings, DvcsCompareSettings {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private State myState = new State();
 
@@ -68,8 +68,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return project.getService(HgProjectSettings.class);
   }
 
-  @Nullable
-  public String getHgExecutable() {
+  public @Nullable String getHgExecutable() {
     return myState.PATH_TO_EXECUTABLE;
   }
 
@@ -85,8 +84,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     myState.OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = overridden;
   }
 
-  @Nullable
-  public String getRecentRootPath() {
+  public @Nullable String getRecentRootPath() {
     return myState.RECENT_HG_ROOT_PATH;
   }
 
@@ -105,9 +103,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     }
   }
 
-  @NotNull
   @Override
-  public Value getSyncSetting() {
+  public @NotNull Value getSyncSetting() {
     return myState.ROOT_SYNC;
   }
 
@@ -137,8 +134,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     }
   }
 
-  @NotNull
-  public DvcsBranchSettings getBranchSettings() {
+  public @NotNull DvcsBranchSettings getBranchSettings() {
     return myState.BRANCH_SETTINGS;
   }
 }

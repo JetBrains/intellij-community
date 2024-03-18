@@ -2,12 +2,14 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
@@ -21,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Override
@@ -121,7 +126,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         possibleTypes.addAll(schema.getTypeVariants());
       }
       else {
-        final JsonSchemaType guessedType = schema.guessType();
+        final JsonSchemaType guessedType = guessType(schema);
         if (guessedType != null) {
           possibleTypes.add(guessedType);
         }
@@ -143,7 +148,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (name == null) return htmlDescription;
 
     String type = "";
-    String schemaType = JsonSchemaObject.getTypesDescription(false, possibleTypes);
+    String schemaType = JsonSchemaObjectReadingUtils.getTypesDescription(false, possibleTypes);
     if (schemaType != null) {
       type = ": " + schemaType;
     }
@@ -219,7 +224,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     private final PsiElement myContextElement;
     private final String myAltName;
 
-    private FakeDocElement(PsiElement context, String name) {
+    private FakeDocElement(PsiElement context, @NotNull String name) {
       myContextElement = context;
       myAltName = name;
     }
@@ -232,6 +237,11 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     @Override
     public @NotNull TextRange getTextRangeInParent() {
       return myContextElement.getTextRange().shiftLeft(myContextElement.getTextOffset());
+    }
+
+    @Override
+    public @NotNull ItemPresentation getPresentation() {
+      return new PresentationData(myAltName, null, null, null);
     }
   }
 }

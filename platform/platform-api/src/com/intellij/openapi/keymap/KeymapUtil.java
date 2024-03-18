@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +70,12 @@ public final class KeymapUtil {
   }
 
   public static @NotNull ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null || actionId == null) {
-      return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
-    }
+    KeymapManager keymapManager = actionId == null ? null : KeymapManager.getInstance();
+    return keymapManager == null ? new CustomShortcutSet(Shortcut.EMPTY_ARRAY) : getActiveKeymapShortcuts(actionId, keymapManager);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull ShortcutSet getActiveKeymapShortcuts(@NotNull @NonNls String actionId, @NotNull KeymapManager keymapManager) {
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 

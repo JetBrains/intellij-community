@@ -1,22 +1,37 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.platform.testFramework.diagnostic
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.*
+import kotlin.io.path.writer
 
 interface MetricsPublisher {
-  fun publish(vararg metricName: String): Unit
+  suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMeterCollector)
+
+  fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMeterCollector) {
+    runBlocking {
+      publish(fullQualifiedTestMethodName, *metricsCollectors)
+    }
+  }
 
   companion object {
-    @JvmStatic
     fun getInstance(): MetricsPublisher = instance.value
+
+    fun getIdeTestLogFile(): Path = PathManager.getSystemDir().resolve("testlog").resolve("idea.log")
+    fun truncateTestLog(): Unit = run { getIdeTestLogFile().writer(options = arrayOf(StandardOpenOption.TRUNCATE_EXISTING)).write("") }
   }
 }
 
 /** Dummy that always "works successfully" */
 class NoopMetricsPublisher : MetricsPublisher {
-  override fun publish(vararg metricName: String) {}
+  override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMeterCollector) {}
 }
 
 private val instance: SynchronizedClearableLazy<MetricsPublisher> = SynchronizedClearableLazy {

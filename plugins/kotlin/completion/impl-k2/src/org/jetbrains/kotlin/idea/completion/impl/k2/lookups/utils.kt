@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
@@ -99,3 +101,7 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
     (typeReference.prevLeaf { it.elementType == KtTokens.LT } ?: typeReference).startOffset,
     (typeReference.nextLeaf { it.elementType == KtTokens.GT } ?: typeReference).endOffset
 )
+
+context(KtAnalysisSession)
+internal fun KtCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
+    isExtension || isFunctionalVariableCall && (returnType as? KtFunctionalType)?.hasReceiver == true

@@ -30,12 +30,12 @@ class ExampleClassWithNoTypos<T>(val name: String) {
  */
 class ExampleClassWithTypos<T>(val name: String) {
     /**
-     * <warning descr="UPPERCASE_SENTENCE_START">it</warning> <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
+     * <warning descr="UPPERCASE_SENTENCE_START">it</warning> <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>. And here are some correct English words to make the language detector work.
      *
      * @return the new size of <warning descr="DT_DT">a the</warning> group.
      */
     fun badFunction(member: T): Int {
-        return 1 // It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> comment
+        return 1 // It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> comment. And here are some correct English words to make the language detector work.
     }
 
     /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OverridingDeprecatedMember", "ReplaceNegatedIsEmptyWithIsNotEmpty",
                "PrivatePropertyName")
 
@@ -42,7 +42,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
@@ -60,8 +59,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MoreButtonUpdated
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.*
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
@@ -99,7 +97,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   val project: Project,
   @field:JvmField internal val isNewUi: Boolean,
   private val isEdtRequired: Boolean,
-  private val coroutineScope: CoroutineScope,
+  internal @JvmField val coroutineScope: CoroutineScope,
 ) : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
@@ -127,6 +125,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     set(value) {
       state.layoutToRestoreLater = value
     }
+
   private var currentState = KeyState.WAITING
   private val waiterForSecondPress: SingleAlarm?
   private val recentToolWindowsState: LinkedList<String>
@@ -136,8 +135,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
   @Suppress("TestOnlyProblems")
-  constructor(project: Project, coroutineScope: CoroutineScope) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true,
-                                                                       coroutineScope = coroutineScope)
+  constructor(project: Project, coroutineScope: CoroutineScope)
+    : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true, coroutineScope = coroutineScope)
 
   init {
     if (project.isDefault) {
@@ -563,7 +562,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         anchor = getToolWindowAnchor(factory, bean),
         sideTool = bean.secondary || bean.side,
         canCloseContent = bean.canCloseContents,
-        canWorkInDumbMode = DumbService.isDumbAware(factory),
         shouldBeAvailable = factory.shouldBeAvailable(project),
         contentFactory = factory,
         stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin)
@@ -588,16 +586,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun projectClosed() {
-    // Hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere.
+    // hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere
     for (entry in idToEntry.values) {
       if (entry.toolWindow.windowInfo.type.isInternal) {
         continue
       }
+
       try {
         removeExternalDecorators(entry)
-      }
-      catch (e: CancellationException) {
-        throw e
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -624,13 +620,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
 
+  @RequiresEdt
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {
-    ThreadingAssertions.assertEventDispatchThread()
-
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
 
-    activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents, source)
+    activateToolWindow(entry = idToEntry.get(id)!!,
+                       info = getRegisteredMutableInfoOrLogError(id),
+                       autoFocusContents = autoFocusContents,
+                       source = source)
 
     coroutineScope.launch(Dispatchers.EDT) {
       runnable?.run()
@@ -963,6 +961,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     ToolWindowCollector.getInstance().recordShown(project, source, toBeShownInfo)
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
+    if (toBeShownInfo.order == -1) {
+      toBeShownInfo.order = layoutState.getMaxOrder(toBeShownInfo.safeToolWindowPaneId, toBeShownInfo.anchor)
+    }
 
     val snapshotInfo = toBeShownInfo.copy()
     entry.applyWindowInfo(snapshotInfo)
@@ -1142,7 +1143,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     if (ensureToolWindowActionRegistered) {
-      ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
+      ActivateToolWindowAction.Manager.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
     }
 
     val stripeButton = if (preparedTask.isButtonNeeded) {
@@ -1203,7 +1204,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     LOG.debug { "unregisterToolWindow($id)" }
 
     ThreadingAssertions.assertEventDispatchThread()
-    ActivateToolWindowAction.unregister(id)
+    ActivateToolWindowAction.Manager.unregister(id)
 
     val entry = idToEntry.remove(id) ?: return
     val toolWindow = entry.toolWindow
@@ -1271,7 +1272,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun saveFloatingOrWindowedState(entry: ToolWindowEntry, info: WindowInfoImpl) {
     entry.floatingDecorator?.let {
-      info.floatingBounds = it.bounds
+      info.floatingBounds = it.visibleWindowBounds
       info.isActiveOnStart = it.isActive
       return
     }
@@ -1279,7 +1280,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     entry.windowedDecorator?.let { windowedDecorator ->
       info.isActiveOnStart = windowedDecorator.isActive
       val frame = windowedDecorator.getFrame()
-      if (frame.isShowing) {
+      val externalDecorator = entry.externalDecorator
+      if (frame.isShowing && externalDecorator != null) {
         val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
         if (maximized) {
           frame.extendedState = Frame.NORMAL
@@ -1287,7 +1289,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           frame.revalidate()
         }
 
-        info.floatingBounds = frame.bounds
+        info.floatingBounds = externalDecorator.visibleWindowBounds
         info.isMaximized = maximized
       }
       return
@@ -1526,6 +1528,32 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(MoreButtonUpdated)
   }
 
+  override fun setShowNames(value: Boolean) {
+    if (isNewUi) {
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateResizeState(null)
+        }
+      }
+    }
+
+    fireStateChanged(ShowNames)
+  }
+
+  override fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
+    if (isNewUi) {
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateResizeState(toolbar)
+        }
+      }
+    }
+
+    fireStateChanged(SideCustomWidth)
+  }
+
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
       coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
@@ -1651,6 +1679,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
            entry.toolWindow.type == ToolWindowType.FLOATING)) {
         tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
       }
+      else if (!button.isShowing) {
+        tracker = createPositionTracker(toolWindowPane, anchor)
+        if (balloon is BalloonImpl) {
+          balloon.setShowPointer(false)
+        }
+      }
       else {
         tracker = object : PositionTracker<Balloon>(button) {
           override fun recalculateLocation(balloon: Balloon): RelativePoint? {
@@ -1710,7 +1744,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(content, options.icon, foreground, background, listenerWrapper)
       .setBorderColor(borderColor)
-      .setHideOnClickOutside(false)
+      .setHideOnClickOutside(true)
       .setHideOnFrameResize(false)
 
     options.balloonCustomizer?.accept(balloonBuilder)
@@ -1722,6 +1756,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val balloon = balloonBuilder.createBalloon()
     if (balloon is BalloonImpl) {
+      balloon.setHideOnClickOutside(false)
       NotificationsManagerImpl.frameActivateBalloonListener(balloon) {
         coroutineScope.launch {
           delay(100.milliseconds)
@@ -2143,16 +2178,31 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     internalDecorator: InternalDecoratorImpl,
     parentFrame: JFrame,
   ) {
-    val bounds = info.floatingBounds
-    if (bounds != null && isValidBounds(bounds)) {
+    val storedBounds = info.floatingBounds
+    val screen = ScreenUtil.getScreenRectangle(parentFrame)
+    val needToCenter: Boolean
+    val bounds: Rectangle
+    if (storedBounds != null && isValidBounds(storedBounds)) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Keeping the tool window ${info.id} valid bounds: $bounds")
+        LOG.debug("Keeping the tool window ${info.id} valid bounds: $storedBounds")
       }
-      externalDecorator.bounds = Rectangle(bounds)
+      bounds = Rectangle(storedBounds)
+      needToCenter = false
+    }
+    else if (storedBounds != null && storedBounds.width > 0 && storedBounds.height > 0) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} to fit the screen $screen")
+      }
+      bounds = Rectangle(storedBounds)
+      ScreenUtil.moveToFit(bounds, screen, null, true)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusted the stored bounds to fit the screen: $bounds")
+      }
+      needToCenter = true
     }
     else {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusting the tool window ${info.id} bounds because the stored bounds are ${if (bounds == null) "null" else "invalid"}")
+        LOG.debug("Computing default bounds for the tool window ${info.id}")
       }
       // place a new frame at the center of the current frame if there are no floating bounds
       var size = internalDecorator.size
@@ -2163,10 +2213,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
         size = preferredSize
       }
-      externalDecorator.bounds = Rectangle(externalDecorator.bounds.location, size)
+      bounds = Rectangle(externalDecorator.visibleWindowBounds.location, size)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Computed the bounds using the default location: $bounds")
+      }
+      needToCenter = true
+    }
+    externalDecorator.visibleWindowBounds = bounds
+    if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Set size to $size and location to ${externalDecorator.bounds.location} (centered to the frame)")
+        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.visibleWindowBounds}")
       }
     }
   }
@@ -2236,7 +2293,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
 
-    ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow)
+    ActivateToolWindowAction.Manager.updateToolWindowActionPresentation(toolWindow)
   }
 
   internal fun activated(toolWindow: ToolWindowImpl, source: ToolWindowEventSource?) {
@@ -2256,10 +2313,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val toolWindow = source.toolWindow
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
+    val externalDecorator = source.getExternalDecorator(info.type)
+    val externalFloatingBounds = externalDecorator?.visibleWindowBounds
     if (info.type == ToolWindowType.FLOATING) {
-      val owner = SwingUtilities.getWindowAncestor(source)
-      if (owner != null) {
-        info.floatingBounds = owner.bounds
+      if (externalFloatingBounds != null) {
+        info.floatingBounds = externalFloatingBounds
         if (LOG.isDebugEnabled) {
           LOG.debug("Floating tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}")
         }
@@ -2271,8 +2329,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (frame == null || !frame.isShowing) {
         return
       }
-      info.floatingBounds = (frame as JFrame).bounds
-      info.isMaximized = frame.extendedState == Frame.MAXIMIZED_BOTH
+      info.floatingBounds = externalFloatingBounds
+      info.isMaximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
       if (LOG.isDebugEnabled) {
         LOG.debug("Windowed tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}, maximized=${info.isMaximized}")
       }

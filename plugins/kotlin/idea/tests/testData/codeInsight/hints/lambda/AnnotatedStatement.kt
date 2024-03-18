@@ -6,11 +6,11 @@ fun test() {
     run {
         val files: Any? = null
         @Some
-        12/*<# [^ [temp:///src/KotlinLambdasHintsProvider.kt:97]run] #>*/
+        12/*<# ^|[temp:///src/KotlinLambdasHintsProvider.kt:97]run #>*/
     }
 
     run {
         val files: Any? = null
-        @Some 12/*<# [^ [temp:///src/KotlinLambdasHintsProvider.kt:170]run] #>*/
+        @Some 12/*<# ^|[temp:///src/KotlinLambdasHintsProvider.kt:170]run #>*/
     }
 }

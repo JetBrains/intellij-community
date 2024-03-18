@@ -3,10 +3,10 @@ package com.intellij.find.impl
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.impl.UsageViewCoroutineScopeProvider
-import com.intellij.util.childScope
 import com.intellij.util.io.await
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture

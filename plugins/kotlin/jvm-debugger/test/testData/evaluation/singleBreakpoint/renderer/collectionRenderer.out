@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR
 LineBreakpoint created at collectionRenderer.kt:35
 Run Java
 Connected to the target VM

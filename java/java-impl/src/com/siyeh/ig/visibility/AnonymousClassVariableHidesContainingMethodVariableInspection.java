@@ -10,7 +10,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassVariableHidesContainingMethodVariableInspection extends
+public final class AnonymousClassVariableHidesContainingMethodVariableInspection extends
                                                                            BaseInspection {
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

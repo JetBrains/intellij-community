@@ -44,7 +44,7 @@ public class LowLevelSearchUtilTest extends TestCase {
     IntList found = new IntArrayList(new int[]{-1});
     CharSequence text = StringUtil.repeat("xxx z ", 1000000);
 
-    PlatformTestUtil.startPerformanceTest("processTextOccurrences", 100, ()-> {
+    PlatformTestUtil.newPerformanceTest("processTextOccurrences", ()-> {
       for (int i=0; i<10000; i++) {
         found.removeInt(0);
         int startOffset = text.length() / 2 + i % 20;
@@ -56,6 +56,6 @@ public class LowLevelSearchUtilTest extends TestCase {
         assertTrue(success);
         assertEquals(startOffset+","+endOffset, 1, found.size());
       }
-    }).assertTiming();
+    }).start();
   }
 }

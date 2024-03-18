@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration> {
+public final class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration> {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

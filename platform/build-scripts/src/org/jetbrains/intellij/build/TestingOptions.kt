@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.TestCaseLoader
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 
@@ -148,4 +149,14 @@ open class TestingOptions {
    * Number of attempts to run tests. Starting from the 2nd attempt only failed tests are re-run.
    */
   var attemptCount = SystemProperties.getIntProperty("intellij.build.test.attempt.count", 1)
+
+  /**
+   * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
+   */
+  var bucketsCount: Int = SystemProperties.getIntProperty(TestCaseLoader.TEST_RUNNERS_COUNT_FLAG, 1)
+
+  /**
+   * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
+   */
+  var bucketIndex: Int = SystemProperties.getIntProperty(TestCaseLoader.TEST_RUNNER_INDEX_FLAG, 0)
 }

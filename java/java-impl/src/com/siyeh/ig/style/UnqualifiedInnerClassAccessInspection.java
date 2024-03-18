@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
+public final class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @SuppressWarnings("PublicField")
   public boolean ignoreReferencesToLocalInnerClasses = true;
@@ -127,10 +127,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
       final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
       ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final Document document = containingFile.getViewProvider().getDocument();
-      if (document == null) {
-        return;
-      }
+      final Document document = containingFile.getFileDocument();
       documentManager.doPostponedOperationsAndUnblockDocument(document);
       final String text = buildNewText(javaFile, references, containingClass, new StringBuilder()).toString();
       document.replaceString(0, document.getTextLength(), text);

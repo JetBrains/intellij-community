@@ -35,15 +35,14 @@ import java.io.IOException
 import javax.swing.SwingUtilities
 
 class MavenExecutionTest : MavenExecutionTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testExternalExecutor() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking
 
     UsefulTestCase.edt<IOException> {
       WriteAction.runAndWait<IOException> { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") }
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
     WriteAction.computeAndWait<VirtualFile, RuntimeException> {
@@ -96,7 +95,7 @@ class MavenExecutionTest : MavenExecutionTestCase() {
     sema.down()
     UsefulTestCase.edt<RuntimeException> {
       MavenRunConfigurationType.runConfiguration(
-        myProject, params, mavenGeneralSettings,
+        project, params, mavenGeneralSettings,
         MavenRunnerSettings(),
         ProgramRunner.Callback { descriptor ->
           descriptor.processHandler!!.addProcessListener(object : ProcessAdapter() {

@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.DisplayPriority;
 import org.jetbrains.annotations.NotNull;
 
 
-public class GenerationSettingsProvider extends CodeStyleSettingsProvider {
+public final class GenerationSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
   public Configurable createSettingsPage(final @NotNull CodeStyleSettings settings, final @NotNull CodeStyleSettings originalSettings) {

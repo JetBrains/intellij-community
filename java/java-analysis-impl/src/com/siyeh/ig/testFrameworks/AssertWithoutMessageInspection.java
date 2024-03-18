@@ -28,7 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssertWithoutMessageInspection extends BaseInspection {
+public final class AssertWithoutMessageInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
@@ -89,7 +89,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
         createdMessageExpr = methodArgs.add(newMessageExpr);
       }
 
-      updater.moveTo(createdMessageExpr.getTextRange().getStartOffset() + 1);
+      updater.moveCaretTo(createdMessageExpr.getTextRange().getStartOffset() + 1);
     }
 
     @Override

@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.SerializationResult
-import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.assertConsistency
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -11,13 +13,11 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.Plugin
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.assertFalse
+import kotlin.test.*
 
 class EntityStorageSerializationTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -30,7 +30,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `simple model serialization`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), virtualFileManager.fromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), virtualFileManager.getOrCreateFromUri("file:///tmp"),
                                    SampleEntitySource("test"))
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
@@ -43,7 +43,7 @@ class EntityStorageSerializationTest {
     VirtualFileUrlManagerImpl()
     builder addEntity SampleEntity(false, stringProperty = "MyEntity",
                                    stringListProperty = mutableListOf("a", "b"),
-                                   stringMapProperty = HashMap(), fileProperty = virtualFileManager.fromUrl("file:///tmp"),
+                                   stringMapProperty = HashMap(), fileProperty = virtualFileManager.getOrCreateFromUri("file:///tmp"),
                                    entitySource = SampleEntitySource("test"))
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
@@ -62,7 +62,7 @@ class EntityStorageSerializationTest {
       put("bc", "ce")
     }
     val entity = SampleEntity(false, "MyEntity", stringListProperty,
-                              stringMapProperty, virtualFileManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+                              stringMapProperty, virtualFileManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
     builder.addEntity(entity)
 
     val setProperty = buildSet {
@@ -73,7 +73,7 @@ class EntityStorageSerializationTest {
     builder.addEntity(CollectionFieldEntity(setProperty, listOf("one", "two", "three"), MySource))
     builder.addEntity(CollectionFieldEntity(setOf(1, 2, 3, 3, 4), listOf("one", "two", "three"), MySource))
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
     withTempFile { file ->
       val result = serializer.serializeCache(file, builder.toSnapshot())
@@ -86,7 +86,7 @@ class EntityStorageSerializationTest {
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
     val builder = createEmptyBuilder()
     val entity = SampleEntity(false, "MyEntity", emptyList(),
-                              emptyMap(), virtualFileManager.fromUrl("file:///tmp"), SampleEntitySource("test")) {
+                              emptyMap(), virtualFileManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test")) {
       randomUUID = UUID.fromString("58e0a7d7-eebc-11d8-9669-0800200c9a66")
     }
     builder.addEntity(entity)
@@ -97,11 +97,11 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialization with version changing`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                    SampleEntitySource("test"))
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
-    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
+    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     withTempFile { file ->
@@ -113,8 +113,80 @@ class EntityStorageSerializationTest {
   }
 
   @Test
+  fun `serialization with ij build version changing`() {
+    val builder = createEmptyBuilder()
+    builder addEntity ParentEntity("Data", MySource) {
+      this.child = ChildEntity("Child", MySource)
+    }
+
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
+    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "Two")
+
+    withTempFile { file ->
+      serializer.serializeCache(file, builder.toSnapshot())
+
+      val deserialized = (deserializer.deserializeCache(file).getOrThrow() as? MutableEntityStorageImpl)?.toSnapshot()
+      assertNotNull(deserialized)
+      assertEquals("Data", deserialized.entities<ParentEntity>().single().parentData)
+    }
+  }
+
+  @Test
+  fun `broken serialization without ij build version changing`() {
+    val builder = createEmptyBuilder()
+    builder addEntity ParentEntity("Data", MySource) {
+      this.child = ChildEntity("Child", MySource)
+    }
+
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
+    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
+
+    withTempFile { file ->
+      builder.refs.oneToOneContainer.clear()
+      assertThrows<Throwable> {
+        // Check that we really broke the builder
+        builder.assertConsistency()
+      }
+      val brokenSnapshot = builder.toSnapshot()
+      serializer.serializeCache(file, brokenSnapshot)
+
+      val cacheDeserializationResult = deserializer.deserializeCache(file)
+      assertTrue(cacheDeserializationResult.isSuccess)
+      val deserialized = cacheDeserializationResult.getOrThrow()
+      // Check the missed issue
+      assertThrows<Throwable> {
+        deserialized!!.assertConsistency()
+      }
+    }
+  }
+
+  @Test
+  fun `broken serialization with ij build version changing`() {
+    val builder = createEmptyBuilder()
+    builder addEntity ParentEntity("Data", MySource) {
+      this.child = ChildEntity("Child", MySource)
+    }
+
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "One")
+    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "Two")
+
+    withTempFile { file ->
+      builder.refs.oneToOneContainer.clear()
+      assertThrows<Throwable> {
+        // Check that we really broke the builder
+        builder.assertConsistency()
+      }
+      val brokenSnapshot = builder.toSnapshot()
+      serializer.serializeCache(file, brokenSnapshot)
+
+      val cacheDeserializationResult = deserializer.deserializeCache(file)
+      assertTrue(cacheDeserializationResult.isFailure)
+    }
+  }
+
+  @Test
   fun `serializer version`() {
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
     val (kryo, _) = serializer.createKryo()
 
@@ -126,12 +198,20 @@ class EntityStorageSerializationTest {
       .joinToString(separator = "\n")
 
     assertEquals(expectedKryoRegistration, registration,
-                 "Have you changed kryo registration? Update the version number! (And this test)")
+                 """
+                   |Have you changed kryo registration? Update the version number! (And this test)
+                   |Existing result:
+                   |=========
+                   |
+                   |$registration
+                   |
+                   |=========
+                 """.trimMargin())
   }
 
   @Test
   fun `immutable serializer version prefix`() {
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
     val serializationVersionNumber = "[1-9][0-9]*".toRegex().find(serializer.serializerDataFormatVersion)?.value
     val serializationVersionPrefix = serializationVersionNumber?.let {
@@ -148,7 +228,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialize empty lists`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
 
@@ -163,11 +243,11 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialize abstract`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
 
-    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                    SampleEntitySource("test"))
 
     withTempFile { file ->
@@ -179,7 +259,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialize rider like`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
 
@@ -194,11 +274,11 @@ class EntityStorageSerializationTest {
   @Test
   fun `read broken cache`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val builder = createEmptyBuilder()
 
-    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+    builder addEntity SampleEntity(false, "myString", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
                                    SampleEntitySource("test"))
 
     withTempFile { file ->
@@ -218,7 +298,7 @@ class EntityStorageSerializationTest {
     val entity = SampleEntity(
       false, stringProperty = "MyEntity",
       stringListProperty = mutableListOf("a", "b"),
-      stringMapProperty = HashMap(), fileProperty = virtualFileManager.fromUrl("file:///tmp"),
+      stringMapProperty = HashMap(), fileProperty = virtualFileManager.getOrCreateFromUri("file:///tmp"),
       entitySource = SampleEntitySource("test")
     )
 
@@ -230,6 +310,25 @@ class EntityStorageSerializationTest {
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
+
+  @Test
+  fun `entities with sealed classes and interfaces`() {
+    val builder = createEmptyBuilder()
+
+    builder addEntity WithSealedEntity(
+      listOf(MySealedClassOne("1"), MySealedClassTwo("2")),
+      listOf(MySealedInterfaceOne("1"), MySealedInterfaceTwo("2")),
+      MySource,
+    )
+
+    val (_, deserialized) = SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val withSealedEntity = deserialized.entities<WithSealedEntity>().single()
+
+    assertEquals("1", (withSealedEntity.classes.first() as MySealedClassOne).info)
+    assertEquals("2", (withSealedEntity.classes.last() as MySealedClassTwo).info)
+    assertEquals("1", (withSealedEntity.interfaces.first() as MySealedInterfaceOne).info)
+    assertEquals("2", (withSealedEntity.interfaces.last() as MySealedInterfaceTwo).info)
+  }
 }
 
 /**
@@ -239,6 +338,8 @@ private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
 
 // Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """
+  com.google.common.collect.HashMultimap
+  com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
   com.intellij.platform.workspace.storage.impl.ConnectionId
   com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
   com.intellij.platform.workspace.storage.impl.ChildEntityId
@@ -274,13 +375,11 @@ private val expectedKryoRegistration = """
   java.util.IdentityHashMap
   com.intellij.util.SmartList
   java.util.LinkedHashMap
-  com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap
   com.intellij.util.containers.BidirectionalMultiMap
   com.google.common.collect.HashBiMap
   java.util.LinkedHashSet
   com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
-  it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
@@ -304,6 +403,9 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#Data
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#References
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata#Id
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata#SerializableTypeMetadata
   com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
   com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
   com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
@@ -324,7 +426,6 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#CustomType
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#EntityReference
   com.intellij.platform.workspace.storage.impl.ConnectionId#ConnectionType
-  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
   java.util.Collections#UnmodifiableCollection
   java.util.Collections#UnmodifiableSet
   java.util.Collections#UnmodifiableRandomAccessList

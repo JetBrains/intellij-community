@@ -3,6 +3,8 @@ package com.intellij.util
 
 import com.intellij.openapi.application.impl.assertNotReferenced
 import com.intellij.openapi.application.impl.assertReferenced
+import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.*
@@ -230,7 +232,7 @@ private fun CoroutineScope.parentJob(): Job? {
 }
 
 internal fun Job.parent(): Job? {
-  @Suppress("DEPRECATION_ERROR", "INVISIBLE_MEMBER")
+  @Suppress("DEPRECATION_ERROR", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   @OptIn(InternalCoroutinesApi::class)
   return (this as JobSupport).parentHandle?.parent
 }

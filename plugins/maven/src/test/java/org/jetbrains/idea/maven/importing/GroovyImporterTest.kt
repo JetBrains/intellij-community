@@ -18,11 +18,10 @@ import java.util.*
 class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
   private var repoPath: String? = null
 
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
-    repoPath = File(myDir, "repo").path
+    repoPath = File(dir, "repo").path
     repositoryPath = repoPath
   }
 
@@ -77,7 +76,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     val library = libraries[0]
     assertUnorderedPathsAreEqual(
       Arrays.asList(*library.getUrls(OrderRootType.CLASSES)),
-      Arrays.asList("jar://" + getRepositoryPath() + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
+      Arrays.asList("jar://" + repositoryPath + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
   }
 
   @Test
@@ -248,7 +247,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       "src/test/java")
     assertDefaultTestResources("project")
 
-    val compilerSettings = myProject.getService(
+    val compilerSettings = project.getService(
       GreclipseIdeaCompilerSettings::class.java)
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar)!!.getPath(), compilerSettings.state!!.greclipsePath)
   }
@@ -314,7 +313,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       "src/test/java")
     assertDefaultTestResources("project")
 
-    val compilerSettings = myProject.getService(
+    val compilerSettings = project.getService(
       GreclipseIdeaCompilerSettings::class.java)
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar)!!.getPath(), compilerSettings.state!!.greclipsePath)
   }
@@ -735,9 +734,9 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
       writeAction {
         val a = MavenRootModelAdapter(
-          MavenRootModelAdapterLegacyImpl(projectsTree.findProject(myProjectPom)!!,
+          MavenRootModelAdapterLegacyImpl(projectsTree.findProject(projectPom)!!,
                                           getModule("project"),
-                                          ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)))
+                                          ProjectDataManager.getInstance().createModifiableModelsProvider(project)))
         a.unregisterAll("$projectPath/target", true, true)
         a.rootModel.commit()
       }
@@ -785,7 +784,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     }
     finally {
       // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true)
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
   }
 

@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentNames
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class AddNamesToCallArgumentsIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtCallElement, AddNamesToCallArgumentsIntention.Context>(KtCallElement::class) {
+    AbstractKotlinModCommandWithContext<KtCallElement, AddNamesToCallArgumentsIntention.Context>(KtCallElement::class) {
 
     class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
 
@@ -47,9 +47,12 @@ internal class AddNamesToCallArgumentsIntention :
         element.valueArgumentList?.arguments?.any { !it.isNamed() } ?: false
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtCallElement): Context? =
-        associateArgumentNamesStartingAt(element, null)?.let { Context(it) }
+    override fun prepareContext(element: KtCallElement): Context? {
+        val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(element, null)
+        return associateArgumentNamesStartingAt?.let { Context(it) }
+    }
 
-    override fun apply(element: KtCallElement, context: Context, project: Project, editor: Editor?) =
-        addArgumentNames(context.argumentNames.dereferenceValidKeys())
+    override fun apply(element: KtCallElement, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+        addArgumentNames(context.analyzeContext.argumentNames.dereferenceValidKeys())
+    }
 }

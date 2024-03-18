@@ -25,7 +25,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
-  public static class Provider extends UsageContextDataflowToPanel.Provider {
+  public static final class Provider extends UsageContextDataflowToPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {

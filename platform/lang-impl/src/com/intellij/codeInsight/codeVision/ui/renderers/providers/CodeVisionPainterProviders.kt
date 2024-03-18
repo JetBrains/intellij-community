@@ -6,11 +6,13 @@ import com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionRichTextPainter
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionVisionTextPainter
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.DefaultCodeVisionPainter
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter
 import com.intellij.openapi.util.ClassExtension
+import com.intellij.openapi.util.registry.Registry
 
 private val INSTANCE = CodeVisionPainterProviders()
 
@@ -26,17 +28,28 @@ private class CounterCodeVisionEntryPainter : DefaultCodeVisionPainter<CounterCo
   textPainter = CodeVisionVisionTextPainter({ "${it.count} ${it.text}" })
 )
 
-private class TextCodeVisionEntryPainter : DefaultCodeVisionPainter<TextCodeVisionEntry>({ _, entry, _ -> entry.icon },
-                                                                                 CodeVisionVisionTextPainter({ it.text }))
+private class TextCodeVisionEntryPainter : DefaultCodeVisionPainter<TextCodeVisionEntry>(
+  iconProvider = { _, entry, _ -> entry.icon },
+  textPainter = CodeVisionVisionTextPainter({ it.text })
+)
 
 private class AdditionalCodeVisionEntryPainter : DefaultCodeVisionPainter<AdditionalCodeVisionEntry>(
-  iconProvider = { _, it, _ -> it.swingIcon },
+  iconProvider = { _, entry, _ -> entry.swingIcon },
   textPainter = CodeVisionVisionTextPainter({ it.text })
 )
 
 private class RichTextCodeVisionEntryPainter : DefaultCodeVisionPainter<RichTextCodeVisionEntry>(
   iconProvider = { _, entry, _ -> entry.icon },
   textPainter = CodeVisionRichTextPainter({ it.text })
+)
+
+private class ZombieCodeVisionEntryPainter : DefaultCodeVisionPainter<ZombieCodeVisionEntry>(
+  iconProvider = { _, entry, _ -> entry.icon },
+  textPainter = CodeVisionVisionTextPainter({
+    val result = if (it.count != null) "${it.count} ${it.text}" else it.text
+    val debug = Registry.`is`("cache.markup.debug")
+    if (debug) "${result}?" else result
+  })
 )
 
 internal fun CodeVisionEntry.painter(): ICodeVisionEntryBasePainter<CodeVisionEntry> {

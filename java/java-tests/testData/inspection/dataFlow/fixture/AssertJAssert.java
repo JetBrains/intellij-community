@@ -1,6 +1,7 @@
 package org.assertj.core.api;
 
 import org.jetbrains.annotations.Nullable;
+import java.util.Optional;
 import java.util.stream.*;
 
 class Sample {
@@ -35,6 +36,21 @@ class Sample {
     Stream<String> stream = Stream.empty();
     Assertions.assertThat(stream).isEmpty();
   }
+
+  private native Optional<String> getOptional();
+
+  public void testAs() {
+    Optional<String> id = getOptional();
+    if (id.isPresent()) {}
+    Assertions.assertThat(id).as("Asserting id not empty.").isNotEmpty();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = getOptional();
+    Assertions.assertThat(id).describedAs("Asserting id present.").isPresent();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = getOptional();
+    Assertions.assertThat(id.isPresent()).as("Alternative asserting id present.").isTrue();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+  }
 }
 class Assertions {
   public static ObjectAssert assertThat(Object actual) {
@@ -48,6 +64,12 @@ class ObjectAssert extends AbstractAssert {
     return this;
   }
   public ObjectAssert isTrue() { return this; }
+  public ObjectAssert isPresent() { return this; }
+  public ObjectAssert isNotEmpty() { return this; }
   public void isEmpty() {}
 }
-class AbstractAssert {}
+class AbstractAssert extends Descriptable {}
+class Descriptable {
+  public native ObjectAssert as(String message, Object... params);
+  public native ObjectAssert describedAs(String message, Object... params);
+}

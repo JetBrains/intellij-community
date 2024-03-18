@@ -21,7 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends SerializableInspectionBase {
+public final class SerializableInnerClassHasSerialVersionUIDFieldInspection extends SerializableInspectionBase {
 
   @Override
   @NotNull

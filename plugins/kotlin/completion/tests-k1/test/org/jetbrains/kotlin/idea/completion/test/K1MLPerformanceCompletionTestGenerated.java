@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -442,6 +442,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/boldOrGrayed/KT9835.kt");
             }
 
+            @TestMetadata("MemberAfterNullable.kt")
+            public void testMemberAfterNullable() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/MemberAfterNullable.kt");
+            }
+
             @TestMetadata("NonPredictableSmartCast.kt")
             public void testNonPredictableSmartCast() throws Exception {
                 runTest("../testData/basic/common/boldOrGrayed/NonPredictableSmartCast.kt");
@@ -470,14 +475,29 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("CompanionObjectMember.kt")
+            public void testCompanionObjectMember() throws Exception {
+                runTest("../testData/basic/common/callableReference/CompanionObjectMember.kt");
+            }
+
             @TestMetadata("EmptyQualifier.kt")
             public void testEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/EmptyQualifier.kt");
             }
 
+            @TestMetadata("EmptyQualifierExtensionFun.kt")
+            public void testEmptyQualifierExtensionFun() throws Exception {
+                runTest("../testData/basic/common/callableReference/EmptyQualifierExtensionFun.kt");
+            }
+
             @TestMetadata("EmptyQualifierInExtensionFun.kt")
             public void testEmptyQualifierInExtensionFun() throws Exception {
                 runTest("../testData/basic/common/callableReference/EmptyQualifierInExtensionFun.kt");
+            }
+
+            @TestMetadata("EnumStaticMembers.kt")
+            public void testEnumStaticMembers() throws Exception {
+                runTest("../testData/basic/common/callableReference/EnumStaticMembers.kt");
             }
 
             @TestMetadata("ExpressionQualifier.kt")
@@ -528,6 +548,21 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("NonEmptyQualifier.kt")
             public void testNonEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/NonEmptyQualifier.kt");
+            }
+
+            @TestMetadata("NonEmptyQualifierWithTypeArguments.kt")
+            public void testNonEmptyQualifierWithTypeArguments() throws Exception {
+                runTest("../testData/basic/common/callableReference/NonEmptyQualifierWithTypeArguments.kt");
+            }
+
+            @TestMetadata("NonEmptyQualifierWithTypeArguments2.kt")
+            public void testNonEmptyQualifierWithTypeArguments2() throws Exception {
+                runTest("../testData/basic/common/callableReference/NonEmptyQualifierWithTypeArguments2.kt");
+            }
+
+            @TestMetadata("Unsupported.kt")
+            public void testUnsupported() throws Exception {
+                runTest("../testData/basic/common/callableReference/Unsupported.kt");
             }
         }
 
@@ -682,6 +717,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("ImplicitReceiver.kt")
             public void testImplicitReceiver() throws Exception {
                 runTest("../testData/basic/common/extensionFunctionTypeValues/ImplicitReceiver.kt");
+            }
+
+            @TestMetadata("Property.kt")
+            public void testProperty() throws Exception {
+                runTest("../testData/basic/common/extensionFunctionTypeValues/Property.kt");
             }
 
             @TestMetadata("SafeCall.kt")
@@ -1518,6 +1558,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("PrivateFunction.kt")
+            public void testPrivateFunction() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrivateFunction.kt");
+            }
+
             @TestMetadata("TypeAliasParameter.kt")
             public void testTypeAliasParameter() throws Exception {
                 runTest("../testData/basic/common/namedArguments/TypeAliasParameter.kt");
@@ -2245,6 +2290,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("DispatchReceiver.kt")
+            public void testDispatchReceiver() throws Exception {
+                runTest("../testData/basic/common/smartCast/DispatchReceiver.kt");
+            }
+
             @TestMetadata("functionWithContract.kt")
             public void testFunctionWithContract() throws Exception {
                 runTest("../testData/basic/common/smartCast/functionWithContract.kt");
@@ -2291,6 +2341,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
         public static class StaticMembers extends AbstractK1MLPerformanceCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("CompanionObjectMembers.kt")
+            public void testCompanionObjectMembers() throws Exception {
+                runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
             }
 
             @TestMetadata("EnumWithoutCompanionObject.kt")
@@ -2553,6 +2608,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/ambiguousSuperMethodHigherUp.kt");
             }
 
+            @TestMetadata("ambiguousSuperMethodLambdaArgument.kt")
+            public void testAmbiguousSuperMethodLambdaArgument() throws Exception {
+                runTest("../testData/basic/common/ambiguousSuperMethodLambdaArgument.kt");
+            }
+
             @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
             public void testAmbiguousSuperMethodSingleImpl() throws Exception {
                 runTest("../testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
@@ -2761,6 +2821,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("ImportedEnumMembers.kt")
             public void testImportedEnumMembers() throws Exception {
                 runTest("../testData/basic/common/ImportedEnumMembers.kt");
+            }
+
+            @TestMetadata("ImportedExtensionFromObject.kt")
+            public void testImportedExtensionFromObject() throws Exception {
+                runTest("../testData/basic/common/ImportedExtensionFromObject.kt");
             }
 
             @TestMetadata("ImportedMemberFromObject.kt")
@@ -3021,6 +3086,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
             public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+            }
+
+            @TestMetadata("LocalFunctions.kt")
+            public void testLocalFunctions() throws Exception {
+                runTest("../testData/basic/common/LocalFunctions.kt");
             }
 
             @TestMetadata("localInnerClass.kt")

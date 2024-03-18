@@ -2,9 +2,11 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -29,6 +31,11 @@ import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.Icon
 import javax.swing.JComponent
+
+class CombinedBlockProducer(
+  val id: CombinedBlockId,
+  val producer: DiffRequestProducer
+)
 
 interface CombinedBlockId
 
@@ -77,7 +84,7 @@ class CombinedSimpleDiffHeader(project: Project,
 
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
-    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
     toolbar.component.border = JBUI.Borders.empty()
 
@@ -142,7 +149,7 @@ class CombinedSimpleDiffHeader(project: Project,
   }
 }
 
-data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
+data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus?, val tag: Any? = null) : CombinedBlockId
 
 internal class CombinedSimpleDiffBlock(project: Project,
                                        override val id: CombinedPathBlockId,
@@ -156,10 +163,10 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
 
-  override val stickyHeader: JComponent  = CombinedDiffRoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
-  .apply {
-    add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
-  }
+  override val stickyHeader: JComponent = CombinedDiffRoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
+    .apply {
+      add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
+    }
 
   override val body: Wrapper = Wrapper(initialContent)
 

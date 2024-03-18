@@ -360,7 +360,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction action : actions) {
       if (!(action instanceof Separator)) {
-        addExtraAction(AnActionButton.fromAction(action));
+        addExtraAction(action);
       }
     }
     return this;
@@ -405,7 +405,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         @Override
         public Dimension getPreferredSize() {
           Dimension preferredSize = super.getPreferredSize();
-          if (!isPreferredSizeSet()) {
+          Dimension preferredViewportSize = ((Scrollable)contextComponent).getPreferredScrollableViewportSize();
+          if (!isPreferredSizeSet() && preferredViewportSize == null) {
             setPreferredSize(new Dimension(0, preferredSize.height));
           }
           return preferredSize;
@@ -596,7 +597,13 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   /**
    * Marker interface, button will be disabled if no selected element
+   * <p>
+   * AnActionButton reinvents the action update wheel and breaks MVC.
+   * We are slowly migrating to regular {@link AnAction}.
+   *
+   * @deprecated Use regular {@link com.intellij.openapi.project.DumbAwareAction}
    */
+  @Deprecated(forRemoval = true)
   public abstract static class ElementActionButton extends AnActionButton {
     public ElementActionButton(@NlsContexts.Button String text,
                                @NlsContexts.Tooltip String description,

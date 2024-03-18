@@ -175,6 +175,7 @@ ll
 ls
 make
 man
+mc
 md
 mkdir
 mocha
@@ -254,6 +255,7 @@ taskmgr
 telnet
 terraform
 title
+tmux
 top
 touch
 traceroute

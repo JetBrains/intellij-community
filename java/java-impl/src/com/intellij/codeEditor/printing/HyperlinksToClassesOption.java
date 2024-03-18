@@ -30,7 +30,7 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class HyperlinksToClassesOption extends PrintOption {
+public final class HyperlinksToClassesOption extends PrintOption {
   private JCheckBox myCbGenerateHyperlinksToClasses;
   private boolean isGenerateHyperlinksToClasses;
 

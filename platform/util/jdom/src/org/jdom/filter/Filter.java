@@ -69,8 +69,7 @@ public interface Filter<E> {
    * Check to see if the object matches a predefined set of rules.
    *
    * @param obj The object to verify.
-   * @return <code>true</code> if the object matches a predfined
-   * set of rules.
+   * @return <code>true</code> if the object matches a predefined set of rules.
    */
   boolean matches(Object obj);
 }

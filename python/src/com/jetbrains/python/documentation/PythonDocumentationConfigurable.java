@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 
-public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 
   @NotNull

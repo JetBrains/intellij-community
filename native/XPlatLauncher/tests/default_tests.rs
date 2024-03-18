@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
@@ -31,7 +31,7 @@ mod tests {
     fn classpath_test_on_unc() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test_unc = test_orig.to_unc();
-        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -45,7 +45,7 @@ mod tests {
     fn classpath_test_on_ns_prefixed_path() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test_unc = test_orig.to_ns_prefix();
-        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -100,12 +100,10 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
 
         let bin_dir = test.dist_root.join("bin");
-        for item in fs::read_dir(&bin_dir).expect(&format!("Cannot list: {:?}", bin_dir)) {
-            if let Ok(entry) = item {
-                if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
-                    fs::remove_file(&entry.path()).expect(&format!("Cannot delete: {:?}", entry.path()));
-                    break;
-                }
+        for entry in fs::read_dir(&bin_dir).unwrap_or_else(|_| panic!("Cannot list: {:?}", bin_dir)).flatten() {
+            if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
+                fs::remove_file(entry.path()).unwrap_or_else(|_| panic!("Cannot delete: {:?}", entry.path()));
+                break;
             }
         }
 
@@ -275,6 +273,26 @@ mod tests {
         assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
 
         let jvm_message = "Conflicting collector combinations in option list";
+        let jvm_message_present = result.stderr.find(jvm_message);
+        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
+
+        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+    }
+
+    #[test]
+    fn reporting_vm_creation_panics() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+
+        let jvm_message = "Initial heap size set to a larger value than the maximum heap size";
         let jvm_message_present = result.stderr.find(jvm_message);
         assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
 

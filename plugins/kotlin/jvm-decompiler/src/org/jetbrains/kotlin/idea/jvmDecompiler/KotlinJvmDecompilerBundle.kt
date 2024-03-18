@@ -13,5 +13,7 @@ private const val BUNDLE = "messages.KotlinJvmDecompilerBundle"
 object KotlinJvmDecompilerBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic
-    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
+        return if (containsKey(key)) getMessage(key, *params) else KotlinJvmDecompilerDeprecatedMessagesBundle.message(key)
+    }
 }

@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -106,9 +107,19 @@ public final class VariableTypeFromCallFix implements IntentionAction {
                                      t -> t != null && t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
               continue;
             }
-            final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(JavaPsiFacade.getElementFactory(
-              project).createType(varClass, psiSubstitutor));
+            final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(
+              JavaPsiFacade.getElementFactory(project).createType(varClass, psiSubstitutor));
             if (!varType.equals(appropriateVarType)) {
+              PsiMethodCallExpression methodCallCopy = (PsiMethodCallExpression)methodCall.copy();
+              PsiElement castedQualifier =
+                AddTypeCastFix.addTypeCast(project, methodCallCopy.getMethodExpression().getQualifierExpression(), appropriateVarType);
+              PsiMethodCallExpression castedMethodCallCopy = PsiTreeUtil.getParentOfType(castedQualifier, PsiMethodCallExpression.class);
+              //only qualifier is considered, so it is necessary to check that it doesn't change a return type of the whole method,
+              //otherwise it can lead to broken code
+              if (castedMethodCallCopy != null && castedMethodCallCopy.getType() != null &&
+                  !castedMethodCallCopy.getType().equals(methodCall.getType())) {
+                continue;
+              }
               actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
               break;
             }

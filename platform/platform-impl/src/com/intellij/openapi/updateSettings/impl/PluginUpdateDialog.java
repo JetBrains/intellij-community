@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -183,12 +184,13 @@ final class PluginUpdateDialog extends DialogWrapper {
       }
     }
 
-    runUpdateAll(toDownloads, getContentPanel(), myFinishCallback);
+    runUpdateAll(toDownloads, getContentPanel(), myFinishCallback, null);
   }
 
-  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
-                                  @Nullable JComponent ownerComponent,
-                                  @Nullable Runnable finishCallback) {
+  static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
+                           @Nullable JComponent ownerComponent,
+                           @Nullable Runnable finishCallback,
+                           @Nullable Consumer<Boolean> customRestarter) {
     String message = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
       @Override
@@ -201,7 +203,12 @@ final class PluginUpdateDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(() -> {
           List<IdeaPluginDescriptor> installedDescriptors = installPluginUpdates(downloaders);
 
-          if (downloaders.size() == installedDescriptors.size()) {
+          boolean restartRequired = downloaders.size() != installedDescriptors.size();
+          if (customRestarter != null) {
+            customRestarter.accept(restartRequired);
+            return;
+          }
+          if (!restartRequired) {
             UpdateChecker.getNotificationGroupForPluginUpdateResults()
               .createNotification(getUpdateNotificationMessage(installedDescriptors),
                                   NotificationType.INFORMATION)

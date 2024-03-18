@@ -41,8 +41,10 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(AddImportAction.class);
@@ -106,6 +108,12 @@ public class AddImportAction implements QuestionAction {
 
     final BaseListPopupStep<PsiClass> step =
       new BaseListPopupStep<>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
+        private final Map<PsiClass, String> names = Arrays.stream(myTargetClasses)
+          .collect(Collectors.toMap(t -> t, t -> {
+            String name = t.getQualifiedName();
+            return name != null ? name : "";
+          }));
+
         @Override
         public boolean isAutoSelectionEnabled() {
           return false;
@@ -140,7 +148,7 @@ public class AddImportAction implements QuestionAction {
         @NotNull
         @Override
         public String getTextFor(PsiClass value) {
-          return Objects.requireNonNull(value.getQualifiedName());
+          return names.getOrDefault(value, "");
         }
 
         @Override

@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class TraceableDisposable {
   private final Throwable CREATE_TRACE;
-  private Throwable KILL_TRACE;
+  private Throwable KILL_TRACE; // guarded by this
 
   public TraceableDisposable(boolean debug) {
     CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable()) : null;
@@ -29,13 +29,17 @@ public class TraceableDisposable {
 
   public void kill(@NonNls @Nullable String msg) {
     if (CREATE_TRACE != null) {
-      KILL_TRACE = ThrowableInterner.intern(new Throwable(msg));
+      killExceptionally(ThrowableInterner.intern(new Throwable(msg)));
     }
   }
 
   public void killExceptionally(@NotNull Throwable throwable) {
     if (CREATE_TRACE != null) {
-      KILL_TRACE = throwable;
+      synchronized (this) {
+        if (KILL_TRACE == null) {
+          KILL_TRACE = throwable;
+        }
+      }
     }
   }
 
@@ -55,8 +59,10 @@ public class TraceableDisposable {
       if (CREATE_TRACE != null) {
         answer.add(new Attachment("creation", CREATE_TRACE));
       }
-      if (KILL_TRACE != null) {
-        answer.add(new Attachment("kill", KILL_TRACE));
+      synchronized (this) {
+        if (KILL_TRACE != null) {
+          answer.add(new Attachment("kill", KILL_TRACE));
+        }
       }
       return answer.toArray(Attachment.EMPTY_ARRAY);
     }
@@ -69,9 +75,11 @@ public class TraceableDisposable {
       out.println("--------------Creation trace: ");
       CREATE_TRACE.printStackTrace(out);
     }
-    if (KILL_TRACE != null) {
-      out.println("--------------Kill trace: ");
-      KILL_TRACE.printStackTrace(out);
+    synchronized (this) {
+      if (KILL_TRACE != null) {
+        out.println("--------------Kill trace: ");
+        KILL_TRACE.printStackTrace(out);
+      }
     }
     out.println("-------------Own trace:");
     new DisposalException(String.valueOf(System.identityHashCode(this))).printStackTrace(out);

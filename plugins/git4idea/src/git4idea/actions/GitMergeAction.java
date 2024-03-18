@@ -126,7 +126,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         boolean setupRebaseEditor = shouldSetupRebaseEditor(project, selectedRoot);
         Ref<GitHandlerRebaseEditorManager> rebaseEditorManager = Ref.create();
-        try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
+        try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.merge"), GitActivity.Merge)) {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.get();
 
@@ -177,12 +177,11 @@ abstract class GitMergeAction extends GitRepositoryAction {
     VirtualFile root = repository.getRoot();
 
     if (mergeConflictDetector.hasHappened()) {
-      GitMerger merger = new GitMerger(project);
       new GitConflictResolver(project, singletonList(root), new GitConflictResolver.Params(project)) {
         @Override
         protected boolean proceedAfterAllMerged() throws VcsException {
           if (commitAfterMerge) {
-            merger.mergeCommit(root);
+            new GitMerger(project).mergeCommit(root);
           }
           return true;
         }

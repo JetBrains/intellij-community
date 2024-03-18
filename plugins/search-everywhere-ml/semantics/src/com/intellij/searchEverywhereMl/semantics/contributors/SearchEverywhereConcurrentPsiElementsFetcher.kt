@@ -4,6 +4,7 @@ import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.utils.attachPsiPresentation
@@ -44,7 +45,7 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<PsiItemWithSimilarity<*>>,
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
-                                         durationMs: Long): () -> FoundItemDescriptor<Any> {
+                                         durationMs: Long): () -> FoundItemDescriptor<Any>? {
     val element = descriptor.item.value
     val foundElement = if (element is PsiElement) attachPsiPresentation(element, psiElementsRenderer) else element
     val newItem = PsiItemWithSimilarity(foundElement, descriptor.item.similarityScore)
@@ -52,8 +53,7 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
     return {
       val equal = knownItems.firstOrNull { checkItemsEqual(it.item.value, foundElement) }
       if (equal != null) {
-        // slightly increase the weight to replace
-        FoundItemDescriptor(equal.item.mergeWith(newItem) as PsiItemWithSimilarity<*>, equal.weight + 1)
+        mergeOrSkipItem(newItem, equal, durationMs)
       }
       else {
         knownItems.add(descriptor)
@@ -62,14 +62,27 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
     }
   }
 
+  // To not replace already frozen items
+  private fun mergeOrSkipItem(newItem: PsiItemWithSimilarity<*>,
+                              existingItem: FoundItemDescriptor<PsiItemWithSimilarity<*>>,
+                              durationMs: Long): FoundItemDescriptor<Any>? {
+    if (durationMs > 70) {
+      // elements are frozen after 100ms delay and shouldn't be re-ordered
+      return null
+    }
+    val mergedElement = existingItem.item.mergeWith(newItem) as PsiItemWithSimilarity<*>
+    // slightly increase the weight to replace
+    return FoundItemDescriptor(mergedElement, existingItem.weight + 1)
+  }
+
   private fun checkItemsEqual(lhs: Any, rhs: Any): Boolean {
     val lhsFile = PSIPresentationBgRendererWrapper.toPsi(lhs)
     val rhsFile = PSIPresentationBgRendererWrapper.toPsi(rhs)
     return lhsFile != null && rhsFile != null && lhsFile == rhsFile
   }
 
-  override fun FoundItemDescriptor<PsiItemWithSimilarity<*>>.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { item.similarityScore!! > priorityThresholds[it]!! }
+  override fun ScoredText.findPriority(): DescriptorPriority {
+    return ORDERED_PRIORITIES.first { similarity > priorityThresholds[it]!! }
   }
 
   companion object {

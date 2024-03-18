@@ -48,6 +48,7 @@ public final class TestUtil {
   @NonNls public static final String SMARTY = "smarty";
   @NonNls public static final String TURTLE = "turtle";
   @NonNls public static final String GIT = "git";
+  @NonNls public static final String RESTRUCTURED_TEXT = "restructuredtext";
 
   public static Path getBundleDirectory(String bundleName) {
     Path bundleDirectory = Path.of(getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);

@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.console.*;
+import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -22,6 +23,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -34,14 +36,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -65,12 +69,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.python.actions.PyExecuteInConsole.*;
+import static com.jetbrains.python.actions.PyExecuteInConsole.requestFocus;
+import static com.jetbrains.python.actions.PyExecuteInConsole.selectConsoleTab;
 import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
@@ -161,6 +168,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                                               @NotNull final ExecutionEnvironment environment) {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
     RunProfile profile = environment.getRunProfile();
+    var clientId = ClientId.getCurrentOrNull();
     return Promises
       .runAsync(() -> {
         int serverLocalPort = findAvailableSocketPort();
@@ -181,9 +189,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         }
       })
       .thenAsync(pair -> AppUIExecutor.onUiThread().submit(() -> {
-        ServerSocket serverSocket = pair.getFirst();
-        ExecutionResult result = pair.getSecond();
-        return createXDebugSession(environment, pyState, serverSocket, result);
+        try (AccessToken ignored = ClientId.withClientId(clientId)) {
+          ServerSocket serverSocket = pair.getFirst();
+          ExecutionResult result = pair.getSecond();
+          return createXDebugSession(environment, pyState, serverSocket, result);
+        }
       }));
   }
 
@@ -948,11 +958,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
       // Note, that we don't modify the parameters if the options are already set by the user.
 
+      if (existingInterpreterParameters.contains(PYTHON_DONT_WRITE_PYC_FLAG)) {
+        return Collections.emptyList();
+      }
+
       if (pythonSdkFlavor.getLanguageLevel(sdk).isOlderThan(LanguageLevel.PYTHON38)) {
         // There is no option for defining a custom directory for .pyc files in Python 3.7 and older, thus disable cache generation entirely.
-        if (!existingInterpreterParameters.contains(PYTHON_DONT_WRITE_PYC_FLAG)) {
-          return List.of(PYTHON_DONT_WRITE_PYC_FLAG);
-        }
+        return List.of(PYTHON_DONT_WRITE_PYC_FLAG);
       }
       else {
         for (int i = 0; i < existingInterpreterParameters.size(); i++) {
@@ -961,15 +973,19 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
             return Collections.emptyList();
           }
         }
-        return List.of( "-X", PYTHON3_PYCACHE_PREFIX_OPTION + prepareAndGetPycacheDirectory());
+        try {
+          return List.of( "-X", PYTHON3_PYCACHE_PREFIX_OPTION + prepareAndGetPycacheDirectory());
+        }
+        catch (IOException e) {
+          return List.of(PYTHON_DONT_WRITE_PYC_FLAG);
+        }
       }
-      return Collections.emptyList();
     }
 
-    private static File prepareAndGetPycacheDirectory() {
-      var pycacheDir = new File(PathManager.getSystemPath(), "cpython-cache");
-      FileUtil.createDirectory(pycacheDir);
-      return pycacheDir;
+    private static Path prepareAndGetPycacheDirectory() throws IOException {
+      var pycacheDir = PathManager.getSystemDir().resolve("cpython-cache");
+      Files.createDirectories(pycacheDir);
+      return pycacheDir.toAbsolutePath();
     }
 
     private static @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,

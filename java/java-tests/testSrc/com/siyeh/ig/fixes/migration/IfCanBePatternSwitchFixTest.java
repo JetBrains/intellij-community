@@ -49,4 +49,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testLeakScope() { assertQuickfixNotAvailable(); }
   public void testNullCast() { doTest(); }
   public void testNotDoubleCall() { doTest(); }
+  public void testWhenCast() { doTest(); }
+  public void testSeveralIfStatements() { doTest(); }
+  public void testSeveralIfStatementsWithComments() { doTest(); }
 }

@@ -9,8 +9,7 @@ public class Test {
     System.out.println("Point(" + x + ", " + result.y() + ")");
   }
 
-    @NotNull
-    private static Result getResult() {
+    private static @NotNull Result getResult() {
         int x = 42;
         int y = 0;
         System.out.println();

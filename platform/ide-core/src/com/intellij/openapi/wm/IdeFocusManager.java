@@ -69,12 +69,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract @Nullable Component getFocusedDescendantFor(@NotNull Component comp);
 
   /**
-   * @deprecated This method does nothing currently.
-   */
-  @Deprecated(forRemoval = true)
-  public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
-
-  /**
    * Requests default focus. The method should not be called by the user code.
    */
   public @NotNull ActionCallback requestDefaultFocus(boolean forced) {

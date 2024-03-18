@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaNonCodeSearchElementDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaNonCodeSearchElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof NonCodeSearchDescriptionLocation ncdLocation)) return null;

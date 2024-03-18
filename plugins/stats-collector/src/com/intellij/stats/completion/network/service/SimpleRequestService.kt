@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.network.service
 
 import com.google.common.net.HttpHeaders
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.stats.completion.logger.LineStorage
@@ -23,13 +24,14 @@ class SimpleRequestService : RequestService() {
       return HttpRequests.post(url, "application/json").tuner {
         it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip")
         it.setRequestProperty(HttpHeaders.CONTENT_LENGTH, zippedArray.size.toString())
+        it.setRequestProperty(HttpHeaders.USER_AGENT, ApplicationInfo.getInstance().fullApplicationName)
       }.connect { request ->
         request.write(zippedArray)
         return@connect request.connection.asResponseData(zippedArray.size)
       }
     }
     catch (e: HttpRequests.HttpStatusException) {
-      ResponseData(e.statusCode, StringUtil.notNullize(e.message))
+      ResponseData(e.statusCode, (e.message ?: ""))
     }
     catch (e: IOException) {
       LOG.debug(e)

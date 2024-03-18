@@ -309,10 +309,16 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private void runProcessFiles() {
-    boolean isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      return processFilesUnderProgress(indicator);
-    }, getProgressTitle(), true, myProject);
+    boolean isSuccess;
+    try {
+      isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        return processFilesUnderProgress(indicator);
+      }, getProgressTitle(), true, myProject);
+    }
+    catch (ProcessCanceledException e) {
+      isSuccess = false;
+    }
 
     if (isSuccess && myPostRunnable != null) {
       myPostRunnable.run();

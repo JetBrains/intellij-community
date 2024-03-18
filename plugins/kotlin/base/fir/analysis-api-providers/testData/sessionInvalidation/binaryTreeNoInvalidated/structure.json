@@ -1,12 +1,12 @@
 {
   "modules" : [
-    { "name": "A", "dependsOn": ["B", "C"] },
-    { "name": "B", "dependsOn": ["D", "E"] },
-    { "name": "C", "dependsOn": ["F", "G"] },
-    { "name": "D", "dependsOn": [] },
-    { "name": "E", "dependsOn": [] },
-    { "name": "F", "dependsOn": [] },
-    { "name": "G", "dependsOn": [] }
+    { "name": "A", "dependencies": ["B", "C"] },
+    { "name": "B", "dependencies": ["D", "E"] },
+    { "name": "C", "dependencies": ["F", "G"] },
+    { "name": "D", "dependencies": [] },
+    { "name": "E", "dependencies": [] },
+    { "name": "F", "dependencies": [] },
+    { "name": "G", "dependencies": [] }
   ],
   "rootModule": "A",
   "modulesToMakeOOBM": [],

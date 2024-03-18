@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class JavaClassTooltipLinkHandler extends TooltipLinkHandler {
+public final class JavaClassTooltipLinkHandler extends TooltipLinkHandler {
 
   @Override
   public boolean handleLink(@NotNull String refSuffix, @NotNull Editor editor) {

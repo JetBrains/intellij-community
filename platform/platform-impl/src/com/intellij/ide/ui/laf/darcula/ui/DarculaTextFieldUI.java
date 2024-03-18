@@ -4,7 +4,9 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -35,7 +37,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     }
 
     Insets i = getComponent().getInsets();
-    return (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
+    return (isCompact(c) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.TextField.minimumSize().height)+ i.top + i.bottom;
   }
 
   @Override
@@ -75,7 +77,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.translate(r.x, r.y);
 
       if (component.isEnabled() && component.isEditable()) {
-        float arc = isSearchField(component) || DarculaTextFieldProperties.isTextFieldRounded(component) ? COMPONENT_ARC.getFloat() : 0.0f;
+        float arc = isSearchField(component) || isNewUiTheme(component) ? COMPONENT_ARC.getFloat() : 0.0f;
         float bw = bw();
 
         g2.setColor(component.getBackground());
@@ -90,10 +92,18 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected Insets getDefaultMargins() {
     Component c = getComponent();
-    return isCompact(c) || isTableCellEditor(c) ? JBInsets.create(0, 3) : JBInsets.create(2, 6);
+    if (isCompact(c) || isTableCellEditor(c)) {
+      return JBInsets.create(0, 3);
+    }
+
+    return isNewUiTheme(c) ? new JBInsets(2, 9, 2, 6) : JBInsets.create(2, 6);
   }
 
   protected float bw() {
     return BW.getFloat();
+  }
+
+  private static boolean isNewUiTheme(@Nullable Component c) {
+    return c instanceof JComponent jComponent && jComponent.getBorder() instanceof DarculaTextBorderNew;
   }
 }

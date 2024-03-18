@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.icons.AllIcons
@@ -15,19 +15,23 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import kotlin.streams.asSequence
 
-private val LOADING_ICON = AnimatedIcon.Default()
-
 class GitBranchPopupFetchAction<P : WizardPopup>(private val popupClass: Class<P>) : GitFetch() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
     val project = e.project
+    val presentation = e.presentation
+
     if (project == null) {
-      e.presentation.isEnabledAndVisible = false
+      presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.icon = if (isBusy(project)) LOADING_ICON else AllIcons.Vcs.Fetch
-    e.presentation.text = if (isBusy(project)) GitBundle.message("fetching") else GitBundle.message("action.fetch.text")
+    val busy = isBusy(project)
+    if (busy) {
+      presentation.isEnabled = true // for loading icon animation
+    }
+    presentation.icon = if (busy) AnimatedIcon.Default.INSTANCE else AllIcons.Vcs.Fetch
+    presentation.text = if (busy) GitBundle.message("fetching") else GitBundle.message("action.fetch.text")
   }
 
   override fun actionPerformed(e: AnActionEvent) {

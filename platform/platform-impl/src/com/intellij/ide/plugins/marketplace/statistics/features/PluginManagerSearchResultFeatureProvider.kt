@@ -2,21 +2,21 @@
 package com.intellij.ide.plugins.marketplace.statistics.features
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 
-class PluginManagerSearchResultFeatureProvider {
-  companion object {
-    private val NAME_LENGTH_DATA_KEY = EventFields.Int("nameLength")
-    private val DEVELOPED_BY_JETBRAINS_DATA_KEY = EventFields.Boolean("byJetBrains")
+object PluginManagerSearchResultFeatureProvider {
+  private val NAME_LENGTH_DATA_KEY = EventFields.Int("nameLength")
+  private val DEVELOPED_BY_JETBRAINS_DATA_KEY = EventFields.Boolean("byJetBrains")
+  private val MARKETPLACE_INFO_DATA_KEY = ObjectEventField(
+    "marketplaceInfo", *PluginManagerSearchResultMarketplaceFeatureProvider.getFeaturesDefinition()
+  )
 
-    fun getFeaturesDefinition(): List<EventField<*>> {
-      return arrayListOf(
-        NAME_LENGTH_DATA_KEY, DEVELOPED_BY_JETBRAINS_DATA_KEY
-      )
-    }
+  fun getFeaturesDefinition(): Array<EventField<*>> {
+    return arrayOf(
+      NAME_LENGTH_DATA_KEY, DEVELOPED_BY_JETBRAINS_DATA_KEY, EventFields.PluginInfo, MARKETPLACE_INFO_DATA_KEY
+    )
   }
 
   fun getSearchStateFeatures(userQuery: String?, descriptor: IdeaPluginDescriptor): List<EventPair<*>> = buildList {
@@ -24,5 +24,9 @@ class PluginManagerSearchResultFeatureProvider {
 
     add(NAME_LENGTH_DATA_KEY.with(descriptor.name.length))
     add(DEVELOPED_BY_JETBRAINS_DATA_KEY.with(pluginInfo.isDevelopedByJetBrains()))
+    add(EventFields.PluginInfo.with(pluginInfo))
+    if (pluginInfo.isSafeToReport() && descriptor is PluginNode) {
+      add(MARKETPLACE_INFO_DATA_KEY.with(PluginManagerSearchResultMarketplaceFeatureProvider.getSearchStateFeatures(descriptor)))
+    }
   }
 }

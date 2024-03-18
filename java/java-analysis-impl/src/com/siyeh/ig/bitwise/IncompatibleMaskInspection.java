@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class IncompatibleMaskInspection extends BaseInspection {
+public final class IncompatibleMaskInspection extends BaseInspection {
 
   @Override
   @NotNull

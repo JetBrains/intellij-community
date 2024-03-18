@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfByteArray
+import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
@@ -136,9 +138,14 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
             val vm = context.vm
             val classLoaderType = classLoader.referenceType() as ClassType
             val defineMethod = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
-            val nameObj = vm.mirrorOf(name)
+            val nameObj = mirrorOfString(name, vm, context.evaluationContext)
 
-            val args = listOf(nameObj, mirrorOfByteArray(bytes, context), vm.mirrorOf(0), vm.mirrorOf(bytes.size))
+            val args = listOf(
+                nameObj,
+                mirrorOfByteArray(bytes, context.evaluationContext),
+                vm.mirrorOf(0),
+                vm.mirrorOf(bytes.size)
+            )
             context.invokeMethod(classLoader, defineMethod, args)
         } catch (e: Exception) {
             throw EvaluateException("Error during class $name definition: $e", e)

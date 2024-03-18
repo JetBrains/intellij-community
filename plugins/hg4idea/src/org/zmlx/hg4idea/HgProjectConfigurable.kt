@@ -15,20 +15,13 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.util.ui.VcsExecutablePathSelector.ExecutableHandler
-import org.jetbrains.annotations.Nls
 import org.zmlx.hg4idea.util.HgUtil
 import org.zmlx.hg4idea.util.HgVersion
 
 class HgProjectConfigurable(val project: Project)
-  : BoundSearchableConfigurable(getConfigurableDisplayName(),
+  : BoundSearchableConfigurable(HgBundle.message("hg4idea.mercurial"),
                                 "project.propVCSSupport.VCSs.Mercurial",
                                 "vcs.Mercurial") {
-  companion object {
-    @JvmStatic
-    fun getConfigurableDisplayName(): @Nls String {
-      return HgBundle.message("hg4idea.mercurial")
-    }
-  }
 
   override fun createPanel(): DialogPanel {
     val disposable = disposable!!

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.linux;
 
 import com.intellij.execution.ExecutionException;
@@ -15,7 +15,6 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -35,7 +34,7 @@ public final class LinuxFileTypeAssociator implements SystemFileTypeAssociator {
     try {
       var mimeFile = Path.of(SystemProperties.getUserHome(), LOCAL_MIME_PACKAGES_PATH, EXTENSIONS_FILE_NAME);
       Files.createDirectories(mimeFile.getParent());
-      JDOMUtil.writeDocument(createMimeFile(descriptions), new BufferedOutputStream(Files.newOutputStream(mimeFile)), "\n");
+      JDOMUtil.writeDocument(createMimeFile(descriptions), mimeFile, "\n");
 
       var mimeDir = Path.of(SystemProperties.getUserHome(), LOCAL_MIME_DIR);
       runCommand(new GeneralCommandLine("xdg-mime", "install", "--mode", "user", "--novendor", mimeDir.toString()));

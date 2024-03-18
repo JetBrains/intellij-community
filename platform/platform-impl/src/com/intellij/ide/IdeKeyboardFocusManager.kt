@@ -1,8 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.ide.ui.ShowingContainer
 import com.intellij.openapi.diagnostic.logger
 import java.awt.*
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED
+import java.awt.event.HierarchyEvent.SHOWING_CHANGED
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import javax.swing.DefaultFocusManager
@@ -20,6 +24,16 @@ internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc ab
   private val parentConstructorExecuted = true
 
   override fun dispatchEvent(e: AWTEvent): Boolean {
+    if (e.id == HierarchyEvent.HIERARCHY_CHANGED &&
+        e is HierarchyEvent &&
+        e.changeFlags.toInt().and(DISPLAYABILITY_CHANGED or SHOWING_CHANGED) == DISPLAYABILITY_CHANGED &&
+        isRecursivelyVisibleViaShowingContainer(e.component)) {
+      // Hack to support SHOWING_CHANGED event generation for ShowingContainer
+      val patchedEvent = HierarchyEvent(e.component, e.id, e.changed, e.changedParent,
+                                        e.changeFlags.or(SHOWING_CHANGED.toLong()))
+      e.component.dispatchEvent(patchedEvent)
+      return true
+    }
     if (EventQueue.isDispatchThread()) {
       var result = false
       performActivity(e) { result = super.dispatchEvent(e) }
@@ -49,6 +63,15 @@ internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc ab
       c = c.parent
     }
     super.setGlobalFocusOwner(focusOwner)
+  }
+
+  private fun isRecursivelyVisibleViaShowingContainer(component: Component): Boolean {
+    var c = component
+    while (true) {
+      if (c is ShowingContainer) return true
+      if (!c.isVisible || c is Window) return false
+      c = c.parent ?: return false
+    }
   }
 }
 

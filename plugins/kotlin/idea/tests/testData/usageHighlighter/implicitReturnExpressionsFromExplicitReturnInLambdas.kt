@@ -1,5 +1,5 @@
 fun some(a: Int, b: Int) {
-    <info descr="null">run</info> {
+    run <info descr="null">{</info>
         val i = 12
         val j = 13
         if (a > 50) {
@@ -11,7 +11,7 @@ fun some(a: Int, b: Int) {
         } else {
             <info descr="null">~return@run false</info>
         }
-    }
+    <info descr="null">}</info>
 }
 
 fun <T> run(a: () -> T) {}

@@ -56,4 +56,7 @@ public class DelegateTest extends AbstractLombokParsingTestCase {
   public void testDelegate$DelegateGenericInterfaceIssue88() {
     doTest(true);
   }
+  public void testDelegate$DelegateWithInterfaces() {
+    doTest(true);
+  }
 }

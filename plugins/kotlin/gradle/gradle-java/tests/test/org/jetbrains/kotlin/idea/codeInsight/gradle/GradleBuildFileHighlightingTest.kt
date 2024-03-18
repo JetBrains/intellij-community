@@ -71,17 +71,16 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
     }
 
     class JavaLibraryPlugin14 : GradleBuildFileHighlightingTest() {
+
         @Test
-        @TargetVersions("6.0.1+")
+        @TargetVersions("7.0.2+")
         fun testJavaLibraryPlugin() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
             withHighLightingFilterChecked(buildGradleKts) {
                 importProject()
             }
-
             checkHighlighting(buildGradleKts)
         }
-
     }
 
     class MultiplesJdkTableEntriesWithSamePathButFirstHasCorruptedRoots : GradleBuildFileHighlightingTest() {

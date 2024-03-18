@@ -28,7 +28,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
-public class JavaColorProvider implements ElementColorProvider {
+public final class JavaColorProvider implements ElementColorProvider {
 
   UastMetaLanguage myUastMetaLanguage = Language.findInstance(UastMetaLanguage.class);
 

@@ -73,10 +73,13 @@ public final class CreateSwitchBranchesUtil {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
     boolean hasSealedClass = selectorClass != null &&
                              (selectorClass.hasModifierProperty(PsiModifier.SEALED) ||
+                              selectorClass.getPermitsList() != null ||
                               (selectorClass instanceof PsiTypeParameter typeParameter &&
                                ContainerUtil.exists(typeParameter.getExtendsListTypes(), extType -> {
                                  PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(extType);
-                                 return psiClass != null && psiClass.hasModifierProperty(PsiModifier.SEALED);
+                                 return psiClass != null &&
+                                        (psiClass.hasModifierProperty(PsiModifier.SEALED) ||
+                                         psiClass.getPermitsList() != null);
                                })));
     boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && hasSealedClass;
     if (body == null) {
@@ -229,24 +232,5 @@ public final class CreateSwitchBranchesUtil {
       nextLabel = nextLabels.get(nextLabel);
     }
     return nextLabel;
-  }
-
-  /**
-   * Prepares the document for starting the template and returns the editor.
-   *
-   * @param element any element from the document
-   * @return an editor, or null if not found.
-   */
-  public static @Nullable Editor prepareForTemplateAndObtainEditor(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (!file.isPhysical()) return null;
-    Project project = file.getProject();
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) return null;
-    Document document = editor.getDocument();
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return null;
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-    return editor;
   }
 }

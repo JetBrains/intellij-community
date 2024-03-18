@@ -103,6 +103,12 @@ interface BaseKotlinConverter {
                     }
                 }
 
+                is UastFakeSourceLightDefaultAccessorForConstructorParameter -> {
+                    el<UMethod> {
+                        KotlinUMethodWithFakeLightDelegateDefaultAccessorForConstructorProperty(element.original, element, givenParent)
+                    }
+                }
+
                 is UastFakeSourceLightDefaultAccessor -> {
                     el<UMethod> {
                         KotlinUMethodWithFakeLightDelegateDefaultAccessor(element.original, element, givenParent)
@@ -148,7 +154,17 @@ interface BaseKotlinConverter {
 
                 is UastKotlinPsiParameterBase<*> -> {
                     el<UParameter> {
-                        (element.ktOrigin as? KtTypeReference)?.let { convertReceiverParameter(it) }
+                        when (val ktOrigin = element.ktOrigin) {
+                            is KtTypeReference -> {
+                                // Regular value parameter in UAST fake LightMethod
+                                convertReceiverParameter(ktOrigin)
+                            }
+                            is KtLambdaExpression -> {
+                                // Implicit lambda parameter `it`
+                                KotlinUParameter(element, sourcePsi = null, givenParent)
+                            }
+                            else -> null
+                        }
                     }
                 }
 

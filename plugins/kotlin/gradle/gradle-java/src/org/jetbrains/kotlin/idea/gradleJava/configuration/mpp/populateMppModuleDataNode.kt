@@ -9,8 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.VersionComparatorUtil
 import org.gradle.tooling.model.UnsupportedMethodException
@@ -47,7 +45,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 import java.lang.reflect.Proxy
 import java.util.*
-import java.util.stream.Collectors
 
 /**
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
@@ -198,6 +195,19 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
 
                     (e.g., retaining some artifacts despite being resolved to _some_ source modules)
                      */
+                    ownerId = "kotlin"
+                )
+            }
+        }
+
+        // Collect compilation output archives
+        mppModel.targets.flatMap { it.compilations }.forEach { compilation ->
+            val archiveFile = compilation.archiveFile ?: return@forEach
+            val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
+            compilation.allSourceSets.forEach { sourceSet ->
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
                     ownerId = "kotlin"
                 )
             }
@@ -407,7 +417,7 @@ private fun createExternalSourceSet(
 
         sourceSet.name = compilation.fullName()
         sourceSet.targetCompatibility = compilationData.targetCompatibility
-        sourceSet.dependencies += compilation.dependencies.mapNotNull { mppModel.dependencyMap[it] }
+        sourceSet.dependencies = compilation.dependencies.mapNotNull { mppModel.dependencyMap[it] }
         //TODO after applying patch to IDEA core uncomment the following line:
         // sourceSet.isTest = compilation.sourceSets.filter { isTestModule }.isNotEmpty()
         // It will allow to get rid of hacks with guessing module type in DataServices and obtain properly set productionOnTest flags
@@ -416,7 +426,7 @@ private fun createExternalSourceSet(
             sourcesWithTypes += compilation.sourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
                 dirSet.outputDir = effectiveClassesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.sourceDirs }
-                dirSet.gradleOutputDirs += compilation.output.classesDirs
+                dirSet.gradleOutputDirs = compilation.output.classesDirs
                 dirSet.setInheritedCompilerOutput(false)
             }
         }
@@ -424,7 +434,7 @@ private fun createExternalSourceSet(
             sourcesWithTypes += compilation.resourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
                 dirSet.outputDir = resourcesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.resourceDirs }
-                dirSet.gradleOutputDirs += resourcesDir
+                dirSet.gradleOutputDirs = listOf(resourcesDir)
                 dirSet.setInheritedCompilerOutput(false)
             }
         }
@@ -465,31 +475,7 @@ private fun getInternalModuleName(
     resolverCtx: ProjectResolverContext,
     actualName: String = kotlinComponent.name
 ): String {
-    val delimiter: String
-    val moduleName = StringBuilder()
-
-    val buildSrcGroup = resolverCtx.buildSrcGroup
-    if (resolverCtx.isUseQualifiedModuleNames) {
-        delimiter = "."
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(
-            gradlePathToQualifiedName(
-                gradleModule.project.name,
-                externalProject.qName
-            )
-        )
-    } else {
-        delimiter = "_"
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(gradleModule.name)
-    }
-    moduleName.append(delimiter)
-    moduleName.append(kotlinComponent.fullName(actualName))
-    return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
+    return KotlinModuleUtils.getInternalModuleName(gradleModule, externalProject, resolverCtx, kotlinComponent.fullName(actualName))
 }
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
@@ -507,7 +493,7 @@ private fun createExternalSourceSet(
     return DefaultExternalSourceSet().also { sourceSet ->
         sourceSet.name = ktSourceSet.name
         sourceSet.targetCompatibility = ktSourceSetData.targetCompatibility
-        sourceSet.dependencies += ktSourceSet.dependencies.mapNotNull { mppModel.dependencyMap[it] }
+        sourceSet.dependencies = ktSourceSet.dependencies.mapNotNull { mppModel.dependencyMap[it] }
 
         sourceSet.setSources(linkedMapOf(
             ktSourceSet.sourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
@@ -522,16 +508,6 @@ private fun createExternalSourceSet(
 
 private fun getExternalModuleName(gradleModule: IdeaModule, kotlinComponent: KotlinComponent) =
     gradleModule.name + ":" + kotlinComponent.fullName()
-
-private fun gradlePathToQualifiedName(
-    rootName: String,
-    gradlePath: String
-): String {
-    return ((if (gradlePath.startsWith(":")) "$rootName." else "")
-            + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-        .filter { s: String -> s.isNotEmpty() }
-        .collect(Collectors.joining(".")))
-}
 
 private val IdeaModule.jdkNameIfAny
     get() = try {

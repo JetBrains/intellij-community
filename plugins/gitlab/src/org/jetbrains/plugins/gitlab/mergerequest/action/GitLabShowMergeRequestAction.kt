@@ -8,10 +8,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-private class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),
-                                                     GitLabBundle.messagePointer("merge.request.show.action.description")) {
+private class GitLabShowMergeRequestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -22,10 +21,11 @@ private class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messag
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val projectVm = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as GitLabToolWindowProjectViewModel
-    val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
+    val projectVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as?
+      GitLabToolWindowProjectViewModel ?: return
+    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED) ?: return
 
-    projectVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid))
+    projectVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid), GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION)
     projectVm.filesController.openTimeline(selection.iid, false)
   }
 }

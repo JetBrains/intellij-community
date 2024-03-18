@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.script
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.ComparisonFailure
 

@@ -13,21 +13,25 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xml.CommonXmlStrings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
+public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
   public JavaFieldBreakpointType() {
     super("java-field", JavaDebuggerBundle.message("field.watchpoints.tab.title"));
   }
@@ -74,13 +78,42 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.FIELD_WATCHPOINTS;
   }
 
   //@Override
   public String getDisplayName() {
     return JavaDebuggerBundle.message("field.watchpoints.tab.title");
+  }
+
+  @Nls
+  @Override
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaFieldBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("field.watchpoint.description");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("field.watchpoint.description");
+  }
+
+  @Override
+  public List<@Nls String> getPropertyXMLDescriptions(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    var res = new SmartList<>(super.getPropertyXMLDescriptions(breakpoint));
+    var props = breakpoint.getProperties();
+    if (props != null) {
+      var defaults = createProperties();
+      if (props.WATCH_ACCESS != defaults.WATCH_ACCESS || props.WATCH_MODIFICATION != defaults.WATCH_MODIFICATION) {
+        // Add both if at least one property isn't default.
+        res.add(JavaDebuggerBundle.message("field.watchpoint.property.name.access") + CommonXmlStrings.NBSP
+                + props.WATCH_ACCESS);
+        res.add(JavaDebuggerBundle.message("field.watchpoint.property.name.modification") + CommonXmlStrings.NBSP
+                + props.WATCH_MODIFICATION);
+      }
+    }
+    return res;
   }
 
   @Override
@@ -121,7 +154,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   @Nullable
   @Override
   public JavaFieldBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
-    return new JavaFieldBreakpointProperties();
+    return createProperties();
   }
 
   @Nullable

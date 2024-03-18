@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
@@ -23,11 +22,12 @@ import org.junit.Test
 import java.io.File
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
+
   protected lateinit var myAnotherProjectRoot: VirtualFile
 
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
-    val projectDir = File(myDir, "anotherProject")
+    val projectDir = File(dir, "anotherProject")
     projectDir.mkdirs()
     myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)!!
   }
@@ -57,15 +57,15 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                             "<artifactId>m2</artifactId>" +
                                             "<version>2</version>")
     runBlockingMaybeCancellable {
-      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
+      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
     }
     assertModules("project1", "m1", "project2", "m2")
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
 
     assertUnorderedElementsAreEqual(
       allConnectors.first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(myDir, File(it))
+        FileUtil.getRelativePath(dir, File(it))
       },
       listOf("project", "anotherProject")
     )
@@ -97,16 +97,14 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                             "<version>2</version>")
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
-    runBlockingMaybeCancellable {
-      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
-    }
+    MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
     assertModules("project1", "m1", "project2", "m2")
 
-    assertEquals(2, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(2, MavenServerManager.getInstance().getAllConnectors().size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.map {
-        FileUtil.getRelativePath(myDir, File(it.multimoduleDirectories.first()))
+      MavenServerManager.getInstance().getAllConnectors().map {
+        FileUtil.getRelativePath(dir, File(it.multimoduleDirectories.first()))
       },
       listOf("project", "anotherProject")
     )
@@ -141,16 +139,16 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     val value = Registry.`is`("maven.server.per.idea.project")
     try {
       Registry.get("maven.server.per.idea.project").setValue(true)
-      runBlockingMaybeCancellable {
-        MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
+      waitForImportWithinTimeout {
+        MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
       }
       assertModules("project1", "m1", "project2", "m2")
 
-      assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+      assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
       assertContainsElements(
-        MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
-          FileUtil.getRelativePath(myDir, File(it))
+        MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
+          FileUtil.getRelativePath(dir, File(it))
         },
         listOf("project", "anotherProject")
       )
@@ -158,13 +156,12 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     finally {
       Registry.get("maven.server.per.idea.project").setValue(value)
     }
-
   }
 
 
   @Test
   fun testShouldNotCreateNewConnectorsIfProjectRootIsInSiblingDir() = runBlocking {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+    projectPom = createModulePom("parent", "<groupId>test</groupId>" +
                                              "<artifactId>project1</artifactId>" +
                                              "<version>1</version>" +
                                              "<packaging>pom</packaging>" +
@@ -180,11 +177,11 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     assertModules("project1", mn("project", "m1"))
 
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(myDir, File(it))
+      MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
+        FileUtil.getRelativePath(dir, File(it))
       }.map { it?.replace("\\", "/") },
       listOf("project/parent", "project/m1")
     )
@@ -192,16 +189,16 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCreateNewConnectorsVmOptionsMvnAndSettings() = runBlocking {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+    projectPom = createModulePom("parent", "<groupId>test</groupId>" +
                                              "<artifactId>project1</artifactId>" +
                                              "<version>1</version>" +
                                              "<packaging>pom</packaging>"
     )
-    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject)
+    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
     settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=jvm")
     importProjectAsync()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
@@ -209,14 +206,14 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCreateNewConnectorsVmOptionsMvn() = runBlocking {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+    projectPom = createModulePom("parent", "<groupId>test</groupId>" +
                                              "<artifactId>project1</artifactId>" +
                                              "<version>1</version>" +
                                              "<packaging>pom</packaging>"
     )
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=something")
     importProjectAsync()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=something", mavenServerConnector.vmOptions)
@@ -224,15 +221,15 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCreateNewConnectorsVmOptionsSettings() = runBlocking {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+    projectPom = createModulePom("parent", "<groupId>test</groupId>" +
                                              "<artifactId>project1</artifactId>" +
                                              "<version>1</version>" +
                                              "<packaging>pom</packaging>"
     )
-    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject)
+    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
     settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
     importProjectAsync()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
@@ -240,23 +237,23 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCreateNewConnectorsVmOptionsJvmXms() = runBlocking {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+    projectPom = createModulePom("parent", "<groupId>test</groupId>" +
                                              "<artifactId>project1</artifactId>" +
                                              "<version>1</version>" +
                                              "<packaging>pom</packaging>"
     )
     createProjectSubFile(".mvn/jvm.config", "-Xms800m")
     importProjectAsync()
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
   }
 
   @Test
   fun testShouldPassValidConfigurationOfGlobalSettingsToConnector() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project1</artifactId>" +
-                     "<version>1</version>");
+                     "<version>1</version>")
     createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
-                         "distributionUrl=" + MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toUri().toASCIIString());
+                         "distributionUrl=" + MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toUri().toASCIIString())
     val settingsRef = Ref<MavenEmbedderSettings>()
     ApplicationManager.getApplication().replaceService(MavenServerManager.MavenServerConnectorFactory::class.java,
                                                        object : MavenServerManager.MavenServerConnectorFactory {
@@ -270,19 +267,21 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                                                                     mavenDistribution,
                                                                                                     multimoduleDirectory) {
                                                              override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
-                                                               settingsRef.set(settings);
-                                                               throw UnsupportedOperationException();
+                                                               settingsRef.set(settings)
+                                                               throw UnsupportedOperationException()
                                                              }
                                                            }
                                                          }
 
                                                        }, testRootDisposable)
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = MavenWrapper;
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
     assertThrows(UnsupportedOperationException::class.java) {
-      MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.path).getEmbedder()
+      runBlockingMaybeCancellable {
+        MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.path).getEmbedder()
+      }
     }
     TestCase.assertNotNull(settingsRef.get())
-    val path = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path).mavenDistribution.mavenHome
+    val path = MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.mavenHome
 
     TestCase.assertEquals(path.resolve("conf/settings.xml").toString(), settingsRef.get().settings.globalSettingsPath)
   }

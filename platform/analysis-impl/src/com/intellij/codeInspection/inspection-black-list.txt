@@ -22,6 +22,7 @@ com.intellij.lang.javascript.inspections.JSPotentiallyInvalidConstructorUsageIns
 com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
 com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
+com.intellij.python.reStructuredText.inspections.RestRoleInspection
 com.intellij.spellchecker.inspections.SpellCheckingInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedVariableInspection
@@ -31,7 +32,6 @@ com.jetbrains.php.lang.inspections.phpdoc.PhpMissingDocCommentInspection
 com.jetbrains.python.inspections.PyCompatibilityInspection
 com.jetbrains.python.inspections.PyPackageRequirementsInspection
 com.jetbrains.python.inspections.PyRedundantParenthesesInspection
-com.jetbrains.rest.inspections.RestRoleInspection
 com.sixrr.inspectjs.bitwise.PointlessBitwiseExpressionJSInspection
 com.sixrr.inspectjs.confusing.EmptyStatementBodyJSInspection
 com.sixrr.inspectjs.confusing.NestedFunctionJSInspection

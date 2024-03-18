@@ -3046,6 +3046,11 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Iterator E next()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
   <item name='java.util.Iterator boolean hasNext()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>

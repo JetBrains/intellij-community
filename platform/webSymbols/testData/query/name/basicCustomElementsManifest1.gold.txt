@@ -3,7 +3,7 @@
   matchedName: "html/elements/my-EleMeNt",
   origin: "basic@null (<none>)",
   complete: true,
-  description: "<p>The cool class</p>",
+  description: "<p>The cool class",
   priority: NORMAL,
   segments: [
    {
@@ -12,7 +12,7 @@
      matchedName: "custom-elements-manifest/declarations/MyElement",
      origin: "basic@null (<none>)",
      complete: true,
-     description: "<p>The cool class</p>",
+     description: "<p>The cool class",
      priority: NORMAL,
      segments: [
       {

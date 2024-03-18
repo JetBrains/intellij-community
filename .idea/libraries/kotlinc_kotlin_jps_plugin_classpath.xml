@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-classpath" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:1.9.22-release-704">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:1.9.23-release-779">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.9.22-release-704/kotlin-jps-plugin-classpath-1.9.22-release-704.jar">
-          <sha256sum>ca2a990c8ced4ace2d011ab2c3a9b4df724cd324c1e7f802b1ecb4815d686a83</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.9.23-release-779/kotlin-jps-plugin-classpath-1.9.23-release-779.jar">
+          <sha256sum>4d7d2aca690a75a8b433f94b09c2a4bd27cd574780f3542a75a0f62e07aedf90</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.9.22-release-704/kotlin-jps-plugin-classpath-1.9.22-release-704.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.9.23-release-779/kotlin-jps-plugin-classpath-1.9.23-release-779.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.9.22-release-704/kotlin-jps-plugin-classpath-1.9.22-release-704-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.9.23-release-779/kotlin-jps-plugin-classpath-1.9.23-release-779-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

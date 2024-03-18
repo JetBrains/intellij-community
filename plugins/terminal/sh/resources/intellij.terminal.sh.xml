@@ -10,5 +10,6 @@
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.sh.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.sh.bash.BashSupport"/>
+    <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.sh.powershell.PowerShellSupport"/>
   </extensions>
 </idea-plugin>

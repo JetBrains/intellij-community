@@ -19,7 +19,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrowsRuntimeExceptionInspection extends BaseInspection {
+public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {

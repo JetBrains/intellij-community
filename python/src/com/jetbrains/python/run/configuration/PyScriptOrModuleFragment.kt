@@ -14,10 +14,10 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.jetbrains.PySymbolFieldWithBrowseButton
-import com.jetbrains.extensions.ModuleBasedContextAnchor
-import com.jetbrains.extensions.ProjectSdkContextAnchor
-import com.jetbrains.isPythonModule
+import com.jetbrains.python.PySymbolFieldWithBrowseButton
+import com.jetbrains.python.extensions.ModuleBasedContextAnchor
+import com.jetbrains.python.extensions.ProjectSdkContextAnchor
+import com.jetbrains.python.isPythonModule
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.awt.GridBagConstraints

@@ -145,9 +145,13 @@ public final class FieldNameConstantsHandler {
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.FINAL);
 
+    final String initializerText = psiMember.getName();
+    fieldNameConstant.withConstantValue(initializerText);
+
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-    final PsiExpression initializer = psiElementFactory.createExpressionFromText("\"" + psiMember.getName() + "\"", containingClass);
+    final PsiExpression initializer = psiElementFactory.createExpressionFromText("\"" + initializerText + "\"", containingClass);
     fieldNameConstant.setInitializer(initializer);
+
     return fieldNameConstant;
   }
 }

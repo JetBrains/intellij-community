@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class WrapVarargArgumentsWithExplicitArrayIntention extends MCIntention {
+public final class WrapVarargArgumentsWithExplicitArrayIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -48,8 +48,12 @@ public final class PatternUtil {
   }
 
   public static @NotNull Pattern fromMask(@NotNull String mask) {
+    return fromMask(mask, 0);
+  }
+
+  public static @NotNull Pattern fromMask(@NotNull String mask, int flags) {
     try {
-      return Pattern.compile(convertToRegex(mask));
+      return Pattern.compile(convertToRegex(mask), flags);
     }
     catch (PatternSyntaxException e) {
       LOG.error(mask, e);

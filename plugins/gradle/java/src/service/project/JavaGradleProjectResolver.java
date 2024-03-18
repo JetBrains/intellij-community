@@ -156,7 +156,8 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
 
   private void populateBuildScriptClasspathData(@NotNull IdeaModule gradleModule,
                                                 @NotNull DataNode<ModuleData> ideModule) {
-    final BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final GradleBuildScriptClasspathModel
+      buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, GradleBuildScriptClasspathModel.class);
     final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
       classpathEntries = ContainerUtil.map(

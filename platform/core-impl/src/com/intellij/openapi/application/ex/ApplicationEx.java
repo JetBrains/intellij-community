@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -148,13 +148,6 @@ public interface ApplicationEx extends Application {
   void assertIsDispatchThread(@Nullable JComponent component);
 
   /**
-   * @deprecated Use {@link #assertIsNonDispatchThread()}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  void assertTimeConsuming();
-
-  /**
    * Tries to acquire the read lock and run the {@code action}.
    *
    * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
@@ -216,11 +209,6 @@ public interface ApplicationEx extends Application {
     action.run();
   }
 
-  @ApiStatus.Internal
-  default boolean isExitInProgress() {
-    return false;
-  }
-
   default boolean isLightEditMode() {
     return false;
   }
@@ -257,6 +245,10 @@ public interface ApplicationEx extends Application {
     runnable.run();
   }
 
+  /**
+   * @deprecated Use {@link IdeEventQueue#flushNativeEventQueue}
+   */
   @ApiStatus.Internal
+  @Deprecated
   default void flushNativeEventQueue() {}
 }

@@ -26,13 +26,13 @@ internal object GradleNewProjectWizardCollector : CounterUsagesCollector() {
   private val gradleVersionField = EventFields.StringValidatedByCustomRule<GradleVersionValidationRule>("gradle_version")
 
   // @formatter:off
-    private val gradleDslChangedEvent = GROUP.registerVarargEvent("gradle.dsl.changed", *buildSystemFields, gradleDslField)
-    private val gradleDslFinishedEvent = GROUP.registerVarargEvent("gradle.dsl.finished", *buildSystemFields, gradleDslField)
-    private val gradleDistributionChangedEvent = GROUP.registerVarargEvent("gradle.distribution.changed", *buildSystemFields, gradleDistributionField)
-    private val gradleDistributionFinishedEvent = GROUP.registerVarargEvent("gradle.distribution.finished", *buildSystemFields, gradleDistributionField)
-    private val gradleVersionChangedEvent = GROUP.registerVarargEvent("gradle.version.changed", *buildSystemFields, gradleVersionField)
-    private val gradleVersionFinishedEvent = GROUP.registerVarargEvent("gradle.version.finished", *buildSystemFields, gradleVersionField)
-    // @formatter:on
+  private val gradleDslChangedEvent = GROUP.registerVarargEvent("gradle.dsl.changed", *buildSystemFields, gradleDslField)
+  private val gradleDslFinishedEvent = GROUP.registerVarargEvent("gradle.dsl.finished", *buildSystemFields, gradleDslField)
+  private val gradleDistributionChangedEvent = GROUP.registerVarargEvent("gradle.distribution.changed", *buildSystemFields, gradleDistributionField)
+  private val gradleDistributionFinishedEvent = GROUP.registerVarargEvent("gradle.distribution.finished", *buildSystemFields, gradleDistributionField)
+  private val gradleVersionChangedEvent = GROUP.registerVarargEvent("gradle.version.changed", *buildSystemFields, gradleVersionField)
+  private val gradleVersionFinishedEvent = GROUP.registerVarargEvent("gradle.version.finished", *buildSystemFields, gradleVersionField)
+  // @formatter:on
 
   fun NewProjectWizardStep.logGradleDslChanged(gradleDsl: GradleDsl) =
     gradleDslChangedEvent.logBuildSystemEvent(this, gradleDslField with gradleDsl)

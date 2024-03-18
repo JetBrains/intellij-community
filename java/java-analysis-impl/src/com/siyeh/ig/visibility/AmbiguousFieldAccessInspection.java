@@ -20,7 +20,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AmbiguousFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class AmbiguousFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

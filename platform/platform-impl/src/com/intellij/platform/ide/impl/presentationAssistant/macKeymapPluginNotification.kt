@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 
@@ -21,7 +22,7 @@ fun showInstallMacKeymapPluginNotification(pluginId: PluginId) {
   })
   notification.addAction(object : AnAction(IdeBundle.message("presentation.assistant.notification.action.hide")) {
     override fun actionPerformed(e: AnActionEvent) {
-      PresentationAssistant.INSTANCE.configuration.showAlternativeKeymap = false
+      service<PresentationAssistant>().configuration.showAlternativeKeymap = false
       notification.expire()
     }
   })

@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.makeJavaIdentifier
 import java.io.File
 
-class TestCaseMethod(
+data class TestCaseMethod(
     private val methodNameBase: String,
     private val contentRootPath: String,
     private val localPath: String,
     private val isCompilerTestData: Boolean,
-    private val passTestDataPath: Boolean
+    private val passTestDataPath: Boolean,
+    val file: File,
+    val ignored: Boolean,
 ) : TestMethod {
     override val methodName = run {
         "test" + when (val qualifier = File(localPath).parentFile?.systemIndependentPath ?: "") {
@@ -27,16 +29,23 @@ class TestCaseMethod(
     }
 
     fun embed(path: String): TestCaseMethod {
+        val f = File(path, localPath)
         return TestCaseMethod(
             methodNameBase,
             contentRootPath,
-            File(path, localPath).systemIndependentPath,
+            f.systemIndependentPath,
             isCompilerTestData,
-            passTestDataPath
+            passTestDataPath,
+            f,
+            ignored
         )
     }
 
+    fun testDataPath(parent: File): File =
+        File(parent, localPath)
+
     override fun Code.render() {
+        if (ignored) return
         appendAnnotation(TAnnotation<TestMetadata>(localPath))
         appendBlock("public void $methodName() throws Exception") {
             if (!passTestDataPath) {

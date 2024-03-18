@@ -52,6 +52,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
@@ -60,6 +61,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.AsyncPromise
@@ -67,6 +69,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -131,6 +134,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       stopProcess(descriptor?.processHandler)
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     @JvmStatic
     fun stopProcess(processHandler: ProcessHandler?) {
       if (processHandler == null) {
@@ -138,20 +142,21 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       }
 
       processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, true)
-
-      if (processHandler is KillableProcess && processHandler.isProcessTerminating) {
-        // process termination was requested, but it's still alive
-        // in this case 'force quit' will be performed
-        processHandler.killProcess()
-        return
-      }
-
-      if (!processHandler.isProcessTerminated) {
-        if (processHandler.detachIsDefault()) {
-          processHandler.detachProcess()
+      GlobalScope.namedChildScope("Destroy " + processHandler.javaClass.name, Dispatchers.Default, true).launch {
+        if (processHandler is KillableProcess && processHandler.isProcessTerminating) {
+          // process termination was requested, but it's still alive
+          // in this case 'force quit' will be performed
+          processHandler.killProcess()
         }
         else {
-          processHandler.destroyProcess()
+          if (!processHandler.isProcessTerminated) {
+            if (processHandler.detachIsDefault()) {
+              processHandler.detachProcess()
+            }
+            else {
+              processHandler.destroyProcess()
+            }
+          }
         }
       }
     }

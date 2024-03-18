@@ -11,6 +11,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Condition;
@@ -254,7 +255,8 @@ public final class CommonJavaRefactoringUtil {
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
-          (acceptVoid || !PsiTypes.voidType().equals(expression.getType()))) {
+          (acceptVoid || !PsiTypes.voidType().equals(DumbService.getInstance(file.getProject())
+                                                       .computeWithAlternativeResolveEnabled(expression::getType)))) {
         if (isExtractable(expression)) {
           expressions.add(expression);
         }

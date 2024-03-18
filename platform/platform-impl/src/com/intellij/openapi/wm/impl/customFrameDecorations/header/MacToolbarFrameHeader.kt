@@ -17,12 +17,14 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.getPreferredWindowHeaderHeight
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.UIBundle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.foundation.MacUtil
-import com.intellij.util.childScope
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
@@ -37,8 +39,10 @@ import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JRootPane
+import kotlin.math.roundToInt
 
-private const val GAP_FOR_BUTTONS = 80
+// Fullscreen controls have fixed 52 points width, and scalable 13 points left and right gaps
+private val GAP_FOR_BUTTONS: Int get() = 26 +  JBValue.Float(52f, true).unscaled.roundToInt()
 
 internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
                                      private val frame: JFrame,
@@ -82,13 +86,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     view = createView(rootPane.isCompactHeaderFastCheck())
     // view.init is called later in a separate coroutine - see below `coroutineScope.launch`
 
-    val isFullscreen = isFullScreen(rootPane)
-    border = if (isFullscreen && !MacFullScreenControlsManager.enabled()) {
-      JBUI.Borders.empty()
-    }
-    else {
-      JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
-    }
+    updateBorders()
 
     if (customTitleBar != null) {
       configureCustomTitleBar(isCompactHeader = view is CompactHeaderView, customTitleBar = customTitleBar, frame = frame)
@@ -180,6 +178,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     } ?: return false
 
     view.init(customTitleBar)
+    updateBorders()
     return true
   }
 
@@ -187,16 +186,19 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
 
   private fun updateBorders() {
     if (isFullScreen(rootPane) && !MacFullScreenControlsManager.enabled()) {
-      view.updateBorders(0, 0)
+      view.updateBorders(5, 0)
     }
     else {
-      view.updateBorders(GAP_FOR_BUTTONS, GAP_FOR_BUTTONS)
+      view.updateBorders(GAP_FOR_BUTTONS, 0)
     }
   }
 
   override fun doLayout() {
     super.doLayout()
 
+    // during opening project JBR loses some events and _deliverMoveResizeEvent is not happened
+    // so we have swing frame with not empty bounds but with empty frame peer bounds and as result we have blank window
+    // if native bounds is empty we push custom header height that leads to sets native bounds
     val height = height
     if (height != 0 && customTitleBar != null &&
         (Math.abs(customTitleBar.height - height) > 0.1 || MacUtil.isNativeBoundsEmpty(frame))) {
@@ -246,13 +248,12 @@ private sealed interface HeaderView {
   }
 }
 
-private class ToolbarHeaderView(panel: JPanel, parentCoroutineScope: CoroutineScope, frame: JFrame) : HeaderView {
-  private val toolbar: MainToolbar
+private class ToolbarHeaderView(private val container: JPanel, parentCoroutineScope: CoroutineScope, frame: JFrame) : HeaderView {
+  private val toolbar: MainToolbar = MainToolbar(coroutineScope = parentCoroutineScope.childScope(), frame = frame)
 
   init {
-    toolbar = MainToolbar(coroutineScope = parentCoroutineScope.childScope(), frame = frame)
     toolbar.border = JBUI.Borders.empty()
-    panel.add(toolbar, GridBagConstraints().also {
+    container.add(toolbar, GridBagConstraints().also {
       it.gridx = 0
       it.gridy = 0
       it.weightx = 1.0
@@ -264,12 +265,16 @@ private class ToolbarHeaderView(panel: JPanel, parentCoroutineScope: CoroutineSc
   override suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar?) {
     toolbar.init(customTitleBar)
   }
+
+  override fun updateBorders(left: Int, right: Int) {
+    container.border = JBEmptyBorder(0, left, 0, right)
+  }
 }
 
 private class CompactHeaderView(panel: JPanel, frame: JFrame, isFullScreen: Boolean) : HeaderView {
-  private val headerTitle: SimpleCustomDecorationPath
+  private val headerTitle: SimpleCustomDecorationPath = SimpleCustomDecorationPath(frame)
+
   init {
-    headerTitle = SimpleCustomDecorationPath(frame)
     headerTitle.add(panel, if (isFullScreen && !MacFullScreenControlsManager.enabled()) 0 else GAP_FOR_BUTTONS)
   }
 

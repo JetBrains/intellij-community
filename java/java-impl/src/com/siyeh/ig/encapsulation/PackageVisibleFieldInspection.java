@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import org.jetbrains.annotations.NotNull;
 
-public class PackageVisibleFieldInspection extends BaseInspection {
+public final class PackageVisibleFieldInspection extends BaseInspection {
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];

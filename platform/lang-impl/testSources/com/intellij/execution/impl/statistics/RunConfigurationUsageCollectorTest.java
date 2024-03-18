@@ -488,6 +488,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       addData("id", id).
       addData("edit_before_run", isEditBeforeRun).
       addData("activate_before_run", isActivate).
+      addData("focus_before_run", false).
       addData("shared", isShared).
       addData("parallel", isParallel).
       addData("temporary", temporary);

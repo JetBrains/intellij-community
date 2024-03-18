@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
-import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.*
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestInfo.graphql")
@@ -21,6 +18,8 @@ class GHPullRequest(id: String,
                     isDraft: Boolean,
                     author: GHActor?,
                     createdAt: Date,
+                    updatedAt: Date,
+                    isReadByViewer: Boolean,
                     @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
                     @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>,
                     @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
@@ -29,35 +28,25 @@ class GHPullRequest(id: String,
                     val reviewDecision: GHPullRequestReviewDecision?,
                     mergeable: GHPullRequestMergeableState,
                     viewerCanUpdate: Boolean,
+                    viewerCanReact: Boolean,
                     viewerDidAuthor: Boolean,
                     @NlsSafe val body: String,
                     val baseRefName: String,
                     val baseRefOid: String,
-                    val baseRepository: Repository?,
+                    val baseRepository: GHRepository?,
                     baseRef: BaseRef?,
                     val headRefName: String,
                     val headRefOid: String,
-                    val headRepository: HeadRepository?)
-  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, reviewRequests, reviewThreads,
-                       mergeable, viewerCanUpdate, viewerDidAuthor) {
-
-  @JsonIgnore
-  val reviews: List<GHPullRequestReview> = reviews.nodes
+                    val headRepository: GHRepository?,
+                    override val reactions: GHReactable.ReactionConnection)
+  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt,
+                       assignees, labels, reviewRequests, reviewThreads,
+                       reviews, mergeable, viewerCanUpdate, viewerCanReact, viewerDidAuthor, reactions) {
 
   @JsonIgnore
   val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule
 
-  open class Repository(val owner: Owner, val isFork: Boolean)
-
-  class HeadRepository(owner: Owner, isFork: Boolean,
-                       val nameWithOwner: @NlsSafe String,
-                       val url: @NlsSafe String,
-                       val sshUrl: @NlsSafe String)
-    : Repository(owner, isFork)
-
   data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
-
-  class Owner(val login: String)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

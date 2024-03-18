@@ -107,7 +107,6 @@ open class RecentProjectListActionProvider {
     }
   }
 
-  // for Rider
   protected open fun createOpenAction(path: String, duplicates: Set<String>): ReopenProjectAction {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     var displayName = recentProjectManager.getDisplayName(path)

@@ -12,7 +12,7 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 5)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 11)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
@@ -32,13 +32,25 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.SOURCE_SET_MODEL_SKIPPED_NON_SOURCE_SET_ARTIFACT_GROUP,
     Messages.SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP,
     Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP,
+    Messages.SOURCE_SET_MODEL_SOURCE_SET_ARTIFACT_GROUP,
+    Messages.SOURCE_SET_MODEL_SKIPPED_SOURCE_SET_ARTIFACT_GROUP,
     Messages.SOURCE_SET_CACHE_GET_GROUP,
     Messages.SOURCE_SET_CACHE_SET_GROUP,
 
     Messages.RESOURCE_FILTER_MODEL_GROUP,
 
+    Messages.SOURCE_SET_DEPENDENCY_MODEL_GROUP,
+    Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_GET_GROUP,
+    Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_SET_GROUP,
+
     Messages.EAR_CONFIGURATION_MODEL_GROUP,
     Messages.WAR_CONFIGURATION_MODEL_GROUP,
+
+    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_GROUP,
+    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP,
+    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP,
+
+    Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP,
 
     Messages.DEPENDENCY_ACCESSOR_MODEL_GROUP,
     Messages.DEPENDENCY_GRAPH_MODEL_GROUP,
@@ -46,10 +58,13 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.INTELLIJ_SETTINGS_MODEL_GROUP,
     Messages.INTELLIJ_PROJECT_SETTINGS_MODEL_GROUP,
 
+    Messages.BUILDSCRIPT_CLASSPATH_MODEL_GROUP,
+    Messages.BUILDSCRIPT_CLASSPATH_MODEL_CACHE_GET_GROUP,
+    Messages.BUILDSCRIPT_CLASSPATH_MODEL_CACHE_SET_GROUP,
+
     Messages.TEST_MODEL_GROUP,
     Messages.MAVEN_REPOSITORY_MODEL_GROUP,
     Messages.ANNOTATION_PROCESSOR_MODEL_GROUP,
-    Messages.BUILDSCRIPT_CLASSPATH_MODEL_GROUP,
     Messages.PROJECT_EXTENSION_MODEL_GROUP,
     Messages.VERSION_CATALOG_MODEL_GROUP,
   ))

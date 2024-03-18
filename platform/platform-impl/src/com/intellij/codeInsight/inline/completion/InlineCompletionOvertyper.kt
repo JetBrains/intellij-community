@@ -5,8 +5,13 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper.Upda
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 /**
  * Responsible for updating currently rendered [InlineCompletionElement] when a user types a new fragment.
@@ -24,7 +29,29 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * @see InlineCompletionProvider.overtyper
  * @see InlineCompletionElementManipulator
  */
-interface InlineCompletionOvertyper {
+@Deprecated(message = "Directly use InlineCompletionSuggestionUpdateManager")
+@ScheduledForRemoval
+interface InlineCompletionOvertyper : InlineCompletionSuggestionUpdateManager.Adapter {
+
+  // Back compatibility
+  override fun onDocumentChange(
+    event: InlineCompletionEvent.DocumentChange,
+    variant: InlineCompletionVariant.Snapshot
+  ): UpdateResult {
+    return when {
+      variant.isActive -> {
+        val context = InlineCompletionContext.getOrNull(event.editor) ?: return UpdateResult.Invalidated
+        if (variant.elements != context.state.elements.map { it.element }) {
+          return UpdateResult.Invalidated // Unexpected case
+        }
+        return when (val overtyped = overtype(context, event.typing)) {
+          null -> UpdateResult.Invalidated
+          else -> UpdateResult.Changed(variant.copy(overtyped.elements))
+        }
+      }
+      else -> UpdateResult.Invalidated
+    }
+  }
 
   /**
    * Updates [context] with respect to new typing [typing]. If [context] can be updated,
@@ -48,6 +75,8 @@ interface InlineCompletionOvertyper {
   class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
 
 
+  @Deprecated(message = "Use InlineCompletionSuggestionUpdateManager.Adapter")
+  @ScheduledForRemoval
   abstract class Adapter : InlineCompletionOvertyper {
     override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
       return when (typing) {
@@ -90,22 +119,21 @@ interface InlineCompletionOvertyper {
  *
  * @see InlineCompletionElementManipulator
  */
+@Deprecated(message = "Use InlineCompletionSuggestionUpdateManager.Default")
+@ScheduledForRemoval
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
-  override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
-    val fragment = typing.typed
-    check(fragment.length == 1)
-    if (!context.textToInsert().startsWith(fragment)) {
-      return null
-    }
-    return truncateFirstSymbol(context.state.elements.map { it.element })?.let { UpdatedElements(it, 1) }
-  }
 
-  private fun truncateFirstSymbol(elements: List<InlineCompletionElement>): List<InlineCompletionElement>? {
-    val newFirstElementIndex = elements.indexOfFirst { it.text.isNotEmpty() }
-    check(newFirstElementIndex >= 0)
-    val firstElement = elements[newFirstElementIndex]
-    val manipulator = InlineCompletionElementManipulator.getApplicable(firstElement) ?: return null
-    val newFirstElement = manipulator.truncateFirstSymbol(firstElement)
-    return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1)
+  private val suggestionUpdateManager
+    get() = InlineCompletionSuggestionUpdateManager.Default.INSTANCE
+
+  override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
+    val event = InlineCompletionEvent.DocumentChange(typing, context.editor)
+    val elements = context.state.elements.map { it.element }
+    val variant = checkNotNull(InlineCompletionSession.getOrNull(context.editor)?.capture()).variants.first { it.isActive }
+    return when (val result = suggestionUpdateManager.update(event, variant)) {
+      is UpdateResult.Changed -> UpdatedElements(result.snapshot.elements, 0)
+      UpdateResult.Invalidated -> null
+      UpdateResult.Same -> UpdatedElements(elements, 0)
+    }
   }
 }

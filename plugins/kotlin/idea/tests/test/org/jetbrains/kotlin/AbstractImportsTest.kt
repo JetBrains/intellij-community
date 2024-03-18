@@ -4,6 +4,7 @@ package org.jetbrains.kotlin
 
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -15,6 +16,8 @@ import java.io.File
 
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    protected var userNotificationInfo: String? = null
 
     protected open fun doTest(unused: String) {
         val testPath = dataFilePath(fileName())
@@ -81,6 +84,12 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 } else {
                     TestCase.assertFalse(logFile.exists())
                 }
+            }
+
+            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
+            if (message != null) {
+                assertNotNull("No user notification info was provided", userNotificationInfo)
+                assertEquals(message, userNotificationInfo)
             }
         }
     }

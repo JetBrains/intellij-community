@@ -26,7 +26,8 @@ public class FileHistoryGetVersionActionProvider implements AnActionExtensionPro
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VcsHistorySession historySession = e.getRequiredData(VcsDataKeys.HISTORY_SESSION);
+    VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+    if (historySession == null) return;
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
 
@@ -41,12 +42,14 @@ public class FileHistoryGetVersionActionProvider implements AnActionExtensionPro
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+    VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+    if (revision == null) return;
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null) return;
 
     GetVersionAction.doGet(project, revision, filePath);
   }

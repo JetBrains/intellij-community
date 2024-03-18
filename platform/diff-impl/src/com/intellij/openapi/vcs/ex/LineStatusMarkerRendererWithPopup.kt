@@ -28,7 +28,7 @@ abstract class LineStatusMarkerRendererWithPopup(
   project: Project?,
   document: Document,
   protected val rangesSource: LineStatusMarkerRangesSource<*>,
-  private val disposable: Disposable,
+  disposable: Disposable,
   editorFilter: MarkupEditorFilter? = null,
   isMain: Boolean = true
 ) : LineStatusMarkerRenderer(project, document, disposable, editorFilter, isMain),
@@ -56,7 +56,7 @@ abstract class LineStatusMarkerRendererWithPopup(
 
   override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
     if (!rangesSource.isValid()) return
-    val popupDisposable = Disposer.newCheckedDisposable(disposable)
+    val popupDisposable = Disposer.newDisposable(disposable)
     val popup = createPopupPanel(editor, range, mousePosition, popupDisposable)
     showPopupAt(editor, popup, mousePosition, popupDisposable)
   }
@@ -83,7 +83,7 @@ abstract class LineStatusMarkerRendererWithPopup(
   }
 
   private inner class LineStatusGutterMarkerRendererWithPopup : ActiveLineStatusGutterMarkerRenderer() {
-    override fun getPaintedRanges(): List<Range>? = rangesSource.getRanges().orEmpty()
+    override fun getPaintedRanges(): List<Range>? = if (shouldPaintGutter()) rangesSource.getRanges().orEmpty() else null
 
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       val ranges = getPaintedRanges() ?: return

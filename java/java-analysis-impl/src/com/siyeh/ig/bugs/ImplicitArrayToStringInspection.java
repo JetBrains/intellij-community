@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ImplicitArrayToStringInspection extends BaseInspection {
+public final class ImplicitArrayToStringInspection extends BaseInspection {
 
   @Override
   @NotNull

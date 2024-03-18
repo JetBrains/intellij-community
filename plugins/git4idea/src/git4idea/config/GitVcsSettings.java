@@ -150,6 +150,22 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setShowRecentBranches(value);
   }
 
+  public boolean filterByActionInPopup() {
+    return getState().getFilterByActionInPopup();
+  }
+
+  public void setFilterByActionInPopup(boolean value) {
+    getState().setFilterByActionInPopup(value);
+  }
+
+  public boolean filterByRepositoryInPopup() {
+    return getState().getFilterByRepositoryInPopup();
+  }
+
+  public void setFilterByRepositoryInPopup(boolean value) {
+    getState().setFilterByRepositoryInPopup(value);
+  }
+
   public boolean warnAboutCrlf() {
     return getState().getWarnAboutCrlf();
   }
@@ -164,6 +180,30 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setWarnAboutDetachedHead(boolean value) {
     getState().setWarnAboutDetachedHead(value);
+  }
+
+  public boolean warnAboutLargeFiles() {
+    return getState().isWarnAboutLargeFiles();
+  }
+
+  public void setWarnAboutLargeFiles(boolean value) {
+    getState().setWarnAboutLargeFiles(value);
+  }
+
+  public boolean warnAboutBadFileNames() {
+    return getState().isWarnAboutBadFileNames();
+  }
+
+  public void setWarnAboutLargeFilesLimitMb(int value) {
+    getState().setWarnAboutLargeFilesLimitMb(value);
+  }
+
+  public int getWarnAboutLargeFilesLimitMb() {
+    return getState().getWarnAboutLargeFilesLimitMb();
+  }
+
+  public void setWarnAboutBadFileNames(boolean value) {
+    getState().setWarnAboutBadFileNames(value);
   }
 
   public @Nullable GitResetMode getResetMode() {

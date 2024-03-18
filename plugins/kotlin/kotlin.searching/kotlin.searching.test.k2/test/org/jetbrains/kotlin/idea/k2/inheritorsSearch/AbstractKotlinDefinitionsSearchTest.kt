@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.inheritorsSearch
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.util.Query
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -19,5 +20,9 @@ abstract class AbstractKotlinDefinitionsSearchTest : AbstractKotlinSearchersTest
 
     override fun searchJavaClass(psiClass: PsiClass): Query<PsiElement> {
         return DefinitionsScopedSearch.search(psiClass)
+    }
+
+    override fun searchJavaMethod(psiMethod: PsiMethod): Query<PsiElement> {
+        return DefinitionsScopedSearch.search(psiMethod)
     }
 }

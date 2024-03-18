@@ -18,7 +18,7 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class MisspelledMethodNameInspectionMerger extends InspectionElementsMerger {
+public final class MisspelledMethodNameInspectionMerger extends InspectionElementsMerger {
 
   @NotNull
   @Override

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaMethodParameterTypesIndex extends StringStubIndexExtension<PsiMethod> {
+public final class JavaMethodParameterTypesIndex extends StringStubIndexExtension<PsiMethod> {
   private static final JavaMethodParameterTypesIndex ourInstance = new JavaMethodParameterTypesIndex();
 
   public static JavaMethodParameterTypesIndex getInstance() {

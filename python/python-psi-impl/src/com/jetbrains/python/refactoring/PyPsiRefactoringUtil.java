@@ -14,8 +14,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
@@ -86,10 +87,9 @@ public final class PyPsiRefactoringUtil {
                                                      boolean toTheBeginning) {
     final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
     // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
-    if (prevElem != null && PyUtil.onSameLine(statementList, prevElem)) {
-      final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
-      final Document document = manager.getDocument(statementList.getContainingFile());
-      if (document != null) {
+    if (prevElem != null && PyUtilCore.onSameLine(statementList, prevElem)) {
+        final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
+        final Document document = statementList.getContainingFile().getFileDocument();
         final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
         manager.doPostponedOperationsAndUnblockDocument(document);
         final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
@@ -99,7 +99,6 @@ public final class PyPsiRefactoringUtil {
         document.insertString(statementList.getTextRange().getStartOffset(), text);
         manager.commitDocument(document);
         statementList = container.getStatementList();
-      }
     }
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {

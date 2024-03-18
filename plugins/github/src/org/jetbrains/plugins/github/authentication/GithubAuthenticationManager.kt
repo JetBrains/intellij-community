@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -13,6 +14,7 @@ import java.awt.Component
 /**
  * Entry point for interactions with Github authentication subsystem
  */
+@Service
 @Deprecated("deprecated in favor of GHAccountsUtil")
 class GithubAuthenticationManager internal constructor() {
   private val accountManager: GHAccountManager get() = service()

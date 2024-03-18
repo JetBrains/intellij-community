@@ -74,7 +74,7 @@ public class EditorEmptyTextPainter {
                                   @NotNull String toolWindowId,
                                   @NotNull JComponent splitters) {
     if (!isToolwindowVisible(splitters, toolWindowId)) {
-      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindowId);
+      String activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindowId);
       appendAction(painter, action, getActionShortcutText(activateActionId));
     }
   }

@@ -6,9 +6,6 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -19,7 +16,6 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +27,7 @@ import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher SET_ADD =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SET, "add").parameterCount(1);
   private static final CallMatcher MAP_PUT =
@@ -199,7 +195,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         for (int i = 0; i < args.size(); i++) {
           PsiExpression arg = args.get(i);
           PsiExpression nextArg = args.get((i + 1) % args.size());
-          LocalQuickFix fix = new NavigateToDuplicateFix(nextArg);
+          LocalQuickFix fix = new NavigateToDuplicateExpressionFix(nextArg);
           myHolder.registerProblem(arg, message, fix);
         }
       }
@@ -230,28 +226,6 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         }
       }
       return null;
-    }
-  }
-
-  private static class NavigateToDuplicateFix extends ModCommandQuickFix {
-    private final SmartPsiElementPointer<PsiExpression> myPointer;
-
-    NavigateToDuplicateFix(PsiExpression arg) {
-      myPointer = SmartPointerManager.getInstance(arg.getProject()).createSmartPsiElementPointer(arg);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return JavaBundle.message("navigate.to.duplicate.fix");
-    }
-
-    @Override
-    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression element = myPointer.getElement();
-      if (element == null) return ModCommand.nop();
-      return ModCommand.select(element);
     }
   }
 }

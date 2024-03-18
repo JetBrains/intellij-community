@@ -13,9 +13,7 @@ public interface CurrentEditorProvider {
   }
 
   /**
-   * This method is obsolete. Use the overload with a project
-   *
-   * @return
+   * This method is obsolete. Use the overload with a project. Default implementation throws an exception.  
    */
   @ApiStatus.Obsolete
   @Nullable

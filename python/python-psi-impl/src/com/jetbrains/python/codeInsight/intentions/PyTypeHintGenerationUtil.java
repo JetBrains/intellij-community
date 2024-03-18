@@ -18,6 +18,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -207,10 +208,10 @@ public final class PyTypeHintGenerationUtil {
       insertionAnchor = statement.getLastChild();
     }
     else if (statement instanceof PyWithStatement) {
-      insertionAnchor = PyUtil.getHeaderEndAnchor((PyStatementListContainer)statement);
+      insertionAnchor = PyUtilCore.getHeaderEndAnchor((PyStatementListContainer)statement);
     }
     else if (statement instanceof PyForStatement) {
-      insertionAnchor = PyUtil.getHeaderEndAnchor(((PyForStatement)statement).getForPart());
+      insertionAnchor = PyUtilCore.getHeaderEndAnchor(((PyForStatement)statement).getForPart());
     }
     else {
       throw new IllegalArgumentException("Target expression must belong to an assignment, \"with\" statement or \"for\" loop");

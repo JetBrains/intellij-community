@@ -34,7 +34,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
+public final class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreNegations = false;
   @SuppressWarnings("PublicField")

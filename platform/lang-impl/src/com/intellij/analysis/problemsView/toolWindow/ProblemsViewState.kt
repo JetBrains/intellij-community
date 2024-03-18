@@ -54,6 +54,7 @@ open class ProblemsViewState : BaseState() {
   }
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "ProblemsViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 internal class ProblemsViewStateManager : SimplePersistentStateComponent<ProblemsViewState>(ProblemsViewState()) {
   override fun noStateLoaded() {

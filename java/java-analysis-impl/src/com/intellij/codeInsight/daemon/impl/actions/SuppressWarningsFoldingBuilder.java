@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +35,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
+public final class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
   private static final Logger LOG = Logger.getInstance(SuppressWarningsFoldingBuilder.class);
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!(root instanceof PsiJavaFile) || quick || !JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings()) {
       return FoldingDescriptor.EMPTY_ARRAY;
     }
-    if (!PsiUtil.isLanguageLevel5OrHigher(root)) {
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, root)) {
       return FoldingDescriptor.EMPTY_ARRAY;
     }
     final List<FoldingDescriptor> result = new ArrayList<>();

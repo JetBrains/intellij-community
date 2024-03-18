@@ -26,26 +26,26 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/m
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.10.12</version>
+    <version>1.10.14</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>https://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-commons-net</artifactId>
-  <version>1.10.12</version>
+  <version>1.10.14</version>
   <name>Apache Ant + Commons Net</name>
   <description>ftp, rexec and telnet tasks</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.10.12</version>
+      <version>1.10.14</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
-      <version>3.8.0</version>
+      <version>3.9.0</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

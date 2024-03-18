@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.externalAnnotations
 
 import com.intellij.openapi.application.runWriteAction
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
-abstract class AbstractExternalAnnotationTest: KotlinLightCodeInsightFixtureTestCase()  {
+abstract class AbstractExternalAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun setUp() {
         super.setUp()
@@ -39,7 +39,7 @@ abstract class AbstractExternalAnnotationTest: KotlinLightCodeInsightFixtureTest
         }
     }
 
-    protected fun doTest(kotlinFilePath: String) {
+    protected open fun doTest(kotlinFilePath: String) {
         myFixture.configureByFiles(kotlinFilePath, dataFilePath(externalAnnotationsFile), dataFilePath(classWithExternalAnnotatedMembers))
         myFixture.checkHighlighting()
     }
@@ -58,3 +58,5 @@ abstract class AbstractExternalAnnotationTest: KotlinLightCodeInsightFixtureTest
         private const val externalAnnotationsFile = "$externalAnnotationsPath/annotations.xml"
     }
 }
+
+abstract class AbstractK1ExternalAnnotationTest : AbstractExternalAnnotationTest()

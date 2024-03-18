@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -20,8 +21,10 @@ import java.util.function.Function;
  * <p>
  * Register in the {@code com.intellij.editorNotificationProvider} extension point, see {@link #EP_NAME}.
  * </p>
+ *
+ * @see EditorNotifications#updateNotifications
  */
-public interface EditorNotificationProvider {
+public interface EditorNotificationProvider extends PossiblyDumbAware {
   ProjectExtensionPointName<EditorNotificationProvider> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
@@ -32,6 +35,7 @@ public interface EditorNotificationProvider {
   Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> CONST_NULL = __ -> null;
 
   @RequiresReadLock
-  @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                          @NotNull VirtualFile file);
+  @Nullable
+  Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                @NotNull VirtualFile file);
 }

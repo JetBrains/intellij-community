@@ -7,6 +7,7 @@ UFile (package = ) [public final class Demo {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>("lorem")] : PsiType:<ErrorType>
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
-                    ULiteralExpression (value = "lorem") ["lorem"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["lorem"] : PsiType:String
+                        ULiteralExpression (value = "lorem") ["lorem"] : PsiType:String
         UMethod (name = getFoo) [public final fun getFoo() : error.NonExistentClass = UastEmptyExpression]
         UMethod (name = Demo) [public fun Demo() = UastEmptyExpression]

@@ -8,7 +8,7 @@ class GradleJdkNonblockingUtilTest : GradleJdkNonblockingUtilTestCase() {
     val sdk = TestSdkGenerator.createNextSdk()
     assertSdkInfo(SdkInfo.Undefined, USE_GRADLE_JAVA_HOME)
     GradleJdkResolutionTestCase.withGradleProperties(externalProjectPath, sdk) {
-      assertSdkInfo(sdk.versionString, sdk.homePath, USE_GRADLE_JAVA_HOME)
+      assertSdkInfo(sdk.versionString!!, sdk.homePath!!, USE_GRADLE_JAVA_HOME)
     }
   }
 
@@ -16,7 +16,7 @@ class GradleJdkNonblockingUtilTest : GradleJdkNonblockingUtilTestCase() {
     val sdk = TestSdkGenerator.createNextSdk()
     assertSdkInfo(SdkInfo.Undefined, USE_GRADLE_LOCAL_JAVA_HOME)
     GradleJdkResolutionTestCase.withGradleLocalProperties(externalProjectPath, sdk) {
-      assertSdkInfo(sdk.versionString, sdk.homePath, USE_GRADLE_LOCAL_JAVA_HOME)
+      assertSdkInfo(sdk.versionString!!, sdk.homePath!!, USE_GRADLE_LOCAL_JAVA_HOME)
     }
   }
 }

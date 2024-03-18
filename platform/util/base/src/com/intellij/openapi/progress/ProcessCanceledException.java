@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * </p>
  *
  * @see com.intellij.openapi.progress.ProgressIndicator#checkCanceled()
- * @see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
  */
 public class ProcessCanceledException extends RuntimeException implements ControlFlowException {
   public ProcessCanceledException() { }

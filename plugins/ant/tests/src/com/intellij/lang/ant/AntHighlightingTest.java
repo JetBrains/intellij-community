@@ -4,6 +4,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.lang.ant.dom.AntResolveInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
@@ -89,7 +90,8 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{
       new AntDuplicateTargetsInspection(),
       new AntResolveInspection(),
-      new XmlPathReferenceInspection()
+      new XmlPathReferenceInspection(),
+      new XmlUnresolvedReferenceInspection()
     };
   }
 }

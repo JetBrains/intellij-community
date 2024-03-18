@@ -28,6 +28,6 @@ interface KotlinCallHighlighterExtension {
     fun highlightCall(elementToHighlight: PsiElement, call: KtCall): HighlightInfoType?
 
     companion object {
-        val EP_NAME = ExtensionPointName.create<KotlinCallHighlighterExtension>("org.jetbrains.kotlin.callHighlighterExtension")
+        val EP_NAME: ExtensionPointName<KotlinCallHighlighterExtension> = ExtensionPointName.create("org.jetbrains.kotlin.callHighlighterExtension")
     }
 }

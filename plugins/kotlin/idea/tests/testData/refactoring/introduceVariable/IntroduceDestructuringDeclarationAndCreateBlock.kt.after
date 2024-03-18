@@ -1,0 +1,7 @@
+fun test(n: Int) {
+    if (n > 0) {
+        val (width, height) = Dimension(1, 2)
+    }
+}
+
+data class Dimension(val width: Int, val height: Int)

@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -34,15 +34,13 @@ internal fun importProject(project: Project) {
       }
     }
 
-    MavenProjectsManager.getInstance(project).waitForImportCompletion()
-
     val mavenManager = MavenProjectsManager.getInstance(project)
     if (!mavenManager.isMavenizedProject) {
       val files = mavenManager.collectAllAvailablePomFiles()
-      mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+      mavenManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
     }
     else {
-      mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+      mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectUtil"))
     }
   }
 }

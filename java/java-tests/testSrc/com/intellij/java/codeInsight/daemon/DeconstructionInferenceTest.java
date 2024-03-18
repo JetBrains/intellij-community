@@ -2,9 +2,11 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +16,7 @@ import java.util.Collection;
 public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
   
   public void testSimple() {
@@ -137,7 +139,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
           }
       }
       """);
-    myFixture.checkHighlighting();
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
   }
 
   public void testWildcardTypeParameterBound() {
@@ -294,6 +296,6 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       }
       """);
     myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
-    myFixture.checkHighlighting();
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
   }
 }

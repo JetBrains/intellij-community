@@ -8,7 +8,8 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
                 ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
                     UBlockExpression [{...}] : PsiType:String
                         UReturnExpression [return "/sdcard"]
-                            ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["/sdcard"] : PsiType:String
+                                ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
         UField (name = annotatedDelegate$delegate) [@org.jetbrains.annotations.NotNull @kotlin.Suppress private static final var annotatedDelegate$delegate: kotlin.Lazy<? extends java.lang.Integer>]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
@@ -32,5 +33,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
                             ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
                                 UBlockExpression [{...}] : PsiType:String
                                     UReturnExpression [return "/sdcard"]
-                                        ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
+                                        UPolyadicExpression (operator = +) ["/sdcard"] : PsiType:String
+                                            ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
         UMethod (name = getAnnotatedDelegate) [public static final fun getAnnotatedDelegate() : int = UastEmptyExpression]

@@ -602,13 +602,13 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   private static OffsetsInFile insertDummyIdentifierWithCache(@NotNull TemplateActionContext templateActionContext) {
     ProperTextRange editRange = ProperTextRange.create(templateActionContext.getStartOffset(), templateActionContext.getEndOffset());
     PsiFile file = templateActionContext.getFile();
-    assertRangeWithinDocument(editRange, Objects.requireNonNull(file.getViewProvider().getDocument()));
+    assertRangeWithinDocument(editRange, file.getFileDocument());
 
     ConcurrentMap<Pair<ProperTextRange, String>, OffsetsInFile> map = CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
         ConcurrentFactoryMap.createMap(
           key -> copyWithDummyIdentifier(new OffsetsInFile(file), key.first.getStartOffset(), key.first.getEndOffset(), key.second)),
-        file, file.getViewProvider().getDocument()));
+        file, file.getFileDocument()));
     return map.get(Pair.create(editRange, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED));
   }
 
@@ -622,7 +622,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     offsetMap.getOffsets().addOffset(START_OFFSET, startOffset);
     offsetMap.getOffsets().addOffset(END_OFFSET, endOffset);
 
-    Document document = offsetMap.getFile().getViewProvider().getDocument();
+    Document document = offsetMap.getFile().getFileDocument();
     assert document != null;
     if (replacement.isEmpty() &&
         startOffset == endOffset &&

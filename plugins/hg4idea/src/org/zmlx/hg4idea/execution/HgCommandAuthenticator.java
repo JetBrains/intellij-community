@@ -66,9 +66,9 @@ class HgCommandAuthenticator {
   private static class GetPasswordRunnable implements Runnable {
     private Credentials myCredentials;
     private final Project myProject;
-    @NotNull private final String myProposedLogin;
+    private final @NotNull String myProposedLogin;
     private boolean ok = false;
-    @NotNull private final String myURL;
+    private final @NotNull String myURL;
     private final boolean myForceAuthorization;
     private final boolean mySilent;
 
@@ -93,7 +93,7 @@ class HgCommandAuthenticator {
         return;
       }
 
-      @NotNull final HgGlobalSettings hgGlobalSettings = HgGlobalSettings.getInstance();
+      final @NotNull HgGlobalSettings hgGlobalSettings = HgGlobalSettings.getInstance();
       @Nullable String rememberedLoginsForUrl = null;
       String url = VirtualFileManager.extractPath(myURL);
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
@@ -148,14 +148,12 @@ class HgCommandAuthenticator {
       return ok;
     }
 
-    @NotNull
-    public String getURL() {
+    public @NotNull String getURL() {
       return myURL;
     }
   }
 
-  @NotNull
-  private static CredentialAttributes createCredentialAttributes(@NotNull String url) {
+  private static @NotNull CredentialAttributes createCredentialAttributes(@NotNull String url) {
     return new CredentialAttributes(CredentialAttributesKt.generateServiceName("HG", url), null);
   }
 }

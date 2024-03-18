@@ -1,26 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.ProjectTypeStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.withProjectAsync
-import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
@@ -37,10 +35,9 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
     assumeTrue(isWorkspaceImport())
     // create project
     waitForProjectCreation {
-      createProjectFromTemplate {
+      createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
-        it.languageData!!.language = "Java"
-        it.javaBuildSystemData!!.buildSystem = "Maven"
+        it.javaBuildSystemData!!.buildSystem = MAVEN
         it.javaMavenData!!.sdk = mySdk
       }
     }.withProjectAsync { project ->
@@ -58,10 +55,9 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       // create module
       waitForModuleCreation {
-        createModuleFromTemplate(project) {
+        createModuleFromTemplate(project, JAVA) {
           it.baseData!!.name = "untitled"
-          it.languageData!!.language = "Java"
-          it.javaBuildSystemData!!.buildSystem = "Maven"
+          it.javaBuildSystemData!!.buildSystem = MAVEN
           it.javaMavenData!!.sdk = mySdk
           it.javaMavenData!!.parentData = mavenProjectsManager.findProject(module)
         }
@@ -70,7 +66,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       // verify pom unignored
       assertSize(0, mavenProjectsManager.ignoredFilesPaths)
-    }
+    }.closeProjectAsync()
     return@runBlocking
   }
 
@@ -78,10 +74,9 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
     assumeTrue(isWorkspaceImport())
     // create project
     waitForProjectCreation {
-      createProjectFromTemplate {
+      createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
-        it.languageData!!.language = "Java"
-        it.javaBuildSystemData!!.buildSystem = "Maven"
+        it.javaBuildSystemData!!.buildSystem = MAVEN
         it.javaMavenData!!.sdk = mySdk
       }
     }.useProjectAsync { project ->
@@ -93,10 +88,9 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       // create
       waitForModuleCreation {
-        createModuleFromTemplate(project) {
+        createModuleFromTemplate(project, JAVA) {
           it.baseData!!.name = "untitled"
-          it.languageData!!.language = "Java"
-          it.javaBuildSystemData!!.buildSystem = "Maven"
+          it.javaBuildSystemData!!.buildSystem = MAVEN
           it.javaMavenData!!.sdk = mySdk
           it.javaMavenData!!.parentData = mavenProjectsManager.findProject(module)
         }
@@ -114,10 +108,9 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   fun `test configurator creates module in project structure modifiable model`() = runBlocking {
     assumeTrue(isWorkspaceImport())
     waitForProjectCreation {
-      createProjectFromTemplate {
+      createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
-        it.languageData!!.language = "Java"
-        it.javaBuildSystemData!!.buildSystem = "Maven"
+        it.javaBuildSystemData!!.buildSystem = MAVEN
         it.javaMavenData!!.sdk = mySdk
       }
     }.useProjectAsync { project ->
@@ -130,11 +123,10 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       val module = waitForModuleCreation {
         withWizard({ modulesConfigurator.addNewModule(null)!! }) {
           this as ProjectTypeStep
-          assertTrue(setSelectedTemplate(UIBundle.message("label.project.wizard.module.generator.name"), null))
+          assertTrue(setSelectedTemplate(JAVA, null))
           val step = customStep as NewProjectWizardStep
           step.baseData!!.name = "untitled"
-          step.languageData!!.language = "Java"
-          step.javaBuildSystemData!!.buildSystem = "Maven"
+          step.javaBuildSystemData!!.buildSystem = MAVEN
           step.javaMavenData!!.sdk = mySdk
         }.single()
       }
@@ -149,23 +141,5 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       }
     }
     return@runBlocking
-  }
-
-  private suspend fun waitForProjectCreation(createProject: () -> Project): Project {
-    val project = withContext(Dispatchers.EDT) { createProject() }
-
-    // hack to wait for all the pending updates on newly created project
-    MavenProjectsManager.getInstance(project).updateAllMavenProjects(MavenImportSpec(false, false, false))
-
-    return project
-  }
-
-  private suspend fun waitForModuleCreation(createModule: () -> Module): Module {
-    val module = withContext(Dispatchers.EDT) { createModule() }
-
-    // hack to wait for all the pending updates
-    MavenProjectsManager.getInstance(module.project).updateAllMavenProjects(MavenImportSpec(false, false, false))
-
-    return module
   }
 }

@@ -19,7 +19,7 @@ internal class InstallPluginTask(private val pluginIds: Set<PluginId>, val modal
 
   override fun run(indicator: ProgressIndicator) {
     val marketplacePlugins = loadLastCompatiblePluginDescriptors(pluginIds)
-    customPlugins = loadPluginsFromCustomRepositories(indicator)
+    customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator)
     val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                  customPlugins, true))
     PluginManagerCore.plugins.filterTo(descriptors) {

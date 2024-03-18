@@ -10,13 +10,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 
@@ -60,7 +58,7 @@ object RunConfigurationsChecker : WorkspaceModelChecker<RunConfigurationsCheckCo
             .sortedBy { it.configuration.uniqueID }
 
         allProducedConfigurations.flatMap { producedConfiguration ->
-            val fqName = ModuleReportData("fqName: ${producedConfiguration.psi.parentOfType<KtNamedDeclaration>()?.fqName}")
+            val fqName = ModuleReportData("fqName: ${producedConfiguration.psi.kotlinFqName}")
             val details = testConfiguration.getConfiguration(RunConfigurationsChecker).details.mapNotNull { detail ->
                 val value = detail.value(producedConfiguration.configuration) ?: return@mapNotNull null
                 ModuleReportData("${detail.name}: $value")

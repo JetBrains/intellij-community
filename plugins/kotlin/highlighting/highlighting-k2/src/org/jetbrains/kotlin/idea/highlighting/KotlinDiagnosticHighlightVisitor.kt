@@ -12,6 +12,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -29,7 +30,10 @@ import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationEr
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
-    var holder: HighlightInfoHolder? = null
+    // map TextRange -> list of diagnostics for that range obtained from collectDiagnosticsForFile()
+    // we have to extract diags from this map according to the range of the current element being visited, to avoid flickers
+    private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder>>
+    private var holder: HighlightInfoHolder? = null
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
     }
@@ -40,35 +44,38 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             return true
         }
         this.holder = holder
+        val contextFile = holder.contextFile as? KtFile ?: error("KtFile files expected but got ${holder.contextFile}")
+        diagnosticRanges = analyzeFile(contextFile)
         try {
             action.run()
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
             // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
             throw e
-        }
-        finally {
+        } finally {
             // do not leak Editor, since KotlinDiagnosticHighlightVisitor is an app-level extension
             this.holder = null
+            diagnosticRanges.clear()
         }
         return true
     }
 
-    private fun analyze(file: KtFile) {
+    private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
         analyze(file) {
-            val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-            for (diagnostic in diagnostics) {
-                addDiagnostic(file, diagnostic, holder!!)
-            }
+            val analysis = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            val diagnostics = analysis
+                .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
+                .groupByTo(HashMap(), { it.first }, { convertToBuilder(file, it.first, it.second) })
+
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
-                diagnostics.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
-                file
+                analysis.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName), file
             )
+            return diagnostics
         }
     }
 
     context(KtAnalysisSession)
-    private fun addDiagnostic(file: KtFile, diagnostic: KtDiagnosticWithPsi<*>, holder: HighlightInfoHolder) {
+    private fun convertToBuilder(file: KtFile, range: TextRange, diagnostic: KtDiagnosticWithPsi<*>) : HighlightInfo.Builder{
         val isWarning = diagnostic.severity == Severity.WARNING
         val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
@@ -77,33 +84,32 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         val problemGroup = if (isWarning && factoryName != null) {
             KotlinSuppressableWarningProblemGroup(factoryName)
         } else null
-        diagnostic.textRanges.forEach { range ->
-            val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
-                .descriptionAndTooltip(diagnostic.getMessageToRender())
-                .range(range)
-            if (problemGroup != null) {
-                infoBuilder.problemGroup(problemGroup)
-            }
-            for (quickFixInfo in fixes) {
-                // to trigger modCommand.getPresentation() to get `Fix all` and other options
-                if (quickFixInfo.asModCommandAction() != null && !quickFixInfo.isAvailable(file.project, null, file)) continue
 
-                val options = mutableListOf<IntentionAction>()
-                if (quickFixInfo is IntentionActionWithOptions) {
-                    options += quickFixInfo.options
-                }
-                if (problemGroup != null) {
-                    options += problemGroup.getSuppressActions(psiElement)
-                }
-                infoBuilder.registerFix(quickFixInfo, options, null, null, null)
-            }
-            if (diagnostic is KtFirDiagnostic.UnresolvedImport || diagnostic is KtFirDiagnostic.UnresolvedReference) {
-                psiElement.reference?.let {
-                    UnresolvedReferenceQuickFixUpdater.getInstance(holder.project).registerQuickFixesLater(it, infoBuilder)
-                }
-            }
-            holder.add(infoBuilder.create())
+        val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
+            .descriptionAndTooltip(diagnostic.getMessageToRender())
+            .range(range)
+        if (problemGroup != null) {
+            infoBuilder.problemGroup(problemGroup)
         }
+        for (quickFixInfo in fixes) {
+            // to trigger modCommand.getPresentation() to get `Fix all` and other options
+            if (quickFixInfo.asModCommandAction() != null && !quickFixInfo.isAvailable(file.project, null, file)) continue
+
+            val options = mutableListOf<IntentionAction>()
+            if (quickFixInfo is IntentionActionWithOptions) {
+                options += quickFixInfo.options
+            }
+            if (problemGroup != null) {
+                options += problemGroup.getSuppressActions(psiElement)
+            }
+            infoBuilder.registerFix(quickFixInfo, options, null, null, null)
+        }
+        if (diagnostic is KtFirDiagnostic.UnresolvedImport || diagnostic is KtFirDiagnostic.UnresolvedReference) {
+            psiElement.reference?.let {
+                UnresolvedReferenceQuickFixUpdater.getInstance(file.project).registerQuickFixesLater(it, infoBuilder)
+            }
+        }
+        return infoBuilder
     }
 
     @NlsSafe
@@ -148,8 +154,19 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     override fun visit(element: PsiElement) {
-        if (element is KtFile) {
-            analyze(element)
+        val elementRange = element.textRange
+        // show diagnostics with textRanges under this element range
+        // assumption: highlight visitors call visit() method in the post-order (children first)
+        // note that after this visitor finished, `diagnosticRanges` will be empty, because all diagnostics are inside the file range, by definition
+        val iterator = diagnosticRanges.iterator()
+        for (entry in iterator) {
+            if (entry.key in elementRange) {
+                val diagnostics = entry.value
+                for (builder in diagnostics) {
+                    holder!!.add(builder.create())
+                }
+                iterator.remove()
+            }
         }
     }
 

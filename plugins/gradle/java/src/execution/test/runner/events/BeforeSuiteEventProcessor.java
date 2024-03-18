@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
@@ -90,7 +91,11 @@ public class BeforeSuiteEventProcessor extends AbstractTestEventProcessor {
     return null;
   }
 
+  private static final Pattern GRADLE_PARTITION_SUITE_NAME = Pattern.compile("Partition \\d+ in session \\d+");
   private static boolean isHiddenTestNode(@Nullable String suiteName) {
-    return suiteName == null || suiteName.startsWith("Gradle Test Executor") || suiteName.startsWith("Gradle Test Run");
+    return suiteName == null
+           || suiteName.startsWith("Gradle Test Executor")
+           || suiteName.startsWith("Gradle Test Run")
+           || GRADLE_PARTITION_SUITE_NAME.matcher(suiteName).lookingAt();
   }
 }

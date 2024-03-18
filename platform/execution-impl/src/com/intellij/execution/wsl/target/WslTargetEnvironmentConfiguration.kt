@@ -39,7 +39,7 @@ class WslTargetEnvironmentConfiguration() : TargetConfigurationWithId(WslTargetT
   override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
     if (probablyPathOnTarget.root in listWindowsLocalDriveRoots()) return null
     if (!probablyPathOnTarget.pathString.startsWith("\\\\wsl")) return null
-    return distribution!!.getWslPath(probablyPathOnTarget.pathString)
+    return distribution!!.getWslPath(probablyPathOnTarget)
   }
 
   override fun getState() = MyState().also {

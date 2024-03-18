@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
@@ -195,7 +196,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     classList.removeIf(aClass -> (anyAccessibleFound ||
                                   !BaseIntentionAction.canModify(aClass) ||
-                                  facade.arePackagesTheSame(aClass, myReferenceElement)) && !isAccessible(aClass, myReferenceElement));
+                                  facade.arePackagesTheSame(aClass, myReferenceElement) ||
+                                  PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) &&
+                                 !isAccessible(aClass, myReferenceElement));
 
     filterByRequiredMemberName(classList);
 

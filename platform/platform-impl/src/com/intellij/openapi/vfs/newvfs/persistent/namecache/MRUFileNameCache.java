@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
@@ -21,7 +22,22 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  */
 @ApiStatus.Internal
 public final class MRUFileNameCache implements FileNameCache {
+
   private static final boolean TRACK_STATS = getBooleanProperty("vfs.name-cache.track-stats", true);
+
+  /**
+   * Cache is really very fast, so even 1-2 stats counters atomic increments significantly affect its
+   * performance. But disable the stats is also undesirable -- name caching is a hotspot, so it is of
+   * real interest how much names we do resolve, and how well caching works.
+   * So lets track only each 64th cache lookup, by using (nameId % 64 == salt) there salt is randomly
+   * chosen on each session -- to avoid long-term favoritism for any specific nameIds group -- and
+   * interpolate actual lookup count on reporting.
+   * Such a 'sampling' increases the noise (stdev), but typical lookups count ~10-100e6, so it doesn't
+   * matter much.
+   */
+  private static final int TRACK_EACH_NTH_LOOKUP_STATS = 64;
+  private static final int TRACK_STATS_MASK = TRACK_EACH_NTH_LOOKUP_STATS - 1;
+  private static final int TRACK_STATS_SALT = ThreadLocalRandom.current().nextInt(TRACK_EACH_NTH_LOOKUP_STATS);
 
   //TODO RC: cache size is better be ctor parameter
   private static final int MRU_CACHE_SIZE = 1024 * 72;
@@ -95,16 +111,18 @@ public final class MRUFileNameCache implements FileNameCache {
   public @NotNull String valueOf(int nameId) throws IOException {
     assert nameId > 0 : nameId;
 
+    boolean trackLookup = shouldTrackLookup(nameId);
+
     int mruCacheEntryIndex = toIndex(nameId);
     CacheEntryNameWithId entry = mruCache[mruCacheEntryIndex];
     if (entry != null && entry.nameId == nameId) {
-      if (TRACK_STATS) {
+      if (trackLookup) {
         cacheHitsCount.incrementAndGet();
       }
       return entry.name;
     }
 
-    if (TRACK_STATS) {
+    if (trackLookup) {
       cacheMissesCount.incrementAndGet();
     }
 
@@ -115,6 +133,10 @@ public final class MRUFileNameCache implements FileNameCache {
     mruCache[mruCacheEntryIndex] = new CacheEntryNameWithId(nameId, name);
 
     return name;
+  }
+
+  private static boolean shouldTrackLookup(int nameId) {
+    return TRACK_STATS && (nameId & TRACK_STATS_MASK) == TRACK_STATS_SALT;
   }
 
   private static int toIndex(int nameId) {
@@ -136,8 +158,8 @@ public final class MRUFileNameCache implements FileNameCache {
     var totalMissesCounter = meter.counterBuilder("FileNameCache.totalMisses").buildObserver();
 
     return meter.batchCallback(() -> {
-      long cacheMisses = cacheMissesCount.longValue();
-      long totalCacheRequestsServed = cacheHitsCount.longValue() + cacheMisses;
+      long cacheMisses = cacheMissesCount.longValue() * TRACK_EACH_NTH_LOOKUP_STATS;
+      long totalCacheRequestsServed = (cacheHitsCount.longValue() * TRACK_EACH_NTH_LOOKUP_STATS) + cacheMisses;
       queriesCounter.record(totalCacheRequestsServed);
       totalMissesCounter.record(cacheMisses);
     }, queriesCounter, totalMissesCounter);

@@ -25,7 +25,6 @@ public class ContextHelpLabel extends JBLabel {
   private ContextHelpLabel(@NotNull HelpTooltip tooltip) {
     super(AllIcons.General.ContextHelp);
     this.tooltip = tooltip;
-    initTooltip();
   }
 
   private void initTooltip() {
@@ -45,11 +44,15 @@ public class ContextHelpLabel extends JBLabel {
   }
 
   public static @NotNull ContextHelpLabel create(@Tooltip @NotNull String description) {
-    return new ContextHelpLabel(new HelpTooltip().setDescription(description));
+    ContextHelpLabel label = new ContextHelpLabel(new HelpTooltip().setDescription(description));
+    label.initTooltip();
+    return label;
   }
 
   public static @NotNull ContextHelpLabel create(@TooltipTitle @NotNull String title, @Tooltip @NotNull String description) {
-    return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title));
+    ContextHelpLabel label = new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title));
+    label.initTooltip();
+    return label;
   }
 
   public static @NotNull ContextHelpLabel createWithLink(@TooltipTitle @Nullable String title,
@@ -64,7 +67,14 @@ public class ContextHelpLabel extends JBLabel {
                                                          @LinkLabel @NotNull String linkText,
                                                          boolean linkIsExternal,
                                                          @NotNull Runnable linkAction) {
-    return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction, linkIsExternal));
+    ContextHelpLabel label =
+      new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction, linkIsExternal));
+    label.initTooltip();
+    return label;
+  }
+
+  public static @NotNull ContextHelpLabel createFromTooltip(HelpTooltip helpTooltip) {
+    return new ContextHelpLabel(helpTooltip);
   }
 
   @Override

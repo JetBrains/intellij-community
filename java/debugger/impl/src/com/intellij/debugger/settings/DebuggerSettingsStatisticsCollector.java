@@ -13,8 +13,9 @@ import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 
-public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 4);
+public final class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 5);
+
   private static final VarargEventId DISABLE_JIT = GROUP.registerVarargEvent("disableJit", EventFields.Enabled);
   private static final VarargEventId SHOW_ALTERNATIVE_SOURCE = GROUP.registerVarargEvent("showAlternativeSource", EventFields.Enabled);
   private static final VarargEventId HOTSWAP_IN_BACKROUND = GROUP.registerVarargEvent("hotswapInBackround", EventFields.Enabled);
@@ -29,6 +30,7 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
   private static final VarargEventId AUTO_VARIABLES_MODE = GROUP.registerVarargEvent("autoVariablesMode", EventFields.Enabled);
   private static final VarargEventId KILL_PROCESS_IMMEDIATELY = GROUP.registerVarargEvent("killProcessImmediately", EventFields.Enabled);
   private static final VarargEventId RESUME_ONLY_CURRENT_THREAD = GROUP.registerVarargEvent("resumeOnlyCurrentThread", EventFields.Enabled);
+  private static final VarargEventId HIDE_STACK_FRAMES_USING_STEPPING_FILTER = GROUP.registerVarargEvent("hideStackFramesUsingSteppingFilter", EventFields.Enabled);
   private static final VarargEventId INSTRUMENTING_AGENT = GROUP.registerVarargEvent("instrumentingAgent", EventFields.Enabled);
 
   @Override
@@ -57,6 +59,7 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
     addBoolIfDiffers(set, settings, sDefault, s -> s.AUTO_VARIABLES_MODE, AUTO_VARIABLES_MODE);
     addBoolIfDiffers(set, settings, sDefault, s -> s.KILL_PROCESS_IMMEDIATELY, KILL_PROCESS_IMMEDIATELY);
     addBoolIfDiffers(set, settings, sDefault, s -> s.RESUME_ONLY_CURRENT_THREAD, RESUME_ONLY_CURRENT_THREAD);
+    addBoolIfDiffers(set, settings, sDefault, s -> s.HIDE_STACK_FRAMES_USING_STEPPING_FILTER, HIDE_STACK_FRAMES_USING_STEPPING_FILTER);
     addBoolIfDiffers(set, settings, sDefault, s -> s.INSTRUMENTING_AGENT, INSTRUMENTING_AGENT);
 
     return set;

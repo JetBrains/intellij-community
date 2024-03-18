@@ -127,6 +127,7 @@ final class CommonCodeStyleSettingsManager {
     synchronized (this) {
       if (!myCommonSettingsMap.containsKey(langId)) {
         myCommonSettingsMap.put(langId, settings);
+        //noinspection ResultOfMethodCallIgnored
         settings.getRootSettings(); // check not null
       }
     }

@@ -24,7 +24,7 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myManager = new MavenEmbeddersManager(myProject);
+    myManager = new MavenEmbeddersManager(getProject());
   }
 
   @Override
@@ -46,52 +46,52 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
   }
 
   public void testBasics() {
-    MavenEmbedderWrapper one = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
-    MavenEmbedderWrapper two = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
+    MavenEmbedderWrapper two = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
 
     assertNotSame(one, two);
   }
 
   public void testForSameId() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
 
     assertNotSame(one1, one2);
 
     myManager.release(one1);
 
-    MavenEmbedderWrapper one3 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one3 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
 
     assertSame(one1, one3);
   }
 
   public void testCachingOnlyOne() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
 
     assertNotSame(one1, one2);
 
     myManager.release(one1);
     myManager.release(one2);
 
-    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
-    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
 
     assertSame(one1, one11);
     assertNotSame(one2, one22);
   }
 
   public void testResettingAllCachedAndInUse() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
 
     myManager.release(one1);
     myManager.reset();
 
     myManager.release(one2);
 
-    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, myDir.getPath());
-    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
+    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
 
     assertNotSame(one1, one11);
     assertNotSame(one2, one22);

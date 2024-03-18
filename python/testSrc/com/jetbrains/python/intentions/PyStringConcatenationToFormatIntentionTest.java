@@ -79,4 +79,8 @@ public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestC
   public void testPy3Unicode() {
     doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
   }
+
+  public void testEnclosingConcatenationWithIntermediateCall() {
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.getLatest());
+  }
 }

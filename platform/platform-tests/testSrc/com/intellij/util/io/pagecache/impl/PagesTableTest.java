@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
@@ -33,8 +33,28 @@ public class PagesTableTest {
   @Parameterized.Parameters(name = "{index}: {0}")
   public static List<IntFunction<PageImpl>> pagesImplToCheck() {
     return List.of(
-      PageImplForTests::new,
-      index -> RWLockProtectedPageImpl.createBlankWithOwnLock(index, PAGE_SIZE, FLUSHER)
+      new IntFunction<>() {
+        @Override
+        public PageImpl apply(int pageIndex) {
+          return new PageImplForTests(pageIndex);
+        }
+
+        @Override
+        public String toString() {
+          return "PageImplForTests";
+        }
+      },
+      new IntFunction<>() {
+        @Override
+        public PageImpl apply(int index) {
+          return RWLockProtectedPageImpl.createBlankWithOwnLock(index, PAGE_SIZE, FLUSHER);
+        }
+
+        @Override
+        public String toString() {
+          return "RWLockProtectedPageImpl";
+        }
+      }
     );
   }
 

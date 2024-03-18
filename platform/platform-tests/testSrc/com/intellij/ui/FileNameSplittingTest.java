@@ -118,12 +118,12 @@ public class FileNameSplittingTest extends TestCase {
   public void testPerformance() {
     myPolicy = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR;
 
-    PlatformTestUtil.startPerformanceTest("FileNameSplitting", 70, () -> {
+    PlatformTestUtil.newPerformanceTest("FileNameSplitting", () -> {
       for (int i = 0; i < 100; i++) {
         for (int j = 0; j < FILE.getPath().length(); j++)
           myPolicy.getPresentableName(FILE, j);
       }
-    }).assertTiming();
+    }).start();
   }
 
   private void doTest(String expected, int count) {

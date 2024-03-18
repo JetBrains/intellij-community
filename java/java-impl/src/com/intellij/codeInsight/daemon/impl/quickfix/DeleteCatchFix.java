@@ -41,7 +41,7 @@ public class DeleteCatchFix extends PsiUpdateModCommandAction<PsiParameter> {
     PsiElement previousElement = deleteCatch(catchParameter);
     if (previousElement != null) {
       //move caret to previous catch section
-      updater.moveTo(previousElement.getTextRange().getEndOffset());
+      updater.moveCaretTo(previousElement.getTextRange().getEndOffset());
     }
   }
 

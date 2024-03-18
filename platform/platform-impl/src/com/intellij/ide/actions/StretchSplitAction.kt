@@ -24,7 +24,7 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     stretch(editor, direction)
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.references
 
 import com.intellij.platform.workspace.storage.impl.ChildEntityId
@@ -21,7 +21,9 @@ internal class MutableOneToAbstractManyContainer(collection: MutableMap<Connecti
   MutableReferenceContainer<ReferenceContainerType>(collection) {
 
   override fun copyValue(value: ReferenceContainerType): ReferenceContainerType {
-    return value.toMap(LinkedBidirectionalMap())
+    return LinkedBidirectionalMap<ChildEntityId, ParentEntityId>().also {
+      value.forEach { (key, value) -> it.add(key, value) }
+    }
   }
 
   override fun toImmutable(): ImmutableOneToAbstractManyContainer {

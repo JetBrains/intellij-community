@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -25,7 +26,10 @@ import org.jetbrains.kotlin.renderer.render
 
 object SpecifySuperTypeFixFactory {
 
-    class TypeStringWithoutArgs(val longTypeRepresentation: String, val shortTypeRepresentation: String)
+    class TypeStringWithoutArgs(
+        val longTypeRepresentation: String,
+        @NlsSafe val shortTypeRepresentation: String
+    )
 
     class Input(val superTypes: List<TypeStringWithoutArgs>) : KotlinApplicatorInput
 
@@ -81,9 +85,10 @@ object SpecifySuperTypeFixFactory {
         if (candidates.isEmpty()) return@diagnosticFixFactory listOf()
         val superTypes = candidates.mapNotNull { superType ->
             when (superType) {
-                is KtErrorType ->  null
+                is KtErrorType -> null
                 is KtNonErrorClassType ->
                     TypeStringWithoutArgs(superType.classId.asSingleFqName().render(), superType.classId.shortClassName.render())
+
                 else -> error("Expected KtClassType but ${superType::class} was found")
             }
         }

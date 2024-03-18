@@ -280,11 +280,6 @@ public final class PythonUiServiceImpl extends PythonUiService {
     }
 
     @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
     public PsiElement getElement() {
       return myCulprit;
     }

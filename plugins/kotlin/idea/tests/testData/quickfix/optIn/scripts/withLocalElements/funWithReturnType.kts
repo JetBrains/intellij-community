@@ -2,7 +2,6 @@
 // ACTION: Add '-opt-in=FunWithReturnType.Library' to module light_idea_test_case compiler arguments
 // ACTION: Add full qualifier
 // ACTION: Convert to block body
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'Library' in containing file 'funWithReturnType.kts'
 // ACTION: Opt in for 'Library' on 'bar'

@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
  * IDs in the same {@link RuntimeModuleRepository repository}.
  */
 public final class RuntimeModuleId {
+  @ApiStatus.Internal
   public static final String LIB_NAME_PREFIX = "lib.";
+  @ApiStatus.Internal
   public static final String TESTS_NAME_SUFFIX = ".tests";
   private final String myStringId;
 
@@ -24,23 +26,40 @@ public final class RuntimeModuleId {
     return myStringId;
   }
 
+  /**
+   * Creates ID from a raw string representation as it's written in the runtime module repository. 
+   * This method is supposed to be used to generate and transform the module repository only, other code should use other methods.
+   */
   @ApiStatus.Internal
   public static @NotNull RuntimeModuleId raw(@NotNull String stringId) {
     return new RuntimeModuleId(stringId);
   }
-  
+
+  /**
+   * Creates ID of a runtime module corresponding to the production part of module {@code moduleName} in intellij project configuration.
+   */
   public static @NotNull RuntimeModuleId module(@NotNull String moduleName) {
     return new RuntimeModuleId(moduleName);
   }
 
+  /**
+   * Creates ID of a runtime module corresponding to the test part of module {@code moduleName} in intellij project configuration.
+   */
   public static @NotNull RuntimeModuleId moduleTests(@NotNull String moduleName) {
     return new RuntimeModuleId(moduleName + TESTS_NAME_SUFFIX);
   }
 
+  /**
+   * Creates ID of a runtime module corresponding to the project-level library {@code libraryName} in intellij project configuration.
+   */
   public static @NotNull RuntimeModuleId projectLibrary(@NotNull String libraryName) {
     return new RuntimeModuleId(LIB_NAME_PREFIX + libraryName);
   }
 
+  /**
+   * Creates ID of a runtime module corresponding to the module-level library {@code libraryName} from module {@code moduleName} in intellij 
+   * project configuration.
+   */
   public static @NotNull RuntimeModuleId moduleLibrary(@NotNull String moduleName, @NotNull String libraryName) {
     return new RuntimeModuleId(LIB_NAME_PREFIX + moduleName + "." + libraryName);
   }

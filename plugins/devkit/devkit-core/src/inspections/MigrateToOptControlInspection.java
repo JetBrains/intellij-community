@@ -223,11 +223,6 @@ final class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     }
   }
 
-  @Override
-  public @NotNull OptPane getOptionsPane() {
-    return super.getOptionsPane();
-  }
-
   static void serialize(@NotNull OptPane pane, @NotNull StringBuilder builder) {
     builder.append(OPT_PANE + ".pane(\n");
     var components = pane.components();

@@ -63,9 +63,13 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
   private float myColumnProportion = 0.1f;
 
   public JBTreeTable(@NotNull TreeTableModel model) {
+    this(model, null);
+  }
+
+  public JBTreeTable(@NotNull TreeTableModel model, @Nullable Tree tree) {
     setLayout(new BorderLayout());
 
-    myTree = new MyTree();
+    myTree = tree == null ? new MyTree() : tree;
     myTable = new Table();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setRootVisible(false);
@@ -351,12 +355,12 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
 
         @Override
         public Object getHeaderValue() {
-          return treeColumnIndex < 0 ? " " : ((TreeTableModel) myTree.getModel()).getColumnName(treeColumnIndex);
+          return treeColumnIndex < 0 ? " " : myModel.getColumnName(treeColumnIndex);
         }
       });
       addColumn(new TableColumn(1, 0));
       myTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, evt -> {
-        TreeTableModel model = (TreeTableModel) myTree.getModel();
+        TreeTableModel model = myModel;
         treeColumnIndex = -1;
         for (int i = 0; i < model.getColumnCount(); i++) {
           if (TreeTableModel.class.isAssignableFrom(model.getColumnClass(i))) {

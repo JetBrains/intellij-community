@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -64,7 +65,11 @@ internal class GitLabMergeRequestsListController(
   }
 
   private fun createErrorPanel(scope: CoroutineScope, accountVm: GitLabAccountViewModel): JComponent {
-    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
+    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+      accountVm,
+      swingAction(GitLabBundle.message("merge.request.list.reload")) {
+        listVm.refresh()
+      })
     val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.error, errorPresenter)
 
     return JPanel(SingleComponentCenteringLayout()).apply {

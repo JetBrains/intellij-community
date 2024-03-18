@@ -47,7 +47,7 @@
      matchedName: "js/events/click",
      origin: "events@1.0.0 (<none>)",
      complete: true,
-     description: "<p>A click event</p>",
+     description: "<p>A click event",
      docUrl: "https://mdn.com/events/click",
      priority: NORMAL,
      segments: [

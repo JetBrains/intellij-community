@@ -81,13 +81,13 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
            : null;
   }
 
-  public static class Function extends GuavaLambdaConversionRule {
+  public static final class Function extends GuavaLambdaConversionRule {
     public Function() {
       super(GuavaLambda.FUNCTION);
     }
   }
 
-  public static class Supplier extends GuavaLambdaConversionRule {
+  public static final class Supplier extends GuavaLambdaConversionRule {
     public Supplier() {
       super(GuavaLambda.SUPPLIER);
     }

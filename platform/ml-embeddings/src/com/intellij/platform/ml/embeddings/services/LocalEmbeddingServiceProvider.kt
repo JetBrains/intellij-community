@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.embeddings.services
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -10,8 +11,10 @@ import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.File
 import java.nio.file.NoSuchFileException
 import java.lang.ref.SoftReference
+import java.nio.file.Path
 
 /**
  * Thread-safe wrapper around [LocalEmbeddingServiceLoader] that caches [LocalEmbeddingService]
@@ -27,21 +30,24 @@ class LocalEmbeddingServiceProvider {
     return mutex.withLock {
       var service = localServiceRef?.get()
       if (service == null) {
-        val artifactsManager = LocalArtifactsManager.getInstance()
-        if (!artifactsManager.checkArtifactsPresent()) {
-          if (!downloadArtifacts) return null
-          logger.debug("Downloading model artifacts because requested embedding calculation")
-          if (!ApplicationManager.getApplication().isUnitTestMode) {
+        service = if (ApplicationManager.getApplication().isUnitTestMode) {
+          LocalEmbeddingServiceLoader().load(CustomRootDataLoader(testDataPath))
+        }
+        else {
+          val artifactsManager = LocalArtifactsManager.getInstance()
+          if (!artifactsManager.checkArtifactsPresent()) {
+            if (!downloadArtifacts) return null
+            logger.debug("Downloading model artifacts because requested embedding calculation")
             artifactsManager.downloadArtifactsIfNecessary()
           }
-        }
 
-        service = try {
-          LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
-        }
-        catch (e: NoSuchFileException) {
-          logger.warn("Local embedding model artifacts not found: $e")
-          null
+          try {
+            LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
+          }
+          catch (e: NoSuchFileException) {
+            logger.warn("Local embedding model artifacts not found: $e")
+            null
+          }
         }
         localServiceRef = SoftReference(service)
       }
@@ -57,5 +63,9 @@ class LocalEmbeddingServiceProvider {
     private val logger = Logger.getInstance(LocalEmbeddingServiceProvider::class.java)
 
     fun getInstance(): LocalEmbeddingServiceProvider = service()
+
+    val testDataPath: Path by lazy {
+      File(PathManager.getHomePath()).resolve("community/platform/ml-embeddings/tests/testResources").toPath()
+    }
   }
 }

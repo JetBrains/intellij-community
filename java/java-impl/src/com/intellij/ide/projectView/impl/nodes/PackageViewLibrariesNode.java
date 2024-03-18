@@ -25,6 +25,21 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true; // to avoid retrieving and validating all children (SLOW!) just to figure out if it's a leaf
+  }
+
+  @Override
+  public boolean isIncludedInExpandAll() {
+    return false; // expanding all libraries makes no sense, as they typically contain too many nodes
+  }
+
+  @Override
+  public boolean isAutoExpandAllowed() {
+    return false;
+  }
+
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrary(file)) return false;
@@ -47,7 +62,8 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     else {
       addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
     }
-    return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
+    var nodeBuilder = new PackageNodeBuilder(null, true);
+    return nodeBuilder.createPackageViewChildrenOnFiles(roots, getProject(), getSettings());
   }
 
   @Override

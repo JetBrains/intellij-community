@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -28,6 +28,12 @@ class A implements Bar {
         Bar.foo()
     }
 }
+'''
+  }
+
+  void 'test var in for loop'() {
+    highlightingTest '''
+for (var i : []) {}
 '''
   }
 

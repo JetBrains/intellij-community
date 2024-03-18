@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +15,10 @@ import java.util.function.Supplier;
 /**
  * AnActionButton reinvents the action update wheel and breaks MVC.
  * We are slowly migrating to regular {@link AnAction}.
+ *
+ * @deprecated Use regular {@link com.intellij.openapi.project.DumbAwareAction}
  */
-@ApiStatus.Obsolete
+@Deprecated(forRemoval = true)
 public abstract class DumbAwareActionButton extends AnActionButton implements DumbAware {
 
   public DumbAwareActionButton(@ActionText String text) {

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class DeprecatedEntryPoint extends EntryPoint {
+public final class DeprecatedEntryPoint extends EntryPoint {
   public boolean DEPRECATED_ENTRY_POINT = true;
 
   @Override

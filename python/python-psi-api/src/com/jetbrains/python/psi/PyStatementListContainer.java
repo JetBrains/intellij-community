@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstStatementListContainer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Ilya.Kazakevich
  */
-public interface PyStatementListContainer extends PyElement {
+public interface PyStatementListContainer extends PyAstStatementListContainer, PyElement {
+  @Override
   @NotNull
   PyStatementList getStatementList();
 }

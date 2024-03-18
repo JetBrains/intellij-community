@@ -35,13 +35,15 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     ActionGroup delegate = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    int currentGroupStamp = delegate instanceof DefaultActionGroup ? ((DefaultActionGroup)delegate).getModificationStamp() : -1;
+    int currentGroupStamp = !ActionUpdaterInterceptor.Companion.treatDefaultActionGroupAsDynamic() &&
+                            delegate instanceof DefaultActionGroup group ? group.getModificationStamp() : -1;
     if (mySchemeModificationStamp < currentSchemaStamp ||
         myGroupModificationStamp < currentGroupStamp ||
+        currentGroupStamp < 0 ||
         ArrayUtil.isEmpty(myChildren) ||
-        delegate instanceof DynamicActionGroup ||
-        !(delegate instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
+        delegate instanceof DynamicActionGroup) {
+      myChildren = CustomizationUtil.getReordableChildren(
+        delegate, super.getChildren(e), mySchema, myDefaultGroupName, myRootGroupName);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
@@ -54,7 +56,7 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
   }
 
   /** @deprecated Use {@link #getDelegate()} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
   public void resetChildren() {

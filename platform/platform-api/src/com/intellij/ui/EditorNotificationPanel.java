@@ -44,6 +44,7 @@ import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -236,6 +237,33 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.EAST, myLastPanel);
   }
 
+  public static void wrapPanels(@NotNull List<EditorNotificationPanel> panels, @NotNull JPanel panel, @NotNull Status status) {
+    if (panels.isEmpty()) {
+      return;
+    }
+
+    Border border = ClientProperty.get(panels.get(0), FileEditorManager.SEPARATOR_BORDER);
+    if (border == null) {
+      for (EditorNotificationPanel editorPanel : panels) {
+        panel.add(editorPanel);
+      }
+    }
+    else {
+      panel.putClientProperty(FileEditorManager.SEPARATOR_BORDER, border);
+      for (int i = 0, size = panels.size(); i < size; i++) {
+        EditorNotificationPanel editorPanel = panels.get(i);
+        if (i == size - 1) {
+          panel.add(editorPanel);
+        }
+        else {
+          NonOpaquePanel wrapper = new NonOpaquePanel(editorPanel);
+          wrapper.setBorder(new SideBorder(status.border, SideBorder.BOTTOM));
+          panel.add(wrapper);
+        }
+      }
+    }
+  }
+
   private static @NotNull NamedBorder borderWithoutStatus() {
     return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsetsWithoutStatus()), BORDER_WITHOUT_STATUS);
   }
@@ -298,6 +326,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public void setText(@NotNull @Label String text) {
     myLabel.setText(text);
+  }
+  
+  public @Nullable HyperlinkLabel findLabelByName(@NotNull @Label String text) {
+    var found = Arrays.stream(myLinksPanel.getComponents())
+      .filter(it -> {
+        if (!(it instanceof HyperlinkLabel)) return false;
+        return ((HyperlinkLabel)it).myText.equals(text);
+      })
+      .findFirst();
+
+    return (HyperlinkLabel)found.orElse(null);
   }
 
   public EditorNotificationPanel text(@NotNull @Label String text) {
@@ -396,6 +435,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   protected void executeAction(@NonNls String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      throw new AssertionError("'" + actionId + "' is not an found");
+    }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
@@ -485,6 +527,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       addHyperlinkListener(new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+          if (!isEnabled()) return;
           myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
         }
       });

@@ -107,14 +107,16 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
 
     FilePath contextFilePath = getContextFilePath(shelvedChange);
 
+    String leftTitle = DiffBundle.message("merge.version.title.base");
+    String rightTitle = VcsBundle.message("shelve.shelved.version");
+
     if (patch.isDeletedFile() || patch.isNewFile()) {
       DiffContent shelfContent = factory.create(myProject, patch.getSingleHunkPatchText(), contextFilePath);
       DiffContent emptyContent = factory.createEmpty();
 
       DiffContent leftContent = patch.isDeletedFile() ? shelfContent : emptyContent;
       DiffContent rightContent = !patch.isDeletedFile() ? shelfContent : emptyContent;
-      String leftTitle = DiffBundle.message("merge.version.title.base");
-      String rightTitle = VcsBundle.message("shelve.shelved.version");
+
       return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
     }
 
@@ -126,13 +128,11 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
         DiffContent leftContent = factory.create(myProject, baseContents.toString(), contextFilePath);
         DiffContent rightContent = factory.create(myProject, patchedContent, contextFilePath);
 
-        String leftTitle = DiffBundle.message("merge.version.title.base");
-        String rightTitle = VcsBundle.message("shelve.shelved.version");
         return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
       }
     }
 
-    return new PatchDiffRequest(patch, title, null);
+    return new PatchDiffRequest(patch, title, leftTitle, rightTitle);
   }
 
   @Override

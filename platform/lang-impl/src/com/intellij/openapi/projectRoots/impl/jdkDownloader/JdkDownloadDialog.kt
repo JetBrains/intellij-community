@@ -9,11 +9,13 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import java.awt.Component
 import java.awt.event.ItemEvent
@@ -216,6 +218,7 @@ internal class JdkDownloadDialog(
   val parentComponent: Component?,
   val sdkType: SdkTypeId,
   private val mergedModel: JdkDownloaderMergedModel,
+  okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk"),
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
   private val panel: JComponent
   private val versionComboBox : ComboBox<JdkVersionItem>
@@ -275,14 +278,21 @@ internal class JdkDownloadDialog(
     vendorComboBox.onSelectionChange(::onVendorSelectionChange)
     versionComboBox.onSelectionChange(::onVersionSelectionChange)
 
-
     panel = panel {
       row(ProjectBundle.message("dialog.row.jdk.version")) { cell(versionComboBox).widthGroup("combo") }
-      row(ProjectBundle.message("dialog.row.jdk.vendor")) { cell(vendorComboBox).widthGroup("combo").focused() }
+      row(ProjectBundle.message("dialog.row.jdk.vendor")) { cell(vendorComboBox).widthGroup("combo").focused()
+        .validationInfo {
+          val itemArch = CpuArch.fromString(it.item.item.arch)
+          when {
+            itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
+            else -> null
+          }
+        }
+      }
       row(ProjectBundle.message("dialog.row.jdk.location")) { cell(installDirComponent) }
     }
 
-    myOKAction.putValue(Action.NAME, ProjectBundle.message("dialog.button.download.jdk"))
+    myOKAction.putValue(Action.NAME, okActionText)
 
     setModel(mergedModel.projectWSLDistribution != null)
     init()

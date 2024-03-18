@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
-import com.intellij.idea.Bombed;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.PathManager;
@@ -11,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.io.File;
-import java.util.Calendar;
 
 /**
  * @author Konstantin Bulenkov

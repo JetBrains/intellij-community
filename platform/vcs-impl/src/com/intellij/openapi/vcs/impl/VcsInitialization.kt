@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
@@ -165,13 +164,21 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   private suspend fun runActivities(activities: List<VcsStartupActivity>) {
     CoroutineTracerShim.coroutineTracer.span("VcsInitialization.runActivities") {
       for (activity in activities) {
-        CoroutineTracerShim.coroutineTracer.span(activity.javaClass.name) {
-          LOG.debug { "running activity: $activity" }
-          blockingContext {
-            runCatching {
+        try {
+          CoroutineTracerShim.coroutineTracer.span(activity.javaClass.name) {
+            LOG.debug { "running activity: $activity" }
+            blockingContext {
               activity.runActivity(project)
-            }.getOrLogException(LOG)
+            }
           }
+        }
+        catch (e: CancellationException) {
+          // do not abort initialization if one of the callbacks threw PCE
+          coroutineContext.ensureActive()
+          LOG.warn(IllegalStateException(e))
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
         }
       }
     }

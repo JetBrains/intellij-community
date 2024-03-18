@@ -17,7 +17,7 @@ import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
-import java.util.EnumSet
+import java.util.*
 
 typealias VSCodeExtensionLanguageId = String
 
@@ -102,7 +102,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
                                 autoCloseBefore = configuration.autoCloseBefore,
                                 surroundingPairs = surroundingPairs,
                                 indentationRules = indentationRules,
-                                null)
+                                customHighlightingAttributes = null,
+                                onEnterRules = configuration.onEnterRules.toSet())
           }
         }
       } ?: emptySequence()
@@ -196,7 +197,8 @@ data class VSCodeExtensionLanguageConfiguration(val brackets: List<List<String>>
                                                 val autoCloseBefore: String?,
                                                 val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
                                                 val comments: VSCodeExtensionComments,
-                                                val indentationRules: VSCodeExtensionIndentationRules?)
+                                                val indentationRules: VSCodeExtensionIndentationRules?,
+                                                val onEnterRules: List<OnEnterRule> = emptyList())
 
 @JsonDeserialize(using = VSCodeExtensionSurroundingPairsDeserializer::class)
 data class VSCodeExtensionSurroundingPairs(val open: String, val close: String)
@@ -266,7 +268,19 @@ class VSCodeExtensionIndentationRulesDeserializer(vc: Class<*>?) : StdDeserializ
       is TextNode -> child.asText()
       is ObjectNode -> child["pattern"].asText()
       null -> null
-      else -> error("unexpected surroundingPairs node")
+      else -> error("unexpected indentationRules node")
+    }
+  }
+}
+
+class TextRuleDeserializer(vc: Class<*>?) : StdDeserializer<TextRule>(vc) {
+  @Suppress("unused")
+  constructor() : this(null)
+  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): TextRule {
+    return when (val node: JsonNode = p.codec.readTree(p)) {
+      is TextNode -> TextRule(node.asText())
+      is ObjectNode -> TextRule(node["pattern"].asText())
+      else -> error("unexpected TextRule node")
     }
   }
 }

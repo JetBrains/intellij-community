@@ -48,11 +48,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
   @Override
   public Set<String> getAllLookupStrings() {
-    final Set<String> strings = getDelegate().getAllLookupStrings();
-    final Set<String> result = new HashSet<>(strings.size() + 1);
-    result.addAll(strings);
-    result.add(getLookupString());
-    return result;
+    return Set.of(getLookupString());
   }
 
   @NotNull

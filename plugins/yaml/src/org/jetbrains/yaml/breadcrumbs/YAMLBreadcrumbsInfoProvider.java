@@ -48,6 +48,12 @@ public class YAMLBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return e instanceof YAMLScalar || e instanceof YAMLKeyValue || e instanceof YAMLSequenceItem || e instanceof YAMLDocument;
   }
 
+  @Override
+  public boolean acceptStickyElement(@NotNull PsiElement e) {
+    // exclude root element IDEA-344788
+    return acceptElement(e) && !(e instanceof YAMLDocument);
+  }
+
   @NotNull
   @Override
   public String getElementInfo(@NotNull PsiElement e) {

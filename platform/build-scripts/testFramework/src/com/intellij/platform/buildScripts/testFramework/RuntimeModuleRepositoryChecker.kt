@@ -2,7 +2,14 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.runtime.repository.*
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.repository.MalformedRepositoryException
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.FList
 import org.assertj.core.api.SoftAssertions
@@ -82,18 +89,41 @@ class RuntimeModuleRepositoryChecker private constructor(
         }
     }
   }
-  private val descriptors by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
+  private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
 
   private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
       val productModules = loadProductModules(productModulesModule)
-      val allDependencies = HashMap<RuntimeModuleId, FList<String>>()
-      productModules.mainModuleGroup.includedModules.forEach { 
-        repository.collectDependencies(it.moduleDescriptor, FList.emptyList(), allDependencies)
-      }
+      val serviceModuleMapping = ServiceModuleMapping.buildMapping(productModules, includeDebugInfoInErrorMessage = true)
+      val mainGroupModuleResourceRoots = 
+        productModules.mainModuleGroup.includedModules
+          .asSequence()
+          .map { it.moduleDescriptor }
+          .filter { !it.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
+          .flatMap { moduleDescriptor -> moduleDescriptor.resourceRootPaths.map { it to moduleDescriptor.moduleId } }
+          .groupBy({ it.first }, { it.second })
+      
       productModules.bundledPluginModuleGroups.forEach { group ->
-        group.includedModules.forEach { 
-          repository.collectDependencies(it.moduleDescriptor, FList.emptyList(), allDependencies)
+        val allPluginModules = group.includedModules.map { it.moduleDescriptor } + serviceModuleMapping.getAdditionalModules(group)
+        for (pluginModule in allPluginModules) {
+          if (pluginModule.moduleId == RuntimeModuleId.projectLibrary("commons-lang3")) {
+            //ignore this error until IJPL-671 is fixed
+            continue
+          }
+          
+          for (resourcePath in pluginModule.resourceRootPaths) {
+            val mainModules = mainGroupModuleResourceRoots[resourcePath]
+            if (mainModules != null) {
+              val mainModuleListString = 
+                if (mainModules.size < 3) mainModules.joinToString { it.stringId } 
+                else "${mainModules.first().stringId} and ${mainModules.size - 1} more modules" 
+              softly.collectAssertionError(
+                AssertionError("""
+                |Module '${pluginModule.moduleId.stringId}' from plugin '${group.mainModule.moduleId}' has resource root $resourcePath,
+                |which is also added as a resource root of modules from the platform part ($mainModuleListString).
+                """.trimMargin()))
+            }
+          }
         }
       }
     }
@@ -119,7 +149,7 @@ class RuntimeModuleRepositoryChecker private constructor(
         """.trimMargin()))
         return@forEach
       }
-      val pluginPath = FList.singleton("bundled plugin ${group.includedModules[0].moduleDescriptor.moduleId.stringId}")
+      val pluginPath = FList.singleton("bundled plugin ${group.mainModule.moduleId.stringId}")
       group.includedModules.forEach {
         repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.stringId), allProductModules)
       }
@@ -129,7 +159,7 @@ class RuntimeModuleRepositoryChecker private constructor(
       repository.getModule(moduleId).resourceRootPaths.map { it to moduleId }
     }.groupBy({ it.first }, { it.second })
     
-    for (rawModuleId in descriptors.keys) {
+    for (rawModuleId in moduleRepositoryData.allIds) {
       val moduleId = RuntimeModuleId.raw(rawModuleId)
       if (rawModuleId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
@@ -157,7 +187,11 @@ class RuntimeModuleRepositoryChecker private constructor(
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionError(AssertionError("""
           |Module '${moduleId.stringId}' is not part of '$productModulesModule', but it's packed in ${included.pathString},
-          |which is included in classpath because $firstIncludedModuleData$more are also packed in it. 
+          |which is included in classpath because $firstIncludedModuleData$more are also packed in it, so '${moduleId.stringId}' will be
+          |included in the classpath as well. Unnecessary code and resources in the classpath may cause performance problems, also, they
+          |may cause '$productModulesModule' to behave differently in a standalone installation and when invoked from '${context.applicationInfo.fullProductName}'
+          |so it's better to fix the problem. Usually, to do that you need to change build scripts to put '${moduleId.stringId}' in a 
+          |separate JAR.
         """.trimMargin()))
       }
     }
@@ -165,7 +199,8 @@ class RuntimeModuleRepositoryChecker private constructor(
 
   private fun loadProductModules(productModulesModule: String): ProductModules {
     val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
-    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)
+    return ProductModulesSerialization.loadProductModules(
+      moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)
   }
 
   private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, path: FList<String>, result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap()): MutableMap<RuntimeModuleId, FList<String>> {

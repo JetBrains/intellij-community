@@ -6,65 +6,82 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalColorPalette
+import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.model.CharBuffer
-import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
-import java.awt.Color
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
+import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
 import java.awt.Font
 
 class TerminalOutputController(
+  project: Project,
   private val editor: EditorEx,
-  private val session: TerminalSession,
-  private val settings: JBTerminalSystemSettingsProviderBase
+  private val session: BlockTerminalSession,
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  focusModel: TerminalFocusModel
 ) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
-  private val terminalModel: TerminalModel = session.model
-  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
+  private val scraper: ShellCommandOutputScraper = ShellCommandOutputScraper(session)
+  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(session.colorPalette, outputModel, focusModel, selectionModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
-  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
-  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
+  private val blockCreationAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, session)
 
-  private val palette: TerminalColorPalette
-    get() = settings.terminalColorPalette
+  private var runningCommandContext: RunningCommandContext? = null
+  private var caretPainter: TerminalCaretPainter? = null
 
   @Volatile
   private var keyEventsListenerDisposable: Disposable? = null
 
   @Volatile
   private var mouseAndContentListenersDisposable: Disposable? = null
+  private val hyperlinkHighlighter: TerminalHyperlinkHighlighter = TerminalHyperlinkHighlighter(project, outputModel, session)
 
   init {
     editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
-    Disposer.register(session, caretModel)
+
+    session.addCommandListener(object : ShellCommandListener {
+      override fun clearInvoked() {
+        val disposable = Disposer.newDisposable()
+        // clear all blocks when command is finished and then remove listener
+        session.addCommandListener(object : ShellCommandListener {
+          override fun commandFinished(event: CommandFinishedEvent) {
+            invokeLater {
+              outputModel.clearBlocks()
+            }
+            Disposer.dispose(disposable)
+          }
+        }, disposable)
+      }
+    })
   }
 
   @RequiresEdt
-  fun startCommandBlock(command: String?) {
-    val block = outputModel.createBlock(command)
-    if (!command.isNullOrEmpty()) {
-      editor.document.insertString(block.endOffset, command + "\n")
-      val highlighting = createCommandHighlighting(block)
-      outputModel.putHighlightings(block, listOf(highlighting))
-      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
-    }
-
+  fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
+    outputModel.closeActiveBlock()
+    scrollToBottom()
     installRunningCommandListeners()
+    runningCommandContext = RunningCommandContext(command, prompt)
+
+    // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
+    val createBlockRequest = {
+      doWithScrollingAware {
+        val context = runningCommandContext ?: error("No running command context")
+        createNewBlock(context)
+      }
+    }
+    blockCreationAlarm.addRequest(createBlockRequest, 200)
   }
 
   private fun installRunningCommandListeners() {
@@ -73,10 +90,14 @@ class TerminalOutputController(
     val keyEventsDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     keyEventsListenerDisposable = keyEventsDisposable
 
-    val eventsHandler = TerminalEventsHandler(session, settings)
+    val eventsHandler = BlockTerminalEventsHandler(session, settings, this)
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
     setupContentListener(mouseAndContentDisposable)
+
+    val caretModel = TerminalCaretModel(session, outputModel, editor, mouseAndContentDisposable)
+    caretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
+    Disposer.register(keyEventsDisposable, caretPainter!!)
   }
 
   private fun disposeRunningCommandListeners() {
@@ -87,13 +108,15 @@ class TerminalOutputController(
       // and this disposable is disposed on BGT. The dispatcher won't be removed as a result.
       keyEventsListenerDisposable?.let { Disposer.dispose(it) }
       keyEventsListenerDisposable = null
+      caretPainter = null
     }
   }
 
   fun finishCommandBlock(exitCode: Int) {
     disposeRunningCommandListeners()
+    updateEditorContent(scraper.scrapeOutput())
     invokeLater {
-      val block = outputModel.getLastBlock() ?: error("No active block")
+      val block = outputModel.getActiveBlock() ?: error("No active block")
       val document = editor.document
       val lastLineInd = document.getLineNumber(block.endOffset)
       val lastLineStart = document.getLineStartOffset(lastLineInd)
@@ -101,28 +124,38 @@ class TerminalOutputController(
       // remove the line with empty prompt
       if (lastLineText.isBlank()) {
         // remove also the line break if it is not the first block
-        val removeOffset = lastLineStart - if (lastLineStart > 0) 1 else 0
-        document.deleteString(removeOffset, block.endOffset)
-        outputModel.getHighlightings(block)?.let { current ->
-          val updated = current.filter { it.endOffset <= block.endOffset }
-          outputModel.putHighlightings(block, updated)
-        }
+        val startRemoveOffset = lastLineStart - if (lastLineStart > 0) 1 else 0
+        outputModel.deleteDocumentRange(block, TextRange(startRemoveOffset, block.endOffset))
       }
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
       }
-      else if (exitCode != 0) {
-        outputModel.addBlockState(block, ErrorBlockDecorationState())
+      else {
+        outputModel.setBlockInfo(block, CommandBlockInfo(exitCode))
       }
+      runningCommandContext = null
     }
   }
 
   @RequiresEdt
   fun insertEmptyLine() {
-    outputModel.closeLastBlock()
+    outputModel.closeActiveBlock()
     editor.document.insertString(editor.document.textLength, "\n")
-    val visibleArea = editor.scrollingModel.visibleArea
-    editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
+    scrollToBottom()
+  }
+
+  @RequiresEdt
+  fun scrollToBottom() {
+    val scrollingModel = editor.scrollingModel
+    // disable animation to perform scrolling atomically
+    scrollingModel.disableAnimation()
+    try {
+      val visibleArea = editor.scrollingModel.visibleArea
+      scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
+    }
+    finally {
+      scrollingModel.enableAnimation()
+    }
   }
 
   override fun onAlternateBufferChanged(enabled: Boolean) {
@@ -132,158 +165,126 @@ class TerminalOutputController(
     }
     else {
       installRunningCommandListeners()
-      terminalModel.withContentLock {
-        updateEditorContent()
-      }
     }
   }
 
   private fun setupContentListener(disposable: Disposable) {
-    terminalModel.addContentListener(object : TerminalModel.ContentListener {
-      override fun onContentChanged() {
-        updateEditorContent()
+    scraper.addListener(object : ShellCommandOutputListener {
+      override fun commandOutputChanged(output: StyledCommandOutput) {
+        updateEditorContent(output)
       }
-    }, disposable)
+    }, disposable, useExtendedDelayOnce = true)
   }
 
-  private fun updateEditorContent() {
-    val output = computeCommandOutput()
+  private fun updateEditorContent(output: StyledCommandOutput) {
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        updateEditor(output)
-      }
-    }
-  }
-
-  private fun computeCommandOutput(): CommandOutput {
-    val block = outputModel.getLastBlock()!!
-    val baseOffset = block.outputStartOffset
-    val builder = StringBuilder()
-    val highlightings = mutableListOf<HighlightingInfo>()
-    val consumer = object : StyledTextConsumer {
-      override fun consume(x: Int,
-                           y: Int,
-                           style: TextStyle,
-                           characters: CharBuffer,
-                           startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        builder.append(characters.toString())
-        val attributes = style.toTextAttributes()
-        highlightings.add(HighlightingInfo(startOffset, baseOffset + builder.length, attributes))
-      }
-
-      override fun consumeNul(x: Int,
-                              y: Int,
-                              nulIndex: Int,
-                              style: TextStyle,
-                              characters: CharBuffer,
-                              startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        repeat(characters.buf.size) {
-          builder.append(' ')
+        doWithScrollingAware {
+          doUpdateEditorContent(output)
         }
-        highlightings.add(HighlightingInfo(startOffset, baseOffset + builder.length, TextStyle.EMPTY.toTextAttributes()))
-      }
-
-      override fun consumeQueue(x: Int, y: Int, nulIndex: Int, startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        builder.append("\n")
-        highlightings.add(HighlightingInfo(startOffset, startOffset + 1, TextStyle.EMPTY.toTextAttributes()))
       }
     }
-
-    val commandLines = block.command?.let { command ->
-      command.split("\n").sumOf { it.length / terminalModel.width + if (it.length % terminalModel.width > 0) 1 else 0 }
-    } ?: 0
-    val historyLines = terminalModel.historyLinesCount
-    if (terminalModel.historyLinesCount > 0) {
-      if (commandLines <= historyLines) {
-        terminalModel.processHistoryAndScreenLines(commandLines - historyLines, historyLines - commandLines, consumer)
-        terminalModel.processScreenLines(0, terminalModel.cursorY, consumer)
-      }
-      else {
-        terminalModel.processHistoryAndScreenLines(-historyLines, historyLines, consumer)
-        terminalModel.processScreenLines(commandLines - historyLines, terminalModel.cursorY, consumer)
-      }
-    }
-    else {
-      terminalModel.processScreenLines(commandLines, terminalModel.cursorY - commandLines, consumer)
-    }
-
-    while (builder.lastOrNull() == '\n') {
-      builder.deleteCharAt(builder.lastIndex)
-      highlightings.removeLast()
-    }
-    return CommandOutput(builder.toString(), highlightings)
   }
 
-  private fun updateEditor(output: CommandOutput) {
-    val block = outputModel.getLastBlock() ?: error("No active block")
-    editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
-    // highlightings are collected only for output, so add command highlighting in the first place
-    val command = block.command
-    val highlightings = if (command != null) {
-      val commandHighlighting = createCommandHighlighting(block)
-      output.highlightings.toMutableList().also { it.add(0, commandHighlighting) }
+  private fun doUpdateEditorContent(output: StyledCommandOutput) {
+    val activeBlock = outputModel.getActiveBlock() ?: run {
+      // If there is no active block, it means that it is the first content update. Create the new block here.
+      blockCreationAlarm.cancelAllRequests()
+      val context = runningCommandContext ?: error("No running command context")
+      createNewBlock(context)
+    }
+    updateBlock(activeBlock, toHighlightedCommandOutput(output, baseOffset = activeBlock.outputStartOffset))
+  }
+
+  private fun createNewBlock(context: RunningCommandContext): CommandBlock {
+    val block = outputModel.createBlock(context.command, context.prompt)
+    if (block.withPrompt) {
+      val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
+      appendLineToBlock(block, block.prompt.text, highlightings, block.withCommand)
+    }
+    if (block.withCommand) {
+      appendLineToBlock(block, context.command!!, listOf(createCommandHighlighting(block)), false)
+    }
+    if (block.withPrompt || block.withCommand) {
+      blocksDecorator.installDecoration(block)
+    }
+    return block
+  }
+
+  private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): CommandOutput {
+    return CommandOutput(output.text, output.styleRanges.map {
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributes())
+    })
+  }
+
+  private fun updateBlock(block: CommandBlock, output: CommandOutput) {
+    // highlightings are collected only for output, so add prompt and command highlightings to the first place
+    val highlightings = if (block.withPrompt || block.withCommand) {
+      output.highlightings.toMutableList().also { highlightings ->
+        if (block.withCommand) {
+          highlightings.add(0, createCommandHighlighting(block))
+        }
+        if (block.withPrompt) {
+          highlightings.addAll(0, adjustHighlightings(block.prompt!!.highlightings, block.startOffset))
+        }
+      }
     }
     else output.highlightings
+
     outputModel.putHighlightings(block, highlightings)
+    // add leading \n here, because \n is not added after command in `startCommandBlock`
+    val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
+    editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
+    outputModel.trimOutput()
+    hyperlinkHighlighter.highlightHyperlinks(block)
+
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
-    if (outputModel.getDecoration(block) == null
-        && output.text.isNotBlank()
-        && output.text.trim() != "%") {
-      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
+    if (output.text.isNotBlank() && output.text.trim() != "%") {
+      blocksDecorator.installDecoration(block)
     }
 
-    editor.caretModel.moveToOffset(block.endOffset)
-    editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
     // caret highlighter can be removed at this moment, because we replaced the text of the block
     // so, call repaint manually
-    caretPainter.repaint()
+    caretPainter?.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes {
-    return TextAttributes().also { attr ->
-      val background = palette.getBackground(terminalModel.styleState.getBackground(backgroundForRun))
-      val defaultBackground = palette.defaultBackground
-      // todo: it is a hack to not set default background, because it is different from the block background.
-      //  They should match to remove this hack.
-      if (background != defaultBackground) {
-        attr.backgroundColor = AwtTransformers.toAwtColor(background)
-      }
-      attr.foregroundColor = getStyleForeground(this)
-      if (hasOption(TextStyle.Option.BOLD)) {
-        attr.fontType = attr.fontType or Font.BOLD
-      }
-      if (hasOption(TextStyle.Option.ITALIC)) {
-        attr.fontType = attr.fontType or Font.ITALIC
-      }
-      if (hasOption(TextStyle.Option.UNDERLINED)) {
-        attr.withAdditionalEffect(EffectType.LINE_UNDERSCORE, attr.foregroundColor)
+  /**
+   * Scroll to bottom if we were at the bottom before executing the [action]
+   */
+  private fun doWithScrollingAware(action: () -> Unit) {
+    val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
+    try {
+      action()
+    }
+    finally {
+      if (wasAtBottom) {
+        scrollToBottom()
       }
     }
   }
 
-  private fun getStyleForeground(style: TextStyle): Color {
-    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
-    return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
-      Color((foreground.red + background.red) / 2,
-            (foreground.green + background.green) / 2,
-            (foreground.blue + background.blue) / 2,
-            foreground.alpha)
-    }
-    else AwtTransformers.toAwtColor(foreground)!!
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
+
+  private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>, addTrailingNewLine: Boolean) {
+    val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
+    outputModel.putHighlightings(block, existingHighlightings + highlightings)
+    editor.document.insertString(block.endOffset, if (addTrailingNewLine) text + "\n" else text)
   }
 
-  /** It is implied that the command is not null */
+  /** It is implied that [CommandBlock.command] is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
     val attributes = TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
-    return HighlightingInfo(block.startOffset, block.startOffset + block.command!!.length, attributes)
+    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length, attributes)
+  }
+
+  private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
+    return highlightings.map {
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributes)
+    }
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
@@ -294,6 +295,8 @@ class TerminalOutputController(
   }
 
   private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
+
+  private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
 
   companion object {
     val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")

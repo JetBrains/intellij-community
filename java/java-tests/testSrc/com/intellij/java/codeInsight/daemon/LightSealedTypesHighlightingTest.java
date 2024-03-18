@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -25,6 +25,7 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
   public void testSealedTypesBasics() { doTest(); }
   public void testSealedFunctionalInterface() { doTest(); }
   public void testSealedRestrictedTypes() { doTest(); }
+  public void testSealedLocalClass() { doTest(); }
   public void testPermitsList() {
     myFixture.addClass("package p1; public class P1 extends p.AnotherPackage {}");
     myFixture.addClass("package p; public class P extends A {}");

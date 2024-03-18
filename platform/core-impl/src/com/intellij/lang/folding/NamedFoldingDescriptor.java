@@ -27,18 +27,4 @@ public final class NamedFoldingDescriptor extends FoldingDescriptor {
                                 @NotNull String placeholderText) {
     super(node, range, group, placeholderText);
   }
-
-  /**
-   * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(ASTNode, TextRange, FoldingGroup, String, Boolean, Set)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public NamedFoldingDescriptor(@NotNull ASTNode node,
-                                final @NotNull TextRange range,
-                                @Nullable FoldingGroup group,
-                                @NotNull String placeholderText,
-                                @Nullable("null means unknown") Boolean collapsedByDefault,
-                                @NotNull Set<Object> dependencies) {
-    super(node, range, group, placeholderText, collapsedByDefault, dependencies);
-  }
 }

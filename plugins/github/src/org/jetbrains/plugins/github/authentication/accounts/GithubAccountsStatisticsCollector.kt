@@ -20,12 +20,8 @@ internal class GithubAccountsStatisticsCollector : ApplicationUsagesCollector() 
     return setOf(ACCOUNTS.metric(accountManager.accountsState.value.size, hasAccountsWithNonDefaultHost))
   }
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("vcs.github", 3)
-    private val ACCOUNTS = GROUP.registerEvent("accounts", EventFields.Count, EventFields.Boolean("has_enterprise"))
-  }
+  private val GROUP = EventLogGroup("vcs.github", 3)
+  private val ACCOUNTS = GROUP.registerEvent("accounts", EventFields.Count, EventFields.Boolean("has_enterprise"))
 }

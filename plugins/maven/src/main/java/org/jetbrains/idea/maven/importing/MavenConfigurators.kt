@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderEx
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.stream.Stream
 
 @ApiStatus.Experimental
@@ -156,7 +156,7 @@ interface MavenAfterImportConfigurator {
   interface Context : UserDataHolder {
     val project: Project
     val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
-    val mavenProgressIndicator: MavenProgressIndicator
+    val progressIndicator: ProgressIndicator
   }
 }
 

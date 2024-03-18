@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
@@ -35,15 +35,13 @@ public class HgCloneDialog extends CloneDvcsDialog {
     return "reference.mercurial.clone.mercurial.repository";
   }
 
-  @NotNull
   @Override
-  protected DvcsRememberedInputs getRememberedInputs() {
+  protected @NotNull DvcsRememberedInputs getRememberedInputs() {
     return ApplicationManager.getApplication().getService(HgRememberedInputs.class);
   }
 
-  @NotNull
   @Override
-  protected TestResult test(@NotNull final String url) {
+  protected @NotNull TestResult test(final @NotNull String url) {
     HgIdentifyCommand identifyCommand = new HgIdentifyCommand(myProject);
     identifyCommand.setSource(url);
     HgCommandResult result = identifyCommand.execute(ModalityState.stateForComponent(getRootPane()));

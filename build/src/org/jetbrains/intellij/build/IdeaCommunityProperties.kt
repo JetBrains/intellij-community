@@ -1,22 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import kotlinx.collections.immutable.plus
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
-
 import java.nio.file.Path
 
-internal fun createCommunityBuildContext(
-  communityHome: BuildDependenciesCommunityRoot,
+internal suspend fun createCommunityBuildContext(
   options: BuildOptions = BuildOptions(),
-  projectHome: Path = communityHome.communityRoot,
+  projectHome: Path = COMMUNITY_ROOT.communityRoot,
 ): BuildContext {
-  return BuildContextImpl.createContextBlocking(communityHome = communityHome,
-                                                projectHome = projectHome,
-                                                productProperties = IdeaCommunityProperties(communityHome.communityRoot),
-                                                options = options)
+  return BuildContextImpl.createContext(projectHome = projectHome,
+                                        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+                                        setupTracer = true,
+                                        options = options)
 }
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
@@ -28,7 +29,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework"
+      "intellij.maven.testFramework",
+      "intellij.platform.reproducibleBuilds.diffTool",
     )
   }
 
@@ -54,7 +56,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.idea.community.customization",
     )
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
-      .addAll(listOf("intellij.javaFX.community", "intellij.ae.database.community"))
+      .addAll(listOf("intellij.javaFX.community", "intellij.ae.database.community", "intellij.vcs.github.community"))
       .toMutableList()
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
@@ -62,7 +64,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin(allPlatforms = true),
-      CommunityRepositoryModules.groovyPlugin()
+      CommunityRepositoryModules.groovyPlugin(),
+      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community"),
     ))
 
     productLayout.addPlatformSpec { layout, _ ->
@@ -80,21 +83,24 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     versionCheckerConfig = CE_CLASS_VERSIONS
     baseDownloadUrl = "https://download.jetbrains.com/idea/"
     buildDocAuthoringAssets = true
+
+    additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    super.copyAdditionalFiles(context, targetDirectory)
-    FileSet(context.paths.communityHomeDir)
-      .include("LICENSE.txt")
-      .include("NOTICE.txt")
-      .copyToDir(Path.of(targetDirectory))
-     FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
-      .includeAll()
-      .copyToDir(Path.of(targetDirectory, "bin"))
-    bundleExternalPlugins(context, targetDirectory)
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
+    super.copyAdditionalFiles(context, targetDir)
+
+    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
+    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
+
+    copyDir(
+      sourceDir = context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"),
+      targetDir = targetDir.resolve("bin"),
+    )
+    bundleExternalPlugins(context, targetDir)
   }
 
-  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: String) {
+  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {
     //temporary unbundle VulnerabilitySearch
     //ExternalPluginBundler.bundle('VulnerabilitySearch',
     //                             "$buildContext.paths.communityHome/build/dependencies",
@@ -173,7 +179,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
   }
 
-  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String) =  "ideaIC-$buildNumber"
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String) = "ideaIC-$buildNumber"
 
   override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = "idea-ce"
 }

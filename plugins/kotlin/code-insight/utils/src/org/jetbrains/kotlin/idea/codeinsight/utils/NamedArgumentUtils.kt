@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getCallElement
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -65,7 +64,7 @@ object NamedArgumentUtils {
      */
     context(KtAnalysisSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
-        val callElement = getCallElement(argument) ?: return null
+        val callElement: KtCallElement = getCallElement(argument) ?: return null
         val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) return null
         return getNameForNameableArgument(argument, resolvedCall)

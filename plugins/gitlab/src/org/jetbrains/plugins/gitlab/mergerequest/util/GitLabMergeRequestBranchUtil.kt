@@ -15,4 +15,9 @@ object GitLabMergeRequestBranchUtil {
     val localPrefix = if (isFork) FORK_BRANCH_PREFIX else null
     GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(mapping.gitRepository, remoteDescriptor, details.sourceBranch, localPrefix)
   }
+
+  suspend fun fetchAndShowRemoteBranchInLog(mapping: GitLabProjectMapping, details: GitLabMergeRequestFullDetails) {
+    val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return
+    GitRemoteBranchesUtil.fetchAndShowRemoteBranchInLog(mapping.gitRepository, remoteDescriptor, details.sourceBranch, details.targetBranch)
+  }
 }

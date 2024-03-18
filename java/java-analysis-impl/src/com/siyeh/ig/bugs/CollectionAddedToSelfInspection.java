@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class CollectionAddedToSelfInspection extends BaseInspection {
+public final class CollectionAddedToSelfInspection extends BaseInspection {
 
   @Override
   @NotNull

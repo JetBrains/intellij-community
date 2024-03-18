@@ -43,7 +43,7 @@ internal sealed interface RecentProjectTreeItem {
   fun children(): List<RecentProjectTreeItem>
 
   fun removeItem() {
-    RemoveSelectedProjectsAction.removeItem(this)
+    RemoveSelectedProjectsAction.removeItems(listOf(this))
   }
 }
 

@@ -9,19 +9,24 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : PsiType:List<? extends String>
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                            ULiteralExpression (value = "1") ["1"] : PsiType:String
-                            ULiteralExpression (value = "2") ["2"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["1"] : PsiType:String
+                                ULiteralExpression (value = "1") ["1"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["2"] : PsiType:String
+                                ULiteralExpression (value = "2") ["2"] : PsiType:String
                 USwitchExpression [switch (string)  {...] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = string) [string] : PsiType:String
                     UExpressionList (when) [    "aaaa" -> {...    ] : PsiType:Unit
                         USwitchClauseExpressionWithBody ["aaaa" -> {...]
-                            ULiteralExpression (value = "aaaa") ["aaaa"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["aaaa"] : PsiType:String
+                                ULiteralExpression (value = "aaaa") ["aaaa"] : PsiType:String
                             UExpressionList (when_entry) [{...]
                                 UYieldExpression [yield return "bindingContext"]
                                     UReturnExpression [return "bindingContext"] : PsiType:Void
-                                        ULiteralExpression (value = "bindingContext") ["bindingContext"] : PsiType:String
+                                        UPolyadicExpression (operator = +) ["bindingContext"] : PsiType:String
+                                            ULiteralExpression (value = "bindingContext") ["bindingContext"] : PsiType:String
                         USwitchClauseExpressionWithBody ["empty-switch" -> {...]
-                            ULiteralExpression (value = "empty-switch") ["empty-switch"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["empty-switch"] : PsiType:String
+                                ULiteralExpression (value = "empty-switch") ["empty-switch"] : PsiType:String
                             UExpressionList (when_entry) [{...]
                         USwitchClauseExpressionWithBody [ -> {...]
                             UExpressionList (when_entry) [{...]

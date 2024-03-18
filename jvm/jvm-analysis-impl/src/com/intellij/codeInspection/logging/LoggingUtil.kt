@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -22,6 +25,8 @@ internal class LoggingUtil {
     private const val LEGACY_JAVA_LOGGER = "java.util.logging.Logger"
 
     internal const val AKKA_LOGGING = "akka.event.LoggingAdapter"
+
+    internal const val IDEA_LOGGER = "com.intellij.openapi.diagnostic.Logger"
 
     private val LOGGER_CLASSES = setOf(SLF4J_LOGGER, LOG4J_LOGGER)
     private val LEGACY_LOGGER_CLASSES = setOf(LEGACY_LOG4J_LOGGER, LEGACY_CATEGORY_LOGGER,
@@ -48,6 +53,9 @@ internal class LoggingUtil {
       CallMatcher.instanceCall(LEGACY_CATEGORY_LOGGER, "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
       CallMatcher.instanceCall(LEGACY_APACHE_COMMON_LOGGER, "trace", "debug", "info", "warn", "error", "fatal"),
       CallMatcher.instanceCall(LEGACY_JAVA_LOGGER, "fine", "log", "finer", "finest", "logp", "logrb", "info", "severe", "warning", "config")
+    )
+    internal val IDEA_LOG_MATCHER: CallMatcher = CallMatcher.anyOf(
+      CallMatcher.instanceCall(IDEA_LOGGER, "trace", "debug", "info", "warn", "error"),
     )
 
     private val LEGACY_METHODS_WITH_LEVEL = setOf("log", "l7dlog", "logp", "logrb")
@@ -254,13 +262,13 @@ internal class LoggingUtil {
       return findLevelTypeByName(methodName, LEGACY_LEVEL_MAP)
     }
 
-    internal fun getLoggerLevel(uCall: UCallExpression?): LevelType? {
+    internal fun getLoggerLevel(uCall: UCallExpression?, isLog: Boolean = false): LevelType? {
       if (uCall == null) {
         return null
       }
 
       var levelName = uCall.methodName
-      if ("log" == levelName) {
+      if (isLog || "log" == levelName) {
         val levelTypeFromLog = findLevelTypeByFirstArgument(uCall, LEVEL_CLASSES, LEVEL_MAP)
         if (levelTypeFromLog != null) {
           return levelTypeFromLog
@@ -280,8 +288,9 @@ internal class LoggingUtil {
             return levelTypeFromAtLevel
           }
         }
+        val loggerLevel = getLoggerLevel(nextCall, true)
+        if (loggerLevel != null) return loggerLevel
         levelName = nextCall?.methodName
-
       }
       if (levelName == null) {
         return null
@@ -352,28 +361,33 @@ internal class LoggingUtil {
 
     fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
       val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
-      val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
-        is UQualifiedReferenceExpression -> {
-          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+      return CachedValuesManager.getManager(sourcePsi.project).getCachedValue(sourcePsi, CachedValueProvider {
+        val emptyResult = CachedValueProvider.Result.create(listOf<UCallExpression>(), PsiModificationTracker.MODIFICATION_COUNT)
+        val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
+          is UQualifiedReferenceExpression -> {
+            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+          }
+          is UCallExpression -> {
+            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+          }
+          else -> {
+            null
+          }
         }
-        is UCallExpression -> {
-          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+        if (qualifier == null) {
+          return@CachedValueProvider emptyResult
         }
-        else -> {
-          null
+        val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
+        if (uIfExpression == null) {
+          return@CachedValueProvider emptyResult
         }
-      }
-      if (qualifier == null) {
-        return emptyList()
-      }
-      val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
-      if (uIfExpression == null) {
-        return emptyList()
-      }
-      val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
-      return referencesForVariable.mapNotNull { it.selector as? UCallExpression }
-        .filter { it.sourcePsi?.containingFile != null }
-        .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) }
+        val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
+        val filtered = referencesForVariable.mapNotNull { it.selector as? UCallExpression }
+          .filter { it.sourcePsi?.containingFile != null }
+          .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) }
+        return@CachedValueProvider CachedValueProvider.Result.create(filtered,
+                                                                     PsiModificationTracker.MODIFICATION_COUNT)
+      })
     }
 
     enum class LoggerType {
@@ -388,5 +402,14 @@ internal class LoggingUtil {
     enum class LegacyLevelType {
       FATAL, ERROR, SEVERE, WARN, WARNING, INFO, DEBUG, TRACE, CONFIG, FINE, FINER, FINEST
     }
+
+    internal val GUARD_MAP = mapOf(
+      Pair("isTraceEnabled", "trace"),
+      Pair("isDebugEnabled", "debug"),
+      Pair("isInfoEnabled", "info"),
+      Pair("isWarnEnabled", "warn"),
+      Pair("isErrorEnabled", "error"),
+      Pair("isFatalEnabled", "fatal"),
+    )
   }
 }

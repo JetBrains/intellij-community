@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator
@@ -14,14 +15,26 @@ import com.intellij.packaging.artifacts.ArtifactType
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementOutputKind
-import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.function.Supplier
 import javax.swing.Icon
 
-class ArtifactTest : HeavyPlatformTestCase() {
-  fun `test rename`() {
+@TestApplication
+class ArtifactTest {
+  @RegisterExtension
+  private val projectModel = ProjectModelExtension()
+  
+  @Test
+  fun `test rename`() = runBlocking(Dispatchers.EDT) {
     runWithRegisteredExtension(MockArtifactTypeForRename(), ArtifactType.EP_NAME) {
+      val project = projectModel.project
       ArtifactManager.getInstance(project).addArtifact("X", MockArtifactTypeForRename(), null)
       val artifact = ArtifactManager.getInstance(project).addArtifact("unnamed", MockArtifactTypeForRename(), null)
       val context = ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext(project, ModulesConfigurator(project,
@@ -30,18 +43,21 @@ class ArtifactTest : HeavyPlatformTestCase() {
                                                               project,
                                                               ArtifactEditorSettings(),
                                                               object : ArtifactListener {})
-      disposeOnTearDown(Disposable { context.disposeUIResources() })
-      val configurable = ArtifactConfigurable(artifact,
-                                              context, Runnable { })
-      configurable.displayName = "X"
+      try {
+        val configurable = ArtifactConfigurable(artifact, context, Runnable { })
+        configurable.displayName = "X"
 
-      var artifacts = context.actualModifiableModel!!.artifacts.map { it.name }
-      assertContainsElements(artifacts, "unnamed")
+        var artifacts = context.actualModifiableModel!!.artifacts.map { it.name }
+        assertContainsElements(artifacts, "unnamed")
 
-      configurable.displayName = "X2"
-      artifacts = context.actualModifiableModel!!.artifacts.map { it.name }
-      assertContainsElements(artifacts, "X")
-      assertContainsElements(artifacts, "X2")
+        configurable.displayName = "X2"
+        artifacts = context.actualModifiableModel!!.artifacts.map { it.name }
+        assertContainsElements(artifacts, "X")
+        assertContainsElements(artifacts, "X2")
+      }
+      finally {
+        context.disposeUIResources()
+      }
     }
   }
 }

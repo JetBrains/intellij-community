@@ -24,9 +24,10 @@ class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
 abstract class TerminalOutputSelectionAction : TerminalPromotedDumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.editor?.isOutputEditor == true
+                                         && e.selectionController?.primarySelection != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 /** Removes the selection and moves the focus to the prompt */
@@ -38,12 +39,24 @@ class TerminalSelectPromptAction : TerminalOutputSelectionAction() {
 
 class TerminalSelectBlockBelowAction : TerminalOutputSelectionAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    e.selectionController?.selectRelativeBlock(isBelow = true)
+    e.selectionController?.selectRelativeBlock(isBelow = true, dropCurrentSelection = true)
   }
 }
 
 class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    e.selectionController?.selectRelativeBlock(isBelow = false)
+    e.selectionController?.selectRelativeBlock(isBelow = false, dropCurrentSelection = true)
+  }
+}
+
+class TerminalExpandBlockSelectionBelowAction : TerminalOutputSelectionAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    e.selectionController?.selectRelativeBlock(isBelow = true, dropCurrentSelection = false)
+  }
+}
+
+class TerminalExpandBlockSelectionAboveAction : TerminalOutputSelectionAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    e.selectionController?.selectRelativeBlock(isBelow = false, dropCurrentSelection = false)
   }
 }

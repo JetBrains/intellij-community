@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
+public final class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
 
   @NotNull
   @Override

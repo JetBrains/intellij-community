@@ -27,4 +27,19 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest(Ko
     fun testMppStdlibAndCoroutinesHighlighting() {
         doTest()
     }
+
+    // Adopted from the K1 tier 1 tests
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.30-dev-0+")
+    fun testTwoKmmLibrariesSource() {
+        doTest()
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.30-dev-0+")
+    fun testOverloads() {
+        doTest {
+            publish("producer")
+        }
+    }
 }

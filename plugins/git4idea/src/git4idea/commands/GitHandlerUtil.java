@@ -21,7 +21,7 @@ public final class GitHandlerUtil {
                                         @Nullable ProgressIndicator indicator,
                                         boolean setIndeterminateFlag,
                                         @Nullable @Nls String operationName) {
-    runInCurrentThread(handler, () -> {
+    handler.runInCurrentThread(() -> {
       if (indicator != null) {
         indicator.setText(operationName == null ? GitBundle.message("git.running", handler.printableCommandLine()) : operationName);
         indicator.setText2("");
@@ -30,11 +30,6 @@ public final class GitHandlerUtil {
         }
       }
     });
-  }
-
-  @Deprecated(forRemoval = true)
-  public static void runInCurrentThread(@NotNull GitHandler handler, @Nullable Runnable postStartAction) {
-    handler.runInCurrentThread(postStartAction);
   }
 
   public static boolean isErrorLine(@NotNull String text) {

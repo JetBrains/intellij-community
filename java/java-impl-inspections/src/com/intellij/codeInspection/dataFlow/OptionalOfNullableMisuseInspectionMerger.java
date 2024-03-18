@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class OptionalOfNullableMisuseInspectionMerger extends InspectionElementsMergerBase {
+public final class OptionalOfNullableMisuseInspectionMerger extends InspectionElementsMergerBase {
   @Override
   public @NotNull String getMergedToolName() {
     return "OptionalOfNullableMisuse";

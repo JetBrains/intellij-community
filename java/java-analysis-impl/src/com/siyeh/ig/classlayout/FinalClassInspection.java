@@ -26,7 +26,7 @@ import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalClassInspection extends BaseInspection {
+public final class FinalClassInspection extends BaseInspection {
 
   @Override
   @NotNull

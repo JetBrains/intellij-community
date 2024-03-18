@@ -4,9 +4,14 @@ package com.intellij.workspaceModel.codegen.engine
 import com.intellij.workspaceModel.codegen.deft.meta.*
 
 val SKIPPED_TYPES: Set<String> = setOfNotNull("Builder", "WorkspaceEntity", "WorkspaceEntityWithSymbolicId")
+
 interface CodeGenerator {
-  fun generate(module: CompiledObjModule): GenerationResult
+  fun generateEntitiesImplementation(module: CompiledObjModule, settings: GeneratorSettings): GenerationResult
+
+  fun generateMetadataStoragesImplementation(modules: List<CompiledObjModule>, settings: GeneratorSettings): GenerationResult
 }
+
+class GeneratorSettings(val testModeEnabled: Boolean, val explicitApiEnabled: Boolean)
 
 class GenerationResult(val generatedCode: List<GeneratedCode>, val problems: List<GenerationProblem>)
 

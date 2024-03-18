@@ -75,6 +75,12 @@ class CommitOptionsPanel(private val project: Project,
           }
         }
       }
+      val extensionOptions = options.extensionOptions
+      if (extensionOptions.isNotEmpty()) {
+        for (option in extensionOptions) {
+          appendOptionRow(option)
+        }
+      }
     }
 
     // Hack: do not iterate over checkboxes in CommitDialog.

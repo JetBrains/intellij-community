@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
@@ -30,7 +30,7 @@ data class WslPath internal constructor(private val prefix: String = WslConstant
     @JvmStatic
     fun parseWindowsUncPath(windowsUncPath: String): WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
-      val path = toSystemDependentName(windowsUncPath)
+      val path = toSystemDependentName(windowsUncPath, '\\')
       return parseWindowsUncPath(path, WslConstants.UNC_PREFIX) ?: parseWindowsUncPath(path, "\\\\wsl.localhost\\")
     }
 

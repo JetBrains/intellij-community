@@ -26,15 +26,19 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   public void scheduleForIndexingRecursively(@NotNull VirtualFile file, boolean onlyContentDependent) {
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
-        myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
+        recordFileEvent(fileOrDir, onlyContentDependent);
         return true;
       };
 
       iterateIndexableFiles(file, iterator);
     }
     else {
-      myEventMerger.recordFileEvent(file, onlyContentDependent);
+      recordFileEvent(file, onlyContentDependent);
     }
+  }
+
+  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
+    myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
   }
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
@@ -71,7 +75,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
       @Override
       public void beforeVfsChange() {
         for (VirtualFile file : deletedFiles.values()) {
-          myEventMerger.recordFileRemovedEvent(file);
+          recordFileRemovedEvent(file);
         }
       }
 
@@ -80,6 +84,10 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         processAfterEvents(events);
       }
     };
+  }
+
+  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    myEventMerger.recordFileRemovedEvent(file);
   }
 
   private void processAfterEvents(@NotNull List<? extends VFileEvent> events) {

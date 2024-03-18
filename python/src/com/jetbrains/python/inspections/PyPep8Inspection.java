@@ -15,7 +15,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * Dummy inspection for configuring the PEP8 checker. The checking itself is performed by
  * Pep8ExternalAnnotator.
  */
-public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorBatchInspection {
+public final class PyPep8Inspection extends PyInspection implements ExternalAnnotatorBatchInspection {
   public List<String> ignoredErrors = new ArrayList<>();
   public static final String INSPECTION_SHORT_NAME = "PyPep8Inspection";
 

@@ -682,7 +682,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10_000, () -> {
+    WriteAction.run(() -> PlatformTestUtil.newPerformanceTest("smart pointer range update", () -> {
       for (int i = 0; i < 10000; i++) {
         document.insertString(i * 20 + 100, "x\n");
         assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
@@ -691,7 +691,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     }).setup(() -> {
       document.setText(text);
       assertEquals(range, pointer.getRange());
-    }).assertTiming());
+    }).start());
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
@@ -882,7 +882,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
     List<XmlTag> tags = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
     List<SmartPsiElementPointer> pointers = ContainerUtil.map(tags, this::createPointer);
-    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
+    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.newPerformanceTest("smart pointer range update after PSI change", () -> {
       for (int i = 0; i < tags.size(); i++) {
         XmlTag tag = tags.get(i);
         SmartPsiElementPointer pointer = pointers.get(i);
@@ -894,7 +894,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
       }
       PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-    }).useLegacyScaling().assertTiming());
+    }).start());
   }
 
   @NotNull
@@ -949,7 +949,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 650, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       List<SmartPsiFileRange> pointers = new ArrayList<>();
       for (int i = 0; i < text.length() - 1; i++) {
         pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
@@ -958,7 +958,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       for (SmartPsiFileRange pointer : pointers) {
         getPointerManager().removePointer(pointer);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testDifferentHashCodesForDifferentElementsInOneFile() throws Exception {

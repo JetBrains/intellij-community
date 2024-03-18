@@ -23,5 +23,5 @@ fun convertToStringLiteral(element: KtStringTemplateExpression, context: ActionC
         else -> minOf(currentOffset + 2, replaced.endOffset)
     }
 
-    updater.moveTo(offset)
+    updater.moveCaretTo(offset)
 }

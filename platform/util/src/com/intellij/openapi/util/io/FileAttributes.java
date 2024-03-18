@@ -176,8 +176,8 @@ public final class FileAttributes {
   @Override
   public int hashCode() {
     int result = flags;
-    result = 31 * result + (int)(length ^ (length >>> 32));
-    result = 31 * result + (int)(lastModified ^ (lastModified >>> 32));
+    result = 31 * result + Long.hashCode(length);
+    result = 31 * result + Long.hashCode(lastModified);
     return result;
   }
 

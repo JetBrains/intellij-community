@@ -58,7 +58,7 @@ import java.util.Properties;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean m_ignoreCatchBlocksWithComments = true;
   public boolean m_ignoreNonEmptyCatchBlock = true;

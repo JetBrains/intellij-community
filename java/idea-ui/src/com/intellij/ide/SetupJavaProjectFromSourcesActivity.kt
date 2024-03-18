@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -13,6 +13,7 @@ import com.intellij.ide.util.importProject.RootDetectionProcessor
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
+import com.intellij.notification.impl.NotificationIdsHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -37,7 +38,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope
@@ -149,6 +149,7 @@ private fun showNotificationToImport(project: Project,
 
   val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
     .setSuggestionType(true)
+    .setDisplayId(SCRIPT_FOUND_NOTIFICATION)
     .setListener(showFileInProjectViewListener)
 
   if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
@@ -208,11 +209,9 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
 
   val modules = ModuleManager.getInstance(project).modules
   if (modules.any { ModuleType.get(it) is JavaModuleType }) {
-    withRawProgressReporter {
-      coroutineToIndicator {
-        findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
-          JavaSdkUtil.applyJdkToProject(project, it)
-        }
+    coroutineToIndicator {
+      findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
+        JavaSdkUtil.applyJdkToProject(project, it)
       }
     }
   }
@@ -225,6 +224,7 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
 private fun notifyAboutAutomaticProjectStructure(project: Project) {
   NOTIFICATION_GROUP.createNotification(JavaUiBundle.message("project.structure.automatically.detected.notification"),
                                         NotificationType.INFORMATION)
+    .setDisplayId(STRUCTURE_DETECTED_NOTIFICATION)
     .addAction(NotificationAction.createSimpleExpiring(
       JavaUiBundle.message("project.structure.automatically.detected.notification.gotit.action")) {})
     .addAction(NotificationAction.createSimpleExpiring(
@@ -232,4 +232,11 @@ private fun notifyAboutAutomaticProjectStructure(project: Project) {
       ProjectSettingsService.getInstance(project).openProjectSettings()
     })
     .notify(project)
+}
+
+const val STRUCTURE_DETECTED_NOTIFICATION = "project.structure.automatically.detected.notification.id"
+const val SCRIPT_FOUND_NOTIFICATION = "build.script.found.notification.id"
+
+class SetupJavaProjectFromSourcesNotificationIds : NotificationIdsHolder {
+  override fun getNotificationIds(): List<String> = listOf(SCRIPT_FOUND_NOTIFICATION, STRUCTURE_DETECTED_NOTIFICATION)
 }

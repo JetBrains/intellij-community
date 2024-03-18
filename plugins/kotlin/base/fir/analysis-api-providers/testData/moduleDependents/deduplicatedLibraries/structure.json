@@ -5,9 +5,9 @@
     { "name": "L3", "roots": ["R1", "R3"] }
   ],
   "modules": [
-    { "name": "A", "dependsOn": ["L1", "L3"] },
-    { "name": "B", "dependsOn": ["L2"] },
-    { "name": "C", "dependsOn": ["L3"] }
+    { "name": "A", "dependencies": ["L1", "L3"] },
+    { "name": "B", "dependencies": ["L2"] },
+    { "name": "C", "dependencies": ["L3"] }
   ],
   "targets": [
     {

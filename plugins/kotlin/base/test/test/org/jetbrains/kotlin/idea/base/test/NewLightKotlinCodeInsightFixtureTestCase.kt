@@ -3,13 +3,12 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
@@ -23,7 +22,7 @@ import java.nio.file.Paths
 import kotlin.io.path.*
 
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
-    protected abstract val pluginKind: KotlinPluginKind
+    protected abstract val pluginKind: KotlinPluginMode
 
     private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
@@ -68,10 +67,10 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     override fun setUp() {
-        val isK2Plugin = pluginKind == KotlinPluginKind.FIR_PLUGIN
+        val isK2Plugin = pluginKind == KotlinPluginMode.K2
         System.setProperty("idea.kotlin.plugin.use.k2", isK2Plugin.toString())
         super.setUp()
-        checkKotlinPluginKind(pluginKind)
+        checkKotlinPluginMode(pluginKind)
     }
 
     override fun tearDown() {
@@ -106,13 +105,35 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
-        val expectedPath = getExpectedPath(expectedSuffix)
+    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
+        val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
+
+        if (pluginKind == KotlinPluginMode.K2) {
+            val expectedPath = Paths.get(testDataPath, expectedPathString)
+
+            val k2ExpectedPathString = getExpectedPath(".fir" + expectedSuffix, addSuffixAfterExtension)
+            val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
+
+            if (k2ExpectedPath.exists()) {
+                checkContentByExpectedPath(k2ExpectedPathString)
+                IgnoreTests.cleanUpIdenticalFirTestFile(
+                    originalTestFile = expectedPath.toFile(),
+                    firTestFile = k2ExpectedPath.toFile()
+                )
+
+                return
+            }
+        }
+
+        checkContentByExpectedPath(expectedPathString)
+    }
+
+    private fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedPathString: String) {
         try {
-            checkResultByFile(expectedPath, /* ignoreTrailingWhitespaces = */ true)
+            checkResultByFile(expectedPathString, /* ignoreTrailingWhitespaces = */ true)
         } catch (e: RuntimeException) {
             if (e.cause is FileNotFoundException) {
-                val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPath)
+                val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPathString)
                 if (!absoluteExpectedPath.exists()) {
                     val mainFile = file
                     val originalVirtualFile = when (val virtualFile = mainFile.virtualFile) {
@@ -133,10 +154,11 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    private fun getExpectedPath(expectedSuffix: String): String = buildString {
+    private fun getExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false): String = buildString {
         append(testMethodPath.nameWithoutExtension)
-        append(expectedSuffix)
+        if (!addSuffixAfterExtension) append(expectedSuffix)
         append(".")
         append(testMethodPath.extension)
+        if (addSuffixAfterExtension) append(expectedSuffix)
     }
 }

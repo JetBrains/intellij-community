@@ -11,6 +11,9 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public final class ExitAction extends AnAction implements DumbAware, LightEditCompatible {
+  public ExitAction() {
+    getTemplatePresentation().setApplicationScope(true);
+  }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

@@ -46,7 +46,7 @@ public final class PyiUtil {
   }
 
   public static boolean isInsideStub(@NotNull PsiElement element) {
-    return element.getContainingFile() instanceof PyiFile;
+    return PyiUtilCore.isInsideStub(element);
   }
 
   @Nullable

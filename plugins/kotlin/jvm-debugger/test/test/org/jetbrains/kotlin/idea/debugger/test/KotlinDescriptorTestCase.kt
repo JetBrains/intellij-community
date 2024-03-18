@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.addIfNotNull
@@ -39,6 +40,8 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -52,12 +55,12 @@ import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
+import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.test.TargetBackend
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.ComparisonFailure
 import java.io.File
 
@@ -173,8 +176,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
     fun getTestDataPath(): String = getTestsRoot(this::class.java)
 
-    open fun useIrBackend() = false
-
     enum class FragmentCompilerBackend {
         JVM,
         JVM_IR
@@ -186,10 +187,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
     protected open fun targetBackend(): TargetBackend =
         when (fragmentCompilerBackend()) {
-            FragmentCompilerBackend.JVM ->
-                if (useIrBackend()) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else TargetBackend.JVM_WITH_OLD_EVALUATOR
-            FragmentCompilerBackend.JVM_IR ->
-                if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else TargetBackend.JVM_WITH_IR_EVALUATOR
+            FragmentCompilerBackend.JVM -> TargetBackend.JVM_IR_WITH_OLD_EVALUATOR
+            FragmentCompilerBackend.JVM_IR -> TargetBackend.JVM_IR_WITH_IR_EVALUATOR
         }
 
     protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
@@ -218,14 +217,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
-        val languageVersion = if (useIrBackend()) {
-            chooseLanguageVersionForCompilation(compileWithK2)
-        } else {
-            check(!compileWithK2) {
-                "Old backend-backed evaluator cannot work with K2"
-            }
-            null
-        }
+        val languageVersion = chooseLanguageVersionForCompilation(compileWithK2)
 
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
@@ -234,7 +226,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
-            TestCompileConfiguration(useIrBackend(), lambdasGenerationScheme(), languageVersion, enabledLanguageFeatures)
+            TestCompileConfiguration(lambdasGenerationScheme(), languageVersion, enabledLanguageFeatures)
         )
 
         compileLibrariesAndTestSources(preferences, compilerFacility)
@@ -247,7 +239,27 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         ).apply { createAdditionalBreakpoints(wholeFileContents) }
 
         createLocalProcess(mainClassName)
+        configureRegistry(preferences)
         doMultiFileTest(testFiles, preferences)
+    }
+
+    private fun configureRegistry(preferences: DebuggerPreferences) {
+        val registrySettings = preferences[DebuggerPreferenceKeys.REGISTRY].associate { registrySetting ->
+            val parts = registrySetting.split("=")
+            require(parts.size == 2) { "Registry options should have form registry=value" }
+            parts[0] to parts[1]
+        }.filter {
+            Registry.get(it.key).asString() != it.value
+        }
+        val backup = registrySettings.keys.associateWith { Registry.get(it).asString() }
+        for (r in registrySettings) {
+            Registry.get(r.key).setValue(r.value)
+        }
+        atDebuggerTearDown {
+            for (r in backup) {
+                Registry.get(r.key).setValue(r.value)
+            }
+        }
     }
 
     private fun compileLibrariesAndTestSources(
@@ -269,6 +281,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         )
         sourcesKtFiles =
             compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
+
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
     // Provide a hook for subclasses to compile additional libraries.
@@ -511,12 +525,11 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         val extensions = sequenceOf(
             ".k2.out".takeIf { compileWithK2 },
             ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
-            ".ir.out".takeIf { useIrBackend() },
             ".out",
         )
         return extensions.filterNotNull()
             .map { File(getTestDataPath(), getTestName(true) + it) }
-            .first(File::exists)
+            .run { firstOrNull(File::exists) ?: last() }
     }
 
     override fun getData(dataId: String): Any? {

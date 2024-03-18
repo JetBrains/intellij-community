@@ -32,7 +32,7 @@ import com.siyeh.ig.style.ConditionalExpressionGenerator;
 import com.siyeh.ig.style.ConditionalModel;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class SimplifiableConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

@@ -6,6 +6,7 @@ package com.intellij.diagnostic
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.*
@@ -436,12 +437,15 @@ private fun postProcessReportFolder(durationMs: Long, task: SamplingTask, dir: P
   }
 
   val message = "UI was frozen for ${durationMs}ms, details saved to $reportDir"
-  if (PluginManagerCore.isRunningFromSources()) {
+
+  if (DebugAttachDetector.isAttached()) {
+    // so freezes produced by standing at breakpoint are not reported as exceptions
     LOG.info(message)
   }
   else {
-    LOG.warn(message)
+    LOG.error(message)
   }
+
   return reportDir
 }
 

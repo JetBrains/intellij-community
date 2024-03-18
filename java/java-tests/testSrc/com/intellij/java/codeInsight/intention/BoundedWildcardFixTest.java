@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import org.jetbrains.annotations.NotNull;
 
 public class BoundedWildcardFixTest extends LightIntentionActionTestCase {
   @Override
@@ -11,7 +12,7 @@ public class BoundedWildcardFixTest extends LightIntentionActionTestCase {
   }
 
   @Override
-  protected void doSingleTest(String fileSuffix, String testDataPath) {
+  protected void doSingleTest(@NotNull String fileSuffix, String testDataPath) {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()-> super.doSingleTest(fileSuffix, testDataPath));
   }
 }

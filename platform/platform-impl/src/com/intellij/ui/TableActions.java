@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,7 @@ public abstract class TableActions extends SwingActionDelegate {
   @Override
   protected @Nullable JTable getComponent(AnActionEvent event) {
     var component = super.getComponent(event);
-    return component instanceof JTable table && SpeedSearchSupply.getSupply(component) == null ? table : null;
+    return component instanceof JTable table && !speedSearchHandlesNavigation(component) ? table : null;
   }
 
   public static final class CtrlHome extends TableActions {

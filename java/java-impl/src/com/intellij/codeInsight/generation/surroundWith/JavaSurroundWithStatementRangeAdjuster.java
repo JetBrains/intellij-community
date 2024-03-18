@@ -24,7 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaSurroundWithStatementRangeAdjuster implements SurroundWithRangeAdjuster {
+public final class JavaSurroundWithStatementRangeAdjuster implements SurroundWithRangeAdjuster {
 
   @Nullable
   @Override

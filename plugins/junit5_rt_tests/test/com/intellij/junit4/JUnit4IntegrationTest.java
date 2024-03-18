@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
@@ -80,6 +81,7 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
       moduleExtension.inheritCompilerOutputPath(false);
       moduleExtension.setCompilerOutputPathForTests(VfsUtilCore.pathToUrl(testDataPath + File.separator + "out"));
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   @After

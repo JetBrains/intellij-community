@@ -122,7 +122,7 @@ public final class ChangeSignatureAction extends BasePlatformRefactoringAction {
   }
 
   @Nullable
-  private static ChangeSignatureHandler getChangeSignatureHandler(@NotNull PsiElement language) {
+  public static ChangeSignatureHandler getChangeSignatureHandler(@NotNull PsiElement language) {
     RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forContext(language);
     return provider != null ? provider.getChangeSignatureHandler() : null;
   }

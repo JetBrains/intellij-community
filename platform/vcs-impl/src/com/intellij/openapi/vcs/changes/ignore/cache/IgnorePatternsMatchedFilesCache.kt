@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -31,6 +32,7 @@ import java.util.regex.Pattern
  * * after entries have been expired: entries becomes expired if no read/write operations happened with the corresponding key during some amount of time (10 minutes).
  * * after project dispose
  */
+@Service(Service.Level.PROJECT)
 internal class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
   private val projectFileIndex = ProjectFileIndex.getInstance(project)
 

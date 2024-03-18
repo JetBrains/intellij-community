@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
@@ -15,8 +16,8 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.FileTreeAccessFilter
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -24,10 +25,10 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AstAccessControl
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -46,6 +47,7 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
         val libraryJar = KotlinCompilerStandalone(listOf(ktFile), options = compilerArguments).compile()
         val jarUrl = "jar://" + FileUtilRt.toSystemIndependentName(libraryJar.absolutePath) + "!/"
         ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
+        IndexingTestUtil.waitUntilIndexesAreReady(module.project)
 
         val ktFileText = FileUtil.loadFile(ktFile, true)
         val allowAstForCompiledFile = InTextDirectivesUtils.isDirectiveDefined(ktFileText, AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE)
@@ -129,7 +131,7 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
         }
 
         if (allowAstForCompiledFile != wasException) {
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 /* message = */ "Redundant '// ${AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE}'",
                 /* expected = */ ktFileText,
                 /* actual = */

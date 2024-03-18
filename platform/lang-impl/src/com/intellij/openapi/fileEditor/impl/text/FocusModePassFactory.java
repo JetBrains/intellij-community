@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -42,7 +43,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
 
   @Override
   public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return isEnabled() && EditorUtil.isRealFileEditor(editor) && editor instanceof EditorImpl
+    return isEnabled() && (EditorUtil.isRealFileEditor(editor) || ApplicationManager.getApplication().isUnitTestMode()) && editor instanceof EditorImpl
            ? new FocusModePass(editor, file)
            : null;
   }

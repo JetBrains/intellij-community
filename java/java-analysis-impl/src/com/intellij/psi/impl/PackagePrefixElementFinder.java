@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class PackagePrefixElementFinder extends PsiElementFinder implements DumbAware {
+public final class PackagePrefixElementFinder extends PsiElementFinder implements DumbAware {
   private final Project myProject;
   private final PackagePrefixIndex myPackagePrefixIndex;
 

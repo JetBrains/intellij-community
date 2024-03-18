@@ -12,8 +12,6 @@
     <completion.contributor language="Manifest" implementationClass="org.jetbrains.lang.manifest.completion.ManifestCompletionContributor"/>
     <manifest.parser.provider implementation="org.jetbrains.lang.manifest.header.impl.StandardManifestHeaderParsers"/>
 
-    <applicationService serviceImplementation="org.jetbrains.lang.manifest.header.HeaderParserRepository"/>
-
     <localInspection language="Manifest" groupKey="inspection.group"
                      enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"
                      key="inspection.missing.final.newline.display.name" bundle="messages.ManifestBundle"/>

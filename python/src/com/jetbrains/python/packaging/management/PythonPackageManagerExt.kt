@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonPackageManagerExt")
 
 package com.jetbrains.python.packaging.management
@@ -9,6 +9,7 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
 fun PythonPackageManager.launchReload() {
-  ApplicationManager.getApplication().coroutineScope.launch {
+  (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
     reloadPackages()
   }
 }

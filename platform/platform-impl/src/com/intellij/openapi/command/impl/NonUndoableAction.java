@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class NonUndoableAction implements UndoableAction {
   private static final Logger LOG = Logger.getInstance(NonUndoableAction.class);
-
+  private long myPerformedTimestamp = -1;
   private final DocumentReference[] myRefs;
   private final boolean myGlobal;
 
@@ -38,5 +38,15 @@ final class NonUndoableAction implements UndoableAction {
   @Override
   public boolean isGlobal() {
     return myGlobal;
+  }
+
+  @Override
+  public long getPerformedNanoTime() {
+    return myPerformedTimestamp;
+  }
+
+  @Override
+  public void setPerformedNanoTime(long l) {
+    myPerformedTimestamp = l;
   }
 }

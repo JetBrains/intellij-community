@@ -3,27 +3,25 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiReference
-import com.intellij.refactoring.changeSignature.ParameterInfo
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.compareDescriptors
-import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.core.setDefaultValue
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.isPrimaryConstructorOfDataClass
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
@@ -35,18 +33,13 @@ import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 
-interface KotlinModifiableParameterInfo : ParameterInfo {
-    var valOrVar: KotlinValVar
-    fun setType(newType: String)
-}
-
 class KotlinParameterInfo(
     val callableDescriptor: CallableDescriptor,
-    val originalIndex: Int = -1,
+    override val originalIndex: Int = -1,
     private var name: String,
     val originalTypeInfo: KotlinTypeInfo = KotlinTypeInfo(false),
-    var defaultValueForCall: KtExpression? = null,
-    var defaultValueAsDefaultParameter: Boolean = false,
+    override var defaultValueForCall: KtExpression? = null,
+    override var defaultValueAsDefaultParameter: Boolean = false,
     override var valOrVar: KotlinValVar = defaultValOrVar(callableDescriptor),
     val modifierList: KtModifierList? = null,
 ) : KotlinModifiableParameterInfo {
@@ -55,7 +48,7 @@ class KotlinParameterInfo(
         _defaultValueForParameter = expression
     }
 
-    val defaultValue: KtExpression? get() = defaultValueForCall?.takeIf { defaultValueAsDefaultParameter } ?: _defaultValueForParameter
+    override val defaultValue: KtExpression? get() = defaultValueForCall?.takeIf { defaultValueAsDefaultParameter } ?: _defaultValueForParameter
 
     var currentTypeInfo: KotlinTypeInfo = originalTypeInfo
 
@@ -75,7 +68,7 @@ class KotlinParameterInfo(
 
     override fun getOldIndex(): Int = originalIndex
 
-    val isNewParameter: Boolean
+    override val isNewParameter: Boolean
         get() = originalIndex == -1
 
     override fun getDefaultValue(): String? = null

@@ -13,10 +13,10 @@ import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
-import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -41,6 +41,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
@@ -61,6 +62,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -80,9 +82,10 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
+import static com.intellij.lang.documentation.DocumentationMarkup.BOTTOM_ELEMENT;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.*;
 
 
 public class JavaDocInfoGenerator {
@@ -116,6 +119,11 @@ public class JavaDocInfoGenerator {
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
+
+  private static final List<Pair<String, String>> HTML_CODE_BLOCKS_DELIMITERS = List.of(
+    Pair.create("<pre><code>", "</code></pre>"),
+    Pair.create("<blockquote><pre>", "</pre></blockquote>")
+  );
 
   /**
    * Tags for which javadoc is known to be generated.
@@ -718,8 +726,7 @@ public class JavaDocInfoGenerator {
     String ownerIcon = null;
 
     if (element instanceof PsiPackage pkg) {
-      return HtmlChunk.div()
-        .setClass("bottom")
+      return BOTTOM_ELEMENT
         .children(
           HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Package"),
           HtmlChunk.nbsp(),
@@ -733,7 +740,7 @@ public class JavaDocInfoGenerator {
         if (!packageName.isEmpty()) {
           PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
           StringBuilder packageFqnBuilder = new StringBuilder();
-          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+          if (myDoSemanticHighlightingOfLinks) {
             appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
           }
           else {
@@ -752,7 +759,7 @@ public class JavaDocInfoGenerator {
         String qName = parentClass.getQualifiedName();
         if (qName != null) {
           StringBuilder classFqnBuilder = new StringBuilder();
-          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+          if (myDoSemanticHighlightingOfLinks) {
             appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
           }
           else {
@@ -766,8 +773,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (ownerLink != null) {
-      return HtmlChunk.div()
-        .setClass("bottom")
+      return BOTTOM_ELEMENT
         .children(
           HtmlChunk.tag("icon").attr("src", ownerIcon),
           HtmlChunk.nbsp(),
@@ -1768,12 +1774,36 @@ public class JavaDocInfoGenerator {
                              int startIndex,
                              InheritDocProvider<PsiElement[]> provider) {
     int predictOffset = startIndex < elements.length ? elements[startIndex].getTextOffset() + elements[startIndex].getText().length() : 0;
+    StringBuilder htmlCodeBlockContents = null;
+    Pair<String, String> htmlCodeBlockDelimiters = null;
     for (int i = startIndex; i < elements.length; i++) {
-      if (elements[i].getTextOffset() > predictOffset) buffer.append(' ');
+      if (elements[i].getTextOffset() > predictOffset) {
+        if (htmlCodeBlockContents != null) {
+          htmlCodeBlockContents.append(' ');
+        }
+        else {
+          buffer.append(' ');
+        }
+      }
       predictOffset = elements[i].getTextOffset() + elements[i].getText().length();
       PsiElement element = elements[i];
       if (element instanceof PsiInlineDocTag tag) {
         String tagName = tag.getName();
+        if (htmlCodeBlockContents != null) {
+          if (CODE_TAG.equals(tagName)) {
+            StringBuilder value = new StringBuilder();
+            generateLiteralValue(value, tag, false);
+            int offset = !value.isEmpty() && value.charAt(0) == ' ' ? 1 : 0;
+            htmlCodeBlockContents.append(value, offset, value.length());
+            continue;
+          }
+          else {
+            buffer.append(htmlCodeBlockDelimiters.first);
+            appendPlainText(buffer, htmlCodeBlockContents.toString());
+            htmlCodeBlockContents = null;
+            htmlCodeBlockDelimiters = null;
+          }
+        }
         switch (tagName) {
           case LINK_TAG -> generateLinkValue(tag, buffer, false);
           case LITERAL_TAG -> generateLiteralValue(buffer, tag, true);
@@ -1796,15 +1826,64 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        final String text;
+        String text;
         if (element instanceof PsiWhiteSpace) {
           text = getWhitespacesBeforeLFWhenLeadingAsterisk(element);
         }
         else {
           text = element.getText();
         }
-        appendPlainText(buffer, text);
+        if (element.getPrevSibling() instanceof PsiInlineDocTag tag
+            && htmlCodeBlockContents == null
+            && isCodeBlock(tag)) {
+          // Remove following </pre> fragment and whitespaces
+          text = StringUtil.trimStart(StringUtil.trimLeading(text), "</pre>");
+        }
+        if (htmlCodeBlockContents != null) {
+          htmlCodeBlockContents = appendHtmlCodeBlockContents(
+            text, buffer, htmlCodeBlockContents, htmlCodeBlockDelimiters
+          );
+        }
+        else {
+          var delimitersWithIndex = findHtmlCodeBlockDelimitersAndIndex(text);
+          if (delimitersWithIndex != null) {
+            htmlCodeBlockDelimiters = delimitersWithIndex.first;
+            int blockStart = delimitersWithIndex.second;
+            appendPlainText(buffer, text.substring(0, blockStart));
+            htmlCodeBlockContents = appendHtmlCodeBlockContents(
+              text.substring(blockStart + htmlCodeBlockDelimiters.first.length()), buffer,
+              new StringBuilder(), htmlCodeBlockDelimiters
+            );
+          }
+          else {
+            appendPlainText(buffer, text);
+          }
+        }
       }
+    }
+    if (htmlCodeBlockContents != null) {
+      buffer.append(htmlCodeBlockDelimiters.first);
+      appendPlainText(buffer, htmlCodeBlockContents.toString());
+    }
+  }
+
+  private @Nullable StringBuilder appendHtmlCodeBlockContents(@NotNull String text, @NotNull StringBuilder buffer,
+                                                              @NotNull StringBuilder htmlCodeBlockContents,
+                                                              @NotNull Pair<String, String> delimiters) {
+    int suffixIndex = text.indexOf(delimiters.second);
+    if (suffixIndex >= 0) {
+      htmlCodeBlockContents.append(text, 0, suffixIndex);
+      buffer.append(CODE_BLOCK_PREFIX);
+      appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+        doHighlightCodeBlocks(), buffer, myProject, JavaLanguage.INSTANCE,
+        StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(htmlCodeBlockContents.toString()))
+          .replace("&nbsp;", " "));
+      buffer.append(CODE_BLOCK_SUFFIX);
+      appendPlainText(buffer, text.substring(suffixIndex + delimiters.second.length()));
+      return null;
+    }
+    else {
+      return htmlCodeBlockContents.append(text);
     }
   }
 
@@ -2117,8 +2196,13 @@ public class JavaDocInfoGenerator {
     ASTNode prevNode = tag.getNode().getTreePrev();
     while (prevNode != null) {
       String text = prevNode.getText();
-      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
-        return true;
+      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        if (StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
+          return true;
+        }
+        if (StringUtil.startsWithIgnoreCase(StringUtil.trim(text), "</pre>")) {
+          return false;
+        }
       }
       prevNode = prevNode.getTreePrev();
     }
@@ -2131,20 +2215,17 @@ public class JavaDocInfoGenerator {
     if (isCodeBlock) {
       // remove excess whitespaces between tags e.g. in `<pre>  {@code`
       int lastNonWhite = buffer.length() - 1;
-      while (buffer.charAt(lastNonWhite) == ' ') lastNonWhite--;
+      while (Character.isWhitespace(buffer.charAt(lastNonWhite))) lastNonWhite--;
       buffer.setLength(lastNonWhite + 1);
+      // Remove preceding <pre> fragment
+      StringUtil.trimEnd(buffer, "<pre>");
     }
 
-    final int offset = isCodeBlock ? getCodeTagOffset(tag) : 0;
-
-    buffer.append("<code style='font-size:");
-    buffer.append(DocumentationSettings.getMonospaceFontSizeCorrection(isRendered()));
-    buffer.append("%;'>");
+    buffer.append(isCodeBlock ? CODE_BLOCK_PREFIX : INLINE_CODE_PREFIX);
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag,
-                         !isCodeBlock && getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.NO_HIGHLIGHTING);
+    generateLiteralValue(codeSnippetBuilder, tag, false);
     String codeSnippet = codeSnippetBuilder.toString();
     if (isCodeBlock) {
       codeSnippet = StringsKt.trimIndent(codeSnippet);
@@ -2157,38 +2238,18 @@ public class JavaDocInfoGenerator {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(true, codeSnippetBuilder, tag.getProject(), tag.getLanguage(), codeSnippet);
       codeSnippet = codeSnippetBuilder.toString();
     }
-
-    if (isCodeBlock && doHighlightCodeBlocks()
-        || !isCodeBlock && getInlineCodeHighlightingMode() != InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
-      // highlights plain code as HighlighterColors.TEXT
-      codeSnippetBuilder.setLength(0);
-      TextAttributes codeAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT).clone();
-      codeAttributes.setBackgroundColor(null);
-      appendStyledSpan(true, codeSnippetBuilder, codeAttributes, codeSnippet);
-      codeSnippet = codeSnippetBuilder.toString();
-    }
-
-    if (isCodeBlock) {
-      // indent code block
-      codeSnippet = Arrays.stream(codeSnippet.contains(BR_TAG) ? codeSnippet.split(BR_TAG) : codeSnippet.split("\n"))
-        .map(it -> " ".repeat(offset + 1) + it)
-        .collect(Collectors.joining(BR_TAG));
-    }
     else {
+      codeSnippet = XmlStringUtil.escapeString(codeSnippet);
+    }
+
+    if (!isCodeBlock) {
       // we are in inline @code block, we should remove all new lines
       codeSnippet = codeSnippet.replace(BR_TAG, "");
     }
 
     buffer.append(codeSnippet);
-    buffer.append("</code>");
+    buffer.append(isCodeBlock ? CODE_BLOCK_SUFFIX : INLINE_CODE_SUFFIX);
     if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
-  }
-
-  private static int getCodeTagOffset(@NotNull PsiInlineDocTag tag) {
-    final PsiElement sibling = tag.getPrevSibling();
-    if (sibling == null || !sibling.getText().isBlank()) return 0;
-
-    return sibling.getTextLength();
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {
@@ -2240,6 +2301,16 @@ public class JavaDocInfoGenerator {
 
   protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
     return (element instanceof PsiDocToken) && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
+  }
+
+  private static Pair<Pair<String, String>, Integer> findHtmlCodeBlockDelimitersAndIndex(@NotNull String text) {
+    for (var delimiter : HTML_CODE_BLOCKS_DELIMITERS) {
+      int index = text.indexOf(delimiter.first);
+      if (index >= 0) {
+        return Pair.create(delimiter, index);
+      }
+    }
+    return null;
   }
 
   private void generateLinkValue(PsiInlineDocTag tag, StringBuilder buffer, boolean plainLink) {
@@ -3200,7 +3271,7 @@ public class JavaDocInfoGenerator {
         if (returnTag != null) {
           return returnTag;
         }
-        if (PsiUtil.isLanguageLevel16OrHigher(comment)) {
+        if (PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16)) {
           for (PsiElement child : comment.getChildren()) {
             if (child instanceof PsiDocTag && RETURN_TAG.equals(((PsiDocTag)child).getName())) {
               return (PsiDocTag)child;

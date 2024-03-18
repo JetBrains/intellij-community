@@ -1,6 +1,21 @@
 package com.siyeh.igtest.controlflow.duplicate_condition;
 
+import java.util.*;
+
 public class DuplicateCondition {
+
+  void testAndChain(String s) {
+    if (!s.isEmpty() && <warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning> && <warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning>) {}
+  }
+
+  void testAndChainNested(String s) {
+    if (!<warning descr="Duplicate condition 's.isEmpty()'">s.isEmpty()</warning> && <warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning>) {
+      if (<warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning>) {
+        if (!<warning descr="Duplicate condition 's.isEmpty()'">s.isEmpty()</warning>) {}
+      }
+      System.out.println("Hello");
+    }
+  }
 
   void x(boolean b) {
     if (<warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> ) {
@@ -72,5 +87,9 @@ public class DuplicateCondition {
     else if (<warning descr="Duplicate condition '(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0'">(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0</warning>) {
       System.out.println("two");
     }
+  }
+  
+  void testCollection(Set<String> set) {
+    if (set.add("foo") || set.remove("bar") || set.add("foo") || set.remove("bar")) {}
   }
 }

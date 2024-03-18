@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, thread};
 use std::ffi::{c_void, CString};
 use std::path::Path;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::JoinHandle;
 
 use anyhow::{anyhow, bail, Context, Error, Result};
@@ -11,7 +12,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JValue};
 use jni::sys::{jboolean, jint, jsize};
 use log::{debug, error};
-use crate::jvm_property;
+use crate::{jvm_property, ui};
 
 #[cfg(target_os = "macos")]
 use {
@@ -31,7 +32,7 @@ const JVM_LIB_REL_PATH: &str = "lib/libjli.dylib";
 #[cfg(target_os = "linux")]
 const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 
-static HOOK_NAME: &str = "vfprintf";
+static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
@@ -65,6 +66,16 @@ fn get_vfprintf_hook_pointer() -> *mut c_void {
     std::ptr::null_mut()
 }
 
+#[no_mangle]
+extern "C" fn abort_hook() {
+    error!("[JVM] abort_hook");
+    let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
+    if !text.is_empty() {
+        let gui = !DEBUG_MODE.load(Ordering::Acquire);
+        ui::show_error(gui, anyhow::format_err!(text))
+    }
+}
+
 const MAIN_METHOD_NAME: &str = "main";
 const MAIN_METHOD_SIGNATURE: &str = "([Ljava/lang/String;)V";
 
@@ -73,8 +84,9 @@ type CreateJvmCall<'lib> = libloading::Symbol<
     unsafe extern "C" fn(*mut *mut jni::sys::JavaVM, *mut *mut c_void, *mut c_void) -> jint
 >;
 
-pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>) -> Result<()> {
+pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>, debug_mode: bool) -> Result<()> {
     debug!("Preparing a JVM environment");
+    DEBUG_MODE.store(debug_mode, Ordering::Release);
 
     #[cfg(target_family = "unix")]
     {
@@ -87,7 +99,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
     let main_class = main_class.to_owned();
     let (tx, rx) = std::sync::mpsc::channel();
 
-    // JNI docs says that JVM should not be created on primordial thread
+    // JNI docs say that JVM should not be created on primordial thread
     // (https://docs.oracle.com/en/java/javase/17/docs/specs/jni/invocation.html#creating-the-vm)
     debug!("Starting a JVM thread");
     let join_handle = thread::Builder::new().spawn(move || {
@@ -145,8 +157,8 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
 }
 
 fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
-    // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
-    // in load_libjvm().
+    // Read the current directory and pass it to JVM through environment variable.
+    // The real current directory will be changed in load_libjvm().
     let work_dir = env::current_dir().context("Failed to get current directory")?;
     env::set_var("IDEA_INITIAL_DIRECTORY", work_dir);
 
@@ -209,10 +221,15 @@ fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Libra
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
     let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
 
+    jni_options.push(jni::sys::JavaVMOption {
+        optionString: CString::new("abort")?.into_raw(),
+        extraInfo: abort_hook as *mut c_void,
+    });
+
     let hook_pointer = get_vfprintf_hook_pointer();
     if !hook_pointer.is_null() {
         jni_options.push(jni::sys::JavaVMOption {
-            optionString: CString::new(HOOK_NAME)?.into_raw(),
+            optionString: CString::new("vfprintf")?.into_raw(),
             extraInfo: hook_pointer,
         });
     }

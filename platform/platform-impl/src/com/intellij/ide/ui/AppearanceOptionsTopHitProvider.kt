@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -60,17 +60,19 @@ internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.App
     return allOptions.toList()
   }
 
-  companion object {
+  internal object Options {
     @JvmStatic
     fun option(@Label option: String, propertyName: String, configurableId: String): BooleanOptionDescription {
       return object : PublicMethodBasedOptionDescription(option, configurableId,
                                                          "get" + Strings.capitalize(propertyName),
-                                                         "set" + Strings.capitalize(propertyName), Supplier { UISettings.getInstance().state }) {
+                                                         "set" + Strings.capitalize(propertyName),
+                                                         Supplier { UISettings.getInstance().state }) {
         override fun fireUpdated() = UISettings.getInstance().fireUISettingsChanged()
       }
     }
 
     @JvmStatic
-    fun appearance(@Label option: String, propertyName: String): BooleanOptionDescription = option(option, propertyName, "preferences.lookFeel")
+    fun appearance(@Label option: String, propertyName: String): BooleanOptionDescription = option(option, propertyName,
+                                                                                                   "preferences.lookFeel")
   }
 }

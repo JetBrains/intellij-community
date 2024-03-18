@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 /**
@@ -106,6 +106,8 @@ public interface IdeActions {
   String ACTION_LOOKUP_DOWN = "EditorLookupDown";
 
   String ACTION_INSERT_INLINE_COMPLETION = "InsertInlineCompletionAction";
+  String ACTION_NEXT_INLINE_COMPLETION_SUGGESTION = "NextInlineCompletionSuggestionAction";
+  String ACTION_PREV_INLINE_COMPLETION_SUGGESTION = "PrevInlineCompletionSuggestionAction";
   String ACTION_CALL_INLINE_COMPLETION = "CallInlineCompletionAction";
 
   String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
@@ -157,6 +159,7 @@ public interface IdeActions {
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
   String ACTION_REPLACE = "Replace";
   String ACTION_TOGGLE_FIND_IN_SELECTION_ONLY = "ToggleFindInSelection";
+  String GROUP_EDITOR_SEARCH_FILTER_RESULTS = "Editor.Search.Filter.Results";
   String ACTION_COMPILE = "Compile";
   String ACTION_COMPILE_PROJECT = "CompileProject";
   String ACTION_MAKE_MODULE = "MakeModule";

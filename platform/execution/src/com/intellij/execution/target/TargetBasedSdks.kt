@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TargetBasedSdks")
 
 package com.intellij.execution.target
@@ -10,6 +10,7 @@ import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Co
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.xmlb.JdomAdapter
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
@@ -48,7 +49,7 @@ fun loadTargetBasedSdkAdditionalData(element: Element): Pair<ContributedConfigur
     LOG.warn("SDK target configuration data is absent")
     return null to null
   }
-  val targetState = jdomSerializer.deserialize(targetConfigurationElement, ContributedConfigurationsList.ContributedStateBase::class.java)
+  val targetState = jdomSerializer.deserialize(targetConfigurationElement, ContributedConfigurationsList.ContributedStateBase::class.java, JdomAdapter)
   val loadedConfiguration = fromOneState(targetState)
   if (loadedConfiguration == null) {
     LOG.info("Cannot load SDK target configuration data")
@@ -68,7 +69,7 @@ fun saveTargetConfiguration(element: Element, config: TargetEnvironmentConfigura
 
 fun loadTargetConfiguration(element: Element): TargetEnvironmentConfiguration? {
   val targetConfigurationElement = element.getChild(TARGET_ENVIRONMENT_CONFIGURATION) ?: return null
-  val targetState = jdomSerializer.deserialize(targetConfigurationElement, TargetEnvironmentsManager.OneTargetState::class.java)
+  val targetState = jdomSerializer.deserialize(targetConfigurationElement, TargetEnvironmentsManager.OneTargetState::class.java, JdomAdapter)
   return targetState.toTargetConfiguration()
 }
 

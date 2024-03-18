@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ObsoleteCollectionInspection extends BaseInspection {
+public final class ObsoleteCollectionInspection extends BaseInspection {
   private static final int MAX_OCCURRENCES = 20;
 
   @SuppressWarnings({"PublicField"})

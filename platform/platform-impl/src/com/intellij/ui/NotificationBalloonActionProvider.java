@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,7 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
 
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
-      IdeBundle.message("tooltip.close.notification"),
+      IdeBundle.message( "tooltip.close.notification", SystemInfo.isMac ? "⌥" : "Alt+"),
       event -> {
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection

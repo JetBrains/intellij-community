@@ -1,6 +1,5 @@
 // "Implement members" "true"
 // DISABLE-ERRORS
-// IGNORE_K2
 
 abstract actual class Bar {
     abstract actual fun foo()

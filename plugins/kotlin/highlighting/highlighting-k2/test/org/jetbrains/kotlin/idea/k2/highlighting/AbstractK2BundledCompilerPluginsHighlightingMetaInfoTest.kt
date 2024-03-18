@@ -1,15 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.highlighting
 
+import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -25,34 +25,32 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
 
     /**
      * Test cases reference fake compiler plugins' jars which lay in the test data directory. This directory is located differently
-     * in local and CI (TeamCity) environments. To overcome this, we use this marker in test cases and replace it before applying
-     * [withCustomCompilerOptions].
+     * in local and CI (TeamCity) environments.
+     * To overcome this, we use this path macro in test cases, and it is expected to be correctly substituted
+     * by [org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl].
      */
-    private val testDirPlaceholder: String = "\$TEST_DIR"
+    private val testDirPlaceholder: String = "TEST_DIR"
+
+    override fun setUp() {
+        super.setUp()
+
+        // N.B. We don't use PathMacroContributor here because it's too late to register at this point
+        PathMacros.getInstance().setMacro(testDirPlaceholder, testDataDirectory.toString())
+    }
+
+    override fun tearDown() {
+        runAll(
+            { PathMacros.getInstance().setMacro(testDirPlaceholder, null) },
+            { super.tearDown() },
+        )
+    }
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val file = files.first() as KtFile
 
-        val fileTextWithSubstitutedPath = file.text.replaceFirst(testDirPlaceholder, testDataDirectory.toString())
-
-        withCustomCompilerOptions(fileTextWithSubstitutedPath, project, module) {
-            enforceResolve(file)
+        withCustomCompilerOptions(file.text, project, module) {
+            ensureFilesResolved(file)
             super.doMultiFileTest(files, globalDirectives)
-        }
-    }
-
-    /**
-     * Highlighting tests combined with compiler plugins can be flaky for some reason,
-     * so we do some resolve beforehand just in case.
-     */
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun enforceResolve(file: KtFile) {
-        allowAnalysisOnEdt {
-            analyze(file) {
-                file.declarations.forEach {
-                    it.getSymbol()
-                }
-            }
         }
     }
 

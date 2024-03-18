@@ -6,6 +6,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
@@ -15,7 +16,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 // todo: support for int[].var (parses as .class access!)
-public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpressionSelector {
+public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpressionSelector implements DumbAware {
   public IntroduceVariablePostfixTemplate() {
     super("var", "T name = expr", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }

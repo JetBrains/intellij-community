@@ -20,18 +20,16 @@ import java.util.Collection;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static git4idea.GitUtil.getRootsFromRepositories;
 
-public class GitMerger {
+public final class GitMerger {
 
   private final Project myProject;
-  private final GitRepositoryManager myRepositoryManager;
 
   public GitMerger(@NotNull Project project) {
     myProject = project;
-    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
   }
 
   public @NotNull Collection<VirtualFile> getMergingRoots() {
-    return getRootsFromRepositories(filter(myRepositoryManager.getRepositories(),
+    return getRootsFromRepositories(filter(GitRepositoryManager.getInstance(myProject).getRepositories(),
                                            repository -> repository.getState() == Repository.State.MERGING));
   }
 

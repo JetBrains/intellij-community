@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -10,6 +11,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import com.intellij.util.SlowOperations
+import com.intellij.util.application
 import com.intellij.util.net.NetUtils
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -21,11 +24,12 @@ import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
+import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import org.intellij.plugins.markdown.ui.actions.changeFontSize
 import org.intellij.plugins.markdown.ui.preview.*
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
 import org.jetbrains.annotations.ApiStatus
 import java.net.URL
-import java.nio.file.Path
 
 class MarkdownJCEFHtmlPanel(
   private val _project: Project?,
@@ -34,7 +38,10 @@ class MarkdownJCEFHtmlPanel(
   constructor(): this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
-  private val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor()
+
+  private var projectRoot: VirtualFile? = null
+  private val fileSchemeResourcesProcessor: ResourceProvider
+
   private val resourceProvider = MyAggregatingResourceProvider()
   private val browserPipe = JcefBrowserPipeImpl(
     this,
@@ -101,6 +108,14 @@ class MarkdownJCEFHtmlPanel(
   private var previousRenderClosure: String = ""
 
   init {
+    if (_virtualFile != null && _project != null) {
+      // Will be fixed in IDEA-340851
+      SlowOperations.allowSlowOperations<Throwable> {
+        projectRoot = ProjectFileIndex.getInstance(_project).getContentRootForFile(_virtualFile)
+      }
+    }
+    fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(_virtualFile, projectRoot)
+
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
@@ -121,6 +136,10 @@ class MarkdownJCEFHtmlPanel(
         data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
         return false
       }
+    })
+    val connection = application.messageBus.connect(this)
+    connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
+      changeFontSize(settings.state.fontSize)
     })
 
     loadIndexContent()
@@ -158,10 +177,9 @@ class MarkdownJCEFHtmlPanel(
     executeJavaScript(code)
   }
 
-  override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) {
-    val basePath = documentPath?.parent
-    fileSchemeResourcesProcessor.clear()
-    val builder = IncrementalDOMBuilder(html, basePath, fileSchemeResourcesProcessor)
+  override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
+    val baseFile = document?.parent
+    val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
     updateDom(builder.generateRenderClosure(), initialScrollOffset)
     firstUpdate = false
   }

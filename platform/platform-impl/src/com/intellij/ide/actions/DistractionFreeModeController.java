@@ -9,9 +9,10 @@ import javax.swing.*;
 
 public final class DistractionFreeModeController {
   static final String KEY = "editor.distraction.free.mode";
-  static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
-  static final String AFTER = "AFTER.DISTRACTION.MODE.";
-  static final String LAST_ENTER_VALUE = "DISTRACTION.MODE.ENTER.VALUE";
+  public static final String DISTRACTION_MODE_PROPERTY_KEY = "DISTRACTION.MODE.";
+  static final String BEFORE = "BEFORE." + DISTRACTION_MODE_PROPERTY_KEY;
+  static final String AFTER = "AFTER." + DISTRACTION_MODE_PROPERTY_KEY;
+  static final String LAST_ENTER_VALUE = DISTRACTION_MODE_PROPERTY_KEY + "ENTER.VALUE";
 
   public static boolean shouldMinimizeCustomHeader() {
     return PropertiesComponent.getInstance().getBoolean(LAST_ENTER_VALUE, false);

@@ -4,15 +4,19 @@ package com.intellij.collaboration.ui.codereview.list.search
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
+import com.intellij.collaboration.ui.util.popup.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.*
+import com.intellij.ui.BadgeIconSupplier
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.GradientViewport
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
@@ -45,7 +49,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
           label.text = getShortText(value)
         })
         .createPopup()
-        .showAndAwaitListSubmission<S>(point)
+        .showAndAwaitListSubmission<S>(point, ShowDirection.BELOW)
       if (value != null) {
         vm.searchState.update { value }
       }
@@ -99,7 +103,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
         DefaultActionGroup(FilterPopupMenuAction(quickFilters, filterListener)),
         true
       ).apply {
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         component.isOpaque = false
         component.border = null
         targetComponent = null
@@ -140,13 +144,13 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
     }
 
     private inner class FilterPopupMenuAction(private val quickFilters: List<Q>, private val filterListener: ((Q) -> Unit)?)
-      : AnActionButton(CollaborationToolsBundle.message("review.list.filter.quick.title")),
+      : DumbAwareAction(CollaborationToolsBundle.message("review.list.filter.quick.title")),
         DumbAware {
-      override fun updateButton(e: AnActionEvent) {
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+      override fun update(e: AnActionEvent) {
         e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
       }
-
-      override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
       override fun actionPerformed(e: AnActionEvent) {
         showQuickFiltersPopup(e.inputEvent!!.component as JComponent, quickFilters, filterListener)

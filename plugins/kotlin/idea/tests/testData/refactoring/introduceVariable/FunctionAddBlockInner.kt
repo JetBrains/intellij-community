@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(a: Int) =
         if (a > 1) {
             (<selection>a + 1</selection>) * (a - 1)

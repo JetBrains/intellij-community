@@ -238,6 +238,10 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintRightMargin() {
+      if (myEditor.isStickyLinePainting()) {
+        // suppress hard wrap and visual guides vertical lines on sticky lines panel
+        return;
+      }
       if (myEditor.getSettings().isRightMarginShown()) {
         Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
         if (visualGuidesColor != null) {
@@ -548,7 +552,8 @@ public final class EditorPainter implements TextDrawingCallback {
                                                               int y,
                                                               VisualPosition selectionStartPosition,
                                                               VisualPosition selectionEndPosition) {
-      if (selectionStartPosition.equals(selectionEndPosition) ||
+      if (myEditor.isStickyLinePainting() || // suppress selection after line end on sticky lines panel IDEA-345708
+          selectionStartPosition.equals(selectionEndPosition) ||
           visualLine < selectionStartPosition.line ||
           visualLine > selectionEndPosition.line ||
           visualLine == selectionEndPosition.line && selectionEndPosition.column <= columnStart) {
@@ -1292,6 +1297,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintCaret() {
       if (myEditor.isPurePaintingMode()) return;
+      if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
       EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(true);
       if (locations == null) return;
 
@@ -1563,6 +1569,9 @@ public final class EditorPainter implements TextDrawingCallback {
         return ObjectUtils.notNull(myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
       }
       TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
+      if (foldAttributes != null) {
+        foldAttributes = debugZombieFoldRegion(foldRegion, foldAttributes);
+      }
       return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
     }
 
@@ -1597,6 +1606,17 @@ public final class EditorPainter implements TextDrawingCallback {
                            primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
 
       return TextAttributesEffectsBuilder.create(secondary).coverWith(primary).applyTo(result);
+    }
+
+    private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
+      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingModelImpl.ZOMBIE_REGION_KEY) != null) {
+        TextAttributes zombieAttr = foldAttributes.clone();
+        zombieAttr.copyFrom(foldAttributes);
+        zombieAttr.setEffectType(EffectType.STRIKEOUT);
+        zombieAttr.setEffectColor(JBColor.DARK_GRAY);
+        return zombieAttr;
+      }
+      return foldAttributes;
     }
   }
 

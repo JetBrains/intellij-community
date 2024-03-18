@@ -37,38 +37,12 @@ public final class HighlightUtils {
   private HighlightUtils() {
   }
 
-  /**
-   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
-   * Please use {@link #highlightElement(PsiElement, Editor)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void highlightElement(@NotNull PsiElement element) {
-    highlightElements(Collections.singleton(element));
-  }
-
   public static void highlightElement(@NotNull PsiElement element, Editor editor) {
     highlightElements(Collections.singleton(element), editor);
   }
 
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, Editor editor) {
     highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), editor);
-  }
-
-  /**
-   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
-   * Please use {@link #highlightElements(Collection, Editor)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
-    if (elementCollection.isEmpty()) {
-      return;
-    }
-    if (!elementCollection.iterator().next().isPhysical()) return;
-
-    Editor selectedTextEditor =
-      FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
-
-    highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), selectedTextEditor);
   }
 
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,

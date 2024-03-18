@@ -5,5 +5,5 @@ import com.intellij.openapi.util.NlsContexts
 
 data class CheckBoxItemData(@NlsContexts.Checkbox val label: String,
                             val jsonElementName: String) {
-  internal var property: Boolean = false
+  var property: Boolean = false
 }

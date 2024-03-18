@@ -10,6 +10,9 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
+/**
+ * Use [com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer] when possible
+ */
 class RoundedCellRenderer<T> @JvmOverloads constructor(private val renderer: ListCellRenderer<T>,
                                                        private val fixedHeight: Boolean = true) : ListCellRenderer<T> {
   override fun getListCellRendererComponent(list: JList<out T>, value: T, index: Int, isSelected: Boolean,

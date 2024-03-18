@@ -14,6 +14,7 @@ import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
 import java.util.regex.Pattern
 
+@Suppress("DEPRECATION")
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
   override val updateMetadataUrl: Url?
     get() {

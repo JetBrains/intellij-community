@@ -24,7 +24,7 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
     _state = state
   }
 
-  override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+  override fun <T> get(property: VcsLogUiProperty<T>): T {
     val result: Any = when (property) {
       is CustomBooleanProperty -> _state.customBooleanProperties[property.name] ?: property.defaultValue()
       is TableColumnVisibilityProperty -> isColumnVisible(_state.columnIdVisibility, property)
@@ -48,10 +48,10 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
     return order
   }
 
-  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
     @Suppress("UNCHECKED_CAST")
     when (property) {
-      is CustomBooleanProperty -> _state.customBooleanProperties[property.getName()] = value as Boolean
+      is CustomBooleanProperty -> _state.customBooleanProperties[property.name] = value as Boolean
       CommonUiProperties.COMPACT_REFERENCES_VIEW -> _state.isCompactReferenceView = value as Boolean
       CommonUiProperties.SHOW_TAG_NAMES -> _state.isShowTagNames = value as Boolean
       CommonUiProperties.LABELS_LEFT_ALIGNED -> _state.isLabelsLeftAligned = value as Boolean

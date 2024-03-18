@@ -9,6 +9,7 @@ import java.io.IOException;
 
 /**
  * Descriptor for serializing identifiers. Use {@link #INSTANCE}.
+ * Does NOT support null values!
  *
  * @see CaseInsensitiveEnumeratorStringDescriptor
  */

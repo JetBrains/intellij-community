@@ -28,7 +28,7 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     String fieldType = PsiReflectionAccessUtil.getAccessibleReturnType(myExpression, resolveFieldType(myField, myExpression));
     if (fieldType == null) {
       LOG.warn("Could not resolve field type. java.lang.Object will be used instead");
-      fieldType = "java.lang.Object";
+      fieldType = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myAccessibleType = fieldType;
   }
@@ -119,8 +119,8 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     }
 
     methodBuilder.setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
-                 .addParameter("java.lang.Object", "object")
-                 .addParameter("java.lang.Object", "value");
+                 .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object")
+                 .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "value");
 
     return methodBuilder.build(elementFactory, outerClass);
   }

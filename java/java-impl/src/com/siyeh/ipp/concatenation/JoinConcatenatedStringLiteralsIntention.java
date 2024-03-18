@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class JoinConcatenatedStringLiteralsIntention extends MCIntention {
+public final class JoinConcatenatedStringLiteralsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

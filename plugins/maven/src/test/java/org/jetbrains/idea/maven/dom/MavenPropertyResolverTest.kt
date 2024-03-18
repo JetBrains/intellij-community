@@ -26,6 +26,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
   @Test
   fun testResolvingProjectAttributes() = runBlocking {
     importProjectAsync("""
@@ -34,8 +35,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("test", resolve("\${project.groupId}", myProjectPom))
-    assertEquals("test", resolve("\${pom.groupId}", myProjectPom))
+    assertEquals("test", resolve("\${project.groupId}", projectPom))
+    assertEquals("test", resolve("\${pom.groupId}", projectPom))
   }
 
   @Test
@@ -73,7 +74,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("\${project.parent.groupId}", resolve("\${project.parent.groupId}", myProjectPom))
+    assertEquals("\${project.parent.groupId}", resolve("\${project.parent.groupId}", projectPom))
   }
 
   @Test
@@ -85,9 +86,9 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     assertEquals(File(projectPath, "target").path,
-                 resolve("\${project.build.directory}", myProjectPom))
+                 resolve("\${project.build.directory}", projectPom))
     assertEquals(File(projectPath, "src/main/java").path,
-                 resolve("\${project.build.sourceDirectory}", myProjectPom))
+                 resolve("\${project.build.sourceDirectory}", projectPom))
   }
 
   @Test
@@ -146,9 +147,9 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("value", resolve("\${prop1}", myProjectPom))
-    assertEquals("value-2", resolve("\${prop2}", myProjectPom))
-    assertEquals("value-2-3", resolve("\${prop3}", myProjectPom))
+    assertEquals("value", resolve("\${prop1}", projectPom))
+    assertEquals("value-2", resolve("\${prop2}", projectPom))
+    assertEquals("value-2-3", resolve("\${prop3}", projectPom))
   }
 
   @Test
@@ -168,10 +169,10 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </properties>
                        """.trimIndent())
 
-    importProjectWithErrors()
-    assertEquals("\${prop1}", resolve("\${prop1}", myProjectPom))
-    assertEquals("\${prop3}", resolve("\${prop3}", myProjectPom))
-    assertEquals("\${prop5}", resolve("\${prop5}", myProjectPom))
+    importProjectAsync()
+    assertEquals("\${prop1}", resolve("\${prop1}", projectPom))
+    assertEquals("\${prop3}", resolve("\${prop3}", projectPom))
+    assertEquals("\${prop5}", resolve("\${prop5}", projectPom))
   }
 
   @Test
@@ -182,8 +183,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("\${~!@#$%^&*()}", resolve("\${~!@#$%^&*()}", myProjectPom))
-    assertEquals("\${#ARRAY[@]}", resolve("\${#ARRAY[@]}", myProjectPom))
+    assertEquals("\${~!@#$%^&*()}", resolve("\${~!@#$%^&*()}", projectPom))
+    assertEquals("\${#ARRAY[@]}", resolve("\${#ARRAY[@]}", projectPom))
   }
 
   @Test
@@ -212,13 +213,13 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     importProjectAsync()
-    assertEquals("value1", resolve("\${prop}", myProjectPom))
+    assertEquals("value1", resolve("\${prop}", projectPom))
 
     importProjectWithProfiles("one")
-    assertEquals("value2", resolve("\${prop}", myProjectPom))
+    assertEquals("value2", resolve("\${prop}", projectPom))
 
     importProjectWithProfiles("two")
-    assertEquals("value3", resolve("\${prop}", myProjectPom))
+    assertEquals("value3", resolve("\${prop}", projectPom))
   }
 
   @Test
@@ -229,15 +230,15 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(projectPath, resolve("\${basedir}", myProjectPom))
-    assertEquals(projectPath, resolve("\${project.basedir}", myProjectPom))
-    assertEquals(projectPath, resolve("\${pom.basedir}", myProjectPom))
+    assertEquals(projectPath, resolve("\${basedir}", projectPom))
+    assertEquals(projectPath, resolve("\${project.basedir}", projectPom))
+    assertEquals(projectPath, resolve("\${pom.basedir}", projectPom))
   }
 
   @Test
   fun testResolvingSystemProperties() = runBlocking {
     val javaHome = System.getProperty("java.home")
-    val tempDir = System.getenv(getEnvVar())
+    val tempDir = System.getenv(envVar)
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -245,8 +246,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(javaHome, resolve("\${java.home}", myProjectPom))
-    assertEquals(tempDir, resolve("\${env." + getEnvVar() + "}", myProjectPom))
+    assertEquals(javaHome, resolve("\${java.home}", projectPom))
+    assertEquals(tempDir, resolve("\${env." + envVar + "}", projectPom))
   }
 
   @Test
@@ -258,7 +259,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     assertEquals("foo test-project bar",
-                 resolve("foo \${project.groupId}-\${project.artifactId} bar", myProjectPom))
+                 resolve("foo \${project.groupId}-\${project.artifactId} bar", projectPom))
   }
 
   @Test
@@ -269,9 +270,9 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("\${project.groupId", resolve("\${project.groupId", myProjectPom))
-    assertEquals("\$project.groupId}", resolve("\$project.groupId}", myProjectPom))
-    assertEquals("{project.groupId}", resolve("{project.groupId}", myProjectPom))
+    assertEquals("\${project.groupId", resolve("\${project.groupId", projectPom))
+    assertEquals("\$project.groupId}", resolve("\$project.groupId}", projectPom))
+    assertEquals("{project.groupId}", resolve("{project.groupId}", projectPom))
   }
 
   @Test
@@ -282,7 +283,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    val doc = FileDocumentManager.getInstance().getDocument(myProjectPom)
+    val doc = FileDocumentManager.getInstance().getDocument(projectPom)
     WriteCommandAction.runWriteCommandAction(null) {
       doc!!.setText(createPomXml("""
                                                                                     <groupId>test</groupId>
@@ -294,9 +295,9 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                                                                     """.trimIndent()))
     }
 
-    PsiDocumentManager.getInstance(myProject).commitDocument(doc!!)
+    PsiDocumentManager.getInstance(project).commitDocument(doc!!)
 
-    assertEquals("value", resolve("\${uncomitted}", myProjectPom))
+    assertEquals("value", resolve("\${uncomitted}", projectPom))
   }
 
   @Test
@@ -331,7 +332,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun resolve(text: String, f: VirtualFile): String {
-    return MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(myProject, f))
+    return MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(project, f))
   }
 }
 

@@ -20,7 +20,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfAWTPeerClassInspection extends BaseInspection {
+public final class UseOfAWTPeerClassInspection extends BaseInspection {
 
   @Override
   @NotNull

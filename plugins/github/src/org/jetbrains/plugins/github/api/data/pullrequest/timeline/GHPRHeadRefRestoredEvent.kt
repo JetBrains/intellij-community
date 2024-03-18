@@ -4,6 +4,6 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRHeadRefRestoredEvent(override val actor: GHActor?,
-                               override val createdAt: Date)
+data class GHPRHeadRefRestoredEvent(override val actor: GHActor?,
+                                    override val createdAt: Date)
   : GHPRTimelineEvent.Branch

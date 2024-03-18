@@ -44,6 +44,8 @@ sealed class SyncSettingsEvent {
 
   class CrossIdeSyncStateChanged(val isCrossIdeSyncEnabled: Boolean) : ExclusiveEvent()
 
+  class RestoreSettingsSnapshot(val hash: String, val onComplete: Runnable): ExclusiveEvent()
+
   override fun toString(): String {
     return javaClass.simpleName
   }

@@ -103,7 +103,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     return myPaths;
   }
 
-  static class AdditionalColorSpace {
+  public static class AdditionalColorSpace {
     private final String colorMode;
     private final List<Color> palette;
 

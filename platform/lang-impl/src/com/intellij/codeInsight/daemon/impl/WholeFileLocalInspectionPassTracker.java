@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+/**
+ * Track inspection tools which have {@link LocalInspectionTool#runForWholeFile()} overridden to true and
+ * allow to quickly filter out files which have no whole-file-inspections configured in their inspection profile,
+ */
 @Service(Service.Level.PROJECT)
 final class WholeFileLocalInspectionPassTracker implements Disposable {
   private final Set<PsiFile> mySkipWholeInspectionsCache = ContainerUtil.createWeakSet(); // guarded by mySkipWholeInspectionsCache

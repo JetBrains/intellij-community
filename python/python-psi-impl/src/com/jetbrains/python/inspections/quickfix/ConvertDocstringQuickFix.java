@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to convert docstrings to the common form according to PEP-257
  * For consistency, always use """triple double quotes""" around docstrings.
  */
-public class ConvertDocstringQuickFix implements LocalQuickFix {
+public class ConvertDocstringQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -28,12 +28,11 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement expression = descriptor.getPsiElement();
-    if (expression instanceof PyStringLiteralExpression && expression.isWritable()) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyStringLiteralExpression && element.isWritable()) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      String stringText = expression.getText();
+      String stringText = element.getText();
       int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       String prefix = stringText.substring(0, prefixLength);
       String content = stringText.substring(prefixLength);
@@ -48,7 +47,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
         content = StringUtil.replaceSubstring(content, TextRange.create(content.length()-1, content.length()), "\\\"");
 
       PyExpression newString = elementGenerator.createDocstring(prefix+"\"\"\"" + content + "\"\"\"").getExpression();
-      expression.replace(newString);
+      element.replace(newString);
     }
   }
 

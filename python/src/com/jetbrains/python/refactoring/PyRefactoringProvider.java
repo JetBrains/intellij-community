@@ -37,7 +37,7 @@ import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHa
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyRefactoringProvider extends RefactoringSupportProvider {
+public final class PyRefactoringProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new PyIntroduceVariableHandler();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtil.positionCursor
@@ -50,14 +50,8 @@ internal class JavaFieldRenderer(
   private val modifiersToRender: Collection<JvmModifier>
     get() {
       return if (constantField) {
-        if (targetClass.isInterface) {
-          // interface fields are public static final implicitly, so modifiers don't have to be rendered
-          request.modifiers - constantModifiers - visibilityModifiers
-        }
-        else {
-          // render static final explicitly
-          request.modifiers + constantModifiers
-        }
+        // render static final explicitly
+        request.modifiers + constantModifiers
       }
       else {
         // render as is
@@ -68,11 +62,14 @@ internal class JavaFieldRenderer(
   fun doRender() {
     var field = renderField()
     field = insertField(field, javaUsage?.anchor)
-    startTemplate(field)
+    if (request.fieldType.isEmpty() || request.fieldType.size > 1 || request.isStartTemplate) {
+      startTemplate(field)
+    }
   }
 
   fun renderField(): PsiField {
-    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiTypes.intType())
+    val fieldType = if (expectedTypes.isNotEmpty()) expectedTypes[0].type else PsiTypes.intType()
+    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, fieldType)
 
     // clean template modifiers
     field.modifierList?.let { list ->

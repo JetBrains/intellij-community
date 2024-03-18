@@ -2,10 +2,12 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -49,7 +51,12 @@ public final class DfaCallArguments {
   public int hashCode() {
     return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+myMutation.hashCode();
   }
-  
+
+  @Override
+  public String toString() {
+    return myQualifier + ".call(" + StringUtil.join(Arrays.asList(myArguments), ", ") + ")";
+  }
+
   public DfaValue[] toArray() {
     if (myArguments == null || myQualifier == null) return DfaValue.EMPTY_ARRAY;
     return ArrayUtil.prepend(myQualifier, myArguments);
@@ -62,7 +69,13 @@ public final class DfaCallArguments {
       return;
     }
     if (myMutation.isPure()) {
-      if (myQualifier instanceof DfaVariableValue qualifier) {
+      if (myQualifier instanceof DfaVariableValue) {
+        DfaValue qualifier;
+        if (method != null && method.isConstructor()) {
+          qualifier = ThisDescriptor.createThisValue(factory, method.getContainingClass());
+        } else {
+          qualifier = myQualifier;
+        }
         // We assume that even pure call may modify private fields (e.g., to cache something)
         state.flushVariables(v -> v.getQualifier() == qualifier &&
                                   v.getPsiVariable() instanceof PsiMember member &&

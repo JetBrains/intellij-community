@@ -136,7 +136,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
                         JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED,
                         JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
                       }) int classNamesInJavadoc) {
-    doTest(before, after, classNamesInJavadoc, "aaa.java");
+    doTest(before, after, classNamesInJavadoc, getClass().getName() + "_" + getTestName(false) + ".java");
   }
 
   private void doTest(@Language("JAVA") @NotNull @NonNls String before,

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class PostfixPrefixIntention extends MCIntention {
+public final class PostfixPrefixIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

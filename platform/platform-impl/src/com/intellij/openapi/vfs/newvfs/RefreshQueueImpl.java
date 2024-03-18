@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -40,8 +39,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshQueue.class);
 
-  private final Executor myQueue;
-  private final Executor myEventProcessingQueue;
+  private final CoroutineDispatcherBackedExecutor myQueue;
+  private final CoroutineDispatcherBackedExecutor myEventProcessingQueue;
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create();
   private final Set<RefreshSessionImpl> mySessions = Collections.synchronizedSet(new HashSet<>());
@@ -64,8 +63,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       fireEvents(events, session);
     }
     else if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
-      LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire). " +
-                "EDT=" + EDT.isCurrentThreadEdt());
+      LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
     }
     else {
       queueSession(session, session.getModality());
@@ -76,7 +74,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
     if (LOG.isDebugEnabled()) LOG.debug("Queue session with id=" + session.hashCode());
     var queuedAt = System.nanoTime();
-    myQueue.execute(() -> {
+    myQueue.schedule(() -> {
       var timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
       startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
       var events = new AtomicReference<Collection<VFileEvent>>();
@@ -117,7 +115,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
               VfsUsageCollector.logEventProcessing(
                 evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
             })
-            .submit(myEventProcessingQueue)
+            .submit(myEventProcessingQueue::schedule)
             .onProcessed(__ -> stopIndicator())
             .onError(t -> {
               if (!myRefreshIndicator.isCanceled()) {
@@ -199,11 +197,13 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
         session.cancel();
       }
     }
+    myEventProcessingQueue.cancel();
+    myQueue.cancel();
   }
 
   public static boolean isRefreshInProgress() {
-    var refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
-    return !refreshQueue.mySessions.isEmpty() || !((CoroutineDispatcherBackedExecutor)refreshQueue.myQueue).isEmpty();
+    var refreshQueue = (RefreshQueueImpl)getInstance();
+    return !refreshQueue.mySessions.isEmpty() || !refreshQueue.myQueue.isEmpty();
   }
 
   @TestOnly

@@ -38,17 +38,6 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
   }
 
   @Override
-  public void testVarargs() {
-    doTest("""
-             class Test {
-               void <caret>foo(Class<?>... cl) { }
-             }""",
-
-           "foo(java.lang.Class...)", "foo-java.lang.Class...-"
-    );
-  }
-
-  @Override
   public void testTypeParams() {
     doTest("""
              class Test {

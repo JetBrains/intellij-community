@@ -1,19 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage
 
+import com.intellij.coverage.view.registerCoverageToolWindow
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 
+@RunWith(JUnit4::class)
 class CoverageSuitesTest : CoverageIntegrationBaseTest() {
+  @Test
   fun `test external suite adding`() {
+    assertNoSuites()
     val path = SIMPLE_IJ_REPORT_PATH
     val runner = CoverageRunner.getInstance(IDEACoverageRunner::class.java)
-    val suite = manager.addExternalCoverageSuite(path, -1, runner, createCoverageFileProvider(path))
+    val suite = manager.addExternalCoverageSuite(File(path), runner)
 
     manager.suites.run {
       Assert.assertEquals(1, size)
@@ -21,12 +28,14 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     }
 
     manager.unregisterCoverageSuite(suite)
-    Assert.assertTrue(manager.suites.isEmpty())
+    assertNoSuites()
   }
 
+  @Test
   fun `test coverage is closed when a suite is deleted`(): Unit = runBlocking {
-    val ijSuite = loadIJSuite().suites[0]
+    assertNoSuites()
 
+    val ijSuite = loadIJSuite().suites[0]
     registerSuite(ijSuite)
 
     manager.suites.run {
@@ -41,12 +50,12 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
 
     manager.unregisterCoverageSuite(ijSuite)
 
-    Assert.assertEquals(0, manager.suites.size)
-    Assert.assertNull(manager.currentSuitesBundle)
+    assertNoSuites()
   }
 
-
+  @Test
   fun `test coverage reopen if one of the suites is deleted`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
 
@@ -79,10 +88,12 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     Assert.assertNull(manager.currentSuitesBundle)
     Assert.assertEquals(1, manager.suites.size)
     manager.unregisterCoverageSuite(ijSuite)
-    Assert.assertEquals(0, manager.suites.size)
+    assertNoSuites()
   }
 
+  @Test
   fun `test suite removal with deletion asks for approval from user`() {
+    assertNoSuites()
     val suite = loadIJSuiteCopy().suites[0]
     val file = File(suite.coverageDataFileName)
 
@@ -96,20 +107,26 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     catch (e: RuntimeException) {
       Assert.assertTrue(e.message!!.contains(file.absolutePath))
     }
+    manager.unregisterCoverageSuite(suite)
+    assertNoSuites()
   }
 
+  @Test
   fun `test suite is not opened if the report file does not exist`() {
+    assertNoSuites()
     val suite = loadIJSuiteCopy()
     val file = File(suite.suites[0].coverageDataFileName)
     Assert.assertTrue(file.exists())
     file.delete()
 
     manager.chooseSuitesBundle(suite)
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertEquals(0, manager.suites.size)
+    assertNoSuites()
   }
 
+  @Test
   fun `test opening several suites`(): Unit = runBlocking {
+    registerCoverageToolWindow(myProject)
+    assertNoSuites()
     val ijSuite = loadIJSuite()
     val xmlSuite = loadXMLSuite()
 
@@ -132,11 +149,12 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     }
 
     closeSuite(ijSuite)
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertEquals(0, manager.activeSuites().size)
+    assertNoSuites()
   }
 
-  fun `test hide coverage action closes all suites`() : Unit = runBlocking {
+  @Test
+  fun `test hide coverage action closes all suites`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite()
     val xmlSuite = loadXMLSuite()
 
@@ -159,12 +177,30 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
       hideAction.actionPerformed(actionEvent)
     }
 
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertEquals(0, manager.activeSuites().size)
+    assertNoSuites()
+  }
+
+  @Test
+  fun `test remote suite implementation`() {
+    // Some coverage implementations load a coverage report from net,
+    // so they use non-standard file provider implementation:
+    val remoteProvider = object : CoverageFileProvider {
+      override fun getCoverageDataFilePath() = null
+      override fun ensureFileExists() = true
+      override fun isValid() = true
+    }
+
+    val suite = object : BaseCoverageSuite("", myProject, null, DefaultCoverageFileProvider(""), 0) {
+      override fun getCoverageEngine() = TODO()
+      override fun getCoverageDataFileProvider(): CoverageFileProvider = remoteProvider
+    }
+
+    Assert.assertEquals("", suite.coverageDataFileName)
   }
 
   private fun registerSuite(suite: CoverageSuite) {
     // Use 'presentableName' parameter to avoid report file deletion
     manager.addCoverageSuite(suite, suite.presentableName)
   }
+
 }

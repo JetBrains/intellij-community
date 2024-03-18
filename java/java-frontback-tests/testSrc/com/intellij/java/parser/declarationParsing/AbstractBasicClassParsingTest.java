@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser.declarationParsing;
 
 import com.intellij.java.parser.AbstractBasicJavaParsingTestCase;
@@ -115,26 +115,28 @@ public abstract class AbstractBasicClassParsingTest extends AbstractBasicJavaPar
     doTest(true);
   }
 
+  public void testLocalSealedClass() { doTest(true); }
+
   public void testProvidesList() {
     doTest(true);
   }
 
-  public void testUnnamedClass0() {
+  public void testImplicitClass0() {
     doTest(true);
   }
-  public void testUnnamedClass1() {
+  public void testImplicitClass1() {
     doTest(true);
   }
-  public void testUnnamedClass2() {
+  public void testImplicitClass2() {
     doTest(true);
   }
-  public void testUnnamedClass3() {
+  public void testImplicitClass3() {
     doTest(true);
   }
-  public void testUnnamedClass4() {
+  public void testImplicitClass4() {
     doTest(true);
   }
-  public void testUnnamedClass5() {
+  public void testImplicitClass5() {
     doTest(true);
   }
 }

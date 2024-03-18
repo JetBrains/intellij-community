@@ -68,14 +68,6 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract void onViewUnselected();
 
-  boolean isGroupByServiceGroups() {
-    return myModel.isGroupByServiceGroups();
-  }
-
-  void setGroupByServiceGroups(boolean value) {
-    myModel.setGroupByServiceGroups(value);
-  }
-
   boolean isGroupByContributor() {
     return myModel.isGroupByContributor();
   }
@@ -121,11 +113,6 @@ abstract class ServiceView extends JPanel implements Disposable {
       @Override
       public boolean isGroupByContributor() {
         return serviceView.isGroupByContributor();
-      }
-
-      @Override
-      public boolean isGroupByServiceGroups() {
-        return serviceView.isGroupByServiceGroups();
       }
     };
     DataManager.registerDataProvider(serviceView, dataId -> {
@@ -179,7 +166,6 @@ abstract class ServiceView extends JPanel implements Disposable {
   }
 
   private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
-    viewModel.setGroupByServiceGroups(viewState.groupByServiceGroups);
     viewModel.setGroupByContributor(viewState.groupByContributor);
   }
 }

@@ -1,16 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.plus
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
+import kotlinx.collections.immutable.*
+import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -28,9 +25,11 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(val mainModule: String,
-                                       mainJarNameWithoutExtension: String,
-                                       @Internal @JvmField val auto: Boolean = false) : BaseLayout() {
+class PluginLayout private constructor(
+  val mainModule: String,
+  mainJarNameWithoutExtension: String,
+  @Internal @JvmField val auto: Boolean = false,
+) : BaseLayout() {
   constructor(mainModule: String, auto: Boolean = false) : this(
     mainModule = mainModule,
     mainJarNameWithoutExtension = convertModuleNameToFileName(mainModule),
@@ -74,7 +73,7 @@ class PluginLayout private constructor(val mainModule: String,
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
-  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, ResourceGenerator> = persistentMapOf()
+  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
     private set
 
   fun getMainJarName(): String = mainJarName
@@ -156,7 +155,10 @@ class PluginLayout private constructor(val mainModule: String,
     }
   }
 
-  override fun toString() = "Plugin '$mainModule'" + if (bundlingRestrictions != PluginBundlingRestrictions.NONE) ", restrictions: $bundlingRestrictions" else ""
+  override fun toString(): String {
+    return "Plugin '$mainModule'" +
+           if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions"
+  }
 
   override fun withModule(moduleName: String) {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
@@ -174,7 +176,7 @@ class PluginLayout private constructor(val mainModule: String,
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResource(resourcePath: String, relativeOutputPath: String) {
-      layout.withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
+      layout.withResourceFromModule(moduleName = layout.mainModule, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
     }
 
     fun withGeneratedResources(generator: ResourceGenerator) {
@@ -182,7 +184,9 @@ class PluginLayout private constructor(val mainModule: String,
     }
 
     fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
-      layout.platformResourceGenerators += SupportedDistribution(os, arch) to generator
+      val key = SupportedDistribution(os, arch)
+      val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
+      layout.platformResourceGenerators += key to newValue
     }
 
     /**
@@ -190,7 +194,7 @@ class PluginLayout private constructor(val mainModule: String,
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
+      layout.withResourceFromModule(moduleName = moduleName, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
     }
   }
 
@@ -334,8 +338,9 @@ class PluginLayout private constructor(val mainModule: String,
      * Do not automatically include module libraries from `moduleNames`
      * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
      */
+    @Obsolete
     fun doNotCopyModuleLibrariesAutomatically(moduleNames: List<String>) {
-      layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
+      layout.modulesWithExcludedModuleLibraries = layout.modulesWithExcludedModuleLibraries.toPersistentSet().addAll(moduleNames)
     }
 
     /**
@@ -351,7 +356,7 @@ class PluginLayout private constructor(val mainModule: String,
     }
 
     /**
-     * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHome] path to a zkm script stub file.
+     * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHomeDir] path to a zkm script stub file.
      * If scramble tool is not defined, scramble toot will expect to find the script stub file at "[org.jetbrains.intellij.build.BuildPaths.projectHome]/plugins/`pluginName`/build/script.zkm.stub".
      * Project home cannot be used since it is not constant (for example, for Rider).
      *

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTargets
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -123,7 +123,7 @@ internal class OperatorToFunctionIntention : AbstractKotlinApplicableModCommandI
 
     override fun getActionName(element: KtExpression): String = familyName
 
-    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
+    override fun apply(element: KtExpression, context: ActionContext, updater: ModPsiUpdater) {
         OperatorToFunctionConverter.convert(element)
     }
 }

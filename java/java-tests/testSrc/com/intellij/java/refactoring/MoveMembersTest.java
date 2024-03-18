@@ -213,6 +213,10 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
+  public void testEscalateVisibilityWhenMoveStaticMemberToStaticClass() {
+    doTest("pack.A", "pack.A.B", true, VisibilityUtil.ESCALATE_VISIBILITY, 1, 2);
+  }
+
   public void testStringConstantInSwitchLabelExpression() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }

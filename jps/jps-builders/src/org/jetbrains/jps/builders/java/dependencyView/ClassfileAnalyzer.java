@@ -762,69 +762,6 @@ final class ClassfileAnalyzer {
       }
 
       @Override
-      public void visitFormalTypeParameter(String name) { }
-
-      @Override
-      public SignatureVisitor visitClassBound() {
-        return super.visitClassBound();
-      }
-
-      @Override
-      public SignatureVisitor visitInterfaceBound() {
-        return super.visitInterfaceBound();
-      }
-
-      @Override
-      public SignatureVisitor visitSuperclass() {
-        return super.visitSuperclass();
-      }
-
-      @Override
-      public SignatureVisitor visitInterface() {
-        return super.visitInterface();
-      }
-
-      @Override
-      public SignatureVisitor visitParameterType() {
-        return super.visitParameterType();
-      }
-
-      @Override
-      public SignatureVisitor visitReturnType() {
-        return super.visitReturnType();
-      }
-
-      @Override
-      public SignatureVisitor visitExceptionType() {
-        return super.visitExceptionType();
-      }
-
-      @Override
-      public void visitBaseType(char descriptor) { }
-
-      @Override
-      public void visitTypeVariable(String name) { }
-
-      @Override
-      public SignatureVisitor visitArrayType() {
-        return super.visitArrayType();
-      }
-
-      @Override
-      public void visitInnerClassType(String name) { }
-
-      @Override
-      public void visitTypeArgument() { super.visitTypeArgument(); }
-
-      @Override
-      public SignatureVisitor visitTypeArgument(char wildcard) {
-        return this;
-      }
-
-      @Override
-      public void visitEnd() { super.visitEnd(); }
-
-      @Override
       public void visitClassType(String name) {
         int className = myContext.get(name);
         myUsages.add(UsageRepr.createClassUsage(myContext, className));

@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 @ApiStatus.Experimental
-public class JavaStaticMethodNameCacheImpl extends JavaStaticMethodNameCache {
+public final class JavaStaticMethodNameCacheImpl extends JavaStaticMethodNameCache {
   @NotNull
   private final Project myProject;
 

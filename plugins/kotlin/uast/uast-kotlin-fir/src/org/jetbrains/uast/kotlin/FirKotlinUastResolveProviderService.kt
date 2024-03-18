@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.asJava.toLightAnnotation
-import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -364,9 +363,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
         analyzeForUast(ktExpression) {
             val resolvedTargetSymbol = when (ktExpression) {
+                is KtInstanceExpressionWithLabel -> {
+                    // A subtype of [KtExpressionWithLabel], including [KtThisExpression]/[KtSuperExpression]
+                    // Therefore, it must be handled *before* that super type.
+                    val reference =
+                        // `this@withLabel`
+                        ktExpression.getTargetLabel()?.mainReference
+                            // just `this` without label
+                            ?: ktExpression.instanceReference.mainReference
+                    reference.resolveToSymbol()
+                }
                 is KtExpressionWithLabel -> {
                     ktExpression.getTargetLabel()?.mainReference?.resolveToSymbol()
-
                 }
 
                 is KtCallExpression -> {
@@ -387,8 +395,19 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
             val project = ktExpression.project
 
-            val resolvedTargetElement = psiForUast(resolvedTargetSymbol, project)
-
+            val resolvedTargetElement =
+                when (resolvedTargetSymbol) {
+                    is KtBackingFieldSymbol -> {
+                        // [KtBackingFieldSymbol] itself has `null` psi, and thus going to
+                        // the below default logic, [psiForUast], will return `null` too.
+                        // Use the owning property's psi and let [getMaybeLightElement] find
+                        // the corresponding [PsiField] for the backing field.
+                        resolvedTargetSymbol.owningProperty.psi
+                    }
+                    else -> {
+                        psiForUast(resolvedTargetSymbol, project)
+                    }
+                }
 
             // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
             //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
@@ -408,7 +427,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
                     is KtLibraryModule -> {
                         // For decompiled declarations, we can try light element conversion (only).
-                        (resolvedTargetElement as? KtDeclaration)?.toLightElements()?.singleOrNull()?.let { return it }
+                        (resolvedTargetElement as? KtElement)?.toPsiElementAsLightElement()?.let { return it }
                     }
 
                     else -> {}
@@ -420,7 +439,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     is KtEnumEntry -> {
                         classOrObject.getEnumEntrySymbol().callableIdIfNonLocal?.classId?.let(::buildClassType)
                     }
-
                     else -> {
                         // NB: Avoid symbol creation/retrieval
                         classOrObject.getClassId()?.let(::buildClassType)
@@ -466,6 +484,31 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     )?.let { return it }
                 }
 
+                is KtTypeReference -> {
+                    if (resolvedTargetSymbol is KtReceiverParameterSymbol) {
+                        // Explicit `this` resolved to type reference if it belongs to an extension callable
+                        when (val callable = resolvedTargetSymbol.owningCallableSymbol) {
+                            is KtFunctionLikeSymbol -> {
+                                val psiMethod = toPsiMethod(callable, ktExpression)
+                                psiMethod?.parameterList?.parameters?.firstOrNull()?.let { return it }
+                            }
+                            is KtPropertySymbol -> {
+                                val getter = callable.getter?.let { toPsiMethod(it, ktExpression) }
+                                getter?.parameterList?.parameters?.firstOrNull()?.let { return it }
+                            }
+                            else -> {}
+                        }
+                    } else {
+                        val ktType = resolvedTargetElement.getKtType()
+                        toPsiClass(
+                            ktType,
+                            ktExpression.toUElement(),
+                            resolvedTargetElement,
+                            resolvedTargetElement.typeOwnerKind
+                        )?.let { return it }
+                    }
+                }
+
                 is KtFunctionLiteral -> {
                     // Implicit lambda parameter `it`
                     if ((resolvedTargetSymbol as? KtValueParameterSymbol)?.isImplicitLambdaParameter == true) {
@@ -473,6 +516,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
                         // and return javaPsi of the corresponding lambda implicit parameter
                         lambda?.valueParameters?.singleOrNull()?.javaPsi?.let { return it }
+                    }
+                    val isLambdaReceiver =
+                        // Implicit `this` as the lambda receiver
+                        resolvedTargetSymbol is KtAnonymousFunctionSymbol ||
+                                // Explicit `this`
+                                resolvedTargetSymbol is KtReceiverParameterSymbol
+                    if (isLambdaReceiver) {
+                        // From its containing lambda (of function literal), build ULambdaExpression
+                        val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
+                        // and return javaPsi of the corresponding lambda receiver
+                        lambda?.parameters?.firstOrNull()?.javaPsi?.let { return it }
                     }
                 }
             }
@@ -550,8 +604,28 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
+        // Analysis API returns [Unit] for statements, but [FirStatement] is too broad,
+        // e.g., that even includes [FirFunctionCall], which definitely has an expression type.
+        // We can't use [KtPsiUtil.isStatement]: https://kotlinlang.org/spec/statements.html
+        // which, again, is too broad as well, e.g., code block, which might be a lambda body
+        // whose return type (if it's [Unit]) might be meaningful (coercion-to-Unit).
+        // Here we bail out syntactical statements that are very obvious.
+        if (ktExpression is KtLoopExpression || ktExpression is KtWhenEntry)
+            return null
+
         analyzeForUast(ktExpression) {
             val ktType = ktExpression.getKtType() ?: return null
+            // Again, Analysis API returns [Unit] for statements, so we need to filter out
+            // some cases that are not actually expression's return type.
+            if (ktType.isUnit) {
+                // E.g., AnnotationTarget.FIELD, reference to enum class is resolved to the constructor call,
+                // and then returned as Unit expression type. Same for path segments in a fully qualified name
+                if (ktExpression.parent is KtQualifiedExpression &&
+                    (ktExpression is KtQualifiedExpression || ktExpression is KtNameReferenceExpression)
+                ) {
+                    return null
+                }
+            }
             return toPsiType(
                 ktType,
                 source,
@@ -593,6 +667,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     isForFake = isForFake,
                 )
             )
+        }
+    }
+
+    override fun hasTypeForValueClassInSignature(ktDeclaration: KtDeclaration): Boolean {
+        analyzeForUast(ktDeclaration) {
+            val symbol = ktDeclaration.getSymbol() as? KtCallableSymbol ?: return false
+            if (symbol.returnType.typeForValueClass) return true
+            if (symbol.receiverType?.typeForValueClass == true) return true
+            if (symbol is KtFunctionLikeSymbol) {
+                return symbol.valueParameters.any { it.returnType.typeForValueClass }
+            }
+            return false
         }
     }
 

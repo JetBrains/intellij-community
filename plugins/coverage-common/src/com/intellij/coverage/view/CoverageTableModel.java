@@ -26,7 +26,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
 class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, SortableColumnModel, TreeModelListener, TreeVisitor.Acceptor {
   private final ColumnInfo[] COLUMN_INFOS;
@@ -52,10 +51,6 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
     else {
       myStructureModel.invalidateAsync();
     }
-  }
-
-  public void makeVisible(AbstractTreeNode<?> node, Consumer<? super TreePath> onSuccess) {
-    myStructureModel.makeVisible(node, myTree, onSuccess);
   }
 
   public void setComparator(Comparator<? super NodeDescriptor<?>> comparator) {

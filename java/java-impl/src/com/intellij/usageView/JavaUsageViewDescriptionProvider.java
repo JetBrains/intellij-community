@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaUsageViewDescriptionProvider implements ElementDescriptionProvider {
 
   public static final String NO_NAME_CLASS_VALUE = "";
   private static final @NlsSafe String CLINIT = "<clinit>";
@@ -34,8 +34,8 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
         boolean isStatic = initializer.hasModifierProperty(PsiModifier.STATIC);
         return isStatic ? CLINIT : INIT;
       }
-      else if (element instanceof PsiUnnamedClass unnamedClass) {
-        return unnamedClass.getContainingFile().getName();
+      else if (element instanceof PsiImplicitClass implicitClass) {
+        return implicitClass.getContainingFile().getName();
       }
     }
 

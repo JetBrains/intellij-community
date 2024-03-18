@@ -9,7 +9,8 @@ class Simple {
       sink(<caret>s2);
     }
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
       return "foo";
     }
   

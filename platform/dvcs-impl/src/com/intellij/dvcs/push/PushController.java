@@ -170,7 +170,10 @@ public final class PushController implements Disposable {
     for (Repository repository : DvcsUtil.sortRepositories(myAllRepos)) {
       PushSupport<Repository, PushSource, PushTarget> support = getPushSupportByRepository(repository);
       if (support != null) {
-        createRepoNode(repository, rootNode, chooseNotNull(myPushSource, support.getSource(repository)), support);
+        PushSource source = myPushSource != null ? myPushSource : support.getSource(repository);
+        if (source != null) {
+          createRepoNode(repository, rootNode, source, support);
+        }
       }
     }
   }

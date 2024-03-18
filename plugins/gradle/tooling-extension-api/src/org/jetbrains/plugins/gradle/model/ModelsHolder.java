@@ -53,7 +53,7 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   }
 
   @ApiStatus.Internal
-  void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
+  public void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
     myPathsConverter = pathsConverter;
   }
 
@@ -231,7 +231,7 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
            '}';
   }
 
-  boolean hasModels() {
+  public boolean hasModels() {
     return !myModelsById.isEmpty();
   }
 }

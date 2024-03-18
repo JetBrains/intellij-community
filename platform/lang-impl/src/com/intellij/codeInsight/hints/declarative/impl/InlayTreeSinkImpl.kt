@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.declarative.InlayPayload
 import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.util.NlsContexts
 
@@ -72,20 +71,4 @@ class InlayTreeSinkImpl(
   fun finish(): List<InlayData> {
     return inlayDataToPresentation
   }
-}
-
-data class InlayData(
-  val position: InlayPosition,
-  @NlsContexts.HintText val tooltip: String?,
-  val hasBackground: Boolean,
-  val tree: TinyTree<Any?>,
-  val providerId: String,
-  val disabled: Boolean,
-  val payloads: List<InlayPayload>?,
-  /**
-   * Just for debugging purposes
-   */
-  val providerClass: Class<*>
-) {
-
 }

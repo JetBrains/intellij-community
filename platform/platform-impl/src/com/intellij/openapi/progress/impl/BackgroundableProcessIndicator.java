@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.impl;
 
@@ -12,24 +12,22 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.TracerLevel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
-import io.opentelemetry.api.trace.Span;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import static com.intellij.openapi.progress.impl.ProgressManagerScopeKt.ProgressManagerScope;
-
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
+ * </p>
+ */
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
-
-  private static final IJTracer myProgressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
-
-  private Span mySpan;
 
   private StatusBarEx myStatusBar;
 
@@ -38,6 +36,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private boolean myDidInitializeOnEdt;
   private boolean myDisposed;
 
+  @Obsolete
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task);
   }
@@ -52,6 +51,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     this(project, info);
   }
 
+  @Obsolete
   public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info) {
     this(project, info, (StatusBarEx)null);
   }
@@ -134,20 +134,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         return cancellable;
       }
     });
-  }
-
-  @Override
-  public void start() {
-    mySpan = myProgressManagerTracer.spanBuilder("Progress: " + this.myInfo.getTitle(), TracerLevel.DEFAULT).startSpan();
-    super.start();
-  }
-
-  @Override
-  public void finish(@NotNull TaskInfo task) {
-    super.finish(task);
-    if(mySpan != null) {
-      mySpan.end();
-    }
   }
 
   @Override

@@ -42,7 +42,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Inspection to detect chained comparisons which can be simplified
  * For instance, a < b and b < c  -->  a < b < c
  */
-public class PyChainedComparisonsInspection extends PyInspection {
+public final class PyChainedComparisonsInspection extends PyInspection {
 
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;

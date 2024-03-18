@@ -69,7 +69,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return new IdeView() {
 
       @Override
-      public void selectElement(PsiElement element) {
+      public void selectElement(@NotNull PsiElement element) {
         NavigationUtil.activateFileWithPsiElement(element);
       }
 

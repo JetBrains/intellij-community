@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class TryStatementWithMultipleResourcesInspection extends BaseInspection {
+public final class TryStatementWithMultipleResourcesInspection extends BaseInspection {
 
   @NotNull
   @Override

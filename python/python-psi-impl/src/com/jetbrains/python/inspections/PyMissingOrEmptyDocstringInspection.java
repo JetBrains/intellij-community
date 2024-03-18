@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspection {
+public final class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspection {
   @NotNull
   @Override
   public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {

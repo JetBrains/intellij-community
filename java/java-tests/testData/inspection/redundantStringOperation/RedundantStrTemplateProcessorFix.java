@@ -1,4 +1,6 @@
 // "Fix all 'Redundant 'String' operation' problems in file" "true"
+import static java.lang.StringTemplate.RAW;
+
 class Foo {
   void test() {
     String str1 = <warning descr="String template can be converted to a plain string literal">STR<caret></warning>."""
@@ -20,5 +22,7 @@ class Foo {
     String str4 = StringTemplate.STR."Simple \{template}";
 
     String str5 = STR."Simple \{template} " + <warning descr="String template can be converted to a plain string literal">STR</warning>."Simple string" + "str";
+
+    StringTemplate str6 = RAW."Hi!";
   }
 }

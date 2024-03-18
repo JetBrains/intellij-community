@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class LibrariesHelperImpl extends LibrariesHelper {
+public final class LibrariesHelperImpl extends LibrariesHelper {
 
   @Override
   public VirtualFile findJarByClass(Library library, @NonNls String fqn) {

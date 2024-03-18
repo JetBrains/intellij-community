@@ -8,7 +8,6 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -73,12 +72,12 @@ class MutableEntityCollectionTest {
     }
 
     makeReplaceOnListOperationAndCheck(builder, listOf("/user/a.txt", "/user/f.txt"), listOf("/user/c.txt")) { entity, vfu ->
-      entity.fileProperty.retainAll(listOf(virtualFileManager.fromUrl("/user/c.txt")))
+      entity.fileProperty.retainAll(listOf(virtualFileManager.getOrCreateFromUri("/user/c.txt")))
     }
 
     makeReplaceOnListOperationAndCheck(builder, listOf("/user/c.txt"), listOf("/user/e.txt")) { entity, vfu ->
       entity.fileProperty.replaceAll {
-        if (it == vfu.single()) virtualFileManager.fromUrl("/user/e.txt") else it
+        if (it == vfu.single()) virtualFileManager.getOrCreateFromUri("/user/e.txt") else it
       }
     }
 
@@ -91,7 +90,7 @@ class MutableEntityCollectionTest {
       val listIterator = entity.fileProperty.listIterator()
       while (listIterator.hasNext()) {
         val element = listIterator.next()
-        if (element == vfu.single()) listIterator.set(virtualFileManager.fromUrl("/user/k.txt"))
+        if (element == vfu.single()) listIterator.set(virtualFileManager.getOrCreateFromUri("/user/k.txt"))
       }
     }
 
@@ -118,7 +117,7 @@ class MutableEntityCollectionTest {
 
   @Test
   fun `check vfu set basic operations`() {
-    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.fromUrl(it) }.toSet()
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.getOrCreateFromUri(it) }.toSet()
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
 
@@ -148,7 +147,7 @@ class MutableEntityCollectionTest {
     //}
 
     makeReplaceOnSetOperationAndCheck(builder, listOf("/user/b.txt", "/user/opt/app/a.txt"), listOf("/user/c.txt")) { entity, vfu ->
-      entity.fileProperty.retainAll(listOf(virtualFileManager.fromUrl("/user/c.txt")))
+      entity.fileProperty.retainAll(listOf(virtualFileManager.getOrCreateFromUri("/user/c.txt")))
     }
 
     // TODO:: Not supported
@@ -172,7 +171,7 @@ class MutableEntityCollectionTest {
   private fun makeOperationOnSetAndCheck(builder: MutableEntityStorageImpl, vararg urls: String, removeOperation: Boolean = false,
                                          operation: (SetVFUEntity.Builder, Set<VirtualFileUrl>) -> Unit) {
     val entity = builder.entities(SetVFUEntity::class.java).single()
-    val vfuForAction = urls.map { virtualFileManager.fromUrl(it) }.toSet()
+    val vfuForAction = urls.map { virtualFileManager.getOrCreateFromUri(it) }.toSet()
 
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     if (removeOperation) vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
@@ -194,7 +193,7 @@ class MutableEntityCollectionTest {
 
   @Test
   fun `collection modification allowed only in modifyEntity block`() {
-    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.fromUrl(it) }.toSet()
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.getOrCreateFromUri(it) }.toSet()
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
     val entity = builder.entities(SetVFUEntity::class.java).first()
@@ -206,7 +205,7 @@ class MutableEntityCollectionTest {
 
   @Test
   fun `check lambda is available only in certain places`() {
-    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.fromUrl(it) }.toSet()
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.getOrCreateFromUri(it) }.toSet()
     val builder = createEmptyBuilder()
     val entity = SetVFUEntity("hello", vfuSet, SampleEntitySource("test"))
     assertNotNull((entity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
@@ -225,7 +224,7 @@ class MutableEntityCollectionTest {
   private fun makeReplaceOnSetOperationAndCheck(builder: MutableEntityStorageImpl, oldUrls: List<String>, newUrls: List<String>,
                                                 operation: (SetVFUEntity.Builder, Set<VirtualFileUrl>) -> Unit) {
     val entity = builder.entities(SetVFUEntity::class.java).single()
-    val vfuForAction = oldUrls.map { virtualFileManager.fromUrl(it) }.toSet()
+    val vfuForAction = oldUrls.map { virtualFileManager.getOrCreateFromUri(it) }.toSet()
 
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
@@ -236,13 +235,13 @@ class MutableEntityCollectionTest {
 
     virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     vfuForAction.forEach { assertFalse(virtualFiles.contains(it)) }
-    newUrls.map { virtualFileManager.fromUrl(it) }.forEach { assertTrue(virtualFiles.contains(it)) }
+    newUrls.map { virtualFileManager.getOrCreateFromUri(it) }.forEach { assertTrue(virtualFiles.contains(it)) }
   }
 
   private fun makeOperationOnListAndCheck(builder: MutableEntityStorageImpl, vararg urls: String, removeOperation: Boolean = false,
                                           operation: (ListVFUEntity.Builder, List<VirtualFileUrl>) -> Unit) {
     val entity = builder.entities(ListVFUEntity::class.java).single()
-    val vfuForAction = urls.map { virtualFileManager.fromUrl(it) }
+    val vfuForAction = urls.map { virtualFileManager.getOrCreateFromUri(it) }
 
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     if (removeOperation) vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
@@ -265,7 +264,7 @@ class MutableEntityCollectionTest {
   private fun makeReplaceOnListOperationAndCheck(builder: MutableEntityStorageImpl, oldUrls: List<String>, newUrls: List<String>,
                                                  operation: (ListVFUEntity.Builder, List<VirtualFileUrl>) -> Unit) {
     val entity = builder.entities(ListVFUEntity::class.java).single()
-    val vfuForAction = oldUrls.map { virtualFileManager.fromUrl(it) }
+    val vfuForAction = oldUrls.map { virtualFileManager.getOrCreateFromUri(it) }
 
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
@@ -276,6 +275,6 @@ class MutableEntityCollectionTest {
 
     virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     vfuForAction.forEach { assertFalse(virtualFiles.contains(it)) }
-    newUrls.map { virtualFileManager.fromUrl(it) }.forEach { assertTrue(virtualFiles.contains(it)) }
+    newUrls.map { virtualFileManager.getOrCreateFromUri(it) }.forEach { assertTrue(virtualFiles.contains(it)) }
   }
 }

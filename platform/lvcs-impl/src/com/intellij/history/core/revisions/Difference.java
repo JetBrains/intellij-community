@@ -24,6 +24,10 @@ public final class Difference {
     this(isFile, left, right, false);
   }
 
+  public Difference(@Nullable Entry left, @Nullable Entry right, boolean isRightContentCurrent) {
+    this(isFile(left, right), left, right, isRightContentCurrent);
+  }
+
   public Difference(boolean isFile, @Nullable Entry left, @Nullable Entry right, boolean isRightContentCurrent) {
     myIsFile = isFile;
     myLeft = left;
@@ -35,12 +39,18 @@ public final class Difference {
     return myIsFile;
   }
 
-  public Entry getLeft() {
+  public @Nullable Entry getLeft() {
     return myLeft;
   }
 
-  public Entry getRight() {
+  public @Nullable Entry getRight() {
     return myRight;
+  }
+
+  public @Nullable FilePath getFilePath() {
+    if (myRight != null) return getFilePath(myRight);
+    if (myLeft != null) return getFilePath(myLeft);
+    return null;
   }
 
   public ContentRevision getLeftContentRevision(IdeaGateway gw) {
@@ -76,7 +86,7 @@ public final class Difference {
 
       @Override
       public @NotNull FilePath getFile() {
-        return Paths.createDvcsFilePath(e.getPath(), e.isDirectory());
+        return getFilePath(e);
       }
 
       @Override
@@ -84,5 +94,15 @@ public final class Difference {
         return VcsRevisionNumber.NULL;
       }
     };
+  }
+
+  private static @NotNull FilePath getFilePath(@NotNull Entry entry) {
+    return Paths.createDvcsFilePath(entry.getPath(), entry.isDirectory());
+  }
+
+  private static boolean isFile(@Nullable Entry left, @Nullable Entry right) {
+    if (left != null) return !left.isDirectory();
+    if (right != null) return !right.isDirectory();
+    return false;
   }
 }

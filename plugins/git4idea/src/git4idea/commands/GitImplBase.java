@@ -5,18 +5,16 @@ import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -32,6 +30,7 @@ import git4idea.rebase.GitSimpleEditorHandler;
 import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +90,7 @@ public abstract class GitImplBase implements Git {
   public @NotNull GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
     return run(handler, new OutputCollector() {
       @Override
-      protected void outputLineReceived(@NotNull String line) {}
+      protected void outputLineReceived(@NotNull String line) { }
 
       @Override
       protected void errorLineReceived(@NotNull String line) {
@@ -104,7 +103,7 @@ public abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   private static @NotNull GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
-                                      @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
+                                               @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;
@@ -142,7 +141,12 @@ public abstract class GitImplBase implements Git {
         throw e;
       }
       catch (Exception e) {
-        return handlePreValidationException(handler.project(), e);
+        Project project = handler.project();
+        if (project != null) {
+          GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
+        }
+        return GitCommandResult.startError(GitBundle.message("git.executable.validation.error.start.title") + ": \n" +
+                                           GitExecutableProblemsNotifier.getPrettyErrorMessage(e));
       }
     }
 
@@ -152,7 +156,7 @@ public abstract class GitImplBase implements Git {
       throw new ProcessCanceledException();
     }
 
-    if (project != null) {
+    if (project != null && handler.isEnableInteractiveCallbacks()) {
       try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
         try (GitHandlerRebaseEditorManager ignored = prepareGeneralPurposeEditor(project, handler)) {
           GitCommandResult result = doRun(handler, version, outputCollector);
@@ -168,7 +172,8 @@ public abstract class GitImplBase implements Git {
     }
   }
 
-  private static @NotNull GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project, @NotNull GitLineHandler handler) {
+  private static @NotNull GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project,
+                                                                                    @NotNull GitLineHandler handler) {
     return GitHandlerRebaseEditorManager.prepareEditor(handler, new GitSimpleEditorHandler(project));
   }
 
@@ -176,8 +181,8 @@ public abstract class GitImplBase implements Git {
    * Run handler with per-project locking, logging
    */
   private static @NotNull GitCommandResult doRun(@NotNull GitLineHandler handler,
-                                        @NotNull GitVersion version,
-                                        @NotNull OutputCollector outputCollector) {
+                                                 @NotNull GitVersion version,
+                                                 @NotNull OutputCollector outputCollector) {
     getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
 
     boolean canSuppressOptionalLocks = Registry.is("git.use.no.optional.locks") &&
@@ -196,10 +201,35 @@ public abstract class GitImplBase implements Git {
     catch (IOException e) {
       return GitCommandResult.error(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()));
     }
+
+    String rootName = getPresentableRootName(handler);
     return new GitCommandResult(resultListener.myStartFailed,
                                 resultListener.myExitCode,
                                 outputCollector.myErrorOutput,
-                                outputCollector.myOutput);
+                                outputCollector.myOutput,
+                                rootName);
+  }
+
+  private static @Nullable @Nls String getPresentableRootName(@NotNull GitLineHandler handler) {
+    if (GitHandler.shouldSuppressReadLocks()) return null;
+    if (handler.getCommand().equals(GitCommand.VERSION)) return null;
+
+    VirtualFile root = handler.getExecutableContext().getRoot();
+    if (root == null) return null;
+
+    Project project = handler.project();
+    if (project == null) return root.getName();
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    VirtualFile vcsRoot = vcsManager.getVcsRootFor(root);
+    if (root.equals(vcsRoot)) {
+      if (vcsManager.getRootsUnderVcs(GitVcs.getInstance(project)).length == 1) {
+        return null;
+      }
+      return ProjectLevelVcsManager.getInstance(project).getShortNameForVcsRoot(root);
+    }
+
+    return root.getName();
   }
 
   /**
@@ -320,23 +350,6 @@ public abstract class GitImplBase implements Git {
     abstract void outputLineReceived(@NotNull String line);
 
     abstract void errorLineReceived(@NotNull String line);
-  }
-
-  private static @NotNull GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
-    // Show notification if it's a project non-modal task and cancel the task
-    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (project != null
-        && progressIndicator != null
-        && !progressIndicator.getModalityState().dominates(ModalityState.nonModal())) {
-      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
-      throw new ProcessCanceledException(e);
-    }
-    else {
-      return GitCommandResult.startError(
-        GitBundle.message("git.executable.validation.error.start.title") + ": \n" +
-        GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
-      );
-    }
   }
 
   private static void writeOutputToConsole(@NotNull GitLineHandler handler) {

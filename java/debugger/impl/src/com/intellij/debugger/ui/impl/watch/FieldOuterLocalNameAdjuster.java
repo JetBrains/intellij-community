@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay.Tropin
  */
-public class FieldOuterLocalNameAdjuster extends NodeDescriptorNameAdjuster {
+public final class FieldOuterLocalNameAdjuster extends NodeDescriptorNameAdjuster {
 
   @Override
   public boolean isApplicable(@NotNull NodeDescriptor descriptor) {

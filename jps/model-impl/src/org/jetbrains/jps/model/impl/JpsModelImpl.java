@@ -22,17 +22,10 @@ import org.jetbrains.jps.model.JpsModel;
 public final class JpsModelImpl implements JpsModel {
   private final JpsProjectImpl myProject;
   private final JpsGlobalImpl myGlobal;
-  private JpsModelImpl myOriginalModel;
 
   public JpsModelImpl() {
     myProject = new JpsProjectImpl(this);
     myGlobal = new JpsGlobalImpl(this);
-  }
-
-  private JpsModelImpl(JpsModelImpl original) {
-    myOriginalModel = original;
-    myProject = new JpsProjectImpl(original.myProject, this);
-    myGlobal = new JpsGlobalImpl(original.myGlobal, this);
   }
 
   @Override
@@ -50,15 +43,5 @@ public final class JpsModelImpl implements JpsModel {
   @Override
   public void registerExternalReference(@NotNull JpsElementReference<?> reference) {
     myProject.addExternalReference(reference);
-  }
-
-  @Override
-  public void commit() {
-    myOriginalModel.applyChanges(this);
-  }
-
-  private void applyChanges(@NotNull JpsModelImpl modifiedCopy) {
-    myProject.applyChanges(modifiedCopy.myProject);
-    myGlobal.applyChanges(modifiedCopy.myGlobal);
   }
 }

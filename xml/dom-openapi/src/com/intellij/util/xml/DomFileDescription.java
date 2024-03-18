@@ -32,7 +32,7 @@ public class DomFileDescription<T> {
   /**
    * @deprecated Register with {@code com.intellij.dom.fileMetaData} extension point instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentFactoryMap.createMap(key -> {

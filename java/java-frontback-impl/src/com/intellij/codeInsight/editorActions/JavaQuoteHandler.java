@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
@@ -127,8 +127,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   }
 
   private static boolean testBlocksIsAvailable(@NotNull PsiFile file){
-      return AbstractBasicJavaDefinitionService.getJavaDefinitionService()
-        .getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_15);
+      return JavaFeature.TEXT_BLOCKS.isSufficient(AbstractBasicJavaDefinitionService.getJavaDefinitionService().getLanguageLevel(file));
   }
 
   @Override

@@ -37,7 +37,8 @@ UFile (package = )
             UParameter (name = t)
                 UAnnotation (fqName = kotlin.Suppress)
                     UNamedExpression (name = names)
-                        ULiteralExpression (value = "s")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "s")
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
@@ -46,7 +47,8 @@ UFile (package = )
                 UAnnotation (fqName = null)
                 UAnnotation (fqName = kotlin.Suppress)
                     UNamedExpression (name = names)
-                        ULiteralExpression (value = "s")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "s")
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)

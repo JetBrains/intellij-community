@@ -8,7 +8,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 
-public class MethodReturnTypeMacro extends Macro {
+public final class MethodReturnTypeMacro extends Macro {
   @Override
   public String getName() {
     return "methodReturnType";

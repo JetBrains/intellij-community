@@ -9,9 +9,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class PyElementGenerator {
+public abstract class PyElementGenerator extends PyAstElementGenerator {
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PyElementGenerator getInstance(Project project) {
-    return project.getService(PyElementGenerator.class);
+    return (PyElementGenerator)PyAstElementGenerator.getInstance(project);
+  }
+
+  public PyElementGenerator(Project project) {
+    super(project);
   }
 
   public abstract ASTNode createNameIdentifier(String name, LanguageLevel languageLevel);
@@ -38,8 +43,6 @@ public abstract class PyElementGenerator {
   public abstract PyStringLiteralExpression createStringLiteral(@NotNull StringLiteralExpression oldElement, @NotNull String unescaped);
 
   public abstract PyListLiteralExpression createListLiteral();
-
-  public abstract ASTNode createComma();
 
   public abstract ASTNode createDot();
 
@@ -79,25 +82,6 @@ public abstract class PyElementGenerator {
                                             String fieldName,
                                             AccessDirection accessDirection);
 
-  @NotNull
-  public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
-
-  @NotNull
-  public abstract <T> T createPhysicalFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
-
-  /**
-   * Creates an arbitrary PSI element from text, by creating a bigger construction and then cutting the proper subelement.
-   * Will produce all kinds of exceptions if the path or class would not match the PSI tree.
-   *
-   * @param langLevel the language level to use for parsing the text
-   * @param aClass    class of the PSI element; may be an interface not descending from PsiElement, as long as target node can be cast to it
-   * @param text      text to parse
-   * @param path      a sequence of numbers, each telling which child to select at current tree level; 0 means first child, etc.
-   * @return the newly created PSI element
-   */
-  @NotNull
-  public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path);
-
   public abstract PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
                                                    @NotNull LanguageLevel level);
 
@@ -117,9 +101,10 @@ public abstract class PyElementGenerator {
 
   public abstract PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value);
 
-  public abstract PsiFile createDummyFile(LanguageLevel langLevel, String contents);
-
-  public abstract PyExpressionStatement createDocstring(String content);
+  @Override
+  public PyExpressionStatement createDocstring(String content) {
+    return (PyExpressionStatement)super.createDocstring(content);
+  }
 
   public abstract PyPassStatement createPassStatement();
 

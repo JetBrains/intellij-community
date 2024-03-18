@@ -96,6 +96,20 @@ public final class Registry {
     isLoaded = false;
   }
 
+  public static double doubleValue(@NonNls @NotNull String key, double defaultValue) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
+      return defaultValue;
+    }
+
+    try {
+      return getInstance().doGet(key).asDouble();
+    }
+    catch (MissingResourceException ignore) {
+      return defaultValue;
+    }
+  }
+
   public static double doubleValue(@NonNls @NotNull String key) throws MissingResourceException {
     return get(key).asDouble();
   }

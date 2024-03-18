@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
 
@@ -25,17 +27,19 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
   override fun getName() = "#${pullRequest.number}"
   override fun getPresentableName() = findDetails()?.let { "${it.title} $name" } ?: name
 
-  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, null)
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, false)
   override fun getPresentablePath() = findDetails()?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
 
   fun getIcon(): Icon? = findDetails()?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
 
-  private fun findDetails(): GHPullRequestShort? =
-    project.service<GHRepositoryConnectionManager>().connectionState.value?.dataContext?.run {
-      listLoader.loadedData.find { it.id == pullRequest.id }
-      ?: dataProviderRepository.findDataProvider(pullRequest)?.detailsData?.loadedDetails
-    }
+  override fun isValid(): Boolean = findProjectVm() != null
 
+  override fun setValid(valid: Boolean) = Unit
+
+  fun findProjectVm(): GHPRToolWindowProjectViewModel? =
+    project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
+
+  private fun findDetails(): GHPullRequestShort? = findProjectVm()?.findDetails(pullRequest)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

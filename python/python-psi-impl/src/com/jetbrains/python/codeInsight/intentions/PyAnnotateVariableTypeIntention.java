@@ -40,7 +40,7 @@ import java.util.*;
 /**
  * @author Mikhail Golubev
  */
-public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
+public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   @Nls
   @NotNull
   @Override

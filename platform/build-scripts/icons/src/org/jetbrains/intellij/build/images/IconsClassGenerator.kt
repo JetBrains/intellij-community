@@ -2,9 +2,8 @@
 package org.jetbrains.intellij.build.images
 
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.icons.loadPng
+import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
@@ -12,6 +11,7 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xml.dom.readXmlAsModel
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconClasses
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -68,7 +68,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val processedPhantom = AtomicInteger()
   private val modifiedClasses = CopyOnWriteArrayList<ModifiedClass>()
   private val obsoleteClasses = CopyOnWriteArrayList<Path>()
-  
+
   private val openSourceRoot: Path? by lazy {
     val communityFolderMarkerFile = "intellij.idea.community.main.iml"
     if (projectHome.resolve(communityFolderMarkerFile).exists()) return@lazy projectHome
@@ -149,21 +149,31 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         )
         val existingIconsClass = findExistingIconsClass(sourceRoots, possiblePackageNames)
         val packageName = existingIconsClass?.packageName ?: possiblePackageNames.first()
-        val targetRoot = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
+        val targetRoot = sourceRoot.findPackageDirectory(packageName)
 
-        if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources 
+        if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources
             && sourceRoot.properties.isForGeneratedSources && images.isNotEmpty()) {
           val oldFile = existingIconsClass.filePath
           println("deleting $oldFile from source root which isn't marked as 'generated', it'll be recreated under the proper root")
           Files.delete(oldFile)
         }
 
-        val className = moduleConfig?.className 
+        val className = moduleConfig?.className
                         ?: existingIconsClass?.className
                         ?: "${directoryName(module).removeSuffix("Icons")}Icons"
         val outFile = targetRoot.resolve("$className.java")
-        return listOf(IconClassInfo(true, packageName, className, outFile, images))
+        val info = IconClassInfo(true, packageName, className, outFile, images)
+        return transformIconClassInfo(info, module, moduleConfig)
       }
+    }
+  }
+
+  private fun transformIconClassInfo(info: IconClassInfo,
+                                     module: JpsModule,
+                                     moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
+    return when (module.name) {
+      "intellij.rider.icons" -> DotnetIconClasses.transformIconClassInfo(info)
+      else -> listOf(info)
     }
   }
 
@@ -173,12 +183,12 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     val packageName: String,
     val className: String
   )
-  
+
   private fun findExistingIconsClass(sourceRoots: List<JpsTypedModuleSourceRoot<JavaSourceRootProperties>>,
                                      possiblePackageNames: List<String>): ExistingIconsClass? {
     for (sourceRoot in sourceRoots) {
       for (packageName in possiblePackageNames) {
-        val directory = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
+        val directory = sourceRoot.findPackageDirectory(packageName)
         val className = findIconClass(directory)
         if (className != null) {
           return ExistingIconsClass(sourceRoot, directory.resolve("$className.java"), packageName, className)
@@ -186,6 +196,13 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       }
     }
     return null
+  }
+
+  private fun JpsTypedModuleSourceRoot<JavaSourceRootProperties>.findPackageDirectory(packageName: String): Path {
+    val packagePrefix = properties.packagePrefix
+    if (packagePrefix == packageName) return path
+    val relativePackage = packageName.removePrefix("$packagePrefix.")
+    return path.resolve(relativePackage.replace('.', File.separatorChar))
   }
 
   fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
@@ -267,10 +284,10 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
   private fun getCopyrightComment(text: String?, module: JpsModule): String {
     if (text == null) {
-      if (openSourceRoot == null || module.contentRootsList.urls.any { 
-        !openSourceRoot!!.isAncestor(Path.of(JpsPathUtil.urlToOsPath(it)), false)
-      }) return ""
-      
+      if (openSourceRoot == null || module.contentRootsList.urls.any { !Path.of(JpsPathUtil.urlToOsPath(it)).startsWith(openSourceRoot!!) }) {
+        return ""
+      }
+
       return "// Copyright 2000-${LocalDate.now().year} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.\n"
     }
     val i = text.indexOf("package ")
@@ -407,7 +424,9 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     }
   }
 
-  protected open fun isInlineClass(name: CharSequence) = false
+  protected open fun isInlineClass(name: CharSequence): Boolean {
+    return DotnetIconClasses.isInlineClass(name)
+  }
 
   private fun appendImage(image: ImageInfo, result: StringBuilder, level: Int, customLoad: Boolean, hasher: IconHasher) {
     val file = image.basicFile ?: return
@@ -486,7 +505,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         javaDoc = "/** ${size.width.toInt()}x${size.height.toInt()} */ "
       }
       else {
-        val loadedImage = Files.newInputStream(file).use { loadPng(it) }
+        val loadedImage = Files.newInputStream(file).use { loadRasterImage(it) }
         key = 0
         javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
       }

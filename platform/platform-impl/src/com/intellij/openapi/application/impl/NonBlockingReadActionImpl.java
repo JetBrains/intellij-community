@@ -667,6 +667,17 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private void failJob(@NotNull Throwable reason) {
       Continuation<Unit> continuation = myChildContext.getContinuation();
       if (continuation != null) {
+        if (reason instanceof ProcessCanceledException e) {
+          Job job = myChildContext.getJob();
+          if (job != null) {
+            // Normally, any exception reported here goes directly to top-level `CoroutineExceptionHandlerImpl`.
+            // This is undesirable for PCE, which expresses cancellation, and not a fatal error.
+            // As a rule, PCE in continuation is handled in `runAsCoroutine`, but since we are opting for manual cancellation handling,
+            // we need to process PCE manually as well.
+            job.cancel(new PceCancellationException(e));
+            return;
+          }
+        }
         continuation.resumeWith(new Result.Failure(reason));
       }
     }

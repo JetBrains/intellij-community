@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -40,8 +40,8 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_FLOW_ALIGN, layout.getAlignment());
   }
 
-  @NotNull @Override
-  public ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
     FlowLayout flowLayout = (FlowLayout) container.getLayout();
     return new FlowDropLocation(container, location, flowLayout.getAlignment(),
                                 (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2);
@@ -89,7 +89,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     }
 
     @Override
-    @NotNull public PropertyRenderer<Integer> getRenderer() {
+    public @NotNull PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
         initPairs();
         myRenderer = new IntEnumRenderer(myPairs);
@@ -98,7 +98,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     }
 
     @Override
-    @NotNull public PropertyEditor<Integer> getEditor() {
+    public @NotNull PropertyEditor<Integer> getEditor() {
       if (myEditor == null) {
         initPairs();
         myEditor = new IntEnumEditor(myPairs);

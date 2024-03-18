@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ImplicitCallToSuperInspection extends BaseInspection {
+public final class ImplicitCallToSuperInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean m_ignoreForObjectSubclasses = false;

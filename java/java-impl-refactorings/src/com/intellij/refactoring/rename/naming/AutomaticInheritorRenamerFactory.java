@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class AutomaticInheritorRenamerFactory implements AutomaticRenamerFactory {
+public final class AutomaticInheritorRenamerFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof PsiClass;

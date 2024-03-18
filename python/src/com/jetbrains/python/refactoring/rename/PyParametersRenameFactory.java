@@ -17,7 +17,7 @@ import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyParametersRenameFactory implements AutomaticRenamerFactory {
+public final class PyParametersRenameFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     if (element instanceof PyParameter) {

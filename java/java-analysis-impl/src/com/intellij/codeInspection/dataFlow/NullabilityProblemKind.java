@@ -8,10 +8,8 @@ import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -352,12 +350,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
           if (labelElementList == null) continue;
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
-            if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
-            if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_20_PREVIEW) &&
-                element instanceof PsiPattern && expressionType != null &&
-                JavaPsiPatternUtil.isUnconditionalForType(element, expressionType)) {
-              return null;
-            }
+            if (element instanceof PsiExpression caseExpression && TypeConversionUtil.isNullType(caseExpression.getType())) return null;
           }
         }
       }

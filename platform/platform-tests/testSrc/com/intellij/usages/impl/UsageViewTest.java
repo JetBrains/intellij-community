@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -230,7 +230,7 @@ public class UsageViewTest extends BasePlatformTestCase {
 
     String text = new ExporterToTextFile(usageView, UsageViewSettings.getInstance()).getReportText();
     assertEquals("""
-                   Usages in  (1 usage found)
+                   Usages  (1 usage found)
                        Unclassified  (1 usage found)
                            light_idea_test_case  (1 usage found)
                                  (1 usage found)

@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyBoolLiteralExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.types.PyType;
@@ -18,11 +17,6 @@ public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBool
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyBuiltinCache.getInstance(this).getBoolType();
-  }
-
-  @Override
-  public boolean getValue() {
-    return PyNames.TRUE.equals(getText());
   }
 
   @Override

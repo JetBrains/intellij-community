@@ -11,7 +11,7 @@
                         serviceImplementation="org.jetbrains.kotlin.idea.jvmDecompiler.KotlinJvmDecompilerFacadeImpl"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.KotlinJvmDecompilerBundle">
     <action id="DecompileKotlinToJava" class="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>

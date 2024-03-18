@@ -26,5 +26,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.idea.customization.base" />
+    <orderEntry type="module" module-name="intellij.platform.experiment" scope="RUNTIME" />
   </component>
 </module>

@@ -383,11 +383,6 @@ public final class ModulesDependenciesPanel extends JPanel implements Disposable
     }
 
     @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
     public String getNavigateActionText(boolean focusEditor) {
       return ActionsBundle.message("action.ModuleSettings.navigate");
     }

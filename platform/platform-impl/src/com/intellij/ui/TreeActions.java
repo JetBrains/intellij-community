@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
-
 public abstract class TreeActions extends SwingActionDelegate {
   private TreeActions(String actionId) {
     super(actionId);
@@ -17,7 +15,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   @Override
   protected @Nullable JTree getComponent(AnActionEvent event) {
     var component = super.getComponent(event);
-    return component instanceof JTree tree && getSupply(component) == null ? tree : null;
+    return component instanceof JTree tree && !speedSearchHandlesNavigation(component) ? tree : null;
   }
 
   public static final class Home extends TreeActions {

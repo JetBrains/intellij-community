@@ -2,10 +2,10 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
-import com.intellij.platform.runtime.repository.ProductMode
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
@@ -19,7 +19,7 @@ class JetBrainsClientModuleFilterImpl(clientMainModuleName: String, context: Bui
     val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
     val repository = RuntimeModuleRepository.create(repositoryForCompiledModulesPath)
     val productModulesFile = findProductModulesFile(context, clientMainModuleName)!!
-    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(productModulesFile, ProductMode.FRONTEND, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(productModulesFile, ProductMode.FRONTEND, repository)
     includedModules = (sequenceOf(productModules.mainModuleGroup) + productModules.bundledPluginModuleGroups.asSequence())
        .flatMap { it.includedModules.asSequence() } 
        .mapTo(HashSet()) { it.moduleDescriptor.moduleId }

@@ -22,7 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PythonCommenter implements CodeDocumentationAwareCommenter, IndentedCommenter {
+public final class PythonCommenter implements CodeDocumentationAwareCommenter, IndentedCommenter {
   @Override
   public String getLineCommentPrefix() {
     return "# ";

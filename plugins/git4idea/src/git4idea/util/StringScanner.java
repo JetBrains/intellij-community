@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
+import com.intellij.openapi.vcs.VcsException;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -68,7 +70,7 @@ public class StringScanner {
    *
    * @return a token
    */
-  public String spaceToken() {
+  public String spaceToken() throws VcsException {
     return boundedToken(' ');
   }
 
@@ -78,7 +80,7 @@ public class StringScanner {
    *
    * @return a token
    */
-  public String tabToken() {
+  public String tabToken() throws VcsException {
     return boundedToken('\t');
   }
 
@@ -89,7 +91,7 @@ public class StringScanner {
    * @param boundaryChar a boundary character
    * @return a token
    */
-  public @NotNull String boundedToken(final char boundaryChar) {
+  public @NotNull String boundedToken(final char boundaryChar) throws VcsException {
     return boundedToken(boundaryChar, false);
   }
 
@@ -101,7 +103,7 @@ public class StringScanner {
    * @param ignoreEol    if true, the end of line is considered as normal character and consumed
    * @return a token
    */
-  public @NotNull String boundedToken(char boundaryChar, boolean ignoreEol) {
+  public @NotNull String boundedToken(char boundaryChar, boolean ignoreEol) throws VcsException {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {
       final char ch = myText.charAt(myPosition);
@@ -114,7 +116,7 @@ public class StringScanner {
         return myText.substring(start, myPosition);
       }
     }
-    throw new IllegalStateException("Unexpected text end at " + myPosition);
+    throw unexpectedTextEndException(start);
   }
 
   /**
@@ -174,55 +176,49 @@ public class StringScanner {
    *
    * @param n characters to skip
    */
-  public void skipChars(final int n) {
+  public void skipChars(final int n) throws VcsException {
     if (n < 0) {
       throw new IllegalArgumentException("Amount of chars to skip must be non neagitve: " + n);
     }
     if (myPosition + n >= myText.length()) {
-      throw new IllegalArgumentException("Skipping beyond end of the text (" + myPosition + " + " + n + " >= " + myText.length() + ")");
+      throw unexpectedTextEndException(myPosition);
     }
     myPosition += n;
   }
 
   /**
-   * Try string and consume it if it matches
-   *
-   * @param c a character to try
-   * @return true if the string was consumed.
-   */
-  public boolean tryConsume(final char c) {
-    if (startsWith(c)) {
-      skipChars(1);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Try consuming a sequence of characters
-   *
-   * @param chars a sequence of characters
-   * @return true if consumed successfully
-   */
-  public boolean tryConsume(String chars) {
-    if (startsWith(chars)) {
-      skipChars(chars.length());
-      return true;
-    }
-    return false;
-  }
-
-  /**
    * @return the next character to be consumed
    */
-  public char peek() {
+  public char peek() throws VcsException {
     if (!hasMoreData()) {
-      throw new IllegalStateException("There is no next character");
+      throw unexpectedTextEndException(myPosition);
     }
     return myText.charAt(myPosition);
   }
 
   public String getAllText() {
     return myText;
+  }
+
+  private @NotNull VcsException unexpectedTextEndException(int start) {
+    start = boundToText(start);
+
+    int firstWindowStart = boundToText(start - 10);
+    int firstWindowEnd = boundToText(start + 10);
+    int secondWindowStart = boundToText(myText.length() - 10);
+    int secondWindowEnd = boundToText(myText.length());
+    String context;
+    if (secondWindowEnd - firstWindowStart < 50) {
+      context = myText.substring(firstWindowStart, start) + "<!>" + myText.substring(start, secondWindowEnd);
+    }
+    else {
+      context = myText.substring(firstWindowStart, start) + "<!>" + myText.substring(start, firstWindowEnd) + "..." +
+                myText.substring(secondWindowStart, secondWindowEnd);
+    }
+    return new VcsException(GitBundle.message("output.parse.exception.unexpected.end.message", context));
+  }
+
+  private int boundToText(int offset) {
+    return Math.max(0, Math.min(myText.length(), offset));
   }
 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -287,9 +286,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void showDiff() {
-    EditorTabDiffPreviewManager previewManager = EditorTabDiffPreviewManager.getInstance(myProject);
     DiffPreview diffPreview = getShowDiffActionPreview();
-    if (diffPreview != null && previewManager.isEditorDiffPreviewAvailable()) {
+    if (diffPreview != null) {
       diffPreview.performDiffAction();
     }
     else {
@@ -347,8 +345,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ChangesBrowserBase changesBrowser = e.getRequiredData(DATA_KEY);
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);
+      if (changesBrowser == null) return;
 
       showStandaloneDiff(project, changesBrowser);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.configurationStore.BatchUpdateListener
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -40,7 +41,6 @@ import com.intellij.project.stateStore
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -52,6 +52,7 @@ import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<ProjectRootManagerComponent>()
 private val LOG_CACHES_UPDATE by lazy(LazyThreadSafetyMode.NONE) {
@@ -201,8 +202,7 @@ open class ProjectRootManagerComponent(project: Project,
       postCollect(newDisposable, oldDisposable, watchRoots)
     }
     else {
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
           postCollect(newDisposable, oldDisposable, watchRoots)
@@ -266,8 +266,8 @@ open class ProjectRootManagerComponent(project: Project,
     val store = project.stateStore
     val projectFilePath = store.projectFilePath
     if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
-      flatPaths += projectFilePath.systemIndependentPath
-      flatPaths += store.workspacePath.systemIndependentPath
+      flatPaths += projectFilePath.invariantSeparatorsPathString
+      flatPaths += store.workspacePath.invariantSeparatorsPathString
       WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }
     }
 
@@ -359,15 +359,18 @@ open class ProjectRootManagerComponent(project: Project,
       rootFiles.forEach { recursivePaths.add(it.path) }
     }
 
-    builder.forEachModuleContentEntitiesRoots { roots ->
+    builder.forEachModuleContentEntitiesRoots { urlRoots ->
+      val roots = urlRoots.toRootHolder()
       register(roots.roots, "module content roots")
       register(roots.nonRecursiveRoots, "module non-recursive content roots")
     }
-    builder.forEachContentEntitiesRoots { roots ->
+    builder.forEachContentEntitiesRoots { urlRoots ->
+      val roots = urlRoots.toRootHolder()
       register(roots.roots, "content roots")
       register(roots.nonRecursiveRoots, "non-recursive content roots")
     }
-    builder.forEachExternalEntitiesRoots { roots ->
+    builder.forEachExternalEntitiesRoots { urlRoots ->
+      val roots = urlRoots.toSourceRootHolder()
       register(roots.roots, "external roots")
       register(roots.sourceRoots, "external source roots")
       register(roots.nonRecursiveRoots, "non-recursive external roots")

@@ -2,6 +2,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -41,13 +42,22 @@ public final class EditableSchemesCombo<T extends Scheme> {
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
-    myRootPanel = new JPanel(myLayout);
+    myRootPanel = new JPanel(myLayout) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), super.getPreferredSize().height);
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE);
+      }
+    };
+    myRootPanel.setOpaque(false);
     createCombo();
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
     myRootPanel.add(myNameEditorField);
-    myRootPanel.setPreferredSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
-    myRootPanel.setMaximumSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE));
   }
 
   private JTextField createNameEditorField() {
@@ -144,6 +154,12 @@ public final class EditableSchemesCombo<T extends Scheme> {
       }
 
       @Override
+      protected boolean isDefaultScheme(@NotNull T scheme) {
+        SchemesModel<T> model = mySchemesPanel.getModel();
+        return model.isDefaultScheme(scheme);
+      }
+
+      @Override
       protected int getIndent(@NotNull T scheme) {
         return mySchemesPanel.getIndent(scheme);
       }
@@ -166,6 +182,7 @@ public final class EditableSchemesCombo<T extends Scheme> {
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });
+    myComboBox.setOpaque(false);
   }
 
   public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
@@ -181,6 +198,10 @@ public final class EditableSchemesCombo<T extends Scheme> {
 
   public void resetSchemes(@NotNull Collection<? extends T> schemes) {
     myComboBox.resetSchemes(schemes);
+  }
+
+  public void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    myComboBox.resetGroupedSchemes(schemeGroups);
   }
 
   public @Nullable T getSelectedScheme() {
@@ -220,5 +241,10 @@ public final class EditableSchemesCombo<T extends Scheme> {
       this.nameConsumer = nameConsumer;
       this.isProjectScheme = isProjectScheme;
     }
+  }
+
+  public void setEnabled(boolean enabled) {
+    getComponent().setEnabled(enabled);
+    myComboBox.setEnabled(enabled);
   }
 }

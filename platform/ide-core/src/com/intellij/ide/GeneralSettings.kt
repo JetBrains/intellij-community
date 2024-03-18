@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.util.xmlb.annotations.Transient
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -192,16 +191,6 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     this.state = state
   }
 
-  @Suppress("unused")
-  @get:Deprecated("unused")
-  @get:Transient
-  @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("unused")
-  @set:ApiStatus.ScheduledForRemoval
-  var isConfirmExtractFiles: Boolean
-    get() = true
-    set(_) {}
-
   @MagicConstant(intValues = [OPEN_PROJECT_ASK.toLong(), OPEN_PROJECT_NEW_WINDOW.toLong(), OPEN_PROJECT_SAME_WINDOW.toLong(), OPEN_PROJECT_SAME_WINDOW_ATTACH.toLong()])
   internal annotation class OpenNewProjectOption
 
@@ -223,7 +212,7 @@ data class GeneralSettingsState(
   @JvmField
   var autoSyncFiles: Boolean = true,
   @JvmField
-  var backgroundSyncFiles: Boolean = false,
+  var backgroundSyncFiles: Boolean = true,
   @JvmField
   var autoSaveFiles: Boolean = true,
   @JvmField

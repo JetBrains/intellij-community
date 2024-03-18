@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -215,14 +217,39 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                 disableForFile(virtualFile, indentOptions);
                 notifyIndentOptionsChanged(project, virtualFile);
               }));
+          final var reindentActionText = ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip);
           actions.add(
-            DumbAwareAction.create(ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip),
+            DumbAwareAction.create(reindentActionText,
                                    e -> {
                                      disableForFile(virtualFile, indentOptions);
+                                     final var document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+                                     if (document != null) {
+                                       // IDEA-332405 -- make sure that detected indent options are not used for the "reindent file" action
+                                       final var indentOptsWithoutDetected = CodeStyle
+                                         .getSettings(project, virtualFile)
+                                         .getIndentOptionsByFile(project, virtualFile, null, true, null);
+                                       indentOptsWithoutDetected.associateWithDocument(document);
+                                     }
                                      notifyIndentOptionsChanged(project, virtualFile);
-                                     CommandProcessor.getInstance().runUndoTransparentAction(
+                                     CommandProcessor.getInstance().executeCommand(
+                                       project,
                                        () -> ApplicationManager.getApplication().runWriteAction(
-                                         () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, file.getTextRange()))
+                                         () -> {
+                                           CodeStyleManager.getInstance(project).adjustLineIndent(file, file.getTextRange());
+                                           UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+                                             @Override
+                                             public void undo() {
+                                               notifyIndentOptionsChanged(project, virtualFile);
+                                             }
+
+                                             @Override
+                                             public void redo() {
+                                               notifyIndentOptionsChanged(project, virtualFile);
+                                             }
+                                           });
+                                         }),
+                                       reindentActionText,
+                                       null
                                      );
                                      myDiscardedOptions.remove(virtualFile);
                                    }));

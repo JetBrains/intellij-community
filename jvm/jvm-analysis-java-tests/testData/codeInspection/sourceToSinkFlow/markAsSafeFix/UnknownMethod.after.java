@@ -9,7 +9,8 @@ class Simple {
     sink(s);
   }
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
     return "safe";
   }
 

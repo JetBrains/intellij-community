@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -11,8 +11,10 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -22,16 +24,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.platform.ijent.IjentApi;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -39,6 +37,7 @@ import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
@@ -73,7 +72,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   private static final String DEFAULT_WSL_IP = "127.0.0.1";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  private static final String DEFAULT_SHELL = "/bin/sh";
+  static final String DEFAULT_SHELL = "/bin/sh";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
   private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";
@@ -82,6 +81,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
+  private static final Key<Boolean> NEVER_RUN_TTY_FIX = Key.create("Never run ttyfix");
 
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
@@ -227,26 +227,28 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
-    if (WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe()) {
-      if (commandLine instanceof PtyCommandLine) {
-        commandLine.setProcessCreator((processBuilder) -> {
-          var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
-          var ijentPty = new IjentApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
-
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, ijentPty);
-        });
+    if (mustRunCommandLineWithIjent(options)) {
+      LocalPtyOptions ptyOptions;
+      if (commandLine instanceof PtyCommandLine ptyCommandLine) {
+        ptyOptions = ptyCommandLine.getPtyOptions();
       }
       else {
-        commandLine.setProcessCreator((processBuilder) -> {
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, null);
-        });
+        ptyOptions = null;
       }
+      commandLine.setProcessCreator((processBuilder) -> {
+        return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
+      });
     }
     else {
       doPatchCommandLine(commandLine, project, options);
     }
 
     return commandLine;
+  }
+
+  @VisibleForTesting
+  public static boolean mustRunCommandLineWithIjent(@NotNull WSLCommandLineOptions options) {
+    return WslIjentManager.getInstance().isIjentAvailable() && !options.isLaunchWithWslExe();
   }
 
   final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
@@ -299,7 +301,10 @@ public class WSLDistribution implements AbstractWslDistribution {
       prependCommand(linuxCommand, "cd", CommandLineUtil.posixQuote(options.getRemoteWorkingDirectory()), "&&");
     }
     if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
-      commandLine.getEnvironment().forEach((key, val) -> {
+      Comparator<Map.Entry<String, String>> comparator = Map.Entry.<String, String>comparingByKey().reversed();
+      commandLine.getEnvironment().entrySet().stream().sorted(comparator).forEach((entry) -> {
+        String key = entry.getKey();
+        String val = entry.getValue();
         if (ENV_VARIABLE_NAME_PATTERN.matcher(key).matches()) {
           prependCommand(linuxCommand, "export", key + "=" + CommandLineUtil.posixQuote(val), "&&");
         }
@@ -333,10 +338,13 @@ public class WSLDistribution implements AbstractWslDistribution {
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
+          fixTTYSize(commandLine);
           commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters(EXEC_PARAMETER, getShellPath());
+          commandLine.addParameter(EXEC_PARAMETER);
+          fixTTYSize(commandLine);
+          commandLine.addParameter(getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -367,6 +375,31 @@ public class WSLDistribution implements AbstractWslDistribution {
     return commandLine;
   }
 
+
+  /***
+   * Never run {@link #fixTTYSize(GeneralCommandLine)}
+   */
+  @NotNull
+  public static GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
+    commandLine.putUserData(NEVER_RUN_TTY_FIX, true);
+    return commandLine;
+  }
+
+  /**
+   * Workaround for <a href="https://github.com/microsoft/WSL/issues/10701">wrong tty size WSL problem</a>
+   */
+  private void fixTTYSize(@NotNull GeneralCommandLine cmd) {
+    if (!WslDistributionDescriptor.isCalculatingMountRootCommand(cmd)
+        && cmd.getUserData(NEVER_RUN_TTY_FIX) == null // ttyfix not disabled explicitly
+        // Even though mount root is calculated with `options.isExecuteCommandInShell()=false`,
+        // let's protect from possible infinite recursion.
+        && !(cmd instanceof PtyCommandLine)  // PTY command line has correct tty size
+        && Registry.is("wsl.fix.initial.tty.size.when.running.without.tty", true)) {
+      var ttyfix = AbstractWslDistributionKt.getToolLinuxPath(this, "ttyfix");
+      cmd.addParameter(ttyfix);
+    }
+  }
+
   private void logCommandLineBefore(@NotNull GeneralCommandLine commandLine, @NotNull WSLCommandLineOptions options) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("[" + getId() + "] " +
@@ -385,7 +418,19 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
   }
 
+  private static @Nullable Path testOverriddenWslExe;
+
+  @TestOnly
+  public static void testOverriddenWslExe(@NotNull Path path, @NotNull Disposable disposable) {
+    Disposer.register(disposable, () -> {
+      testOverriddenWslExe = null;
+    });
+    testOverriddenWslExe = path;
+  }
+
   public static @Nullable Path findWslExe() {
+    if (testOverriddenWslExe != null) return testOverriddenWslExe;
+
     File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
     return file != null ? file.toPath() : null;
   }
@@ -398,14 +443,14 @@ public class WSLDistribution implements AbstractWslDistribution {
   // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
   private static void passEnvironmentUsingInterop(@NotNull GeneralCommandLine commandLine) {
     StringBuilder builder = new StringBuilder();
-    for (String envName : commandLine.getEnvironment().keySet()) {
+    commandLine.getEnvironment().keySet().stream().sorted().forEach((envName) -> {
       if (StringUtil.isNotEmpty(envName)) {
         if (builder.length() > 0) {
           builder.append(":");
         }
         builder.append(envName).append("/u");
       }
-    }
+    });
     if (builder.length() > 0) {
       String prevValue = commandLine.getEnvironment().get(WslConstants.WSLENV);
       if (prevValue == null) {
@@ -469,8 +514,8 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return environment map of the default user in wsl
    */
   public @Nullable Map<String, String> getEnvironment() {
-    if (WslIjentManager.isIjentAvailable()) {
-      return WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+    if (WslIjentManager.getInstance().isIjentAvailable()) {
+      return WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
     }
     try {
       ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
@@ -530,9 +575,23 @@ public class WSLDistribution implements AbstractWslDistribution {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #getWslPath(Path)}
+   */
+  @Deprecated
+  public final @Nullable String getWslPath(@NotNull @NlsSafe String windowsPath) {
+    try {
+      return getWslPath(Path.of(windowsPath));
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Failed to convert '" + windowsPath + "' to wsl path", e);
+      return null;
+    }
+  }
+
   @Override
-  public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath);
+  public @Nullable @NlsSafe String getWslPath(@NotNull Path windowsPath) {
+    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath.toString());
     if (wslPath != null) {
       if (wslPath.getDistributionId().equalsIgnoreCase(myDescriptor.getMsId())) {
         return wslPath.getLinuxPath();
@@ -542,8 +601,8 @@ public class WSLDistribution implements AbstractWslDistribution {
                                          ", but context distribution is " + myDescriptor.getMsId());
     }
 
-    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return getMntRoot() + convertWindowsPath(windowsPath);
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath.toString())) { // absolute windows path => /mnt/disk_letter/path
+      return getMntRoot() + convertWindowsPath(windowsPath.toString());
     }
     return null;
   }
@@ -619,8 +678,11 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * Windows IP address. See class doc before using it, because this is probably not what you are looking for.
    *
+   * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
+   *
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
    */
+  @Deprecated
   public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
     final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
     if (hostIpOrException == null) {
@@ -634,7 +696,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public final @NotNull InetAddress getWslIpAddress() {
     if (Registry.is("wsl.proxy.connect.localhost")) {
-      return InetAddress.getLoopbackAddress();
+      return InetAddresses.forString(DEFAULT_WSL_IP);
     }
     return InetAddresses.forString(coalesce(getValueWithLogging(myLazyWslIp, "WSL IP"), DEFAULT_WSL_IP));
   }
@@ -728,10 +790,15 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
+    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+      Map<String, String> map = WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
+      return map.get(name);
+    }
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true);
-    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name),
+                                                              options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
                                                               true);
   }
 
@@ -739,7 +806,12 @@ public class WSLDistribution implements AbstractWslDistribution {
     return coalesce(getValueWithLogging(myLazyShellPath, "user's shell path"), DEFAULT_SHELL);
   }
 
+  @VisibleForTesting
+  protected @Nullable String testOverriddenShellPath;
+
   private @NlsSafe @Nullable String readShellPath() {
+    if (testOverriddenShellPath != null) return testOverriddenShellPath;
+
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true).setLaunchWithWslExe(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);

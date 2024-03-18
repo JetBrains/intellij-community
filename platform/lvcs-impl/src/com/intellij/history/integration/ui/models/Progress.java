@@ -17,5 +17,13 @@
 package com.intellij.history.integration.ui.models;
 
 public interface Progress {
+  Progress EMPTY = new Empty();
+
   void processed(int percentage);
+
+  class Empty implements Progress {
+    @Override
+    public void processed(int percentage) {
+    }
+  }
 }

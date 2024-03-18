@@ -99,6 +99,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStringLiterals() { doTest(false); }
   public void testStaticInInner() { doTest(false); }
   public void testStaticInInnerJava16() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
+  public void testStaticAccessViaInstanceForImplicitClasses() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
   public void testInvalidExpressions() { doTest(false); }
   public void testIllegalVoidType() { doTest(false); }
   public void testIllegalType() { doTest(false); }
@@ -136,6 +137,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStaticOverride() { doTest(false); }
   public void testCyclicInheritance() { doTest(false); }
   public void testReferenceMemberBeforeCtrCalled() { doTest(false); }
+  public void testQualifiedThisBeforeCtrCalled() { doTest(false); }
   public void testLabels() { doTest(false); }
   public void testUnclosedBlockComment() { doTest(false); }
   public void testUnclosedComment() { doTest(false); }
@@ -240,7 +242,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false); }
-
+  public void testStatementsBeforeSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
   public void testCastFromVoid() { doTest(false); }
   public void testCatchUnknownMethod() { doTest(false); }
   public void testIDEADEV8822() { doTest(false); }
@@ -339,6 +341,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
+  public void testAnnotationHighlighting() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
+  }
+
   public void testMultiFieldDeclNames() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
@@ -378,8 +385,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnsupportedFeatures() { doTest(false); }
   public void testThisBeforeSuper() { doTest(false); }
   public void testExplicitConstructorInvocation() { doTest(false); }
+  public void testExtendFinalClass() { doTest(false); }
+  public void testPrivateMethodCalledFromSuper() { doTest(false); }
+  public void testQualifiedThisCalledFromSuper() { doTest(false); }
+  public void testReferenceToClassFromSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
   public void testThisInInterface() { doTest(false); }
   public void testInnerClassConstantReference() { doTest(false); }
+  public void testConstantReferencedViaInstance() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
   public void testIDEA60875() { doTest(false); }
   public void testIDEA71645() { doTest(false); }
   public void testIDEA18343() { doTest(false); }
@@ -389,6 +401,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() { doTest(false); }
   public void testIDEA168768() { doTest(false); }
   public void testStatementWithExpression() { doTest(false); }
+  public void testReturnFromConstructor() { doTest(false); }
+  public void testInheritFromFinalLocalClass() { doTest(false); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
@@ -445,5 +459,15 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testArrayInitBeforeSuper() {
     doTest(false);
+  }
+
+  public void testThisReferencedInnerClass() {
+    doTest(false);
+  }
+
+  public void testReferenceToImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+      doTest(false);
+    });
   }
 }

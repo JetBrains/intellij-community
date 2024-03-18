@@ -38,14 +38,18 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    myFixture = createMyFixture();
+
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+  }
+
+  protected CodeInsightTestFixture createMyFixture() {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
 
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirTestFixture());
-
-    myFixture.setTestDataPath(getTestDataPath());
-    myFixture.setUp();
+    return IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirTestFixture());
   }
 
   protected TempDirTestFixture createTempDirTestFixture() {

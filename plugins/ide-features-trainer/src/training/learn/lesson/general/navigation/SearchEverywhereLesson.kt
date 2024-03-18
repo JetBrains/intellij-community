@@ -43,6 +43,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   open val showQuickDock: Boolean = true
 
   override val lessonContent: LessonContext.() -> Unit = {
+    configurationTasks()
     sdkConfigurationTasks()
 
     task("SearchEverywhere") {
@@ -103,6 +104,37 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
     }
 
+    replaceClassWithTypes()
+
+    task {
+      text(LessonsBundle.message("search.everywhere.close.documentation.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
+      stateCheck { previous.ui?.isShowing != true }
+      test { invokeActionViaShortcut("ENTER") }
+    }
+
+    task {
+      text(LessonsBundle.message("search.everywhere.finish", action("GotoSymbol"), action("GotoFile")))
+    }
+
+    if (TaskTestContext.inTestMode) task {
+      stateCheck { focusOwner is EditorComponentImpl }
+      test {
+        invokeActionViaShortcut("ESCAPE")
+        invokeActionViaShortcut("ESCAPE")
+      }
+    }
+
+    epilogue()
+  }
+
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
+    restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
+    backupPopupLocation = null
+  }
+
+  protected open fun LessonContext.configurationTasks() {}
+
+  protected open fun LessonContext.replaceClassWithTypes() {
     actionTask("GotoClass") {
       LessonsBundle.message("search.everywhere.goto.class", action(it))
     }
@@ -139,31 +171,6 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
         test { actions(it) }
       }
     }
-
-    task {
-      text(LessonsBundle.message("search.everywhere.close.documentation.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
-      stateCheck { previous.ui?.isShowing != true }
-      test { invokeActionViaShortcut("ENTER") }
-    }
-
-    task {
-      text(LessonsBundle.message("search.everywhere.finish", action("GotoSymbol"), action("GotoFile")))
-    }
-
-    if (TaskTestContext.inTestMode) task {
-      stateCheck { focusOwner is EditorComponentImpl }
-      test {
-        invokeActionViaShortcut("ESCAPE")
-        invokeActionViaShortcut("ESCAPE")
-      }
-    }
-
-    epilogue()
-  }
-
-  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
-    restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
-    backupPopupLocation = null
   }
 
   open fun LessonContext.epilogue() = Unit

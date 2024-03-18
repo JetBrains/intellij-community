@@ -8,6 +8,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.RegExpBundle;
@@ -72,7 +74,7 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RemoveRedundantEscapeFix implements LocalQuickFix {
+  private static class RemoveRedundantEscapeFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -82,12 +84,11 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof RegExpChar)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof RegExpChar regExpChar)) {
         return;
       }
-      RegExpReplacementUtil.replaceInContext(element, replacement((RegExpChar)element));
+      RegExpReplacementUtil.replaceInContext(element, replacement(regExpChar));
     }
 
     @NotNull

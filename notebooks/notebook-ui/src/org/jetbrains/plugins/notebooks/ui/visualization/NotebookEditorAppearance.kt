@@ -90,6 +90,7 @@ interface NotebookEditorAppearanceColors {
 interface NotebookEditorAppearanceFlags {
   fun shouldShowCellLineNumbers(): Boolean
   fun shouldShowExecutionCounts(): Boolean
+  fun shouldShowOutExecutionCounts(): Boolean
 }
 
 object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
@@ -117,8 +118,8 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val JUPYTER_CELL_TOOLBAR_INLAY_PRIORITY = JUPYTER_CELL_SPACERS_INLAY_PRIORITY + 10
   override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = 5
 
-  override val EXTRA_PADDING_EXECUTION_COUNT = 25
-  override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = 40
+  override val EXTRA_PADDING_EXECUTION_COUNT = 20
+  override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = 0
 
   override fun getCellLeftLineWidth(): Int = EDIT_MODE_CELL_LEFT_LINE_WIDTH
   override fun getCellLeftLineHoverWidth(): Int = COMMAND_MODE_CELL_LEFT_LINE_WIDTH

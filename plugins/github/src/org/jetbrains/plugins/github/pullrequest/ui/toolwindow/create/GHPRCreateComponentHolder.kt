@@ -49,7 +49,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
@@ -336,8 +335,12 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   private inner class NewPRDiffRequestChainProducer : DiffRequestChainProducer {
+    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
+      val producers = changes.map { change -> createDiffRequestProducer(project, change) }
+      return ChangeDiffRequestChain(producers)
+    }
 
-    val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
+    private fun createDiffRequestProducer(project: Project, change: Change): Producer? {
       val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
       if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
@@ -353,12 +356,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
         VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
       }
 
-      ChangeDiffRequestProducer.create(project, change, requestDataKeys)
-    }
-
-    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
-      val producers = changes.map { change -> changeProducerFactory.create(project, change) as? Producer }
-      return ChangeDiffRequestChain(producers)
+      return ChangeDiffRequestProducer.create(project, change, requestDataKeys)
     }
   }
 }

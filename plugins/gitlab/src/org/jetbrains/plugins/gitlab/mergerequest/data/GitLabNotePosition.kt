@@ -60,7 +60,7 @@ sealed class GitLabNotePosition(
     @Suppress("DuplicatedCode")
     fun from(position: GitLabNoteDTO.Position): GitLabNotePosition? {
       if (position.diffRefs.baseSha == null) {
-        LOG.warn("Missing merge base in note position: $position")
+        LOG.debug("Missing merge base in note position: $position")
         return null
       }
 
@@ -76,7 +76,7 @@ sealed class GitLabNotePosition(
     @Suppress("DuplicatedCode")
     fun from(position: GitLabMergeRequestDraftNoteRestDTO.Position): GitLabNotePosition? {
       if (position.baseSha == null) {
-        LOG.warn("Missing merge base in note position: $position")
+        LOG.debug("Missing merge base in note position: $position")
         return null
       }
 

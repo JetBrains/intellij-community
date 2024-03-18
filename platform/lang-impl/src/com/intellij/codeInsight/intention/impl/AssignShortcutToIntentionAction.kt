@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -30,7 +30,7 @@ class AssignShortcutToIntentionAction(intention: IntentionAction)
 }
 
 /** Action shown in each intention's submenu to allow modifying its shortcut */
-class EditShortcutToIntentionAction(intention: IntentionAction)
+internal class EditShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "edit.intention.shortcut") {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -42,7 +42,7 @@ class EditShortcutToIntentionAction(intention: IntentionAction)
 }
 
 /** Action shown in each intention's submenu to remove its shortcut */
-class RemoveIntentionActionShortcut(intention: IntentionAction)
+internal class RemoveIntentionActionShortcut(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "remove.intention.shortcut") {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {

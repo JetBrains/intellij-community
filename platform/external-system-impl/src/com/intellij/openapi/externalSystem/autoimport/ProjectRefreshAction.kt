@@ -12,12 +12,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 class ProjectRefreshAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    refreshProject(project)
+    Manager.refreshProject(project)
   }
 
   override fun update(e: AnActionEvent) {
@@ -66,6 +67,12 @@ class ProjectRefreshAction : DumbAwareAction() {
   }
 
   companion object {
+    @Deprecated("Use ProjectRefreshAction.Manager explicitly")
+    @ApiStatus.ScheduledForRemoval
+    fun refreshProject(project: Project) = Manager.refreshProject(project)
+  }
+
+  object Manager {
     fun refreshProject(project: Project) {
       val projectNotificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
       val systemIds = projectNotificationAware.getSystemIds()

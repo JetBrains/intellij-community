@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
@@ -345,7 +344,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * check non-ascii (127+) chars are supported in skip messaged
    */
   @Test
-  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {IronPythonSdkFlavor.class})
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {})
   public void testNonAsciiMessage() {
 
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nonAscii", "test_test.py") {
@@ -378,13 +377,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -409,13 +402,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestAssertEqualsError() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 0);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py", true) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -436,13 +423,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @EnvTestTagsRequired(tags = "python3")
   @Test
   public void testWithNamedSubTests() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withNamedSubtests", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withNamedSubtests", "test_test.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -475,13 +456,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @EnvTestTagsRequired(tags = "python3")
   @Test
   public void testDotsInSubtest() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -544,13 +519,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   @EnvTestTagsRequired(tags = "python3")
   public void testScriptWithHyphen() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withHyphen", "test-foobar.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withHyphen", "test-foobar.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -928,7 +897,20 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
                                          @NotNull String scriptName,
                                          int rerunFailedTests) {
-      super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
+      super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner, false, rerunFailedTests);
+    }
+
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+                                         @NotNull String scriptName,
+                                         boolean isToFullPath,
+                                         int rerunFailedTests) {
+      super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner, isToFullPath, rerunFailedTests);
+    }
+
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+                                         @NotNull String scriptName,
+                                         boolean isToFullPath) {
+      super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner, isToFullPath);
     }
 
     @Override

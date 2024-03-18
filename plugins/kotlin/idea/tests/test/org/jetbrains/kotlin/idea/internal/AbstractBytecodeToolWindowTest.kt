@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.idea.actions.bytecode.BytecodeGenerationResult
@@ -22,10 +22,7 @@ import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    fun doTestWithIr(testPath: String) = doTest(testPath, true)
-    fun doTestWithoutIr(testPath: String) = doTest(testPath, false)
-
-    fun doTest(testPath: String, withIr: Boolean) {
+    fun doTest(testPath: String) {
         val mainDir = File(testPath)
         val mainFileName = mainDir.name + ".kt"
         mainDir.listFiles { _, name -> name != mainFileName }.forEach { myFixture.configureByFile(testPath + "/" + it.name) }
@@ -36,7 +33,7 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
         val file = myFixture.file as KtFile
 
         val configuration = CompilerConfiguration().apply {
-            if (withIr) put(JVMConfigurationKeys.IR, true)
+            put(JVMConfigurationKeys.IR, true)
             if (InTextDirectivesUtils.getPrefixedBoolean(mainFileText, "// INLINE:") == false) {
                 put(CommonConfigurationKeys.DISABLE_INLINE, true)
             }

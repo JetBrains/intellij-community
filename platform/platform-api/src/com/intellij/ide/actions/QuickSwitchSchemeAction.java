@@ -9,12 +9,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
   private static final Condition<? super AnAction> DEFAULT_PRESELECT_ACTION = a -> {
@@ -53,8 +55,18 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   protected abstract void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext);
 
   private void showPopup(AnActionEvent e, DefaultActionGroup group) {
-    if (!myShowPopupWithNoActions && group.getChildrenCount() == 0) return;
+    var count = group.getChildrenCount();
+    if (!myShowPopupWithNoActions && count == 0) return;
+
     JBPopupFactory.ActionSelectionAid aid = getAidMethod();
+    if (aid == JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING) {
+      // Exclude separators. Do it only here to avoid getting children unless necessary.
+      count = (int) Arrays.stream(group.getChildren(e)).filter(child -> !(child instanceof Separator)).count();
+      // Alphanumeric mnemonics are pointless with <= 10 items and don't work well with huge lists.
+      if (count < 11 || count > 36) {
+        aid = JBPopupFactory.ActionSelectionAid.NUMBERING;
+      }
+    }
 
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
@@ -78,7 +90,9 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   protected JBPopupFactory.ActionSelectionAid getAidMethod() {
-    return JBPopupFactory.ActionSelectionAid.NUMBERING;
+    return Registry.is("ide.quick.switch.alpha.numbering", false)
+           ? JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING
+           : JBPopupFactory.ActionSelectionAid.NUMBERING;
   }
 
   protected @Nls(capitalization = Nls.Capitalization.Title) String getPopupTitle(@NotNull AnActionEvent e) {

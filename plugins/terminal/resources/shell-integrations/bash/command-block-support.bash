@@ -30,13 +30,13 @@ __jetbrains_intellij_encode_slow() {
     builtin printf -v hexch "%02X" "'$value[i]"
     out+="$hexch"
   done
-  builtin printf "$out"
+  builtin printf "%s" "$out"
 }
 
 __jetbrains_intellij_encode() {
   builtin local value="$1"
   if builtin command -v od > /dev/null && builtin command -v tr > /dev/null; then
-    builtin printf "$value" | od -An -tx1 -v | tr -d "[:space:]"
+    builtin printf "%s" "$value" | od -An -tx1 -v | tr -d "[:space:]"
   else
     __jetbrains_intellij_encode_slow "$value"
   fi
@@ -56,14 +56,21 @@ __jetbrains_intellij_get_directory_files() {
 __jetbrains_intellij_get_environment() {
   __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
   builtin local request_id="$1"
-  builtin local env_vars="$(builtin compgen -A export)"
-  builtin local keyword_names="$(builtin compgen -A keyword)"
-  builtin local builtin_names="$(builtin compgen -A builtin)"
-  builtin local function_names="$(builtin compgen -A function)"
-  builtin local command_names="$(builtin compgen -A command)"
+  builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin compgen -A export)")"
+  builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A keyword)")"
+  builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A builtin)")"
+  builtin local function_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A function)")"
+  builtin local command_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A command)")"
+  builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
-  builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\"}"
+  builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\",  \"aliases\": \"$aliases_mapping\"}"
   builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode "${result}")"
+}
+
+__jetbrains_intellij_escape_json() {
+  sed -e 's/\\/\\\\/g'\
+      -e 's/"/\\"/g'\
+      <<< "$1"
 }
 
 __jetbrains_intellij_prompt_shown() {
@@ -79,22 +86,27 @@ __jetbrains_intellij_configure_prompt() {
 
 __jetbrains_intellij_debug_log() {
   if [ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]; then
-    builtin printf "$1\n"
+    builtin printf "%s\n" "$1"
   fi
 }
 
 __jetbrains_intellij_command_started() {
-  builtin local bash_command="$1"
+  builtin local bash_command="$BASH_COMMAND"
   if __jetbrains_intellij_is_generator_command "$bash_command"
   then
     return 0
   fi
 
+  __jetbrains_intellij_clear_all_and_move_cursor_to_top_left
   __jetbrains_intellij_debug_log "command_started '$bash_command'"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
      "$(__jetbrains_intellij_encode "$bash_command")" \
      "$(__jetbrains_intellij_encode "$current_directory")"
+}
+
+__jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
+  builtin printf '\e[3J\e[1;1H'
 }
 
 __jetbrains_intellij_initialized=""
@@ -109,6 +121,7 @@ __jetbrains_intellij_command_terminated() {
 
   __jetbrains_intellij_configure_prompt
 
+  __jetbrains_intellij_report_prompt_state
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_debug_log 'initialized'
@@ -116,11 +129,38 @@ __jetbrains_intellij_command_terminated() {
     builtin local hist="$(builtin history)"
     builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
   else
-    builtin local current_directory="$PWD"
     __jetbrains_intellij_debug_log "command_finished exit_code=$last_exit_code"
-    builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' "$last_exit_code" \
-       "$(__jetbrains_intellij_encode "$current_directory")"
+    builtin printf '\e]1341;command_finished;exit_code=%s\a' "$last_exit_code"
   fi
+}
+
+__jetbrains_intellij_report_prompt_state() {
+  builtin local current_directory="$PWD"
+  builtin local git_branch=""
+  builtin local virtual_env=""
+  builtin local conda_env=""
+  if builtin command -v git > /dev/null
+  then
+    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+  fi
+  if [[ -n $VIRTUAL_ENV ]]
+  then
+    virtual_env="$VIRTUAL_ENV"
+  fi
+  if [[ -n $CONDA_DEFAULT_ENV ]]
+  then
+    conda_env="$CONDA_DEFAULT_ENV"
+  fi
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s\a' \
+    "$(__jetbrains_intellij_encode "${current_directory}")" \
+    "$(__jetbrains_intellij_encode "${git_branch}")" \
+    "$(__jetbrains_intellij_encode "${virtual_env}")" \
+    "$(__jetbrains_intellij_encode "${conda_env}")"
+}
+
+# override clear behaviour to handle it on IDE side and remove the blocks
+clear() {
+  builtin printf '\e]1341;clear_invoked\a'
 }
 
 preexec_functions+=(__jetbrains_intellij_command_started)

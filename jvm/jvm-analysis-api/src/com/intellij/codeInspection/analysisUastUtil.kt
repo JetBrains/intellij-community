@@ -23,8 +23,6 @@ fun ULambdaExpression.getLambdaType(): PsiType? =
 
 fun UAnnotated.findAnnotations(vararg fqNames: String) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
 
-annotation class X(vararg val value: String)
-
 /**
  * Gets all attribute values, ignore whether these are written as array initializer.
  *
@@ -39,6 +37,19 @@ annotation class X(vararg val value: String)
  *```
  * Will return "X", "Y" as [PsiAnnotationMemberValue]s instead of returning a [PsiArrayInitializerMemberValue] that contains both "X" and
  * "Y".
+ * @see PsiAnnotation.flattenedAttributeValues
+ */
+fun UAnnotation.flattenedAttributeValues(attributeName: String): List<UExpression> {
+  fun UExpression.flatten(): List<UExpression> = if (this is UCallExpression) {
+    this.valueArguments.flatMap { it.flatten() }
+  } else listOf(this)
+  val annotationArgument = findDeclaredAttributeValue(attributeName)
+  if (annotationArgument == null) return emptyList()
+  return annotationArgument.flatten()
+}
+
+/**
+ * @see UAnnotation.flattenedAttributeValues
  */
 fun PsiAnnotation.flattenedAttributeValues(attributeName: String): List<PsiAnnotationMemberValue> {
   fun PsiAnnotationMemberValue.flatten(): List<PsiAnnotationMemberValue> = if (this is PsiArrayInitializerMemberValue) {

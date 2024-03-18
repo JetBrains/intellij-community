@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.runReadAction
@@ -10,10 +10,10 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.util.io.impl.FileTextMatchers
-import com.intellij.util.io.systemIndependentPath
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * This class actually doesn't depend on Java. It's located in intellij.java.tests module because if Java plugin is enabled additional elements
@@ -75,7 +75,7 @@ class SaveProjectTest {
   @Test
   fun `save single library`() {
     projectModel.addProjectLevelLibrary("foo") {
-      it.addRoot(VfsUtil.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("lib/classes").systemIndependentPath),
+      it.addRoot(VfsUtil.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("lib/classes").invariantSeparatorsPathString),
                  OrderRootType.CLASSES)
     }
     projectModel.saveProjectState()

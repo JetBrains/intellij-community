@@ -42,7 +42,7 @@ public final class IntMapForwardIndex implements IntForwardIndex, MeasurableInde
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     myPersistentMap.force();
   }
 

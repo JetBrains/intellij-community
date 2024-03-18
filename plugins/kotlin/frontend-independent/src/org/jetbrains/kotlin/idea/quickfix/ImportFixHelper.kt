@@ -44,7 +44,7 @@ object ImportFixHelper {
             val sortedImportInfos = TreeSet<ImportInfo<T>>(compareBy({ it.priority }, { it.name }))
             sortedImportInfos.addAll(names)
             val firstName = sortedImportInfos.first().name
-            val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
+            val singlePackage = suggestionsAreFromSameParent(suggestions)
 
             if (singlePackage) {
                 val sortedByName = sortedImportInfos.toSortedSet(compareBy { it.name })
@@ -175,6 +175,9 @@ object ImportFixHelper {
             override fun getIconFor(value: AutoImportVariant) = value.icon
         }
     }
+
+    fun suggestionsAreFromSameParent(suggestions: Iterable<FqName>): Boolean =
+        suggestions.distinctBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
 }
 
 

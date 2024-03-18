@@ -50,11 +50,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public void setRangeInElement(TextRange rangeInElement) {
-    super.setRangeInElement(rangeInElement);
-  }
-
-  @Override
   public PsiElement resolve() {
     final ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;

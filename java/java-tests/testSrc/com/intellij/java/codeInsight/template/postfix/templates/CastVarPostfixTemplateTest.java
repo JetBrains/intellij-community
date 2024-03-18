@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.template.postfix.templates;
 
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class CastVarPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -13,6 +14,14 @@ public class CastVarPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testSingleExpression() {
+    doTest();
+  }
+
+  public void testAssigned() {
+    doTest();
+  }
+  
+  public void testTypeAnnotations() {
     doTest();
   }
 

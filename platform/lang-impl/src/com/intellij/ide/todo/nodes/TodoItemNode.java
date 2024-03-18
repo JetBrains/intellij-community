@@ -16,8 +16,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoItem;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.HighlightedRegion;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,14 +124,17 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
     // Update icon
 
-    Icon newIcon = todoItem.getPattern().getAttributes().getIcon();
+    TodoPattern pattern = todoItem.getPattern();
+    Icon newIcon =
+      pattern != null ? pattern.getAttributes().getIcon() : IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoDefault);
 
     // Update highlighted regions
 
     myHighlightedRegions.clear();
     EditorHighlighter highlighter = myBuilder.getHighlighter(todoItem.getFile(), document);
     collectHighlights(myHighlightedRegions, highlighter, lineStartOffset, lineEndOffset, lineColumnPrefix.length());
-    TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
+    TextAttributes attributes =
+      pattern != null ? pattern.getAttributes().getTextAttributes() : TodoAttributesUtil.getDefaultColorSchemeTextAttributes();
     myHighlightedRegions.add(new HighlightedRegion(
       lineColumnPrefix.length() + startOffset - lineStartOffset,
       lineColumnPrefix.length() + endOffset - lineStartOffset,

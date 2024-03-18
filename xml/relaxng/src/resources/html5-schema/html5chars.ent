@@ -1,5 +1,5 @@
 <!--
- * Copyright 2000-2021 JetBrains s.r.o.
+ * Copyright 2000-2023 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +52,13 @@
  <!ENTITY rbrack  "&#93;" >
  <!ENTITY Hat  "&#94;" >
  <!ENTITY lowbar  "&#95;" >
+ <!ENTITY UnderBar  "&#95;" >
  <!ENTITY grave  "&#96;" >
  <!ENTITY DiacriticalGrave  "&#96;" >
  <!ENTITY lcub  "&#123;" >
  <!ENTITY lbrace  "&#123;" >
- <!ENTITY verbar  "&#124;" >
  <!ENTITY vert  "&#124;" >
+ <!ENTITY verbar  "&#124;" >
  <!ENTITY VerticalLine  "&#124;" >
  <!ENTITY rcub  "&#125;" >
  <!ENTITY rbrace  "&#125;" >
@@ -70,10 +71,10 @@
  <!ENTITY yen  "&#165;" >
  <!ENTITY brvbar  "&#166;" >
  <!ENTITY sect  "&#167;" >
- <!ENTITY Dot  "&#168;" >
  <!ENTITY die  "&#168;" >
- <!ENTITY DoubleDot  "&#168;" >
  <!ENTITY uml  "&#168;" >
+ <!ENTITY Dot  "&#168;" >
+ <!ENTITY DoubleDot  "&#168;" >
  <!ENTITY copy  "&#169;" >
  <!ENTITY COPY  "&#169;" >
  <!ENTITY ordf  "&#170;" >
@@ -84,11 +85,10 @@
  <!ENTITY circledR  "&#174;" >
  <!ENTITY REG  "&#174;" >
  <!ENTITY macr  "&#175;" >
- <!ENTITY OverBar  "&#175;" >
  <!ENTITY strns  "&#175;" >
  <!ENTITY deg  "&#176;" >
- <!ENTITY plusmn  "&#177;" >
  <!ENTITY pm  "&#177;" >
+ <!ENTITY plusmn  "&#177;" >
  <!ENTITY PlusMinus  "&#177;" >
  <!ENTITY sup2  "&#178;" >
  <!ENTITY sup3  "&#179;" >
@@ -105,8 +105,8 @@
  <!ENTITY ordm  "&#186;" >
  <!ENTITY raquo  "&#187;" >
  <!ENTITY frac14  "&#188;" >
- <!ENTITY frac12  "&#189;" >
  <!ENTITY half  "&#189;" >
+ <!ENTITY frac12  "&#189;" >
  <!ENTITY frac34  "&#190;" >
  <!ENTITY iquest  "&#191;" >
  <!ENTITY Agrave  "&#192;" >
@@ -114,6 +114,7 @@
  <!ENTITY Acirc  "&#194;" >
  <!ENTITY Atilde  "&#195;" >
  <!ENTITY Auml  "&#196;" >
+ <!ENTITY angst  "&#197;" >
  <!ENTITY Aring  "&#197;" >
  <!ENTITY AElig  "&#198;" >
  <!ENTITY Ccedil  "&#199;" >
@@ -164,8 +165,8 @@
  <!ENTITY ocirc  "&#244;" >
  <!ENTITY otilde  "&#245;" >
  <!ENTITY ouml  "&#246;" >
- <!ENTITY divide  "&#247;" >
  <!ENTITY div  "&#247;" >
+ <!ENTITY divide  "&#247;" >
  <!ENTITY oslash  "&#248;" >
  <!ENTITY ugrave  "&#249;" >
  <!ENTITY uacute  "&#250;" >
@@ -313,7 +314,6 @@
  <!ENTITY dblac  "&#733;" >
  <!ENTITY DiacriticalDoubleAcute  "&#733;" >
  <!ENTITY DownBreve  "&#785;" >
- <!ENTITY UnderBar  "&#818;" >
  <!ENTITY Alpha  "&#913;" >
  <!ENTITY Beta  "&#914;" >
  <!ENTITY Gamma  "&#915;" >
@@ -337,13 +337,13 @@
  <!ENTITY Phi  "&#934;" >
  <!ENTITY Chi  "&#935;" >
  <!ENTITY Psi  "&#936;" >
+ <!ENTITY ohm  "&#937;" >
  <!ENTITY Omega  "&#937;" >
  <!ENTITY alpha  "&#945;" >
  <!ENTITY beta  "&#946;" >
  <!ENTITY gamma  "&#947;" >
  <!ENTITY delta  "&#948;" >
- <!ENTITY epsiv  "&#949;" >
- <!ENTITY varepsilon  "&#949;" >
+ <!ENTITY epsi  "&#949;" >
  <!ENTITY epsilon  "&#949;" >
  <!ENTITY zeta  "&#950;" >
  <!ENTITY eta  "&#951;" >
@@ -357,24 +357,24 @@
  <!ENTITY omicron  "&#959;" >
  <!ENTITY pi  "&#960;" >
  <!ENTITY rho  "&#961;" >
+ <!ENTITY sigmaf  "&#962;" >
  <!ENTITY sigmav  "&#962;" >
  <!ENTITY varsigma  "&#962;" >
- <!ENTITY sigmaf  "&#962;" >
  <!ENTITY sigma  "&#963;" >
  <!ENTITY tau  "&#964;" >
  <!ENTITY upsi  "&#965;" >
  <!ENTITY upsilon  "&#965;" >
  <!ENTITY phi  "&#966;" >
- <!ENTITY phiv  "&#966;" >
- <!ENTITY varphi  "&#966;" >
  <!ENTITY chi  "&#967;" >
  <!ENTITY psi  "&#968;" >
  <!ENTITY omega  "&#969;" >
  <!ENTITY thetav  "&#977;" >
- <!ENTITY vartheta  "&#977;" >
  <!ENTITY thetasym  "&#977;" >
- <!ENTITY Upsi  "&#978;" >
+ <!ENTITY vartheta  "&#977;" >
  <!ENTITY upsih  "&#978;" >
+ <!ENTITY Upsi  "&#978;" >
+ <!ENTITY phiv  "&#981;" >
+ <!ENTITY varphi  "&#981;" >
  <!ENTITY straightphi  "&#981;" >
  <!ENTITY piv  "&#982;" >
  <!ENTITY varpi  "&#982;" >
@@ -385,7 +385,8 @@
  <!ENTITY varkappa  "&#1008;" >
  <!ENTITY rhov  "&#1009;" >
  <!ENTITY varrho  "&#1009;" >
- <!ENTITY epsi  "&#1013;" >
+ <!ENTITY epsiv  "&#1013;" >
+ <!ENTITY varepsilon  "&#1013;" >
  <!ENTITY straightepsilon  "&#1013;" >
  <!ENTITY bepsi  "&#1014;" >
  <!ENTITY backepsilon  "&#1014;" >
@@ -492,43 +493,43 @@
  <!ENTITY hairsp  "&#8202;" >
  <!ENTITY VeryThinSpace  "&#8202;" >
  <!ENTITY ZeroWidthSpace  "&#8203;" >
- <!ENTITY NegativeVeryThinSpace  "&#8203;" >
  <!ENTITY NegativeThinSpace  "&#8203;" >
- <!ENTITY NegativeMediumSpace  "&#8203;" >
  <!ENTITY NegativeThickSpace  "&#8203;" >
+ <!ENTITY NegativeMediumSpace  "&#8203;" >
+ <!ENTITY NegativeVeryThinSpace  "&#8203;" >
  <!ENTITY zwnj  "&#8204;" >
  <!ENTITY zwj  "&#8205;" >
  <!ENTITY lrm  "&#8206;" >
  <!ENTITY rlm  "&#8207;" >
- <!ENTITY hyphen  "&#8208;" >
  <!ENTITY dash  "&#8208;" >
+ <!ENTITY hyphen  "&#8208;" >
  <!ENTITY ndash  "&#8211;" >
  <!ENTITY mdash  "&#8212;" >
  <!ENTITY horbar  "&#8213;" >
- <!ENTITY Verbar  "&#8214;" >
  <!ENTITY Vert  "&#8214;" >
+ <!ENTITY Verbar  "&#8214;" >
  <!ENTITY lsquo  "&#8216;" >
  <!ENTITY OpenCurlyQuote  "&#8216;" >
  <!ENTITY rsquo  "&#8217;" >
  <!ENTITY rsquor  "&#8217;" >
  <!ENTITY CloseCurlyQuote  "&#8217;" >
- <!ENTITY lsquor  "&#8218;" >
  <!ENTITY sbquo  "&#8218;" >
+ <!ENTITY lsquor  "&#8218;" >
  <!ENTITY ldquo  "&#8220;" >
  <!ENTITY OpenCurlyDoubleQuote  "&#8220;" >
  <!ENTITY rdquo  "&#8221;" >
  <!ENTITY rdquor  "&#8221;" >
  <!ENTITY CloseCurlyDoubleQuote  "&#8221;" >
- <!ENTITY ldquor  "&#8222;" >
  <!ENTITY bdquo  "&#8222;" >
+ <!ENTITY ldquor  "&#8222;" >
  <!ENTITY dagger  "&#8224;" >
- <!ENTITY Dagger  "&#8225;" >
  <!ENTITY ddagger  "&#8225;" >
+ <!ENTITY Dagger  "&#8225;" >
  <!ENTITY bull  "&#8226;" >
  <!ENTITY bullet  "&#8226;" >
  <!ENTITY nldr  "&#8229;" >
- <!ENTITY hellip  "&#8230;" >
  <!ENTITY mldr  "&#8230;" >
+ <!ENTITY hellip  "&#8230;" >
  <!ENTITY permil  "&#8240;" >
  <!ENTITY pertenk  "&#8241;" >
  <!ENTITY prime  "&#8242;" >
@@ -539,6 +540,7 @@
  <!ENTITY lsaquo  "&#8249;" >
  <!ENTITY rsaquo  "&#8250;" >
  <!ENTITY oline  "&#8254;" >
+ <!ENTITY OverBar  "&#8254;" >
  <!ENTITY caret  "&#8257;" >
  <!ENTITY hybull  "&#8259;" >
  <!ENTITY frasl  "&#8260;" >
@@ -546,57 +548,57 @@
  <!ENTITY qprime  "&#8279;" >
  <!ENTITY MediumSpace  "&#8287;" >
  <!ENTITY NoBreak  "&#8288;" >
- <!ENTITY ApplyFunction  "&#8289;" >
  <!ENTITY af  "&#8289;" >
- <!ENTITY InvisibleTimes  "&#8290;" >
+ <!ENTITY ApplyFunction  "&#8289;" >
  <!ENTITY it  "&#8290;" >
- <!ENTITY InvisibleComma  "&#8291;" >
+ <!ENTITY InvisibleTimes  "&#8290;" >
  <!ENTITY ic  "&#8291;" >
+ <!ENTITY InvisibleComma  "&#8291;" >
  <!ENTITY euro  "&#8364;" >
  <!ENTITY tdot  "&#8411;" >
  <!ENTITY TripleDot  "&#8411;" >
  <!ENTITY DotDot  "&#8412;" >
- <!ENTITY Copf  "&#8450;" >
  <!ENTITY complexes  "&#8450;" >
+ <!ENTITY Copf  "&#8450;" >
  <!ENTITY incare  "&#8453;" >
  <!ENTITY gscr  "&#8458;" >
  <!ENTITY hamilt  "&#8459;" >
- <!ENTITY HilbertSpace  "&#8459;" >
  <!ENTITY Hscr  "&#8459;" >
+ <!ENTITY HilbertSpace  "&#8459;" >
  <!ENTITY Hfr  "&#8460;" >
  <!ENTITY Poincareplane  "&#8460;" >
  <!ENTITY quaternions  "&#8461;" >
  <!ENTITY Hopf  "&#8461;" >
  <!ENTITY planckh  "&#8462;" >
- <!ENTITY planck  "&#8463;" >
  <!ENTITY hbar  "&#8463;" >
- <!ENTITY plankv  "&#8463;" >
  <!ENTITY hslash  "&#8463;" >
- <!ENTITY Iscr  "&#8464;" >
+ <!ENTITY planck  "&#8463;" >
+ <!ENTITY plankv  "&#8463;" >
  <!ENTITY imagline  "&#8464;" >
+ <!ENTITY Iscr  "&#8464;" >
  <!ENTITY image  "&#8465;" >
- <!ENTITY Im  "&#8465;" >
  <!ENTITY imagpart  "&#8465;" >
+ <!ENTITY Im  "&#8465;" >
  <!ENTITY Ifr  "&#8465;" >
- <!ENTITY Lscr  "&#8466;" >
  <!ENTITY lagran  "&#8466;" >
+ <!ENTITY Lscr  "&#8466;" >
  <!ENTITY Laplacetrf  "&#8466;" >
  <!ENTITY ell  "&#8467;" >
- <!ENTITY Nopf  "&#8469;" >
  <!ENTITY naturals  "&#8469;" >
+ <!ENTITY Nopf  "&#8469;" >
  <!ENTITY numero  "&#8470;" >
  <!ENTITY copysr  "&#8471;" >
- <!ENTITY weierp  "&#8472;" >
  <!ENTITY wp  "&#8472;" >
- <!ENTITY Popf  "&#8473;" >
+ <!ENTITY weierp  "&#8472;" >
  <!ENTITY primes  "&#8473;" >
+ <!ENTITY Popf  "&#8473;" >
  <!ENTITY rationals  "&#8474;" >
  <!ENTITY Qopf  "&#8474;" >
- <!ENTITY Rscr  "&#8475;" >
  <!ENTITY realine  "&#8475;" >
+ <!ENTITY Rscr  "&#8475;" >
  <!ENTITY real  "&#8476;" >
- <!ENTITY Re  "&#8476;" >
  <!ENTITY realpart  "&#8476;" >
+ <!ENTITY Re  "&#8476;" >
  <!ENTITY Rfr  "&#8476;" >
  <!ENTITY reals  "&#8477;" >
  <!ENTITY Ropf  "&#8477;" >
@@ -605,42 +607,40 @@
  <!ENTITY TRADE  "&#8482;" >
  <!ENTITY integers  "&#8484;" >
  <!ENTITY Zopf  "&#8484;" >
- <!ENTITY ohm  "&#8486;" >
  <!ENTITY mho  "&#8487;" >
- <!ENTITY Zfr  "&#8488;" >
  <!ENTITY zeetrf  "&#8488;" >
+ <!ENTITY Zfr  "&#8488;" >
  <!ENTITY iiota  "&#8489;" >
- <!ENTITY angst  "&#8491;" >
  <!ENTITY bernou  "&#8492;" >
- <!ENTITY Bernoullis  "&#8492;" >
  <!ENTITY Bscr  "&#8492;" >
+ <!ENTITY Bernoullis  "&#8492;" >
  <!ENTITY Cfr  "&#8493;" >
  <!ENTITY Cayleys  "&#8493;" >
  <!ENTITY escr  "&#8495;" >
- <!ENTITY Escr  "&#8496;" >
  <!ENTITY expectation  "&#8496;" >
+ <!ENTITY Escr  "&#8496;" >
  <!ENTITY Fscr  "&#8497;" >
  <!ENTITY Fouriertrf  "&#8497;" >
  <!ENTITY phmmat  "&#8499;" >
- <!ENTITY Mellintrf  "&#8499;" >
  <!ENTITY Mscr  "&#8499;" >
+ <!ENTITY Mellintrf  "&#8499;" >
+ <!ENTITY oscr  "&#8500;" >
  <!ENTITY order  "&#8500;" >
  <!ENTITY orderof  "&#8500;" >
- <!ENTITY oscr  "&#8500;" >
- <!ENTITY alefsym  "&#8501;" >
  <!ENTITY aleph  "&#8501;" >
+ <!ENTITY alefsym  "&#8501;" >
  <!ENTITY beth  "&#8502;" >
  <!ENTITY gimel  "&#8503;" >
  <!ENTITY daleth  "&#8504;" >
- <!ENTITY CapitalDifferentialD  "&#8517;" >
  <!ENTITY DD  "&#8517;" >
- <!ENTITY DifferentialD  "&#8518;" >
+ <!ENTITY CapitalDifferentialD  "&#8517;" >
  <!ENTITY dd  "&#8518;" >
- <!ENTITY ExponentialE  "&#8519;" >
- <!ENTITY exponentiale  "&#8519;" >
+ <!ENTITY DifferentialD  "&#8518;" >
  <!ENTITY ee  "&#8519;" >
- <!ENTITY ImaginaryI  "&#8520;" >
+ <!ENTITY exponentiale  "&#8519;" >
+ <!ENTITY ExponentialE  "&#8519;" >
  <!ENTITY ii  "&#8520;" >
+ <!ENTITY ImaginaryI  "&#8520;" >
  <!ENTITY frac13  "&#8531;" >
  <!ENTITY frac23  "&#8532;" >
  <!ENTITY frac15  "&#8533;" >
@@ -654,18 +654,18 @@
  <!ENTITY frac58  "&#8541;" >
  <!ENTITY frac78  "&#8542;" >
  <!ENTITY larr  "&#8592;" >
+ <!ENTITY slarr  "&#8592;" >
  <!ENTITY leftarrow  "&#8592;" >
  <!ENTITY LeftArrow  "&#8592;" >
- <!ENTITY slarr  "&#8592;" >
  <!ENTITY ShortLeftArrow  "&#8592;" >
  <!ENTITY uarr  "&#8593;" >
  <!ENTITY uparrow  "&#8593;" >
  <!ENTITY UpArrow  "&#8593;" >
  <!ENTITY ShortUpArrow  "&#8593;" >
  <!ENTITY rarr  "&#8594;" >
+ <!ENTITY srarr  "&#8594;" >
  <!ENTITY rightarrow  "&#8594;" >
  <!ENTITY RightArrow  "&#8594;" >
- <!ENTITY srarr  "&#8594;" >
  <!ENTITY ShortRightArrow  "&#8594;" >
  <!ENTITY darr  "&#8595;" >
  <!ENTITY downarrow  "&#8595;" >
@@ -678,11 +678,11 @@
  <!ENTITY updownarrow  "&#8597;" >
  <!ENTITY UpDownArrow  "&#8597;" >
  <!ENTITY nwarr  "&#8598;" >
- <!ENTITY UpperLeftArrow  "&#8598;" >
  <!ENTITY nwarrow  "&#8598;" >
+ <!ENTITY UpperLeftArrow  "&#8598;" >
  <!ENTITY nearr  "&#8599;" >
- <!ENTITY UpperRightArrow  "&#8599;" >
  <!ENTITY nearrow  "&#8599;" >
+ <!ENTITY UpperRightArrow  "&#8599;" >
  <!ENTITY searr  "&#8600;" >
  <!ENTITY searrow  "&#8600;" >
  <!ENTITY LowerRightArrow  "&#8600;" >
@@ -695,25 +695,25 @@
  <!ENTITY nrightarrow  "&#8603;" >
  <!ENTITY rarrw  "&#8605;" >
  <!ENTITY rightsquigarrow  "&#8605;" >
- <!ENTITY Larr  "&#8606;" >
  <!ENTITY twoheadleftarrow  "&#8606;" >
+ <!ENTITY Larr  "&#8606;" >
  <!ENTITY Uarr  "&#8607;" >
- <!ENTITY Rarr  "&#8608;" >
  <!ENTITY twoheadrightarrow  "&#8608;" >
+ <!ENTITY Rarr  "&#8608;" >
  <!ENTITY Darr  "&#8609;" >
  <!ENTITY larrtl  "&#8610;" >
  <!ENTITY leftarrowtail  "&#8610;" >
  <!ENTITY rarrtl  "&#8611;" >
  <!ENTITY rightarrowtail  "&#8611;" >
- <!ENTITY LeftTeeArrow  "&#8612;" >
  <!ENTITY mapstoleft  "&#8612;" >
- <!ENTITY UpTeeArrow  "&#8613;" >
+ <!ENTITY LeftTeeArrow  "&#8612;" >
  <!ENTITY mapstoup  "&#8613;" >
+ <!ENTITY UpTeeArrow  "&#8613;" >
  <!ENTITY map  "&#8614;" >
- <!ENTITY RightTeeArrow  "&#8614;" >
  <!ENTITY mapsto  "&#8614;" >
- <!ENTITY DownTeeArrow  "&#8615;" >
+ <!ENTITY RightTeeArrow  "&#8614;" >
  <!ENTITY mapstodown  "&#8615;" >
+ <!ENTITY DownTeeArrow  "&#8615;" >
  <!ENTITY larrhk  "&#8617;" >
  <!ENTITY hookleftarrow  "&#8617;" >
  <!ENTITY rarrhk  "&#8618;" >
@@ -742,8 +742,8 @@
  <!ENTITY orarr  "&#8635;" >
  <!ENTITY circlearrowright  "&#8635;" >
  <!ENTITY lharu  "&#8636;" >
- <!ENTITY LeftVector  "&#8636;" >
  <!ENTITY leftharpoonup  "&#8636;" >
+ <!ENTITY LeftVector  "&#8636;" >
  <!ENTITY lhard  "&#8637;" >
  <!ENTITY leftharpoondown  "&#8637;" >
  <!ENTITY DownLeftVector  "&#8637;" >
@@ -754,17 +754,17 @@
  <!ENTITY upharpoonleft  "&#8639;" >
  <!ENTITY LeftUpVector  "&#8639;" >
  <!ENTITY rharu  "&#8640;" >
- <!ENTITY RightVector  "&#8640;" >
  <!ENTITY rightharpoonup  "&#8640;" >
+ <!ENTITY RightVector  "&#8640;" >
  <!ENTITY rhard  "&#8641;" >
  <!ENTITY rightharpoondown  "&#8641;" >
  <!ENTITY DownRightVector  "&#8641;" >
  <!ENTITY dharr  "&#8642;" >
- <!ENTITY RightDownVector  "&#8642;" >
  <!ENTITY downharpoonright  "&#8642;" >
+ <!ENTITY RightDownVector  "&#8642;" >
  <!ENTITY dharl  "&#8643;" >
- <!ENTITY LeftDownVector  "&#8643;" >
  <!ENTITY downharpoonleft  "&#8643;" >
+ <!ENTITY LeftDownVector  "&#8643;" >
  <!ENTITY rlarr  "&#8644;" >
  <!ENTITY rightleftarrows  "&#8644;" >
  <!ENTITY RightArrowLeftArrow  "&#8644;" >
@@ -782,8 +782,8 @@
  <!ENTITY ddarr  "&#8650;" >
  <!ENTITY downdownarrows  "&#8650;" >
  <!ENTITY lrhar  "&#8651;" >
- <!ENTITY ReverseEquilibrium  "&#8651;" >
  <!ENTITY leftrightharpoons  "&#8651;" >
+ <!ENTITY ReverseEquilibrium  "&#8651;" >
  <!ENTITY rlhar  "&#8652;" >
  <!ENTITY rightleftharpoons  "&#8652;" >
  <!ENTITY Equilibrium  "&#8652;" >
@@ -800,16 +800,16 @@
  <!ENTITY Uparrow  "&#8657;" >
  <!ENTITY DoubleUpArrow  "&#8657;" >
  <!ENTITY rArr  "&#8658;" >
- <!ENTITY Rightarrow  "&#8658;" >
  <!ENTITY Implies  "&#8658;" >
+ <!ENTITY Rightarrow  "&#8658;" >
  <!ENTITY DoubleRightArrow  "&#8658;" >
  <!ENTITY dArr  "&#8659;" >
  <!ENTITY Downarrow  "&#8659;" >
  <!ENTITY DoubleDownArrow  "&#8659;" >
+ <!ENTITY iff  "&#8660;" >
  <!ENTITY hArr  "&#8660;" >
  <!ENTITY Leftrightarrow  "&#8660;" >
  <!ENTITY DoubleLeftRightArrow  "&#8660;" >
- <!ENTITY iff  "&#8660;" >
  <!ENTITY vArr  "&#8661;" >
  <!ENTITY Updownarrow  "&#8661;" >
  <!ENTITY DoubleUpDownArrow  "&#8661;" >
@@ -840,25 +840,25 @@
  <!ENTITY exist  "&#8707;" >
  <!ENTITY Exists  "&#8707;" >
  <!ENTITY nexist  "&#8708;" >
- <!ENTITY NotExists  "&#8708;" >
  <!ENTITY nexists  "&#8708;" >
+ <!ENTITY NotExists  "&#8708;" >
  <!ENTITY empty  "&#8709;" >
- <!ENTITY emptyset  "&#8709;" >
  <!ENTITY emptyv  "&#8709;" >
+ <!ENTITY emptyset  "&#8709;" >
  <!ENTITY varnothing  "&#8709;" >
  <!ENTITY nabla  "&#8711;" >
  <!ENTITY Del  "&#8711;" >
+ <!ENTITY in  "&#8712;" >
  <!ENTITY isin  "&#8712;" >
  <!ENTITY isinv  "&#8712;" >
  <!ENTITY Element  "&#8712;" >
- <!ENTITY in  "&#8712;" >
  <!ENTITY notin  "&#8713;" >
- <!ENTITY NotElement  "&#8713;" >
  <!ENTITY notinva  "&#8713;" >
- <!ENTITY niv  "&#8715;" >
- <!ENTITY ReverseElement  "&#8715;" >
+ <!ENTITY NotElement  "&#8713;" >
  <!ENTITY ni  "&#8715;" >
+ <!ENTITY niv  "&#8715;" >
  <!ENTITY SuchThat  "&#8715;" >
+ <!ENTITY ReverseElement  "&#8715;" >
  <!ENTITY notni  "&#8716;" >
  <!ENTITY notniva  "&#8716;" >
  <!ENTITY NotReverseElement  "&#8716;" >
@@ -869,26 +869,26 @@
  <!ENTITY sum  "&#8721;" >
  <!ENTITY Sum  "&#8721;" >
  <!ENTITY minus  "&#8722;" >
- <!ENTITY mnplus  "&#8723;" >
  <!ENTITY mp  "&#8723;" >
+ <!ENTITY mnplus  "&#8723;" >
  <!ENTITY MinusPlus  "&#8723;" >
  <!ENTITY plusdo  "&#8724;" >
  <!ENTITY dotplus  "&#8724;" >
  <!ENTITY setmn  "&#8726;" >
- <!ENTITY setminus  "&#8726;" >
- <!ENTITY Backslash  "&#8726;" >
  <!ENTITY ssetmn  "&#8726;" >
+ <!ENTITY setminus  "&#8726;" >
  <!ENTITY smallsetminus  "&#8726;" >
+ <!ENTITY Backslash  "&#8726;" >
  <!ENTITY lowast  "&#8727;" >
  <!ENTITY compfn  "&#8728;" >
  <!ENTITY SmallCircle  "&#8728;" >
  <!ENTITY radic  "&#8730;" >
  <!ENTITY Sqrt  "&#8730;" >
  <!ENTITY prop  "&#8733;" >
- <!ENTITY propto  "&#8733;" >
- <!ENTITY Proportional  "&#8733;" >
  <!ENTITY vprop  "&#8733;" >
+ <!ENTITY propto  "&#8733;" >
  <!ENTITY varpropto  "&#8733;" >
+ <!ENTITY Proportional  "&#8733;" >
  <!ENTITY infin  "&#8734;" >
  <!ENTITY angrt  "&#8735;" >
  <!ENTITY ang  "&#8736;" >
@@ -897,23 +897,23 @@
  <!ENTITY measuredangle  "&#8737;" >
  <!ENTITY angsph  "&#8738;" >
  <!ENTITY mid  "&#8739;" >
- <!ENTITY VerticalBar  "&#8739;" >
  <!ENTITY smid  "&#8739;" >
  <!ENTITY shortmid  "&#8739;" >
+ <!ENTITY VerticalBar  "&#8739;" >
  <!ENTITY nmid  "&#8740;" >
- <!ENTITY NotVerticalBar  "&#8740;" >
  <!ENTITY nsmid  "&#8740;" >
  <!ENTITY nshortmid  "&#8740;" >
+ <!ENTITY NotVerticalBar  "&#8740;" >
  <!ENTITY par  "&#8741;" >
- <!ENTITY parallel  "&#8741;" >
- <!ENTITY DoubleVerticalBar  "&#8741;" >
  <!ENTITY spar  "&#8741;" >
+ <!ENTITY parallel  "&#8741;" >
  <!ENTITY shortparallel  "&#8741;" >
+ <!ENTITY DoubleVerticalBar  "&#8741;" >
  <!ENTITY npar  "&#8742;" >
- <!ENTITY nparallel  "&#8742;" >
- <!ENTITY NotDoubleVerticalBar  "&#8742;" >
  <!ENTITY nspar  "&#8742;" >
+ <!ENTITY nparallel  "&#8742;" >
  <!ENTITY nshortparallel  "&#8742;" >
+ <!ENTITY NotDoubleVerticalBar  "&#8742;" >
  <!ENTITY and  "&#8743;" >
  <!ENTITY wedge  "&#8743;" >
  <!ENTITY or  "&#8744;" >
@@ -925,8 +925,8 @@
  <!ENTITY Int  "&#8748;" >
  <!ENTITY tint  "&#8749;" >
  <!ENTITY iiint  "&#8749;" >
- <!ENTITY conint  "&#8750;" >
  <!ENTITY oint  "&#8750;" >
+ <!ENTITY conint  "&#8750;" >
  <!ENTITY ContourIntegral  "&#8750;" >
  <!ENTITY Conint  "&#8751;" >
  <!ENTITY DoubleContourIntegral  "&#8751;" >
@@ -950,25 +950,25 @@
  <!ENTITY mDDot  "&#8762;" >
  <!ENTITY homtht  "&#8763;" >
  <!ENTITY sim  "&#8764;" >
- <!ENTITY Tilde  "&#8764;" >
  <!ENTITY thksim  "&#8764;" >
  <!ENTITY thicksim  "&#8764;" >
+ <!ENTITY Tilde  "&#8764;" >
  <!ENTITY bsim  "&#8765;" >
  <!ENTITY backsim  "&#8765;" >
  <!ENTITY ac  "&#8766;" >
  <!ENTITY mstpos  "&#8766;" >
  <!ENTITY acd  "&#8767;" >
+ <!ENTITY wr  "&#8768;" >
  <!ENTITY wreath  "&#8768;" >
  <!ENTITY VerticalTilde  "&#8768;" >
- <!ENTITY wr  "&#8768;" >
  <!ENTITY nsim  "&#8769;" >
  <!ENTITY NotTilde  "&#8769;" >
  <!ENTITY esim  "&#8770;" >
- <!ENTITY EqualTilde  "&#8770;" >
  <!ENTITY eqsim  "&#8770;" >
+ <!ENTITY EqualTilde  "&#8770;" >
  <!ENTITY sime  "&#8771;" >
- <!ENTITY TildeEqual  "&#8771;" >
  <!ENTITY simeq  "&#8771;" >
+ <!ENTITY TildeEqual  "&#8771;" >
  <!ENTITY nsime  "&#8772;" >
  <!ENTITY nsimeq  "&#8772;" >
  <!ENTITY NotTildeEqual  "&#8772;" >
@@ -977,15 +977,15 @@
  <!ENTITY simne  "&#8774;" >
  <!ENTITY ncong  "&#8775;" >
  <!ENTITY NotTildeFullEqual  "&#8775;" >
- <!ENTITY asymp  "&#8776;" >
  <!ENTITY ap  "&#8776;" >
- <!ENTITY TildeTilde  "&#8776;" >
- <!ENTITY approx  "&#8776;" >
+ <!ENTITY asymp  "&#8776;" >
  <!ENTITY thkap  "&#8776;" >
+ <!ENTITY approx  "&#8776;" >
  <!ENTITY thickapprox  "&#8776;" >
+ <!ENTITY TildeTilde  "&#8776;" >
  <!ENTITY nap  "&#8777;" >
- <!ENTITY NotTildeTilde  "&#8777;" >
  <!ENTITY napprox  "&#8777;" >
+ <!ENTITY NotTildeTilde  "&#8777;" >
  <!ENTITY ape  "&#8778;" >
  <!ENTITY approxeq  "&#8778;" >
  <!ENTITY apid  "&#8779;" >
@@ -994,14 +994,14 @@
  <!ENTITY asympeq  "&#8781;" >
  <!ENTITY CupCap  "&#8781;" >
  <!ENTITY bump  "&#8782;" >
- <!ENTITY HumpDownHump  "&#8782;" >
  <!ENTITY Bumpeq  "&#8782;" >
+ <!ENTITY HumpDownHump  "&#8782;" >
  <!ENTITY bumpe  "&#8783;" >
- <!ENTITY HumpEqual  "&#8783;" >
  <!ENTITY bumpeq  "&#8783;" >
+ <!ENTITY HumpEqual  "&#8783;" >
+ <!ENTITY doteq  "&#8784;" >
  <!ENTITY esdot  "&#8784;" >
  <!ENTITY DotEqual  "&#8784;" >
- <!ENTITY doteq  "&#8784;" >
  <!ENTITY eDot  "&#8785;" >
  <!ENTITY doteqdot  "&#8785;" >
  <!ENTITY efDot  "&#8786;" >
@@ -1032,42 +1032,42 @@
  <!ENTITY le  "&#8804;" >
  <!ENTITY leq  "&#8804;" >
  <!ENTITY ge  "&#8805;" >
- <!ENTITY GreaterEqual  "&#8805;" >
  <!ENTITY geq  "&#8805;" >
+ <!ENTITY GreaterEqual  "&#8805;" >
  <!ENTITY lE  "&#8806;" >
- <!ENTITY LessFullEqual  "&#8806;" >
  <!ENTITY leqq  "&#8806;" >
+ <!ENTITY LessFullEqual  "&#8806;" >
  <!ENTITY gE  "&#8807;" >
- <!ENTITY GreaterFullEqual  "&#8807;" >
  <!ENTITY geqq  "&#8807;" >
+ <!ENTITY GreaterFullEqual  "&#8807;" >
  <!ENTITY lnE  "&#8808;" >
  <!ENTITY lneqq  "&#8808;" >
  <!ENTITY gnE  "&#8809;" >
  <!ENTITY gneqq  "&#8809;" >
+ <!ENTITY ll  "&#8810;" >
  <!ENTITY Lt  "&#8810;" >
  <!ENTITY NestedLessLess  "&#8810;" >
- <!ENTITY ll  "&#8810;" >
+ <!ENTITY gg  "&#8811;" >
  <!ENTITY Gt  "&#8811;" >
  <!ENTITY NestedGreaterGreater  "&#8811;" >
- <!ENTITY gg  "&#8811;" >
  <!ENTITY twixt  "&#8812;" >
  <!ENTITY between  "&#8812;" >
  <!ENTITY NotCupCap  "&#8813;" >
  <!ENTITY nlt  "&#8814;" >
- <!ENTITY NotLess  "&#8814;" >
  <!ENTITY nless  "&#8814;" >
+ <!ENTITY NotLess  "&#8814;" >
  <!ENTITY ngt  "&#8815;" >
- <!ENTITY NotGreater  "&#8815;" >
  <!ENTITY ngtr  "&#8815;" >
+ <!ENTITY NotGreater  "&#8815;" >
  <!ENTITY nle  "&#8816;" >
- <!ENTITY NotLessEqual  "&#8816;" >
  <!ENTITY nleq  "&#8816;" >
+ <!ENTITY NotLessEqual  "&#8816;" >
  <!ENTITY nge  "&#8817;" >
- <!ENTITY NotGreaterEqual  "&#8817;" >
  <!ENTITY ngeq  "&#8817;" >
+ <!ENTITY NotGreaterEqual  "&#8817;" >
  <!ENTITY lsim  "&#8818;" >
- <!ENTITY LessTilde  "&#8818;" >
  <!ENTITY lesssim  "&#8818;" >
+ <!ENTITY LessTilde  "&#8818;" >
  <!ENTITY gsim  "&#8819;" >
  <!ENTITY gtrsim  "&#8819;" >
  <!ENTITY GreaterTilde  "&#8819;" >
@@ -1086,17 +1086,17 @@
  <!ENTITY ntgl  "&#8825;" >
  <!ENTITY NotGreaterLess  "&#8825;" >
  <!ENTITY pr  "&#8826;" >
- <!ENTITY Precedes  "&#8826;" >
  <!ENTITY prec  "&#8826;" >
+ <!ENTITY Precedes  "&#8826;" >
  <!ENTITY sc  "&#8827;" >
- <!ENTITY Succeeds  "&#8827;" >
  <!ENTITY succ  "&#8827;" >
+ <!ENTITY Succeeds  "&#8827;" >
  <!ENTITY prcue  "&#8828;" >
- <!ENTITY PrecedesSlantEqual  "&#8828;" >
  <!ENTITY preccurlyeq  "&#8828;" >
+ <!ENTITY PrecedesSlantEqual  "&#8828;" >
  <!ENTITY sccue  "&#8829;" >
- <!ENTITY SucceedsSlantEqual  "&#8829;" >
  <!ENTITY succcurlyeq  "&#8829;" >
+ <!ENTITY SucceedsSlantEqual  "&#8829;" >
  <!ENTITY prsim  "&#8830;" >
  <!ENTITY precsim  "&#8830;" >
  <!ENTITY PrecedesTilde  "&#8830;" >
@@ -1117,8 +1117,8 @@
  <!ENTITY nsub  "&#8836;" >
  <!ENTITY nsup  "&#8837;" >
  <!ENTITY sube  "&#8838;" >
- <!ENTITY SubsetEqual  "&#8838;" >
  <!ENTITY subseteq  "&#8838;" >
+ <!ENTITY SubsetEqual  "&#8838;" >
  <!ENTITY supe  "&#8839;" >
  <!ENTITY supseteq  "&#8839;" >
  <!ENTITY SupersetEqual  "&#8839;" >
@@ -1136,17 +1136,17 @@
  <!ENTITY uplus  "&#8846;" >
  <!ENTITY UnionPlus  "&#8846;" >
  <!ENTITY sqsub  "&#8847;" >
- <!ENTITY SquareSubset  "&#8847;" >
  <!ENTITY sqsubset  "&#8847;" >
+ <!ENTITY SquareSubset  "&#8847;" >
  <!ENTITY sqsup  "&#8848;" >
- <!ENTITY SquareSuperset  "&#8848;" >
  <!ENTITY sqsupset  "&#8848;" >
+ <!ENTITY SquareSuperset  "&#8848;" >
  <!ENTITY sqsube  "&#8849;" >
- <!ENTITY SquareSubsetEqual  "&#8849;" >
  <!ENTITY sqsubseteq  "&#8849;" >
+ <!ENTITY SquareSubsetEqual  "&#8849;" >
  <!ENTITY sqsupe  "&#8850;" >
- <!ENTITY SquareSupersetEqual  "&#8850;" >
  <!ENTITY sqsupseteq  "&#8850;" >
+ <!ENTITY SquareSupersetEqual  "&#8850;" >
  <!ENTITY sqcap  "&#8851;" >
  <!ENTITY SquareIntersection  "&#8851;" >
  <!ENTITY sqcup  "&#8852;" >
@@ -1180,9 +1180,9 @@
  <!ENTITY LeftTee  "&#8867;" >
  <!ENTITY top  "&#8868;" >
  <!ENTITY DownTee  "&#8868;" >
- <!ENTITY bottom  "&#8869;" >
  <!ENTITY bot  "&#8869;" >
  <!ENTITY perp  "&#8869;" >
+ <!ENTITY bottom  "&#8869;" >
  <!ENTITY UpTee  "&#8869;" >
  <!ENTITY models  "&#8871;" >
  <!ENTITY vDash  "&#8872;" >
@@ -1219,17 +1219,17 @@
  <!ENTITY angrtvb  "&#8894;" >
  <!ENTITY lrtri  "&#8895;" >
  <!ENTITY xwedge  "&#8896;" >
- <!ENTITY Wedge  "&#8896;" >
  <!ENTITY bigwedge  "&#8896;" >
+ <!ENTITY Wedge  "&#8896;" >
  <!ENTITY xvee  "&#8897;" >
- <!ENTITY Vee  "&#8897;" >
  <!ENTITY bigvee  "&#8897;" >
+ <!ENTITY Vee  "&#8897;" >
  <!ENTITY xcap  "&#8898;" >
- <!ENTITY Intersection  "&#8898;" >
  <!ENTITY bigcap  "&#8898;" >
+ <!ENTITY Intersection  "&#8898;" >
  <!ENTITY xcup  "&#8899;" >
- <!ENTITY Union  "&#8899;" >
  <!ENTITY bigcup  "&#8899;" >
+ <!ENTITY Union  "&#8899;" >
  <!ENTITY diam  "&#8900;" >
  <!ENTITY diamond  "&#8900;" >
  <!ENTITY Diamond  "&#8900;" >
@@ -1265,11 +1265,11 @@
  <!ENTITY gtdot  "&#8919;" >
  <!ENTITY gtrdot  "&#8919;" >
  <!ENTITY Ll  "&#8920;" >
- <!ENTITY Gg  "&#8921;" >
  <!ENTITY ggg  "&#8921;" >
+ <!ENTITY Gg  "&#8921;" >
  <!ENTITY leg  "&#8922;" >
- <!ENTITY LessEqualGreater  "&#8922;" >
  <!ENTITY lesseqgtr  "&#8922;" >
+ <!ENTITY LessEqualGreater  "&#8922;" >
  <!ENTITY gel  "&#8923;" >
  <!ENTITY gtreqless  "&#8923;" >
  <!ENTITY GreaterEqualLess  "&#8923;" >
@@ -1321,8 +1321,8 @@
  <!ENTITY notnivb  "&#8958;" >
  <!ENTITY barwed  "&#8965;" >
  <!ENTITY barwedge  "&#8965;" >
- <!ENTITY Barwed  "&#8966;" >
  <!ENTITY doublebarwedge  "&#8966;" >
+ <!ENTITY Barwed  "&#8966;" >
  <!ENTITY lceil  "&#8968;" >
  <!ENTITY LeftCeiling  "&#8968;" >
  <!ENTITY rceil  "&#8969;" >
@@ -1493,16 +1493,18 @@
  <!ENTITY VerticalSeparator  "&#10072;" >
  <!ENTITY lbbrk  "&#10098;" >
  <!ENTITY rbbrk  "&#10099;" >
+ <!ENTITY bsolhsub  "&#10184;" >
+ <!ENTITY suphsol  "&#10185;" >
  <!ENTITY lobrk  "&#10214;" >
  <!ENTITY LeftDoubleBracket  "&#10214;" >
  <!ENTITY robrk  "&#10215;" >
  <!ENTITY RightDoubleBracket  "&#10215;" >
  <!ENTITY lang  "&#10216;" >
- <!ENTITY LeftAngleBracket  "&#10216;" >
  <!ENTITY langle  "&#10216;" >
+ <!ENTITY LeftAngleBracket  "&#10216;" >
  <!ENTITY rang  "&#10217;" >
- <!ENTITY RightAngleBracket  "&#10217;" >
  <!ENTITY rangle  "&#10217;" >
+ <!ENTITY RightAngleBracket  "&#10217;" >
  <!ENTITY Lang  "&#10218;" >
  <!ENTITY Rang  "&#10219;" >
  <!ENTITY loang  "&#10220;" >
@@ -1538,8 +1540,8 @@
  <!ENTITY lBarr  "&#10510;" >
  <!ENTITY rBarr  "&#10511;" >
  <!ENTITY dbkarow  "&#10511;" >
- <!ENTITY RBarr  "&#10512;" >
  <!ENTITY drbkarow  "&#10512;" >
+ <!ENTITY RBarr  "&#10512;" >
  <!ENTITY DDotrahd  "&#10513;" >
  <!ENTITY UpArrowBar  "&#10514;" >
  <!ENTITY DownArrowBar  "&#10515;" >
@@ -1559,10 +1561,10 @@
  <!ENTITY swarhk  "&#10534;" >
  <!ENTITY hkswarow  "&#10534;" >
  <!ENTITY nwnear  "&#10535;" >
- <!ENTITY nesear  "&#10536;" >
  <!ENTITY toea  "&#10536;" >
- <!ENTITY seswar  "&#10537;" >
+ <!ENTITY nesear  "&#10536;" >
  <!ENTITY tosa  "&#10537;" >
+ <!ENTITY seswar  "&#10537;" >
  <!ENTITY swnwar  "&#10538;" >
  <!ENTITY rarrc  "&#10547;" >
  <!ENTITY cudarrr  "&#10549;" >
@@ -1680,7 +1682,6 @@
  <!ENTITY rtriltri  "&#10702;" >
  <!ENTITY LeftTriangleBar  "&#10703;" >
  <!ENTITY RightTriangleBar  "&#10704;" >
- <!ENTITY race  "&#10714;" >
  <!ENTITY iinfin  "&#10716;" >
  <!ENTITY infintie  "&#10717;" >
  <!ENTITY nvinfin  "&#10718;" >
@@ -1781,11 +1782,11 @@
  <!ENTITY ltquest  "&#10875;" >
  <!ENTITY gtquest  "&#10876;" >
  <!ENTITY les  "&#10877;" >
- <!ENTITY LessSlantEqual  "&#10877;" >
  <!ENTITY leqslant  "&#10877;" >
+ <!ENTITY LessSlantEqual  "&#10877;" >
  <!ENTITY ges  "&#10878;" >
- <!ENTITY GreaterSlantEqual  "&#10878;" >
  <!ENTITY geqslant  "&#10878;" >
+ <!ENTITY GreaterSlantEqual  "&#10878;" >
  <!ENTITY lesdot  "&#10879;" >
  <!ENTITY gesdot  "&#10880;" >
  <!ENTITY lesdoto  "&#10881;" >

@@ -12,7 +12,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -82,8 +81,6 @@ import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
 import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
-  private static final Logger LOG = Logger.getInstance(AbstractVcsHelperImpl.class);
-
   private Consumer<VcsException> myCustomHandler = null;
 
   protected AbstractVcsHelperImpl(@NotNull Project project) {
@@ -549,7 +546,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     @NotNull CommittedChangeListProvider changelistProvider) throws VcsException {
     try {
       Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
-      if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
+      if (pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
 
       CommittedChangeList changeList = pair.getFirst();
       FilePath targetPath = pair.getSecond();
@@ -562,7 +559,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  @Nullable
+  @NotNull
   private static Pair<CommittedChangeList, FilePath> getAffectedChanges(@NotNull CommittedChangesProvider provider,
                                                                         @NotNull VirtualFile virtualFile,
                                                                         @NotNull VcsRevisionNumber revision,
@@ -572,6 +569,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       //noinspection unchecked
       Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
       if (pair != null) return pair;
+
+      throw new VcsException(VcsBundle.message("error.cant.load.affected.files", virtualFile.getPath(), revision.asString()));
     }
     else {
       if (location != null) {
@@ -584,34 +583,37 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         if (changes.size() == 1) {
           return Pair.create(changes.get(0), null);
         }
+        else {
+          throw new VcsException(VcsBundle.message("error.cant.load.affected.files", virtualFile.getPath(), revision.asString()));
+        }
       }
       else {
         CommittedChangeList list = getRemoteList(provider, revision, virtualFile);
-        if (list != null) return Pair.create(list, null);
+        return Pair.create(list, null);
       }
     }
-    LOG.warn(String.format("Can't get affected files: path: %s; revision: %s; location: %s; nonLocal: %s",
-                           virtualFile.getPath(), revision.asString(), location, isNonLocal), new Throwable());
-    return null;
   }
 
-  @Nullable
+  @NotNull
   public static CommittedChangeList getRemoteList(@NotNull CommittedChangesProvider provider,
                                                   @NotNull VcsRevisionNumber revision,
                                                   @NotNull VirtualFile nonLocal) throws VcsException {
-    final RepositoryLocation local = provider.getForNonLocal(nonLocal);
-    if (local != null) {
-      final String number = revision.asString();
-      final ChangeBrowserSettings settings = provider.createDefaultSettings();
-      //noinspection unchecked
-      final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
-      for (CommittedChangeList change : changes) {
-        if (number.equals(String.valueOf(change.getNumber()))) {
-          return change;
-        }
+    final RepositoryLocation location = provider.getForNonLocal(nonLocal);
+    if (location == null) {
+      throw new VcsException(VcsBundle.message("error.cant.get.local.file.for.non.local", nonLocal));
+    }
+
+    final String number = revision.asString();
+    final ChangeBrowserSettings settings = provider.createDefaultSettings();
+    //noinspection unchecked
+    final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, provider.getUnlimitedCountValue());
+    for (CommittedChangeList change : changes) {
+      if (number.equals(String.valueOf(change.getNumber()))) {
+        return change;
       }
     }
-    return null;
+    throw new VcsException(VcsBundle.message("error.cant.load.affected.files.with.limit",
+                                             location, revision.asString(), provider.getUnlimitedCountValue(), changes.size()));
   }
 
   @NotNull
@@ -694,7 +696,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public interface CommittedChangeListProvider {
-    @Nullable
+    @NotNull
     Pair<? extends CommittedChangeList, FilePath> loadChangelist() throws VcsException;
   }
 }

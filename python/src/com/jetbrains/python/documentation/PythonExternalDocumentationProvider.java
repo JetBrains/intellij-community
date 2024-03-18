@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class PythonExternalDocumentationProvider extends PythonDocumentationProvider implements ExternalDocumentationProvider {
+public final class PythonExternalDocumentationProvider extends PythonDocumentationProvider implements ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance(PythonExternalDocumentationProvider.class);
 
   @Override

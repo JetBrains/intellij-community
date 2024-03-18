@@ -74,6 +74,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiClass psiClass = getContainingClass(element);
 
     if (psiClass == null) return false;
+    if (psiClass instanceof PsiImplicitClass) return false;
 
     PsiFile file = psiClass.getContainingFile();
     if (file.getContainingDirectory() == null || JavaProjectRootsUtil.isOutsideJavaSourceRoot(file)) return false;

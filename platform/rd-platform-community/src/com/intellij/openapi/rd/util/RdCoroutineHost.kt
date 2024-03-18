@@ -7,15 +7,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
 class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
-    private val logger = logger<RdCoroutineHost>()
-
     val instance by lazy {
       val scope = ApplicationManager.getApplication().service<ScopeHolder>()
       RdCoroutineHost(scope.scope).apply {
@@ -23,11 +20,11 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
       }
     }
 
-    fun init() { instance }
+    fun init() {
+      instance
+    }
 
-    val applicationThreadPool get() = Dispatchers.IO
-    val processIODispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
-    val nonUrgentDispatcher = NonUrgentExecutor.getInstance().asCoroutineDispatcher()
+    val processIODispatcher: ExecutorCoroutineDispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
   }
 
   override val defaultContext: CoroutineContext = coroutineScope.coroutineContext
@@ -56,15 +53,15 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   @Deprecated("Dispatchers.EDT + ModalityState.any().asContextElement()", ReplaceWith("Dispatchers.EDT + ModalityState.any().asContextElement()", "kotlinx.coroutines.Dispatchers",
                                    "com.intellij.openapi.application.EDT", "com.intellij.openapi.application.ModalityState",
                                    "com.intellij.openapi.application.asContextElement"))
-  val uiDispatcherAnyModality get() = Dispatchers.EDT + ModalityState.any().asContextElement()
+  val uiDispatcherAnyModality: CoroutineContext
+    get() = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   override fun onException(throwable: Throwable) {
     if (throwable !is CancellationException && throwable !is ProcessCanceledException) {
-      logger.error("Unhandled coroutine throwable", throwable)
+      logger<RdCoroutineHost>().error("Unhandled coroutine throwable", throwable)
     }
   }
 
-
   @Service(Service.Level.APP)
-  private class ScopeHolder(val scope: CoroutineScope)
+  private class ScopeHolder(@JvmField val scope: CoroutineScope)
 }

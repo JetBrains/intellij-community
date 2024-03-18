@@ -16,6 +16,38 @@
       ],
       "compatibility": {},
       "doc": "<div class=\"notecard note\">\n<p><strong>Note:</strong> See <a href=\"https://github.com/w3c/csswg-drafts/issues/4766\" class=\"external\" rel=\" noopener\">https://github.com/w3c/csswg-drafts/issues/4766</a> for discussion around @viewport's removal from the standards track.</p>\n</div>\n<p>The <strong><code>@viewport</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\" data-flaw=\"link2\">at-rule</a> lets you configure the <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a> through which the document is viewed. It's primarily used for mobile devices, but is also used by desktop browsers that support features like \"snap to edge\" (such as Microsoft Edge).</p>\n<p>Lengths specified as percentages are calculated relative to the <strong>initial viewport</strong>, which is the viewport before any user agent or authored styles have had an opportunity to adjust the viewport. This is typically based on the size of the window on desktop browsers that aren't in full screen mode.</p>\n<p>On mobile devices (or desktop devices that are in full screen mode), the initial viewport is usually the portion of a device's screen that is available for application use. This may be either the full screen or the full screen area minus areas controlled by the operating system (such as a taskbar) or the application-available screen area (either the full screen or the screen minus any areas owned by the operating system or other applications).</p>\n<div class=\"code-example\"><pre class=\"brush: css no-line-numbers notranslate\"><code>@viewport {\n  width: 100vw; /*Sets the width of the actual viewport to the device width*/\n}\n</code></pre></div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong> The use of <code>&lt;meta name=\"viewport\"&gt;</code> tag overrides <code>@viewport</code></p>\n</div>"
+    },
+    "font-face": {
+      "doc": "",
+      "properties": {
+        "woff": {
+          "url": "$MDN_URL$/web/guide/woff",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "support_of_WOFF": {
+              "Chrome": "6",
+              "ChromeAndroid": "",
+              "Edge": "",
+              "Firefox": "3.5",
+              "Opera": "11.1",
+              "Safari": "5.1",
+              "SafariIOS": "5"
+            },
+            "support_of_WOFF_2": {
+              "Chrome": "36",
+              "ChromeAndroid": "36",
+              "Edge": "14",
+              "Firefox": "39",
+              "Opera": "23",
+              "Safari": "10",
+              "SafariIOS": "10"
+            }
+          },
+          "doc": "<strong>WOFF</strong> (the <strong>Web Open Font Format</strong>) is a web font format developed by Mozilla in concert with Type Supply, LettError, and other organizations. It uses a compressed version of the same table-based <code>sfnt</code> structure used by TrueType, OpenType, and Open Font Format, but adds metadata and private-use data structures, including predefined fields allowing foundries and vendors to provide license information if desired.\n<p>There are three main benefits to using WOFF:\n<ol>\n<li>The font data is compressed, so sites using WOFF will use less bandwidth and will load faster than if they used equivalent uncompressed TrueType or OpenType files.</li>\n<li>Many font vendors that are unwilling to license their TrueType or OpenType format fonts for use on the web will license WOFF format fonts. This improves availability of fonts to site designers.</li>\n<li>Both proprietary and free software browser vendors like the WOFF format, so it has the potential of becoming a truly universal, interoperable font format for the web, unlike other current font formats.</li>\n</ol>\n<p>There are two versions of WOFF: WOFF and WOFF2. They mostly differ in regard to the compression algorithm used. In <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> they are identified by the <code>'woff'</code> and <code>'woff2'</code> format descriptor respectively."
+        }
+      }
     }
   },
   "dataTypes": {},

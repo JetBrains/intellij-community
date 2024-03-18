@@ -30,16 +30,6 @@ def f32(x):
     return x
 
 
-async def f41(x):
-    y = (<error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> z for z in [])  # fail
-    await x
-
-
-async def f42(x):
-    y = (mapper(<error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> z) for z in [])  # fail
-    await x
-
-
 async def f43(x):
     y = (z for <error descr="Cannot assign to await expression">await z</error> in [])  # fail
     await x

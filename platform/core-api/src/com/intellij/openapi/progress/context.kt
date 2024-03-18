@@ -1,14 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.asContextElement
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -94,7 +91,7 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
  */
 internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (CoroutineContext) -> T): T {
   val context = prepareCurrentThreadContext().minusKey(Job) +
-                indicatorContext(indicator)
+                (ProgressManager.getInstance().currentProgressModality?.asContextElement() ?: EmptyCoroutineContext)
   if (Cancellation.isInNonCancelableSection()) {
     return ProgressManager.getInstance().silenceGlobalIndicator {
       resetThreadContext().use {
@@ -120,16 +117,6 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
   finally {
     indicatorWatcher.cancel()
   }
-}
-
-/**
- * @return [ModalityState] and [ProgressReporter] from [indicator] as [CoroutineContext]
- */
-private fun indicatorContext(indicator: ProgressIndicator): CoroutineContext {
-  val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
-                         ?: EmptyCoroutineContext
-  val reporter = IndicatorRawProgressReporter(indicator).asContextElement()
-  return progressModality + reporter
 }
 
 private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {

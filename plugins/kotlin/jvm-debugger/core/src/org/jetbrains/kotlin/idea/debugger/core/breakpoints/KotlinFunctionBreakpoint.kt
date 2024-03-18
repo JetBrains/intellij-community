@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.SourcePosition
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -71,6 +72,7 @@ open class KotlinFunctionBreakpoint(
         return sourcePosition
     }
 
+    @RequiresBackgroundThread
     override fun reload() {
         super.reload()
 
@@ -88,15 +90,14 @@ open class KotlinFunctionBreakpoint(
     }
 
     private fun invalidateMethodData() {
-        setMethodName(null)
+        methodName = null
         mySignature = null
     }
 
     private fun updateMethodData(descriptor: MethodDescriptor?) {
-        setMethodName(descriptor?.methodName)
+        methodName = descriptor?.methodName
         mySignature = descriptor?.methodSignature
-        myIsStatic = descriptor != null && descriptor.isStatic
-        if (myIsStatic) {
+        if (descriptor != null && descriptor.isStatic) {
             isInstanceFiltersEnabled = false
         }
     }

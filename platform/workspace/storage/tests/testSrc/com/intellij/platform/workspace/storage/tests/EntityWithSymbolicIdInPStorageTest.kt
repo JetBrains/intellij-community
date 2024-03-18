@@ -7,10 +7,11 @@ import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlready
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class EntityWithSymbolicIdInPStorageTest {
 
@@ -80,11 +81,10 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   fun `add entity with existing persistent id`() {
     builder = createEmptyBuilder()
-    val exception = assertThrows<Throwable> {
+    assertThrowsLogError<SymbolicIdAlreadyExistsException> {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
     }
-    assertTrue(exception.cause is SymbolicIdAlreadyExistsException)
   }
 
   @Test
@@ -104,29 +104,25 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   fun `modify entity to repeat persistent id`() {
     builder = createEmptyBuilder()
-    val exception = assertThrows<Throwable> {
+    assertThrowsLogError<SymbolicIdAlreadyExistsException> {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")
       builder.modifyEntity(namedEntity) {
         this.myName = "MyName"
       }
     }
-    assertTrue(exception.cause is SymbolicIdAlreadyExistsException)
   }
 
   @Test
   fun `modify entity to repeat persistent id - restoring after exception`() {
     builder = createEmptyBuilder()
-    try {
+    assertThrowsLogError<SymbolicIdAlreadyExistsException> {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")
       builder.modifyEntity(namedEntity) {
         this.myName = "MyName"
       }
     }
-    catch (e: AssertionError) {
-      assert(e.cause is SymbolicIdAlreadyExistsException)
-      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.myName == "MyName" })
-    }
+    assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.myName == "MyName" })
   }
 }

@@ -29,7 +29,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveCommentToSeparateLineIntention extends MCIntention {
+public final class MoveCommentToSeparateLineIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -61,7 +61,7 @@ public class MoveCommentToSeparateLineIntention extends MCIntention {
     }
     final PsiElement anchor = element;
 
-    final Document document = comment.getContainingFile().getViewProvider().getDocument();
+    final Document document = comment.getContainingFile().getFileDocument();
     final String newline;
     if (whitespace == null) {
       newline = "\n";
@@ -78,6 +78,6 @@ public class MoveCommentToSeparateLineIntention extends MCIntention {
     final int offset = anchor.getTextRange().getStartOffset();
     document.insertString(offset, newline);
     document.insertString(offset, comment.getText());
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 }

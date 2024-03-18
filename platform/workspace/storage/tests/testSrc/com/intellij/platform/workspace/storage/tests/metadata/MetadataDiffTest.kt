@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.tests.metadata
 
 import com.intellij.platform.workspace.storage.impl.ConnectionId.ConnectionType
-import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
+import com.intellij.platform.workspace.storage.metadata.diff.TypesMetadataComparator
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata.AbstractClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata.ClassMetadata
@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.EntityReference
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.PrimitiveType
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -94,7 +93,7 @@ class MetadataDiffTest {
       createOwnProperty("someType", createPrimitiveType("Int", false))
     )
 
-    assertTrue(twoEntitiesDiff(current, cache))
+    assertFalse(twoEntitiesDiff(current, cache))
   }
 
 
@@ -209,7 +208,7 @@ class MetadataDiffTest {
       )
     )
 
-    assertTrue(twoEntitiesDiff(current, cache))
+    assertFalse(twoEntitiesDiff(current, cache))
   }
 
   @Test
@@ -395,8 +394,7 @@ class MetadataDiffTest {
 
 
   private fun twoEntitiesDiff(current: EntityMetadata, cache: EntityMetadata): Boolean {
-    val comparisonResult = CacheMetadataComparator().areEquals(listOf(cache), listOf(current))
-    println(comparisonResult.info)
+    val comparisonResult = TypesMetadataComparator(cache, current).areEquals(cache, current)
     return comparisonResult.areEquals
   }
 

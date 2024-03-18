@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 /**
  * Strategy extracting elements for grammar checking used by Grazie plugin
@@ -199,6 +200,8 @@ interface GrammarCheckingStrategy {
    * @param child current checking element for which ignored categories are specified
    * @return set of the ignored categories for [child]
    */
+  @ScheduledForRemoval
+  @Deprecated("Override getIgnoredRuleGroup instead", ReplaceWith("getIgnoredRuleGroup(root, child)"))
   fun getIgnoredTypoCategories(root: PsiElement, child: PsiElement): Set<Typo.Category>? = null
 
 

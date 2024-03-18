@@ -2,11 +2,12 @@
 package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 
 interface CodeReviewStatusViewModel {
   val hasConflicts: SharedFlow<Boolean>
+  val requiredConversationsResolved: SharedFlow<Boolean>
+
   val ciJobs: SharedFlow<List<CodeReviewCIJob>>
 
   val showJobsDetailsRequests: SharedFlow<List<CodeReviewCIJob>>

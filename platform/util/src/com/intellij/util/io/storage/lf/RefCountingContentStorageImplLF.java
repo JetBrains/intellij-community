@@ -39,17 +39,7 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
 
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
-  private final IntObjectMap<RecordData> currentRecords = ContainerUtil.createConcurrentIntObjectMap();
-
-  private static final class RecordData {
-    private final int compressedSize;
-    private final int compressedHash;
-
-    private RecordData(int size, int hash) {
-      compressedSize = size;
-      compressedHash = hash;
-    }
-  }
+  private final IntObjectMap<RecordData> recordsLogForDebug = ContainerUtil.createConcurrentIntObjectMap();
 
   public RefCountingContentStorageImplLF(@NotNull Path path,
                                          @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
@@ -81,16 +71,24 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
   }
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
+
+    //TODO RC: why to wait for record to be written, if we can just return the not-yet-written bytes?
+    //MAYBE RC: even better -- cache last 2-4-8 records uncompressed, in memory?
     waitForPendingWriteForRecord(record);
-    byte[] result = withReadLock(() -> super.readBytes(record));
+    byte[] compressedBytes = super.readBytes(record);
 
     if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-      doRecordSanityCheck(record, result);
+      doRecordSanityCheck(record, compressedBytes);
     }
 
+    //TODO RC: Inflater could work with ByteBuffer as input! So there is no need to copy data from
+    //         page cache buffer into byte[], and then un-compress to another byte[] -- instead we
+    //         could un-compress straight from the page cache buffer, skipping 1 memcopy and 1 byte[]
+    //         allocation
+
     //text files usually 3-4x compressible:
-    int uncompressedSizeEstimation = Math.max(512, result.length * 3);
-    try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
+    int uncompressedSizeEstimation = Math.max(512, compressedBytes.length * 3);
+    try (InflaterInputStream in = new CustomInflaterInputStream(compressedBytes)) {
       final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(uncompressedSizeEstimation);
       StreamUtil.copy(in, outputStream);
       return outputStream;
@@ -98,7 +96,7 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
   }
 
   private void doRecordSanityCheck(int record, byte[] result) {
-    RecordData savedData = currentRecords.get(record);
+    RecordData savedData = recordsLogForDebug.get(record);
     if (savedData == null) {
       return;
     }
@@ -188,7 +186,7 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
     withWriteLock(() -> {
       super.writeBytes(record, compressedBytes, fixedSize);
       if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-        currentRecords.put(record, new RecordData(compressedBytes.getLength(), compressedBytes.hashCode()));
+        recordsLogForDebug.put(record, new RecordData(compressedBytes.getLength(), compressedBytes.hashCode()));
       }
       pendingWriteRequestsSize -= bytes.getLength();
       pendingWriteRequests.remove(record);
@@ -272,6 +270,16 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
       catch (Exception e) {
         throw new RuntimeException(e);
       }
+    }
+  }
+
+  private static final class RecordData {
+    private final int compressedSize;
+    private final int compressedHash;
+
+    private RecordData(int size, int hash) {
+      compressedSize = size;
+      compressedHash = hash;
     }
   }
 }

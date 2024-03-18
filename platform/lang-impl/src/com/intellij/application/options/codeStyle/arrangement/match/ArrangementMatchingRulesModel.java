@@ -17,11 +17,6 @@ public final class ArrangementMatchingRulesModel extends DefaultTableModel {
     return 1;
   }
 
-  @Override
-  public Class<?> getColumnClass(int columnIndex) {
-    return Object.class;
-  }
-
   public Object getElementAt(int row) {
     return getValueAt(row, 0);
   }

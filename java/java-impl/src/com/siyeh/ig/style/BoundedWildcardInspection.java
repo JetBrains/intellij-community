@@ -45,7 +45,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
  */
-public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(BoundedWildcardInspection.class);
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;

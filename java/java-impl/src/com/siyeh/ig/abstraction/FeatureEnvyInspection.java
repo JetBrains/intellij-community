@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class FeatureEnvyInspection extends BaseInspection {
+public final class FeatureEnvyInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField", "UnusedDeclaration"})
   public boolean ignoreTestCases = false; // keep for compatibility

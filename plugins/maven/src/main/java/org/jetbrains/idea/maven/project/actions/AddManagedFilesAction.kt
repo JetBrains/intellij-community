@@ -53,8 +53,10 @@ class AddManagedFilesAction : MavenAction() {
       }
     }
 
-    val fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    val files = withContext(Dispatchers.EDT) { FileChooser.chooseFiles(singlePomSelection, project, fileToSelect) }
+    val files = withContext(Dispatchers.EDT) {
+      val fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE)
+      FileChooser.chooseFiles(singlePomSelection, project, fileToSelect)
+    }
 
     if (files.size != 1) return
 
@@ -62,7 +64,7 @@ class AddManagedFilesAction : MavenAction() {
     val selectedFiles = if (projectFile.isDirectory) projectFile.children else files
     if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
       val openProjectProvider = MavenOpenProjectProvider()
-      openProjectProvider.linkToExistingProjectAsync(projectFile, project)
+      openProjectProvider.forceLinkToExistingProjectAsync(projectFile, project)
     }
     else {
       val projectPath = getPresentablePath(projectFile.path)

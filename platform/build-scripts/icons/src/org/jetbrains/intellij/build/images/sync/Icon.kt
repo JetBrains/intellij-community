@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync
 
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class Icon(private val file: Path) {
   val isValid by lazy {
@@ -34,7 +34,7 @@ internal class Icon(private val file: Path) {
   private fun isPluginLogo(): Boolean {
     val dimension = dimension ?: return false
     if (dimension.height == PluginLogo.height() && dimension.width == PluginLogo.width()) {
-      val path = file.toAbsolutePath().systemIndependentPath
+      val path = file.toAbsolutePath().invariantSeparatorsPathString
       return path.endsWith(pluginIcon) || path.endsWith(pluginIconDark)
     }
     return false

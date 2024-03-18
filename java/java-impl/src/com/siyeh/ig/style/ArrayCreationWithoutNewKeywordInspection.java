@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
+public final class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
 
   @NotNull
   @Override

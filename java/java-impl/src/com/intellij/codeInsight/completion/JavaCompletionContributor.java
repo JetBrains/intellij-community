@@ -6,7 +6,6 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
@@ -23,11 +22,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,8 +38,10 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -74,6 +77,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
@@ -270,7 +274,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return element instanceof PsiEnumConstant;
         }
       };
-      if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
+      if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, position)) {
         return enumClassFilter;
       }
 
@@ -317,7 +321,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
     };
 
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, position) ||
         isPrimitive(selectorType) || TypeUtils.isJavaLangString(selectorType)) {
       ClassFilter classFilter = new ClassFilter(PsiClass.class) {
         @Override
@@ -851,9 +855,40 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
       ContainerUtil.addIfNotNull(items, ArrayMemberAccess.accessFirstElement(position, element));
     }
+
     if (parameters.getInvocationCount() > 0) {
       items.addAll(getInnerScopeVariables(parameters, position));
     }
+
+    if (ref.getQualifier() instanceof PsiExpression qualifierExpression &&
+        parameters.getInvocationCount() <= 2 &&
+        AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
+      JavaQualifierAsArgumentStaticMembersProcessor processor =
+        new JavaQualifierAsArgumentStaticMembersProcessor(parameters, qualifierExpression);
+
+      items = ContainerUtil.map(items, lookupItem -> {
+        JavaMethodCallElement javaMethodCallElement = lookupItem.as(JavaMethodCallElement.class);
+        if (javaMethodCallElement != null) {
+          PsiMethod psiMethod = javaMethodCallElement.getObject();
+          Ref<LookupElement> staticref = new Ref<>();
+          processor.processStaticMember(staticItem -> staticref.set(staticItem), psiMethod, new HashSet<>());
+          if (!staticref.isNull()) {
+            PrioritizedLookupElement<?> prioritizedLookupElement = lookupItem.as(PrioritizedLookupElement.class);
+            if (prioritizedLookupElement != null) {
+              if (prioritizedLookupElement.getExplicitProximity() != 0) {
+                return PrioritizedLookupElement.withExplicitProximity(staticref.get(), prioritizedLookupElement.getExplicitProximity());
+              }
+              else {
+                return PrioritizedLookupElement.withPriority(staticref.get(), prioritizedLookupElement.getPriority());
+              }
+            }
+            return staticref.get();
+          }
+        }
+        return lookupItem;
+      });
+    }
+
     return items;
   }
 
@@ -977,7 +1012,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (IN_SWITCH_LABEL.accepts(position)) {
-      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
+      return PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, parent);
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {
@@ -1018,7 +1053,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
       String defText = defaultValue == null ? null : defaultValue.getText();
       if (PsiKeyword.TRUE.equals(defText) || PsiKeyword.FALSE.equals(defText)) {
-        result.addElement(createAnnotationAttributeElement(method, 
+        result.addElement(createAnnotationAttributeElement(method,
                                                            PsiKeyword.TRUE.equals(defText) ? PsiKeyword.FALSE : PsiKeyword.TRUE,
                                                            position));
         result.addElement(PrioritizedLookupElement.withPriority(createAnnotationAttributeElement(method, defText, position)
@@ -1037,7 +1072,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static LookupElementBuilder createAnnotationAttributeElement(@NotNull PsiMethod annoMethod,
                                                                        @Nullable String value,
                                                                        @NotNull PsiElement position) {
-    String space = ReferenceExpressionCompletionContributor.getSpace(CodeStyle.getLanguageSettings(annoMethod.getContainingFile()).SPACE_AROUND_ASSIGNMENT_OPERATORS);
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(annoMethod.getContainingFile());
+    String space = ReferenceExpressionCompletionContributor.getSpace(styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
     return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
       .withStrikeoutness(JavaDeprecationUtils.isDeprecated(annoMethod, position))
@@ -1051,12 +1087,32 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         context.commitDocument();
         PsiAnnotationParameterList paramList =
           PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
+        Document document = context.getDocument();
         if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
           int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
-          context.getDocument().insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+          document.insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
           EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
         }
+        int offset = editor.getCaretModel().getOffset();
+        CharSequence sequence = document.getCharsSequence();
+        if (hasAttributeNameAt(sequence, offset)) {
+          document.insertString(offset, styleSettings.SPACE_AFTER_COMMA ? ", " : ",");
+        }
       });
+  }
+
+  private static boolean hasAttributeNameAt(@NotNull CharSequence sequence, int offset) {
+    int length = sequence.length();
+    if (length <= offset) return false;
+    char nextChar = sequence.charAt(offset);
+    if (!StringUtil.isJavaIdentifierStart(nextChar)) return false;
+    while (offset < length - 1 && StringUtil.isJavaIdentifierPart(sequence.charAt(offset + 1))) {
+      offset++;
+    }
+    while (offset < length - 1 && StringUtil.isWhiteSpace(sequence.charAt(offset + 1))) {
+      offset++;
+    }
+    return offset < length - 1 && sequence.charAt(offset + 1) == '=';
   }
 
   @Override
@@ -1275,7 +1331,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
     if (PsiUtilCore.getElementType(at) == JavaTokenType.LPARENTH &&
         PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null &&
-        PsiTreeUtil.getParentOfType(at, PsiUnnamedClass.class) == null) { // TODO check before it that there is record
+        PsiTreeUtil.getParentOfType(at, PsiImplicitClass.class) == null) { // TODO check before it that there is record
       // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }

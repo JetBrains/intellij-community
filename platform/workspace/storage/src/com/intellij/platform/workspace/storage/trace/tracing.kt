@@ -1,11 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.platform.workspace.storage.trace
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 
 
 /**
@@ -15,21 +20,28 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
  * Implementation note: There could be two options for attaching the tracker. One is an inheritance, the second is delegation. Fleet uses
  *   delegation, we use inheritance.
  * The decision to use inheritance comes from how we create entities. For that, we internally call the method [initializeEntity].
- * As this is an internal call from [EntityStorageSnapshotImpl], the deligation won't override it and this will cause two problems:
- *   - The storage in entity will be [EntityStorageSnapshotImpl], but it should be [ReadTracker].
- *   - Since the [EntityStorageSnapshotImpl] caches entities, we'll leak entities with read tracker attached.
+ * As this is an internal call from [ImmutableEntityStorageImpl], the deligation won't override it and this will cause two problems:
+ *   - The storage in entity will be [ImmutableEntityStorageImpl], but it should be [ReadTracker].
+ *   - Since the [ImmutableEntityStorageImpl] caches entities, we'll leak entities with read tracker attached.
  *
- * The argument for deligation is clearer architecture ([EntityStorageSnapshotImpl] is not open).
+ * The argument for deligation is clearer architecture ([ImmutableEntityStorageImpl] is not open).
  */
-internal class ReadTracker(
-  snapshot: EntityStorageSnapshot,
-  private val onRead: (ReadTrace) -> Unit,
-) : EntityStorageSnapshotImpl(
-  (snapshot as EntityStorageSnapshotImpl).entitiesByType,
+internal class ReadTracker private constructor(
+  snapshot: ImmutableEntityStorage,
+  internal val onRead: (ReadTrace) -> Unit,
+) : ImmutableEntityStorageImpl(
+  (snapshot as ImmutableEntityStorageImpl).entitiesByType,
   snapshot.refs,
   snapshot.indexes,
   snapshot.snapshotCache,
 ) {
+
+  init {
+    require(snapshot !is ReadTracker) {
+      "Recursive read tracker is not supported"
+    }
+  }
+
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     val trace = ReadTrace.EntitiesOfType(entityClass)
     log.trace { "Read trace of `entities` function: $trace" }
@@ -37,11 +49,11 @@ internal class ReadTracker(
     return super.entities(entityClass)
   }
 
-  override fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int {
+  override fun <E : WorkspaceEntity> entityCount(entityClass: Class<E>): Int {
     val trace = ReadTrace.EntitiesOfType(entityClass)
     log.trace { "Read trace of `entitiesAmount` function: $trace" }
     onRead(trace)
-    return super.entitiesAmount(entityClass)
+    return super.entityCount(entityClass)
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
@@ -66,15 +78,18 @@ internal class ReadTracker(
     return super.contains(id)
   }
 
-  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
-    TODO("The external mapping is not supported for read tracing at the moment")
+  override fun <T> getExternalMapping(identifier: ExternalMappingKey<T>): ExternalEntityMapping<T> {
+    val trace = ReadTrace.ExternalMappingAccess(identifier)
+    log.trace { "Read trace of `getExternalMapping` function: $trace" }
+    onRead(trace)
+    return super.getExternalMapping(identifier)
   }
 
   override fun getVirtualFileUrlIndex(): VirtualFileUrlIndex {
     TODO("The VirtualFileUrlIndex is not supported for read tracing at the moment")
   }
 
-  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
+  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Sequence<WorkspaceEntity> {
     TODO("The entitiesBySource is not supported for read tracing at the moment")
   }
 
@@ -100,98 +115,213 @@ internal class ReadTracker(
   }
 
   override fun <T : WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: () -> T): T {
-    return newInstance()
+    val instance = newInstance()
+    instance.asBase().onRead = this.onRead
+    return instance
   }
 
   companion object {
     private val log = logger<ReadTracker>()
-  }
-}
 
-internal sealed interface ReadTrace {
-  data class EntitiesOfType(val ofClass: Class<out WorkspaceEntity>) : ReadTrace
-  data class HasSymbolicLinkTo(
-    val linkTo: SymbolicEntityId<WorkspaceEntityWithSymbolicId>,
-    val inClass: Class<out WorkspaceEntity>,
-  ) : ReadTrace
-
-  data class Resolve(val link: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) : ReadTrace
-
-  data class FieldAccess(
-    internal val entityId: EntityId,
-    val fieldName: String,
-  ) : ReadTrace
-
-  data class SomeFieldAccess(
-    internal val entityId: EntityId,
-  ) : ReadTrace
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
-  return buildSet {
-    this@toTraces.forEach { (key, changes) ->
-      changes.forEach { change ->
-        when (change) {
-          is EntityChange.Added -> {
-            val entity = change.entity
-
-            add(ReadTrace.EntitiesOfType(key as Class<out WorkspaceEntity>))
-
-            val id = entity.asBase().id
-            val entityData = (entity.asBase().snapshot as AbstractEntityStorage).entityDataByIdOrDie(id)
-            if (entityData is SoftLinkable) {
-              entityData.getLinks().forEach { link ->
-                add(ReadTrace.HasSymbolicLinkTo(link, key))
-              }
-            }
-
-            if (entity is WorkspaceEntityWithSymbolicId) {
-              add(ReadTrace.Resolve(entity.symbolicId))
-            }
-          }
-          is EntityChange.Removed -> {
-            val entity = change.entity
-
-            add(ReadTrace.EntitiesOfType(key as Class<out WorkspaceEntity>))
-
-            val id = entity.asBase().id
-            val entityData = (entity.asBase().snapshot as AbstractEntityStorage).entityDataByIdOrDie(id)
-            if (entityData is SoftLinkable) {
-              entityData.getLinks().forEach { link ->
-                add(ReadTrace.HasSymbolicLinkTo(link, key))
-              }
-            }
-
-            if (entity is WorkspaceEntityWithSymbolicId) {
-              add(ReadTrace.Resolve(entity.symbolicId))
-            }
-          }
-          is EntityChange.Replaced -> {
-            add(ReadTrace.SomeFieldAccess((change.newEntity as WorkspaceEntityBase).id))
-
-            // We generate this event to cause `entities` note to react on change of fields. However, this approach is questionable.
-            add(ReadTrace.EntitiesOfType(key as Class<out WorkspaceEntity>))
-
-            val entity = change.newEntity
-
-            // Becase maybe we update the field with links
-            val id = entity.asBase().id
-            val entityData = (entity.asBase().snapshot as AbstractEntityStorage).entityDataByIdOrDie(id)
-            if (entityData is SoftLinkable) {
-              entityData.getLinks().forEach { link ->
-                add(ReadTrace.HasSymbolicLinkTo(link, key))
-              }
-            }
-
-            // Because maybe we update the field that calculates symbolic id
-            if (entity is WorkspaceEntityWithSymbolicId) {
-              add(ReadTrace.Resolve(entity.symbolicId))
-            }
-          }
-        }
+    fun trace(snapshot: ImmutableEntityStorage, action: (ImmutableEntityStorage) -> Unit): Set<ReadTrace> {
+      return HashSet<ReadTrace>().also { traces ->
+        val traced = ReadTracker(snapshot) { traces.add(it) }
+        action(traced)
       }
+    }
+
+    fun tracedSnapshot(snapshot: ImmutableEntityStorage, addTo: LongArrayList): ReadTracker {
+      return ReadTracker(snapshot) { addTo.add(it.hash) }
     }
   }
 }
 
+internal typealias ReadTraceHash = Long
+internal typealias ReadTraceHashSet = LongOpenHashSet
+
+internal sealed interface ReadTrace {
+
+  /**
+   * The hash of the read trace can be used to minimize the memory usage
+   *   and avoid leak of the data in the traces.
+   */
+  val hash: ReadTraceHash
+
+  data class EntitiesOfType(val ofClass: Class<out WorkspaceEntity>) : ReadTrace {
+    override val hash: ReadTraceHash
+      get() {
+        val mult = 433L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult * (mult + ofClass.toClassId()))
+      }
+  }
+
+  data class HasSymbolicLinkTo(
+    val linkTo: SymbolicEntityId<WorkspaceEntityWithSymbolicId>,
+    val inClass: Class<out WorkspaceEntity>,
+  ) : ReadTrace {
+    override val hash: ReadTraceHash
+      get() {
+        val mult = 569L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        var res = mult * linkTo.hashCode()
+        res = mult * res + inClass.toClassId()
+        return res
+      }
+  }
+
+  data class Resolve(val link: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) : ReadTrace {
+    override val hash: ReadTraceHash
+      get() {
+        val mult = 859L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult + (mult + link.hashCode()))
+      }
+  }
+
+  /**
+   * Any read from external mapping.
+   * This is a very broad scope, it can be more precise later.
+   */
+  data class ExternalMappingAccess(val identifier: ExternalMappingKey<*>) : ReadTrace {
+    override val hash: ReadTraceHash
+      get() {
+        val mult = 1129L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult * (mult + identifier.hashCode()))
+      }
+  }
+
+  data class SomeFieldAccess(
+    internal val entityId: EntityId,
+  ) : ReadTrace {
+    override val hash: ReadTraceHash
+      get() {
+        val mult = 2833L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult * (mult + entityId))
+      }
+
+    override fun toString(): String {
+      return "SomeFieldAccess(entityId=${entityId.asString()})"
+    }
+  }
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
+  val patternSet = ReadTraceHashSet(this.size)
+  this@toTraces.forEach { (id, change) ->
+    when (change) {
+      is ChangeEntry.AddEntity -> {
+        val ofClass = id.clazz.findWorkspaceEntity()
+        val entityData = change.entityData
+
+        patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
+
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        }
+      }
+      is ChangeEntry.RemoveEntity -> {
+        val ofClass = id.clazz.findWorkspaceEntity()
+        val entityData = change.oldData
+
+        patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
+
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        }
+      }
+      is ChangeEntry.ReplaceEntity -> {
+        val ofClass = id.clazz.findWorkspaceEntity()
+        val entityData = (newSnapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(id)
+
+        patternSet.add(ReadTrace.SomeFieldAccess(id).hash)
+
+        // Becase maybe we update the field with links
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        // Because maybe we update the field that calculates symbolic id
+        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        }
+      }
+    }
+  }
+  return patternSet
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+internal fun Sequence<EntityChange<*>>.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
+  val patternSet = ReadTraceHashSet()
+  this.forEach { change ->
+    when (change) {
+      is EntityChange.Added<*> -> {
+        val ofClass = change.newEntity.getEntityInterface()
+        val entityData = change.newEntity.asBase().getData()
+
+        patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
+
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        val entity = entityData.createEntity(newSnapshot)
+        if (entity is WorkspaceEntityWithSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        }
+      }
+      is EntityChange.Removed<*> -> {
+        val ofClass = change.entity.getEntityInterface()
+        val entityData = change.entity.asBase().getData()
+
+        patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
+
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        val entity = entityData.createEntity(newSnapshot)
+        if (entity is WorkspaceEntityWithSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        }
+      }
+      is EntityChange.Replaced<*> -> {
+        val ofClass = change.newEntity.getEntityInterface()
+        val entityData = change.newEntity.asBase().getData()
+
+        patternSet.add(ReadTrace.SomeFieldAccess(change.newEntity.asBase().id).hash)
+
+        // Becase maybe we update the field with links
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        // Because maybe we update the field that calculates symbolic id
+        val entity = entityData.createEntity(newSnapshot)
+        if (entity is WorkspaceEntityWithSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        }
+      }
+    }
+  }
+  return patternSet
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,8 +28,7 @@ public abstract class JpsLoaderBase {
   /**
    * Returns null if file doesn't exist
    */
-  @Nullable
-  protected Element loadRootElement(@NotNull Path file) {
+  protected @Nullable Element loadRootElement(@NotNull Path file) {
     return loadRootElement(file, myMacroExpander);
   }
 
@@ -50,16 +49,14 @@ public abstract class JpsLoaderBase {
     timingLog.run();
   }
 
-  @Nullable
-  protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
+  protected @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     return JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
   }
 
   /**
    * Returns null if file doesn't exist
    */
-  @Nullable
-  protected static Element loadRootElement(@NotNull Path file, @NotNull JpsMacroExpander macroExpander) {
+  protected static @Nullable Element loadRootElement(@NotNull Path file, @NotNull JpsMacroExpander macroExpander) {
     final Element element = tryLoadRootElement(file);
     if (element != null) {
       macroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
@@ -67,8 +64,7 @@ public abstract class JpsLoaderBase {
     return element;
   }
 
-  @Nullable
-  public static Element tryLoadRootElement(@NotNull Path file) {
+  public static @Nullable Element tryLoadRootElement(@NotNull Path file) {
     int i = 0;
     while (true) {
       try {
@@ -91,7 +87,7 @@ public abstract class JpsLoaderBase {
         }
       }
 
-      //most likely configuration file is being written by IDE so we'll wait a little
+      // the most likely configuration file is being written by IDE, so we'll wait a little
       try {
         //noinspection BusyWait
         Thread.sleep(300);

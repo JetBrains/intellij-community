@@ -56,9 +56,10 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
     if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
+      lockSystemDirsJob.join()
       try {
         showSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
       }

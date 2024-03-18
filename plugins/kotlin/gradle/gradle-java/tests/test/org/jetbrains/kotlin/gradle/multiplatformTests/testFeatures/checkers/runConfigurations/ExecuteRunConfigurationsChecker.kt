@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.js.backend.ast.REGULAR_EXTENSION
 import org.jetbrains.kotlin.name.FqName
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -59,6 +60,7 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
 
         KotlinTestUtils.assertEqualsToFile(expectedTestDataFile, actualOutput) { text ->
             text.replace(Regex("""\d\d?:\d\d?:\d\d?\s*(\w\w)?:"""), "<time>:")
+                .replace(Regex("""\h*Download.*\n"""), "")
                 .lineSequence()
                 .map { it.split("//").first().trimEnd() } // Support comments
                 .filterNot { it.startsWith("Starting Gradle Daemon") }

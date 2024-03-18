@@ -33,7 +33,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.awt.BorderLayout
 import java.util.function.Supplier
 

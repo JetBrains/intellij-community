@@ -32,7 +32,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.trigger
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -85,7 +85,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
 
     if (myAggregatorProject == null) {
       val manager = MavenProjectsManager.getInstance(project)
-      manager.addManagedFilesOrUnignore(listOf(pom))
+      manager.addManagedFilesOrUnignoreNoUpdate(listOf(pom))
     }
 
     if (myArchetype == null) {
@@ -99,6 +99,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
       }
     }
 
+    MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)

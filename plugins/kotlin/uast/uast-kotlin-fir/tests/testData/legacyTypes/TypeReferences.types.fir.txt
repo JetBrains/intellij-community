@@ -6,10 +6,12 @@ UFile (package = ) [public final class TypeReferencesKt {...]
             UBlockExpression [{...}] : PsiType:Void
                 UDeclarationsExpression [var varWithType: java.lang.String = "Not Null"]
                     ULocalVariable (name = varWithType) [var varWithType: java.lang.String = "Not Null"]
-                        ULiteralExpression (value = "Not Null") ["Not Null"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["Not Null"] : PsiType:String
+                            ULiteralExpression (value = "Not Null") ["Not Null"] : PsiType:String
                 UDeclarationsExpression [var varWithoutType: java.lang.String = "lorem ipsum"]
                     ULocalVariable (name = varWithoutType) [var varWithoutType: java.lang.String = "lorem ipsum"]
-                        ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["lorem ipsum"] : PsiType:String
+                            ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] : PsiType:String
                 UDeclarationsExpression [var result: java.lang.String = varWithType + varWithoutType]
                     ULocalVariable (name = result) [var result: java.lang.String = varWithType + varWithoutType]
                         UBinaryExpression (operator = +) [varWithType + varWithoutType] : PsiType:String

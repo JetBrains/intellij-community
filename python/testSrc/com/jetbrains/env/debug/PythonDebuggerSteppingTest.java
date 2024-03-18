@@ -3,7 +3,6 @@ package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -41,21 +40,23 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
       Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       SdkModificator modificator = sdk.getSdkModificator();
-      ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
+      });
       super.runTestOn(sdk.getHomePath(), sdk);
     }
 
     void assertSmartStepIntoVariants(@NotNull String @NotNull ... expectedFunctionNames) {
-      ReadAction.run(() -> {
-        List<?> variants = getSmartStepIntoVariants();
+      getSmartStepIntoVariantsAsync().onSuccess(variants -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          String[] arr = new String[variants.size()];
+          for(int i = 0; i < arr.length; i++) {
+            PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);
+            arr[i] = v.getFunctionName();
+          }
 
-        String[] arr = new String[variants.size()];
-        for(int i = 0; i < arr.length; i++) {
-          PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);
-          arr[i] = v.getFunctionName();
-        }
-
-        Assert.assertArrayEquals(expectedFunctionNames, arr);
+          Assert.assertArrayEquals(expectedFunctionNames, arr);
+        });
       });
     }
 
@@ -149,7 +150,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepInto() {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
@@ -312,7 +312,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoConstructor() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_constructor.py") {
@@ -390,7 +389,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoCondition() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_condition.py") {
@@ -446,7 +444,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoDecorator1() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_decorator1.py") {
@@ -659,7 +656,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoMultiline2Python3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_multiline2.py") {
@@ -766,7 +762,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator3.py") {

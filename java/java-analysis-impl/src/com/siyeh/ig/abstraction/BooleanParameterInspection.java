@@ -17,7 +17,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class BooleanParameterInspection extends BaseInspection {
+public final class BooleanParameterInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportMultiple = false;

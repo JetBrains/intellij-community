@@ -41,7 +41,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final String STRING_JOINER = "java.util.StringJoiner";
   private static final CallMatcher STRING_JOINER_ADD = CallMatcher.instanceCall(STRING_JOINER, "add").parameterCount(1);
@@ -436,8 +436,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       }
 
       private static int getLineNumber(PsiElement element) {
-        final Document document = element.getContainingFile().getViewProvider().getDocument();
-        assert document != null;
+        final Document document = element.getContainingFile().getFileDocument();
         return document.getLineNumber(element.getTextRange().getStartOffset());
       }
     }

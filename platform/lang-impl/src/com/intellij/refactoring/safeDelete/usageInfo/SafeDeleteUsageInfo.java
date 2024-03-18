@@ -16,13 +16,11 @@
 
 package com.intellij.refactoring.safeDelete.usageInfo;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class SafeDeleteUsageInfo extends UsageInfo {
-  private static final Logger LOG = Logger.getInstance(SafeDeleteUsageInfo.class);
   private final PsiElement myReferencedElement;
 
   public SafeDeleteUsageInfo(@NotNull PsiElement element, PsiElement referencedElement) {

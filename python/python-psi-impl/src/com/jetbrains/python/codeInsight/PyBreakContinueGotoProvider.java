@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Provides reaction on ctrl+click for {@code break} and {@code continue} statements.
  */
-public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
+public final class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement source, Editor editor) {
     if (source != null && source.getLanguage() instanceof PythonLanguage) {

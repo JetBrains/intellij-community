@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToSuperclassFieldInspection extends  BaseInspection {
+public final class AssignmentToSuperclassFieldInspection extends BaseInspection {
 
   @NotNull
   @Override

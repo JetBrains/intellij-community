@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -89,4 +90,18 @@ public abstract class JobLauncher {
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
   public abstract @NotNull Job<Void> submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+
+  @ApiStatus.Internal
+  public <T> boolean procInOrderAsync(@NotNull ProgressIndicator progress,
+                                      int maxQueueSize,
+                                      @NotNull PairProcessor<? super T, ? super QueueController<? super T>> thingProcessor,
+                                      @NotNull Processor<? super QueueController<? super T>> otherActions) throws ProcessCanceledException {
+    return false;
+  }
+
+  public interface QueueController<T> {
+    void enqueue(T element);
+    void dropEverythingAndPanic();
+    void finish();
+  }
 }

@@ -20,7 +20,7 @@ import static com.intellij.psi.JavaTokenType.*;
 /**
  * @author Bas Leijdekkers
  */
-public class ReverseForLoopDirectionIntention extends MCIntention {
+public final class ReverseForLoopDirectionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

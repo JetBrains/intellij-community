@@ -9,19 +9,19 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectLibrary
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureParser
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectEntityReference
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectEntityReferenceParser
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectLibraryReference
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectModuleReference
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsJsonObjectList
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsStringList
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ProjectLibrariesByName
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ModulesByName
+import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
+import org.jetbrains.kotlin.idea.base.util.getAsStringList
+import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReference
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReferenceParser
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibraryReference
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModuleReference
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 
 abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>() {
     override fun isFirPlugin(): Boolean = true

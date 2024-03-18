@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
+public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
 
   @Override
   protected boolean isJavaFile(@NotNull PsiFile file) {

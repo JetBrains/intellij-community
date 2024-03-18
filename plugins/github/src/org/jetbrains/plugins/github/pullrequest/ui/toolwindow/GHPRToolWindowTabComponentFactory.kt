@@ -8,9 +8,10 @@ import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -44,12 +45,16 @@ internal class GHPRToolWindowTabComponentFactory(
   }
 
   override fun createReviewListComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel): JComponent {
-    val listModel = cs.scopedDelegatingListModel(projectVm.listVm.listModel)
-    val list = GHPRListComponentFactory(listModel).create(projectVm.avatarIconsProvider)
+    val ghostUser = projectVm.dataContext.securityService.ghostUser
+    val currentUser = projectVm.dataContext.securityService.currentUser
+    val listVm = projectVm.listVm
+    val listModel = cs.scopedDelegatingListModel(listVm.listModel)
+    val list = GHPRListComponentFactory(projectVm.dataContext.interactionState, listModel)
+      .create(listVm.avatarIconsProvider, ghostUser, currentUser)
 
     GHPRStatisticsCollector.logListOpened(project)
-    return GHPRListPanelFactory(project, projectVm.listVm)
-      .create(cs, list, projectVm.avatarIconsProvider)
+    return GHPRListPanelFactory(project, listVm)
+      .create(cs, list, listVm.avatarIconsProvider)
   }
 
   private fun <T> CoroutineScope.scopedDelegatingListModel(delegate: ListModel<T>) =
@@ -57,14 +62,20 @@ internal class GHPRToolWindowTabComponentFactory(
       private val listeners = CopyOnWriteArrayList<ListDataListener>()
 
       init {
-        awaitCancellationAndInvoke {
-          listeners.forEach {
-            delegate.removeListDataListener(it)
+        launchNow {
+          try {
+            awaitCancellation()
+          }
+          finally {
+            listeners.forEach {
+              delegate.removeListDataListener(it)
+            }
           }
         }
       }
 
       override fun addListDataListener(l: ListDataListener) {
+        if (!isActive) return
         listeners.add(l)
         delegate.addListDataListener(l)
       }

@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,10 +157,12 @@ public final class SelectInContextImpl extends FileSelectInContext {
     if (builder instanceof TreeBasedStructureViewBuilder) {
       return getElementFromStructureTreeView(editor, (TreeBasedStructureViewBuilder)builder);
     }
-    StructureView structureView = builder.createStructureView(editor, project);
-    Object selectorInFile = structureView.getTreeModel().getCurrentEditorElement();
-    Disposer.dispose(structureView);
-    return selectorInFile;
+    else {
+      if (!EDT.isCurrentThreadEdt()) {
+        return null;
+      }
+      return getElementFromStructureViewComponent(project, editor, builder);
+    }
   }
 
   @Nullable
@@ -168,6 +171,14 @@ public final class SelectInContextImpl extends FileSelectInContext {
     StructureViewModel model = builder.createStructureViewModel(editor);
     Object selectorInFile = model.getCurrentEditorElement();
     Disposer.dispose(model);
+    return selectorInFile;
+  }
+
+  @Nullable
+  private static Object getElementFromStructureViewComponent(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
+    StructureView structureView = builder.createStructureView(editor, project);
+    Object selectorInFile = structureView.getTreeModel().getCurrentEditorElement();
+    Disposer.dispose(structureView);
     return selectorInFile;
   }
 

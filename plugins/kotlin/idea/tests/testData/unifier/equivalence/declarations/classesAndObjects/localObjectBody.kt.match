@@ -1,3 +1,4 @@
+(44,169)
 object A {
             val a = 1
             fun b() = a + 1
@@ -5,6 +6,7 @@ object A {
                 get() = b() + 1
         }
 
+(484,609)
 object D {
             fun b() = a + 1
             val a = 1

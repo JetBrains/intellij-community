@@ -8,7 +8,6 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -24,6 +23,8 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -47,23 +48,49 @@ open class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipsePro
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val variablePaths: Map<String, String>
-    get() = dataSource.variablePaths
+    get() {
+      readField("variablePaths")
+      return dataSource.variablePaths
+    }
   override val eclipseUrls: List<VirtualFileUrl>
-    get() = dataSource.eclipseUrls
+    get() {
+      readField("eclipseUrls")
+      return dataSource.eclipseUrls
+    }
 
   override val unknownCons: List<String>
-    get() = dataSource.unknownCons
+    get() {
+      readField("unknownCons")
+      return dataSource.unknownCons
+    }
 
   override val knownCons: List<String>
-    get() = dataSource.knownCons
+    get() {
+      readField("knownCons")
+      return dataSource.knownCons
+    }
 
-  override val forceConfigureJdk: Boolean get() = dataSource.forceConfigureJdk
-  override val expectedModuleSourcePlace: Int get() = dataSource.expectedModuleSourcePlace
+  override val forceConfigureJdk: Boolean
+    get() {
+      readField("forceConfigureJdk")
+      return dataSource.forceConfigureJdk
+    }
+  override val expectedModuleSourcePlace: Int
+    get() {
+      readField("expectedModuleSourcePlace")
+      return dataSource.expectedModuleSourcePlace
+    }
   override val srcPlace: Map<String, Int>
-    get() = dataSource.srcPlace
+    get() {
+      readField("srcPlace")
+      return dataSource.srcPlace
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -337,11 +364,13 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): EclipseProjectPropertiesEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): EclipseProjectPropertiesEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = EclipseProjectPropertiesEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
   }

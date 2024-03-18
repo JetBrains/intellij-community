@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,12 +50,12 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
   }
 
   public static void doGet(@NotNull Project project, @NotNull VcsFileRevision revision, @NotNull FilePath filePath) {
-    String actionTitle = VcsBundle.message("action.name.for.file.get.version", filePath.getPath(), revision.getRevisionNumber());
-    doGet(project, actionTitle, Collections.singletonList(new VcsFileRevisionProvider(filePath, revision)), null);
+    String activityName = VcsBundle.message("activity.name.get.from", revision.getRevisionNumber());
+    doGet(project, activityName, Collections.singletonList(new VcsFileRevisionProvider(filePath, revision)), null);
   }
 
   public static void doGet(@NotNull Project project,
-                           @NotNull @NlsContexts.Label String actionTitle,
+                           @NotNull @NlsContexts.Label String activityName,
                            @NotNull List<? extends FileRevisionProvider> providers,
                            @Nullable Runnable onFinished) {
     List<VirtualFile> files = ContainerUtil.mapNotNull(providers, it -> it.getFilePath().getVirtualFile());
@@ -70,27 +71,27 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
       }
     }
 
-    new MyWriteVersionTask(project, actionTitle, providers, onFinished).queue();
+    new MyWriteVersionTask(project, activityName, providers, onFinished).queue();
   }
 
   private static class MyWriteVersionTask extends Task.Backgroundable {
-    @NotNull private final @NlsContexts.Label String myActionTitle;
+    @NotNull private final @NlsContexts.Label String myActivityName;
     private final @NotNull List<? extends FileRevisionProvider> myProviders;
     @Nullable private final Runnable myOnFinished;
 
     MyWriteVersionTask(@NotNull Project project,
-                       @NotNull @NlsContexts.Label String actionTitle,
+                       @NotNull @NlsContexts.Label String activityName,
                        @NotNull List<? extends FileRevisionProvider> providers,
                        @Nullable Runnable onFinished) {
       super(project, VcsBundle.message("show.diff.progress.title"));
-      myActionTitle = actionTitle;
+      myActivityName = activityName;
       myProviders = providers;
       myOnFinished = onFinished;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(myActionTitle);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(myActivityName, VcsActivity.Get);
       try {
         TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
         Object commandGroup = new Object();

@@ -28,9 +28,7 @@ class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspectionTool 
             override fun visitNamedDeclaration(element: KtNamedDeclaration) {
                 if (!KotlinUnusedSymbolUtil.isApplicableByPsi(element) || KotlinUnusedSymbolUtil.isLocalDeclaration(element)) return
                 val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
-                val psiToReportProblem = analyze(element) { KotlinUnusedSymbolUtil.getPsiToReportProblem(element) {
-                    javaInspection.isEntryPoint(it)
-                } } ?: return
+                val psiToReportProblem = analyze(element) { KotlinUnusedSymbolUtil.getPsiToReportProblem(element, javaInspection) } ?: return
                 holder.registerProblem(psiToReportProblem, message, *KotlinUnusedSymbolUtil.createQuickFixes(element))
             }
         }

@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,23 +13,22 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
+import git4idea.GitReference;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeCommittingConflictResolver;
-import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -37,16 +36,14 @@ import static git4idea.GitNotificationIdsHolder.DELETE_BRANCH_ON_MERGE;
 import static git4idea.GitNotificationIdsHolder.MERGE_ROLLBACK_ERROR;
 import static git4idea.GitUtil.getHead;
 import static git4idea.GitUtil.updateAndRefreshChangedVfs;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 class GitMergeOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitMergeOperation.class);
-  private static final @NotNull String DELETE_HREF_ATTRIBUTE = "delete";
 
-  private final @NotNull ChangeListManager myChangeListManager;
-  private final @NotNull @NlsSafe String myBranchToMerge;
+  private final @NotNull @NlsSafe String myBranchNameToMerge;
+  private final @NotNull GitReference myReferenceToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
@@ -55,11 +52,11 @@ class GitMergeOperation extends GitBranchOperation {
 
   GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                     @NotNull Collection<? extends GitRepository> repositories,
-                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge) {
+                    @NotNull GitReference referenceToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge) {
     super(project, git, uiHandler, repositories);
-    myBranchToMerge = branchToMerge;
+    myReferenceToMerge = referenceToMerge;
+    myBranchNameToMerge = referenceToMerge.getName();
     myDeleteOnMerge = deleteOnMerge;
-    myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
   @Override
@@ -68,7 +65,7 @@ class GitMergeOperation extends GitBranchOperation {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.merge"), GitActivity.Merge)) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
         LOG.info("next repository: " + repository);
@@ -84,9 +81,9 @@ class GitMergeOperation extends GitBranchOperation {
         GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
         GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
-        GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.emptyList(),
-                                            localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
-                                            alreadyUpToDateDetector);
+        GitCommandResult result = myGit.merge(repository, myReferenceToMerge.getFullName(), Collections.emptyList(),
+                                              localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
+                                              alreadyUpToDateDetector);
         if (result.success()) {
           LOG.info("Merged successfully");
           updateAndRefreshChangedVfs(repository, startHash);
@@ -155,15 +152,17 @@ class GitMergeOperation extends GitBranchOperation {
     switch (myDeleteOnMerge) {
       case DELETE -> {
         super.notifySuccess(message);
-        new GitBranchWorker(myProject, myGit, myUiHandler).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
+        new GitBranchWorker(myProject, myGit, myUiHandler).deleteBranch(myBranchNameToMerge, new ArrayList<>(getRepositories()));
       }
       case PROPOSE -> {
-        String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
-        String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
-        VcsNotifier.getInstance(myProject).notifySuccess(DELETE_BRANCH_ON_MERGE,
-                                                         "",
-                                                         description,
-                                                         new DeleteMergedLocalBranchNotificationListener());
+        VcsNotifier.NOTIFICATION_GROUP_ID
+          .createNotification("", new HtmlBuilder().appendRaw(message).toString(), NotificationType.INFORMATION)
+          .setDisplayId(DELETE_BRANCH_ON_MERGE)
+          .addAction(NotificationAction.createSimpleExpiring(
+            GitBundle.message("merge.operation.delete.branch.action", myBranchNameToMerge), () -> {
+              GitBrancher.getInstance(myProject).deleteBranch(myBranchNameToMerge, new ArrayList<>(getRepositories()));
+            }))
+          .notify(myProject);
       }
       case NOTHING -> super.notifySuccess(message);
     }
@@ -177,10 +176,10 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   private boolean proposeSmartMergePerformAndNotify(@NotNull GitRepository repository,
-                                          @NotNull GitMessageWithFilesDetector localChangesOverwrittenByMerge) {
+                                                    @NotNull GitMessageWithFilesDetector localChangesOverwrittenByMerge) {
     Pair<List<GitRepository>, List<Change>> conflictingRepositoriesAndAffectedChanges =
       getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByMerge, myCurrentHeads.get(repository),
-                                                   myBranchToMerge);
+                                                   myBranchNameToMerge);
     List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
@@ -191,7 +190,7 @@ class GitMergeOperation extends GitBranchOperation {
       return doSmartMerge(allConflictingRepositories);
     }
     else {
-      fatalLocalChangesError(myBranchToMerge);
+      fatalLocalChangesError(myBranchNameToMerge);
       return false;
     }
   }
@@ -207,7 +206,7 @@ class GitMergeOperation extends GitBranchOperation {
     GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
     myPreservingProcess = new GitPreservingProcess(myProject, myGit, GitUtil.getRootsFromRepositories(repositories),
                                                    GitBundle.message("merge.operation.name"),
-                                                   myBranchToMerge, saveMethod, getIndicator(),
+                                                   myBranchNameToMerge, saveMethod, getIndicator(),
                                                    () -> success.set(doMerge(repositories)));
     myPreservingProcess.execute(myConflictedRepositories::isEmpty);
     return success.get();
@@ -220,13 +219,13 @@ class GitMergeOperation extends GitBranchOperation {
    * If an error happens in one repository, the method doesn't go further in others, and shows a notification.
    *
    * @return true if merge has succeeded without errors (but possibly with conflicts) in all repositories;
-   *         false if it failed at least in one of them.
+   * false if it failed at least in one of them.
    */
   private boolean doMerge(@NotNull Collection<? extends GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       Hash startHash = getHead(repository);
       GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
-      GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.emptyList(), mergeConflict);
+      GitCommandResult result = myGit.merge(repository, myReferenceToMerge.getFullName(), Collections.emptyList(), mergeConflict);
       if (!result.success()) {
         if (mergeConflict.hasHappened()) {
           myConflictedRepositories.put(repository, Boolean.TRUE);
@@ -247,7 +246,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   private @NotNull @NlsContexts.NotificationTitle String getCommonErrorTitle() {
-    return GitBundle.message("merge.operation.could.not.merge.branch", myBranchToMerge);
+    return GitBundle.message("merge.operation.could.not.merge.branch", myBranchNameToMerge);
   }
 
   @Override
@@ -296,7 +295,7 @@ class GitMergeOperation extends GitBranchOperation {
     Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);
     GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
     GitPreservingProcess preservingProcess =
-      new GitPreservingProcess(myProject, myGit, roots, GitBundle.message("merge.operation.name"), myBranchToMerge, saveMethod,
+      new GitPreservingProcess(myProject, myGit, roots, GitBundle.message("merge.operation.name"), myBranchNameToMerge, saveMethod,
                                getIndicator(), () -> {
         for (GitRepository repository : repositories) result.append(repository, rollback(repository));
       });
@@ -316,14 +315,14 @@ class GitMergeOperation extends GitBranchOperation {
     return result;
   }
 
-  private boolean thereAreLocalChangesIn(@NotNull GitRepository repository) {
-    return !myChangeListManager.getChangesIn(repository.getRoot()).isEmpty();
+  private static boolean thereAreLocalChangesIn(@NotNull GitRepository repository) {
+    return !repository.getStagingAreaHolder().getAllRecords().isEmpty();
   }
 
   @Override
   protected @NotNull String getSuccessMessage() {
     return GitBundle
-      .message("merge.operation.merged.to", bold(code(myBranchToMerge)), bold(code(stringifyBranchesByRepos(myCurrentHeads))));
+      .message("merge.operation.merged.to", code(myBranchNameToMerge), code(stringifyBranchesByRepos(myCurrentHeads)));
   }
 
   @Override
@@ -334,7 +333,7 @@ class GitMergeOperation extends GitBranchOperation {
       .br()
       .appendRaw(successfulRepositoriesJoined())
       .br()
-      .append(GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge")).toString();  
+      .append(GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge")).toString();
   }
 
   @Override
@@ -344,23 +343,14 @@ class GitMergeOperation extends GitBranchOperation {
 
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
     MyMergeConflictResolver() {
-      super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
-            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(GitMergeOperation.this.myProject), true);
+      super(GitMergeOperation.this.myProject,
+            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()),
+            new Params(GitMergeOperation.this.myProject), true);
     }
 
     @Override
     protected void notifyUnresolvedRemain() {
-      notifyWarning(GitBundle.message("merge.operation.branch.merged.with.conflicts", myBranchToMerge), "");
-    }
-  }
-
-  private class DeleteMergedLocalBranchNotificationListener extends NotificationListener.Adapter {
-    @Override
-    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getDescription().equalsIgnoreCase(DELETE_HREF_ATTRIBUTE)) {
-        notification.expire();
-        GitBrancher.getInstance(myProject).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
-      }
+      notifyWarning(GitBundle.message("merge.operation.branch.merged.with.conflicts", myBranchNameToMerge), "");
     }
   }
 }

@@ -2,11 +2,12 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.java.LanguageLevel;
+
+import java.util.Objects;
 
 public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectExtensionImpl> implements JpsJavaProjectExtension {
   private String myOutputUrl;
@@ -35,7 +36,6 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
   public void setOutputUrl(String outputUrl) {
     if (!Objects.equals(myOutputUrl, outputUrl)) {
       myOutputUrl = outputUrl;
-      fireElementChanged();
     }
   }
 
@@ -48,13 +48,6 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
   public void setLanguageLevel(LanguageLevel languageLevel) {
     if (!Comparing.equal(myLanguageLevel, languageLevel)) {
       myLanguageLevel = languageLevel;
-      fireElementChanged();
     }
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsJavaProjectExtensionImpl modified) {
-    setLanguageLevel(modified.myLanguageLevel);
-    setOutputUrl(modified.myOutputUrl);
   }
 }

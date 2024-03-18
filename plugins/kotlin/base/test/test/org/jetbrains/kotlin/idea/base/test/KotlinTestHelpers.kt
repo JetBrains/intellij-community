@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import junit.framework.TestCase
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import java.nio.file.Path
@@ -47,7 +47,7 @@ object KotlinTestHelpers {
         val processedExpected = process(expectedPath.readText())
         val processedActual = process(actual)
         if (processedExpected != processedActual) {
-            throw FileComparisonFailure(message(), processedExpected, processedActual, expectedPath.absolutePathString())
+            throw FileComparisonFailedError(message(), processedExpected, processedActual, expectedPath.absolutePathString())
         }
     }
 }

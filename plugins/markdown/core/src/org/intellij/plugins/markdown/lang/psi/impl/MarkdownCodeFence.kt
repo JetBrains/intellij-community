@@ -139,7 +139,7 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
 
     private fun replaceWithIndent(text: String, content: String, range: TextRange, indent: String): String {
       if (content.isEmpty()) {
-        return text
+        return content
       }
       val prefix = text.substring(0, range.startOffset)
       val suffix = text.substring(range.endOffset)

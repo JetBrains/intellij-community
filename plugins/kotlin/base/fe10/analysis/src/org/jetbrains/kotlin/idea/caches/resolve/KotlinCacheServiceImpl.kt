@@ -548,7 +548,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return getResolutionFacadeByModuleInfo(moduleInfo, platform)
     }
 
-    private fun getResolutionFacadeByModuleInfo(moduleInfo: IdeaModuleInfo, platform: TargetPlatform): ResolutionFacade {
+    override fun getResolutionFacadeByModuleInfo(moduleInfo: IdeaModuleInfo, platform: TargetPlatform): ResolutionFacade {
         val settings = moduleInfo.platformSettings(platform)
         return getResolutionFacadeByModuleInfoAndSettings(moduleInfo, settings)
     }

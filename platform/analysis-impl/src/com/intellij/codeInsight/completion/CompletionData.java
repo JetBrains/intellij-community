@@ -10,6 +10,8 @@ import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
@@ -33,6 +35,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance(CompletionData.class);
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(CharPattern.javaIdentifierPartCharacter());
+  public static final Key<PsiReference> LOOKUP_ELEMENT_PSI_REFERENCE = Key.create("lookup element psi reference");
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<>();
 
   protected CompletionData(){ }
@@ -220,6 +223,7 @@ public class CompletionData {
     }
     else{
       final Object[] completions = reference.getVariants();
+      putSourceInformation(reference, completions);
       for (Object completion : completions) {
         if (completion == null) {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
@@ -244,6 +248,14 @@ public class CompletionData {
             LOG.error("Caused by variant from reference: " + reference.getClass(), e);
           }
         }
+      }
+    }
+  }
+
+  private static void putSourceInformation(@NotNull PsiReference reference, Object[] referencesAsObjects) {
+    for (Object referenceAsObject : referencesAsObjects) {
+      if (referenceAsObject instanceof UserDataHolderBase userDataHolderBaseReference) {
+        userDataHolderBaseReference.putUserData(LOOKUP_ELEMENT_PSI_REFERENCE, reference);
       }
     }
   }

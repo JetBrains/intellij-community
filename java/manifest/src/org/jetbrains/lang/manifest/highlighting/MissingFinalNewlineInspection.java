@@ -44,7 +44,7 @@ import java.util.List;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class MissingFinalNewlineInspection extends LocalInspectionTool {
+public final class MissingFinalNewlineInspection extends LocalInspectionTool {
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof ManifestFile) {

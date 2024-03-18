@@ -32,8 +32,8 @@ import com.intellij.platform.backend.documentation.impl.InternalResolveLinkResul
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.platform.backend.documentation.impl.resolveLink
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.popup.AbstractPopup
-import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -195,7 +195,8 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (getPopup() != null) {
       return // return here to avoid showing another popup if the current one gets cancelled during the delay
     }
-    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)) {
+    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)
+        || !lookup.component.isShowing) {
       return
     }
     delay(delay)

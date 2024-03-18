@@ -22,28 +22,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
 @ApiStatus.Internal
-abstract class InstallAndEnableTask extends Task.Modal {
-  private final boolean allowInstallingPlugins;
-  protected final Set<PluginDownloader> myPlugins = new HashSet<>();
-  protected final @NotNull Set<PluginId> myPluginIds;
-  protected @Nullable List<PluginNode> myCustomPlugins;
-
+public final class InstallAndEnableTask extends Task.Modal {
+  private final Set<PluginId> myPluginIds;
   private final boolean myShowDialog;
   private final boolean mySelectAllInDialog;
-  protected final @Nullable ModalityState myModalityState;
-  protected final @NotNull Runnable myOnSuccess;
+  private final @Nullable ModalityState myModalityState;
+  private final Runnable myOnSuccess;
+
+  private final Set<PluginDownloader> myPlugins = new HashSet<>();
+  private @Nullable List<PluginNode> myCustomPlugins;
 
   InstallAndEnableTask(@Nullable Project project,
                        @NotNull Set<PluginId> pluginIds,
-                       boolean allowInstallingPlugins,
                        boolean showDialog,
                        boolean selectAllInDialog,
                        @Nullable ModalityState modalityState,
                        @NotNull Runnable onSuccess) {
     super(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true);
-    this.allowInstallingPlugins = allowInstallingPlugins;
     myPluginIds = pluginIds;
     myShowDialog = showDialog;
     mySelectAllInDialog = selectAllInDialog;
@@ -55,7 +51,7 @@ abstract class InstallAndEnableTask extends Task.Modal {
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds);
-      myCustomPlugins = PluginsAdvertiser.loadPluginsFromCustomRepositories(indicator);
+      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
       List<IdeaPluginDescriptor> descriptors =
         new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
@@ -83,8 +79,9 @@ abstract class InstallAndEnableTask extends Task.Modal {
       }
 
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor) &&
-            PluginManagementPolicy.getInstance().canInstallPlugin(descriptor) || allowInstallingPlugins) {
+        if (!descriptor.isEnabled() &&
+            PluginManagerCore.isCompatible(descriptor) &&
+            PluginManagementPolicy.getInstance().canInstallPlugin(descriptor)) {
           descriptors.add(descriptor);
         }
       }
@@ -114,7 +111,7 @@ abstract class InstallAndEnableTask extends Task.Modal {
       .doInstallPlugins(myShowDialog, myModalityState);
   }
 
-  protected void runOnSuccess(boolean onSuccess) {
+  private void runOnSuccess(boolean onSuccess) {
     if (onSuccess) {
       myOnSuccess.run();
     }

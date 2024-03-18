@@ -14,6 +14,7 @@ import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunConfigurationStartHistory
 import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -146,12 +147,24 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   }
 
   override fun setName(name: String) {
-    val existing = uniqueId != null && manager.getConfigurationById(uniqueID) != null
+    val alreadyExists = uniqueId != null && manager.getConfigurationById(uniqueID) != null
+    val oldUniqueId = uniqueId
     uniqueId = null
     configuration.name = name
-    if (existing) {
+    if (alreadyExists) {
       manager.addConfiguration(this)
+      val runConfigHistory = RunConfigurationStartHistory.getInstance(manager.project)
+      for (set in runConfigHistory.state.let { listOf(it.pinned, it.history) }) {
+        set.find { it.setting == oldUniqueId }?.apply {
+          setting = getSettings(configuration).uniqueID
+        }
+      }
+      runConfigHistory.reloadState()
     }
+  }
+
+  private fun getSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings {
+    return RunnerAndConfigurationSettingsImpl(manager, configuration)
   }
 
   override fun getName(): String {
@@ -196,7 +209,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   }
 
   override fun getFolderName() = folderName
-
   fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
@@ -339,22 +351,22 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    var warning: RuntimeConfigurationException? = null
     val dataContext = ProgramParametersConfigurator.projectContext(configuration.project, null, null)
 
-     ReadAction.nonBlocking {
+    var warning = ReadAction.nonBlocking<RuntimeConfigurationException?> {
       try {
         ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
           configuration.checkConfiguration()
         }
       }
       catch (e: RuntimeConfigurationException) {
-        warning = e
+        return@nonBlocking e
       }
+      null
     }.executeSynchronously()
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
-        throw warning as RuntimeConfigurationException
+        throw warning
       }
       return
     }
@@ -389,7 +401,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (warning != null) {
-      throw warning as RuntimeConfigurationException
+      throw warning
     }
   }
 

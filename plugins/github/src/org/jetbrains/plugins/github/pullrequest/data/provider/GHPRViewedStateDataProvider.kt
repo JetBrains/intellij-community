@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import java.util.concurrent.CompletableFuture
 
@@ -12,7 +16,7 @@ interface GHPRViewedStateDataProvider {
   fun loadViewedState(): CompletableFuture<Map<String, GHPullRequestFileViewedState>>
 
   @RequiresEdt
-  fun getViewedState(): Map<String, GHPullRequestFileViewedState>
+  fun getViewedState(): Map<String, GHPullRequestFileViewedState>?
 
   @RequiresEdt
   fun updateViewedState(path: String, isViewed: Boolean)
@@ -23,3 +27,13 @@ interface GHPRViewedStateDataProvider {
   @RequiresEdt
   fun reset()
 }
+
+fun GHPRViewedStateDataProvider.createViewedStateRequestsFlow(): Flow<CompletableFuture<Map<String, GHPullRequestFileViewedState>>> =
+  callbackFlow {
+    val disposable = Disposer.newDisposable()
+    addViewedStateListener(disposable) {
+      trySend(loadViewedState())
+    }
+    send(loadViewedState())
+    awaitClose { Disposer.dispose(disposable) }
+  }

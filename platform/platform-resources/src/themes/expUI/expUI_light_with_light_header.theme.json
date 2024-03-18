@@ -111,9 +111,10 @@
 
     "GotItTooltip": {
       "background": "Grey14",
-      "borderColor": "Grey11",
-      "foreground": "Grey3",
+      "borderColor": "Grey14",
+      "foreground": "Grey1",
       "stepForeground": "Grey7",
+      "secondaryActionForeground": "Grey7",
       "Header.foreground": "Grey1",
       "shortcutForeground": "Grey1",
       "shortcutBackground": "Grey11",
@@ -121,15 +122,22 @@
       "codeBackground": "Grey14",
       "codeBorderColor": "Grey8",
       "linkForeground": "Blue2",
+      "linkUnderlineHoveredColor": "Blue2",
+      "linkUnderlineDefaultColor": "#FFFFFF00",
       "imageBorderColor": "Grey12",
-      "animationBackground": "Grey13",
+      "animationBackground": "Grey14",
       "Button": {
-        "foreground": "Grey3",
+        "foreground": "Grey1",
         "startBackground": "Grey11",
         "endBackground": "Grey11",
         "startBorderColor": "Grey11",
         "endBorderColor": "Grey11"
       }
+    },
+
+    "Tooltip.Learning": {
+      "Header.foreground": "Grey14",
+      "codeForeground": "Grey14"
     },
 
     "RecentProject": {

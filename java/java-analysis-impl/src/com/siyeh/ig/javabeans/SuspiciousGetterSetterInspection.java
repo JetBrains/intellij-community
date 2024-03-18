@@ -37,7 +37,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousGetterSetterInspection extends BaseInspection {
+public final class SuspiciousGetterSetterInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyWarnWhenFieldPresent = false;

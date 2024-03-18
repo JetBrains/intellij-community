@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.Predicates.alwaysTrue;
 
 
-public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
+public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {

@@ -10,8 +10,7 @@ class T {
     List<String> list3 = getList1();
   }
 
-    @NotNull
-    private static ArrayList<String> getList1() {
+    private static @NotNull ArrayList<String> getList1() {
         return new ArrayList<>();
     }
 }

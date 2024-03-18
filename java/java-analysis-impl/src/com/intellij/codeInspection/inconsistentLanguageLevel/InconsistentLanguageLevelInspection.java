@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
+public final class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @Override
   public boolean isGraphNeeded() {
     return false;

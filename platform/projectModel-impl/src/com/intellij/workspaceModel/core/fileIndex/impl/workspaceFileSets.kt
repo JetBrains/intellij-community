@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
@@ -77,7 +77,7 @@ internal object StoredFileSetKindMask {
  * this interface implements [StoredFileSetCollection] to optimize performance and memory usage.
  */
 internal sealed interface StoredFileSet : StoredFileSetCollection {
-  val entityReference: EntityReference<WorkspaceEntity>
+  val entityPointer: EntityPointer<WorkspaceEntity>
   val entityStorageKind: EntityStorageKind
   
   override fun removeIf(predicate: (StoredFileSet) -> Boolean): StoredFileSetCollection? {
@@ -96,7 +96,7 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
  */
 internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val kind: WorkspaceFileKind,
-                                    override val entityReference: EntityReference<WorkspaceEntity>,
+                                    override val entityPointer: EntityPointer<WorkspaceEntity>,
                                     override val entityStorageKind: EntityStorageKind,
                                     override val data: WorkspaceFileSetData,
                                     val recursive: Boolean = true)
@@ -275,7 +275,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
-                   override val entityReference: EntityReference<WorkspaceEntity>,
+                   override val entityPointer: EntityPointer<WorkspaceEntity>,
                    override val entityStorageKind: EntityStorageKind = EntityStorageKind.MAIN) : ExcludedFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
       val withExclusion = if (honorExclusion) currentMasks.unsetAcceptedKinds(mask) else currentMasks
@@ -288,7 +288,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   class ByPattern(val root: VirtualFile, patterns: List<String>,
-                  override val entityReference: EntityReference<WorkspaceEntity>,
+                  override val entityPointer: EntityPointer<WorkspaceEntity>,
                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     val table = FileTypeAssocTable<Boolean>()
 
@@ -320,7 +320,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
-                    override val entityReference: EntityReference<WorkspaceEntity>,
+                    override val entityPointer: EntityPointer<WorkspaceEntity>,
                     override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     private fun isExcluded(file: VirtualFile): Boolean {
       var current = file
@@ -362,16 +362,16 @@ internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, va
   }
 }
 
-internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityReference<WorkspaceEntity>, WorkspaceFileSetImpl>>
+internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityPointer<WorkspaceEntity>, WorkspaceFileSetImpl>>
 
 internal fun PackagePrefixStorage.addFileSet(packagePrefix: String, fileSet: WorkspaceFileSetImpl) {
   val entityRef2FileSet = getOrPut(packagePrefix) { MultiMap(LinkedHashMap()) }
-  entityRef2FileSet.putValue(fileSet.entityReference, fileSet)
+  entityRef2FileSet.putValue(fileSet.entityPointer, fileSet)
 }
 
-internal fun PackagePrefixStorage.removeByPrefixAndReference(packagePrefix: String, entityReference: EntityReference<WorkspaceEntity>) {
+internal fun PackagePrefixStorage.removeByPrefixAndPointer(packagePrefix: String, entityPointer: EntityPointer<WorkspaceEntity>) {
   val entityRef2FileSet = get(packagePrefix) ?: return
-  entityRef2FileSet.remove(entityReference)
+  entityRef2FileSet.remove(entityPointer)
   if (entityRef2FileSet.isEmpty) {
     remove(packagePrefix)
   }

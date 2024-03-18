@@ -27,6 +27,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchActivator;
+import com.intellij.ui.speedSearch.SpeedSearchInputMethodRequests;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -46,8 +47,11 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.TextHitInfo;
+import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.AttributedCharacterIterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -104,6 +108,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     setupListeners();
   }
 
+  @Override
+  public boolean supportsNavigation() {
+    return true;
+  }
+
   public void setupListeners() {
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
@@ -155,6 +164,22 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
+    if (allowInputMethodsInSpeedSearch()) {
+      myComponent.addInputMethodListener(new InputMethodListener() {
+        @Override
+        public void inputMethodTextChanged(InputMethodEvent e) {
+          processInputMethodEvent(e);
+        }
+
+        @Override
+        public void caretPositionChanged(InputMethodEvent e) {
+          processInputMethodEvent(e);
+        }
+      });
+
+      myComponent.enableInputMethods(true);
+    }
+
     new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -188,6 +213,42 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected boolean keepEvenWhenFocusLost() {
     return false;
+  }
+
+  protected boolean allowInputMethodsInSpeedSearch() {
+    return true;
+  }
+
+  private InputMethodRequests myInputMethodRequests;
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    if (!allowInputMethodsInSpeedSearch()) {
+      return null;
+    }
+
+    if (myInputMethodRequests == null) {
+      myInputMethodRequests = new SpeedSearchInputMethodRequests() {
+        @Override
+        protected void ensurePopupIsShown() {
+          if (mySearchPopup == null) {
+            showPopup();
+          }
+        }
+
+        @Override
+        protected InputMethodRequests getDelegate() {
+          JTextField field = getSearchField();
+          if (field == null) {
+            return null;
+          } else {
+            return field.getInputMethodRequests();
+          }
+        }
+      };
+    }
+
+    return myInputMethodRequests;
   }
 
   public @Nullable JTextField getSearchField() {
@@ -434,6 +495,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
+  public void processInputMethodEvent(InputMethodEvent e) {
+    if (!isSpeedSearchEnabled()) return;
+
+    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
+      showPopup();
+    }
+
+    if (mySearchPopup != null) {
+      mySearchPopup.processInputMethodEvent(e);
+    }
+  }
+
   protected @NotNull SpeedSearchBase<Comp>.SearchPopup createPopup(String s) {
     return new SearchPopup(s);
   }
@@ -610,6 +683,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+    @Override
+    public void processInputMethodEvent(InputMethodEvent e) {
+      mySearchField.processInputMethodEvent(e);
+      if (e.isConsumed()) {
+        updateLastPattern();
+        String s = mySearchField.getText();
+        updateSelection(findElement(s), s);
+      }
+    }
+
     void refreshSelection() {
       findAndSelectElement(mySearchField.getText());
     }
@@ -648,10 +731,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @NotNull String @NotNull [] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
       for (String id : actionIds) {
         switch (id) {
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP -> {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP, IdeActions.ACTION_FIND_PREVIOUS -> {
             return KeyEvent.VK_UP;
           }
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN -> {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, IdeActions.ACTION_FIND_NEXT -> {
             return KeyEvent.VK_DOWN;
           }
           case IdeActions.ACTION_EDITOR_MOVE_LINE_START -> {
@@ -763,10 +846,26 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         return;
       }
 
+      if (e.getID() == KeyEvent.KEY_TYPED && !UIUtil.isReallyTypedEvent(e)) {
+        // Stuff like Ctrl+N / Ctrl+P is processed on KEY_PRESSED, and the subsequent KEY_TYPED screws it up.
+        return;
+      }
+
       super.processKeyEvent(e);
+
+      if (!e.isConsumed() && getNavigationKeyCode(e) != 0) {
+        // Some navigation action shortcuts aren't consumed by the field, e.g. if these are custom shortcuts the text field doesn't understand.
+        e.consume();
+      }
+
       if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
       }
+    }
+
+    @Override
+    public void processInputMethodEvent(InputMethodEvent e) {
+      super.processInputMethodEvent(e);
     }
 
     @Override

@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports any fields that are not used in the <code>toString()</code> method of a class.
-<p>This inspection can help discover the
-fields that were added after the <code>toString()</code> method was created and for which the <code>toString()</code> method was not
-  updated. The quick-fix regenerates the <code>toString()</code> method.</p>
+Reports fields that are not used in the <code>toString()</code> method of a class.
+<p>Helps discover fields added after the <code>toString()</code> method was last updated.
+  The quick-fix regenerates the <code>toString()</code> method.</p>
 <p>
 In the <b>Generate | toString()</b> dialog, it is possible to exclude fields from this check.
 This inspection will also check for problems with getter methods if the <em>Enable getters in code generation</em> option is enabled there.

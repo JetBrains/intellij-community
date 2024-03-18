@@ -35,11 +35,22 @@ internal fun isUnderIndicatorOrJob(): Boolean {
 @ApiStatus.Internal
 fun throwAlreadyDisposedError(serviceDescription: String, componentManager: ComponentManagerImpl) {
   val error = AlreadyDisposedException("Cannot create $serviceDescription because container is already disposed (container=${componentManager})")
+  throw wrapAlreadyDisposedError(error)
+}
+
+/**
+ * AlreadyDisposedException should cancel current computation -- if computation is cancellable.
+ * Method checks if computation is cancellable, and returns ADE wrapped in PCE if true, or return
+ * original ADE if computation is not cancellable -- so returned exception is appropriate to be
+ * thrown in either context.
+ */
+@ApiStatus.Internal
+fun wrapAlreadyDisposedError(error: AlreadyDisposedException): RuntimeException {
   if (!isUnderIndicatorOrJob()) {
-    throw error
+    return error
   }
   else {
-    throw ProcessCanceledException(error)
+    return ProcessCanceledException(error)
   }
 }
 

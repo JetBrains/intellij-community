@@ -15,10 +15,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.TestDataFile;
@@ -63,8 +63,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget;
 
 public final class KotlinTestUtils {
     public static final String TEST_MODULE_NAME = "test-module";
@@ -379,8 +379,8 @@ public final class KotlinTestUtils {
             String sanitizedActualText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(sanitizer.invoke(actualText));
 
             if (!Objects.equals(sanitizedExpectedText, sanitizedActualText)) {
-                throw new FileComparisonFailure(message + ": " + expectedFile.getName(),
-                                                sanitizedExpectedText, sanitizedActualText, expectedFile.getAbsolutePath());
+                throw new FileComparisonFailedError(message + ": " + expectedFile.getName(),
+                                                    sanitizedExpectedText, sanitizedActualText, expectedFile.getAbsolutePath());
             }
         } catch (IOException e) {
             throw ExceptionUtilsKt.rethrow(e);

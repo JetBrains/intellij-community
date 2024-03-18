@@ -9,16 +9,18 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.ui.NewUiValue;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 
-public class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {
+public final class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {
   @Override
   public ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
     return new ColoredItemPresentation() {
@@ -34,6 +36,10 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
           PsiClassOwner classOwner = (PsiClassOwner)file;
           String packageName = classOwner.getPackageName();
           if (packageName.isEmpty()) return null;
+          LanguageLevel version = JavaMultiReleaseUtil.getVersion(file);
+          if (version != null) {
+            packageName += "/" + JavaPsiBundle.message("class.file.version", version.feature());
+          }
           return NewUiValue.isEnabled() ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
         }
         return null;

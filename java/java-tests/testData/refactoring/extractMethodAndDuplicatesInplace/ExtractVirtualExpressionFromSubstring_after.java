@@ -6,8 +6,7 @@ class Test {
     System.out.println("one " + getTwo() + " three");
   }
 
-    @NotNull
-    private static String getTwo() {
+    private static @NotNull String getTwo() {
         return "two";
     }
 }

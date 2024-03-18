@@ -8,16 +8,26 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.tree.IElementType
 
-data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
+data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes) {
+  init {
+    check(startOffset <= endOffset)
+  }
+  val length: Int
+    get() = endOffset - startOffset
+}
 
-class TerminalTextHighlighter private constructor(private val getHighlightings: () -> List<HighlightingInfo>) : EditorHighlighter {
+class TerminalTextHighlighter private constructor(
+  private val allHighlightingsSnapshotProvider: () -> AllHighlightingsSnapshot
+) : EditorHighlighter {
   private var editor: HighlighterClient? = null
 
-  constructor(model: TerminalOutputModel) : this({ model.getAllHighlightings() })
-  constructor(highlightings: List<HighlightingInfo>) : this({ highlightings })
+  constructor(model: TerminalOutputModel) : this({ model.getHighlightingsSnapshot() })
+  internal constructor(allHighlightingsSnapshot: AllHighlightingsSnapshot) : this({ allHighlightingsSnapshot })
 
   override fun createIterator(startOffset: Int): HighlighterIterator {
-    return MyHighlighterIterator(editor?.document, getHighlightings())
+    val highlightingsSnapshot = allHighlightingsSnapshotProvider()
+    val curInd = highlightingsSnapshot.findHighlightingIndex(startOffset)
+    return MyHighlighterIterator(editor?.document, highlightingsSnapshot, curInd)
   }
 
   override fun setEditor(editor: HighlighterClient) {
@@ -25,8 +35,8 @@ class TerminalTextHighlighter private constructor(private val getHighlightings: 
   }
 
   private class MyHighlighterIterator(private val document: Document?,
-                                      private val highlightings: List<HighlightingInfo>) : HighlighterIterator {
-    private var curInd = 0
+                                      private val highlightings: AllHighlightingsSnapshot,
+                                      private var curInd: Int) : HighlighterIterator {
 
     override fun getStart(): Int = highlightings[curInd].startOffset
 

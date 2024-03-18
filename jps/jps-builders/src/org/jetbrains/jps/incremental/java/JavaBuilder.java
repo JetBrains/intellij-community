@@ -30,7 +30,6 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
 import org.jetbrains.jps.builders.java.*;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -39,6 +38,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -55,9 +55,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -167,12 +165,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     COMPILING_TOOL.set(context, compilingTool);
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     if (!isJavac(compilingTool)) {
-      Mappings mappings = context.getProjectDescriptor().dataManager.getMappings();
-      if (mappings != null) {
-        mappings.setProcessConstantsIncrementally(false);
-      }
-      // todo: need to support this mode for the new dep graph?
+      dataManager.setProcessConstantsIncrementally(false);
     }
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
@@ -1042,7 +1037,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
     @NotNull JpsModule module = chunk.representativeTarget().getModule();
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    final int languageLevel = level != null ? level.toJavaVersion().feature : 0;
+    final int languageLevel = level != null ? level.feature() : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
     int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
@@ -1123,7 +1118,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   private static int getLanguageLevel(@NotNull JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    return level != null ? level.toJavaVersion().feature : 0;
+    return level != null ? level.feature() : 0;
   }
 
   /**

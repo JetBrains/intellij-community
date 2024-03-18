@@ -24,7 +24,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class SplitElseIfIntention extends MCIntention {
+public final class SplitElseIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -90,7 +91,9 @@ public final class VfsRootAccess {
         }
       }
 
-      assert isUnder : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed);
+      if (!isUnder) {
+        throw new VfsRootAccessNotAllowedError(child, new ArrayList<>(allowed));
+      }
     }
   }
 
@@ -255,6 +258,12 @@ public final class VfsRootAccess {
       for (String root : roots) {
         ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
       }
+    }
+  }
+
+  public static class VfsRootAccessNotAllowedError extends AssertionError implements ControlFlowException {
+    public VfsRootAccessNotAllowedError(@NotNull VirtualFile child, @NotNull ArrayList<String> allowed) {
+      super("File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed));
     }
   }
 }

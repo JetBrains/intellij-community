@@ -13,13 +13,12 @@ import java.util.concurrent.TimeUnit
 import kotlin.String
 
 class ArchetypesTest : MavenTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   /**
    * very time consumed test (uses the network and -U maven flag)
    */
   fun ignoreTestGenerating() = runBlocking {
-    val dir = File(myDir.path, "generated")
+    val dir = File(dir.path, "generated")
     dir.mkdirs()
 
     val params = MavenRunnerParameters(
@@ -40,7 +39,7 @@ class ArchetypesTest : MavenTestCase() {
     settings.mavenProperties = props
     settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA)
     val latch = CountDownLatch(1)
-    MavenRunner.getInstance(myProject).run(params, settings) { latch.countDown() }
+    MavenRunner.getInstance(project).run(params, settings) { latch.countDown() }
 
     val tryAcquire = latch.await(20, TimeUnit.SECONDS)
     assertTrue("Maven execution failed", tryAcquire)
@@ -80,10 +79,10 @@ class ArchetypesTest : MavenTestCase() {
     settings.mavenProperties = props
     settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA)
     val configuration = MavenRunConfigurationType
-      .createRunnerAndConfigurationSettings(null, settings, params, myProject)
+      .createRunnerAndConfigurationSettings(null, settings, params, project)
       .getConfiguration() as MavenRunConfiguration
 
-    val parameters = configuration.createJavaParameters(myProject)
+    val parameters = configuration.createJavaParameters(project)
     val parametersList = parameters.programParametersList
     Assert.assertEquals(archetypeGroupIdValue, parametersList.getPropertyValue(archetypeGroupId))
     Assert.assertEquals(archetypeArtifactIdValue, parametersList.getPropertyValue(archetypeArtifactId))

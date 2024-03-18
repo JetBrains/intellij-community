@@ -136,19 +136,17 @@ public abstract class GutterTooltipBuilder {
     while (element != null) {
       String name = getPresentableName(element);
       if (name != null) {
+        boolean deprecated = isDeprecated(element);
+        if (deprecated && !useSingleLink) {
+          sb.append("<strike>");
+        }
         boolean addedLink = !useSingleLink && appendLink(sb, original != null ? original : element);
         original = null; // do not use a link to the original element if it is already added
-        // Swing uses simple HTML processing and paints a link incorrectly if it contains different fonts.
-        // This is the reason why I use monospaced font not only for element name, but for a whole link.
-        // By the same reason I have to comment out support for deprecated elements.
-        //
-        // boolean deprecated = RefJavaUtil.isDeprecated(element);
-        // if (deprecated) sb.append("<strike>");
-        // sb.append("<code>");
         sb.append(name);
-        // sb.append("</code>");
-        // if (deprecated) sb.append("</strike>");
-        if (addedLink) sb.append("</code></a>");
+        if (addedLink) sb.append("</a></code>");
+        if (deprecated && !useSingleLink) {
+          sb.append("</strike>");
+        }
       }
       PsiElement parent = element instanceof PsiFile? null : getContainingElement(element);
       if (parent == null || parent instanceof PsiFile) {
@@ -160,7 +158,11 @@ public abstract class GutterTooltipBuilder {
       if (name != null) sb.append(" ").append(LangBundle.message("tooltip.in")).append(" ");
       element = parent;
     }
-    if (addedSingleLink) sb.append("</code></a>");
+    if (addedSingleLink) sb.append("</a></code>");
+  }
+
+  protected boolean isDeprecated(@NotNull PsiElement element) {
+    return false;
   }
 
   protected static void appendPackageName(@NotNull StringBuilder sb, @Nullable String name) {
@@ -183,20 +185,20 @@ public abstract class GutterTooltipBuilder {
     sb.append("'>").append(LangBundle.message(key, text)).append("</font>");
   }
 
-  protected boolean appendLink(@NotNull StringBuilder sb, @NotNull PsiElement element) {
+  private boolean appendLink(@NotNull StringBuilder sb, @NotNull PsiElement element) {
     try {
       String name = getLinkReferenceText(element);
       if (!StringUtil.isEmpty(name)) {
-        sb.append("<a href=\"#").append(getLinkProtocol()).append("/").append(name).append("\"><code>");
+        sb.append("<code><a href=\"#").append(getLinkProtocol()).append("/").append(name).append("\">");
         return true;
       }
       VirtualFile file = getVirtualFile(element);
       if (file == null) return false;
 
       int offset = element.getTextOffset();
-      sb.append("<a href=\"#navigation/");
+      sb.append("<code><a href=\"#navigation/");
       sb.append(toSystemIndependentName(file.getPath()));
-      sb.append(":").append(offset).append("\"><code>");
+      sb.append(":").append(offset).append("\">");
       return true;
     }
     catch (Exception ignored) {

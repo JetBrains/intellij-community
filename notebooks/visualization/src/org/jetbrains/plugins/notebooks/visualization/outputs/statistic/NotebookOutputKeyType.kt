@@ -19,5 +19,6 @@ enum class NotebookOutputKeyType {
   PYSPARK_TABLE,
   GENERIC_TABLE,
   EXTERNAL_TABLE,
+  JSON,
   UNKNOWN
 }

@@ -8,8 +8,6 @@ import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
@@ -21,11 +19,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.LegalNoticeDialog;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -57,40 +53,31 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = new ArrayList<>();
 
-  static final class AcceptedLanguageLevelsSettingsStartupActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      ReadAction.nonBlocking(() -> {
-          TreeSet<LanguageLevel> previewLevels = new TreeSet<>();
-          MultiMap<LanguageLevel, Module> unacceptedLevels = getUnacceptedLevels(project, previewLevels);
-          return new LanguageLevels(unacceptedLevels, previewLevels);
-        })
-        .inSmartMode(project)
-        .finishOnUiThread(ModalityState.nonModal(), languageLevels -> {
-          applyUnnacceptedLevels(project, languageLevels.unacceptedLevels(), languageLevels.previewLevels());
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
+  static void applyUnacceptedLevels(@NotNull Project project,
+                                    MultiMap<LanguageLevel, Module> unacceptedLevels,
+                                    TreeSet<LanguageLevel> previewLevels) {
+    if (!unacceptedLevels.isEmpty()) {
+      decreaseLanguageLevel(project);
 
-    private record LanguageLevels(
-      MultiMap<LanguageLevel, Module> unacceptedLevels,
-      TreeSet<LanguageLevel> previewLevels
-    ) {}
-
-    private static void applyUnnacceptedLevels(@NotNull Project project,
-                                               MultiMap<LanguageLevel, Module> unacceptedLevels,
-                                               TreeSet<LanguageLevel> previewLevels) {
-      if (!unacceptedLevels.isEmpty()) {
-        decreaseLanguageLevel(project);
-
-        for (LanguageLevel level : unacceptedLevels.keySet()) {
-          showNotificationToAccept(project, unacceptedLevels, level);
-        }
+      for (LanguageLevel level : unacceptedLevels.keySet()) {
+        showNotificationToAccept(project, unacceptedLevels, level);
       }
-      if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
-        LanguageLevel languageLevel = previewLevels.first();
-        if (languageLevel == LanguageLevel.JDK_X) return;
-        int previewFeature = languageLevel.toJavaVersion().feature;
+    }
+    if (!previewLevels.isEmpty()) {
+      LanguageLevel languageLevel = previewLevels.first();
+      if (languageLevel == LanguageLevel.JDK_X) {
+        return;
+      }
+
+      int previewFeature = languageLevel.feature();
+      if (languageLevel.isUnsupported()) {
+        PREVIEW_NOTIFICATION_GROUP.createNotification(
+            JavaBundle.message("java.preview.features.unsupported.title"),
+            JavaBundle.message("java.preview.features.unsupported", previewFeature),
+            NotificationType.ERROR)
+          .notify(project);
+      }
+      else if (!PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
         PREVIEW_NOTIFICATION_GROUP.createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
@@ -107,8 +94,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
-  @NotNull
-  private static MultiMap<LanguageLevel, Module> getUnacceptedLevels(@NotNull Project project, TreeSet<LanguageLevel> previewLevels) {
+  static @NotNull MultiMap<LanguageLevel, Module> getUnacceptedLevels(@NotNull Project project, TreeSet<LanguageLevel> previewLevels) {
     MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
     LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
     if (projectExtension != null) {
@@ -235,8 +221,8 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
-  private static void decreaseLanguageLevel(Project project) {
-    WriteAction.run(() -> {
+  private static void decreaseLanguageLevel(@NotNull Project project) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         LanguageLevel languageLevel = LanguageLevelUtil.getCustomLanguageLevel(module);

@@ -12,10 +12,12 @@ private const val BUNDLE = "messages.GitLabBundle"
 
 object GitLabBundle : DynamicBundle(BUNDLE) {
   @JvmStatic
-  fun message(key: @PropertyKey(resourceBundle = BUNDLE) @NonNls String, vararg params: Any): @Nls String =
-    getMessage(key, *params)
+  fun message(key: @PropertyKey(resourceBundle = BUNDLE) @NonNls String, vararg params: Any): @Nls String {
+    return if (containsKey(key)) getMessage(key, *params) else GitLabDeprecatedMessagesBundle.message(key)
+  }
 
   @JvmStatic
-  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) @NonNls String, vararg params: Any): Supplier<String> =
-    getLazyMessage(key, *params)
+  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) @NonNls String, vararg params: Any): Supplier<String> {
+    return if (containsKey(key)) getLazyMessage(key, *params) else GitLabDeprecatedMessagesBundle.messagePointer(key, *params)
+  }
 }

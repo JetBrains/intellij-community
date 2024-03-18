@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -33,6 +34,7 @@ private val myCbBlockCursor                           get() = CheckboxDescriptor
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
+private val mbCbShowStickyLines                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.sticky.lines"), model::areStickyLinesShown, model::setStickyLinesShown)
 private val myCbShowMethodSeparators                  get() = CheckboxDescriptor(if (PlatformUtils.isDataGrip()) ApplicationBundle.message("checkbox.show.method.separators.DataGrip") else  ApplicationBundle.message("checkbox.show.method.separators"), DaemonCodeAnalyzerSettings.getInstance()::SHOW_METHOD_SEPARATORS)
 private val myWhitespacesCheckbox                     get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.whitespaces"), model::isWhitespacesShown, model::setWhitespacesShown)
 private val myLeadingWhitespacesCheckBox              get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.leading.whitespaces"), model::isLeadingWhitespacesShown, model::setLeadingWhitespacesShown)
@@ -86,6 +88,17 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
             }
           }
         ).bindItem(model::getLineNumeration, model::setLineNumeration)
+      }
+      row {
+        val cbShowSticky = checkBox(mbCbShowStickyLines)
+          .gap(RightGap.SMALL)
+        intTextField(UINumericRange(5, 1, 15).asRange())
+          .bindIntText(model::getStickyLineLimit, model::setStickyLineLimit)
+          .columns(2)
+          .gap(RightGap.SMALL)
+          .enabledIf(cbShowSticky.selected)
+        @Suppress("DialogTitleCapitalization")
+        label(ApplicationBundle.message("label.show.sticky.lines"))
       }
       row {
         checkBox(myCbShowMethodSeparators)
@@ -158,7 +171,7 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
 
     super.apply()
 
-    EditorOptionsPanel.reinitAllEditors()
+    reinitAllEditors()
     if (showEditorTooltip != UISettings.getInstance().showEditorToolTip) {
       LafManager.getInstance().repaintUI()
       UISettings.getInstance().fireUISettingsChanged()
@@ -167,7 +180,7 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       DocRenderManager.resetAllEditorsToDefaultState()
     }
 
-    EditorOptionsPanel.restartDaemons()
+    restartDaemons()
     ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied()
   }
 

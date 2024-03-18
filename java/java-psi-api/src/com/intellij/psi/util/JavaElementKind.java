@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -17,35 +17,36 @@ public enum JavaElementKind {
   ANNOTATION("element.annotation"),
   ANONYMOUS_CLASS("element.anonymous_class"),
   CLASS("element.class"),
-  TYPE_PARAMETER("element.type.parameter"),
   CONSTANT("element.constant"),
   CONSTRUCTOR("element.constructor"),
   ENUM("element.enum"),
   ENUM_CONSTANT("element.enum_constant"),
   EXPRESSION("element.expression"),
+  EXTENDS_LIST("element.extends.list"),
   FIELD("element.field"),
   INITIALIZER("element.initializer"),
   INTERFACE("element.interface"),
   LABEL("element.label"),
   LOCAL_VARIABLE("element.local_variable"),
   METHOD("element.method"),
+  METHOD_CALL("element.method.call"),
   MODULE("element.module"),
   PACKAGE("element.package"),
+  PACKAGE_STATEMENT("element.package.statement"),
   PARAMETER("element.parameter"),
   PATTERN_VARIABLE("element.pattern_variable"),
+  RECEIVER_PARAMETER("element.receiver.parameter"),
   RECORD("element.record"),
   RECORD_COMPONENT("element.record_component"),
+  SEMICOLON("element.type.semicolon"),
   SNIPPET_BODY("element.snippet_body"),
   STATEMENT("element.statement"),
-  UNKNOWN("element.unknown"),
-  VARIABLE("element.variable"),
   THROWS_LIST("element.throws.list"),
-  EXTENDS_LIST("element.extends.list"),
-  RECEIVER_PARAMETER("element.receiver.parameter"),
-  METHOD_CALL("element.method.call"),
   TYPE_ARGUMENTS("element.type.arguments"),
-  SEMICOLON("element.type.semicolon");
-  
+  TYPE_PARAMETER("element.type.parameter"),
+  UNKNOWN("element.unknown"),
+  VARIABLE("element.variable");
+
   private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String propertyKey;
 
   JavaElementKind(@PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -170,6 +171,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiPackage) {
       return PACKAGE;
+    }
+    if (element instanceof PsiPackageStatement) {
+      return PACKAGE_STATEMENT;
     }
     if (element instanceof PsiJavaModule) {
       return MODULE;

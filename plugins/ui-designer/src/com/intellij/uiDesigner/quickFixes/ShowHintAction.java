@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.openapi.actionSystem.*;
@@ -12,7 +12,7 @@ import javax.swing.*;
 final class ShowHintAction extends AnAction {
   private final QuickFixManager myManager;
 
-  ShowHintAction(@NotNull final QuickFixManager manager) {
+  ShowHintAction(final @NotNull QuickFixManager manager) {
     myManager = manager;
   }
 
@@ -24,7 +24,7 @@ final class ShowHintAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final GuiEditor editor = myManager.getEditor();
     if (editor == null) return;
 

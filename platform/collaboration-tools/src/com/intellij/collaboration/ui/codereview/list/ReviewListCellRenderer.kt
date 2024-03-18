@@ -12,7 +12,7 @@ import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.FontUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.DateFormatUtil
@@ -21,7 +21,6 @@ import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.geom.RoundRectangle2D
 import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
@@ -33,12 +32,15 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   private val toolTipManager
     get() = IdeTooltipManager.getInstance()
 
+  private val unseen = JLabel().apply {
+    icon = UnreadDotIcon()
+    border = JBEmptyBorder(0, 2, 0, 0)
+  }
   private val title = JLabel().apply {
     minimumSize = JBDimension(30, 0)
   }
   private val info = JLabel().apply {
-    val titleFontSize = title.font.size
-    font = font.deriveFont(titleFontSize / 13.0f * 12.0f)
+    font = JBFont.create(font, false).let(FontUtil::minusOne)
   }
   private val tags = JLabel()
   private val stateTextModel = SingleValueModel<@Nls String?>(null)
@@ -57,6 +59,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val firstLinePanel = JPanel(HorizontalSidesLayout(6)).apply {
       isOpaque = false
+      add(unseen, SwingConstants.LEFT as Any)
       add(title, SwingConstants.LEFT as Any)
       add(tags, SwingConstants.LEFT as Any)
 
@@ -106,6 +109,9 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val presentation = presenter(value)
 
+    unseen.apply {
+      isVisible = !presentation.seen
+    }
     title.apply {
       text = presentation.title
       foreground = primaryTextColor
@@ -231,34 +237,6 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
   companion object {
     private const val MAX_PARTICIPANT_ICONS = 2
-
-    /**
-     * Draws a background with rounded corners
-     */
-    private class StatePanel(stateLabel: JLabel) : JPanel(BorderLayout()) {
-      init {
-        add(stateLabel, BorderLayout.CENTER)
-        isOpaque = false
-      }
-
-      override fun paintComponent(g: Graphics) {
-        g as Graphics2D
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
-
-        val insets = insets
-        val bounds = bounds
-        JBInsets.removeFrom(bounds, insets)
-        val arc = JBUIScale.scale(6)
-        val rect = RoundRectangle2D.Float(0f, 0f,
-                                          bounds.width.toFloat(), bounds.height.toFloat(),
-                                          arc.toFloat(), arc.toFloat())
-        g.color = background
-        g.fill(rect)
-        super.paintComponent(g)
-      }
-    }
 
     /**
      * Lays out the components horizontally in two groups - [SwingConstants.LEFT] and [SwingConstants.RIGHT] anchored to the left and right sides respectively.

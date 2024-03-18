@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.weighers;
 
@@ -294,6 +294,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
         }
 
+        @TestMetadata("safeCallArgument.kt")
+        public void testSafeCallArgument() throws Exception {
+            runTest("../testData/weighers/basic/expectedType/safeCallArgument.kt");
+        }
+
         @TestMetadata("typeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
@@ -380,6 +385,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/Callables.kt");
         }
 
+        @TestMetadata("ContravariantType.kt")
+        public void testContravariantType() throws Exception {
+            runTest("../testData/weighers/basic/ContravariantType.kt");
+        }
+
+        @TestMetadata("CovariantType.kt")
+        public void testCovariantType() throws Exception {
+            runTest("../testData/weighers/basic/CovariantType.kt");
+        }
+
         @TestMetadata("DelegateToOtherObject.kt")
         public void testDelegateToOtherObject() throws Exception {
             runTest("../testData/weighers/basic/DelegateToOtherObject.kt");
@@ -423,6 +438,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("DslMemberCalls.kt")
         public void testDslMemberCalls() throws Exception {
             runTest("../testData/weighers/basic/DslMemberCalls.kt");
+        }
+
+        @TestMetadata("ErrorImplicitReceiverType.kt")
+        public void testErrorImplicitReceiverType() throws Exception {
+            runTest("../testData/weighers/basic/ErrorImplicitReceiverType.kt");
         }
 
         @TestMetadata("ExactMatchForKeyword.kt")
@@ -608,6 +628,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("RecursiveCall.kt")
         public void testRecursiveCall() throws Exception {
             runTest("../testData/weighers/basic/RecursiveCall.kt");
+        }
+
+        @TestMetadata("StarProjection.kt")
+        public void testStarProjection() throws Exception {
+            runTest("../testData/weighers/basic/StarProjection.kt");
         }
 
         @TestMetadata("StaticMembers.kt")

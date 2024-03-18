@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.gradleJava.compilerPlugin
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
@@ -34,7 +34,7 @@ abstract class AnnotationBasedPluginProjectResolverExtension<T : AnnotationBased
             @Suppress("UNCHECKED_CAST")
             val refurbishedModel = Class.forName(className).constructors.single().newInstance(*args) as T
 
-            ideModule.putCopyableUserData(userDataKey, refurbishedModel)
+            ideModule.createChild(userDataKey, refurbishedModel)
         }
 
         super.populateModuleExtraModels(gradleModule, ideModule)

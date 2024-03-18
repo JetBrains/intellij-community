@@ -42,9 +42,10 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   private final boolean eagerlyCheckFileCompatibility;
   /**
-   * If eager check finds file is incompatible:
+   * If eager check finds file is incompatible (magic-word, impl version, page size):
    * true: just clean/delete it and open empty storage on top of empty file
    * false: throw an IOException
+   * Beware: data version check is now separated
    */
   private final boolean cleanFileIfIncompatible;
 
@@ -114,7 +115,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     );
   }
 
-  public AppendOnlyLogFactory cleanFileIfIncompatible() {
+  public AppendOnlyLogFactory cleanIfFileIncompatible() {
     return new AppendOnlyLogFactory(
       pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,

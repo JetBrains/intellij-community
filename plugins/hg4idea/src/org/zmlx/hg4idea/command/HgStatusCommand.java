@@ -42,7 +42,7 @@ public final class HgStatusCommand {
   private static final int ITEM_COUNT = 3;
   private static final int STATUS_INDEX = 0;
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private final boolean myIncludeAdded;
   private final boolean myIncludeModified;
@@ -53,8 +53,8 @@ public final class HgStatusCommand {
   private final boolean myIncludeCopySource;
   private boolean myCleanStatus = false; // should be always false, except checking file existence in revision
 
-  @Nullable private final HgRevisionNumber myBaseRevision;
-  @Nullable private final HgRevisionNumber myTargetRevision;
+  private final @Nullable HgRevisionNumber myBaseRevision;
+  private final @Nullable HgRevisionNumber myTargetRevision;
 
   public void cleanFilesOption(boolean clean) {
     myCleanStatus = clean;
@@ -240,24 +240,20 @@ public final class HgStatusCommand {
     return changes;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo) {
+  public @NotNull Collection<VirtualFile> getFiles(@NotNull VirtualFile repo) {
     return getFiles(repo, (Collection<FilePath>)null);
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
+  public @NotNull Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
     //noinspection RedundantTypeArguments incorrect inspection, javac fails
     return getFiles(repo, files != null ? ContainerUtil.<VirtualFile, FilePath>map(files, VcsUtil::getFilePath) : null);
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
+  public @NotNull Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
     return ContainerUtil.mapNotNull(getFilePaths(repo, paths), FilePath::getVirtualFile);
   }
 
-  @NotNull
-  public Collection<FilePath> getFilePaths(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
+  public @NotNull Collection<FilePath> getFilePaths(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
     Collection<FilePath> resultFiles = new HashSet<>();
     Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {

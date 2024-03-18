@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 @ApiStatus.Internal
-public final class PluginUtilImpl implements PluginUtil {
+public class PluginUtilImpl implements PluginUtil {
   private static final Logger LOG = Logger.getInstance(PluginUtilImpl.class);
 
   @Override
@@ -123,27 +123,29 @@ public final class PluginUtilImpl implements PluginUtil {
 
     Throwable cause = t.getCause();
     PluginId causeId = cause == null ? null : doFindPluginId(cause);
-    return causeId != null ? causeId : bundledId;
+    return causeId == null ? bundledId : causeId;
   }
 
   @Override
   public @Nls @Nullable String findPluginName(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    return plugin != null ? plugin.getName() : null;
+    return plugin == null ? null : plugin.getName();
   }
 
   private static void logPluginDetection(String className, PluginId id) {
-    if (LOG.isDebugEnabled()) {
-      String message = "Detected a plugin " + id + " by class " + className;
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
-      if (descriptor != null) {
-        ClassLoader loader = descriptor.getClassLoader();
-        message += "; loader=" + loader + '/' + loader.getClass();
-        if (loader instanceof PluginClassLoader) {
-          message += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
-        }
-      }
-      LOG.debug(message);
+    if (!LOG.isDebugEnabled()) {
+      return;
     }
+
+    String message = "Detected a plugin " + id + " by class " + className;
+    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
+    if (descriptor != null) {
+      ClassLoader loader = descriptor.getClassLoader();
+      message += "; loader=" + loader + '/' + loader.getClass();
+      if (loader instanceof PluginClassLoader) {
+        message += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
+      }
+    }
+    LOG.debug(message);
   }
 }

@@ -6,5 +6,5 @@ import com.intellij.driver.client.Remote
 interface TelemetryManager {
   fun getInstance(): TelemetryManager
 
-  fun forceFlushMetrics()
+  fun forceFlushMetricsBlocking()
 }

@@ -1,26 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorKind;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorCache;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.IOUtil;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,28 +44,28 @@ import static com.intellij.util.io.DataInputOutputUtil.writeINT;
  * Stores the highlighting markup on disk on file close and restores it back to the editor on file open,
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
-@Service(Service.Level.PROJECT)
-final class HighlightingMarkupGrave implements Disposable {
+@ApiStatus.Internal
+public class HighlightingMarkupGrave {
   private static final Logger LOG = Logger.getInstance(HighlightingMarkupGrave.class);
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
 
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
   private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> isMarkupModelPreferable
   private final @NotNull HighlightingMarkupStore myMarkupStore;
 
-  HighlightingMarkupGrave(@NotNull Project project) {
+  public HighlightingMarkupGrave(@NotNull Project project, @NotNull CoroutineScope scope) {
     // check that important TextAttributesKeys are initialized
     assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
 
     myProject = project;
     myResurrectedZombies = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-    myMarkupStore = HighlightingMarkupStore.create(project);
+    myMarkupStore = new HighlightingMarkupStore(project, scope);
 
     subscribeDaemonFinished();
     subscribeFileClosed();
   }
 
-  private void subscribeDaemonFinished() {
+  protected void subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
     myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
@@ -77,14 +74,18 @@ final class HighlightingMarkupGrave implements Disposable {
         if (!DumbService.getInstance(myProject).isDumb()) {
           for (FileEditor fileEditor : fileEditors) {
             if (fileEditor instanceof TextEditor textEditor &&
-                textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
-                DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, myProject)) {
+                shouldPutDownActiveZombiesInFile(textEditor)) {
               putDownActiveZombiesInFile(textEditor);
             }
           }
         }
       }
     });
+  }
+
+  protected Boolean shouldPutDownActiveZombiesInFile(TextEditor textEditor){
+    return textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
+           DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, myProject);
   }
 
   private void subscribeFileClosed() {
@@ -103,13 +104,17 @@ final class HighlightingMarkupGrave implements Disposable {
     if (!(textEditor.getFile() instanceof VirtualFileWithId fileWithId)) {
       return;
     }
+    putDownActiveZombiesInFile(fileWithId, textEditor.getEditor());
+  }
+
+  protected void putDownActiveZombiesInFile(@NotNull VirtualFileWithId fileWithId, @NotNull Editor editor){
     boolean replaced = myResurrectedZombies.replace(fileWithId.getId(), false, true);
     if (!replaced) {
       // no zombie or zombie already disposed
       return;
     }
     List<RangeHighlighter> toRemove = null;
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(textEditor.getEditor().getDocument(), myProject, false);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
     if (markupModel != null) {
       for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
         if (isZombieMarkup(highlighter)) {
@@ -124,7 +129,7 @@ final class HighlightingMarkupGrave implements Disposable {
       return;
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("removing " + toRemove.size() + " markups for " + textEditor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
+      LOG.debug("removing " + toRemove.size() + " markups for " + editor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
     }
 
     for (RangeHighlighter highlighter : toRemove) {
@@ -217,7 +222,7 @@ final class HighlightingMarkupGrave implements Disposable {
       return;
     }
     EditorColorsScheme colorsScheme = textEditor.getEditor().getColorsScheme();
-    HighlightingMarkupStore.getExecutor().execute(() -> {
+    myMarkupStore.executeAsync(() -> {
       ReadAction.run(() -> {
         FileMarkupInfo markupFromModel = getMarkupFromModel(document, colorsScheme);
         FileMarkupInfo storedMarkup = myMarkupStore.getMarkup(fileWithId);
@@ -246,17 +251,43 @@ final class HighlightingMarkupGrave implements Disposable {
     });
   }
 
+  @NotNull
+  private List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
+                                                                  @NotNull Document document,
+                                                                  @NotNull EditorColorsScheme colorsScheme) {
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
+    if (markupModel == null) {
+      return Collections.emptyList();
+    }
+    return Arrays.stream(markupModel.getAllHighlighters())
+      .filter(h -> shouldSaveHighlighter(h))
+      .map(h -> new HighlighterState(h, getHighlighterLayer(h), colorsScheme))
+      .toList();
+  }
+
+  protected boolean shouldSaveHighlighter(@NotNull RangeHighlighter highlighter) {
+    if (highlighter.getTextAttributesKey() != null && highlighter.getTextAttributesKey().getExternalName().equals("STICKY_LINE_MARKER")) {
+      return true;
+    }
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info != null &&
+        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
+         || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
+      return true;
+    }
+    LineMarkerInfo<?> lm = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    return lm != null && lm.getIcon() != null; // or a line marker with a gutter icon
+  }
+
+  protected int getHighlighterLayer(@NotNull RangeHighlighter highlighter) {
+    return highlighter.getLayer();
+  }
+
   private @NotNull FileMarkupInfo getMarkupFromModel(@NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
     return new FileMarkupInfo(
       contentHash(document),
-      HighlighterState.allHighlightersFromMarkup(myProject, document, colorsScheme)
+      allHighlightersFromMarkup(myProject, document, colorsScheme)
     );
-  }
-
-  @Override
-  public void dispose() {
-    // TODO: it is not allowed to close on EDT
-    myMarkupStore.close(false);
   }
 
   record FileMarkupInfo(int contentHash, @NotNull List<@NotNull HighlighterState> highlighters) {
@@ -297,11 +328,11 @@ final class HighlightingMarkupGrave implements Disposable {
     @Nullable TextAttributes textAttributes,
     @Nullable Icon gutterIcon
   ) {
-    private HighlighterState(@NotNull RangeHighlighter highlighter, @NotNull EditorColorsScheme colorsScheme) {
+    private HighlighterState(@NotNull RangeHighlighter highlighter, int highlighterLayer, @NotNull EditorColorsScheme colorsScheme) {
       this(
         highlighter.getStartOffset(),
         highlighter.getEndOffset(),
-        highlighter.getLayer(),
+        highlighterLayer, //because Rider needs to modify its zombie's layers
         highlighter.getTargetArea(),
         highlighter.getTextAttributesKey(),
         highlighter.getTextAttributes(colorsScheme),
@@ -364,33 +395,6 @@ final class HighlightingMarkupGrave implements Disposable {
     public int hashCode() {
       // exclude gutterIcon
       return Objects.hash(start, end, layer, targetArea, textAttributesKey, textAttributes);
-    }
-
-    @NotNull
-    private static List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
-                                                                    @NotNull Document document,
-                                                                    @NotNull EditorColorsScheme colorsScheme) {
-      MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
-      if (markupModel == null) {
-        return Collections.emptyList();
-      }
-      // for stable XML
-      Comparator<HighlighterState> comparator = (h1, h2) -> h1.equals(h2) ? 0 : h1.start() != h2.start() ? Integer.compare(h1.start(), h2.start()) : h1.end() != h2.end() ? Integer.compare(h1.end(), h2.end()) : Integer.compare(h1.hashCode(), h2.hashCode());
-
-      return Arrays.stream(markupModel.getAllHighlighters())
-        .filter(h -> {
-          LineMarkerInfo<?> lm;
-          HighlightInfo info = HighlightInfo.fromRangeHighlighter(h);
-          return info != null &&
-                 (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
-                  || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY
-                 )
-                 || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.getIcon() != null; // or a line marker with a gutter icon
-          }
-        )
-        .map(h -> new HighlighterState(h, colorsScheme))
-        .sorted(comparator)
-        .toList();
     }
   }
 
@@ -470,7 +474,7 @@ final class HighlightingMarkupGrave implements Disposable {
   }
 
   private static int contentHash(@NotNull Document document) {
-    return Hashing.komihash5_0().hashCharsToInt(document.getImmutableCharSequence());
+    return TextEditorCache.Companion.contentHash(document);
   }
 
   private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event) {

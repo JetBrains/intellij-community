@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class CompileStepBeforeRunImporter implements BeforeRunTaskImporter {
+public final class CompileStepBeforeRunImporter implements BeforeRunTaskImporter {
   @Override
   public List<BeforeRunTask> process(@NotNull Project project,
                                      @NotNull IdeModifiableModelsProvider modelsProvider,

@@ -21,7 +21,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
 
     val parametersList = mutableListOf<MavenRunnerParameters>()
     subscribeToMavenGoalExecution("clean", parametersList)
-    addCompileTask(myProjectPom.path, "clean")
+    addCompileTask(projectPom.path, "clean")
     compileModules("project")
     assertSize(1, parametersList)
   }
@@ -155,13 +155,13 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
   }
 
   private fun addCompileTask(pomPath: String, goal: String) {
-    val mavenTasksManager = MavenTasksManager.getInstance(myProject)
+    val mavenTasksManager = MavenTasksManager.getInstance(project)
     val task = MavenCompilerTask(pomPath, goal)
     mavenTasksManager.addCompileTasks(listOf(task), MavenTasksManager.Phase.BEFORE_COMPILE)
   }
 
   private fun subscribeToMavenGoalExecution(goal: String, parametersList: MutableList<MavenRunnerParameters>) {
-    val connection = myProject.messageBus.connect()
+    val connection = project.messageBus.connect()
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) {
         val runProfile = environmentLocal.runProfile

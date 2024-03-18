@@ -9,8 +9,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   private fun renameDirectory(directory: PsiDirectory, newName: String) {
-    val renameDialog = RenameDialog(myProject, directory, directory, null)
+    val renameDialog = RenameDialog(project, directory, directory, null)
     renameDialog.performRename(newName)
   }
 
@@ -39,7 +41,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newModulePath)
 
@@ -73,7 +75,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "mNew/m1"
 
     val m1Parent = m1File.getParent().getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
@@ -107,7 +109,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "./m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
@@ -151,7 +153,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "../m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
@@ -185,7 +187,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "module/module-new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
@@ -219,7 +221,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "module-new/module"
 
     val m1Parent = m1File.getParent().getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
@@ -253,7 +255,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val newModulePath = "m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newModulePath.trim { it <= ' ' })
 

@@ -9,8 +9,7 @@ public class Test {
     return 0;
   }
 
-    @Nullable
-    private static Result getResult(boolean param) {
+    private static @Nullable Result getResult(boolean param) {
         int x = 0;
         int y = 0;
         if (param) return null;

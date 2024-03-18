@@ -1,7 +1,7 @@
 PsiJavaFile:Errors0.java
   PsiImportList
     <empty list>
-  PsiUnnamedClass
+  PsiImplicitClass
     PsiModifierList:public
       PsiKeyword:public('public')
     PsiWhiteSpace(' ')

@@ -16,9 +16,9 @@ T = TypeVar('T', bound=str)
 
 def expects_generic_builtin_type(x: type[T]):
     expects_generic_typing_Type(x)
-    expects_generic_typing_Type(<warning descr="Expected type 'Type[T]', got 'Type[int]' instead">int</warning>)
+    expects_generic_typing_Type(<warning descr="Expected type 'Type[T ≤: str]', got 'Type[int]' instead">int</warning>)
 
 
 def expects_generic_typing_Type(x: Type[T]):
     expects_generic_builtin_type(x)
-    expects_generic_builtin_type(<warning descr="Expected type 'Type[T]', got 'Type[int]' instead">int</warning>)
+    expects_generic_builtin_type(<warning descr="Expected type 'Type[T ≤: str]', got 'Type[int]' instead">int</warning>)

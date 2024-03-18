@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs
 
-import com.intellij.openapi.util.io.isAncestor
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
@@ -33,8 +32,8 @@ internal class MockMultiRootFileSystem(
   }
 
   private fun getRealRoot(file: VirtualFile): VirtualFile {
-    val nioPath = Path.of(file.path)
-    return checkNotNull(root.children.find { Path.of(it.path).isAncestor(nioPath, false) }) {
+    val nioPath = file.toNioPath()
+    return checkNotNull(root.children.find { nioPath.startsWith(it.toNioPath()) }) {
       "Cannot find test root for real path $nioPath"
     }
   }

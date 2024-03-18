@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    */
   private final String myName;
 
-  public Property(final Property parent, @NotNull @NonNls final String name) {
+  public Property(final Property parent, final @NotNull @NonNls String name) {
     myParent = parent;
     myName = name;
   }
@@ -35,8 +35,8 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    * @return property's name.
    */
   @Override
-  @NotNull
-  public final @NlsSafe String getName() {
+  public final @NotNull
+  @NlsSafe String getName() {
     return myName;
   }
 
@@ -107,8 +107,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    * The method can return {@code null} if the property
    * doesn't have parent.
    */
-  @Nullable
-  public final Property getParent() {
+  public final @Nullable Property getParent() {
     return myParent;
   }
 
@@ -122,15 +121,13 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
   /**
    * @return property's renderer.
    */
-  @NotNull
-  public abstract PropertyRenderer<V> getRenderer();
+  public abstract @NotNull PropertyRenderer<V> getRenderer();
 
   /**
    * @return property's editor. The method allows to return {@code null}.
    * In this case property is not editable.
    */
-  @Nullable
-  public abstract PropertyEditor<V> getEditor();
+  public abstract @Nullable PropertyEditor<V> getEditor();
 
   public boolean appliesTo(T component) {
     return true;

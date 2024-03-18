@@ -16,7 +16,7 @@ import java.util.function.ObjIntConsumer;
 
 public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final IntSet NULL_COLLECTION = IntSets.emptySet();
-  private static final int CACHE_SIZE = 128;
+  private static final int CACHE_SIZE = 256;
   private final PersistentHashMap<Integer, IntSet> map;
   private final LoadingCache<Integer, IntSet> cache;
 

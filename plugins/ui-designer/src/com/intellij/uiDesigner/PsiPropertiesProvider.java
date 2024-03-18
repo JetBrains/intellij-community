@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.application.AccessToken;
@@ -22,14 +22,13 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
   private final Module myModule;
   private final HashMap<String, HashMap> myCache;
 
-  public PsiPropertiesProvider(@NotNull final Module module) {
+  public PsiPropertiesProvider(final @NotNull Module module) {
     myModule = module;
     myCache = new HashMap<>();
   }
 
   @Override
-  @Nullable
-  public HashMap getLwProperties(final String className) {
+  public @Nullable HashMap getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
       return myCache.get(className);
     }

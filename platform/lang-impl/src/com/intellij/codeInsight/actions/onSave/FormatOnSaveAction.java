@@ -40,13 +40,11 @@ final class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener.
 
       allFiles.add(psiFile);
 
-      if (formatOptions.isRunOnSaveEnabled() &&
-          (formatOptions.isAllFileTypesSelected() || formatOptions.isFileTypeSelected(psiFile.getFileType()))) {
+      if (formatOptions.isRunOnSaveEnabled() && formatOptions.isFileTypeSelected(psiFile.getFileType())) {
         filesToFormat.add(psiFile);
       }
 
-      if (optimizeImportsOptions.isRunOnSaveEnabled() &&
-          (optimizeImportsOptions.isAllFileTypesSelected() || optimizeImportsOptions.isFileTypeSelected(psiFile.getFileType()))) {
+      if (optimizeImportsOptions.isRunOnSaveEnabled() && optimizeImportsOptions.isFileTypeSelected(psiFile.getFileType())) {
         filesToOptimizeImports.add(psiFile);
       }
     }

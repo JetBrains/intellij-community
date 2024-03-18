@@ -30,10 +30,16 @@ public final class LocalDocumentationSettings implements ClientDocumentationSett
   }
 
   @Override
+  public boolean isCodeBackgroundEnabled() {
+    return ApplicationManager.getApplication().isUnitTestMode()
+           || AdvancedSettings.getBoolean("documentation.components.enable.code.background");
+  }
+
+  @Override
   public @NotNull DocumentationSettings.InlineCodeHighlightingMode getInlineCodeHighlightingMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || AdvancedSettings.getBoolean("documentation.components.enable.inline.code.highlighting"))
+    return ApplicationManager.getApplication().isUnitTestMode()
            ? DocumentationSettings.InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
-           : DocumentationSettings.InlineCodeHighlightingMode.NO_HIGHLIGHTING;
+           : AdvancedSettings.getEnum("documentation.components.enable.inline.code.highlighting",
+                                      DocumentationSettings.InlineCodeHighlightingMode.class);
   }
 }

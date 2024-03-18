@@ -47,7 +47,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
    * It specifies the thread performing suspend-all stepping.
    * All events in other threads are ignored.
    */
-  private @Nullable ThreadReference myFilterThread;
+  private @Nullable LightOrRealThreadInfo myFilterThread;
 
   public RequestManagerImpl(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
@@ -59,12 +59,27 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   @Nullable
-  public ThreadReference getFilterThread() {
+  public LightOrRealThreadInfo getFilterThread() {
     return myFilterThread;
   }
 
+  @Nullable
+  public ThreadReference getFilterRealThread() {
+    return myFilterThread != null ? myFilterThread.getRealThread() : null;
+  }
+
+  /** @deprecated Use setThreadFilter instead */
+  @Deprecated
   public void setFilterThread(@Nullable final ThreadReference filterThread) {
-    myFilterThread = filterThread;
+    if (filterThread != null) {
+      setThreadFilter(new RealThreadInfo(filterThread));
+    }
+    else {
+      setThreadFilter(null);
+    }
+  }
+  public void setThreadFilter(@Nullable final LightOrRealThreadInfo filter) {
+    myFilterThread = filter;
   }
 
   public Set<EventRequest> findRequests(Requestor requestor) {
@@ -352,7 +367,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
     try {
-      final ThreadReference filterThread = myFilterThread;
+      final ThreadReference filterThread = myFilterThread == null ? null : myFilterThread.getRealThread();
       if (filterThread != null && DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
         if (request instanceof BreakpointRequest) {
           ((BreakpointRequest)request).addThreadFilter(filterThread);

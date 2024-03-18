@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ConditionalExpressionInspection extends BaseInspection {
+public final class ConditionalExpressionInspection extends BaseInspection {
 
   private static final Logger LOG = Logger.getInstance(ConditionalExpressionInspection.class);
 

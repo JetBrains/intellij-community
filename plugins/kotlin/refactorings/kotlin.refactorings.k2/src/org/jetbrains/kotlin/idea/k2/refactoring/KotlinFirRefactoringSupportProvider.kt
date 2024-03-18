@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
@@ -22,5 +24,7 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     /**
      * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.getIntroduceVariableHandler
      */
-    override fun getIntroduceVariableHandler(): RefactoringActionHandler = KotlinIntroduceVariableHandler
+    override fun getIntroduceVariableHandler(): RefactoringActionHandler = K2IntroduceVariableHandler
+
+    override fun getChangeSignatureHandler(): ChangeSignatureHandler? = KotlinChangeSignatureHandler
 }

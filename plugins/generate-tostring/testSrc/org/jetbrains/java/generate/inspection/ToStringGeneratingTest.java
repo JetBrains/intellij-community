@@ -193,6 +193,94 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
              """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
+  public void testImplicitClass() {
+    doTest(
+            """
+            private Integer i = 2;
+            
+            public void main()
+            {
+            }
+            
+            <caret>
+            
+            public class T{
+            }""",
+           """
+            private Integer i = 2;
+            
+            public void main()
+            {
+            }
+            
+            
+            
+            public class T{
+            }
+            
+            @Override
+            public String toString() {
+                return "a{" +
+                        "i=" + i +
+                        '}';
+            }""", ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+  }
+
+  public void testImplicitClassWithoutMain() {
+    doTest("""
+            public void main()
+            {
+            }
+            
+            <caret>
+            """,
+           """
+             public void main()
+             {
+             }
+             
+             @Override
+             public String toString() {
+                 return "a{}";
+             }
+             
+             
+             """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+  }
+
+  public void testAnonymousClass() {
+    doTest(
+      """
+            public class Test {
+                public static void main(String[] args) {
+                    new Runnable() {
+                        <caret>
+                        @Override
+                        public void run() {
+                        }
+                    };
+                }
+            }
+            """,
+           """
+           public class Test {
+               @Override
+               public String toString() {
+                   return "Test{}";
+               }
+          
+               public static void main(String[] args) {
+                   new Runnable() {
+                      \s
+                       @Override
+                       public void run() {
+                       }
+                   };
+               }
+           }
+           """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+  }
+
   private void doTest(@NotNull String before,
                       @NotNull String after,
                       @NotNull ConflictResolutionPolicy policy,

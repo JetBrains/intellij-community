@@ -16,21 +16,22 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class MavenRepositoryInfo implements Serializable {
   private final String myId;
   private final String myName;
   private final String myUrl;
-  private final IndexKind myKind;
+  private final RepositoryKind myKind;
 
-  public MavenRepositoryInfo(String id, String name, String url, IndexKind kind) {
+  public MavenRepositoryInfo(String id, String name, String url, RepositoryKind kind) {
     myId = id;
     myName = name;
     myUrl = url;
     myKind = kind;
   }
 
-  public MavenRepositoryInfo(String id, String url, IndexKind kind) {
+  public MavenRepositoryInfo(String id, String url, RepositoryKind kind) {
     this(id, id, url, kind);
   }
 
@@ -46,7 +47,7 @@ public class MavenRepositoryInfo implements Serializable {
     return myUrl;
   }
 
-  public IndexKind getKind() {
+  public RepositoryKind getKind() {
     return myKind;
   }
 
@@ -59,5 +60,21 @@ public class MavenRepositoryInfo implements Serializable {
     MavenId.append(builder, myUrl);
 
     return builder.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MavenRepositoryInfo info = (MavenRepositoryInfo)o;
+    return Objects.equals(myId, info.myId) &&
+           Objects.equals(myName, info.myName) &&
+           Objects.equals(myUrl, info.myUrl) &&
+           myKind == info.myKind;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myId, myName, myUrl, myKind);
   }
 }

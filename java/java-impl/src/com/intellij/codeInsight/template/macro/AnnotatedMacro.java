@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class AnnotatedMacro extends Macro {
+public final class AnnotatedMacro extends Macro {
 
   @Override
   @NonNls

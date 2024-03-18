@@ -150,7 +150,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
       final PsiElementFactory factory = getFactory();
       final PsiJavaFile psiFile;
       try {
-        psiFile = (PsiJavaFile)createFile("aaa.java", """
+        psiFile = (PsiJavaFile)createFile("AddTag3.java", """
           class A {/**
            * Javadoc
            * @param p1

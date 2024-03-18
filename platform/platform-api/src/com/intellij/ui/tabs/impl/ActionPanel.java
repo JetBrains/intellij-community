@@ -3,21 +3,19 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -34,11 +32,16 @@ public final class ActionPanel extends NonOpaquePanel {
     myTabs = tabs;
     myInfo = tabInfo;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
-    AnAction[] children = group.getChildren(null);
+    ActionManager actionManager = ActionManager.getInstance();
+    // TODO replace with a regular toolbar
+    List<AnAction> children = JBTreeTraverser.<AnAction>of(
+        o -> !(o instanceof DefaultActionGroup) ? AnAction.EMPTY_ARRAY :
+             ((DefaultActionGroup)o).getChildren(null, actionManager))
+      .withRoot(group)
+      .filter(o -> o.getActionUpdateThread() == ActionUpdateThread.EDT)
+      .toList();
     if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() && !UISettings.getInstance().getCloseTabButtonOnTheRight()) {
-      List<AnAction> list = Arrays.asList(children);
-      Collections.reverse(list);
-      children = list.toArray(AnAction[]::new);
+      children = ContainerUtil.reverse(children);
     }
 
     setFocusable(false);

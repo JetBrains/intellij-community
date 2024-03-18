@@ -12,5 +12,7 @@ fun foo(a: Int) {
             if (a > 0) continue@A
             if (a < 0) continue@B
         }
+        continue
+        (continue)
     }
 }

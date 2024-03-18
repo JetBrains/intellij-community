@@ -40,7 +40,7 @@ class OnArrayTest {
         ArrayReturnType<String[]> a3 = <error descr="Bad return type in method reference: cannot convert int[] to java.lang.String[]">int[]::new</error>;
 
         ObjectArrayReturnType a4 = Foo<?>[]::new;
-        ObjectArrayReturnType a5 = <error descr="Generic array creation">Foo<? extends String>[]</error>::new;
+        ObjectArrayReturnType a5 = Foo<error descr="Generic array creation not allowed"><? extends String></error>[]::new;
     }
 }
 

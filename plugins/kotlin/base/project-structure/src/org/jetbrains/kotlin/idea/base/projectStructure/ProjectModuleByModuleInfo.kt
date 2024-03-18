@@ -167,7 +167,8 @@ private object DependencyKeys {
     val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
 }
 
-internal class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModuleInfoBase(libraryInfo), KtLibraryModule {
+@ApiStatus.Internal
+class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModuleInfoBase(libraryInfo), KtLibraryModule {
     override val libraryName: String
         get() = libraryInfo.library.name ?: "Unnamed library"
 
@@ -183,7 +184,8 @@ internal class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtMod
     override val project: Project get() = libraryInfo.project
 }
 
-internal class SdkKtModuleByModuleInfo(private val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
+@ApiStatus.Internal
+class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
     override val sdkName: String
         get() = moduleInfo.sdk.name
 

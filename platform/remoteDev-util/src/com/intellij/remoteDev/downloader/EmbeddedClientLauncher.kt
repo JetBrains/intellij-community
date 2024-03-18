@@ -19,7 +19,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
-import com.intellij.platform.runtime.repository.ProductMode
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.remoteDev.util.ProductInfo
@@ -182,7 +182,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val vmOptionsFile = PathManager.getConfigDir() / "embedded-client" / "jetbrains_client64.vmoptions"
     val customizableOptions: List<String>
     if (vmOptionsFile.exists()) {
-      customizableOptions = vmOptionsFile.readLines()
+      customizableOptions = vmOptionsFile.readLines().mapNotNull { line -> line.trim().takeIf { it.isNotEmpty() } }
     }
     else {
       customizableOptions = getDefaultCustomizableVmOptions()
@@ -192,10 +192,11 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
     vmParametersList.addAll(customizableOptions)
 
+    val build = ApplicationInfo.getInstance().build
     val jetBrainsClientOptions = listOf(
       "-Djb.vmOptionsFile=${vmOptionsFile.pathString}",
       "-Didea.vendor.name=JetBrains",
-      "-Didea.paths.selector=JetBrainsClient${ApplicationInfo.getInstance().build.withoutProductCode().asString()}",
+      "-Didea.paths.selector=JetBrainsClient${build.withoutProductCode().asString()}",
       "-Didea.platform.prefix=JetBrainsClient",
       "-Dide.no.platform.update=true",
       "-Didea.initially.ask.config=never",
@@ -203,6 +204,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
+      "-Dintellij.platform.full.ide.product.code=${build.productCode}",
       "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )

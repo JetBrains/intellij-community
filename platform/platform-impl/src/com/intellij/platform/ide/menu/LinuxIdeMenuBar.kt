@@ -2,12 +2,19 @@
 package com.intellij.platform.ide.menu
 
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.util.function.Consumer
 import javax.swing.JFrame
 
 internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?)
@@ -44,7 +51,7 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
   }
 
   override fun doInstallAppMenuIfNeeded(frame: JFrame) {
-    if (globalMenu != null || IdeRootPane.isMenuButtonInToolbar || !GlobalMenuLinux.isAvailable()) {
+    if (globalMenu != null || !GlobalMenuLinux.isAvailable()) {
       return
     }
 
@@ -58,5 +65,18 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
 
   override fun onToggleFullScreen(isFullScreen: Boolean) {
     globalMenu?.toggle(!isFullScreen)
+  }
+}
+
+@RequiresEdt
+fun collectGlobalMenu(scope: CoroutineScope, globalMenuListener: Consumer<Boolean>) {
+  ThreadingAssertions.assertEventDispatchThread()
+
+  if (GlobalMenuLinux.isAvailable()) {
+    scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      GlobalMenuLinux.isPresentedMutable.collect {
+        globalMenuListener.accept(it)
+      }
+    }
   }
 }

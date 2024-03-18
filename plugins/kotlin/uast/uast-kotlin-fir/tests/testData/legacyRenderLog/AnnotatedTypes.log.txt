@@ -11,13 +11,15 @@ UFile (package = )
                             ULiteralExpression (value = 2)
                 UDeclarationsExpression
                     ULocalVariable (name = b)
-                        ULiteralExpression (value = "abc")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "abc")
                 UDeclarationsExpression
                     ULocalVariable (name = c)
                         USimpleNameReferenceExpression (identifier = b)
                 UDeclarationsExpression
                     ULocalVariable (name = v)
-                        ULiteralExpression (value = "abc")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "abc")
     UClass (name = MyAnnotation)
         UAnnotation (fqName = kotlin.annotation.Target)
             UNamedExpression (name = allowedTargets)

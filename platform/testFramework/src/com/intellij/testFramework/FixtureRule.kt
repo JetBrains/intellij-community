@@ -637,16 +637,6 @@ open class DisposableRule : ExternalResource() {
   }
 }
 
-@ScheduledForRemoval
-@Deprecated(
-  message = "Use com.intellij.testFramework.junit5.TestDisposable annotation",
-)
-class DisposableExtension : DisposableRule(), AfterEachCallback {
-  override fun afterEach(context: ExtensionContext?) {
-    after()
-  }
-}
-
 class SystemPropertyRule(private val name: String, private val value: String) : ExternalResource() {
   override fun apply(base: Statement, description: Description): Statement {
     return object: Statement() {

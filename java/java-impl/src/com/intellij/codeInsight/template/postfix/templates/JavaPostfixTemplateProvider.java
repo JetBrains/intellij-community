@@ -115,8 +115,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   @NotNull
   @Override
   public PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
-    Document document = copyFile.getViewProvider().getDocument();
-    assert document != null;
+    Document document = copyFile.getFileDocument();
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
     if (isSemicolonNeeded(copyFile, realEditor)) {

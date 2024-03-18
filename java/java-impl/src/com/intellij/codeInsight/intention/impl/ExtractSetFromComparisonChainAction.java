@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,7 +34,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExtractSetFromComparisonChainAction implements ModCommandAction {
+public final class ExtractSetFromComparisonChainAction implements ModCommandAction {
   private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
   private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
   private static final String INITIALIZER_FORMAT_JAVA2 =
@@ -69,9 +70,8 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
     List<ExpressionToConstantReplacementContext> copies =
       myProcessDuplicates == ThreeState.NO ? List.of() : findCopies(comparisons, containingClass);
     if (myProcessDuplicates == ThreeState.UNSURE && !copies.isEmpty()) {
-      return new ModChooseAction(JavaBundle.message("intention.extract.set.from.comparison.chain.popup.title"),
-                                 List.of(new ExtractSetFromComparisonChainAction(false),
-                                         new ExtractSetFromComparisonChainAction(true)));
+      return ModCommand.chooseAction(JavaBundle.message("intention.extract.set.from.comparison.chain.popup.title"),
+                                     new ExtractSetFromComparisonChainAction(false), new ExtractSetFromComparisonChainAction(true));
     }
     LinkedHashSet<String> suggestions = getSuggestions(comparisons);
 
@@ -90,7 +90,7 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
       String initializer = MessageFormat.format(pattern, fieldInitializer, elementType.getCanonicalText());
       String modifiers = cls.isInterface() ? "" : "private static final ";
       String type = CommonClassNames.JAVA_UTIL_SET +
-                    (PsiUtil.isLanguageLevel5OrHigher(cls) ? "<" + elementType.getCanonicalText() + ">" : "");
+                    (PsiUtil.isAvailable(JavaFeature.GENERICS, cls) ? "<" + elementType.getCanonicalText() + ">" : "");
       PsiField field = factory.createFieldFromText(modifiers + type + " " + name + "=" + initializer + ";", cls);
       field = (PsiField)cls.add(field);
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(field);
@@ -135,13 +135,13 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
     if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return INITIALIZER_ENUM_SET;
     }
-    if (PsiUtil.isLanguageLevel9OrHigher(containingClass)) {
+    if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, containingClass)) {
       return INITIALIZER_FORMAT_JAVA9;
     }
     if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
       return INITIALIZER_FORMAT_GUAVA;
     }
-    if (PsiUtil.isLanguageLevel5OrHigher(containingClass)) {
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, containingClass)) {
       return INITIALIZER_FORMAT_JAVA5;
     }
     return INITIALIZER_FORMAT_JAVA2;
@@ -149,6 +149,7 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext actionContext) {
+    if (!BaseIntentionAction.canModify(actionContext.file())) return null;
     PsiElement element = actionContext.findLeaf();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
     if (comparisons.size() <= 1) return null;

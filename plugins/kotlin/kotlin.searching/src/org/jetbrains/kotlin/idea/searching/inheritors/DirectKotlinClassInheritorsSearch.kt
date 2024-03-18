@@ -14,7 +14,8 @@ object DirectKotlinClassInheritorsSearch {
     data class SearchParameters(
         val ktClass: KtClass,
         val searchScope: SearchScope,
-        val includeAnonymous: Boolean = true
+        val includeAnonymous: Boolean = true,
+        val includeLocal: Boolean = true,
     ) : com.intellij.model.search.SearchParameters<PsiElement> {
         override fun getProject(): Project {
             return runReadAction { ktClass.project }
@@ -36,5 +37,4 @@ object DirectKotlinClassInheritorsSearch {
     fun search(parameters: SearchParameters): Query<PsiElement> {
         return SearchService.getInstance().searchParameters(parameters)
     }
-  
 }

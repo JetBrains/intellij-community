@@ -21,11 +21,12 @@ data class FileEditorOpenOptions(
   fun clone(): FileEditorOpenOptions = copy()  // no arg copying for Java
 
   // @formatter:off
-  @Contract(pure = true) @JvmOverloads fun withSelectAsCurrent(value: Boolean = true):FileEditorOpenOptions     = copy(selectAsCurrent = value)
-  @Contract(pure = true) @JvmOverloads fun withReuseOpen(value: Boolean = true):FileEditorOpenOptions           = copy(reuseOpen = value)
-  @Contract(pure = true) @JvmOverloads fun withUsePreviewTab(value: Boolean = true):FileEditorOpenOptions       = copy(usePreviewTab = value)
-  @Contract(pure = true) @JvmOverloads fun withRequestFocus(value: Boolean = true):FileEditorOpenOptions        = copy(requestFocus = value)
-  @Contract(pure = true)               fun withPin(value: Boolean = true):FileEditorOpenOptions                 = copy(pin = value)
-  @Contract(pure = true)               fun withIndex(value: Int):FileEditorOpenOptions                          = copy(index = value)
+  @Contract(pure = true) @JvmOverloads fun withSelectAsCurrent(value: Boolean = true):FileEditorOpenOptions               = copy(selectAsCurrent = value)
+  @Contract(pure = true) @JvmOverloads fun withReuseOpen(value: Boolean = true):FileEditorOpenOptions                     = copy(reuseOpen = value)
+  @Contract(pure = true) @JvmOverloads fun withUsePreviewTab(value: Boolean = true):FileEditorOpenOptions                 = copy(usePreviewTab = value)
+  @Contract(pure = true) @JvmOverloads fun withRequestFocus(value: Boolean = true):FileEditorOpenOptions                  = copy(requestFocus = value)
+  @Contract(pure = true)               fun withPin(value: Boolean = true):FileEditorOpenOptions                           = copy(pin = value)
+  @Contract(pure = true)               fun withIndex(value: Int):FileEditorOpenOptions                                    = copy(index = value)
+  @Experimental @Contract(pure = true) fun withOpenMode(openMode: FileEditorManagerImpl.OpenMode?):FileEditorOpenOptions  = copy(openMode = openMode)
   // @formatter:on
 }

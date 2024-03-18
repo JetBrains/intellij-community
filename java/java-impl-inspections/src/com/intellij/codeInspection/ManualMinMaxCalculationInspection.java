@@ -28,7 +28,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean disableForNonIntegralTypes = false;
 

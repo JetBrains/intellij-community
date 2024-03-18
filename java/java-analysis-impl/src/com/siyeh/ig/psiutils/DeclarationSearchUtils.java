@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,15 +32,12 @@ public final class DeclarationSearchUtils {
 
   public static boolean variableNameResolvesToTarget(@NotNull String variableName, @NotNull PsiVariable target,
                                                      @NotNull PsiElement context) {
-    final Project project = context.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(variableName, context);
     return target.equals(variable);
   }
 
-  public static PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression,
-                                             @Nullable PsiVariable variable) {
+  public static PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression, @Nullable PsiVariable variable) {
     if (variable == null) {
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiVariable)) {
@@ -58,17 +54,12 @@ public final class DeclarationSearchUtils {
       return null;
     }
     final PsiElement def = defs[0];
-    if (def instanceof PsiVariable) {
-      final PsiVariable target = (PsiVariable)def;
-      final PsiExpression initializer = target.getInitializer();
-      return PsiUtil.skipParenthesizedExprDown(initializer);
+    if (def instanceof PsiVariable target) {
+      return PsiUtil.skipParenthesizedExprDown(target.getInitializer());
     }
     else if (def instanceof PsiReferenceExpression) {
-      final PsiElement parent = def.getParent();
-      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
-        return null;
-      }
-      if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
+      if (!(def.getParent() instanceof PsiAssignmentExpression assignmentExpression) ||
+          assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
         return null;
       }
       return PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
@@ -81,18 +72,16 @@ public final class DeclarationSearchUtils {
     if (name == null) {
       return true;
     }
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getProject());
     final SearchScope useScope = element.getUseScope();
-    if (!(useScope instanceof GlobalSearchScope)) {
+    if (!(useScope instanceof GlobalSearchScope globalSearchScope)) {
       return false;
     }
+    final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getProject());
     final PsiSearchHelper.SearchCostResult cost =
-      searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator());
-    if (cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
-      return zeroResult;
-    }
-    return cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+      searchHelper.isCheapEnoughToSearch(name, globalSearchScope, null, ProgressManager.getInstance().getProgressIndicator());
+    return cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
+           ? zeroResult
+           : cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
   public static PsiField findFirstFieldInDeclaration(PsiField field) {

@@ -262,6 +262,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testInSuperCall() {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest());
   }
 
   public void testMethodReferenceInsideMethodCall() {

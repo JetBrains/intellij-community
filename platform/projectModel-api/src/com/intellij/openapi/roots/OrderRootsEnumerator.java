@@ -54,7 +54,7 @@ public interface OrderRootsEnumerator {
   /**
    * If roots for this enumerator are already evaluated the cached result will be used. Otherwise roots will be evaluated and cached for
    * subsequent calls. <p>
-   * Caching is not supported if {@link OrderEnumerator#satisfying}, {@link OrderEnumerator#using} or {@link #usingCustomRootProvider}
+   * Caching is not supported if {@link OrderEnumerator#satisfying}, {@link OrderEnumerator#using} or {@link #usingCustomSdkRootProvider}
    * option is used
    * @return this instance
    */
@@ -70,13 +70,6 @@ public interface OrderRootsEnumerator {
    */
   @NotNull
   OrderRootsEnumerator withoutSelfModuleOutput();
-
-  /**
-   * @deprecated use {@link #usingCustomSdkRootProvider(NotNullFunction)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
 
   /**
    * Instructs the enumerator to use {@code provider} to obtain roots of an SDK order entry instead of taking them from SDK configuration. 

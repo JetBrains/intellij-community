@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -38,6 +39,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -534,11 +536,15 @@ public class HelpTooltip {
    * @param owner possible owner
    * @param master master popup
    */
-  public static void setMasterPopup(@NotNull Component owner, JBPopup master) {
+  public static void setMasterPopup(@NotNull Component owner, @Nullable JBPopup master) {
     if (owner instanceof JComponent) {
-      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
-      if (instance != null && instance.myPopup != master) {
-        instance.masterPopupOpenCondition = () -> master == null || !master.isVisible();
+      HelpTooltip tooltip = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (tooltip != null && tooltip.myPopup != master) {
+        WeakReference<JBPopup> popupRef = new WeakReference<>(master);
+        tooltip.masterPopupOpenCondition = () -> {
+          JBPopup popup = SoftReference.dereference(popupRef);
+          return popup == null || !popup.isVisible();
+        };
       }
     }
   }

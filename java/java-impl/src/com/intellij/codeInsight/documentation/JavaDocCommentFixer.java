@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class JavaDocCommentFixer implements DocCommentFixer {
+public final class JavaDocCommentFixer implements DocCommentFixer {
   private static final String PARAM_TAG = "@param";
   private static final String PARAM_TAG_NAME = "param";
 

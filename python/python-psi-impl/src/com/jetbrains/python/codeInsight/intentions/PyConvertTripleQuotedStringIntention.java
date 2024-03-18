@@ -1,19 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,7 +31,10 @@ import java.util.List;
  *      "but \"this\" includes far too much" "\n"
  *      "whitespace at the start")
  */
-public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction {
+public final class PyConvertTripleQuotedStringIntention extends PsiUpdateModCommandAction<PyStringLiteralExpression> {
+  PyConvertTripleQuotedStringIntention() {
+    super(PyStringLiteralExpression.class);
+  }
 
   @Override
   @NotNull
@@ -38,95 +42,77 @@ public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction 
     return PyPsiBundle.message("INTN.triple.quoted.string");
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return PyPsiBundle.message("INTN.triple.quoted.string");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyStringLiteralExpression element) {
+    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
+    if (docStringOwner != null) {
+      if (docStringOwner.getDocStringExpression() == element) return null;
+    }
+    for (StringNodeInfo info : extractStringNodesInfo(element)) {
+      if (info.isTripleQuoted() && info.isTerminated() && info.getNode().getTextRange().contains(context.offset())) {
+        return super.getPresentation(context, element);
+      }
+    }
+    return null;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset), PyStringLiteralExpression.class);
-    if (pyString != null) {
-      final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(pyString, PyDocStringOwner.class);
-      if (docStringOwner != null) {
-        if (docStringOwner.getDocStringExpression() == pyString) return false;
+  protected void invoke(@NotNull ActionContext context, @NotNull PyStringLiteralExpression element, @NotNull ModPsiUpdater updater) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
+    final StringBuilder result = new StringBuilder();
+    final List<StringNodeInfo> nodeInfos = extractStringNodesInfo(element);
+    for (int i = 0; i < nodeInfos.size(); i++) {
+      final StringNodeInfo info = nodeInfos.get(i);
+      List<String> lines = StringUtil.split(info.getContent(), "\n", true, false);
+      boolean lastLineExcluded = false;
+      if (lines.size() > 1 && lines.get(lines.size() - 1).isEmpty()) {
+        lastLineExcluded = true;
+        lines = lines.subList(0, lines.size() - 1);
       }
-      for (StringNodeInfo info : extractStringNodesInfo(pyString)) {
-        if (info.isTripleQuoted() && info.isTerminated() && info.getNode().getTextRange().contains(caretOffset)) {
-          return true;
+
+      final boolean inLastNode = i == nodeInfos.size() - 1;
+      for (int j = 0; j < lines.size(); j++) {
+        final String line = lines.get(j);
+        final boolean inLastLine = j == lines.size() - 1;
+
+        if (info.isRaw()) {
+          appendSplittedRawStringLine(result, info, line);
+          if (!inLastLine || lastLineExcluded) {
+            result.append(" ").append(info.getSingleQuote()).append("\\n").append(info.getSingleQuote());
+          }
+        }
+        else {
+          result.append(info.getPrefix());
+          result.append(info.getSingleQuote());
+          result.append(convertToValidSubString(line, info.getSingleQuote(), info.isTripleQuoted()));
+          if (!inLastLine || lastLineExcluded) {
+            result.append("\\n");
+          }
+          result.append(info.getSingleQuote());
+        }
+        if (!(inLastNode && inLastLine)) {
+          result.append("\n");
         }
       }
     }
-    return false;
-  }
+    if (result.indexOf("\n") >= 0) {
+      result.insert(0, "(");
+      result.append(")");
+    }
+    PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), result.toString());
 
-  @Override
-  public void doInvoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                           PyStringLiteralExpression.class);
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    if (pyString != null) {
-      final StringBuilder result = new StringBuilder();
-      final List<StringNodeInfo> nodeInfos = extractStringNodesInfo(pyString);
-      for (int i = 0; i < nodeInfos.size(); i++) {
-        final StringNodeInfo info = nodeInfos.get(i);
-        List<String> lines = StringUtil.split(info.getContent(), "\n", true, false);
-        boolean lastLineExcluded = false;
-        if (lines.size() > 1 && lines.get(lines.size() - 1).isEmpty()) {
-          lastLineExcluded = true;
-          lines = lines.subList(0, lines.size() - 1);
-        }
-
-        final boolean inLastNode = i == nodeInfos.size() - 1;
-        for (int j = 0; j < lines.size(); j++) {
-          final String line = lines.get(j);
-          final boolean inLastLine = j == lines.size() - 1;
-
-          if (info.isRaw()) {
-            appendSplittedRawStringLine(result, info, line);
-            if (!inLastLine || lastLineExcluded) {
-              result.append(" ").append(info.getSingleQuote()).append("\\n").append(info.getSingleQuote());
-            }
-          }
-          else {
-            result.append(info.getPrefix());
-            result.append(info.getSingleQuote());
-            result.append(convertToValidSubString(line, info.getSingleQuote(), info.isTripleQuoted()));
-            if (!inLastLine || lastLineExcluded) {
-              result.append("\\n");
-            }
-            result.append(info.getSingleQuote());
-          }
-          if (!(inLastNode && inLastLine)) {
-            result.append("\n");
-          }
-        }
-      }
-      if (result.indexOf("\n") >= 0) {
-        result.insert(0, "(");
-        result.append(")");
-      }
-      PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(pyString), result.toString());
-
-      final PsiElement parent = pyString.getParent();
-      if (expression instanceof PyParenthesizedExpression &&
-          (parent instanceof PyParenthesizedExpression ||
-           parent instanceof PyTupleExpression ||
-           parent instanceof PyArgumentList && ArrayUtil.getFirstElement(((PyArgumentList)parent).getArguments()) == pyString)) {
-        expression = ((PyParenthesizedExpression)expression).getContainedExpression();
-      }
-      if (expression instanceof PyStringLiteralExpression && ((PyStringLiteralExpression)expression).isDocString()) {
-        expression = elementGenerator.createStringLiteralAlreadyEscaped(result.toString());
-      }
-      if (expression != null) {
-        pyString.replace(expression);
-      }
+    final PsiElement parent = element.getParent();
+    if (expression instanceof PyParenthesizedExpression &&
+        (parent instanceof PyParenthesizedExpression ||
+         parent instanceof PyTupleExpression ||
+         parent instanceof PyArgumentList && ArrayUtil.getFirstElement(((PyArgumentList)parent).getArguments()) == element)) {
+      expression = ((PyParenthesizedExpression)expression).getContainedExpression();
+    }
+    if (expression instanceof PyStringLiteralExpression && ((PyStringLiteralExpression)expression).isDocString()) {
+      expression = elementGenerator.createStringLiteralAlreadyEscaped(result.toString());
+    }
+    if (expression != null) {
+      element.replace(expression);
     }
   }
 

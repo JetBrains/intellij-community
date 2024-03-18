@@ -26,6 +26,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   private final LombokLightModifierList myModifierList;
 
   private boolean myIsEnum;
+  private boolean myIsAnnotationType;
   private PsiField[] myFields;
   private PsiMethod[] myMethods;
 
@@ -35,6 +36,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
     super(context, simpleName);
     myIsEnum = false;
+    myIsAnnotationType = false;
     myQualifiedName = qualifiedName;
     myBaseIcon = LombokIcons.Nodes.LombokClass;
     myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage());
@@ -92,6 +94,11 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   }
 
   @Override
+  public boolean isAnnotationType() {
+    return myIsAnnotationType;
+  }
+
+  @Override
   public PsiField @NotNull [] getFields() {
     if (null == myFields) {
       Collection<PsiField> generatedFields = fieldSupplier.apply(this);
@@ -138,6 +145,11 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
 
   public LombokLightClassBuilder withEnum(boolean isEnum) {
     myIsEnum = isEnum;
+    return this;
+  }
+
+  public LombokLightClassBuilder withAnnotationType(boolean isAnnotationType) {
+    myIsAnnotationType = isAnnotationType;
     return this;
   }
 

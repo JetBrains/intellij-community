@@ -51,11 +51,13 @@ public final class PlatformUtils {
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String STUDIO_PREFIX = "AndroidStudio";
   public static final String RUSTROVER_PREFIX = "RustRover";
+  public static final String WRITERSIDE_PREFIX = "Writerside";
 
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
@@ -182,6 +184,10 @@ public final class PlatformUtils {
 
   public static boolean isWebStorm() {
     return is(WEB_PREFIX);
+  }
+
+  public static boolean isWriterSide() {
+    return is(WRITERSIDE_PREFIX);
   }
 
   public static boolean isDataGrip() {

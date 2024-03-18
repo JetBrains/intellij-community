@@ -149,11 +149,4 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
       }
     }
   }
-
-
-  @Override
-  @After
-  public void tearDown() throws Exception {
-    super.tearDown();
-  }
 }
