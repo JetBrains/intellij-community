@@ -38,7 +38,6 @@ internal abstract class SingleFileActivityDiffPreview(project: Project, private 
     UiNotifyConnector.installOn(processor.component, object : Activatable {
       override fun showNotify() = processor.updatePreview()
     })
-    Disposer.register(this, processor)
     return processor
   }
 
