@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
@@ -19,10 +20,9 @@ import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMod
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -30,17 +30,21 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 /**
- * Find all conflicts when moving elements as described by [descriptor].
+ * Find all conflicts when moving elements.
+ * @param declarationsToMove the set of declarations to move, they must all be moved from the same containing file.
  */
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun findAllMoveConflicts(
-    descriptor: K2MoveDescriptor.Declarations,
+    declarationsToMove: Set<KtNamedDeclaration>,
+    targetDir: PsiDirectory,
+    targetPkg: FqName,
+    targetFileName: String,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> = allowAnalysisOnEdt {
-    val (fakeTarget, oldToNewMap) = descriptor.createCopyTarget()
+    val (fakeTarget, oldToNewMap) = createCopyTarget(declarationsToMove, targetDir, targetPkg, targetFileName)
     MultiMap<PsiElement, String>().apply {
-        putAllValues(checkVisibilityConflictsForInternalUsages(descriptor, fakeTarget))
-        putAllValues(checkVisibilityConflictForNonMovedUsages(descriptor, oldToNewMap, usages))
+        putAllValues(checkVisibilityConflictsForInternalUsages(declarationsToMove, fakeTarget))
+        putAllValues(checkVisibilityConflictForNonMovedUsages(declarationsToMove, oldToNewMap, usages))
     }
 }
 
@@ -48,7 +52,12 @@ internal fun findAllMoveConflicts(
  * Creates a non-physical file that contains the moved elements with all references retargeted.
  * This non-physical file can be used to analyze for conflicts without modifying the file on the disk.
  */
-private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<KtNamedDeclaration, KtNamedDeclaration>> {
+private fun createCopyTarget(
+    declarationsToMove: Set<KtNamedDeclaration>,
+    targetDir: PsiDirectory,
+    targetPkg: FqName,
+    targetFileName: String
+): Pair<KtFile, Map<KtNamedDeclaration, KtNamedDeclaration>> {
     /** Collects physical to non-physical usage-infos. */
     fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
         return collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
@@ -60,9 +69,9 @@ private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<K
         }
     }
 
-    val fakeTargetFile = KtPsiFactory.contextual(target.baseDirectory)
-        .createFile(target.fileName, "package ${target.pkgName.quoteIfNeeded()}\n")
-    val oldToNewMap = source.moveInto(fakeTargetFile)
+    val fakeTargetFile = KtPsiFactory.contextual(targetDir)
+        .createFile(targetFileName, "package ${targetPkg.quoteIfNeeded()}\n")
+    val oldToNewMap = declarationsToMove.moveInto(fakeTargetFile)
     val usageInfos = fakeTargetFile.collectOldToNewUsageInfos(oldToNewMap)
     usageInfos.forEach { (originalUsageInfo, copyUsageInfo) ->
         // Retarget all references to make sure all references are resolvable after moving
@@ -72,17 +81,17 @@ private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<K
         // This will make it possible for the conflict checker to check whether a conflict exists before even calling the refactoring.
         retargetReference.internalUsageInfo = originalUsageInfo
     }
-    fakeTargetFile.originalFile = source.elements.firstOrNull()?.containingKtFile ?: error("Moved element is not in a Kotlin file")
+    fakeTargetFile.originalFile = declarationsToMove.firstOrNull()?.containingKtFile ?: error("Moved element is not in a Kotlin file")
     return fakeTargetFile to oldToNewMap
 }
 
 
-private fun PsiElement?.willBeMoved(source: K2MoveSourceDescriptor<*>): Boolean {
-    return this != null && source.elements.any { it.isAncestor(this, false) }
+private fun PsiElement?.willBeMoved(declarationsToMove: Set<KtNamedDeclaration>): Boolean {
+    return this != null && declarationsToMove.any { it.isAncestor(this, false) }
 }
 
-private fun MoveRenameUsageInfo.willNotBeMoved(source: K2MoveSourceDescriptor<*>): Boolean {
-    return this !is K2MoveRenameUsageInfo || !element.willBeMoved(source)
+private fun MoveRenameUsageInfo.willNotBeMoved(declarationsToMove: Set<KtNamedDeclaration>): Boolean {
+    return this !is K2MoveRenameUsageInfo || !element.willBeMoved(declarationsToMove)
 }
 
 private fun PsiElement.createVisibilityConflict(referencedDeclaration: PsiElement): Pair<PsiElement, String> {
@@ -132,12 +141,12 @@ private fun KtNamedDeclaration.lightIsVisibleTo(usage: PsiElement): Boolean {
  * Check whether the moved external usages are still visible towards their non-physical declaration.
  */
 private fun checkVisibilityConflictForNonMovedUsages(
-    descriptor: K2MoveDescriptor,
+    declarationsToMove: Set<KtNamedDeclaration>,
     oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
     return usages
-        .filter { usage -> usage.willNotBeMoved(descriptor.source) && usage.isVisibleBeforeMove() }
+        .filter { usage -> usage.willNotBeMoved(declarationsToMove) && usage.isVisibleBeforeMove() }
         .mapNotNull { usage ->
             val usageElement = usage.element ?: return@mapNotNull null
             val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
@@ -151,13 +160,13 @@ private fun checkVisibilityConflictForNonMovedUsages(
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
 private fun checkVisibilityConflictsForInternalUsages(
-    descriptor: K2MoveDescriptor,
+    declarationsToMove: Set<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {
     return fakeTarget
         .collectDescendantsOfType<KtSimpleNameExpression>()
         .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
-        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(descriptor.source) && usageInfo.isVisibleBeforeMove() }
+        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(declarationsToMove) && usageInfo.isVisibleBeforeMove() }
         .mapNotNull { (usageInfo, refExprCopy) ->
             val usageElement = usageInfo.element as? KtElement ?: return@mapNotNull null
             val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null

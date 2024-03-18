@@ -27,7 +27,13 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
-        val conflicts = findAllMoveConflicts(descriptor, usages.filterIsInstance<MoveRenameUsageInfo>())
+        val conflicts = findAllMoveConflicts(
+            descriptor.source.elements,
+            descriptor.target.baseDirectory,
+            descriptor.target.pkgName,
+            descriptor.target.fileName,
+            usages.filterIsInstance<MoveRenameUsageInfo>()
+        )
         return showConflicts(conflicts, usages)
     }
 
@@ -42,7 +48,7 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val targetFile = descriptor.target.getOrCreateTarget()
         val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
-        val oldToNewMap = descriptor.source.moveInto(targetFile)
+        val oldToNewMap = descriptor.source.elements.moveInto(targetFile)
         descriptor.source.elements.forEach(PsiElement::deleteSingle)
         retargetUsagesAfterMove(usages.toList(), oldToNewMap)
         for (sourceFile in sourceFiles) {

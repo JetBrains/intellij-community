@@ -7,14 +7,13 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-internal fun K2MoveSourceDescriptor.ElementSource.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
-    return elements.associateWith { declaration -> targetFile.add(declaration) as KtNamedDeclaration }
+internal fun Set<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
+    return associateWith { declaration -> targetFile.add(declaration) as KtNamedDeclaration }
 }
 
 internal fun K2MoveDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
