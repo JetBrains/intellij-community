@@ -5,11 +5,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,9 +28,11 @@ internal abstract class AbstractAddAccessorIntention(
 
     override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
 
-    override fun getApplicabilityRange() = applicabilityTarget { ktProperty: KtProperty ->
-        if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
-    }
+    override fun getApplicableRanges(element: KtProperty): List<TextRange> =
+        ApplicabilityRange.single(element) { property ->
+            if (property.hasInitializer()) property.nameIdentifier
+            else property
+        }
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
         if (element.isLocal ||

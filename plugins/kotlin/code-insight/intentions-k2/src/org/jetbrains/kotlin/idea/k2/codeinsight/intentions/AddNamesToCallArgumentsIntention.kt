@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.associateArgumentNamesStartingAt
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
@@ -27,21 +25,22 @@ internal class AddNamesToCallArgumentsIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.to.call.arguments")
 
+    override fun getApplicableRanges(element: KtCallElement): List<TextRange> {
+        // Note: Applicability range matches FE 1.0 (see AddNamesToCallArgumentsIntention).
+        val calleeExpression = element.calleeExpression
+            ?: return emptyList()
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallElement> =
-        applicabilityRanges { element: KtCallElement ->
-            // Note: Applicability range matches FE 1.0 (see AddNamesToCallArgumentsIntention).
-            val calleeExpression = element.calleeExpression ?: return@applicabilityRanges emptyList()
-            val calleeExpressionTextRange = calleeExpression.textRangeIn(element)
-            val arguments = element.valueArguments
-            if (arguments.size < 2) {
-                listOf(calleeExpressionTextRange)
-            } else {
-                val firstArgument = arguments.firstOrNull() as? KtValueArgument ?: return@applicabilityRanges emptyList()
-                val endOffset = firstArgument.textRangeIn(element).endOffset
-                listOf(TextRange(calleeExpressionTextRange.startOffset, endOffset))
-            }
+        val calleeExpressionTextRange = calleeExpression.textRangeIn(element)
+        val arguments = element.valueArguments
+        return if (arguments.size < 2) {
+            listOf(calleeExpressionTextRange)
+        } else {
+            val firstArgument = arguments.firstOrNull() as? KtValueArgument
+                ?: return emptyList()
+            val endOffset = firstArgument.textRangeIn(element).endOffset
+            listOf(TextRange(calleeExpressionTextRange.startOffset, endOffset))
         }
+    }
 
     override fun isApplicableByPsi(element: KtCallElement): Boolean =
         // Note: `KtCallElement.valueArgumentList` only includes arguments inside parentheses; it doesn't include a trailing lambda.

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -11,8 +12,6 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -69,8 +68,11 @@ internal class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<
         }
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtIfExpression> = applicabilityRange {
-        it.lastSingleElseKeyword()?.textRange?.shiftRight(-it.startOffset)
+    override fun getApplicableRanges(element: KtIfExpression): List<TextRange> {
+        val textRange = element.lastSingleElseKeyword()
+            ?.textRange
+            ?.shiftRight(-element.startOffset)
+        return listOfNotNull(textRange)
     }
 
     override fun isApplicableByPsi(element: KtIfExpression): Boolean {

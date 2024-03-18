@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -10,8 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTargets
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -22,15 +22,15 @@ import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 internal class OperatorToFunctionIntention :
     KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTargets { element ->
-        when (element) {
-            is KtUnaryExpression -> listOf(element.operationReference)
+    override fun getApplicableRanges(element: KtExpression): List<TextRange> = ApplicabilityRange.multiple(element) { expression ->
+        when (expression) {
+            is KtUnaryExpression -> listOf(expression.operationReference)
 
-            is KtBinaryExpression -> listOf(element.operationReference)
+            is KtBinaryExpression -> listOf(expression.operationReference)
 
             is KtArrayAccessExpression -> {
-                val lbrace = element.leftBracket
-                val rbrace = element.rightBracket
+                val lbrace = expression.leftBracket
+                val rbrace = expression.rightBracket
 
                 if (lbrace == null || rbrace == null) {
                     emptyList()
@@ -40,8 +40,8 @@ internal class OperatorToFunctionIntention :
             }
 
             is KtCallExpression -> {
-                val lbrace = element.valueArgumentList?.leftParenthesis
-                    ?: element.lambdaArguments.firstOrNull()?.getLambdaExpression()?.leftCurlyBrace
+                val lbrace = expression.valueArgumentList?.leftParenthesis
+                    ?: expression.lambdaArguments.firstOrNull()?.getLambdaExpression()?.leftCurlyBrace
 
                 listOfNotNull(lbrace as PsiElement?)
             }
@@ -94,6 +94,7 @@ internal class OperatorToFunctionIntention :
             KtTokens.IN_KEYWORD, KtTokens.NOT_IN, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ,
             KtTokens.GT, KtTokens.LT, KtTokens.GTEQ, KtTokens.LTEQ
             -> true
+
             KtTokens.EQEQ, KtTokens.EXCLEQ -> listOf(element.left, element.right).none { it?.node?.elementType == KtNodeTypes.NULL }
             KtTokens.EQ -> element.left is KtArrayAccessExpression
             else -> false

@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 
@@ -22,8 +20,6 @@ internal class ConvertReferenceToLambdaIntention :
     override fun prepareContext(element: KtCallableReferenceExpression): String? =
         if (skip(element)) null
         else ConvertReferenceToLambdaUtil.prepareLambdaExpressionText(element)
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableReferenceExpression> =  ApplicabilityRanges.SELF
 
     context(KtAnalysisSession)
     private fun skip(element: KtCallableReferenceExpression): Boolean {

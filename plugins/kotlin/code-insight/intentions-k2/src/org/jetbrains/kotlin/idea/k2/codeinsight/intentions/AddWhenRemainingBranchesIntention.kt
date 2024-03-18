@@ -7,8 +7,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
@@ -17,8 +15,6 @@ internal class AddWhenRemainingBranchesIntention :
     KotlinApplicableModCommandAction<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
 
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 

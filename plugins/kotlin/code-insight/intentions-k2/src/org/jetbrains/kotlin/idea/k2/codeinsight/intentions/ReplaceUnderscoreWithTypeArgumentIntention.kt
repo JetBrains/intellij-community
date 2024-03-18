@@ -13,10 +13,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.isUnderscoreTypeArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
@@ -31,8 +29,6 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.explicit.type")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtTypeProjection> = ApplicabilityRanges.SELF
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtTypeProjection): Context? {

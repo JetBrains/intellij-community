@@ -26,10 +26,6 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
      */
     open fun getProblemHighlightType(element: ELEMENT): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
-    final override fun shouldApplyInWriteAction(): Boolean {
-        return false
-    }
-
     protected abstract fun createQuickFix(element: ELEMENT): KotlinModCommandQuickFix<ELEMENT>
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {

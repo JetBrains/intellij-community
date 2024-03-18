@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canConvertToStringTemplate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.containNoNewLine
@@ -59,8 +57,6 @@ internal class ConvertToStringTemplateInspection :
         if (!canConvertToStringTemplate(element) || !isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
         return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
     }
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         if (element.operationToken != KtTokens.PLUS) return false

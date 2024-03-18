@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.RemoveArgumentNamesUtils.collectSortedArgumentsThatCanBeUnnamed
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -37,9 +35,13 @@ internal class RemoveSingleArgumentNameIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.argument.name")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgument> = applicabilityRange { valueArgument ->
-        val argumentExpression = valueArgument.getArgumentExpression() ?: return@applicabilityRange null
-        TextRange(valueArgument.startOffset, argumentExpression.startOffset).relativeTo(valueArgument)
+    override fun getApplicableRanges(element: KtValueArgument): List<TextRange> {
+        val argumentExpression = element.getArgumentExpression()
+            ?: return emptyList()
+
+        val textRange = TextRange(element.startOffset, argumentExpression.startOffset)
+            .relativeTo(element)
+        return listOf(textRange)
     }
 
     override fun isApplicableByPsi(element: KtValueArgument): Boolean {

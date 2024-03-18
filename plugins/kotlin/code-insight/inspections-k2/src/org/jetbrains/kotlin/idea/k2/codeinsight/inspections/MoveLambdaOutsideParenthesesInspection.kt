@@ -6,12 +6,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
@@ -58,11 +57,10 @@ internal class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicable
         }
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> {
-        return applicabilityRange { element: KtCallExpression ->
-            element.getLastLambdaExpression()
-                ?.getStrictParentOfType<KtValueArgument>()?.asElement()
-                ?.textRangeIn(element)
-        }
+    override fun getApplicableRanges(element: KtCallExpression): List<TextRange> {
+        val textRange = element.getLastLambdaExpression()
+            ?.getStrictParentOfType<KtValueArgument>()?.asElement()
+            ?.textRangeIn(element)
+        return listOfNotNull(textRange)
     }
 }

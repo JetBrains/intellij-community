@@ -3,27 +3,25 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransfor
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.UnfoldFunctionCallToIfOrWhenUtils.canUnfold
 import org.jetbrains.kotlin.idea.codeinsight.utils.UnfoldFunctionCallToIfOrWhenUtils.unfold
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class UnfoldFunctionCallToIfIntention :
     KotlinApplicableModCommandAction<KtCallExpression, Unit>(KtCallExpression::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.function.call.with.if")
 
-    override fun getApplicabilityRange() = applicabilityRange<KtCallExpression> {
-        it.calleeExpression?.textRange?.shiftLeft(it.startOffset)
-    }
+    override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
+        ApplicabilityRanges.calleeExpression(element)
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = canUnfold<KtIfExpression>(element)
-
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression) {

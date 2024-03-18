@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
@@ -30,8 +28,6 @@ internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspecti
 
     override fun getProblemDescription(element: KtPrefixExpression): String =
         KotlinBundle.message("inspection.kotlin.double.negation.display.name")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtPrefixExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtPrefixExpression): Boolean =
         element.operationToken == KtTokens.EXCL

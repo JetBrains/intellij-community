@@ -5,12 +5,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.psi.getParentLambdaLabelName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -44,11 +43,11 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection : Abstra
         return true
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtReturnExpression> = applicabilityRange { returnExpression ->
-        val keywordRange = returnExpression.returnKeyword.textRangeInParent
-        val labelRange = returnExpression.labeledExpression?.textRangeInParent
-
-        if (labelRange != null) keywordRange.union(labelRange) else null
+    override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
+        val labelRange = element.labeledExpression
+            ?.textRangeInParent
+            ?.let { element.returnKeyword.textRangeInParent.union(it) }
+        return listOfNotNull(labelRange)
     }
 
     override fun createQuickFix(element: KtReturnExpression): KotlinModCommandQuickFix<KtReturnExpression> {

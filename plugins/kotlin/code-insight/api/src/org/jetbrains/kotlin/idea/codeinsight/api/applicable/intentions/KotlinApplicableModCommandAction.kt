@@ -5,7 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -16,7 +17,8 @@ import kotlin.reflect.KClass
  */
 abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
     elementClass: KClass<E>,
-) : KotlinModCommandAction.ClassBased<E, C>(elementClass) {
+) : KotlinModCommandAction.ClassBased<E, C>(elementClass),
+    KotlinApplicableToolBase<E> {
 
     override fun stopSearchAt(
         element: PsiElement,
@@ -31,23 +33,11 @@ abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
 
         // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
         val relativeCaretOffset = context.offset - element.startOffset
-        val ranges = getApplicabilityRange()
-            .getApplicabilityRanges(element)
+        val ranges = KtAnalysisAllowanceManager.forbidAnalysisInside("getApplicabilityRanges") {
+            getApplicableRanges(element)
+        }
         if (!ranges.any { it.containsOffset(relativeCaretOffset) }) return false
 
         return getElementContext(context, element) != null
     }
-
-    /**
-     * The [KotlinApplicabilityRange] determines whether the tool is available in a range *after* [isApplicableByPsi] has been checked.
-     *
-     * Configuration of the applicability range might be as simple as choosing an existing one from `ApplicabilityRanges`.
-     */
-    // todo fun getApplicableRanges(element: E): List<E>
-    protected abstract fun getApplicabilityRange(): KotlinApplicabilityRange<E>
-
-    /**
-     * Whether this tool is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
-     */
-    protected open fun isApplicableByPsi(element: E): Boolean = true
 }

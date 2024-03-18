@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
 
 internal class RemoveSingleExpressionStringTemplateInspection :
@@ -30,8 +28,6 @@ internal class RemoveSingleExpressionStringTemplateInspection :
 
     override fun getProblemDescription(element: KtStringTemplateExpression, context: Context): String =
         KotlinBundle.message("remove.single.expression.string.template")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
     override fun getProblemHighlightType(element: KtStringTemplateExpression, context: Context): ProblemHighlightType =
       if (context.isString) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION

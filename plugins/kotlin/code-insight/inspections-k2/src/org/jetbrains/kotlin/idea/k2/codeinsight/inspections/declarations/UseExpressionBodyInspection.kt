@@ -15,8 +15,7 @@ import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
 import org.jetbrains.kotlin.idea.codeinsight.utils.replaceWithExpressionBodyPreservingComments
 import org.jetbrains.kotlin.idea.util.resultingWhens
@@ -51,19 +50,20 @@ internal class UseExpressionBodyInspection :
 
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = element.isConvertableToExpressionBody()
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclarationWithBody> = applicabilityTarget { declaration ->
-        val bodyBlockExpression = declaration.bodyBlockExpression
+    override fun getApplicableRanges(element: KtDeclarationWithBody): List<TextRange> =
+        ApplicabilityRange.single(element) { declaration: KtDeclarationWithBody ->
+            val bodyBlockExpression = declaration.bodyBlockExpression
 
-        fun KtExpression.toHighlight(): PsiElement? = when (this) {
-            is KtReturnExpression -> returnKeyword
-            is KtCallExpression -> calleeExpression
-            is KtQualifiedExpression -> selectorExpression?.toHighlight()
-            is KtObjectLiteralExpression -> objectDeclaration.getObjectKeyword()
-            else -> this
+            fun KtExpression.toHighlight(): PsiElement? = when (this) {
+                is KtReturnExpression -> returnKeyword
+                is KtCallExpression -> calleeExpression
+                is KtQualifiedExpression -> selectorExpression?.toHighlight()
+                is KtObjectLiteralExpression -> objectDeclaration.getObjectKeyword()
+                else -> this
+            }
+
+            bodyBlockExpression?.statements?.singleOrNull()?.toHighlight() ?: bodyBlockExpression
         }
-
-        bodyBlockExpression?.statements?.singleOrNull()?.toHighlight() ?: bodyBlockExpression
-    }
 
     override fun getProblemHighlightType(
         element: KtDeclarationWithBody, context: Context

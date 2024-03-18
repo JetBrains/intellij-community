@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ReplaceGetOrSetInspectionUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -46,8 +46,11 @@ internal class ReplaceGetOrSetInspection :
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context): String =
         KotlinBundle.message("explicit.0.call", context.calleeName)
 
-    override fun getApplicabilityRange() = applicabilityRange { dotQualifiedExpression: KtDotQualifiedExpression ->
-        dotQualifiedExpression.getPossiblyQualifiedCallExpression()?.calleeExpression?.textRangeIn(dotQualifiedExpression)
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> {
+        val textRange = element.getPossiblyQualifiedCallExpression()
+            ?.calleeExpression
+            ?.textRangeIn(element)
+        return listOfNotNull(textRange)
     }
 
     override fun getProblemHighlightType(element: KtDotQualifiedExpression, context: Context): ProblemHighlightType =

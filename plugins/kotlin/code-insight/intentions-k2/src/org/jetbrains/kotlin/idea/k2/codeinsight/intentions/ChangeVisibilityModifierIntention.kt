@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
@@ -55,28 +53,29 @@ sealed class ChangeVisibilityModifierIntention(
 
     override fun getFamilyName(): String = KotlinBundle.message("make.0", modifier.value)
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> = applicabilityRanges { declaration ->
-        val keywordRange = when (declaration) {
-            is KtNamedFunction -> declaration.funKeyword?.textRange
-            is KtProperty -> declaration.valOrVarKeyword.textRange
-            is KtPropertyAccessor -> declaration.namePlaceholder.textRange
-            is KtClass -> declaration.getClassOrInterfaceKeyword()?.textRange
-            is KtObjectDeclaration -> declaration.getObjectKeyword()?.textRange
-            is KtPrimaryConstructor -> declaration.getConstructorKeyword()?.textRange
-            is KtSecondaryConstructor -> declaration.getConstructorKeyword().textRange
-            is KtParameter -> declaration.valOrVarKeyword?.textRange
-            is KtTypeAlias -> declaration.getTypeAliasKeyword()?.textRange
+    override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
+        val keywordRange = when (element) {
+            is KtNamedFunction -> element.funKeyword?.textRange
+            is KtProperty -> element.valOrVarKeyword.textRange
+            is KtPropertyAccessor -> element.namePlaceholder.textRange
+            is KtClass -> element.getClassOrInterfaceKeyword()?.textRange
+            is KtObjectDeclaration -> element.getObjectKeyword()?.textRange
+            is KtPrimaryConstructor -> element.getConstructorKeyword()?.textRange
+            is KtSecondaryConstructor -> element.getConstructorKeyword().textRange
+            is KtParameter -> element.valOrVarKeyword?.textRange
+            is KtTypeAlias -> element.getTypeAliasKeyword()?.textRange
             else -> null
         }
-        val withoutKeywordRange = when (declaration) {
-            is KtPrimaryConstructor -> declaration.valueParameterList?.let {
+        val withoutKeywordRange = when (element) {
+            is KtPrimaryConstructor -> element.valueParameterList?.let {
                 TextRange.from(it.startOffset, 0) // first position before constructor e.g. Foo<caret>()
             }
 
             else -> null
         }
-        listOfNotNull(declaration.modifierList?.range, keywordRange, withoutKeywordRange)
-            .map { range -> range.relativeTo(declaration) }
+
+        return listOfNotNull(element.modifierList?.range, keywordRange, withoutKeywordRange)
+            .map { range -> range.relativeTo(element) }
     }
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean {

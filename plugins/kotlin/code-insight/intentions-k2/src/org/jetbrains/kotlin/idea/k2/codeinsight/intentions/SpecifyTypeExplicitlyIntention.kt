@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.psi.*
 internal class SpecifyTypeExplicitlyIntention:
     KotlinApplicableModCommandAction<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> =
-        ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
+    override fun getApplicableRanges(element: KtCallableDeclaration): List<TextRange> =
+        ApplicabilityRanges.declarationWithoutInitializer(element)
 
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
         if (element is KtConstructor<*> || element is KtFunctionLiteral) return false

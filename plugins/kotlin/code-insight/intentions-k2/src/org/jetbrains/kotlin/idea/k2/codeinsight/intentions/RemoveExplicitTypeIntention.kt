@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.returnTypeOfCallDependsOnTypeParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeReferencesTypeParameter
@@ -28,17 +26,19 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 internal class RemoveExplicitTypeIntention :
     KotlinApplicableModCommandAction<KtDeclaration, Unit>(KtDeclaration::class) {
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
-        applicabilityRanges { declaration ->
-            val typeReference = declaration.typeReference ?: return@applicabilityRanges emptyList()
+    override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
+        val typeReference = element.typeReference
+            ?: return emptyList()
 
-            if (declaration is KtParameter && declaration.isSetterParameter) {
-                listOf(typeReference.textRangeIn(declaration))
-            } else {
-                val typeReferenceRelativeEndOffset = typeReference.endOffset - declaration.startOffset
-                listOf(TextRange(0, typeReferenceRelativeEndOffset))
-            }
+        val textRange = if (element is KtParameter && element.isSetterParameter) {
+            typeReference.textRangeIn(element)
+        } else {
+            val typeReferenceRelativeEndOffset = typeReference.endOffset - element.startOffset
+            TextRange(0, typeReferenceRelativeEndOffset)
         }
+
+        return listOf(textRange)
+    }
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean {
         val typeReference = element.typeReference ?: return false

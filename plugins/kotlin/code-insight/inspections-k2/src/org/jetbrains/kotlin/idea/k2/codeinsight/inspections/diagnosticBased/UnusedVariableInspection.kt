@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
@@ -38,7 +39,8 @@ internal class UnusedVariableInspection
 
     override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
+    override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
+        ApplicabilityRanges.declarationName(element)
 
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtNamedDeclaration): Boolean {

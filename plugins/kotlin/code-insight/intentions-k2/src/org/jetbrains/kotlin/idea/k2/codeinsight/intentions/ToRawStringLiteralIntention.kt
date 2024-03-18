@@ -8,8 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToStringLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -32,8 +30,6 @@ internal class ToRawStringLiteralIntention :
     ) {
         convertToStringLiteral(element, context, updater)
     }
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.canBeConvertedToStringLiteral()
 }

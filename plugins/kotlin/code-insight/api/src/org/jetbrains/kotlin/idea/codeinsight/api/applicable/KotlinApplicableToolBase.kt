@@ -1,30 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntentionBase] and
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction] and
  * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionBase].
  */
 interface KotlinApplicableToolBase<ELEMENT : KtElement> {
 
     /**
-     * The [KotlinApplicabilityRange] determines whether the tool is available in a range *after* [isApplicableByPsi] has been checked.
+     * Determines whether the tool is available in a range *after* [isApplicableByPsi] has been checked.
      *
      * Configuration of the applicability range might be as simple as choosing an existing one from `ApplicabilityRanges`.
      */
-    fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT>
+    fun getApplicableRanges(element: ELEMENT): List<TextRange> = ApplicabilityRange.self(element)
 
     /**
      * Whether this tool is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
      */
-    fun isApplicableByPsi(element: ELEMENT): Boolean
-
-    /**
-     * Whether `apply` should be performed in a write action. An individual tool may override this to have fine-grained control over read
-     * and write actions in `apply`. For example, a tool may wish to start a refactoring in `apply` outside a write action.
-     */
-    fun shouldApplyInWriteAction(): Boolean = true
+    fun isApplicableByPsi(element: ELEMENT): Boolean = true
 }

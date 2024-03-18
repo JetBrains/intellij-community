@@ -4,11 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -37,9 +36,8 @@ internal class InfixCallToOrdinaryInspection : AbstractKotlinApplicableInspectio
         visitTargetElement(it, holder, isOnTheFly)
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = applicabilityRange {
-        it.operationReference.textRangeInParent
-    }
+    override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
+        listOf(element.operationReference.textRangeInParent)
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         return !(element.operationToken != KtTokens.IDENTIFIER || element.left == null || element.right == null)

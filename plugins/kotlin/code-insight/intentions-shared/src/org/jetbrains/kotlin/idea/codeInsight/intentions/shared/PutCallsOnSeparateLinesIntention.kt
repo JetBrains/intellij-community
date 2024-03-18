@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 import com.intellij.application.options.CodeStyle
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -12,8 +13,6 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -23,8 +22,10 @@ import org.jetbrains.kotlin.util.takeWhileIsInstance
 internal class PutCallsOnSeparateLinesIntention :
     KotlinApplicableModCommandAction<KtQualifiedExpression, Unit>(KtQualifiedExpression::class) {
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtQualifiedExpression> = applicabilityRange {
-        (it.operationTokenNode as? PsiElement)?.textRangeInParent
+    override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> {
+        val textRange = (element.operationTokenNode as? PsiElement)
+            ?.textRangeInParent
+        return listOfNotNull(textRange)
     }
 
     override fun isApplicableByPsi(element: KtQualifiedExpression): Boolean {

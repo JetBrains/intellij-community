@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.NameCommentsByArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -26,7 +26,8 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.in.comment.to.call.arguments")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallElement> = ApplicabilityRanges.CALL_EXCLUDING_LAMBDA_ARGUMENT
+    override fun getApplicableRanges(element: KtCallElement): List<TextRange> =
+        ApplicabilityRanges.callExcludingLambdaArgument(element)
 
     override fun isApplicableByPsi(element: KtCallElement): Boolean = element.canAddArgumentNameCommentsByPsi()
 

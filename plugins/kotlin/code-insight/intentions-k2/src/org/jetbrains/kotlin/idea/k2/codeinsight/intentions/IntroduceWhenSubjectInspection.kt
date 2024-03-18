@@ -5,12 +5,12 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.introduceSubjectIfPossible
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -58,7 +58,8 @@ internal class IntroduceWhenSubjectInspection :
         }
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = applicabilityTarget { it.whenKeyword }
+    override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
+        ApplicabilityRanges.whenKeyword(element)
 
     context(KtAnalysisSession) override fun prepareContext(element: KtWhenExpression): Context? {
         val commentSaver = CommentSaver(element, true)

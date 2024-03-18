@@ -6,13 +6,14 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
@@ -33,7 +34,8 @@ internal class RedundantUnitReturnTypeInspection :
     override fun getProblemDescription(element: KtNamedFunction, context: TypeInfo): String =
         KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
+    override fun getApplicableRanges(element: KtNamedFunction): List<TextRange> =
+        ApplicabilityRange.single(element) { it.typeReference?.typeElement }
 
     override fun isApplicableByPsi(element: KtNamedFunction): Boolean {
         return element.hasBlockBody() && element.typeReference != null

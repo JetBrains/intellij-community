@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertStringTemplateToBuildStringCall
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
@@ -19,8 +17,6 @@ internal class ConvertStringTemplateToBuildStringIntention :
     LowPriorityAction {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.string.template.to.build.string")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
         !element.text.startsWith("\"\"\"") && !element.isInsideAnnotationEntryArgumentList()

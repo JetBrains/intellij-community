@@ -6,9 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
@@ -17,8 +15,6 @@ internal class RemoveExplicitTypeArgumentsIntention :
     KotlinApplicableModCommandAction<KtTypeArgumentList, Unit>(KtTypeArgumentList::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.arguments")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtTypeArgumentList> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtTypeArgumentList): Boolean {
         val callExpression = element.parent as? KtCallExpression ?: return false

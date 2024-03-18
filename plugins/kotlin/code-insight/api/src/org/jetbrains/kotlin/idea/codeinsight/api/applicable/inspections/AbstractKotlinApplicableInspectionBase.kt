@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -29,7 +30,9 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : Loc
 
     final fun visitTargetElement(element: ELEMENT, holder: ProblemsHolder, isOnTheFly: Boolean) {
         if (!isApplicableByPsi(element)) return
-        val ranges = getApplicabilityRange().getApplicabilityRanges(element)
+        val ranges = KtAnalysisAllowanceManager.forbidAnalysisInside("getApplicabilityRanges") {
+            getApplicableRanges(element)
+        }
         if (ranges.isEmpty()) return
 
         val problemInfo = buildProblemInfo(element) ?: return

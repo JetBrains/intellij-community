@@ -7,8 +7,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -26,8 +24,6 @@ internal class ConvertPropertyGetterToInitializerIntention :
 
     override fun getFamilyName() =
         KotlinBundle.message("convert.property.getter.to.initializer")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtPropertyAccessor> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtPropertyAccessor): Boolean {
         if (!element.isGetter || element.singleExpression() == null) return false

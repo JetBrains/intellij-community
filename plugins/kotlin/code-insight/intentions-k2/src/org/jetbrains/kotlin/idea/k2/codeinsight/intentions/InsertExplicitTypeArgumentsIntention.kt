@@ -3,20 +3,20 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 internal class InsertExplicitTypeArgumentsIntention :
     KotlinApplicableModCommandAction<KtCallExpression, String>(KtCallExpression::class) {
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> =
-        applicabilityTarget { it.calleeExpression }
+    override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
+        ApplicabilityRanges.calleeExpression(element)
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = element.typeArguments.isEmpty() && element.calleeExpression != null
 

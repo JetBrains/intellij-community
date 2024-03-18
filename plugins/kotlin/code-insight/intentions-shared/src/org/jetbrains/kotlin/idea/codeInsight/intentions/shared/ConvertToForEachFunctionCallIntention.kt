@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
@@ -42,9 +40,13 @@ internal class ConvertToForEachFunctionCallIntention :
         return element.body.getJumpExpressions<KtBreakExpression>(element.getLabelName()).isEmpty()
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtForExpression> = applicabilityRange {
-        val rParen = it.rightParenthesis ?: return@applicabilityRange null
-        TextRange(it.startOffset, rParen.endOffset).shiftLeft(it.startOffset)
+    override fun getApplicableRanges(element: KtForExpression): List<TextRange> {
+        val rParen = element.rightParenthesis
+            ?: return emptyList()
+
+        val textRange = TextRange(element.startOffset, rParen.endOffset)
+            .shiftLeft(element.startOffset)
+        return listOf(textRange)
     }
 
 

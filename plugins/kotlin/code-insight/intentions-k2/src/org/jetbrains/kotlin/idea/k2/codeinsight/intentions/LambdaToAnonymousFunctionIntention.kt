@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -56,11 +54,10 @@ internal class LambdaToAnonymousFunctionIntention :
         return LambdaToFunctionContext(signature, lambdaArgumentName)
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtLambdaExpression> {
-        return applicabilityRange { lambdaExpression: KtLambdaExpression ->
-            val lastElement = lambdaExpression.functionLiteral.arrow ?: lambdaExpression.functionLiteral.lBrace
-            TextRange(0, lastElement.textRangeInParent.endOffset)
-        }
+    override fun getApplicableRanges(element: KtLambdaExpression): List<TextRange> {
+        val literal = element.functionLiteral
+        val lastElement = literal.arrow ?: literal.lBrace
+        return listOf(TextRange(0, lastElement.textRangeInParent.endOffset))
     }
 
     override fun isApplicableByPsi(element: KtLambdaExpression): Boolean {

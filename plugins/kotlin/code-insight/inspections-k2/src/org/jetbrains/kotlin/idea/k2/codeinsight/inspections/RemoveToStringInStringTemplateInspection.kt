@@ -5,15 +5,14 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -38,11 +37,8 @@ internal class RemoveToStringInStringTemplateInspection :
 
     override fun getProblemDescription(element: KtDotQualifiedExpression): String = KotlinBundle.message("remove.to.string.fix.text")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDotQualifiedExpression> =
-        applicabilityRanges { dotQualifiedExpression: KtDotQualifiedExpression ->
-            val selectorExpression = dotQualifiedExpression.selectorExpression ?: return@applicabilityRanges emptyList()
-            listOf(selectorExpression.textRange.shiftLeft(dotQualifiedExpression.startOffset))
-        }
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) { element.selectorExpression }
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
         if (element.parent !is KtBlockStringTemplateEntry) return false

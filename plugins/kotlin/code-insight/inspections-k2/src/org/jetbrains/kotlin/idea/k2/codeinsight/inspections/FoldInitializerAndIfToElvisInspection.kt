@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.idea.codeInsight.joinLines
 import org.jetbrains.kotlin.idea.codeInsight.prepareData
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -80,14 +78,16 @@ internal class FoldInitializerAndIfToElvisInspection :
         }
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtIfExpression> = applicabilityRange { ifExpression ->
-        val rightOffset = ifExpression.rightParenthesis?.endOffset
+    override fun getApplicableRanges(element: KtIfExpression): List<TextRange> {
+        val rightOffset = element.rightParenthesis?.endOffset
 
-        if (rightOffset == null) {
-            ifExpression.ifKeyword.textRangeIn(ifExpression)
+        val textRange = if (rightOffset == null) {
+            element.ifKeyword.textRangeIn(element)
         } else {
-            TextRange(ifExpression.ifKeyword.startOffset, rightOffset).shiftLeft(ifExpression.startOffset)
+            TextRange(element.ifKeyword.startOffset, rightOffset).shiftLeft(element.startOffset)
         }
+
+        return listOf(textRange)
     }
 
     override fun isApplicableByPsi(element: KtIfExpression): Boolean {

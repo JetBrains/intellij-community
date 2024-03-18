@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
@@ -29,10 +27,8 @@ internal class SplitPropertyDeclarationIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("split.property.declaration")
 
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = applicabilityRange {
-        TextRange(0, it.initializer!!.startOffsetInParent)
-    }
+    override fun getApplicableRanges(element: KtProperty): List<TextRange> =
+        listOf(TextRange(0, element.initializer!!.startOffsetInParent))
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
         if (!element.isLocal || element.parent is KtWhenExpression) return false

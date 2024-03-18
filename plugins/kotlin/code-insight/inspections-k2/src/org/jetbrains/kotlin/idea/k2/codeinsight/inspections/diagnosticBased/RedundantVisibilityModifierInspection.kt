@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.RedundantModifierInspectionBase
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -29,7 +29,8 @@ internal class RedundantVisibilityModifierInspection :
     override fun getDiagnosticType(): KClass<KtFirDiagnostic.RedundantVisibilityModifier> =
         KtFirDiagnostic.RedundantVisibilityModifier::class
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtModifierListOwner> = ApplicabilityRanges.VISIBILITY_MODIFIER
+    override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
+        ApplicabilityRanges.visibilityModifier(element)
 
     context(KtAnalysisSession)
     override fun prepareContextByDiagnostic(

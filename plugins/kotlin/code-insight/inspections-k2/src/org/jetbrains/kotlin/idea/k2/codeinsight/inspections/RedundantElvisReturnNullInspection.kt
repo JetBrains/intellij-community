@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
@@ -35,11 +34,15 @@ internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInsp
 
     override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
 
-    override fun getApplicabilityRange() = applicabilityRanges { binaryExpression: KtBinaryExpression ->
-        val right =
-            binaryExpression.right?.safeDeparenthesize()?.takeIf { it == binaryExpression.right }
-                ?: return@applicabilityRanges emptyList()
-        listOf(TextRange(binaryExpression.operationReference.startOffset, right.endOffset).shiftLeft(binaryExpression.startOffset))
+    override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> {
+        val right = element.right
+            ?.safeDeparenthesize()
+            ?.takeIf { it == element.right }
+            ?: return emptyList()
+
+        val textRange = TextRange(element.operationReference.startOffset, right.endOffset)
+            .shiftLeft(element.startOffset)
+        return listOf(textRange)
     }
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {

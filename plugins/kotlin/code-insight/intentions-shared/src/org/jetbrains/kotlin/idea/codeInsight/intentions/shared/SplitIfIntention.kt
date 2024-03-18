@@ -9,8 +9,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -77,8 +77,9 @@ internal class SplitIfIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("split.if.into.two")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTarget {
-        if (it is KtIfExpression) it.ifKeyword else it
+    override fun getApplicableRanges(element: KtExpression): List<TextRange> = when (element) {
+        is KtIfExpression -> ApplicabilityRanges.ifKeyword(element)
+        else -> ApplicabilityRange.self(element)
     }
 
     override fun isApplicableByPsi(element: KtExpression): Boolean = when (element) {

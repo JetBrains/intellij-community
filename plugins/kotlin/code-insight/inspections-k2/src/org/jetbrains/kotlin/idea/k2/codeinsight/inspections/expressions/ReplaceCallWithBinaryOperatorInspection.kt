@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -49,9 +50,8 @@ internal class ReplaceCallWithBinaryOperatorInspection :
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context) =
         KotlinBundle.message("call.replaceable.with.binary.operator")
 
-    override fun getApplicabilityRange() = applicabilityTarget<KtDotQualifiedExpression> { element ->
-        element.callExpression?.calleeExpression
-    }
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) { it.callExpression?.calleeExpression }
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
         if (element.receiverExpression is KtSuperExpression) return false
