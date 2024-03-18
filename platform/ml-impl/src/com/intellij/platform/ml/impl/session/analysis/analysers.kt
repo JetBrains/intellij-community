@@ -7,6 +7,8 @@ import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.session.DescribedRootContainer
 import com.intellij.platform.ml.impl.session.DescribedSessionTree
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
@@ -70,25 +72,35 @@ interface SessionAnalyser<M : MLModel<P>, P : Any> {
    */
   suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>>
 
-  abstract class Default<M : MLModel<P>, P : Any> : SessionAnalyserProvider<M, P>, SessionAnalyser<M, P> {
-    protected lateinit var callParameters: Environment
-    protected lateinit var sessionEnvironment: Environment
+  abstract class Default<M : MLModel<P>, P : Any> : SessionAnalyserProvider<M, P> {
+    private inner class EnvironmentAwareAnalyser(
+      private val callParameters: Environment,
+      private val sessionEnvironment: Environment,
+    ) : SessionAnalyser<M, P> {
+      override suspend fun onBeforeSessionStarted() = this@Default.onBeforeSessionStarted(callParameters, sessionEnvironment)
 
-    override fun startSessionAnalysis(callParameters: Environment, sessionEnvironment: Environment): SessionAnalyser<M, P> {
-      this.callParameters = callParameters
-      this.sessionEnvironment = sessionEnvironment
-      return this
+      override suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>) = this@Default.onSessionFailedToStart(callParameters, sessionEnvironment, failure)
+
+      override suspend fun onSessionFailedWithException(exception: Throwable) = this@Default.onSessionFailedWithException(callParameters, sessionEnvironment, exception)
+
+      override suspend fun onSessionStarted(session: Session<P>, mlModel: M) = this@Default.onSessionStarted(callParameters, sessionEnvironment, session, mlModel)
+
+      override suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>) = this@Default.onSessionFinished(callParameters, sessionEnvironment, sessionTreeRoot)
     }
 
-    override suspend fun onBeforeSessionStarted(): List<EventPair<*>> = emptyList()
+    open suspend fun onBeforeSessionStarted(callParameters: Environment, sessionEnvironment: Environment): List<EventPair<*>> = emptyList()
 
-    override suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>): List<EventPair<*>> = emptyList()
+    open suspend fun onSessionFailedToStart(callParameters: Environment, sessionEnvironment: Environment, failure: Session.StartOutcome.Failure<P>): List<EventPair<*>> = emptyList()
 
-    override suspend fun onSessionFailedWithException(exception: Throwable): List<EventPair<*>> = emptyList()
+    open suspend fun onSessionFailedWithException(callParameters: Environment, sessionEnvironment: Environment, exception: Throwable): List<EventPair<*>> = emptyList()
 
-    override suspend fun onSessionStarted(session: Session<P>, mlModel: M): List<EventPair<*>> = emptyList()
+    open suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<P>, mlModel: M): List<EventPair<*>> = emptyList()
 
-    override suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>> = emptyList()
+    open suspend fun onSessionFinished(callParameters: Environment, sessionEnvironment: Environment, sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>> = emptyList()
+
+    override fun startSessionAnalysis(callParameters: Environment, sessionEnvironment: Environment): SessionAnalyser<M, P> {
+      return EnvironmentAwareAnalyser(callParameters, sessionEnvironment)
+    }
   }
 }
 
@@ -102,23 +114,28 @@ internal fun <M : MLModel<P>, P : Any> Collection<SessionAnalyserProvider<M, P>>
     val analysers = analyserProviders.map { it.startSessionAnalysis(callParameters, sessionEnvironment) }
     return object : SessionAnalyser<M, P> {
       override suspend fun onBeforeSessionStarted(): List<EventPair<*>> {
-        return analysers.flatMap { it.onBeforeSessionStarted() }
+        return analyseAll(analysers.map { { it.onBeforeSessionStarted() } })
       }
 
       override suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>): List<EventPair<*>> {
-        return analysers.flatMap { it.onSessionFailedToStart(failure) }
+        return analyseAll(analysers.map { { it.onSessionFailedToStart(failure) } })
       }
 
       override suspend fun onSessionFailedWithException(exception: Throwable): List<EventPair<*>> {
-        return analysers.flatMap { it.onSessionFailedWithException(exception) }
+        return analyseAll(analysers.map { { it.onSessionFailedWithException(exception) } })
       }
 
       override suspend fun onSessionStarted(session: Session<P>, mlModel: M): List<EventPair<*>> {
-        return analysers.flatMap { it.onSessionStarted(session, mlModel) }
+        return analyseAll(analysers.map { { it.onSessionStarted(session, mlModel) } })
       }
 
       override suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>> {
-        return analysers.flatMap { it.onSessionFinished(sessionTreeRoot) }
+        return analyseAll(analysers.map { { it.onSessionFinished(sessionTreeRoot) } })
+      }
+
+      private suspend fun analyseAll(analysers: Collection<suspend () -> List<EventPair<*>>>): List<EventPair<*>> = coroutineScope {
+        val analysisJobs = analysers.map { async { it() } }
+        return@coroutineScope analysisJobs.flatMap { it.await() }
       }
     }
   }
@@ -130,9 +147,10 @@ internal fun <M : MLModel<P>, P : Any> Collection<StructureAnalyser<M, P>>.creat
 
   override val declaration: PerTier<Set<FeatureDeclaration<*>>> = analysers.map { it.declaration }.mergePerTier { mutableSetOf() }
 
-  override suspend fun analyse(sessionTreeRoot: DescribedRootContainer<M, P>): Map<DescribedSessionTree<M, P>, PerTier<Set<Feature>>> {
-    return analysers
-      .map { analyser -> analyser.analyse(sessionTreeRoot) }
+  override suspend fun analyse(sessionTreeRoot: DescribedRootContainer<M, P>): Map<DescribedSessionTree<M, P>, PerTier<Set<Feature>>> = coroutineScope {
+    analysers
+      .map { async { it.analyse(sessionTreeRoot) } }
+      .map { it.await() }
       .flatMap { it.entries }
       .groupBy({ it.key }, { it.value })
       .mapValues { it.value.mergePerTier { mutableSetOf() } }

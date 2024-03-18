@@ -3,6 +3,7 @@ package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.eventLog.events.ClassEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME
 import com.intellij.lang.Language
@@ -144,8 +145,9 @@ class ExceptionLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>()
   private val THROWABLE_CLASS = ClassEventField("throwable_class")
 
   override val declaration: List<EventField<*>> = listOf(THROWABLE_CLASS)
-
-  override suspend fun onSessionFailedWithException(exception: Throwable) = listOf(THROWABLE_CLASS with exception.javaClass)
+  override suspend fun onSessionFailedWithException(callParameters: Environment, sessionEnvironment: Environment, exception: Throwable): List<EventPair<*>> {
+    return listOf(THROWABLE_CLASS with exception.javaClass)
+  }
 }
 
 class FailureLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>() {
@@ -153,7 +155,9 @@ class FailureLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>() {
 
   override val declaration: List<EventField<*>> = listOf(REASON)
 
-  override suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>) = listOf(REASON with failure.javaClass)
+  override suspend fun onSessionFailedToStart(callParameters: Environment, sessionEnvironment: Environment, failure: Session.StartOutcome.Failure<P>): List<EventPair<*>> {
+    return listOf(REASON with failure.javaClass)
+  }
 }
 
 abstract class MLApiLogsTestCase : BasePlatformTestCase() {

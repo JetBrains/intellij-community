@@ -119,7 +119,7 @@ class DumbModeAnalyser<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>(
     val IS_DUMB_MODEL = BooleanEventField("is_dumb_model")
   }
 
-  override suspend fun onSessionStarted(session: Session<P>, mlModel: M): List<EventPair<*>> {
+  override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<P>, mlModel: M): List<EventPair<*>> {
     return listOf<EventPair<*>>(
       IS_DUMB_MODEL with (mlModel is DumbPredictionsMode)
     )

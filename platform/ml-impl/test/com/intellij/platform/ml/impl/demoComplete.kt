@@ -157,7 +157,7 @@ class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> 
 object RandomModelSeedAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
   private val SEED = IntEventField("random_seed")
 
-  override suspend fun onSessionStarted(session: Session<Double>, mlModel: RandomModel): List<EventPair<*>> {
+  override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<Double>, mlModel: RandomModel): List<EventPair<*>> {
     return listOf(SEED with mlModel.seed)
   }
 
