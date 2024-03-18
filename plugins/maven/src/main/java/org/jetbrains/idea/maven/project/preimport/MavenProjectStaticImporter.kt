@@ -51,6 +51,9 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
                          reimportExistingFiles: Boolean,
                          parentActivity: StructuredIdeActivity): PreimportResult {
 
+    if (!MavenProjectImporter.isImportToWorkspaceModelEnabled(project)) {
+      return PreimportResult.empty(project)
+    }
 
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
     val statisticsData = StatisticsData(project, rootProjectFiles.size)
@@ -95,12 +98,12 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       // MavenProjectsManager.getInstance(project).projectsTree = projectTree
       return PreimportResult(withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         blockingContext {
-          val importer = MavenProjectImporter.createImporter(project, projectTree,
-                                                             projectChanges,
-                                                             modelsProvider,
-                                                             importingSettings,
-                                                             null,
-                                                             parentActivity)
+          val importer = MavenProjectImporter.createStaticImporter(project,
+                                                                   projectTree,
+                                                                   projectChanges,
+                                                                   modelsProvider,
+                                                                   importingSettings,
+                                                                   parentActivity)
 
           importer.importProject()
           statisticsData.add(forest, allProjects)
