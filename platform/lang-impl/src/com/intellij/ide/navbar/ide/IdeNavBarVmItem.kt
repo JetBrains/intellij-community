@@ -12,7 +12,7 @@ import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
-internal class IdeNavBarVmItem @RequiresReadLock constructor(
+class IdeNavBarVmItem @RequiresReadLock constructor(
   item: NavBarItem,
 ) : NavBarVmItem {
 
@@ -70,7 +70,7 @@ private suspend fun <T> IdeNavBarVmItem.fetch(selector: NavBarItem.() -> T): T? 
   }
 }
 
-internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
+fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
   return map {
     IdeNavBarVmItem(it)
   }

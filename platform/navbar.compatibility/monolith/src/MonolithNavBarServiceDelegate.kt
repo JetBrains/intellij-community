@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ide
+package com.intellij.platform.navbar.compatibility.monolith
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
+import com.intellij.ide.navbar.ide.IdeNavBarVmItem
+import com.intellij.ide.navbar.ide.fireOnFileChanges
+import com.intellij.ide.navbar.ide.toVmItems
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
