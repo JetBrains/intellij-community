@@ -8,6 +8,7 @@ import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -112,29 +113,48 @@ public abstract class GitTextHandler extends GitHandler {
           ProgressManager.checkCanceled();
         }
         catch (ProcessCanceledException pce) {
-          ProgressManager.getInstance().executeNonCancelableSection(() -> {
-            if (!tryKill()) {
-              LOG.warn("Could not terminate [" + printableCommandLine() + "].");
-            }
-          });
+          tryKillProcess();
           throw pce;
         }
       }
     }
   }
 
-  private boolean tryKill() {
-    myHandler.destroyProcess();
+  private void tryKillProcess() {
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      myHandler.destroyProcess();
+    });
 
-    // signal was sent, but we still need to wait for process to finish its dark deeds
+    if (ApplicationManager.getApplication().isReadAccessAllowed() ||
+        shouldSuppressReadLocks()) {
+      // Some Git operations are called while holding the global locks.
+      // Ex: access to the 'GitIndexVirtualFile' or 'GitDirectoryVirtualFile'.
+      // In this case, we should not delay the current thread cancellation.
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        waitAndHardKillProcess();
+      });
+    }
+    else {
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        waitAndHardKillProcess();
+      });
+    }
+  }
+
+  private void waitAndHardKillProcess() {
+    // The signal was sent, but we still need to wait for the process to finish its dark deeds
     if (myHandler.waitFor(myTerminationTimeoutMs)) {
-      return true;
+      return;
     }
 
     LOG.warn("Soft-kill failed for [" + printableCommandLine() + "].");
 
     ExecutionManagerImpl.stopProcess(myHandler);
-    return myHandler.waitFor(myTerminationTimeoutMs);
+    if (myHandler.waitFor(myTerminationTimeoutMs)) {
+      return;
+    }
+
+    LOG.warn("Could not terminate [" + printableCommandLine() + "].");
   }
 
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
