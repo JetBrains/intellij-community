@@ -1,23 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectBuildClasspathEntity;
+import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.sequences.Sequence;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
+import static com.intellij.openapi.externalSystem.settings.workspaceModel.EntitiesKt.modifyEntity;
+import static com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt.getExternalProjectBuildClasspathPojo;
+import static com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt.getExternalProjectsBuildClasspathEntity;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
 /**
@@ -71,14 +86,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
       }
     }
 
-    for (Iterator<Map.Entry<String, ExternalProjectBuildClasspathPojo>> it = state.projectBuildClasspath.entrySet().iterator();
-         it.hasNext(); ) {
-      Map.Entry<String, ExternalProjectBuildClasspathPojo> entry = it.next();
-      if (linkedProjectPathsToForget.contains(entry.getKey())
-          || linkedProjectPathsToForget.contains(getRootProjectPath(entry.getKey(), myExternalSystemId, myProject))) {
-        it.remove();
-      }
-    }
+    forgetExternalProjectsClasspath(myExternalSystemId, myProject, linkedProjectPathsToForget);
 
     for (Iterator<Map.Entry<String, SyncType>> it = state.projectSyncType.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<String, SyncType> entry = it.next();
@@ -115,7 +123,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   @NotNull
   public Map<String, ExternalProjectBuildClasspathPojo> getProjectBuildClasspath() {
-    return state.projectBuildClasspath;
+    return getExternalProjectsBuildClasspath(myProject);
   }
 
   @NotNull
@@ -129,6 +137,8 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   public void loadState(@NotNull State state) {
+    saveProjectBuildClasspathWorkspaceEntity(myProject, state.projectBuildClasspath);
+    state.projectBuildClasspath = Collections.emptyMap();
     //noinspection unchecked
     this.state = (S)state;
     pruneOutdatedEntries();
@@ -160,7 +170,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   public void setProjectBuildClasspath(Map<String, ExternalProjectBuildClasspathPojo> value) {
-    state.projectBuildClasspath = value;
+    saveProjectBuildClasspathWorkspaceEntity(myProject, value);
   }
 
   @Deprecated(forRemoval = true)
@@ -168,7 +178,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     otherState.recentTasks.clear();
     otherState.availableProjects = state.availableProjects;
     otherState.modificationStamps = state.modificationStamps;
-    otherState.projectBuildClasspath = state.projectBuildClasspath;
     otherState.projectSyncType = state.projectSyncType;
   }
 
@@ -176,11 +185,98 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
     public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createSmallMemoryFootprintMap();
     public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = CollectionFactory.createSmallMemoryFootprintMap();
+    @Deprecated(forRemoval = true, since = "24.2")
     public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = CollectionFactory.createSmallMemoryFootprintMap();
     public Map<String/* linked project path */, SyncType> projectSyncType = CollectionFactory.createSmallMemoryFootprintMap();
   }
 
   public enum SyncType {
     PREVIEW, IMPORT, RE_IMPORT
+  }
+
+  private static void forgetExternalProjectsClasspath(@NotNull ProjectSystemId myExternalSystemId,
+                                                      @NotNull Project project,
+                                                      @NotNull Set<String> linkedProjectPathsToForget) {
+    modifyWorkspaceModel(
+      project,
+      ExternalSystemBundle.message("external.system.local.settings.workspace.model.project.unlink.title"),
+      "ForgetExternalProjects update",
+      storage -> {
+        Sequence<ExternalProjectsBuildClasspathEntity> currentEntities = storage.entities(ExternalProjectsBuildClasspathEntity.class);
+        Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = currentEntities.iterator();
+        if (!entityIterator.hasNext()) {
+          return;
+        }
+        modifyEntity(storage, entityIterator.next(), modifiableEntity -> {
+          Map<String, ExternalProjectBuildClasspathEntity> classpath = modifiableEntity.getProjectsBuildClasspath();
+          Iterator<Map.Entry<String, ExternalProjectBuildClasspathEntity>> classpathIterator = classpath.entrySet().iterator();
+          while (classpathIterator.hasNext()) {
+            Map.Entry<String, ExternalProjectBuildClasspathEntity> entry = classpathIterator.next();
+            if (linkedProjectPathsToForget.contains(entry.getKey()) ||
+                linkedProjectPathsToForget.contains(getRootProjectPath(entry.getKey(), myExternalSystemId, project))) {
+              classpathIterator.remove();
+            }
+          }
+          return null;
+        });
+      });
+  }
+
+  private static void saveProjectBuildClasspathWorkspaceEntity(
+    @NotNull Project project,
+    @NotNull Map<String, ExternalProjectBuildClasspathPojo> projectBuildClasspath
+  ) {
+    if (projectBuildClasspath.isEmpty()) {
+      return;
+    }
+    modifyWorkspaceModel(
+      project,
+      ExternalSystemBundle.message("external.system.local.settings.workspace.model.project.update"),
+      "AbstractExternalSystemLocalSettings update",
+      storage -> {
+        Sequence<ExternalProjectsBuildClasspathEntity> entities = storage.entities(ExternalProjectsBuildClasspathEntity.class);
+        Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = entities.iterator();
+        ExternalProjectsBuildClasspathEntity newClasspathEntity = getExternalProjectsBuildClasspathEntity(projectBuildClasspath);
+        if (!entityIterator.hasNext()) {
+          storage.addEntity(newClasspathEntity);
+        }
+        else {
+          modifyEntity(storage, entityIterator.next(), modifiableEntity -> {
+            modifiableEntity.setProjectsBuildClasspath(newClasspathEntity.getProjectsBuildClasspath());
+            return null;
+          });
+        }
+      });
+  }
+
+  private static @NotNull Map<String, ExternalProjectBuildClasspathPojo> getExternalProjectsBuildClasspath(
+    @NotNull Project project
+  ) {
+    Sequence<ExternalProjectsBuildClasspathEntity> entities = WorkspaceModel.getInstance(project)
+      .getCurrentSnapshot()
+      .entities(ExternalProjectsBuildClasspathEntity.class);
+    Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = entities.iterator();
+    if (entityIterator.hasNext()) {
+      return getExternalProjectBuildClasspathPojo(entityIterator.next());
+    }
+    return Collections.emptyMap();
+  }
+
+  private static void modifyWorkspaceModel(@NotNull Project project,
+                                           @Nls String message,
+                                           @NonNls String cause,
+                                           @NotNull Consumer<MutableEntityStorage> mutator) {
+    new Task.Modal(project, message, true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        WriteAction.runAndWait(() -> {
+          WorkspaceModel.getInstance(project)
+            .updateProjectModel(cause, storage -> {
+              mutator.accept(storage);
+              return null;
+            });
+        });
+      }
+    }.queue();
   }
 }
