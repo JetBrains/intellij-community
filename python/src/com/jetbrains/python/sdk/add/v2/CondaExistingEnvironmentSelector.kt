@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -39,7 +40,8 @@ class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter)
       executableSelector(state.condaExecutable,
                          validationRequestor,
                          message("sdk.create.conda.executable.path"),
-                         message("sdk.create.conda.missing.text"))
+                         message("sdk.create.conda.missing.text"),
+                         createInstallCondaFix(presenter))
         .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
 
       row(message("sdk.create.custom.env.creation.type")) {
@@ -53,7 +55,7 @@ class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter)
 
         link(message("sdk.create.custom.conda.refresh.envs"), action = { onReloadCondaEnvironments() })
           .visibleIf(condaEnvironmentsLoaded)
-      }
+      }.visibleIf(state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE))
     }
   }
 
