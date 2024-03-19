@@ -260,9 +260,9 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         if (psiFile.getLanguage() == viewProvider.getBaseLanguage()) {
           psiFile = createOrMergeInjectedFile(myHostPsiFile, myDocumentManagerBase, place, documentWindow, psiFile, viewProvider);
           addFileToResults(psiFile);
-        } else {
+        }
+        else {
           cacheEverything(place, documentWindow, viewProvider, psiFile);
-          InjectedLanguageUtilBase.setHighlightTokens(psiFile, InjectedLanguageUtilBase.getHighlightTokens(psiFile));
         }
 
         DocumentWindowImpl retrieved = (DocumentWindowImpl)myDocumentManagerBase.getDocument(psiFile);
