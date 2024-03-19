@@ -9,6 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
@@ -23,10 +24,12 @@ public class JigsawCompletionContributor extends CompletionContributor {
              public void addCompletions(@NotNull CompletionParameters parameters,
                                         @NotNull ProcessingContext context,
                                         @NotNull CompletionResultSet resultSet) {
+               int offset = parameters.getOffset() - 1;
+               if (isInvalidOffset(parameters.getOriginalFile(), offset)) return;
                TemplateActionContext templateActionContext = TemplateActionContext.create(parameters.getOriginalFile(),
                                                                                           parameters.getEditor(),
-                                                                                          parameters.getOffset() - 1,
-                                                                                          parameters.getOffset() - 1, false);
+                                                                                          offset,
+                                                                                          offset, false);
                JavaCodeContextType declaration = TemplateContextTypes.getByClass(JavaCodeContextType.Declaration.class);
                if (!declaration.isInContext(templateActionContext)) return;
 
@@ -39,6 +42,11 @@ public class JigsawCompletionContributor extends CompletionContributor {
                if (className == null) return;
 
                resultSet.addElement(new JigsawProviderLookupElement(targetClass));
+             }
+
+             private static boolean isInvalidOffset(@NotNull PsiFile file, int offset) {
+               PsiElement element = file.findElementAt(offset);
+               return element == null || !element.getTextRange().contains(offset);
              }
            }
     );
