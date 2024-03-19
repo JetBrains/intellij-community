@@ -5181,11 +5181,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
         }
 
-        @TestMetadata("NotIs.java")
-        public void testNotIs() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/NotIs.java");
-        }
-
         @TestMetadata("NullChecksToSafeCall.java")
         public void testNullChecksToSafeCall() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/NullChecksToSafeCall.java");
@@ -5430,6 +5425,39 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("specifyLocalVariableTypeByDefaultInFor.java")
         public void testSpecifyLocalVariableTypeByDefaultInFor() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/settings/specifyLocalVariableTypeByDefaultInFor.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression")
+    public static class SimplifyNegatedBinaryExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("equals.java")
+        public void testEquals() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/equals.java");
+        }
+
+        @TestMetadata("floatingPoint.java")
+        public void testFloatingPoint() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/floatingPoint.java");
+        }
+
+        @TestMetadata("greaterThan.java")
+        public void testGreaterThan() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/greaterThan.java");
+        }
+
+        @TestMetadata("lessThan.java")
+        public void testLessThan() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/lessThan.java");
+        }
+
+        @TestMetadata("notIs.java")
+        public void testNotIs() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/notIs.java");
         }
     }
 

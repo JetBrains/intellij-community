@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
@@ -102,9 +100,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     },
     inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
-    },
-    inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
-        it.canBeSimplifiedWithoutChangingSemantics()
     },
     inspectionBasedProcessing(ReplaceGetOrSetInspection()),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
