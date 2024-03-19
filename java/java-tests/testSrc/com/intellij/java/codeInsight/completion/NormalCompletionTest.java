@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -1043,7 +1044,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     complete();
     assertStringItems("_bar", "_goo", "_foo");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
-    selectItem(getLookup().getItems().get(2), getLookup().NORMAL_SELECT_CHAR);
+    selectItem(getLookup().getItems().get(2), Lookup.NORMAL_SELECT_CHAR);
     checkResult();
   }
 
@@ -1090,16 +1091,16 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertNull(getLookup());
   }
 
-  public void testSmartEnterWrapsConstructorCall() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterWrapsConstructorCall() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterNoNewLine() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterNoNewLine() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterWithNewLine() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterWithNewLine() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   @NeedsIndex.SmartMode(reason = "MethodCallFixer.apply needs smart mode to count number of parameters")
-  public void testSmartEnterGuessArgumentCount() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterGuessArgumentCount() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterInsideArrayBrackets() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterInsideArrayBrackets() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   public void testTabReplacesMethodNameWithLocalVariableName() { doTest("\t"); }
 
@@ -1301,7 +1302,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testSynchronizedArgumentSmartEnter() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSynchronizedArgumentSmartEnter() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   @NeedsIndex.Full
   public void testImportStringValue() {
@@ -2196,7 +2197,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testSmartEnterWrapsTypeArguments() {
     myFixture.configureByText("a.java", "class Foo<T> { F<caret>List<String> }");
     myFixture.completeBasic();
-    myFixture.type(getLookup().COMPLETE_STATEMENT_SELECT_CHAR);
+    myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
     myFixture.checkResult("class Foo<T> { Foo<List<String>><caret> }");
   }
 
@@ -2996,21 +2997,21 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       import java.util.List;
 
       public final class Complete {
-      	public static void main(String[] args) {
-      		SubClass instance;
+        public static void main(String[] args) {
+          SubClass instance;
               instance.<caret>
-      	}
+        }
 
-      	static class SuperClass<T> {
-      		public List<T> list(Object param) {return null;}
-      	}
+        static class SuperClass<T> {
+          public List<T> list(Object param) {return null;}
+        }
 
-      	static class SubClass extends SuperClass<String> {
-      		@Override
-      		public List<String> list(Object paramName) {
-      			return super.list(paramName);
-      		}
-      	}
+        static class SubClass extends SuperClass<String> {
+          @Override
+          public List<String> list(Object paramName) {
+            return super.list(paramName);
+          }
+        }
 
       }""");
     LookupElement[] elements = myFixture.completeBasic();
