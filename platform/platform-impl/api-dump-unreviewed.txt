@@ -17699,7 +17699,6 @@ a:com.intellij.xml.breadcrumbs.BreadcrumbsPanel
 - addBreadcrumbListener(com.intellij.xml.breadcrumbs.BreadcrumbListener,com.intellij.openapi.Disposable):V
 - pa:computeCrumbs(I):java.lang.Iterable
 - dispose():V
-- ps:findCollectorFor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.xml.breadcrumbs.BreadcrumbsPanel):com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 - getBreadcrumbs():com.intellij.ui.components.breadcrumbs.Breadcrumbs
 - s:getBreadcrumbsComponent(com.intellij.openapi.editor.Editor):com.intellij.xml.breadcrumbs.BreadcrumbsPanel
 - p:getHighlightInfo(com.intellij.ui.components.breadcrumbs.Crumb):com.intellij.xml.breadcrumbs.BreadcrumbsPanel$CrumbHighlightInfo

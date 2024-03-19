@@ -22,10 +22,20 @@ import java.awt.*;
 
 public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
   private final VirtualFile myFile;
+  private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public BreadcrumbsXmlWrapper(final @NotNull Editor editor) {
     super(editor);
     myFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+
+    if (myFile != null) {
+      myBreadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
+      myBreadcrumbsCollector.watchForChanges(myFile, myEditor, this, () -> queueUpdate());
+    }
+    else {
+      myBreadcrumbsCollector = null;
+    }
+
     if (ExperimentalUI.isNewUI()) {
       putClientProperty(FileEditorManager.SEPARATOR_DISABLED, Boolean.TRUE);
     }
@@ -34,12 +44,11 @@ public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Bor
 
   @Override
   protected @Nullable Iterable<? extends Crumb> computeCrumbs(int offset) {
-    FileBreadcrumbsCollector breadcrumbsCollector = findCollectorFor(myProject, myFile, this);
-    if (breadcrumbsCollector == null) return null;
+    if (myBreadcrumbsCollector == null) return null;
 
     Document document = myEditor.getDocument();
     Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(myEditor);
-    return breadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
+    return myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
   }
 
   public void navigate(NavigatableCrumb crumb, boolean withSelection) {
