@@ -67,7 +67,7 @@ internal class LinuxInstaller(scope: CoroutineScope, project: Project) : Ultimat
       "\$COMMENT\$" to suggestedIde.productCode,
     )
 
-    installationInfo.iconPath?.let { entries["\$ICON\$"] to it.pathString }
+    installationInfo.iconPath?.let { entries.put("\$ICON\$", it.pathString) }
     val content = loadTemplate(CreateDesktopEntryAction::class.java.classLoader, "entry.desktop", entries)
 
     desktopFile.write(content)
