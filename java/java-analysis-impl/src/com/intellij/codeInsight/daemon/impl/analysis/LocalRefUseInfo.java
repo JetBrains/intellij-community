@@ -25,7 +25,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
 
-final class LocalRefUseInfo {
+/**
+ * Contains the information about references used locally in a given file.
+ */
+public final class LocalRefUseInfo {
   // resolved elements -> list of their references in this file
   private final @NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap;
 
@@ -96,6 +99,41 @@ final class LocalRefUseInfo {
     return !myImportStatements.containsValue(importStatement);
   }
 
+  /**
+   * @param variable to check
+   * @param context scope (must be in the same file where variable is declared)
+   * @return true if the variable is used within the context. Recursive use of parameter is still considered as a use in this method.
+   */
+  public boolean isVariableUsed(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    for (PsiReference reference : myLocalRefsMap.get(variable.getNavigationElement())) {
+      if (PsiTreeUtil.isAncestor(context, reference.getElement(), false)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * @param variable to check
+   * @param context scope (must be in the same file where variable is declared); null scope means the whole file 
+   * @return list of reference expressions that refer the variable. Recursive use of parameter is still considered as a use in this method.
+   */
+  public List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+    Collection<PsiReference> references = myLocalRefsMap.get(variable.getNavigationElement());
+    if (references.isEmpty()) return List.of();
+    List<PsiReferenceExpression> result = new ArrayList<>();
+    for (PsiReference reference : references) {
+      if (reference.getElement() instanceof PsiReferenceExpression ref) {
+        if (context == null || PsiTreeUtil.isAncestor(context, ref, false)) {
+          result.add(ref);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * @param element element to check (variable, method, parameter, field, etc.)
+   * @return true if the element is referenced in the same file
+   */
   boolean isReferenced(@NotNull PsiElement element) {
     Collection<PsiReference> array = myLocalRefsMap.get(element);
     if (!array.isEmpty() &&
@@ -218,7 +256,7 @@ final class LocalRefUseInfo {
       myImportStatements = new HashMap<>();
       myDclsUsedMap = new HashSet<>();
       myFile = file;
-      myLocalRefsMap = MultiMap.createSet();
+      myLocalRefsMap = MultiMap.createLinkedSet();
     }
 
     LocalRefUseInfo build() {

@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -274,8 +275,9 @@ public final class VariableAccessUtils {
    * @return a list of references, empty list if no references were found.
    */
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
-    PsiElement scope = variable instanceof PsiField ? variable.getContainingFile() : PsiUtil.getVariableCodeBlock(variable, null);
-    return getVariableReferences(variable, scope);
+    PsiFile file = variable.getContainingFile();
+    if (file == null) return List.of();
+    return LocalRefUseInfo.forFile(file).getVariableReferences(variable, null);
   }
 
   /**
@@ -286,6 +288,11 @@ public final class VariableAccessUtils {
    */
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) return Collections.emptyList();
+    PsiFile file = context.getContainingFile();
+    PsiFile variableFile = variable.getContainingFile();
+    if (variableFile != null && file == variableFile && file.isPhysical()) {
+      return LocalRefUseInfo.forFile(file).getVariableReferences(variable, context);
+    }
     List<PsiReferenceExpression> result = new ArrayList<>();
     PsiTreeUtil.processElements(context, e -> {
       if (e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).isReferenceTo(variable)) {
@@ -298,7 +305,13 @@ public final class VariableAccessUtils {
 
   @Contract("_, null -> false")
   public static boolean variableIsUsed(@NotNull PsiVariable variable, @Nullable PsiElement context) {
-    return context != null && VariableUsedVisitor.isVariableUsedIn(variable, context);
+    if (context == null) return false;
+    PsiFile file = context.getContainingFile();
+    PsiFile variableFile = variable.getContainingFile();
+    if (variableFile != null && file == variableFile && file.isPhysical()) {
+      return LocalRefUseInfo.forFile(file).isVariableUsed(variable, context);
+    }
+    return VariableUsedVisitor.isVariableUsedIn(variable, context);
   }
 
   public static boolean variableIsDecremented(@NotNull PsiVariable variable, @Nullable PsiStatement statement) {
@@ -567,7 +580,7 @@ public final class VariableAccessUtils {
     if (var == null) return false;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     return block != null &&
-           getVariableReferences(var, block).stream()
+           getVariableReferences(var).stream()
              .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
              .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
   }

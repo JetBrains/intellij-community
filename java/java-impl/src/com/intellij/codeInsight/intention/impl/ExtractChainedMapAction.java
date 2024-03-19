@@ -40,7 +40,7 @@ public final class ExtractChainedMapAction extends PsiUpdateModCommandAction<Psi
     ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, initializer, variable.getType());
     if (extractor == null) return null;
     PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-    if (ContainerUtil.and(VariableAccessUtils.getVariableReferences(parameter, lambda), 
+    if (ContainerUtil.and(VariableAccessUtils.getVariableReferences(parameter), 
                           ref -> PsiTreeUtil.isAncestor(initializer, ref, false))) {
       return Presentation.of(JavaBundle.message("intention.extract.map.step.text", variable.getName(),
                                                 extractor.getMethodName(parameter, initializer, variable.getType())));

@@ -115,8 +115,7 @@ public final class StringBufferReplaceableByStringBuilderInspection extends Base
     }
 
     private static void replaceAssignmentsWithStringBuilder(PsiVariable variable, PsiJavaCodeReferenceElement stringBuilderClassReference) {
-      final List<PsiReferenceExpression> references =
-        VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
+      final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
       for (PsiReference reference : references) {
         final PsiElement referenceElement = PsiUtil.skipParenthesizedExprUp(reference.getElement().getParent());
         if (referenceElement instanceof PsiAssignmentExpression assignmentExpression) {

@@ -736,28 +736,25 @@ public final class ExpectedTypesProvider {
       if (variable instanceof PsiLocalVariable local && myForCompletion && myHops < MAX_VAR_HOPS) {
         PsiTypeElement typeElement = local.getTypeElement();
         if (typeElement.isInferredType()) {
-          PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
-          if (block != null) {
-            myHops++;
-            List<PsiReferenceExpression> refs = StreamEx.of(VariableAccessUtils.getVariableReferences(variable, block))
-              // Remove invalid refs from initializer/annotations to avoid possible SOE
-              .remove(ref -> PsiTreeUtil.isAncestor(variable, ref, true))
-              .toList();
-            for (PsiReferenceExpression ref : refs) {
-              myExpr = ref;
-              ref.getParent().accept(this);
-              if (myResult.size() >= myMaxCandidates) {
-                break;
-              }
+          myHops++;
+          List<PsiReferenceExpression> refs = StreamEx.of(VariableAccessUtils.getVariableReferences(variable))
+            // Remove invalid refs from initializer/annotations to avoid possible SOE
+            .remove(ref -> PsiTreeUtil.isAncestor(variable, ref, true))
+            .toList();
+          for (PsiReferenceExpression ref : refs) {
+            myExpr = ref;
+            ref.getParent().accept(this);
+            if (myResult.size() >= myMaxCandidates) {
+              break;
             }
-            if (myResult.size() > 1) {
-              Set<ExpectedTypeInfo> distinct = new LinkedHashSet<>(myResult);
-              myResult.clear();
-              myResult.addAll(distinct);
-            }
-            if (!myResult.isEmpty()) {
-              return;
-            }
+          }
+          if (myResult.size() > 1) {
+            Set<ExpectedTypeInfo> distinct = new LinkedHashSet<>(myResult);
+            myResult.clear();
+            myResult.addAll(distinct);
+          }
+          if (!myResult.isEmpty()) {
+            return;
           }
         }
       }

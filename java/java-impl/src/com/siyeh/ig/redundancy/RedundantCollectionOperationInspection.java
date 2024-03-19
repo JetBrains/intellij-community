@@ -520,8 +520,7 @@ public final class RedundantCollectionOperationInspection extends AbstractBaseJa
             ((PsiDeclarationStatement)localVariable.getParent()).getDeclaredElements().length != 1) {
           return null;
         }
-        PsiCodeBlock block = PsiTreeUtil.getParentOfType(localVariable, PsiCodeBlock.class);
-        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable, block);
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable);
         if (!references.isEmpty() && ContainerUtil.and(references, RedundantAsListForIterationHandler::isAllowedContext)) {
           return new RedundantAsListForIterationHandler();
         }

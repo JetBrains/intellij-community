@@ -306,6 +306,7 @@ public final class PsiUtil extends PsiUtilCore {
    * @return topmost code block where variable makes sense
    */
   @Nullable
+  @Contract(pure = true)
   public static PsiElement getVariableCodeBlock(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {

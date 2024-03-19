@@ -355,12 +355,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (psi != null && psiVar != null) {
       if (psiVar instanceof PsiLocalVariable local) {
         // Java
-        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-        if (codeBlock instanceof PsiCodeBlock) {
-          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
-          return ContainerUtil.mapNotNull(
-            refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
-        }
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local);
+        return ContainerUtil.mapNotNull(
+          refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
       }
       else {
         // Kotlin

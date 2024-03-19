@@ -351,7 +351,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables(expr)) {
-      if (ContainerUtil.exists(VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope()),
+      if (ContainerUtil.exists(VariableAccessUtils.getVariableReferences(variable),
                                ref -> !PsiTreeUtil.isAncestor(expr, ref, true))) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", variable.getName()));

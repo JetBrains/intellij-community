@@ -466,9 +466,7 @@ public final class InstanceOfUtils {
     PsiType variableType = varTypeElement.getType();
     if (!(variableType instanceof PsiClassType classType) || classType.isRaw()) return false;
     if (variableType.equals(castType) || !variableType.isAssignableFrom(castType)) return false;
-    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
-    if (block == null) return false;
-    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, block)) {
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable)) {
       if (PsiTreeUtil.isAncestor(cast, reference, true)) continue;
       if (!isVariableTypeChangeSafeForReference(castType, reference)) return false;
     }

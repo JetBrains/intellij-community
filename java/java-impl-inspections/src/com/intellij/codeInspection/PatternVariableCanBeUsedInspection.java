@@ -200,8 +200,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
           new CommentTracker().replace(element, myPatternName);
           return;
         }
-        List<PsiReferenceExpression> references =
-          VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
         for (PsiReferenceExpression ref : references) {
           ExpressionUtils.bindReferenceTo(ref, myPatternName);
         }

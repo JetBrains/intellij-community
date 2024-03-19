@@ -520,7 +520,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     PsiElement[] defs = DefUseUtil.getDefs(block, local, expression.getParent());
     // boolean x = false; x|=something;
     return defs.length == 1 && defs[0] == local && 
-           VariableAccessUtils.getVariableReferences(local, block).stream().filter(PsiUtil::isAccessedForWriting).limit(2).count() > 1;
+           VariableAccessUtils.getVariableReferences(local).stream().filter(PsiUtil::isAccessedForWriting).limit(2).count() > 1;
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
