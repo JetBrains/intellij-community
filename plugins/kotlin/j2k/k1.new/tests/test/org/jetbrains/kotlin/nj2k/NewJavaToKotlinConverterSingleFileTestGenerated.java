@@ -5455,6 +5455,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticMemberAccessedViaInstance.java");
         }
 
+        @TestMetadata("StaticMethodInInterface.java")
+        public void testStaticMethodInInterface() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticMethodInInterface.java");
+        }
+
         @TestMetadata("StaticQualifiedByInheritor.java")
         public void testStaticQualifiedByInheritor() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticQualifiedByInheritor.java");
