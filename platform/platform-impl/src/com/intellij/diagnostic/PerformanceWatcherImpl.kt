@@ -473,61 +473,46 @@ private suspend fun reportCrashesIfAny() {
   // TODO: check jre in app info, not the current
   // Only report if on JetBrains jre
   if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
-    val pid = Files.readString(pidFile)
-    val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
-      file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile
-    }) ?: arrayOfNulls(0))
-    val appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis()
-    for (file in crashFiles) {
-      if (file!!.lastModified() > appInfoFileLastModified) {
-        if (file.length() > 5 * FileUtilRt.MEGABYTE) {
-          LOG.info("Crash file $file is too big to report")
-          break
-        }
+    val crashInfo = withContext(Dispatchers.IO) {
+      val pid = Files.readString(pidFile)
+      val appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis()
+      collectCrashInfo(pid, appInfoFileLastModified)
+    }
+    if (crashInfo != null) {
+      val attachments = mutableListOf<Attachment>()
 
-        val content = Files.readString(file.toPath())
-        // TODO: maybe we need to notify the user
-        // see https://youtrack.jetbrains.com/issue/IDEA-258128
-        if (content.contains("fuck_the_regulations")) {
-          break
-        }
+      if (crashInfo.jvmCrashContent != null) {
+        IdeaFreezeReporter.checkProfilerCrash(crashInfo.jvmCrashContent)
+        attachments += Attachment("crash.txt", crashInfo.jvmCrashContent).also { it.isIncluded = true }
+      }
 
-        IdeaFreezeReporter.checkProfilerCrash(content)
-
-        val attachment = Attachment("crash.txt", content)
-        attachment.isIncluded = true
-
-        // include plugins list
-        val plugins = PluginManagerCore.loadedPlugins
+      // include plugins list
+      attachments += Attachment(
+        "plugins.txt",
+        PluginManagerCore.loadedPlugins
           .asSequence()
           .filter { it.isEnabled && !it.isBundled }
           .map(::getPluginInfoByDescriptor)
           .filter(PluginInfo::isSafeToReport)
           .map { "${it.id} (${it.version})" }
           .joinToString(separator = "\n", "Extra plugins:\n")
-        val pluginAttachment = Attachment("plugins.txt", plugins)
-        attachment.isIncluded = true
-        val attachments = mutableListOf(attachment, pluginAttachment)
+      ).also { it.isIncluded = true }
 
-        // look for extended crash logs
-        val extraLog = findExtraLogFile(pid, appInfoFileLastModified)
-        if (extraLog != null) {
-          val jbrErrContent = Files.readString(extraLog)
-          // Detect crashes caused by OOME
-          if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
-            LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
-          }
-          val extraAttachment = Attachment("jbr_err.txt", jbrErrContent)
-          extraAttachment.isIncluded = true
-          attachments.add(extraAttachment)
+      if (crashInfo.extraJvmLog != null) {
+        // Detect crashes caused by OOME
+        if (crashInfo.extraJvmLog.contains("java.lang.OutOfMemoryError: Java heap space")) {
+          LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
         }
-        val message = content.substringBefore("---------------  P R O C E S S  ---------------")
-        val event = LogMessage.eventOf(JBRCrash(), message, attachments)
-        IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
-        IdeaFreezeReporter.report(event)
-        LifecycleUsageTriggerCollector.onCrashDetected()
-        break
+        attachments += Attachment("jbr_err.txt", crashInfo.extraJvmLog).also { it.isIncluded = true }
       }
+
+      val message = crashInfo.jvmCrashContent?.substringBefore("---------------  P R O C E S S  ---------------")
+                    ?: crashInfo.extraJvmLog
+                    ?: "<no crash info retrieved>" // actually should never happen, but it's better than throwing, at least attachments are reported
+      val event = LogMessage.eventOf(JBRCrash(), message, attachments)
+      IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
+      IdeaFreezeReporter.report(event)
+      LifecycleUsageTriggerCollector.onCrashDetected()
     }
   }
 
@@ -536,6 +521,39 @@ private suspend fun reportCrashesIfAny() {
     Files.createDirectories(pidFile.parent)
     Files.writeString(pidFile, OSProcessUtil.getApplicationPid())
   }
+}
+
+private const val CRASH_MAX_SIZE = 5 * FileUtilRt.MEGABYTE
+
+private data class CrashInfo(val jvmCrashContent: String?, val extraJvmLog: String?)
+
+private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
+  val javaCrashContent = runCatching {
+    val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
+      file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile
+    }) ?: arrayOfNulls(0))
+
+    crashFiles.firstNotNullOfOrNull { file ->
+      if (file!!.lastModified() <= lastModified) return@firstNotNullOfOrNull null
+      if (file.length() > CRASH_MAX_SIZE) {
+        LOG.info("Crash file $file is too big to report")
+        return@firstNotNullOfOrNull null
+      }
+      val content = Files.readString(file.toPath())
+      // TODO: maybe we need to notify the user
+      // see https://youtrack.jetbrains.com/issue/IDEA-258128
+      if (content.contains("fuck_the_regulations")) {
+        return@firstNotNullOfOrNull null
+      }
+      return@firstNotNullOfOrNull content
+    }
+  }.getOrLogException(LOG)
+
+  val jbrErrContent = runCatching {
+    findExtraLogFile(pid, lastModified)?.let { Files.readString(it) }
+  }.getOrLogException(LOG)
+
+  return if (javaCrashContent != null || jbrErrContent != null) CrashInfo(javaCrashContent, jbrErrContent) else null
 }
 
 private fun findExtraLogFile(pid: String, lastModified: Long): Path? {
