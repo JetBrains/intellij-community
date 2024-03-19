@@ -30,16 +30,16 @@ plugins {
 }
 
 include(
-    ":ui",
-    ":foundation",
     ":decorated-window",
+    ":foundation",
+    ":ide-laf-bridge",
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
-    ":ide-laf-bridge",
     ":markdown:core",
     ":markdown:extension-gfm-alerts",
-    ":samples:standalone",
     ":samples:ide-plugin",
+    ":samples:standalone",
+    ":ui",
 )
 
 gradleEnterprise {
