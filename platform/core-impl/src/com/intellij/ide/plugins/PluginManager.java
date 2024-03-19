@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
@@ -19,6 +18,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import static com.intellij.ide.plugins.PluginManagerCore.CORE_ID;
 
 @Service
 public final class PluginManager {
@@ -81,7 +82,7 @@ public final class PluginManager {
   public static @Nullable PluginId getPluginByClassNameAsNoAccessToClass(@NotNull String className) {
     PluginDescriptor result = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
     PluginId id = result == null ? null : result.getPluginId();
-    return (id == null || PluginManagerCore.CORE_ID.equals(id)) ? null : id;
+    return (id == null || CORE_ID.equals(id)) ? null : id;
   }
 
   public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
@@ -176,6 +177,7 @@ public final class PluginManager {
                                                                                               boolean showImplementationDetails) {
     return plugins
       .stream()
+      .filter(descriptor -> !descriptor.getPluginId().equals(CORE_ID))
       .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
   }
 }
