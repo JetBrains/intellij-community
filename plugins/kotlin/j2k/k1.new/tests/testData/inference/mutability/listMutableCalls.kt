@@ -38,6 +38,7 @@ fun a(
 //T3 <: UPPER due to 'PARAMETER'
 //T11 := LOWER due to 'USE_AS_RECEIVER'
 //T10 := T10 due to 'RECEIVER_PARAMETER'
+//T11 := LOWER due to 'USE_AS_RECEIVER'
 //T12 := T12 due to 'RECEIVER_PARAMETER'
 //T12 := T2 due to 'PARAMETER'
 //T3 <: UPPER due to 'PARAMETER'

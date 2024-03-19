@@ -4325,9 +4325,24 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/listOfMutableList.java");
         }
 
+        @TestMetadata("MutableCollection.java")
+        public void testMutableCollection() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableCollection.java");
+        }
+
+        @TestMetadata("MutableList.java")
+        public void testMutableList() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableList.java");
+        }
+
         @TestMetadata("mutableListInOtherClass.java")
         public void testMutableListInOtherClass() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/mutableListInOtherClass.java");
+        }
+
+        @TestMetadata("MutableMap.java")
+        public void testMutableMap() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableMap.java");
         }
 
         @TestMetadata("Overrides.java")
