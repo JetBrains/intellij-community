@@ -15,7 +15,8 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.installer.ReleaseInstaller
+import com.jetbrains.python.sdk.installer.BinaryInstallation
+import com.jetbrains.python.sdk.installer.toResourcePreview
 import org.jetbrains.annotations.CalledInAny
 
 val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
@@ -23,7 +24,7 @@ val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 @CalledInAny
 fun getSdksToInstall(): List<PySdkToInstall> {
   return PySdkToInstallManager.getAvailableVersionsToInstall().map {
-    PySdkToInstall(it.value.first, it.value.second)
+    PySdkToInstall(it.value)
   }
 }
 
@@ -41,8 +42,8 @@ fun installSdkIfNeeded(sdk: Sdk?, module: Module?, existingSdks: List<Sdk>, cont
 /**
  * Generic PySdkToInstall. Compatible with all OS / CpuArch.
  */
-class PySdkToInstall(val installer: ReleaseInstaller, val release: Release)
-  : ProjectJdkImpl(release.title, PythonSdkType.getInstance(), "", release.version.toString()) {
+class PySdkToInstall(val installation: BinaryInstallation)
+  : ProjectJdkImpl(installation.release.title, PythonSdkType.getInstance(), "", installation.release.version) {
 
   /**
    * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].
@@ -50,7 +51,7 @@ class PySdkToInstall(val installer: ReleaseInstaller, val release: Release)
   @CalledInAny
   fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
-    val preview = installer.getPreview(release)
+    val preview = installation.toResourcePreview()
     renderer.append(" ${preview.description}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)  // NON-NLS
     renderer.icon = AllIcons.Actions.Download
   }
@@ -58,7 +59,7 @@ class PySdkToInstall(val installer: ReleaseInstaller, val release: Release)
   @CalledInAny
   @NlsContexts.DialogMessage
   fun getInstallationWarning(@NlsContexts.Button defaultButtonName: String): String {
-    val preview = installer.getPreview(release)
+    val preview = installation.toResourcePreview()
     val fileSize = StringUtil.formatFileSize(preview.size)
     return HtmlBuilder()
       .append(PyBundle.message("python.sdk.executable.not.found.header"))
