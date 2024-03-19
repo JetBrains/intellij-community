@@ -320,6 +320,7 @@ class JKAssignmentChainLetLink(
 class JKIsExpression(expression: JKExpression, type: JKTypeElement) : JKExpression() {
     var type by child(type)
     var expression by child(expression)
+    var negateSymbol = false
     override val expressionType: JKType? get() = null
     override fun calculateType(typeFactory: JKTypeFactory) = typeFactory.types.boolean
     override fun accept(visitor: JKVisitor) = visitor.visitIsExpression(this)

@@ -42,6 +42,7 @@ fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = li
     LabeledStatementConversion(context),
     ArrayOperationsConversion(context),
     EqualsOperatorConversion(context),
+    SimplifyNegatedBinaryExpressionConversion(context),
     TypeMappingConversion(context),
     InternalDeclarationConversion(context),
     InnerClassConversion(context),

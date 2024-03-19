@@ -268,7 +268,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitIsExpressionRaw(isExpression: JKIsExpression) {
             isExpression.expression.accept(this)
-            printer.printWithSurroundingSpaces("is")
+            printer.printWithSurroundingSpaces(if (isExpression.negateSymbol)  "!is" else "is")
             isExpression.type.accept(this)
         }
 

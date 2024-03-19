@@ -103,9 +103,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },
-    inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
-        it.canBeSimplifiedWithoutChangingSemantics()
-    },
     inspectionBasedProcessing(ReplaceGetOrSetInspection()),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
     intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {

@@ -5414,6 +5414,29 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression")
+    public static class SimplifyNegatedBinaryExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("equals.java")
+        public void testEquals() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/equals.java");
+        }
+
+        @TestMetadata("greaterThan.java")
+        public void testGreaterThan() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/greaterThan.java");
+        }
+
+        @TestMetadata("lessThan.java")
+        public void testLessThan() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/lessThan.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/staticMembers")
     public static class StaticMembers extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
