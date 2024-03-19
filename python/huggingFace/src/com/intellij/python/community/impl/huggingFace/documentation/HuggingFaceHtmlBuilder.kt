@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
-import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceQuickDocStyles.LINK_TOP_MARGIN
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 
 
@@ -42,13 +41,7 @@ class HuggingFaceHtmlBuilder(
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
     val cardTitle = modelInfo.itemId.replace("-", HuggingFaceQuickDocStyles.NBHP)
-
-    val modelNameWithIconRow = HtmlChunk.tag("h3")
-      .children(
-        HtmlChunk.raw(cardTitle),
-        // HtmlChunk.nbsp(2),
-        // LOGO_ICON
-      )
+    val modelNameWithIconRow = HtmlChunk.tag("h3").child(HtmlChunk.raw(cardTitle), )
 
     // modelPurpose chunk is not applicable for datasets
     val conditionalChunks = if (entityKind == HuggingFaceEntityKind.MODEL) {
@@ -77,13 +70,8 @@ class HuggingFaceHtmlBuilder(
 
     val linkRow = HtmlChunk.tag("a")
       .attr("href", HuggingFaceURLProvider.getEntityCardLink(modelInfo.itemId, entityKind).toString())
-      .children(
-        HtmlChunk.text(PyHuggingFaceBundle.getMessage("open.on.hugging.face")),
-        HtmlChunk.nbsp(),
-        DocumentationMarkup.EXTERNAL_LINK_ICON
-      )
+      .child(HtmlChunk.text(PyHuggingFaceBundle.getMessage("open.on.hugging.face")))
       .wrapWith("p")
-      .style("margin-top: ${LINK_TOP_MARGIN}px;") // compensate h3 tag bottom margin
 
       val headerContainer = HtmlChunk.div()
         .setClass(DocumentationMarkup.CLASS_DEFINITION)
