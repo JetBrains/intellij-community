@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
@@ -22,5 +21,5 @@ interface OnboardingBackgroundImageProvider {
 
   fun getImageUrl(): URL?
   fun loadImage(callback: Consumer<Image?>)
-  fun installBackgroundImageToDialog(dialog: DialogWrapper, image: Image, disposable: Disposable)
+  fun setBackgroundImageToDialog(dialog: DialogWrapper, image: Image?)
 }

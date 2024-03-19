@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.NotificationData
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
@@ -72,7 +74,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
     currentPage = page
     tracker.onEnter(page.stage)
 
-    setBackgroundImage(page.backgroundImage)
+    OnboardingBackgroundImageProvider.getInstance().setBackgroundImageToDialog(this, page.backgroundImage)
   }
 
   override fun createContentPaneBorder(): Border {
