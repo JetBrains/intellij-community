@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.StartupWizardService
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 
@@ -105,6 +106,7 @@ class OnboardingController private constructor(){
     if(!dl.isShowing) {
       dl.initialize()
       dl.show()
+      ImportSettingsEventsCollector.importDialogClosed()
     }
 
     state = State.WIZARD

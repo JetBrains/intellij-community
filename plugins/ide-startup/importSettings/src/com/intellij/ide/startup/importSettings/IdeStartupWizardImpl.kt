@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
@@ -28,6 +29,7 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
 
       if (!settingsService.shouldShowImport()) {
         logger.info("No import options available: skipping the import wizard.")
+        ImportSettingsEventsCollector.firstPageSkipped()
         return@coroutineScope
       }
 
