@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -48,10 +49,10 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.InvocationEvent
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration.Companion.minutes
 
 private val LOG = logger<StartupManagerImpl>()
 private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("startup")) }
@@ -103,6 +104,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private val lock = Any()
   private val initProjectStartupActivities = ArrayDeque<Runnable>()
   private val postStartupActivities = ArrayDeque<Runnable>()
+  private val runningProjectActivities = ConcurrentHashMap<Class<*>, Job>()
 
   @Volatile
   private var freezePostStartupActivities = false
@@ -157,7 +159,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     isInitProjectActivitiesPassed = true
   }
 
-  suspend fun runPostStartupActivities(): Deferred<List<Job>> {
+  suspend fun runPostStartupActivities() {
     // opened on startup
     LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
     // opened from the welcome screen
@@ -166,22 +168,16 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     coroutineContext.ensureActive()
 
     val app = ApplicationManager.getApplication()
-    val launchedActivities: Deferred<List<Job>> = if (app.isUnitTestMode) {
+    if (app.isUnitTestMode) {
       if (app.isDispatchThread) {
         // doesn't block project opening
-        coroutineScope.async {
+        coroutineScope.launch {
           runPostStartupActivities(async = true)
-        }.also {
-          waitAndProcessInvocationEventsInIdeEventQueue(this)
         }
+        waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
       else {
-        val activities = runPostStartupActivities(async = true)
-        withTimeout(2.minutes) {
-          activities.joinAll()
-        }
-
-        CompletableDeferred(activities)
+        runPostStartupActivities(async = true)
       }
     }
     else {
@@ -197,7 +193,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         }
       }
     }
-    return launchedActivities
   }
 
   private suspend fun runInitProjectActivities() {
@@ -233,8 +228,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   // Must be executed in a pooled thread outside a project loading modal task. The only exclusion - test mode.
-  private suspend fun runPostStartupActivities(async: Boolean): List<Job> {
-    val launchedActivities = mutableListOf<Job>()
+  private suspend fun runPostStartupActivities(async: Boolean) {
     try {
       LOG.assertTrue(isInitProjectActivitiesPassed)
       val snapshot = PerformanceWatcher.takeSnapshot()
@@ -259,7 +253,10 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             val job = blockingContext {
               launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
             }
-            launchedActivities.add(job)
+            if (application.isUnitTestMode) {
+              runningProjectActivities[activity.javaClass] = job
+              job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
+            }
           }
           else {
             activity.execute(project)
@@ -318,8 +315,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     catch (e: Throwable) {
       throw e
     }
-
-    return launchedActivities
   }
 
   private fun runOldActivity(@Suppress("UsagesOfObsoleteApi") activity: StartupActivity) {
@@ -390,6 +385,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       initProjectStartupActivities.clear()
       postStartupActivities.clear()
       freezePostStartupActivities = false
+      runningProjectActivities.clear()
     }
   }
 
@@ -398,14 +394,18 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   fun checkCleared() {
     try {
       synchronized(lock) {
-        assert(initProjectStartupActivities.isEmpty()) { "Activities: $initProjectStartupActivities" }
+        assert(initProjectStartupActivities.isEmpty()) { "InitProject Activities: $initProjectStartupActivities" }
         assert(postStartupActivities.isEmpty()) { "DumbAware Post Activities: $postStartupActivities" }
+        assert(runningProjectActivities.isEmpty()) { "ProjectActivities: $postStartupActivities" }
       }
     }
     finally {
       prepareForNextTest()
     }
   }
+
+  @TestOnly
+  fun getRunningProjectActivities(): Map<Class<*>, Job> = runningProjectActivities.toImmutableMap()
 }
 
 private fun scheduleBackgroundPostStartupActivities(project: Project, coroutineScope: CoroutineScope) {

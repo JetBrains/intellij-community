@@ -118,11 +118,8 @@ open class TestProjectManager : ProjectManagerImpl() {
         coroutineScope {
           runInitProjectActivities(project = project)
         }
-        return@runUnderModalProgressIfIsEdt if (isRunStartUpActivitiesEnabled(project)) {
-          (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities().await()
-        }
-        else {
-          emptyList()
+        if (isRunStartUpActivitiesEnabled(project)) {
+          (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
         }
       }
     }
