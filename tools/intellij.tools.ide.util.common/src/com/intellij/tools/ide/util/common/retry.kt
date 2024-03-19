@@ -62,7 +62,7 @@ fun <T> withRetryBlocking(
   retries: Long = 3,
   printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL_FAILURES,
   delay: Duration = 10.seconds,
-  retryAction: () -> T
+  retryAction: suspend () -> T
 ): T? = runBlocking(Dispatchers.IO) {
   withRetry(
     messageOnFailure = messageOnFailure,
