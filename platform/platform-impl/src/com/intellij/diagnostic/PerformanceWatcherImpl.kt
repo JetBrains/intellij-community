@@ -32,6 +32,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import sun.awt.ModalityEvent
@@ -533,6 +536,11 @@ private suspend fun reportCrashesIfAny() {
   }
 }
 
+internal val MacOSDiagnosticReportDirectories = listOf(
+  SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports",
+  SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports/Retired",
+)
+
 private const val CRASH_MAX_SIZE = 5 * FileUtilRt.MEGABYTE
 
 private data class CrashInfo(val jvmCrashContent: String?, val extraJvmLog: String?, val osCrashContent: String?)
@@ -564,10 +572,7 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
 
   val osCrashContent = runCatching {
     if (!SystemInfoRt.isMac) return@runCatching null
-    for (reportsDir in listOf(
-      SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports",
-      SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports/Retired",
-    )) {
+    for (reportsDir in MacOSDiagnosticReportDirectories) {
       val reportFiles = File(reportsDir).listFiles { file ->
         file.name.endsWith(".ips") && file.isFile && file.lastModified() > lastModified
       } ?: arrayOfNulls(0)
@@ -576,9 +581,14 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
           LOG.info("OS crash file $file is too big to process or report")
           return@firstNotNullOfOrNull null
         }
+        // https://developer.apple.com/documentation/xcode/interpreting-the-json-format-of-a-crash-report
         val content = Files.readString(file.toPath())
-        if (content.contains("\"bug_type\":\"309\"") && // check that it is a crash report
-            content.contains("\"pid\" : $pid")) {
+        val jsonObjects = content.splitToSequence("\r\n", "\n", "\r", limit = 2).toList()
+        check(jsonObjects.size == 2) { content }
+        val (metadata, report) = jsonObjects.map(Json::parseToJsonElement)
+        metadata as JsonObject
+        report as JsonObject
+        if (metadata["bug_type"] == JsonPrimitive("309") && report["pid"] == JsonPrimitive(pid.toInt())) {
           return@firstNotNullOfOrNull content
         }
         null
