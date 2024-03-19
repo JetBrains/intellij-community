@@ -45,7 +45,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
-  private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
   private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
@@ -172,21 +171,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    Map<String, PsiClass[]> map = dereference(myClassCache);
-    if (map == null) {
-      myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
-    }
-    PsiClass[] classes = map.get(name);
-    if (classes != null) {
-      return classes;
-    }
-
-    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    classes = findAllClasses(name, GlobalSearchScope.everythingScope(getProject()));
-    if (stamp.mayCacheNow()) {
-      map.put(name, classes);
-    }
-    return classes;
+    return findAllClasses(name, scope);
   }
 
   private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
@@ -223,6 +208,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes == null ? PsiClass.EMPTY_ARRAY : classes;
   }
 
+  // todo
   private PsiClass @Nullable [] findClassesHeuristically(final String name, GlobalSearchScope scope) {
     if (findSubPackageByName(name) != null) {
       return PsiClass.EMPTY_ARRAY;
@@ -237,7 +223,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
-        List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), file -> file.getName().contains(name));
+        List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(scope), file -> file.getName().contains(name));
         PsiClass[] classes = CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY));
         for (PsiClass aClass : classes) {
           if (name.equals(aClass.getName())) {

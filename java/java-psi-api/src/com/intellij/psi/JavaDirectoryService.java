@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,14 +47,9 @@ public abstract class JavaDirectoryService {
    *
    * @return the array of classes.
    */
-  public PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope) {
-    PsiClass[] result =
-      Arrays.stream(getClasses(dir))
-        .filter(psiClass -> scope.contains(psiClass.getContainingFile().getVirtualFile()))
-        .toArray(PsiClass[]::new);
-
-    return result.length == 0 ? PsiClass.EMPTY_ARRAY : result;
-  }
+  // todo ijpl-339 mark experimental
+  @ApiStatus.Internal
+  public abstract PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope);
 
   /**
    * Creates a class with the specified name in the directory.
