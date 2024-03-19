@@ -13,9 +13,18 @@ abstract class OAuthCallbackHandlerBase : RestService() {
 
   protected abstract fun oauthService(): OAuthService<*>
 
-  protected open fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult {
-    return callbackHandler.handleAcceptCode(oAuthResult.isAccepted).let { AcceptCodeHandleResult.convertFromBase(it) }
+  @Deprecated("Use handleOAuthResult instead", ReplaceWith("handleOAuthResult"))
+  protected open fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
+    throw UnsupportedOperationException()
   }
+
+  protected open fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult =
+    try {
+      handleAcceptCode(oAuthResult.isAccepted)
+    }
+    catch (e: UnsupportedOperationException) {
+      callbackHandler.handleAcceptCode(oAuthResult.isAccepted).let { AcceptCodeHandleResult.convertFromBase(it) }
+    }
 
   private val callbackHandler = object : OAuthCallbackHandler() {
     override fun oauthService(): OAuthService<*> = this@OAuthCallbackHandlerBase.oauthService()
