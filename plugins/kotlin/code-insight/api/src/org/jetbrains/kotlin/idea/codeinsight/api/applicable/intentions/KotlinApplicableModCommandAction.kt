@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
