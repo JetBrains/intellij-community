@@ -28,18 +28,21 @@ internal class ClearExplicitLabelsProcessing : PostProcessing {
 
 private fun PostProcessingTarget.deleteLabelComments(filter: (PsiComment) -> Boolean) {
     val comments = mutableListOf<PsiComment>()
-    for (element in elements()) {
-        element.accept(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                element.acceptChildren(this)
-            }
 
-            override fun visitComment(comment: PsiComment) {
-                if (runReadAction { filter(comment) }) {
-                    comments += comment
+    runReadAction {
+        for (element in elements()) {
+            element.accept(object : PsiElementVisitor() {
+                override fun visitElement(element: PsiElement) {
+                    element.acceptChildren(this)
                 }
-            }
-        })
+
+                override fun visitComment(comment: PsiComment) {
+                    if (filter(comment)) {
+                        comments += comment
+                    }
+                }
+            })
+        }
     }
 
     runUndoTransparentActionInEdt(inWriteAction = true) {
