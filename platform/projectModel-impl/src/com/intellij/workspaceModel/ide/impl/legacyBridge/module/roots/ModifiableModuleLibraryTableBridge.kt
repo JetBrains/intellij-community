@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -195,7 +195,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
   internal fun disposeOriginalLibrariesAndUpdateCopies() {
     if (copyToOriginal.isEmpty()) return
 
-    val storage = WorkspaceModel.getInstance(modifiableModel.project).internal.entityStorage
+    val storage = (WorkspaceModel.getInstance(modifiableModel.project) as WorkspaceModelInternal).entityStorage
     copyToOriginal.forEach { (copyBridge, originBridge) ->
       // It's possible if we removed old library, its copy will be disposed [ModifiableModuleLibraryTableBridge.removeLibrary]
       // but original bridge will be disposed in during events handling. This method will be called the last thus both of them will be disposed

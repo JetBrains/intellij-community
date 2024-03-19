@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -115,7 +115,7 @@ internal class LegacyProjectModelListenersBridge(
         removeUnloadedModuleWithId(change.entity.symbolicId)
         val alreadyCreatedModule = change.entity.findModule(event.storageAfter)
         val module = if (alreadyCreatedModule != null) {
-          alreadyCreatedModule.entityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
+          alreadyCreatedModule.entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
           alreadyCreatedModule.diff = null
           alreadyCreatedModule
         }
@@ -152,9 +152,9 @@ internal class LegacyProjectModelListenersBridge(
   }
 
   private fun removeUnloadedModuleWithId(moduleId: ModuleId) {
-    val unloadedEntity = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities.resolve(moduleId)
+    val unloadedEntity = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.resolve(moduleId)
     if (unloadedEntity != null) {
-      WorkspaceModel.getInstance(project).internal.updateUnloadedEntities(
+      (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities(
         "Remove module '${moduleId.name}' from unloaded storage because a module with same name is added") {
         it.removeEntity(unloadedEntity)
       }
@@ -184,7 +184,7 @@ internal class LegacyProjectModelListenersBridge(
       is EntityChange.Added -> {
         val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
         if (library != null) {
-          (library as LibraryBridgeImpl).entityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
+          (library as LibraryBridgeImpl).entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
           library.clearTargetBuilder()
         }
       }

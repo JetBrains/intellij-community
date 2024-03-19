@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -104,7 +104,7 @@ class OrphanService(
   fun start() {
     cs.launch {
       // flowOfDiff is used to process updates in batches
-      project.workspaceModel.internal.flowOfDiff(query).collect { diff ->
+      (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect { diff ->
         val added = diff.added
 
         val updateTime = measureTimeMillis {

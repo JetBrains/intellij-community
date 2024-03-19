@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
@@ -440,9 +440,9 @@ class WorkspaceModelBenchmarksPerformanceTest {
     PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         repeat(1000) {
-          val builderSnapshot = WorkspaceModel.getInstance(projectModel.project).internal.getBuilderSnapshot()
+          val builderSnapshot = (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).getBuilderSnapshot()
           builderSnapshot.builder addEntity ModuleEntity("Module$it", emptyList(), MySource)
-          WorkspaceModel.getInstance(projectModel.project).internal.replaceProjectModel(builderSnapshot.getStorageReplacement())
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(builderSnapshot.getStorageReplacement())
         }
       }
     }

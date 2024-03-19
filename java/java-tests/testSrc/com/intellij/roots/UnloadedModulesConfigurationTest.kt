@@ -16,7 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -27,7 +27,8 @@ import java.nio.file.Paths
 
 class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
   private val unloadedModuleEntities: List<ModuleEntity>
-    get() = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities.entities(ModuleEntity::class.java).toList()
+    get() = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.entities(
+      ModuleEntity::class.java).toList()
   
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
@@ -45,7 +46,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
     assertEquals("util", assertOneElement(dep.dependencyModuleNames))
     
-    assertSameElements(WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities.entities(
+    assertSameElements((WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.entities(
       ModuleEntity::class.java).map { it.name }.toList(),
                        "dep", "util")
   }
@@ -168,20 +169,21 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     runWithModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
-    
+
     val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
     assertEquals(project.name, entityStorage.entities(ModuleEntity::class.java).single().name)
     assertEmpty(entityStorage.entities(LibraryEntity::class.java).toList())
 
     assertEquals("a", unloadedModuleEntities.single().name)
-    val unloadedStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
+    val unloadedStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
     assertEquals("lib", unloadedStorage.entities(LibraryEntity::class.java).single().name)
 
     runWithModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf())
     }
     assertEmpty(unloadedModuleEntities)
-    assertEmpty(WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities.entities(LibraryEntity::class.java).toList())
+    assertEmpty((WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.entities(
+      LibraryEntity::class.java).toList())
     assertEquals("lib", WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryEntity::class.java).single().name)
   }
 }

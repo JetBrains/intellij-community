@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
@@ -81,9 +81,9 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
         diff.modifyEntity(moduleEntity) { this.name = newModuleName }
       }
     }
-    val unloadedModule = workspaceModel.internal.currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
+    val unloadedModule = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
     if (unloadedModule != null) {
-      workspaceModel.internal.updateUnloadedEntities(description) { diff ->
+      (workspaceModel as WorkspaceModelInternal).updateUnloadedEntities(description) { diff ->
         diff.modifyEntity(unloadedModule) { this.name = newModuleName }
       }
     }

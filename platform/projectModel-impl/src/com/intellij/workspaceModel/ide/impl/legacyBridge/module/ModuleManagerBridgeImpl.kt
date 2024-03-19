@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.platform.backend.workspace.*
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
@@ -116,14 +116,15 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
         // - `setUnloadedModules` logic has some additional logic between `setLoadedModules` and updating the workspace model. This might
         //   be a problem.
         coroutineScope.launch {
-          project.workspaceModel.internal.flowOfQuery(moduleNamesQuery).collect {
+          (project.workspaceModel as WorkspaceModelInternal).flowOfQuery(moduleNamesQuery).collect {
             delay(1000) // TODO: Get rid of it, but don't forget to test with it
             if (moduleNameToUnloadedModuleDescription.isNotEmpty()) {
               AutomaticModuleUnloader.getInstance(project).setLoadedModules(it)
             }
           }
         }
-      } else {
+      }
+      else {
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
       }
 
@@ -177,7 +178,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  val entityStore: VersionedEntityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
+  val entityStore: VersionedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
 
   suspend fun loadModules(loadedEntities: List<ModuleEntity>,
                           unloadedEntities: List<ModuleEntity>,
@@ -185,6 +186,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
                           initializeFacets: Boolean) = loadAllModulesTimeMs.addMeasuredTime {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
+
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
       LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
@@ -354,7 +356,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val moduleEntitiesToUnload = mainStorage.entities(ModuleEntity::class.java)
       .filter { unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
-    val unloadedEntityStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
+    val unloadedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
     val moduleEntitiesToLoad = unloadedEntityStorage.entities(ModuleEntity::class.java)
       .filter { !unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
@@ -389,7 +391,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
           WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
           }
-          WorkspaceModel.getInstance(project).internal.updateUnloadedEntities("Update unloaded modules") { builder ->
+          (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
           }
         }
@@ -435,7 +437,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     unloadedModules.forEach { this.moduleNameToUnloadedModuleDescription.remove(it.name) }
 
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(this.moduleNameToUnloadedModuleDescription.keys)
-    WorkspaceModel.getInstance(project).internal.updateUnloadedEntities("Remove unloaded modules") { builder ->
+    (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities("Remove unloaded modules") { builder ->
       val namesToRemove = unloadedModules.mapTo(HashSet()) { it.name }
       val entitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in namesToRemove }.toList()
       for (moduleEntity in entitiesToRemove) {

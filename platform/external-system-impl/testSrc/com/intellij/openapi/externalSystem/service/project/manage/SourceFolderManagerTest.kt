@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
@@ -89,7 +89,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     manager.addSourceFolder(secondModule, secondFolderUrl, JavaSourceRootType.SOURCE)
 
     var notificationsCount = 0
-    val version = WorkspaceModel.getInstance(project).internal.entityStorage.version
+    val version = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage.version
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         notificationsCount++
@@ -98,7 +98,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     LocalFileSystem.getInstance().refresh(false)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
     then(notificationsCount).isEqualTo(1)
-    then(WorkspaceModel.getInstance(project).internal.entityStorage.version)
+    then((WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage.version)
       .describedAs("Check that storage version increased by 1")
       .isEqualTo(version + 1)
   }

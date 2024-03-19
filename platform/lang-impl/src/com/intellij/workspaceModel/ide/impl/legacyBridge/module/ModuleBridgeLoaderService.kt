@@ -16,7 +16,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -143,7 +143,8 @@ private suspend fun loadModules(project: Project,
     }
 
     val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
-    val unloadedEntities = (targetUnloadedEntitiesBuilder ?: project.serviceAsync<WorkspaceModel>().internal.currentSnapshotOfUnloadedEntities)
+    val unloadedEntities = (targetUnloadedEntitiesBuilder
+                            ?: (project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities)
       .entities(ModuleEntity::class.java)
       .toList()
     moduleManager.loadModules(loadedEntities = entities,

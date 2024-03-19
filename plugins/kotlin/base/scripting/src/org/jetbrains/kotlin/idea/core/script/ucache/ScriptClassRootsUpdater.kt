@@ -16,7 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.testFramework.LightVirtualFile
@@ -292,22 +292,22 @@ abstract class ScriptClassRootsUpdater(
         filesToAddOrUpdate: List<VirtualFile>,
         filesToRemove: List<VirtualFile>
     ) {
-        if (project.isDisposed) return
+      if (project.isDisposed) return
 
-        val builderSnapshot = WorkspaceModel.getInstance(project).internal.getBuilderSnapshot()
-        builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
-        val replacement = builderSnapshot.getStorageReplacement()
+      val builderSnapshot = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).getBuilderSnapshot()
+      builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
+      val replacement = builderSnapshot.getStorageReplacement()
 
-        runInEdt(ModalityState.nonModal()) {
-            val replaced = runWriteAction {
-                if (project.isDisposed) false
-                else WorkspaceModel.getInstance(project).internal.replaceProjectModel(replacement)
-            }
-            if (!replaced) {
-                // initiate update once again
-                applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
-            }
+      runInEdt(ModalityState.nonModal()) {
+        val replaced = runWriteAction {
+          if (project.isDisposed) false
+          else (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).replaceProjectModel(replacement)
         }
+        if (!replaced) {
+          // initiate update once again
+          applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
+        }
+      }
     }
 
     private fun recreateRootsCacheAndDiff(): ScriptClassRootsCache.Updates {
