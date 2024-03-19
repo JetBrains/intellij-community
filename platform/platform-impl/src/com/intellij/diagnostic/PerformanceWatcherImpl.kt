@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
@@ -506,8 +507,13 @@ private suspend fun reportCrashesIfAny() {
         attachments += Attachment("jbr_err.txt", crashInfo.extraJvmLog).also { it.isIncluded = true }
       }
 
+      if (crashInfo.osCrashContent != null) {
+        attachments += Attachment("process_crash.txt", crashInfo.osCrashContent).also { it.isIncluded = true }
+      }
+
       val message = crashInfo.jvmCrashContent?.substringBefore("---------------  P R O C E S S  ---------------")
                     ?: crashInfo.extraJvmLog
+                    ?: crashInfo.osCrashContent
                     ?: "<no crash info retrieved>" // actually should never happen, but it's better than throwing, at least attachments are reported
       val event = LogMessage.eventOf(JBRCrash(), message, attachments)
       IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
@@ -525,16 +531,15 @@ private suspend fun reportCrashesIfAny() {
 
 private const val CRASH_MAX_SIZE = 5 * FileUtilRt.MEGABYTE
 
-private data class CrashInfo(val jvmCrashContent: String?, val extraJvmLog: String?)
+private data class CrashInfo(val jvmCrashContent: String?, val extraJvmLog: String?, val osCrashContent: String?)
 
 private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
   val javaCrashContent = runCatching {
     val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
-      file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile
+      file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile && file.lastModified() > lastModified
     }) ?: arrayOfNulls(0))
 
     crashFiles.firstNotNullOfOrNull { file ->
-      if (file!!.lastModified() <= lastModified) return@firstNotNullOfOrNull null
       if (file.length() > CRASH_MAX_SIZE) {
         LOG.info("Crash file $file is too big to report")
         return@firstNotNullOfOrNull null
@@ -553,7 +558,33 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
     findExtraLogFile(pid, lastModified)?.let { Files.readString(it) }
   }.getOrLogException(LOG)
 
-  return if (javaCrashContent != null || jbrErrContent != null) CrashInfo(javaCrashContent, jbrErrContent) else null
+  val osCrashContent = runCatching {
+    if (!SystemInfoRt.isMac) return@runCatching null
+    for (reportsDir in listOf(
+      SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports",
+      SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports/Retired",
+    )) {
+      val reportFiles = File(reportsDir).listFiles { file ->
+        file.name.endsWith(".ips") && file.isFile && file.lastModified() > lastModified
+      } ?: arrayOfNulls(0)
+      val osCrashContent = reportFiles.firstNotNullOfOrNull { file ->
+        if (file.length() > CRASH_MAX_SIZE) {
+          LOG.info("OS crash file $file is too big to process or report")
+          return@firstNotNullOfOrNull null
+        }
+        val content = Files.readString(file.toPath())
+        if (content.contains("\"bug_type\":\"309\"") && // check that it is a crash report
+            content.contains("\"pid\" : $pid")) {
+          return@firstNotNullOfOrNull content
+        }
+        null
+      }
+      if (osCrashContent != null) return@runCatching osCrashContent
+    }
+    return@runCatching null // not found
+  }.getOrLogException(LOG)
+
+  return if (javaCrashContent != null || jbrErrContent != null || osCrashContent != null) CrashInfo(javaCrashContent, jbrErrContent, osCrashContent) else null
 }
 
 private fun findExtraLogFile(pid: String, lastModified: Long): Path? {
