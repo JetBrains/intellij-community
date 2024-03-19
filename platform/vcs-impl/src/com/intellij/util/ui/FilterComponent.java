@@ -300,7 +300,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     }
   }
 
-  private static final class DynamicLabel extends JLabel {
+  private final class DynamicLabel extends JLabel {
     private final @NotNull Supplier<@NlsContexts.Label String> myText;
 
     private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) { myText = text; }
@@ -318,6 +318,11 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
       Dimension size = super.getMinimumSize();
       size.width = Math.min(size.width, JBUI.scale(70));
       return size;
+    }
+
+    @Override
+    public String getToolTipText() {
+      return FilterComponent.this.getToolTipText();
     }
   }
 
