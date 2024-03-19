@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -57,7 +58,11 @@ class KotlinFacetBridge(
     }
 
     override fun getExternalSource(): ProjectModelExternalSource? {
-        return super.getExternalSource() ?: if (configuration.settings.externalProjectId.isEmpty()) return null
-        else ExternalProjectSystemRegistry.getInstance().getSourceById(configuration.settings.externalProjectId)
+        return super.getExternalSource() ?: run {
+            val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
+            modulePropertyManager.getExternalSystemId()?.let { externalSystemId ->
+                ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)
+            }
+        }
     }
 }
