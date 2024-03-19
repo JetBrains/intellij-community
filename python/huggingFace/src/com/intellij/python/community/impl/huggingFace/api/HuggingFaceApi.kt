@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
@@ -60,7 +61,7 @@ object HuggingFaceApi {
       val id = jsonObject.get("id")?.asText()?.takeIf { it.isNotEmpty() } ?: return@forEach
 
       @NlsSafe val nlsSafeId = id
-      @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: "unknown"
+      @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
       val gated = jsonObject.get("gated")?.asText() ?: "true"
       val downloads = jsonObject.get("downloads")?.asInt() ?: -1
       val likes = jsonObject.get("likes")?.asInt() ?: -1
