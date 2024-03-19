@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -42,6 +41,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_N
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
+import com.jetbrains.python.sdk.conda.CondaInstallManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -321,7 +321,8 @@ const val UNKNOWN_EXECUTABLE = "<unknown_executable>"
 fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
                              validationRequestor: DialogValidationRequestor,
                              labelText: @Nls String,
-                             missingExecutableText: @Nls String): Cell<TextFieldWithBrowseButton> {
+                             missingExecutableText: @Nls String,
+                             installAction: ActionLink? = null): Cell<TextFieldWithBrowseButton> {
   var textFieldCell: Cell<TextFieldWithBrowseButton>? = null
   var validationPanel: JPanel? = null
 
@@ -331,8 +332,14 @@ fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
     }
   }
 
+  val (firstFix, secondFix) = if (installAction == null) Pair(selectExecutableLink, null) else Pair(installAction, selectExecutableLink)
+
   row("") {
-    validationPanel = validationTooltip(missingExecutableText, selectExecutableLink, validationType = ValidationType.WARNING, inline = true)
+    validationPanel = validationTooltip(missingExecutableText,
+                                        firstFix,
+                                        secondFix,
+                                        validationType = ValidationType.WARNING,
+                                        inline = true)
       .align(Align.FILL)
       .component
   }.visibleIf(executable.equalsTo(UNKNOWN_EXECUTABLE))
@@ -360,6 +367,15 @@ fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
   }.visibleIf(executable.notEqualsTo(UNKNOWN_EXECUTABLE))
 
   return textFieldCell!!
+}
+
+internal fun createInstallCondaFix(presenter: PythonAddInterpreterPresenter): ActionLink {
+  return ActionLink(message("sdk.create.conda.install.fix")) {
+    CondaInstallManager.installLatest(null)
+    presenter.scope.launch(presenter.uiContext) {
+      presenter.reloadConda(presenter.projectLocationContext)
+    }
+  }
 }
 
 

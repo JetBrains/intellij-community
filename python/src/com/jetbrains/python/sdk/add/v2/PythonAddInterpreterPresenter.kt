@@ -183,19 +183,23 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       _projectLocationContext
         .mapLatest { context ->
           withContext(uiContext) {
-            _detectingCondaExecutable.value = true
-            val executor = context.targetEnvironmentConfiguration.toExecutor()
-            val suggestedCondaPath = runCatching { suggestCondaPath(targetCommandExecutor = executor) }.getOrLogException(LOG)
-            val suggestedCondaLocalPath = suggestedCondaPath?.toLocalPathOn(context.targetEnvironmentConfiguration)
-            state.condaExecutable.set(suggestedCondaLocalPath?.toString().orEmpty())
-            val environments = suggestedCondaPath?.let { PyCondaEnv.getEnvs(executor, suggestedCondaPath).getOrLogException(LOG) }
-            baseConda = environments?.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
-            _detectingCondaExecutable.value = false
+            reloadConda(context)
           }
         }
         .logException(LOG)
         .collect()
     }
+  }
+
+  internal suspend fun reloadConda(context: ProjectLocationContext) {
+    _detectingCondaExecutable.value = true
+    val executor = context.targetEnvironmentConfiguration.toExecutor()
+    val suggestedCondaPath = runCatching { suggestCondaPath(targetCommandExecutor = executor) }.getOrLogException(LOG)
+    val suggestedCondaLocalPath = suggestedCondaPath?.toLocalPathOn(context.targetEnvironmentConfiguration) ?: UNKNOWN_EXECUTABLE
+    state.condaExecutable.set(suggestedCondaLocalPath?.toString().orEmpty())
+    val environments = suggestedCondaPath?.let { PyCondaEnv.getEnvs(executor, suggestedCondaPath).getOrLogException(LOG) }
+    baseConda = environments?.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
+    _detectingCondaExecutable.value = false
   }
 
   private fun String.tryConvertToPath(): Path? =

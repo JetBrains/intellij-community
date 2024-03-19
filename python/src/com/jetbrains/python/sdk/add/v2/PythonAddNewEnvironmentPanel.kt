@@ -94,7 +94,8 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
         executableSelector(state.condaExecutable,
                            validationRequestor,
                            message("sdk.create.conda.executable.path"),
-                           message("sdk.create.conda.missing.text"))
+                           message("sdk.create.conda.missing.text"),
+                           createInstallCondaFix(presenter))
           .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)
 
