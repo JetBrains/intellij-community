@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBSwingUtilities
@@ -115,7 +116,7 @@ object OnboardingDialogButtons {
     btn.putClientProperty("ActionToolbar.smallVariant", true)
     btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
     btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS, true)
-    btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_DECORATIONS_GRAPHICS, isDefault)
+    btn.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, isDefault)
     val listener: MouseAdapter = object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
         btn.putClientProperty("JButton.borderColor",
