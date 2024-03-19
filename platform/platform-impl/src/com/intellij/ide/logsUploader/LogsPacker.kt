@@ -101,7 +101,7 @@ object LogsPacker {
               val name = path.fileName.toString()
               if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(
                   path)) {
-                zip.addFolder(name, path)
+                zip.addFile(name, path.readBytes())
               }
             }
           }
