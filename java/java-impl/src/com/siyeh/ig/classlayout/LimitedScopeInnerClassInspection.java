@@ -59,8 +59,12 @@ public final class LimitedScopeInnerClassInspection extends BaseInspection {
       }
       else {
         PsiElement lBrace = aClass.getLBrace();
-        assert lBrace != null;
-        registerErrorAtOffset(aClass, 0, lBrace.getStartOffsetInParent());
+        if (lBrace != null) {
+          registerErrorAtOffset(aClass, 0, lBrace.getStartOffsetInParent());
+        }
+        else {
+          registerClassError(aClass);
+        }
       }
     }
   }
