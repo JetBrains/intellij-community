@@ -174,7 +174,7 @@ function addSuggestions(sessionDiv, popup, lookup) {
     let suggestionDiv = document.createElement("DIV")
     suggestionDiv.setAttribute("class", "suggestion")
     suggestionDiv.setAttribute("id", `${sessionDiv.id} ${i}`)
-    let p = document.createElement(isCompletionGolf ? "code" : "plaintext")
+    let p = document.createElement("pre")
     p.setAttribute("class", "suggestion-p")
     if (lookup["selectedPosition"] == i) {
       p.setAttribute("style", "font-weight: bold;")
