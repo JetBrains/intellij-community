@@ -3,13 +3,13 @@ package org.jetbrains.jewel.samples.standalone
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.res.loadSvgPainter
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.Inter
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.intui.standalone.theme.darkThemeDefinition
 import org.jetbrains.jewel.intui.standalone.theme.lightThemeDefinition
 import org.jetbrains.jewel.intui.window.decoratedWindow
@@ -23,12 +23,11 @@ import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.io.InputStream
 
-@OptIn(ExperimentalTextApi::class)
 fun main() {
     val icon = svgResource("icons/jewel-logo.svg")
 
     application {
-        val textStyle = TextStyle(fontFamily = FontFamily("Inter"))
+        val textStyle = JewelTheme.createDefaultTextStyle(fontFamily = FontFamily.Inter)
 
         val themeDefinition =
             if (MainViewModel.theme.isDark()) {

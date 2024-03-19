@@ -57,15 +57,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.ui.NewUI
-import com.intellij.ui.RelativeFont
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import icons.JewelIcons
 import kotlinx.coroutines.delay
@@ -94,7 +89,6 @@ import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
 import org.jetbrains.skiko.DependsOnJBR
-import java.awt.Font
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.time.Duration.Companion.seconds
@@ -545,21 +539,10 @@ private fun AndroidStudioReleaseDetails(item: ContentItem.AndroidStudio) {
     TextWithLabel("Full build number:", item.build)
 }
 
-@OptIn(DependsOnJBR::class)
 @Composable
 private fun TextWithLabel(labelText: String, valueText: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(labelText)
         Text(valueText, style = Typography.regular().copy(fontWeight = FontWeight.Bold))
     }
-}
-
-// Logic from com.intellij.openapi.ui.panel.ComponentPanelBuilder#getCommentFont
-private fun getCommentFontSize(font: Font = JBFont.label()): TextUnit {
-    val commentFont = if (NewUI.isEnabled()) {
-        JBFont.medium()
-    } else {
-        RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font)
-    }
-    return commentFont.size2D.sp
 }
