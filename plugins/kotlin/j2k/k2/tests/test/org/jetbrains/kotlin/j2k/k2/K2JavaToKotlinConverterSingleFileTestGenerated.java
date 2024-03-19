@@ -1569,6 +1569,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/AbstractPropertyPrivateSetter.java");
         }
 
+        @TestMetadata("AbstractProtectedProperty.java")
+        public void testAbstractProtectedProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/AbstractProtectedProperty.java");
+        }
+
         @TestMetadata("AccessInGetterWithThis.java")
         public void testAccessInGetterWithThis() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/AccessInGetterWithThis.java");
