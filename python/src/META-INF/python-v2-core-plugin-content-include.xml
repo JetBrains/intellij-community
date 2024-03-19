@@ -1,9 +1,5 @@
 <idea-plugin>
   <!--This is not a module, but a part of `plugin.xml` to be included. Only content could be shared for now-->
-  <dependencies>
-    <plugin id="com.intellij.modules.platform"/>
-    <plugin id="com.intellij.modules.lang"/>
-  </dependencies>
 
   <!--These modules are used both in Python Community and Prof-->
   <content>
