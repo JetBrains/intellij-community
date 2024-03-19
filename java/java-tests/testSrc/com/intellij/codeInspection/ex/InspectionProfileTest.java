@@ -9,7 +9,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -21,7 +22,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.FieldNamingConventionInspection;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
@@ -345,7 +345,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       InspectionToolWrapper<?, ?> toolWrapper = it.getInspectionTool("unused", getProject());
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
       tool.ADD_NONJAVA_TO_ENTRIES = true;
-      UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
+      UnusedSymbolLocalInspection inspectionTool = tool.getSharedLocalInspectionTool();
       inspectionTool.setParameterVisibility(PsiModifier.PUBLIC);
     });
     @Language("XML") String mergedText = """
@@ -723,7 +723,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.modifyProfile(it -> {
       InspectionToolWrapper<?, ?> toolWrapper = it.getInspectionTool("unused", getProject());
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
-      UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
+      UnusedSymbolLocalInspection inspectionTool = tool.getSharedLocalInspectionTool();
       inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
       inspectionTool.CLASS = false;
     });

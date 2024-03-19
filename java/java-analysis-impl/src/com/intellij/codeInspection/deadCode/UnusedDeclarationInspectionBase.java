@@ -11,7 +11,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
-  final UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
+  final UnusedSymbolLocalInspection myLocalInspectionBase = createUnusedSymbolLocalInspection();
 
   private static final Key<Set<RefElement>> PROCESSED_SUSPICIOUS_ELEMENTS_KEY = Key.create("java.unused.declaration.processed.suspicious.elements");
   private static final Key<Integer> PHASE_KEY = Key.create("java.unused.declaration.phase");
@@ -73,13 +73,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @NotNull
-  protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
-    return new UnusedSymbolLocalInspectionBase();
+  protected UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
+    return new UnusedSymbolLocalInspection();
   }
 
   @NotNull
   @Override
-  public UnusedSymbolLocalInspectionBase getSharedLocalInspectionTool() {
+  public UnusedSymbolLocalInspection getSharedLocalInspectionTool() {
     return myLocalInspectionBase;
   }
 

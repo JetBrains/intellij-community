@@ -14,7 +14,6 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -49,7 +48,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
 
   @Override
   public String getAlternativeID() {
-    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
+    return UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
   @Override
@@ -112,8 +111,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   }
 
   @Override
-  protected @NotNull UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
-    //noinspection deprecation
+  protected @NotNull UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
     return new UnusedSymbolLocalInspection();
   }
 

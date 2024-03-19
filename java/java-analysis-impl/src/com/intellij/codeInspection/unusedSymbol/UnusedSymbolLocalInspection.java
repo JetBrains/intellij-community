@@ -6,16 +6,28 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.AccessModifier;
+import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
+import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
+
+/**
+ * Local counterpart of {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase}
+ */
+public class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
   @NonNls public static final String UNUSED_ID = "unused";
@@ -35,6 +47,31 @@ public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspec
   protected String myParameterVisibility = PsiModifier.PUBLIC;
   protected boolean myIgnoreAccessors = false;
   protected boolean myCheckParameterExcludingHierarchy = false;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("CLASS", JavaBundle.message("inspection.unused.symbol.check.classes"),
+               modifierSelector("myClassVisibility")),
+      checkbox("INNER_CLASS", JavaBundle.message("inspection.unused.symbol.check.inner.classes"),
+               modifierSelector("myInnerClassVisibility")),
+      checkbox("FIELD", JavaBundle.message("inspection.unused.symbol.check.fields"),
+               modifierSelector("myFieldVisibility")),
+      checkbox("METHOD", JavaBundle.message("inspection.unused.symbol.check.methods"),
+               modifierSelector("myMethodVisibility"),
+               checkbox("myIgnoreAccessors", JavaBundle.message("inspection.unused.symbol.check.accessors"))),
+      checkbox("PARAMETER", JavaBundle.message("inspection.unused.symbol.check.parameters"),
+               modifierSelector("myParameterVisibility"),
+               checkbox("myCheckParameterExcludingHierarchy",
+                        JavaBundle.message("inspection.unused.symbol.check.parameters.excluding.hierarchy"))),
+      checkbox("LOCAL_VARIABLE", JavaBundle.message("inspection.unused.symbol.check.localvars"))
+    );
+  }
+
+  private static OptDropdown modifierSelector(@Language("jvm-field-name") @NotNull String bindId) {
+    return dropdown(bindId, "", List.of(AccessModifier.values()),
+                    AccessModifier::toPsiModifier, AccessModifier::toString);
+  }
 
   @PsiModifier.ModifierConstant
   @Nullable

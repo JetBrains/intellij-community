@@ -18,7 +18,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.unusedImport.MissortedImportsInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -64,7 +64,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   private final GlobalUsageHelper myGlobalUsageHelper;
   private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
   private int myCurrentEntryIndex = -1;
-  private final UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
+  private final UnusedSymbolLocalInspection myUnusedSymbolInspection;
   private final HighlightDisplayKey myDeadCodeKey;
   private final HighlightInfoType myDeadCodeInfoType;
   private boolean errorFound;
@@ -237,7 +237,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     PsiElement parent = identifier.getParent();
     if (parent == null) return;
     if ((parent instanceof PsiVariable || parent instanceof PsiMember) && SuppressionUtil.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return;
-    if (parent instanceof PsiParameter && SuppressionUtil.isSuppressed(identifier, UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME)) return;
+    if (parent instanceof PsiParameter && SuppressionUtil.isSuppressed(identifier, UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME)) return;
 
     parent.accept(this);
     if (message != null) {
