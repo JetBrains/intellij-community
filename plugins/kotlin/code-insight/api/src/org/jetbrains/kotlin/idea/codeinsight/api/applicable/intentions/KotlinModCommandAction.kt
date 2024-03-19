@@ -7,8 +7,8 @@ import com.intellij.modcommand.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
@@ -83,20 +83,13 @@ sealed class KotlinModCommandAction<E : PsiElement, C : Any> private constructor
 
     abstract class ClassBased<E : KtElement, C : Any>(
         elementClass: KClass<E>,
-    ) : KotlinModCommandAction<E, C>(null, elementClass) {
+    ) : KotlinModCommandAction<E, C>(null, elementClass),
+        ContextProvider<E, C> {
 
         final override fun getElementContext(
             context: ActionContext,
             element: E,
-        ): C? = analyze(element) {
-            prepareContext(element)
-        }
-
-        /**
-         * @return The context of the intention, null if the intention is unavailable, only called when [isElementApplicable] returns true.
-         */
-        context(KtAnalysisSession)
-        abstract fun prepareContext(element: E): C?
+        ): C? = getElementContext(element)
 
         protected inline val Boolean.asUnit: Unit?
             get() = if (this) Unit else null

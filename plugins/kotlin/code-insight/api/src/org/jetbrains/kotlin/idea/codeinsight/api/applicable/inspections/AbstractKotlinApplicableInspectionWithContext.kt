@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtElement
  */
 abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT> :
     AbstractKotlinApplicableInspectionBase<ELEMENT>(),
-    KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+    ContextProvider<ELEMENT, CONTEXT> {
 
     /**
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
@@ -36,7 +36,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
     ): KotlinModCommandQuickFix<ELEMENT>
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
-        val context = prepareContextWithAnalyze(element) ?: return null
+        val context = getElementContext(element) ?: return null
 
         return ProblemInfo(
             description = getProblemDescription(element, context),

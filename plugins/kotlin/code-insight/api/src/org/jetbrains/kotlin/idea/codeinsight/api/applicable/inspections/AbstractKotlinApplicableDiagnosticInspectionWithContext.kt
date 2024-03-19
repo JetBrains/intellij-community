@@ -14,7 +14,7 @@ abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT :
     /**
      * Provides some context for [apply] given some [element] and [diagnostic].
      *
-     * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext.prepareContext
+     * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider.prepareContext
      *
      * @param element a physical PSI
      */

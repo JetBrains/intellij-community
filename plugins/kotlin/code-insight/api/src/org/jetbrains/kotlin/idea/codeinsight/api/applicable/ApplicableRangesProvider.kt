@@ -9,17 +9,17 @@ import org.jetbrains.kotlin.psi.KtElement
  * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction] and
  * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionBase].
  */
-interface KotlinApplicableToolBase<ELEMENT : KtElement> {
+interface ApplicableRangesProvider<E : KtElement> {
 
     /**
      * Determines whether the tool is available in a range *after* [isApplicableByPsi] has been checked.
      *
      * Configuration of the applicability range might be as simple as choosing an existing one from `ApplicabilityRanges`.
      */
-    fun getApplicableRanges(element: ELEMENT): List<TextRange> = ApplicabilityRange.self(element)
+    fun getApplicableRanges(element: E): List<TextRange> = ApplicabilityRange.self(element)
 
     /**
      * Whether this tool is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
      */
-    fun isApplicableByPsi(element: ELEMENT): Boolean = true
+    fun isApplicableByPsi(element: E): Boolean = true
 }

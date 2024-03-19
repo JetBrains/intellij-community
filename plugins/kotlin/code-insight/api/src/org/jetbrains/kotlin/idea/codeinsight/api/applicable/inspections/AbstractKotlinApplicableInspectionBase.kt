@@ -5,7 +5,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitor
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtVisitor
  * [AbstractKotlinApplicableInspectionWithContext].
  */
 abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(),
-                                                                             KotlinApplicableToolBase<ELEMENT> {
+                                                                             ApplicableRangesProvider<ELEMENT> {
 
     internal class ProblemInfo(
         val description: @InspectionMessage String,

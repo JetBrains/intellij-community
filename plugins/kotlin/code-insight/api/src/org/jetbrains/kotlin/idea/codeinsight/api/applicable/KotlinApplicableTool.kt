@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtElement
 
-interface KotlinApplicableTool<ELEMENT : KtElement> : KotlinApplicableToolBase<ELEMENT> {
+interface KotlinApplicableTool<ELEMENT : KtElement> : ApplicableRangesProvider<ELEMENT> {
     /**
      * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention],
      * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext], and
