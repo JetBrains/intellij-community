@@ -59,9 +59,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
   private fun areInlineBreakpointsEnabled(document: Document) =
     areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))
 
-  private val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
-
-  private fun shouldAlwaysShowAllInlays() = Registry.`is`(SHOW_EVEN_TRIVIAL_KEY)
+  private fun shouldAlwaysShowAllInlays() = Registry.`is`(Companion.SHOW_EVEN_TRIVIAL_KEY)
 
   // Breakpoints are modified without borrowing the write lock,
   // so we have to manually track their modifications to prevent races
@@ -77,7 +75,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
         }
       }, project)
 
-      for (key in listOf(XDebuggerUtil.INLINE_BREAKPOINTS_KEY, SHOW_EVEN_TRIVIAL_KEY)) {
+      for (key in listOf(XDebuggerUtil.INLINE_BREAKPOINTS_KEY, Companion.SHOW_EVEN_TRIVIAL_KEY)) {
         Registry.get(key).addListener(object : RegistryValueListener {
           override fun afterValueChanged(value: RegistryValue) {
             reinitializeAll()
@@ -449,5 +447,6 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
       project.service<InlineBreakpointInlayManager>()
 
     private const val LIMIT_REDRAW_JOBS_COUNT_KEY = "debugger.limit.inline.breakpoints.jobs.count"
+    private const val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
   }
 }
