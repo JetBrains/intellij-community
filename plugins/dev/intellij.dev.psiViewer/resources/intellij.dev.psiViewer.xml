@@ -9,6 +9,8 @@
                     interface="com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod$Provider"/>
     <extensionPoint qualifiedName="com.intellij.dev.psiViewer.propertyNodeAppender" dynamic="true"
                     interface="com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNodeAppender"/>
+    <extensionPoint qualifiedName="com.intellij.dev.psiViewer.psiViewerActionEnabler" dynamic="true"
+                    interface="com.intellij.dev.psiViewer.PsiViewerActionEnabler"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij.dev">
     <psiViewer.propertyNodeFactory implementation="com.intellij.dev.psiViewer.properties.tree.nodes.PsiViewerPrimitiveNode$Factory"/>

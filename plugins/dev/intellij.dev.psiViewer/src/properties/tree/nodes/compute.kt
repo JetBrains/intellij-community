@@ -6,6 +6,7 @@ import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiM
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.psiViewerApiMethods
 import com.intellij.dev.psiViewer.properties.tree.prependPresentation
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -43,6 +44,8 @@ private suspend fun computePsiViewerNodeByMethodCall(
   nodeContext: PsiViewerPropertyNode.Context,
   psiViewerApiMethod: PsiViewerApiMethod,
 ): PsiViewerPropertyNode? {
+  nodeContext.project.waitForSmartMode()
+
   val returnType = psiViewerApiMethod.returnType.returnType
   val matchedNodeFactory = PsiViewerPropertyNode.Factory.findMatchingFactory(returnType)
   if (matchedNodeFactory != null) {

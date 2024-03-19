@@ -1,5 +1,6 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.CancellationException
@@ -33,7 +34,10 @@ class PsiViewerApiMethod(
     catch (ce : CancellationException) {
       throw ce
     }
-    catch (e : Exception) {
+    catch (e : Throwable) {
+      if (e is ControlFlowException) {
+        throw e
+      }
       thisLogger().warn("Failed to evaluate method $name", e)
       null
     }

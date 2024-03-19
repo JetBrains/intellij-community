@@ -52,7 +52,7 @@ public class PsiViewerAction extends DumbAwareAction {
         return true;
       }
     }
-    return false;
+    return PsiViewerActionEnabler.isActionEnabled(project);
   }
 
   public static class ForContext extends PsiViewerAction {
