@@ -38,6 +38,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.Point
@@ -51,11 +52,16 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.border.LineBorder
 
-internal class NewNavBarPanel(
+/**
+ * @param installPopupHandler Disables popup which appears on right click containing nav bar actions
+ */
+@ApiStatus.Internal
+class NewNavBarPanel(
   cs: CoroutineScope,
   private val vm: NavBarVm,
   val project: Project,
   val isFloating: Boolean,
+  private val installPopupHandler: Boolean = true,
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)),
     PopupOwner,
     DataProvider {
@@ -139,7 +145,7 @@ internal class NewNavBarPanel(
     myItemComponents.clear()
 
     for (item in items) {
-      val itemComponent = NavBarItemComponent(cs, item, this)
+      val itemComponent = NavBarItemComponent(cs, item, this, installPopupHandler)
       add(itemComponent)
       myItemComponents.add(itemComponent)
     }

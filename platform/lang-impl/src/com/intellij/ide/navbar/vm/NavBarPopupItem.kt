@@ -2,8 +2,10 @@
 package com.intellij.ide.navbar.vm
 
 import com.intellij.ide.navbar.NavBarItemPresentation
+import org.jetbrains.annotations.ApiStatus
 
-internal interface NavBarPopupItem {
+@ApiStatus.Internal
+interface NavBarPopupItem {
 
   val presentation: NavBarItemPresentation
 }

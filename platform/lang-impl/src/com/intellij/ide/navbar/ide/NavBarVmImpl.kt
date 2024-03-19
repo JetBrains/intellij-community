@@ -15,8 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
-internal class NavBarVmImpl(
+@ApiStatus.Internal
+class NavBarVmImpl(
   cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
   contextItems: Flow<List<NavBarVmItem>>,
