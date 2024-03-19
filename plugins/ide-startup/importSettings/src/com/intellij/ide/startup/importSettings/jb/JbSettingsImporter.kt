@@ -12,6 +12,8 @@ import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl.Companion
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
@@ -405,6 +407,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     if (!SettingsService.getInstance().pluginIdsPreloaded) {
       LOG.warn("Couldn't preload plugin ids, which indicates problems with connection. Will use old import")
       val importOptions = configImportOptions(progressIndicator, pluginsMap.keys)
+      ImportSettingsEventsCollector.jbPluginsOldImport()
       ConfigImportHelper.migratePlugins(
         pluginsPath,
         configDirPath,
@@ -414,6 +417,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       ) { false }
       return
     }
+    ImportSettingsEventsCollector.jbPluginsNewImport()
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath) { LOG.info(it) }
     val updateableMap = HashMap(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
@@ -432,6 +436,7 @@ class JbSettingsImporter(private val configDirPath: Path,
         val descriptor = pluginsMap[pluginDownloader.id] ?: continue
         updateableMap[pluginDownloader.id] = descriptor
         // failed to download - should copy instead
+        ImportSettingsEventsCollector.jbPluginImportConnectionError()
         LOG.info("Failed to download a newer version of '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}. " +
                  "Will try to copy old version (${descriptor.version}) instead")
       }
@@ -482,6 +487,7 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
   fun importRaw() {
+    val startTime = System.currentTimeMillis()
     val externalVmOptionsFile = configDirPath.listDirectoryEntries("*.vmoptions").firstOrNull()
     if (externalVmOptionsFile != null) {
       val currentVMFile = PathManager.getConfigDir().resolve(VMOptions.getFileName())
@@ -494,6 +500,10 @@ class JbSettingsImporter(private val configDirPath: Path,
       ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
     }
     CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
+    (System.currentTimeMillis() - startTime).let {
+      LOG.info("Raw import finished in $it ms.")
+      ImportSettingsEventsCollector.jbTotalImportTimeSpent(it)
+    }
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
