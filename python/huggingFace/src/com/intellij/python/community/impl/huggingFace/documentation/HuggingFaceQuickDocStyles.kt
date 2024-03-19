@@ -26,7 +26,6 @@ object HuggingFaceQuickDocStyles {  // see PY-70541
   const val HF_CONTENT_CLASS = "hf-content"
   const val NBHP = "&#8209;"
   const val HAIR_SPACE = "&ensp;"
-  val LINK_TOP_MARGIN = scale(6)
 
   @Language("CSS")
   @NlsSafe
