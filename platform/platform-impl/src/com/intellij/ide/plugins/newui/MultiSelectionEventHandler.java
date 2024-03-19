@@ -91,12 +91,12 @@ public final class MultiSelectionEventHandler extends EventHandler {
           }
 
           DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getSelection());
+          component.createPopupMenu(group, getSelectionWithoutEssential());
           if (group.getChildrenCount() == 0) {
             return;
           }
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelectionWithoutEssential());
 
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
@@ -187,9 +187,9 @@ public final class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(event, getSelection());
+          component.handleKeyAction(event, getSelectionWithoutEssential());
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelection());
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelectionWithoutEssential());
         }
       }
 
@@ -289,6 +289,11 @@ public final class MultiSelectionEventHandler extends EventHandler {
   public @NotNull List<ListPluginComponent> getSelection() {
     return myComponents.stream()
       .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
+  }
+
+  private @NotNull List<ListPluginComponent> getSelectionWithoutEssential() {
+    return getSelection().stream()
+      .filter(pluginComponent -> !pluginComponent.isEssential()).toList();
   }
 
   @Override

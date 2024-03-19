@@ -879,6 +879,10 @@ public final class ListPluginComponent extends JPanel {
     return myMarketplace;
   }
 
+  public boolean isEssential() {
+    return myIsEssential;
+  }
+
   public boolean isRestartEnabled() {
     return myRestartButton != null && myRestartButton.isVisible();
   }
@@ -901,6 +905,10 @@ public final class ListPluginComponent extends JPanel {
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
                               @NotNull List<? extends ListPluginComponent> selection) {
+    if (selection.isEmpty()) {
+      return;
+    }
+
     if (!myIsAvailable) {
       return;
     }
@@ -988,6 +996,10 @@ public final class ListPluginComponent extends JPanel {
 
   public void handleKeyAction(@NotNull KeyEvent event,
                               @NotNull List<? extends ListPluginComponent> selection) {
+    if (selection.isEmpty()) {
+      return;
+    }
+
     // If the focus is not on a ListPluginComponent, the focused component will handle the event.
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (event.getKeyCode() == KeyEvent.VK_SPACE && !(focusOwner instanceof ListPluginComponent)) {
