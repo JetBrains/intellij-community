@@ -135,8 +135,11 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
         return;
       }
       final PsiClass aClass = ClassUtils.getContainingClass(expression);
-      if (aClass != null && cachedNumberTypes.contains(aClass.getQualifiedName())) {
-        return;
+      if (aClass != null) {
+        String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName != null && cachedNumberTypes.contains(qualifiedName)) {
+          return;
+        }
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
