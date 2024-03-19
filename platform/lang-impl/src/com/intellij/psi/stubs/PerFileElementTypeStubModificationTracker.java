@@ -283,6 +283,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       "List of suitable conflicting StubFileElementTypes:\n" +
       String.join("\n", ContainerUtil.map(data, p -> p.first))
     );
+    attachment.setIncluded(true);
     var message = "Cannot distinguish StubFileElementTypes. This might worsen the performance. " +
                   "Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help " +
                   "(override getExternalId() and/or getDebugName() in StubFileElementType). " +
