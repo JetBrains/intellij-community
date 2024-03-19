@@ -270,7 +270,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
       Notification notification = notificationGroup.createNotification(
           IdeBundle.message("notification.vfs.vfs-recovered.notification.title", names.getFullProductName()),
-          IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getProductName()),
+          IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getFullProductName()),
           INFORMATION
         )
         .setDisplayId("VFS.recovery.happened")
