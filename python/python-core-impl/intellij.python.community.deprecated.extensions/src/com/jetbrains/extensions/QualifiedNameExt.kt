@@ -7,8 +7,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.extensions.QNameResolveContext
+import com.jetbrains.python.extensions.getElementAndResolvableName
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.fromModule
@@ -81,5 +84,14 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
     return null
   }
   return subQualifiedName(root.componentCount, componentCount)
+}
+
+/**
+ * @deprecated moved to {@link com.jetbrains.python.extensions}
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Moved to com.jetbrains.python")
+fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
+  return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
 
