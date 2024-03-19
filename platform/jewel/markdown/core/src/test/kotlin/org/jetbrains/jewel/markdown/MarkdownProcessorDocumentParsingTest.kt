@@ -5,9 +5,10 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Test
 
 /**
- * This class tests that all the snippets in the CommonMark 0.30 specs are
+ * This class tests that all the snippets in the CommonMark 0.31.2 specs are
  * rendered correctly into MarkdownBlocks, matching what the CommonMark
  * 0.20 HTML renderer tests also validate.
+ * <https://spec.commonmark.org/0.31.2/spec.json>
  *
  * Note that the reference HTML output is only there as information; our
  * parsing logic performs various transformations that CommonMark wouldn't.
@@ -362,13 +363,13 @@ class MarkdownProcessorDocumentParsingTest {
 
     @Test
     fun `should parse spec sample 20 correctly (Backslash escapes)`() {
-        val parsed = processor.processMarkdownDocument("<http://example.com?find=\\*>")
+        val parsed = processor.processMarkdownDocument("<https://example.com?find=\\*>")
 
         /*
          * Expected HTML:
-         * <p><a href="http://example.com?find=%5C*">http://example.com?find=\*</a></p>
+         * <p><a href="https://example.com?find=%5C*">https://example.com?find=\*</a></p>
          */
-        parsed.assertEquals(paragraph("[http://example.com?find=\\*](http://example.com?find=\\*)"))
+        parsed.assertEquals(paragraph("[https://example.com?find=\\*](https://example.com?find=\\*)"))
     }
 
     @Test
@@ -8270,24 +8271,24 @@ class MarkdownProcessorDocumentParsingTest {
 
     @Test
     fun `should parse spec sample 345 correctly (Code spans)`() {
-        val parsed = processor.processMarkdownDocument("`<http://foo.bar.`baz>`")
+        val parsed = processor.processMarkdownDocument("`<https://foo.bar.`baz>`")
 
         /*
          * Expected HTML:
-         * <p><code>&lt;http://foo.bar.</code>baz&gt;`</p>
+         * <p><code>&lt;https://foo.bar.</code>baz&gt;`</p>
          */
-        parsed.assertEquals(paragraph("`<http://foo.bar.`baz\\>\\`"))
+        parsed.assertEquals(paragraph("`<https://foo.bar.`baz\\>\\`"))
     }
 
     @Test
     fun `should parse spec sample 346 correctly (Code spans)`() {
-        val parsed = processor.processMarkdownDocument("<http://foo.bar.`baz>`")
+        val parsed = processor.processMarkdownDocument("<https://foo.bar.`baz>`")
 
         /*
          * Expected HTML:
-         * <p><a href="http://foo.bar.%60baz">http://foo.bar.`baz</a>`</p>
+         * <p><a href="https://foo.bar.%60baz">https://foo.bar.`baz</a>`</p>
          */
-        parsed.assertEquals(paragraph("[http://foo.bar.\\`baz](http://foo.bar.`baz)\\`"))
+        parsed.assertEquals(paragraph("[https://foo.bar.\\`baz](https://foo.bar.`baz)\\`"))
     }
 
     @Test
@@ -8367,8 +8368,30 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(paragraph("\\* a \\*"))
     }
 
+    @org.junit.Ignore("need to update escapeInlineMarkdownChars implementation")
     @Test
     fun `should parse spec sample 354 correctly (Emphasis and strong emphasis)`() {
+        val parsed = processor.processMarkdownDocument(
+            """
+            |*$*alpha.
+            |
+            |*£*bravo.
+            |
+            |*€*charlie.
+            """.trimMargin(),
+        )
+
+        /*
+         * Expected HTML:
+         * <p>*$*alpha.</p>
+         * <p>*£*bravo.</p>
+         * <p>*€*charlie.</p>
+         */
+        parsed.assertEquals(paragraph("*$*alpha."), paragraph("*£*bravo."), paragraph("*€*charlie."))
+    }
+
+    @Test
+    fun `should parse spec sample 355 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo*bar*")
 
         /*
@@ -8379,7 +8402,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 355 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 356 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("5*6*78")
 
         /*
@@ -8390,7 +8413,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 356 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 357 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo bar_")
 
         /*
@@ -8401,7 +8424,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 357 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 358 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_ foo bar_")
 
         /*
@@ -8412,7 +8435,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 358 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 359 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("a_\"foo\"_")
 
         /*
@@ -8423,7 +8446,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 359 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 360 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo_bar_")
 
         /*
@@ -8434,7 +8457,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 360 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 361 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("5_6_78")
 
         /*
@@ -8445,7 +8468,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 361 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 362 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("пристаням_стремятся_")
 
         /*
@@ -8456,7 +8479,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 362 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 363 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("aa_\"bb\"_cc")
 
         /*
@@ -8467,7 +8490,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 363 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 364 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo-_(bar)_")
 
         /*
@@ -8478,7 +8501,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 364 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 365 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo*")
 
         /*
@@ -8489,7 +8512,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 365 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 366 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo bar *")
 
         /*
@@ -8500,7 +8523,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 366 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 367 correctly (Emphasis and strong emphasis)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -8519,7 +8542,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 367 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 368 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*(*foo)")
 
         /*
@@ -8530,7 +8553,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 368 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 369 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*(*foo*)*")
 
         /*
@@ -8541,7 +8564,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 369 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 370 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo*bar")
 
         /*
@@ -8552,7 +8575,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 370 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 371 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo bar _")
 
         /*
@@ -8563,7 +8586,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 371 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 372 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_(_foo)")
 
         /*
@@ -8574,7 +8597,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 372 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 373 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_(_foo_)_")
 
         /*
@@ -8585,7 +8608,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 373 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 374 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo_bar")
 
         /*
@@ -8596,7 +8619,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 374 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 375 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_пристаням_стремятся")
 
         /*
@@ -8607,7 +8630,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 375 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 376 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo_bar_baz_")
 
         /*
@@ -8618,7 +8641,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 376 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 377 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_(bar)_.")
 
         /*
@@ -8629,7 +8652,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 377 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 378 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo bar**")
 
         /*
@@ -8640,7 +8663,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 378 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 379 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("** foo bar**")
 
         /*
@@ -8651,7 +8674,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 379 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 380 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("a**\"foo\"**")
 
         /*
@@ -8662,7 +8685,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 380 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 381 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo**bar**")
 
         /*
@@ -8673,7 +8696,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 381 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 382 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo bar__")
 
         /*
@@ -8684,7 +8707,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 382 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 383 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__ foo bar__")
 
         /*
@@ -8695,7 +8718,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 383 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 384 correctly (Emphasis and strong emphasis)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -8714,7 +8737,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 384 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 385 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("a__\"foo\"__")
 
         /*
@@ -8725,7 +8748,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 385 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 386 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo__bar__")
 
         /*
@@ -8736,7 +8759,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 386 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 387 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("5__6__78")
 
         /*
@@ -8747,7 +8770,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 387 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 388 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("пристаням__стремятся__")
 
         /*
@@ -8758,7 +8781,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 388 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 389 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo, __bar__, baz__")
 
         /*
@@ -8769,7 +8792,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 389 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 390 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo-__(bar)__")
 
         /*
@@ -8780,7 +8803,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 390 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 391 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo bar **")
 
         /*
@@ -8791,7 +8814,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 391 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 392 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**(**foo)")
 
         /*
@@ -8802,7 +8825,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 392 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 393 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*(**foo**)*")
 
         /*
@@ -8813,7 +8836,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 393 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 394 correctly (Emphasis and strong emphasis)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -8836,7 +8859,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 394 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 395 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo \"*bar*\" foo**")
 
         /*
@@ -8847,7 +8870,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 395 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 396 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo**bar")
 
         /*
@@ -8858,7 +8881,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 396 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 397 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo bar __")
 
         /*
@@ -8869,7 +8892,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 397 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 398 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__(__foo)")
 
         /*
@@ -8880,7 +8903,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 398 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 399 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_(__foo__)_")
 
         /*
@@ -8891,7 +8914,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 399 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 400 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo__bar")
 
         /*
@@ -8902,7 +8925,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 400 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 401 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__пристаням__стремятся")
 
         /*
@@ -8913,7 +8936,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 401 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 402 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo__bar__baz__")
 
         /*
@@ -8924,7 +8947,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 402 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 403 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__(bar)__.")
 
         /*
@@ -8935,7 +8958,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 403 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 404 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo [bar](/url)*")
 
         /*
@@ -8946,7 +8969,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 404 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 405 correctly (Emphasis and strong emphasis)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -8965,7 +8988,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 405 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 406 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo __bar__ baz_")
 
         /*
@@ -8976,7 +8999,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 406 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 407 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo _bar_ baz_")
 
         /*
@@ -8987,7 +9010,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 407 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 408 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo_ bar_")
 
         /*
@@ -8998,7 +9021,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 408 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 409 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo *bar**")
 
         /*
@@ -9009,7 +9032,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 409 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 410 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo **bar** baz*")
 
         /*
@@ -9020,7 +9043,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 410 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 411 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo**bar**baz*")
 
         /*
@@ -9031,7 +9054,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 411 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 412 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo**bar*")
 
         /*
@@ -9042,7 +9065,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 412 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 413 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("***foo** bar*")
 
         /*
@@ -9053,7 +9076,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 413 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 414 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo **bar***")
 
         /*
@@ -9064,7 +9087,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 414 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 415 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo**bar***")
 
         /*
@@ -9075,7 +9098,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 415 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 416 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo***bar***baz")
 
         /*
@@ -9086,7 +9109,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 416 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 417 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo******bar*********baz")
 
         /*
@@ -9097,7 +9120,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 417 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 418 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo **bar *baz* bim** bop*")
 
         /*
@@ -9108,7 +9131,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 418 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 419 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo [*bar*](/url)*")
 
         /*
@@ -9119,7 +9142,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 419 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 420 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("** is not an empty emphasis")
 
         /*
@@ -9130,7 +9153,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 420 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 421 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**** is not an empty strong emphasis")
 
         /*
@@ -9141,7 +9164,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 421 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 422 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo [bar](/url)**")
 
         /*
@@ -9152,7 +9175,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 422 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 423 correctly (Emphasis and strong emphasis)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -9171,7 +9194,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 423 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 424 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo _bar_ baz__")
 
         /*
@@ -9182,7 +9205,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 424 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 425 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo __bar__ baz__")
 
         /*
@@ -9193,7 +9216,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 425 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 426 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("____foo__ bar__")
 
         /*
@@ -9204,7 +9227,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 426 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 427 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo **bar****")
 
         /*
@@ -9215,7 +9238,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 427 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 428 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo *bar* baz**")
 
         /*
@@ -9226,7 +9249,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 428 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 429 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo*bar*baz**")
 
         /*
@@ -9237,7 +9260,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 429 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 430 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("***foo* bar**")
 
         /*
@@ -9248,7 +9271,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 430 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 431 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo *bar***")
 
         /*
@@ -9259,7 +9282,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 431 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 432 correctly (Emphasis and strong emphasis)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -9278,7 +9301,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 432 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 433 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo [*bar*](/url)**")
 
         /*
@@ -9289,7 +9312,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 433 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 434 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__ is not an empty emphasis")
 
         /*
@@ -9300,7 +9323,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 434 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 435 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("____ is not an empty strong emphasis")
 
         /*
@@ -9311,7 +9334,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 435 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 436 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo ***")
 
         /*
@@ -9322,7 +9345,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 436 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 437 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo *\\**")
 
         /*
@@ -9333,7 +9356,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 437 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 438 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo *_*")
 
         /*
@@ -9344,7 +9367,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 438 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 439 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo *****")
 
         /*
@@ -9355,7 +9378,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 439 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 440 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo **\\***")
 
         /*
@@ -9366,7 +9389,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 440 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 441 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo **_**")
 
         /*
@@ -9377,7 +9400,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 441 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 442 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo*")
 
         /*
@@ -9388,7 +9411,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 442 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 443 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo**")
 
         /*
@@ -9399,7 +9422,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 443 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 444 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("***foo**")
 
         /*
@@ -9410,7 +9433,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 444 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 445 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("****foo*")
 
         /*
@@ -9421,7 +9444,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 445 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 446 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo***")
 
         /*
@@ -9432,7 +9455,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 446 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 447 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo****")
 
         /*
@@ -9443,7 +9466,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 447 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 448 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo ___")
 
         /*
@@ -9454,7 +9477,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 448 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 449 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo _\\__")
 
         /*
@@ -9465,7 +9488,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 449 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 450 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo _*_")
 
         /*
@@ -9476,7 +9499,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 450 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 451 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo _____")
 
         /*
@@ -9487,7 +9510,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 451 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 452 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo __\\___")
 
         /*
@@ -9498,7 +9521,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 452 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 453 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("foo __*__")
 
         /*
@@ -9509,7 +9532,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 453 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 454 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo_")
 
         /*
@@ -9520,7 +9543,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 454 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 455 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo__")
 
         /*
@@ -9531,7 +9554,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 455 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 456 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("___foo__")
 
         /*
@@ -9542,7 +9565,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 456 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 457 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("____foo_")
 
         /*
@@ -9553,7 +9576,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 457 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 458 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo___")
 
         /*
@@ -9564,7 +9587,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 458 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 459 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo____")
 
         /*
@@ -9575,7 +9598,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 459 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 460 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo**")
 
         /*
@@ -9586,7 +9609,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 460 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 461 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*_foo_*")
 
         /*
@@ -9597,62 +9620,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 460b correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("*_foo *bar*_*")
-
-        /*
-         * Expected HTML:
-         * <p><em><em>foo <em>bar</em></em></em></p>
-         */
-        parsed.assertEquals(paragraph("*_foo *bar*_*"))
-    }
-
-    @Test
-    fun `should parse spec sample 460c correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("**foo *bar***")
-
-        /*
-         * Expected HTML:
-         * <p><strong>foo <em>bar</em></strong></p>
-         */
-        parsed.assertEquals(paragraph("**foo *bar***"))
-    }
-
-    @Test
-    fun `should parse spec sample 460d correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("*_foo *bar* a_*")
-
-        /*
-         * Expected HTML:
-         * <p><em><em>foo <em>bar</em> a</em></em></p>
-         */
-        parsed.assertEquals(paragraph("*_foo *bar* a_*"))
-    }
-
-    @Test
-    fun `should parse spec sample 460e correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("**foo *bar* a**")
-
-        /*
-         * Expected HTML:
-         * <p><strong>foo <em>bar</em> a</strong></p>
-         */
-        parsed.assertEquals(paragraph("**foo *bar* a**"))
-    }
-
-    @Test
-    fun `should parse spec sample 460f correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("*_*foo *bar* a*_*")
-
-        /*
-         * Expected HTML:
-         * <p><strong>foo <em>bar</em> a</strong></p>
-         */
-        parsed.assertEquals(paragraph("*_*foo *bar* a*_*"))
-    }
-
-    @Test
-    fun `should parse spec sample 461 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 462 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo__")
 
         /*
@@ -9663,7 +9631,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 462 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 463 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_*foo*_")
 
         /*
@@ -9674,7 +9642,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 462b correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 462+1b correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_*foo _bar_*_")
 
         /*
@@ -9685,7 +9653,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 462c correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 462+1c correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo _bar___")
 
         /*
@@ -9696,7 +9664,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 462d correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 462+1d correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_*foo _bar_ a*_")
 
         /*
@@ -9707,7 +9675,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 462e correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 462+1e correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__foo _bar_ a__")
 
         /*
@@ -9718,7 +9686,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 462f correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 462+1f correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_*foo *bar* a*_")
 
         /*
@@ -9729,7 +9697,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 463 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 464 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("****foo****")
 
         /*
@@ -9740,7 +9708,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 464 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 465 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("____foo____")
 
         /*
@@ -9751,7 +9719,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 465 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 466 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("******foo******")
 
         /*
@@ -9762,7 +9730,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 466 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 467 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("***foo***")
 
         /*
@@ -9773,7 +9741,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 467 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 468 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_____foo_____")
 
         /*
@@ -9784,7 +9752,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 468 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 469 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo _bar* baz_")
 
         /*
@@ -9795,7 +9763,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 469 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 470 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo __bar *baz bim__ bam*")
 
         /*
@@ -9806,7 +9774,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 470 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 471 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**foo **bar baz**")
 
         /*
@@ -9817,7 +9785,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 471 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 472 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*foo *bar baz*")
 
         /*
@@ -9828,7 +9796,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 472 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 473 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*[bar*](/url)")
 
         /*
@@ -9839,7 +9807,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 473 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 474 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_foo [bar_](/url)")
 
         /*
@@ -9850,7 +9818,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 474 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 475 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*<img src=\"foo\" title=\"*\"/>")
 
         /*
@@ -9861,7 +9829,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 475 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 476 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("**<a href=\"**\">")
 
         /*
@@ -9872,7 +9840,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 476 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 477 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("__<a href=\"__\">")
 
         /*
@@ -9883,7 +9851,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 477 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 478 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("*a `*`*")
 
         /*
@@ -9894,7 +9862,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 478 correctly (Emphasis and strong emphasis)`() {
+    fun `should parse spec sample 479 correctly (Emphasis and strong emphasis)`() {
         val parsed = processor.processMarkdownDocument("_a `_`_")
 
         /*
@@ -9905,29 +9873,29 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 479 correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("**a<http://foo.bar/?q=**>")
-
-        /*
-         * Expected HTML:
-         * <p>**a<a href="http://foo.bar/?q=**">http://foo.bar/?q=**</a></p>
-         */
-        parsed.assertEquals(paragraph("\\*\\*a[http://foo.bar/?q=\\*\\*](http://foo.bar/?q=**)"))
-    }
-
-    @Test
     fun `should parse spec sample 480 correctly (Emphasis and strong emphasis)`() {
-        val parsed = processor.processMarkdownDocument("__a<http://foo.bar/?q=__>")
+        val parsed = processor.processMarkdownDocument("**a<https://foo.bar/?q=**>")
 
         /*
          * Expected HTML:
-         * <p>__a<a href="http://foo.bar/?q=__">http://foo.bar/?q=__</a></p>
+         * <p>**a<a href="https://foo.bar/?q=**">https://foo.bar/?q=**</a></p>
          */
-        parsed.assertEquals(paragraph("\\_\\_a[http://foo.bar/?q=\\_\\_](http://foo.bar/?q=__)"))
+        parsed.assertEquals(paragraph("\\*\\*a[https://foo.bar/?q=\\*\\*](https://foo.bar/?q=**)"))
     }
 
     @Test
-    fun `should parse spec sample 481 correctly (Links)`() {
+    fun `should parse spec sample 481 correctly (Emphasis and strong emphasis)`() {
+        val parsed = processor.processMarkdownDocument("__a<https://foo.bar/?q=__>")
+
+        /*
+         * Expected HTML:
+         * <p>__a<a href="https://foo.bar/?q=__">https://foo.bar/?q=__</a></p>
+         */
+        parsed.assertEquals(paragraph("\\_\\_a[https://foo.bar/?q=\\_\\_](https://foo.bar/?q=__)"))
+    }
+
+    @Test
+    fun `should parse spec sample 482 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/uri \"title\")")
 
         /*
@@ -9938,7 +9906,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 482 correctly (Links)`() {
+    fun `should parse spec sample 483 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/uri)")
 
         /*
@@ -9949,7 +9917,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 483 correctly (Links)`() {
+    fun `should parse spec sample 484 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[](./target.md)")
 
         /*
@@ -9960,7 +9928,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 484 correctly (Links)`() {
+    fun `should parse spec sample 485 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link]()")
 
         /*
@@ -9971,7 +9939,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 485 correctly (Links)`() {
+    fun `should parse spec sample 486 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](<>)")
 
         /*
@@ -9982,7 +9950,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 486 correctly (Links)`() {
+    fun `should parse spec sample 487 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[]()")
 
         /*
@@ -9993,7 +9961,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 487 correctly (Links)`() {
+    fun `should parse spec sample 488 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/my uri)")
 
         /*
@@ -10004,7 +9972,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 488 correctly (Links)`() {
+    fun `should parse spec sample 489 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](</my uri>)")
 
         /*
@@ -10015,7 +9983,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 489 correctly (Links)`() {
+    fun `should parse spec sample 490 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10034,7 +10002,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 490 correctly (Links)`() {
+    fun `should parse spec sample 491 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10053,7 +10021,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 491 correctly (Links)`() {
+    fun `should parse spec sample 492 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[a](<b)c>)")
 
         /*
@@ -10064,7 +10032,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 492 correctly (Links)`() {
+    fun `should parse spec sample 493 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](<foo\\>)")
 
         /*
@@ -10075,7 +10043,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 493 correctly (Links)`() {
+    fun `should parse spec sample 494 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10100,7 +10068,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 494 correctly (Links)`() {
+    fun `should parse spec sample 495 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](\\(foo\\))")
 
         /*
@@ -10111,7 +10079,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 495 correctly (Links)`() {
+    fun `should parse spec sample 496 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](foo(and(bar)))")
 
         /*
@@ -10122,7 +10090,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 496 correctly (Links)`() {
+    fun `should parse spec sample 497 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](foo(and(bar))")
 
         /*
@@ -10133,7 +10101,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 497 correctly (Links)`() {
+    fun `should parse spec sample 498 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](foo\\(and\\(bar\\))")
 
         /*
@@ -10144,7 +10112,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 498 correctly (Links)`() {
+    fun `should parse spec sample 499 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](<foo(and(bar)>)")
 
         /*
@@ -10155,7 +10123,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 499 correctly (Links)`() {
+    fun `should parse spec sample 500 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](foo\\)\\:)")
 
         /*
@@ -10166,15 +10134,15 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 500 correctly (Links)`() {
+    fun `should parse spec sample 501 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
             |[link](#fragment)
             |
-            |[link](http://example.com#fragment)
+            |[link](https://example.com#fragment)
             |
-            |[link](http://example.com?foo=3#frag)
+            |[link](https://example.com?foo=3#frag)
             """
                     .trimMargin(),
             )
@@ -10182,18 +10150,18 @@ class MarkdownProcessorDocumentParsingTest {
         /*
          * Expected HTML:
          * <p><a href="#fragment">link</a></p>
-         * <p><a href="http://example.com#fragment">link</a></p>
-         * <p><a href="http://example.com?foo=3#frag">link</a></p>
+         * <p><a href="https://example.com#fragment">link</a></p>
+         * <p><a href="https://example.com?foo=3#frag">link</a></p>
          */
         parsed.assertEquals(
             paragraph("[link](#fragment)"),
-            paragraph("[link](http://example.com#fragment)"),
-            paragraph("[link](http://example.com?foo=3#frag)"),
+            paragraph("[link](https://example.com#fragment)"),
+            paragraph("[link](https://example.com?foo=3#frag)"),
         )
     }
 
     @Test
-    fun `should parse spec sample 501 correctly (Links)`() {
+    fun `should parse spec sample 502 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](foo\\bar)")
 
         /*
@@ -10204,7 +10172,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 502 correctly (Links)`() {
+    fun `should parse spec sample 503 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](foo%20b&auml;)")
 
         /*
@@ -10215,7 +10183,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 503 correctly (Links)`() {
+    fun `should parse spec sample 504 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](\"title\")")
 
         /*
@@ -10226,7 +10194,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 504 correctly (Links)`() {
+    fun `should parse spec sample 505 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10249,7 +10217,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 505 correctly (Links)`() {
+    fun `should parse spec sample 506 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/url \"title \\\"&quot;\")")
 
         /*
@@ -10260,7 +10228,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 506 correctly (Links)`() {
+    fun `should parse spec sample 507 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/url \"title\")")
 
         /*
@@ -10271,7 +10239,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 507 correctly (Links)`() {
+    fun `should parse spec sample 508 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/url \"title \"and\" title\")")
 
         /*
@@ -10282,7 +10250,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 508 correctly (Links)`() {
+    fun `should parse spec sample 509 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link](/url 'title \"and\" title')")
 
         /*
@@ -10293,7 +10261,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 509 correctly (Links)`() {
+    fun `should parse spec sample 510 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10311,7 +10279,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 510 correctly (Links)`() {
+    fun `should parse spec sample 511 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link] (/uri)")
 
         /*
@@ -10322,7 +10290,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 511 correctly (Links)`() {
+    fun `should parse spec sample 512 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link [foo [bar]]](/uri)")
 
         /*
@@ -10333,7 +10301,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 512 correctly (Links)`() {
+    fun `should parse spec sample 513 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link] bar](/uri)")
 
         /*
@@ -10344,7 +10312,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 513 correctly (Links)`() {
+    fun `should parse spec sample 514 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link [bar](/uri)")
 
         /*
@@ -10355,7 +10323,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 514 correctly (Links)`() {
+    fun `should parse spec sample 515 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link \\[bar](/uri)")
 
         /*
@@ -10366,7 +10334,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 515 correctly (Links)`() {
+    fun `should parse spec sample 516 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[link *foo **bar** `#`*](/uri)")
 
         /*
@@ -10377,7 +10345,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 516 correctly (Links)`() {
+    fun `should parse spec sample 517 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[![moon](moon.jpg)](/uri)")
 
         /*
@@ -10388,7 +10356,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 517 correctly (Links)`() {
+    fun `should parse spec sample 518 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[foo [bar](/uri)](/uri)")
 
         /*
@@ -10399,7 +10367,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 518 correctly (Links)`() {
+    fun `should parse spec sample 519 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[foo *[bar [baz](/uri)](/uri)*](/uri)")
 
         /*
@@ -10410,7 +10378,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 519 correctly (Links)`() {
+    fun `should parse spec sample 520 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("![[[foo](uri1)](uri2)](uri3)")
 
         /*
@@ -10421,7 +10389,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 520 correctly (Links)`() {
+    fun `should parse spec sample 521 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("*[foo*](/uri)")
 
         /*
@@ -10432,7 +10400,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 521 correctly (Links)`() {
+    fun `should parse spec sample 522 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[foo *bar](baz*)")
 
         /*
@@ -10443,7 +10411,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 522 correctly (Links)`() {
+    fun `should parse spec sample 523 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("*foo [bar* baz]")
 
         /*
@@ -10454,7 +10422,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 523 correctly (Links)`() {
+    fun `should parse spec sample 524 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[foo <bar attr=\"](baz)\">")
 
         /*
@@ -10465,7 +10433,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 524 correctly (Links)`() {
+    fun `should parse spec sample 525 correctly (Links)`() {
         val parsed = processor.processMarkdownDocument("[foo`](/uri)`")
 
         /*
@@ -10476,22 +10444,22 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 525 correctly (Links)`() {
-        val parsed = processor.processMarkdownDocument("[foo<http://example.com/?search=](uri)>")
+    fun `should parse spec sample 526 correctly (Links)`() {
+        val parsed = processor.processMarkdownDocument("[foo<https://example.com/?search=](uri)>")
 
         /*
          * Expected HTML:
-         * <p>[foo<a href="http://example.com/?search=%5D(uri)">http://example.com/?search=](uri)</a></p>
+         * <p>[foo<a href="https://example.com/?search=%5D(uri)">https://example.com/?search=](uri)</a></p>
          */
         parsed.assertEquals(
             paragraph(
-                "\\[foo[http://example.com/?search=\\]\\(uri\\)](http://example.com/?search=]\\(uri\\))",
+                "\\[foo[https://example.com/?search=\\]\\(uri\\)](https://example.com/?search=]\\(uri\\))",
             ),
         )
     }
 
     @Test
-    fun `should parse spec sample 526 correctly (Links)`() {
+    fun `should parse spec sample 527 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10510,7 +10478,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 527 correctly (Links)`() {
+    fun `should parse spec sample 528 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10529,7 +10497,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 528 correctly (Links)`() {
+    fun `should parse spec sample 529 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10548,7 +10516,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 529 correctly (Links)`() {
+    fun `should parse spec sample 530 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10567,7 +10535,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 530 correctly (Links)`() {
+    fun `should parse spec sample 531 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10586,7 +10554,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 531 correctly (Links)`() {
+    fun `should parse spec sample 532 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10605,7 +10573,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 532 correctly (Links)`() {
+    fun `should parse spec sample 533 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10624,7 +10592,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 533 correctly (Links)`() {
+    fun `should parse spec sample 534 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10643,7 +10611,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 534 correctly (Links)`() {
+    fun `should parse spec sample 535 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10662,7 +10630,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 535 correctly (Links)`() {
+    fun `should parse spec sample 536 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10681,7 +10649,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 536 correctly (Links)`() {
+    fun `should parse spec sample 537 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10700,11 +10668,11 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 537 correctly (Links)`() {
+    fun `should parse spec sample 538 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo<http://example.com/?search=][ref]>
+            |[foo<https://example.com/?search=][ref]>
             |
             |[ref]: /uri
             """
@@ -10713,17 +10681,17 @@ class MarkdownProcessorDocumentParsingTest {
 
         /*
          * Expected HTML:
-         * <p>[foo<a href="http://example.com/?search=%5D%5Bref%5D">http://example.com/?search=][ref]</a></p>
+         * <p>[foo<a href="https://example.com/?search=%5D%5Bref%5D">https://example.com/?search=][ref]</a></p>
          */
         parsed.assertEquals(
             paragraph(
-                "\\[foo[http://example.com/?search=\\]\\[ref\\]](http://example.com/?search=][ref])",
+                "\\[foo[https://example.com/?search=\\]\\[ref\\]](https://example.com/?search=][ref])",
             ),
         )
     }
 
     @Test
-    fun `should parse spec sample 538 correctly (Links)`() {
+    fun `should parse spec sample 539 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10742,7 +10710,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 539 correctly (Links)`() {
+    fun `should parse spec sample 540 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10761,7 +10729,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 540 correctly (Links)`() {
+    fun `should parse spec sample 541 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10781,7 +10749,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 541 correctly (Links)`() {
+    fun `should parse spec sample 542 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10800,7 +10768,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 542 correctly (Links)`() {
+    fun `should parse spec sample 543 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10821,7 +10789,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 543 correctly (Links)`() {
+    fun `should parse spec sample 544 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10842,7 +10810,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 544 correctly (Links)`() {
+    fun `should parse spec sample 545 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10861,7 +10829,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 545 correctly (Links)`() {
+    fun `should parse spec sample 546 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10884,7 +10852,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 546 correctly (Links)`() {
+    fun `should parse spec sample 547 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10907,7 +10875,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 547 correctly (Links)`() {
+    fun `should parse spec sample 548 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10930,7 +10898,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 548 correctly (Links)`() {
+    fun `should parse spec sample 549 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10949,7 +10917,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 549 correctly (Links)`() {
+    fun `should parse spec sample 550 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10968,7 +10936,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 550 correctly (Links)`() {
+    fun `should parse spec sample 551 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -10991,7 +10959,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 551 correctly (Links)`() {
+    fun `should parse spec sample 552 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11018,7 +10986,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 552 correctly (Links)`() {
+    fun `should parse spec sample 553 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11037,7 +11005,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 553 correctly (Links)`() {
+    fun `should parse spec sample 554 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11056,7 +11024,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 554 correctly (Links)`() {
+    fun `should parse spec sample 555 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11075,7 +11043,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 555 correctly (Links)`() {
+    fun `should parse spec sample 556 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11096,7 +11064,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 556 correctly (Links)`() {
+    fun `should parse spec sample 557 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11115,7 +11083,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 557 correctly (Links)`() {
+    fun `should parse spec sample 558 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11134,7 +11102,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 558 correctly (Links)`() {
+    fun `should parse spec sample 559 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11153,7 +11121,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 559 correctly (Links)`() {
+    fun `should parse spec sample 560 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11172,7 +11140,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 560 correctly (Links)`() {
+    fun `should parse spec sample 561 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11191,7 +11159,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 561 correctly (Links)`() {
+    fun `should parse spec sample 562 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11210,7 +11178,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 562 correctly (Links)`() {
+    fun `should parse spec sample 563 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11229,7 +11197,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 563 correctly (Links)`() {
+    fun `should parse spec sample 564 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11248,7 +11216,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 564 correctly (Links)`() {
+    fun `should parse spec sample 565 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11268,7 +11236,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 565 correctly (Links)`() {
+    fun `should parse spec sample 566 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11287,7 +11255,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 566 correctly (Links)`() {
+    fun `should parse spec sample 567 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11306,7 +11274,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 567 correctly (Links)`() {
+    fun `should parse spec sample 568 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11325,7 +11293,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 568 correctly (Links)`() {
+    fun `should parse spec sample 569 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11344,7 +11312,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 569 correctly (Links)`() {
+    fun `should parse spec sample 570 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11364,7 +11332,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 570 correctly (Links)`() {
+    fun `should parse spec sample 571 correctly (Links)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11384,7 +11352,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 571 correctly (Images)`() {
+    fun `should parse spec sample 572 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("![foo](/url \"title\")")
 
         /*
@@ -11395,7 +11363,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 572 correctly (Images)`() {
+    fun `should parse spec sample 573 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11414,7 +11382,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 573 correctly (Images)`() {
+    fun `should parse spec sample 574 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("![foo ![bar](/url)](/url2)")
 
         /*
@@ -11425,7 +11393,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 574 correctly (Images)`() {
+    fun `should parse spec sample 575 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("![foo [bar](/url)](/url2)")
 
         /*
@@ -11436,7 +11404,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 575 correctly (Images)`() {
+    fun `should parse spec sample 576 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11455,7 +11423,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 576 correctly (Images)`() {
+    fun `should parse spec sample 577 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11474,7 +11442,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 577 correctly (Images)`() {
+    fun `should parse spec sample 578 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("![foo](train.jpg)")
 
         /*
@@ -11485,7 +11453,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 578 correctly (Images)`() {
+    fun `should parse spec sample 579 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("My ![foo bar](/path/to/train.jpg  \"title\"   )")
 
         /*
@@ -11496,7 +11464,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 579 correctly (Images)`() {
+    fun `should parse spec sample 580 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("![foo](<url>)")
 
         /*
@@ -11507,7 +11475,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 580 correctly (Images)`() {
+    fun `should parse spec sample 581 correctly (Images)`() {
         val parsed = processor.processMarkdownDocument("![](/url)")
 
         /*
@@ -11518,7 +11486,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 581 correctly (Images)`() {
+    fun `should parse spec sample 582 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11537,7 +11505,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 582 correctly (Images)`() {
+    fun `should parse spec sample 583 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11556,7 +11524,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 583 correctly (Images)`() {
+    fun `should parse spec sample 584 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11575,7 +11543,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 584 correctly (Images)`() {
+    fun `should parse spec sample 585 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11594,7 +11562,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 585 correctly (Images)`() {
+    fun `should parse spec sample 586 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11613,7 +11581,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 586 correctly (Images)`() {
+    fun `should parse spec sample 587 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11634,7 +11602,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 587 correctly (Images)`() {
+    fun `should parse spec sample 588 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11653,7 +11621,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 588 correctly (Images)`() {
+    fun `should parse spec sample 589 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11672,7 +11640,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 589 correctly (Images)`() {
+    fun `should parse spec sample 590 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11695,7 +11663,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 590 correctly (Images)`() {
+    fun `should parse spec sample 591 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11714,7 +11682,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 591 correctly (Images)`() {
+    fun `should parse spec sample 592 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11733,7 +11701,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 592 correctly (Images)`() {
+    fun `should parse spec sample 593 correctly (Images)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -11752,7 +11720,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 593 correctly (Autolinks)`() {
+    fun `should parse spec sample 594 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<http://foo.bar.baz>")
 
         /*
@@ -11763,22 +11731,22 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 594 correctly (Autolinks)`() {
-        val parsed = processor.processMarkdownDocument("<http://foo.bar.baz/test?q=hello&id=22&boolean>")
+    fun `should parse spec sample 595 correctly (Autolinks)`() {
+        val parsed = processor.processMarkdownDocument("<https://foo.bar.baz/test?q=hello&id=22&boolean>")
 
         /*
          * Expected HTML:
-         * <p><a href="http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean">http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>
+         * <p><a href="https://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean">https://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>
          */
         parsed.assertEquals(
             paragraph(
-                "[http://foo.bar.baz/test?q=hello&id=22&boolean](http://foo.bar.baz/test?q=hello&id=22&boolean)",
+                "[https://foo.bar.baz/test?q=hello&id=22&boolean](https://foo.bar.baz/test?q=hello&id=22&boolean)",
             ),
         )
     }
 
     @Test
-    fun `should parse spec sample 595 correctly (Autolinks)`() {
+    fun `should parse spec sample 596 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<irc://foo.bar:2233/baz>")
 
         /*
@@ -11789,7 +11757,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 596 correctly (Autolinks)`() {
+    fun `should parse spec sample 597 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<MAILTO:FOO@BAR.BAZ>")
 
         /*
@@ -11800,7 +11768,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 597 correctly (Autolinks)`() {
+    fun `should parse spec sample 598 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<a+b+c:d>")
 
         /*
@@ -11811,7 +11779,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 598 correctly (Autolinks)`() {
+    fun `should parse spec sample 599 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<made-up-scheme://foo,bar>")
 
         /*
@@ -11822,18 +11790,18 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 599 correctly (Autolinks)`() {
-        val parsed = processor.processMarkdownDocument("<http://../>")
+    fun `should parse spec sample 600 correctly (Autolinks)`() {
+        val parsed = processor.processMarkdownDocument("<https://../>")
 
         /*
          * Expected HTML:
-         * <p><a href="http://../">http://../</a></p>
+         * <p><a href="https://../">https://../</a></p>
          */
-        parsed.assertEquals(paragraph("[http://../](http://../)"))
+        parsed.assertEquals(paragraph("[https://../](https://../)"))
     }
 
     @Test
-    fun `should parse spec sample 600 correctly (Autolinks)`() {
+    fun `should parse spec sample 601 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<localhost:5001/foo>")
 
         /*
@@ -11844,29 +11812,29 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 601 correctly (Autolinks)`() {
-        val parsed = processor.processMarkdownDocument("<http://foo.bar/baz bim>")
-
-        /*
-         * Expected HTML:
-         * <p>&lt;http://foo.bar/baz bim&gt;</p>
-         */
-        parsed.assertEquals(paragraph("\\<http://foo.bar/baz bim\\>"))
-    }
-
-    @Test
     fun `should parse spec sample 602 correctly (Autolinks)`() {
-        val parsed = processor.processMarkdownDocument("<http://example.com/\\[\\>")
+        val parsed = processor.processMarkdownDocument("<https://foo.bar/baz bim>")
 
         /*
          * Expected HTML:
-         * <p><a href="http://example.com/%5C%5B%5C">http://example.com/\[\</a></p>
+         * <p>&lt;https://foo.bar/baz bim&gt;</p>
          */
-        parsed.assertEquals(paragraph("[http://example.com/\\[\\\\](http://example.com/\\[\\)"))
+        parsed.assertEquals(paragraph("\\<https://foo.bar/baz bim\\>"))
     }
 
     @Test
     fun `should parse spec sample 603 correctly (Autolinks)`() {
+        val parsed = processor.processMarkdownDocument("<https://example.com/\\[\\>")
+
+        /*
+         * Expected HTML:
+         * <p><a href="https://example.com/%5C%5B%5C">https://example.com/\[\</a></p>
+         */
+        parsed.assertEquals(paragraph("[https://example.com/\\[\\\\](https://example.com/\\[\\)"))
+    }
+
+    @Test
+    fun `should parse spec sample 604 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<foo@bar.example.com>")
 
         /*
@@ -11877,7 +11845,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 604 correctly (Autolinks)`() {
+    fun `should parse spec sample 605 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<foo+special@Bar.baz-bar0.com>")
 
         /*
@@ -11892,7 +11860,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 605 correctly (Autolinks)`() {
+    fun `should parse spec sample 606 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<foo\\+@bar.example.com>")
 
         /*
@@ -11903,7 +11871,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 606 correctly (Autolinks)`() {
+    fun `should parse spec sample 607 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<>")
 
         /*
@@ -11914,18 +11882,18 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 607 correctly (Autolinks)`() {
-        val parsed = processor.processMarkdownDocument("< http://foo.bar >")
+    fun `should parse spec sample 608 correctly (Autolinks)`() {
+        val parsed = processor.processMarkdownDocument("< https://foo.bar >")
 
         /*
          * Expected HTML:
-         * <p>&lt; http://foo.bar &gt;</p>
+         * <p>&lt; https://foo.bar &gt;</p>
          */
-        parsed.assertEquals(paragraph("\\< http://foo.bar \\>"))
+        parsed.assertEquals(paragraph("\\< https://foo.bar \\>"))
     }
 
     @Test
-    fun `should parse spec sample 608 correctly (Autolinks)`() {
+    fun `should parse spec sample 609 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<m:abc>")
 
         /*
@@ -11936,7 +11904,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 609 correctly (Autolinks)`() {
+    fun `should parse spec sample 610 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("<foo.bar.baz>")
 
         /*
@@ -11947,18 +11915,18 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 610 correctly (Autolinks)`() {
-        val parsed = processor.processMarkdownDocument("http://example.com")
+    fun `should parse spec sample 611 correctly (Autolinks)`() {
+        val parsed = processor.processMarkdownDocument("https://example.com")
 
         /*
          * Expected HTML:
-         * <p>http://example.com</p>
+         * <p>https://example.com</p>
          */
-        parsed.assertEquals(paragraph("http://example.com"))
+        parsed.assertEquals(paragraph("https://example.com"))
     }
 
     @Test
-    fun `should parse spec sample 611 correctly (Autolinks)`() {
+    fun `should parse spec sample 612 correctly (Autolinks)`() {
         val parsed = processor.processMarkdownDocument("foo@bar.example.com")
 
         /*
@@ -11969,7 +11937,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 612 correctly (Raw HTML)`() {
+    fun `should parse spec sample 613 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("<a><bab><c2c>")
 
         /*
@@ -11980,7 +11948,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 613 correctly (Raw HTML)`() {
+    fun `should parse spec sample 614 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("<a/><b2/>")
 
         /*
@@ -11991,7 +11959,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 614 correctly (Raw HTML)`() {
+    fun `should parse spec sample 615 correctly (Raw HTML)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -12010,7 +11978,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 615 correctly (Raw HTML)`() {
+    fun `should parse spec sample 616 correctly (Raw HTML)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -12033,7 +12001,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 616 correctly (Raw HTML)`() {
+    fun `should parse spec sample 617 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("Foo <responsive-image src=\"foo.jpg\" />")
 
         /*
@@ -12044,7 +12012,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 617 correctly (Raw HTML)`() {
+    fun `should parse spec sample 618 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("<33> <__>")
 
         /*
@@ -12055,7 +12023,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 618 correctly (Raw HTML)`() {
+    fun `should parse spec sample 619 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("<a h*#ref=\"hi\">")
 
         /*
@@ -12066,7 +12034,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 619 correctly (Raw HTML)`() {
+    fun `should parse spec sample 620 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("<a href=\"hi'> <a href=hi'>")
 
         /*
@@ -12077,7 +12045,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 620 correctly (Raw HTML)`() {
+    fun `should parse spec sample 621 correctly (Raw HTML)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
@@ -12104,7 +12072,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 621 correctly (Raw HTML)`() {
+    fun `should parse spec sample 622 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("<a href='bar'title=title>")
 
         /*
@@ -12115,7 +12083,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 622 correctly (Raw HTML)`() {
+    fun `should parse spec sample 623 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("</a></foo >")
 
         /*
@@ -12126,7 +12094,7 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 623 correctly (Raw HTML)`() {
+    fun `should parse spec sample 624 correctly (Raw HTML)`() {
         val parsed = processor.processMarkdownDocument("</a href=\"foo\">")
 
         /*
@@ -12137,33 +12105,22 @@ class MarkdownProcessorDocumentParsingTest {
     }
 
     @Test
-    fun `should parse spec sample 624 correctly (Raw HTML)`() {
+    fun `should parse spec sample 625 correctly (Raw HTML)`() {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo <!-- this is a
-            |comment - with hyphen -->
+            |foo <!-- this is a --
+            |comment - with hyphens -->
             """
                     .trimMargin(),
             )
 
         /*
          * Expected HTML:
-         * <p>foo <!-- this is a
-         * </p>
+         * <p>foo <!-- this is a --
+         * comment - with hyphens --></p>
          */
-        parsed.assertEquals(paragraph("foo <!-- this is a\ncomment - with hyphen -->"))
-    }
-
-    @Test
-    fun `should parse spec sample 625 correctly (Raw HTML)`() {
-        val parsed = processor.processMarkdownDocument("foo <!-- not a comment -- two hyphens -->")
-
-        /*
-         * Expected HTML:
-         * <p>foo &lt;!-- not a comment -- two hyphens --&gt;</p>
-         */
-        parsed.assertEquals(paragraph("foo \\<\\!-- not a comment -- two hyphens --\\>"))
+        parsed.assertEquals(paragraph("foo <!-- this is a --\ncomment - with hyphens -->"))
     }
 
     @Test
@@ -12173,19 +12130,19 @@ class MarkdownProcessorDocumentParsingTest {
                 """
             |foo <!--> foo -->
             |
-            |foo <!-- foo--->
+            |foo <!---> foo -->
             """
                     .trimMargin(),
             )
 
         /*
          * Expected HTML:
-         * <p>foo &lt;!--&gt; foo --&gt;</p>
-         * <p>foo &lt;!-- foo---&gt;</p>
+         * <p>foo <!--> foo --&gt;</p>
+         * <p>foo <!---> foo --&gt;</p>
          */
         parsed.assertEquals(
-            paragraph("foo \\<\\!--\\> foo --\\>"),
-            paragraph("foo \\<\\!-- foo---\\>"),
+            paragraph("foo <!--> foo --\\>"),
+            paragraph("foo <!---> foo --\\>"),
         )
     }
 

@@ -1,5 +1,5 @@
 [versions]
-commonmark = "0.21.0"
+commonmark = "0.22.0"
 composeDesktop = "1.6.10-dev1514"
 detekt = "1.23.4"
 dokka = "1.8.20"

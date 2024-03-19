@@ -55,7 +55,7 @@ public class MarkdownProcessor(private val extensions: List<MarkdownProcessorExt
             .build()
 
     /**
-     * Parses a Markdown document, translating from CommonMark 0.30
+     * Parses a Markdown document, translating from CommonMark 0.31.2
      * to a list of [MarkdownBlock]. Inline Markdown in leaf nodes
      * is contained in [InlineMarkdown], which can be rendered
      * to an [androidx.compose.ui.text.AnnotatedString] by using

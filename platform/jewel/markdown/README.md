@@ -6,8 +6,7 @@
 
 Adds the ability to render Markdown as native Compose UI.
 
-Currently supports the [CommonMark 0.30](https://spec.commonmark.org/0.30/) specs. When `commonmark-java` will be
-updated to support the new 0.31.2 specs, we'll inherit that.
+Currently supports the [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) specs.
 
 Additional supported Markdown, via extensions:
 

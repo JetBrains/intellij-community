@@ -14,6 +14,7 @@ import org.commonmark.renderer.NodeRenderer
 import org.commonmark.renderer.text.TextContentNodeRendererContext
 import org.commonmark.renderer.text.TextContentRenderer
 import org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension
+import org.commonmark.text.Characters
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
@@ -114,7 +115,7 @@ private class AlertParser(type: String) : AbstractBlockParser() {
         return if (parserState.isMarker(nextNonSpace)) {
             var newColumn: Int = parserState.column + parserState.indent + 1
             // optional following space or tab
-            if (Parsing.isSpaceOrTab(parserState.line.content, nextNonSpace + 1)) {
+            if (Characters.isSpaceOrTab(parserState.line.content, nextNonSpace + 1)) {
                 newColumn++
             }
             BlockContinue.atColumn(newColumn)
