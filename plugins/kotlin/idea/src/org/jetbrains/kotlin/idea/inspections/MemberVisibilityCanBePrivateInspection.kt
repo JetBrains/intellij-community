@@ -96,7 +96,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         val useScope = declaration.useScope
         val name = declaration.name ?: return false
         val restrictedScope = if (useScope is GlobalSearchScope) {
-            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)) {
                 PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return false
                 PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> return false
                 PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.projectSourcesAndResources(useScope, declaration.project)

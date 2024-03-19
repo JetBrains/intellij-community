@@ -13,7 +13,6 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -414,7 +413,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
           Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           int[] usageCount = {0};
-          if (UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, new EmptyProgressIndicator(), null, info -> {
+          if (UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, null, info -> {
               PsiElement element = info.getElement();
               usageCount[0]++;
               UElement uElement = UastContextKt.toUElement(element);

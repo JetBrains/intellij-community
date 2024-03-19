@@ -305,6 +305,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                          @NotNull GlobalSearchScope scope,
                                                          @Nullable PsiFile fileToIgnoreOccurrencesIn,
                                                          @Nullable ProgressIndicator progress) {
+    return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn);
+  }
+
+  @Override
+  public @NotNull SearchCostResult isCheapEnoughToSearch(@NotNull String name,
+                                                         @NotNull GlobalSearchScope scope,
+                                                         @Nullable PsiFile fileToIgnoreOccurrencesIn) {
     if (!ReadAction.compute(() -> scope.getUnloadedModulesBelongingToScope().isEmpty())) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }

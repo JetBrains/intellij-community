@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -333,7 +332,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
           quickFixes.add(QuickFixFactory.getInstance().createAddToImplicitlyWrittenFieldsFix(project, annoName)));
       }
     }
-    else if (!UnusedSymbolUtil.isFieldUsed(myProject, myFile, field, ProgressIndicatorProvider.getGlobalProgressIndicator(), myGlobalUsageHelper)) {
+    else if (!UnusedSymbolUtil.isFieldUsed(myProject, myFile, field, myGlobalUsageHelper)) {
       if (UnusedSymbolUtil.isImplicitWrite(myProject, field)) {
         message = getNotUsedForReadingMessage(field);
         quickFixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(field));
@@ -471,7 +470,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   }
 
   private void processMethod(@NotNull Project project, @NotNull PsiMethod method) {
-    if (UnusedSymbolUtil.isMethodUsed(myProject, myFile, method, ProgressIndicatorProvider.getGlobalProgressIndicator(), myGlobalUsageHelper)) {
+    if (UnusedSymbolUtil.isMethodUsed(myProject, myFile, method, myGlobalUsageHelper)) {
       return;
     }
     String key;
@@ -494,7 +493,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   }
 
   private void processClass(@NotNull Project project, @NotNull PsiClass aClass) {
-    if (UnusedSymbolUtil.isClassUsed(project, myFile, aClass, ProgressIndicatorProvider.getGlobalProgressIndicator(), myGlobalUsageHelper)) {
+    if (UnusedSymbolUtil.isClassUsed(project, myFile, aClass, myGlobalUsageHelper)) {
       return;
     }
 

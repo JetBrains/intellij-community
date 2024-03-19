@@ -221,7 +221,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val module = ModuleUtilCore.findModuleForPsiElement(member) ?: return false
     val scope = GlobalSearchScope.moduleScope(module)
     val memberFile = member.containingFile
-    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile, null) != TOO_MANY_OCCURRENCES
+    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile) != TOO_MANY_OCCURRENCES
   }
 
   private fun isOverride(possibleOverride: PsiMethod, target: PsiMember): Boolean {

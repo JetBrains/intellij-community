@@ -10,7 +10,6 @@ import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -214,7 +213,7 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
       int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
       AtomicInteger maxLevel = new AtomicInteger(minLevel);
       AtomicBoolean foundUsage = new AtomicBoolean();
-      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
+      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, null, info -> {
         PsiElement element = info.getElement();
         if (element == null) return true;
         PsiFile psiFile = info.getFile();

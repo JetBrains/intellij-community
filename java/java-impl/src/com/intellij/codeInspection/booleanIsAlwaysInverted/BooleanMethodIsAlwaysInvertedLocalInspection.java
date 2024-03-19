@@ -6,7 +6,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -39,7 +38,7 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
     if (!PsiTypes.booleanType().equals(method.getReturnType()) || MethodUtils.hasSuper(method) || RefUtil.isImplicitRead(method)) return null;
 
     int[] usageCount = {0};
-    if (!UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
+    if (!UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, null, u -> {
       PsiElement element = u.getElement();
       if (!(element instanceof PsiReferenceExpression)) return false;
       PsiMethodCallExpression methodCallExpression = ObjectUtils.tryCast(element.getParent(), PsiMethodCallExpression.class);

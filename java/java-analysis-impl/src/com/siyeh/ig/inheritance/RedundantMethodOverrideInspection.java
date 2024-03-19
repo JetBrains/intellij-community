@@ -321,7 +321,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
         if (isOnTheFly()) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
           final PsiSearchHelper.SearchCostResult cost =
-            searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, null);
+            searchHelper.isCheapEnoughToSearch(method.getName(), scope, null);
           if (cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
             return true;
           }

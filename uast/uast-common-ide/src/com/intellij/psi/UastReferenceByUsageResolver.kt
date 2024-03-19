@@ -59,7 +59,7 @@ private fun findAllDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEl
   val uastScope = getUastScope(module.moduleScope)
 
   val searchHelper = PsiSearchHelper.getInstance(module.project)
-  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, currentFile, null) != PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
+  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, currentFile) != PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
     return localUsages
   }
 

@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
@@ -193,7 +193,7 @@ class AddFunctionParametersFix(
             val project = runReadAction { it.project }
             val psiSearchHelper = PsiSearchHelper.getInstance(project)
             val globalSearchScope = GlobalSearchScope.projectScope(project)
-            val cheapEnoughToSearch = psiSearchHelper.isCheapEnoughToSearch(name, globalSearchScope, null, null)
+            val cheapEnoughToSearch = psiSearchHelper.isCheapEnoughToSearch(name, globalSearchScope, null)
             if (cheapEnoughToSearch == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false
         }
 

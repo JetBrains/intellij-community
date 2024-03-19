@@ -188,7 +188,7 @@ object KotlinUnusedSymbolUtil {
                   listOfNotNull(declaration.getClassNameForCompanionObject())
           for (name in list) {
               if (name == null) continue
-              when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+              when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)) {
                   PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> {
                   } // go on, check other names
                   PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> zeroOccurrences = false

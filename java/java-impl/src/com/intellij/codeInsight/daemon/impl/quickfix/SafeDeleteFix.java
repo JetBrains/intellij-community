@@ -176,7 +176,7 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       final String name = namedElement.getName();
       if (name != null &&
           PsiSearchHelper.getInstance(explored.getProject())
-            .isCheapEnoughToSearch(name, GlobalSearchScope.projectScope(explored.getProject()), null, null) ==
+            .isCheapEnoughToSearch(name, GlobalSearchScope.projectScope(explored.getProject()), null) ==
           PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
         return false;
       }

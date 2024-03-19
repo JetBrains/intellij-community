@@ -36,10 +36,10 @@ private fun enumReferenceIsUsedByParameterizedTest(element: PsiEnumConstant): Bo
   fun isCheapEnough(psiClass: PsiClass, name: String, useScope: SearchScope): Boolean {
     if (useScope is LocalSearchScope) return true
     val searchHelper = PsiSearchHelper.getInstance(psiClass.project)
-    if (SearchCostResult.ZERO_OCCURRENCES == searchHelper.isCheapEnoughToSearch(ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT, (useScope as GlobalSearchScope), null, null)) {
+    if (SearchCostResult.ZERO_OCCURRENCES == searchHelper.isCheapEnoughToSearch(ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT, (useScope as GlobalSearchScope), null)) {
       return false
     }
-    val cheapEnough = searchHelper.isCheapEnoughToSearch(name, useScope, null, null)
+    val cheapEnough = searchHelper.isCheapEnoughToSearch(name, useScope, null)
     return !(cheapEnough == SearchCostResult.ZERO_OCCURRENCES || cheapEnough == SearchCostResult.TOO_MANY_OCCURRENCES)
   }
 
