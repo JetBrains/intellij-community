@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
+public final class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   public RecentFilesSEContributor(@NotNull AnActionEvent event) {
     super(event);
