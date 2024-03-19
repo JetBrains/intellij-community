@@ -19,7 +19,7 @@ class AddContentRootToModule(text: String, line: Int) : PlaybackCommandCoroutine
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val (moduleName, contentPath) = extractCommandArgument(PREFIX).replace("\\s", "").split(",")
+    val (moduleName, contentPath) = extractCommandArgument(PREFIX).split(",")
 
     constrainedReadAndWriteAction(ReadConstraint.inSmartMode(context.project)) {
       val moduleManager = ModuleManager.getInstance(context.project)
