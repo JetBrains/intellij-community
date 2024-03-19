@@ -3,7 +3,8 @@
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.completion.test.firFileName
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 
@@ -19,5 +20,5 @@ abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicComple
         )
     }
 
-    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory, ".after")
+    override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR, ".after")
 }

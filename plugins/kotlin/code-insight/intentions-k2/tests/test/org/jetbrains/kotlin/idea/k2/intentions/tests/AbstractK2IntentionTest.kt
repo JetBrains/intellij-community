@@ -23,7 +23,7 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
 
     override fun fileName(): String {
         val fileName = super.fileName()
-        val firFileName = IgnoreTests.deriveFirFileName(fileName)
+        val firFileName = IgnoreTests.deriveK2FileName(fileName, IgnoreTests.FileExtension.FIR)
 
         return if (File(testDataDirectory, firFileName).exists()) firFileName else fileName
     }

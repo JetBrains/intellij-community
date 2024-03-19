@@ -35,9 +35,10 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
             // warnings are not supported yet
             super.doTest(unused)
 
-            IgnoreTests.cleanUpIdenticalFirTestFile(
+            IgnoreTests.cleanUpIdenticalK2TestFile(
                 originalTestFile = testKtFile.getExpectedHighlightingFile(HIGHLIGHTING_EXTENSION),
-                firTestFile = testKtFile.getExpectedHighlightingFile(HIGHLIGHTING_FIR_EXTENSION),
+                k2Extension = IgnoreTests.FileExtension.FIR,
+                k2TestFile = testKtFile.getExpectedHighlightingFile(HIGHLIGHTING_FIR_EXTENSION),
                 additionalFileToMarkFirIdentical = testKtFile
             )
         }

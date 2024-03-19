@@ -5,17 +5,17 @@ package org.jetbrains.kotlin.idea.completion.test.handlers
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.runTestIfNotDisabledByFileDirective
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.addCharacterCodingException
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.runTestIfNotDisabledByFileDirective
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
 
@@ -36,10 +36,12 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                 test(testPath)
                 val originalTestFile = dataFile()
                 val extension = originalTestFile.extension
+                val k2Extension = IgnoreTests.FileExtension.FIR
                 val originalAfterFile = originalTestFile.withExtension("$extension.after")
-                val firAfterFile = originalTestFile.withExtension("fir.$extension.after")
-                IgnoreTests.cleanUpIdenticalFirTestFile(
+                val firAfterFile = originalTestFile.withExtension("$k2Extension.$extension.after")
+                IgnoreTests.cleanUpIdenticalK2TestFile(
                     originalTestFile,
+                    k2Extension,
                     additionalFileToMarkFirIdentical = originalAfterFile,
                     additionalFileToDeleteIfIdentical = firAfterFile,
                     additionalFilesToCompare = listOf(originalAfterFile to firAfterFile)

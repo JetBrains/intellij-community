@@ -84,7 +84,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun doTest(path: String) {
-        val mainFile = File(path)
+        val mainFile = File(dataFilePath(fileName()))
         val inspection = createInspection(mainFile)
 
         val fileText = FileUtil.loadFile(mainFile, true)
