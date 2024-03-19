@@ -14,6 +14,7 @@ import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
@@ -73,11 +74,11 @@ fun runMoveRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, p
 object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
 
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
-        if (doJavaMove(mainFile, elementsAtCaret, config)) return
+        if (doJavaMove(rootDir, mainFile, elementsAtCaret, config)) return
         doKotlinMove(rootDir, elementsAtCaret, mainFile, config)
     }
 
-    private fun doJavaMove(mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject): Boolean {
+    private fun doJavaMove(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject): Boolean {
         val type = config.getString("type")
         return when (type) {
             "MOVE_MEMBERS" -> {
@@ -140,6 +141,28 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                     /* moveCallback = */ null
                 ).run()
                 true
+            }
+            "MOVE_FILES" -> {
+                if (mainFile.name.endsWith(".java")) {
+                    val targetPackage = config.getNullableString("targetPackage")
+                    val targetDirPath = targetPackage?.replace('.', '/') ?: config.getNullableString("targetDirectory") ?: return false
+                    val project = mainFile.project
+                    val newParent = if (targetPackage != null) {
+                        JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
+                    } else {
+                        rootDir.findFileByRelativePath(targetDirPath)!!.toPsiDirectory(project)!!
+                    }
+                    MoveFilesOrDirectoriesProcessor(
+                        project,
+                        arrayOf(mainFile),
+                        newParent,
+                        /* searchInComments = */ false,
+                        /* searchInNonJavaFiles = */ true,
+                        /* moveCallback = */ null,
+                        /* prepareSuccessfulCallback = */ null
+                    ).run()
+                    true
+                } else false
             }
             else -> return false
         }
