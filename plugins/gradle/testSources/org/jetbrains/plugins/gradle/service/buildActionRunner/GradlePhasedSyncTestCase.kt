@@ -14,6 +14,8 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -88,6 +90,60 @@ abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
           action(resolverContext)
         }
       })
+  }
+
+  fun initMultiModuleProject() {
+    if (isGradleAtLeast("8.0")) {
+      // For old Gradle versions, Idea sync project with build src in two sequent Gradle calls.
+      // So don't use buildSrc for generic projects with multiple modules.
+      createBuildFile("buildSrc") {
+        withPlugin("groovy")
+        addImplementationDependency(code("gradleApi()"))
+        addImplementationDependency(code("localGroovy()"))
+      }
+    }
+    createSettingsFile {
+      setProjectName("project")
+      include("module")
+      includeBuild("../includedProject")
+    }
+    createBuildFile {
+      withJavaPlugin()
+    }
+    createBuildFile("module") {
+      withJavaPlugin()
+    }
+    createSettingsFile("../includedProject") {
+      setProjectName("includedProject")
+      include("module")
+    }
+    createBuildFile("../includedProject") {
+      withJavaPlugin()
+    }
+    createBuildFile("../includedProject/module") {
+      withJavaPlugin()
+    }
+  }
+
+  fun assertMultiModuleProjectStructure() {
+    val buildSrcModules = listOf(
+      "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
+    )
+    val projectModules = listOf(
+      "project", "project.main", "project.test",
+      "project.module", "project.module.main", "project.module.test"
+    )
+    val includesProjectModules = listOf(
+      "includedProject", "includedProject.main", "includedProject.test",
+      "includedProject.module", "includedProject.module.main", "includedProject.module.test"
+    )
+    assertModules(buildList {
+      if (isGradleAtLeast("8.0")) {
+        addAll(buildSrcModules)
+      }
+      addAll(projectModules)
+      addAll(includesProjectModules)
+    })
   }
 
   private class TestProjectResolverExtension : AbstractProjectResolverExtension() {

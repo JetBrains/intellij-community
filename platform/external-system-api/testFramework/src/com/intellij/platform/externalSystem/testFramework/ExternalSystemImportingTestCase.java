@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.assertj.core.api.Assertions;
@@ -87,6 +88,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     Assertions.assertThat(actualModules)
       .extracting("name")
       .containsExactlyInAnyOrder(expectedNames);
+  }
+
+  protected void assertModules(List<String> expectedNames) {
+    assertModules(ArrayUtil.toStringArray(expectedNames));
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {

@@ -22,16 +22,19 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenBuildCompleted(disposable) { resolverContext ->
         buildCompletionAssertion.trace {
-          val buildModel = resolverContext.allBuilds.single()
-          val projectModel = buildModel.projects.single()
-          val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
-          val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
-          Assertions.assertNotNull(buildFinishedModel) { "Expected BuildFinishedModel on the build completion" }
+          for (buildModel in resolverContext.allBuilds) {
+            for (projectModel in buildModel.projects) {
+              val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+              val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
+              Assertions.assertNotNull(buildFinishedModel) { "Expected BuildFinishedModel on the build completion" }
+            }
+          }
         }
       }
 
-      createSettingsFile("")
+      initMultiModuleProject()
       importProject()
+      assertMultiModuleProjectStructure()
 
       buildCompletionAssertion.assertListenerFailures()
       buildCompletionAssertion.assertListenerState(1) { "Build action should be finished only once" }
@@ -48,28 +51,33 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenProjectLoaded(disposable) { resolverContext ->
         projectLoadingAssertion.trace {
-          val buildModel = resolverContext.allBuilds.single()
-          val projectModel = buildModel.projects.single()
-          val projectLoadedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
-          val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
-          Assertions.assertNotNull(projectLoadedModel) { "Expected ProjectLoadedModel on the project loaded phase" }
+          for (buildModel in resolverContext.allBuilds) {
+            for (projectModel in buildModel.projects) {
+              val projectLoadedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
+              val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
+              Assertions.assertNotNull(projectLoadedModel) { "Expected ProjectLoadedModel on the project loaded phase" }
+            }
+          }
         }
       }
       whenBuildCompleted(disposable) { resolverContext ->
         buildCompletionAssertion.trace {
-          val buildModel = resolverContext.allBuilds.single()
-          val projectModel = buildModel.projects.single()
-          val projectLoadedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
-          val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
-          val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
-          val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
-          Assertions.assertNotNull(projectLoadedModel) { "Expected ProjectLoadedModel on the build completion" }
-          Assertions.assertNotNull(buildFinishedModel) { "Expected BuildFinishedModel on the build completion" }
+          for (buildModel in resolverContext.allBuilds) {
+            for (projectModel in buildModel.projects) {
+              val projectLoadedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
+              val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+              val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
+              val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
+              Assertions.assertNotNull(projectLoadedModel) { "Expected ProjectLoadedModel on the build completion" }
+              Assertions.assertNotNull(buildFinishedModel) { "Expected BuildFinishedModel on the build completion" }
+            }
+          }
         }
       }
 
-      createSettingsFile("")
+      initMultiModuleProject()
       importProject()
+      assertMultiModuleProjectStructure()
 
       projectLoadingAssertion.assertListenerFailures()
       buildCompletionAssertion.assertListenerFailures()
@@ -94,9 +102,6 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { resolverContext, phase ->
         phaseCompletionAssertion.trace {
-          val buildModel = resolverContext.allBuilds.single()
-          val projectModel = buildModel.projects.single()
-
           for (completedPhase in completedPhases) {
             Assertions.assertTrue(completedPhase < phase) {
               "The $phase should be completed before the $completedPhase.\n" +
@@ -109,13 +114,17 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
             "Requested phases = $allPhases\n" +
             "Completed phases = $completedPhases"
           }
-          for (completedPhase in completedPhases) {
-            val phasedModelClass = TestPhasedModel.getModelClass(completedPhase)
-            val phasedModel = resolverContext.getProjectModel(projectModel, phasedModelClass)
-            Assertions.assertNotNull(phasedModel) {
-              "Expected model for the $completedPhase on the $phase completion.\n" +
-              "Requested phases = $allPhases\n" +
-              "Completed phases = $completedPhases"
+          for (buildModel in resolverContext.allBuilds) {
+            for (projectModel in buildModel.projects) {
+              for (completedPhase in completedPhases) {
+                val phasedModelClass = TestPhasedModel.getModelClass(completedPhase)
+                val phasedModel = resolverContext.getProjectModel(projectModel, phasedModelClass)
+                Assertions.assertNotNull(phasedModel) {
+                  "Expected model for the $completedPhase on the $phase completion.\n" +
+                  "Requested phases = $allPhases\n" +
+                  "Completed phases = $completedPhases"
+                }
+              }
             }
           }
         }
@@ -135,15 +144,16 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      createSettingsFile("")
+      initMultiModuleProject()
       importProject()
+      assertMultiModuleProjectStructure()
 
       projectLoadingAssertion.assertListenerFailures()
       buildCompletionAssertion.assertListenerFailures()
       phaseCompletionAssertion.assertListenerFailures()
       phaseCompletionAssertion.assertListenerState(allPhases.size) {
         "All requested phases should be completed.\n" +
-        "Requested phases = $allPhases\n"
+        "Requested phases = $allPhases\n" +
         "Completed phases = $completedPhases"
       }
     }
@@ -158,7 +168,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         throw ProcessCanceledException()
       }
 
-      createSettingsFile("")
+      initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
         isSyncCancelled.set(true)
       })
@@ -182,7 +192,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         isBuildFinished.set(true)
       }
 
-      createSettingsFile("")
+      initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
         isSyncCancelled.set(true)
       })
@@ -232,7 +242,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         isBuildCompleted.set(true)
       }
 
-      createSettingsFile("")
+      initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
         isSyncCancelled.set(true)
       })
