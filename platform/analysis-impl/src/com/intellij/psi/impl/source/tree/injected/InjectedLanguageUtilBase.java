@@ -65,7 +65,7 @@ public class InjectedLanguageUtilBase {
   }
 
   private static final Key<List<? extends TokenInfo>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
-  public static List<? extends TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
+  static List<? extends TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
   static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<? extends TokenInfo> tokens) {
@@ -99,10 +99,10 @@ public class InjectedLanguageUtilBase {
     return sb.toString();
   }
 
-  public record TokenInfo(@NotNull IElementType type,
-                          @NotNull ProperTextRange rangeInsideInjectionHost,
-                          int shredIndex,
-                          TextAttributesKey @NotNull [] textAttributesKeys) {
+  record TokenInfo(@NotNull IElementType type,
+                   @NotNull ProperTextRange rangeInsideInjectionHost,
+                   int shredIndex,
+                   @NotNull TextAttributesKey @NotNull [] textAttributesKeys) {
   }
 
   public static Place getShreds(@NotNull PsiFile injectedFile) {

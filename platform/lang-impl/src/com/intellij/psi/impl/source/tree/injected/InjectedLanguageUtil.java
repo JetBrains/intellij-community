@@ -14,11 +14,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * @deprecated Use {@link InjectedLanguageManager} instead
@@ -321,5 +324,30 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
       ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class).disposeEditorFor(injectedDocument);
     }
     return runnable;
+  }
+
+  public static void processTokens(@NotNull PsiFile injectedPsi,
+                                   @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
+                                   @NotNull BiConsumer<? super @NotNull TextRange, ? super @NotNull TextAttributesKey @NotNull []> consumer) {
+    List<? extends InjectedLanguageUtilBase.TokenInfo> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
+    if (tokens == null) return;
+
+    int shredIndex = -1;
+    int injectionHostTextRangeStart = -1;
+    for (InjectedLanguageUtil.TokenInfo token : tokens) {
+      ProgressManager.checkCanceled();
+      TextRange range = token.rangeInsideInjectionHost();
+      if (range.getLength() == 0) continue;
+      if (shredIndex != token.shredIndex()) {
+        shredIndex = token.shredIndex();
+        PsiLanguageInjectionHost.Shred shred = places.get(shredIndex);
+        PsiLanguageInjectionHost host = shred.getHost();
+        if (host == null) return;
+        injectionHostTextRangeStart = host.getTextRange().getStartOffset();
+      }
+      TextRange hostRange = range.shiftRight(injectionHostTextRangeStart);
+
+      consumer.accept(hostRange, token.textAttributesKeys());
+    }
   }
 }
