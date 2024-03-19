@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
+import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -32,7 +33,7 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                                 this
                             )
 
-                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + NAME_SUGGESTER.suggestExpressionNames(initializer))
+                            return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestExpressionNames(initializer))
                                 .filter(nameValidator)
                                 .toList()
                         }
@@ -53,7 +54,7 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                             this
                         )
-                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
+                        return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
                             .filter(nameValidator)
                             .toList()
                     }
