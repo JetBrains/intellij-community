@@ -12,6 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows a custom language plugin to define annotations for files in that language.
+ * To get hold of {@link AnnotationHolder} in your code, you should
+ * <ol>
+ * <li>create and register your own {@link Annotator}
+ * (See <a href="https://plugins.jetbrains.com/docs/intellij/annotator.html">Annotator Guide</a> on how to create your own {@link Annotator}), and then</li>
+ * <li>use the argument passed to its {@link Annotator#annotate(PsiElement, AnnotationHolder)} method.</li>
+ * </ol>
  *
  * @author max
  * @see Annotator#annotate(PsiElement, AnnotationHolder)
