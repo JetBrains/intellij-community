@@ -556,15 +556,15 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
         LOG.info("Crash file $file is too big to report")
         return@firstNotNullOfOrNull null
       }
-      val content = Files.readString(file.toPath())
-      // TODO: maybe we need to notify the user
-      // see https://youtrack.jetbrains.com/issue/IDEA-258128
-      if (content.contains("fuck_the_regulations")) {
-        return@firstNotNullOfOrNull null
-      }
-      return@firstNotNullOfOrNull content
+      return@firstNotNullOfOrNull Files.readString(file.toPath())
     }
   }.getOrLogException(LOG)
+
+  // TODO: maybe we need to notify the user
+  // see https://youtrack.jetbrains.com/issue/IDEA-258128
+  if (javaCrashContent != null && javaCrashContent.contains("fuck_the_regulations")) {
+    return null
+  }
 
   val jbrErrContent = runCatching {
     findExtraLogFile(pid, lastModified)?.let { Files.readString(it) }
