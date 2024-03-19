@@ -480,7 +480,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
           .replace("<b><code>", "<b>")
           .replace("<code>", "<b>")
           .replace("</code></b>", "</b>")
-          .replace("</code>", "</b>");;
+          .replace("</code>", "</b>");
         int refStart = conflictDescription.indexOf(CODE_START);
         while (refStart > 0) {
           // workaround for UsageViewTreeCellRenderer adding a space after the first chunk
