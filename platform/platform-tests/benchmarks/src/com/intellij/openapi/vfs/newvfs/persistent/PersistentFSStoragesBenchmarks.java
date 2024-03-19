@@ -369,7 +369,7 @@ public class PersistentFSStoragesBenchmarks {
       int consumer = 1;
       int offset = recordSizeBytes * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
-        consumer += UNSAFE.getIntVolatile(null, bufferAddress + offset + recordField * Integer.BYTES);
+        consumer += UNSAFE.getIntVolatile(null, bufferAddress + offset + (long)recordField * Integer.BYTES);
       }
       return consumer;
     }
@@ -433,7 +433,7 @@ public class PersistentFSStoragesBenchmarks {
       int consumer = 1;
       int offset = recordSizeBytes * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
-        consumer += UNSAFE.getIntVolatile(null, bufferAddress + offset + recordField * Integer.BYTES);
+        consumer += UNSAFE.getIntVolatile(null, bufferAddress + offset + (long)recordField * Integer.BYTES);
       }
       return consumer;
     }
@@ -504,8 +504,8 @@ public class PersistentFSStoragesBenchmarks {
       consumer += storage.getParent(recordId);
       consumer += storage.getContentRecordId(recordId);
       consumer += storage.getAttributeRecordId(recordId);
-      consumer += storage.getLength(recordId);
-      consumer += storage.getTimestamp(recordId);
+      consumer += (int)storage.getLength(recordId);
+      consumer += (int)storage.getTimestamp(recordId);
       consumer += storage.getFlags(recordId);
       consumer += storage.getModCount(recordId);
       return consumer;
