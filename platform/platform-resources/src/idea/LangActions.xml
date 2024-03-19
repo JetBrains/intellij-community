@@ -120,6 +120,8 @@
       <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
     </action>
 
+    <group id="ShowUsagesPinGroup"/>
+
     <group id="FindUsagesMenuGroup" popup="true">
       <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
       <action id="ShowSettingsAndFindUsages" class="com.intellij.find.actions.FindUsagesAction$ShowSettingsAndFindUsages"/>
