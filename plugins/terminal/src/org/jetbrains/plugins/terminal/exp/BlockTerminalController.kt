@@ -7,6 +7,7 @@ import com.intellij.find.FindUtil
 import com.intellij.find.SearchSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -90,7 +91,7 @@ class BlockTerminalController(
     val model = session.model
     model.isCommandRunning = false
 
-    invokeLater(getDisposed()) {
+    invokeLater(getDisposed(), ModalityState.any()) {
       promptController.reset()
       promptController.promptIsVisible = true
     }
