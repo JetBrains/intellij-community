@@ -1819,8 +1819,8 @@
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NullableProblems" bundle="messages.JavaBundle" key="inspection.nullable.problems.display.name"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NullableStuffInspection" />
-    <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="UnsatisfiedRange" bundle="messages.JavaAnalysisBundle" key="inspection.unsatisfied.range.display.name"
-                     groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java" language="JAVA" shortName="UnsatisfiedRange" bundle="messages.JavaAnalysisBundle" key="inspection.unsatisfied.range.display.name"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.UnsatisfiedRangeInspection" />
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NotNullFieldNotInitialized" bundle="messages.JavaBundle" key="inspection.notnull.field.not.initialized.display.name"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
