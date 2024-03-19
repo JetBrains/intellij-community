@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.AnalyzerStatus
 import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColorUtil
@@ -119,10 +118,8 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       val project = e.project ?: return
 
       val comp: JComponent =  e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
-      val panel = InspectionsSettingContent(analyzerGetter, project).panel
 
-      JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(panel, panel).createPopup().show(RelativePoint.getSouthWestOf(comp))
+      InspectionsSettingContentService.getInstance().showPopup(analyzerGetter, project, RelativePoint.getSouthWestOf(comp))
     }
 
     override fun update(e: AnActionEvent) {

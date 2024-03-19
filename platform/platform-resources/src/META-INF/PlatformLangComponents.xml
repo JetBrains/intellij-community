@@ -151,6 +151,9 @@
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
+
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
