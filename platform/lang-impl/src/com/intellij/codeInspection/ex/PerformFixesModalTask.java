@@ -60,7 +60,16 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean isDone() {
-    return myPackIdx > myDescriptorPacks.size() - 1;
+    int curPackIdx = myPackIdx;
+    while (curPackIdx <= myDescriptorPacks.size() - 1) {
+      CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
+      if (descriptors.length != 0)
+        return false;
+
+      curPackIdx ++;
+    }
+
+    return true;
   }
 
   @Override
@@ -158,14 +167,26 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   }
 
   private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
-    CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
-    CommonProblemDescriptor descriptor = descriptors[myDescriptorIdx++];
     boolean shouldDoPostponedOperations = false;
-    if (myDescriptorIdx == descriptors.length) {
-      shouldDoPostponedOperations = true;
-      myPackIdx++;
-      myDescriptorIdx = 0;
+    while(true) {
+      CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
+      if (myDescriptorIdx == descriptors.length) {
+        // Possible only in case of empty descriptors
+        shouldDoPostponedOperations = true;
+        myPackIdx++;
+        myDescriptorIdx = 0;
+        assert myPackIdx <= myDescriptorPacks.size() - 1;
+        continue;
+      }
+
+      CommonProblemDescriptor descriptor = descriptors[myDescriptorIdx++];
+      if (myDescriptorIdx == descriptors.length) {
+        shouldDoPostponedOperations = true;
+        myPackIdx++;
+        myDescriptorIdx = 0;
+        assert myPackIdx <= myDescriptorPacks.size() - 1;
+      }
+      return Pair.create(descriptor, shouldDoPostponedOperations);
     }
-    return Pair.create(descriptor, shouldDoPostponedOperations);
   }
 }
