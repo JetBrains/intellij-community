@@ -55,6 +55,7 @@ public fun RadioButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = JewelTheme.radioButtonStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
     RadioButtonImpl(
         selected = selected,
@@ -65,6 +66,7 @@ public fun RadioButton(
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
+        verticalAlignment = verticalAlignment,
         content = null,
     )
 }
@@ -80,6 +82,7 @@ public fun RadioButtonRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = JewelTheme.radioButtonStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
     RadioButtonImpl(
         selected = selected,
@@ -90,6 +93,7 @@ public fun RadioButtonRow(
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
+        verticalAlignment = verticalAlignment,
     ) {
         Text(text)
     }
@@ -105,6 +109,7 @@ public fun RadioButtonRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = JewelTheme.radioButtonStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable RowScope.() -> Unit,
 ) {
     RadioButtonImpl(
@@ -116,6 +121,7 @@ public fun RadioButtonRow(
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
+        verticalAlignment = verticalAlignment,
         content = content,
     )
 }
@@ -130,6 +136,7 @@ private fun RadioButtonImpl(
     interactionSource: MutableInteractionSource,
     style: RadioButtonStyle,
     textStyle: TextStyle,
+    verticalAlignment: Alignment.Vertical,
     content: (@Composable RowScope.() -> Unit)?,
 ) {
     var radioButtonState by remember(interactionSource) {
@@ -197,7 +204,7 @@ private fun RadioButtonImpl(
         Row(
             wrapperModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = verticalAlignment,
         ) {
             Box(radioButtonBoxModifier, contentAlignment = Alignment.Center) {
                 RadioButtonImage(radioButtonPainter)
