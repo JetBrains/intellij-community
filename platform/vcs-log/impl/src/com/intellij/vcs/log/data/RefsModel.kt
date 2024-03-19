@@ -18,10 +18,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, heads: Set<
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
   init {
-    val commitIds = storage.getCommitIds(heads)
-    for (head in heads) {
-      val commitId = commitIds[head] ?: continue
-
+    storage.getCommitIds(heads).forEach { (head, commitId) ->
       val root = commitId.root
       rootForHead.put(head, root)
 
