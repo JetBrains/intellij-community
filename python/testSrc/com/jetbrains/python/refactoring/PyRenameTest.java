@@ -408,6 +408,11 @@ public class PyRenameTest extends PyTestCase {
     doTest("Renamed");
   }
 
+  // PY-17733
+  public void testRenameClassAttributeDefinedInClassMethod() {
+    doTest("renamed");
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }

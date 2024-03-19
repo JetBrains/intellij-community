@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -294,7 +295,21 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
   @Nullable
   List<String> getSlots(@Nullable TypeEvalContext context);
 
+  /**
+   * Process all declarations appearing at the syntactic level of this class' body, in particular class attributes, both
+   * assignments and type declarations, methods, and nested classes.
+   */
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
+
+  /**
+   * Process all definitions that can be accessed as attributes of this class.
+   * These include immediate class-level declarations scanned by {@link #processClassLevelDeclarations(PsiScopeProcessor)} and class
+   * object's attributes initialized in methods decorated with {@code @classmethod}.
+   */
+  @ApiStatus.Internal
+  default boolean processClassObjectAttributes(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
+    return processClassLevelDeclarations(processor);
+  }
 
   boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
 
