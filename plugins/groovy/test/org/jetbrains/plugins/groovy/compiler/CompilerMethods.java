@@ -39,7 +39,7 @@ public interface CompilerMethods {
 
     ExecutionEnvironment environment = builder.build(descriptor -> {
       if (descriptor == null) {
-        throw new AssertionError((Object)"Null descriptor!");
+        throw new AssertionError("Null descriptor!");
       }
       disposeOnTearDown(descriptor);
       final ProcessHandler handler = descriptor.getProcessHandler();
