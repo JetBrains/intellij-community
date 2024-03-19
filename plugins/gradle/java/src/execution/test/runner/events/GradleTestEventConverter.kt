@@ -5,13 +5,13 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.groovy.ext.spock.isSpockSpecification
 
@@ -70,7 +70,7 @@ internal class GradleTestEventConverter(
   private val isSpockTestMethod: Boolean by lazy {
     isTestMethod
     && isEnabledGroovyPlugin
-    && runBlocking {
+    && runBlockingMaybeCancellable {
       readAction {
         DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
           val scope = GlobalSearchScope.allScope(project)
