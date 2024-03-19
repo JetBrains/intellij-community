@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import java.awt.Color
 
 @Suppress("ConstPropertyName")
@@ -64,5 +65,11 @@ object TerminalUi {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       backgroundColor = defaultBackground(this)
     })
+  }
+
+  fun promptSeparatorColor(editor: Editor): Color {
+    return createColorBoundToColorKey(BlockTerminalColors.PROMPT_SEPARATOR_COLOR, editor) {
+      JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
+    }
   }
 }

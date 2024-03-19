@@ -215,6 +215,8 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                           BlockTerminalColors.INACTIVE_SELECTED_BLOCK_STROKE_COLOR, ColorDescriptor.Kind.FOREGROUND),
       new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.errorBlockBorder"),
                           BlockTerminalColors.ERROR_BLOCK_STROKE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.promptSeparator"),
+                          BlockTerminalColors.PROMPT_SEPARATOR_COLOR, ColorDescriptor.Kind.FOREGROUND),
     };
   }
 
