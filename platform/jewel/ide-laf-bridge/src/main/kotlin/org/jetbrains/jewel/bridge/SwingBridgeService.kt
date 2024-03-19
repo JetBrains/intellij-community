@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import kotlinx.coroutines.CoroutineScope
@@ -49,20 +50,21 @@ internal class SwingBridgeService(scope: CoroutineScope) {
         val componentStyling: ComponentStyling,
     ) {
 
-        public companion object {
+        companion object {
 
             val DEFAULT = run {
-                val themeDefinition = createBridgeThemeDefinition(TextStyle.Default)
+                val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
+                val themeDefinition = createBridgeThemeDefinition(textStyle)
 
                 BridgeThemeData(
                     themeDefinition = themeDefinition,
                     componentStyling =
                     createBridgeComponentStyling(
                         theme = themeDefinition,
-                        textFieldTextStyle = TextStyle.Default,
-                        textAreaTextStyle = TextStyle.Default,
-                        dropdownTextStyle = TextStyle.Default,
-                        linkTextStyle = TextStyle.Default,
+                        textFieldTextStyle = textStyle,
+                        textAreaTextStyle = textStyle,
+                        dropdownTextStyle = textStyle,
+                        linkTextStyle = textStyle,
                     ),
                 )
             }

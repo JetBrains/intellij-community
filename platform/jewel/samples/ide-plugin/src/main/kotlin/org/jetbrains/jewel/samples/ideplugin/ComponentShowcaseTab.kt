@@ -47,6 +47,7 @@ import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
+import org.jetbrains.jewel.ui.component.Typography
 
 @Composable
 internal fun ComponentShowcaseTab() {
@@ -78,6 +79,7 @@ private fun RowScope.ColumnOne() {
             Modifier.onActivated {
                 activated = it
             },
+            style = Typography.h3TextStyle()
         )
 
         Row(
