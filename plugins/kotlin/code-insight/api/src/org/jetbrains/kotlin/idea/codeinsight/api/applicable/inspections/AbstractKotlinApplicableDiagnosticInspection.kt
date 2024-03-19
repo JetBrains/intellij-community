@@ -20,6 +20,4 @@ interface AbstractKotlinApplicableDiagnosticInspection<
      * The type of the [KtDiagnosticWithPsi] which should be filtered for.
      */
     fun getDiagnosticType(): KClass<DIAGNOSTIC>
-
-    override fun isApplicableByPsi(element: ELEMENT): Boolean = true
 }

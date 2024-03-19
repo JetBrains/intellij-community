@@ -7,15 +7,19 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isArrayOfFunction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-internal class ReplaceArrayOfWithLiteralInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
+internal class ReplaceArrayOfWithLiteralInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
 
-    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    override fun createQuickFix(
+        element: KtCallExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.with.array.literal.fix.family.name")
@@ -44,7 +48,10 @@ internal class ReplaceArrayOfWithLiteralInspection : AbstractKotlinApplicableIns
         }
     }
 
-    override fun getProblemDescription(element: KtCallExpression): String {
+    override fun getProblemDescription(
+        element: KtCallExpression,
+        context: Unit,
+    ): String {
         val calleeExpression = element.calleeExpression as KtNameReferenceExpression
         return KotlinBundle.message("0.call.should.be.replaced.with.array.literal", calleeExpression.getReferencedName())
     }
@@ -81,5 +88,6 @@ internal class ReplaceArrayOfWithLiteralInspection : AbstractKotlinApplicableIns
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtCallExpression): Boolean = element.isArrayOfFunction()
+    override fun prepareContext(element: KtCallExpression): Unit? =
+        element.isArrayOfFunction().asUnit
 }

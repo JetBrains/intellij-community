@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -13,7 +12,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
@@ -26,13 +25,14 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 
 internal class UseExpressionBodyInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtDeclarationWithBody, UseExpressionBodyInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtDeclarationWithBody, UseExpressionBodyInspection.Context>() {
 
     data class Context(val subject: String, val highlightType: ProblemHighlightType, val requireType: Boolean = false)
 
     override fun getProblemDescription(
-        element: KtDeclarationWithBody, context: Context
-    ): @InspectionMessage String = KotlinBundle.message("use.expression.body.instead.of.0", context.subject)
+        element: KtDeclarationWithBody,
+        context: Context,
+    ): String = KotlinBundle.message("use.expression.body.instead.of.0", context.subject)
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -70,8 +70,8 @@ internal class UseExpressionBodyInspection :
     ): ProblemHighlightType = context.highlightType
 
     context(KtAnalysisSession)
-    override fun prepareContext(declaration: KtDeclarationWithBody): Context? {
-        val valueStatement = declaration.findValueStatement() ?: return null
+    override fun prepareContext(element: KtDeclarationWithBody): Context? {
+        val valueStatement = element.findValueStatement() ?: return null
         val requireType = valueStatement.getKtType()?.isNothing == true
         return when {
             valueStatement !is KtReturnExpression -> Context(KotlinBundle.message("block.body"), INFORMATION)

@@ -90,8 +90,5 @@ sealed class KotlinModCommandAction<E : PsiElement, C : Any> private constructor
             context: ActionContext,
             element: E,
         ): C? = getElementContext(element)
-
-        protected inline val Boolean.asUnit: Unit?
-            get() = if (this) Unit else null
     }
 }

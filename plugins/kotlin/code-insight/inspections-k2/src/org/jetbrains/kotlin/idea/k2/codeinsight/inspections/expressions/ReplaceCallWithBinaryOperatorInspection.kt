@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class ReplaceCallWithBinaryOperatorInspection :
-  AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceCallWithBinaryOperatorInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, ReplaceCallWithBinaryOperatorInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
  * contingent on a few complications. See Steps 3.1 and 3.2 below.
  */
 internal class WhenWithOnlyElseInspection
-    : AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
+    : KotlinApplicableInspectionBase.Simple<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -134,7 +134,12 @@ internal class WhenWithOnlyElseInspection
      *  Additionally, track if _we_ inserted a call to `kotlin.run`. In that case, we will attempt to shorten the reference to `run`,
      *  once we have done the actual transformation in Step 3.2 below. This preserves explicit, user-supplied calls to `kotlin.run`.
      */
-    private fun rewriteElseBranch(context: Context, elseExpression: KtExpression, factory: KtPsiFactory, updater: ModPsiUpdater): Pair<KtExpression, Boolean>? {
+    private fun rewriteElseBranch(
+        context: Context,
+        elseExpression: KtExpression,
+        factory: KtPsiFactory,
+        updater: ModPsiUpdater
+    ): Pair<KtExpression, Boolean>? {
         val info = context.subjectVariableInfo
 
         if (info?.initializer == null) {

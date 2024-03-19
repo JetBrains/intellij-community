@@ -9,7 +9,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canConvertToStringTemplate
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class ConvertToStringTemplateInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

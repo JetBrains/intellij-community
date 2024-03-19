@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ReplaceGetOrSetInspectionUtils
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class ReplaceGetOrSetInspection :
-  AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -41,7 +41,10 @@ internal class ReplaceGetOrSetInspection :
         }
     }
 
-    data class Context(val calleeName: Name, val problemHighlightType: ProblemHighlightType)
+    data class Context(
+        val calleeName: Name,
+        val problemHighlightType: ProblemHighlightType,
+    )
 
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context): String =
         KotlinBundle.message("explicit.0.call", context.calleeName)
@@ -53,8 +56,10 @@ internal class ReplaceGetOrSetInspection :
         return listOfNotNull(textRange)
     }
 
-    override fun getProblemHighlightType(element: KtDotQualifiedExpression, context: Context): ProblemHighlightType =
-        context.problemHighlightType
+    override fun getProblemHighlightType(
+        element: KtDotQualifiedExpression,
+        context: Context
+    ): ProblemHighlightType = context.problemHighlightType
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         ReplaceGetOrSetInspectionUtils.looksLikeGetOrSetOperatorCall(element)

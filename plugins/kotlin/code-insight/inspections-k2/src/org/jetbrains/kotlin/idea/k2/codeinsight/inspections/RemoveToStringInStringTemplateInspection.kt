@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.name.CallableId
@@ -21,9 +22,8 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 private val TO_STRING_CALLABLE_ID = CallableId(StandardClassIds.Any, OperatorNameConventions.TO_STRING)
 
-internal class RemoveToStringInStringTemplateInspection :
-    AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(),
-    CleanupLocalInspectionTool {
+internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, Unit>(),
+                                                          CleanupLocalInspectionTool {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -35,7 +35,10 @@ internal class RemoveToStringInStringTemplateInspection :
         }
     }
 
-    override fun getProblemDescription(element: KtDotQualifiedExpression): String = KotlinBundle.message("remove.to.string.fix.text")
+    override fun getProblemDescription(
+        element: KtDotQualifiedExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("remove.to.string.fix.text")
 
     override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
         ApplicabilityRange.single(element) { element.selectorExpression }
@@ -49,13 +52,17 @@ internal class RemoveToStringInStringTemplateInspection :
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtDotQualifiedExpression): Boolean {
-        val call = element.resolveCall()?.successfulFunctionCallOrNull() ?: return false
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
+        val call = element.resolveCall()?.successfulFunctionCallOrNull() ?: return null
         val allOverriddenSymbols = listOf(call.symbol) + call.symbol.getAllOverriddenSymbols()
         return allOverriddenSymbols.any { it.callableIdIfNonLocal == TO_STRING_CALLABLE_ID }
+            .asUnit
     }
 
-    override fun createQuickFix(element: KtDotQualifiedExpression) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    override fun createQuickFix(
+        element: KtDotQualifiedExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.to.string.fix.text")

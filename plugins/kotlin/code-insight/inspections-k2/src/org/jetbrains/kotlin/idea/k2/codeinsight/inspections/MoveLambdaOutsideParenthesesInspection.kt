@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
@@ -20,16 +20,22 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
+internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
 
-    override fun getProblemDescription(element: KtCallExpression): @InspectionMessage String {
-        return KotlinBundle.message("lambda.argument.0.be.moved.out",
-                             if (element.isComplexCallWithLambdaArgument()) 0 else 1)
-    }
+    override fun getProblemDescription(
+        element: KtCallExpression,
+        context: Unit,
+    ): String = KotlinBundle.message(
+        "lambda.argument.0.be.moved.out",
+        if (element.isComplexCallWithLambdaArgument()) 0 else 1,
+    )
 
-    override fun getProblemHighlightType(element: KtCallExpression): ProblemHighlightType {
-        return if (element.isComplexCallWithLambdaArgument()) ProblemHighlightType.INFORMATION else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    }
+    override fun getProblemHighlightType(
+        element: KtCallExpression,
+        context: Unit,
+    ): ProblemHighlightType =
+        if (element.isComplexCallWithLambdaArgument()) ProblemHighlightType.INFORMATION
+        else super.getProblemHighlightType(element, context)
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -43,7 +49,14 @@ internal class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicable
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
 
-    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtCallExpression) {
+    }
+
+    override fun createQuickFix(
+        element: KtCallExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("move.lambda.argument.out.of.parentheses")

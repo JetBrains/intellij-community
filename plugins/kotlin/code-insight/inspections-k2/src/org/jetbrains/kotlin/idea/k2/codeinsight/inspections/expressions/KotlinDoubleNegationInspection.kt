@@ -7,14 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspection<KtPrefixExpression>() {
+internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.Simple<KtPrefixExpression, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -26,17 +27,25 @@ internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspecti
         }
     }
 
-    override fun getProblemDescription(element: KtPrefixExpression): String =
-        KotlinBundle.message("inspection.kotlin.double.negation.display.name")
+    override fun getProblemDescription(
+        element: KtPrefixExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.kotlin.double.negation.display.name")
 
     override fun isApplicableByPsi(element: KtPrefixExpression): Boolean =
         element.operationToken == KtTokens.EXCL
                 && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtPrefixExpression): Boolean = element.getKtType()?.isBoolean == true
+    override fun prepareContext(element: KtPrefixExpression): Unit? =
+        element.getKtType()
+            ?.isBoolean
+            ?.asUnit
 
-    override fun createQuickFix(element: KtPrefixExpression) = object : KotlinModCommandQuickFix<KtPrefixExpression>() {
+    override fun createQuickFix(
+        element: KtPrefixExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtPrefixExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.kotlin.double.negation.action.name")

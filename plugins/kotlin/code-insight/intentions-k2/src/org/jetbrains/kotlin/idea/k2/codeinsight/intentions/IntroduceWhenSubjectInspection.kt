@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.getSubjectToIntroduce
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 internal class IntroduceWhenSubjectInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, IntroduceWhenSubjectInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtWhenExpression, IntroduceWhenSubjectInspection.Context>() {
 
     data class Context(
         val subjectedExpression: KtWhenExpression,
@@ -27,8 +27,10 @@ internal class IntroduceWhenSubjectInspection :
         val subject: KtExpression,
     )
 
-    override fun getProblemDescription(element: KtWhenExpression, context: Context): String =
-        KotlinBundle.message("introduce.0.as.subject.0.when", context.subject.text)
+    override fun getProblemDescription(
+        element: KtWhenExpression,
+        context: Context,
+    ): String = KotlinBundle.message("introduce.0.as.subject.0.when", context.subject.text)
 
     override fun createQuickFix(
         element: KtWhenExpression,

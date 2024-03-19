@@ -6,15 +6,14 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
-internal class ImplicitThisInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtExpression, ImplicitReceiverInfo>() {
+internal class ImplicitThisInspection : KotlinApplicableInspectionBase.Simple<KtExpression, ImplicitReceiverInfo>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

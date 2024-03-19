@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.FoldInitializerAndIfExpressionData
 import org.jetbrains.kotlin.idea.codeInsight.joinLines
 import org.jetbrains.kotlin.idea.codeInsight.prepareData
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -25,13 +25,14 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 internal class FoldInitializerAndIfToElvisInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtIfExpression, FoldInitializerAndIfExpressionData>() {
+    KotlinApplicableInspectionBase.Simple<KtIfExpression, FoldInitializerAndIfExpressionData>() {
 
-    override fun getProblemHighlightType(element: KtIfExpression, context: FoldInitializerAndIfExpressionData): ProblemHighlightType {
-        return when (element.condition) {
-            is KtBinaryExpression -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-            else -> ProblemHighlightType.INFORMATION
-        }
+    override fun getProblemHighlightType(
+        element: KtIfExpression,
+        context: FoldInitializerAndIfExpressionData,
+    ): ProblemHighlightType = when (element.condition) {
+        is KtBinaryExpression -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        else -> ProblemHighlightType.INFORMATION
     }
 
     context(KtAnalysisSession)

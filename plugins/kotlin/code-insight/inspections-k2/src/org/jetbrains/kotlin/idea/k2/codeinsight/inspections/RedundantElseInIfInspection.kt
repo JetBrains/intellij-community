@@ -7,10 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.psi.*
@@ -19,9 +20,12 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<KtIfExpression>() {
+internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression, Unit>() {
 
-    override fun createQuickFix(element: KtIfExpression) = object : KotlinModCommandQuickFix<KtIfExpression>() {
+    override fun createQuickFix(
+        element: KtIfExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtIfExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.else.fix.text")
@@ -56,7 +60,10 @@ internal class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<
         }
     }
 
-    override fun getProblemDescription(element: KtIfExpression): String = KotlinBundle.message("redundant.else")
+    override fun getProblemDescription(
+        element: KtIfExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("redundant.else")
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -80,6 +87,10 @@ internal class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<
         element.lastSingleElseKeyword() ?: return false
 
         return element.hasRedundantElse()
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtIfExpression) {
     }
 
     private fun KtExpression.isElseIf() = parent.node.elementType == KtNodeTypes.ELSE

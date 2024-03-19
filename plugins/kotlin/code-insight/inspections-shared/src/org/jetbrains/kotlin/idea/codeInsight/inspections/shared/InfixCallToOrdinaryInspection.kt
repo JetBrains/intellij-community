@@ -5,17 +5,24 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-internal class InfixCallToOrdinaryInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>() {
+internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
 
-    override fun getProblemDescription(element: KtBinaryExpression) = KotlinBundle.message("replace.infix.call.with.ordinary.call")
+    override fun getProblemDescription(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = KotlinBundle.message("replace.infix.call.with.ordinary.call")
 
-    override fun createQuickFix(element: KtBinaryExpression) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -41,6 +48,10 @@ internal class InfixCallToOrdinaryInspection : AbstractKotlinApplicableInspectio
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         return !(element.operationToken != KtTokens.IDENTIFIER || element.left == null || element.right == null)
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtBinaryExpression) {
     }
 }
 

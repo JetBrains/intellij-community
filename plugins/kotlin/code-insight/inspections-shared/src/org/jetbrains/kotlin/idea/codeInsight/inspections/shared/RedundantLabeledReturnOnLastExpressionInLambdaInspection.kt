@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.getParentLambdaLabelName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
@@ -22,10 +22,13 @@ import org.jetbrains.kotlin.psi.returnExpressionVisitor
  * - [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1LocalInspectionTestGenerated.RedundantLabeledReturnOnLastExpressionInLambda]
  * - [org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2LocalInspectionTestGenerated.RedundantLabeledReturnOnLastExpressionInLambda]
  */
-internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection : AbstractKotlinApplicableInspection<KtReturnExpression>() {
+internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection :
+    KotlinApplicableInspectionBase.Simple<KtReturnExpression, Unit>() {
 
-    override fun getProblemDescription(element: KtReturnExpression): @InspectionMessage String =
-        KotlinBundle.message("inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name")
+    override fun getProblemDescription(
+        element: KtReturnExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name")
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -50,7 +53,14 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection : Abstra
         return listOfNotNull(labelRange)
     }
 
-    override fun createQuickFix(element: KtReturnExpression): KotlinModCommandQuickFix<KtReturnExpression> {
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtReturnExpression) {
+    }
+
+    override fun createQuickFix(
+        element: KtReturnExpression,
+        context: Unit,
+    ): KotlinModCommandQuickFix<KtReturnExpression> {
         val smartPointer = element.createSmartPointer()
 
         return object : KotlinModCommandQuickFix<KtReturnExpression>() {

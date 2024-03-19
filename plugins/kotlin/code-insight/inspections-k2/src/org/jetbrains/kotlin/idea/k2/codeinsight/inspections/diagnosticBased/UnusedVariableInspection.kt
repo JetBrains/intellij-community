@@ -11,8 +11,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
@@ -20,9 +21,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.renameToUnderscore
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
 
-internal class UnusedVariableInspection
-    : AbstractKotlinApplicableInspection<KtNamedDeclaration>(),
-      AbstractKotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable> {
+internal class UnusedVariableInspection : KotlinApplicableInspectionBase.Simple<KtNamedDeclaration, Unit>(),
+                                          AbstractKotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable> {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -34,8 +34,10 @@ internal class UnusedVariableInspection
         }
     }
 
-    override fun getProblemDescription(element: KtNamedDeclaration): String =
-        KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
+    override fun getProblemDescription(
+        element: KtNamedDeclaration,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
 
     override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
 
@@ -43,16 +45,20 @@ internal class UnusedVariableInspection
         ApplicabilityRanges.declarationName(element)
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtNamedDeclaration): Boolean {
+    override fun prepareContext(element: KtNamedDeclaration): Unit? {
         val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
         val suitableDiagnostics = diagnostics.filterIsInstance(getDiagnosticType().java)
-        val diagnostic = suitableDiagnostics.firstOrNull() ?: return false
-        val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return false
-        val typeReference = ktProperty.typeReference ?: return true
-        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference)
+        val diagnostic = suitableDiagnostics.firstOrNull() ?: return null
+        val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return null
+        val typeReference = ktProperty.typeReference ?: return Unit
+        return (!ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference))
+            .asUnit
     }
 
-    override fun createQuickFix(element: KtNamedDeclaration): KotlinModCommandQuickFix<KtNamedDeclaration> {
+    override fun createQuickFix(
+        element: KtNamedDeclaration,
+        context: Unit,
+    ): KotlinModCommandQuickFix<KtNamedDeclaration> {
         val smartPointer = element.createSmartPointer()
 
         return object : KotlinModCommandQuickFix<KtNamedDeclaration>() {

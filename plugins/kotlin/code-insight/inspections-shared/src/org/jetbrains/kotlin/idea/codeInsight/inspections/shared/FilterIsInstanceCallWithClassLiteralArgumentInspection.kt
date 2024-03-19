@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
@@ -21,8 +22,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 private val FILTER_IS_INSTANCE_CALLABLE_ID = CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("filterIsInstance"))
 
-internal class FilterIsInstanceCallWithClassLiteralArgumentInspection :
-    AbstractKotlinApplicableInspection<KtCallExpression>(), CleanupLocalInspectionTool {
+internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>(),
+                                                                        CleanupLocalInspectionTool {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -34,23 +35,32 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection :
         }
     }
 
-    override fun getProblemDescription(element: KtCallExpression): String =
-        KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.display.name")
+    override fun getProblemDescription(
+        element: KtCallExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.display.name")
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "filterIsInstance" && element.valueArguments.singleOrNull()?.isClassLiteral() == true
 
-    context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtCallExpression): Boolean {
-        if (element.resolveToFunctionSymbol()?.callableIdIfNonLocal != FILTER_IS_INSTANCE_CALLABLE_ID) return false
+    context(KtAnalysisSession) override fun prepareContext(element: KtCallExpression): Unit? {
+        if (element.resolveToFunctionSymbol()?.callableIdIfNonLocal != FILTER_IS_INSTANCE_CALLABLE_ID) return null
 
-        val classLiteral = element.valueArguments.singleOrNull()?.classLiteral() ?: return false
-        val classNameReference = classLiteral.receiverExpression?.getQualifiedElementSelector() ?: return false
-        val classSymbol = classNameReference.resolveToClassSymbol() ?: return false
-        return classSymbol.typeParameters.isEmpty()
+        return element.valueArguments
+            .singleOrNull()
+            ?.classLiteral()
+            ?.receiverExpression
+            ?.getQualifiedElementSelector()
+            ?.resolveToClassSymbol()
+            ?.typeParameters
+            ?.isEmpty()
+            ?.asUnit
     }
 
-    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    override fun createQuickFix(
+        element: KtCallExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.quick.fix.text")
@@ -81,7 +91,7 @@ private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
 
 context(KtAnalysisSession)
 private fun KtElement.resolveToClassSymbol(): KtNamedClassOrObjectSymbol? =
-  mainReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol
+    mainReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol
 
 context(KtAnalysisSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KtFunctionSymbol? =

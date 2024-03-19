@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
@@ -24,7 +25,7 @@ private val COLLECTION_COUNT_CALLABLE_ID = CallableId(StandardNames.COLLECTIONS_
 private val COLLECTION_CLASS_IDS = setOf(StandardClassIds.Collection, StandardClassIds.Array, StandardClassIds.Map) +
         StandardClassIds.elementTypeByPrimitiveArrayType.keys + StandardClassIds.unsignedArrayTypeByElementType.keys
 
-internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
+internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -36,20 +37,26 @@ internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicab
         }
     }
 
-    override fun getProblemDescription(element: KtCallExpression): String =
-        KotlinBundle.message("inspection.replace.collection.count.with.size.display.name")
+    override fun getProblemDescription(
+        element: KtCallExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.replace.collection.count.with.size.display.name")
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "count" && element.valueArguments.isEmpty()
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtCallExpression): Boolean {
-        val functionSymbol = element.resolveToFunctionSymbol() ?: return false
-        val receiverClassId = (functionSymbol.receiverType as? KtNonErrorClassType)?.classId ?: return false
-        return functionSymbol.callableIdIfNonLocal == COLLECTION_COUNT_CALLABLE_ID && receiverClassId in COLLECTION_CLASS_IDS
+    override fun prepareContext(element: KtCallExpression): Unit? {
+        val functionSymbol = element.resolveToFunctionSymbol() ?: return null
+        val receiverClassId = (functionSymbol.receiverType as? KtNonErrorClassType)?.classId ?: return null
+        return (functionSymbol.callableIdIfNonLocal == COLLECTION_COUNT_CALLABLE_ID
+                && receiverClassId in COLLECTION_CLASS_IDS).asUnit
     }
 
-    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    override fun createQuickFix(
+        element: KtCallExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")

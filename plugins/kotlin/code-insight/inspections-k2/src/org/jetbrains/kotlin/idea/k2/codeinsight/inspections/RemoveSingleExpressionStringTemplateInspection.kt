@@ -7,12 +7,12 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.*
 
 internal class RemoveSingleExpressionStringTemplateInspection :
-  AbstractKotlinApplicableInspectionWithContext<KtStringTemplateExpression, RemoveSingleExpressionStringTemplateInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtStringTemplateExpression, RemoveSingleExpressionStringTemplateInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

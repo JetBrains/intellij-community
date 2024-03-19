@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 internal sealed class ReplaceSizeCheckInspectionBase :
-  AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
+    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,

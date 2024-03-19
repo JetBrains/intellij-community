@@ -8,7 +8,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.canRemoveByPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeArgumentList
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(),
+internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicableInspectionBase.Simple<KtValueArgumentList, Unit>(),
                                                                 CleanupLocalInspectionTool {
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -28,16 +29,23 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinAp
         }
     }
 
-    override fun getProblemDescription(element: KtValueArgumentList): String =
-        KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
+    override fun getProblemDescription(
+        element: KtValueArgumentList,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtValueArgumentList): Boolean =
-        (element.parent as? KtCallExpression)?.resolveCall() is KtSuccessCallInfo
+    override fun prepareContext(element: KtValueArgumentList): Unit? =
+        ((element.parent as? KtCallExpression)
+            ?.resolveCall() is KtSuccessCallInfo)
+            .asUnit
 
-    override fun createQuickFix(element: KtValueArgumentList) = object : KotlinModCommandQuickFix<KtValueArgumentList>() {
+    override fun createQuickFix(
+        element: KtValueArgumentList,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtValueArgumentList>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")

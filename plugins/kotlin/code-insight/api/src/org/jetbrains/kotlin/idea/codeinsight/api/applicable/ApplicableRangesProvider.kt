@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction] and
- * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionBase].
+ * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase].
  */
 interface ApplicableRangesProvider<E : KtElement> {
 

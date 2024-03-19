@@ -8,7 +8,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -21,7 +22,7 @@ import org.jetbrains.kotlin.psi.*
  *   - `!(nb ?: false)` => `nb != true`
  * See plugins/kotlin/code-insight/descriptions/resources-en/inspectionDescriptions/NullableBooleanElvis.html for details.
  */
-internal class NullableBooleanElvisInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>() {
+internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -32,7 +33,11 @@ internal class NullableBooleanElvisInspection : AbstractKotlinApplicableInspecti
             visitTargetElement(expression, holder, isOnTheFly)
         }
     }
-    override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
+
+    override fun getProblemDescription(
+        element: KtBinaryExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
 
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
         listOf(element.operationReference.textRangeInParent)
@@ -40,12 +45,17 @@ internal class NullableBooleanElvisInspection : AbstractKotlinApplicableInspecti
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtBinaryExpression): Boolean {
-        val lhsType = element.left?.getKtType() ?: return false
-        return lhsType.isBoolean && lhsType.nullability.isNullable
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
+        return element.left
+            ?.getKtType()
+            ?.let { it.isBoolean && it.nullability.isNullable }
+            ?.asUnit
     }
 
-    override fun createQuickFix(element: KtBinaryExpression) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")

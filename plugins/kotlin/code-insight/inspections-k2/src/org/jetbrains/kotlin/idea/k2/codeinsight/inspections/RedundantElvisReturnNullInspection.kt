@@ -9,7 +9,8 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
-internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>() {
+internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -32,7 +33,10 @@ internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInsp
         }
     }
 
-    override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
+    override fun getProblemDescription(
+        element: KtBinaryExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
 
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> {
         val right = element.right
@@ -55,13 +59,18 @@ internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInsp
         return isTargetOfReturn && element.operationToken == KtTokens.ELVIS
     }
 
+    // The LHS of the binary expression must be nullable.
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtBinaryExpression): Boolean {
-        // The LHS of the binary expression must be nullable.
-        return element.left?.getKtType()?.isMarkedNullable == true
-    }
+    override fun prepareContext(element: KtBinaryExpression): Unit? =
+        element.left
+            ?.getKtType()
+            ?.isMarkedNullable
+            ?.asUnit
 
-    override fun createQuickFix(element: KtBinaryExpression) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.elvis.return.null.text")
