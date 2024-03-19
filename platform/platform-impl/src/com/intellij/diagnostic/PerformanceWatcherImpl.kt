@@ -579,6 +579,7 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
         }
         // https://developer.apple.com/documentation/xcode/interpreting-the-json-format-of-a-crash-report
         val content = Files.readString(file.toPath())
+        if (!content.contains(pid)) return@firstNotNullOfOrNull null // certainly not our crash report
         val jsonObjects = content.splitToSequence("\r\n", "\n", "\r", limit = 2).toList()
         check(jsonObjects.size == 2) { content }
         val (metadata, report) = jsonObjects.map(Json::parseToJsonElement)
