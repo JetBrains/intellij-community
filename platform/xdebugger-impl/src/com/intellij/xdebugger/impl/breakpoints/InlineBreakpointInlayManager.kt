@@ -36,6 +36,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
@@ -44,6 +46,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val scope = parentScope.namedChildScope("InlineBreakpoints", Dispatchers.Default.limitedParallelism(1))
+  private val redrawJobInternalSemaphore = Semaphore(1)
 
   private val redrawQueue = MergingUpdateQueue(
     "inline breakpoint inlay redraw queue",
@@ -200,44 +203,46 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     if (postponeOnChanged()) return
     // Double-checked now.
 
-    readAndWriteAction {
-      if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+    redrawJobInternalSemaphore.withPermit {
+      readAndWriteAction {
+        if (postponeOnChanged()) return@readAndWriteAction value(Unit)
 
-      val allBreakpoints = allBreakpointsIn(document)
+        val allBreakpoints = allBreakpointsIn(document)
 
-      val inlays = mutableListOf<SingleInlayDatum>()
-      if (onlyLine != null) {
-        if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndWriteAction value(Unit)
+        val inlays = mutableListOf<SingleInlayDatum>()
+        if (onlyLine != null) {
+          if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndWriteAction value(Unit)
 
-        val breakpoints = allBreakpoints.filter { it.line == onlyLine }
-        if (!breakpoints.isEmpty()) {
-          inlays += collectInlayData(document, onlyLine, breakpoints)
+          val breakpoints = allBreakpoints.filter { it.line == onlyLine }
+          if (!breakpoints.isEmpty()) {
+            inlays += collectInlayData(document, onlyLine, breakpoints)
+          }
         }
-      }
-      else {
-        for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
-          // We could process lines concurrently, but it doesn't seem to be really required.
-          inlays += collectInlayData(document, line, breakpoints)
+        else {
+          for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
+            // We could process lines concurrently, but it doesn't seem to be really required.
+            inlays += collectInlayData(document, line, breakpoints)
+          }
         }
-      }
 
-      if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+        if (postponeOnChanged()) return@readAndWriteAction value(Unit)
 
-      if (onlyLine != null && inlays.isEmpty() &&
-          allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
-      ) {
-        // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
-        // It's required to prevent performance degradations due to IDEA-339224,
-        // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
-        return@readAndWriteAction value(Unit)
-      }
+        if (onlyLine != null && inlays.isEmpty() &&
+            allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
+        ) {
+          // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
+          // It's required to prevent performance degradations due to IDEA-339224,
+          // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
+          return@readAndWriteAction value(Unit)
+        }
 
-      writeAction {
-        if (postponeOnChanged()) return@writeAction
+        writeAction {
+          if (postponeOnChanged()) return@writeAction
 
-        insertInlays(document, onlyEditor, onlyLine, inlays)
+          insertInlays(document, onlyEditor, onlyLine, inlays)
 
-        if (postponeOnChanged()) return@writeAction
+          if (postponeOnChanged()) return@writeAction
+        }
       }
     }
   }
