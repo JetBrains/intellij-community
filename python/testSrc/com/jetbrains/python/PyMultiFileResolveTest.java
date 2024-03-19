@@ -649,4 +649,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertInstanceOf(result, PyFile.class);
     assertEquals("mod.py", ((PyFile)result).getName());
   }
+
+  // PY-17627
+  public void testClassAttributeDefinedInClassMethodInOtherFile() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
 }

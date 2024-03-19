@@ -1881,4 +1881,41 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   //  });
   //}
 
+
+  // PY-17627
+  public void testClassAttributeDefinedInSameClassMethod() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInOtherClassMethod() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("first", containingMethod.getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInAncestorClassMethod() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
+
+  // PY-17627
+  public void testClassAttributeInitializationInClassHasPrecedenceOverSameClassMethod() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyClass.class);
+  }
+
+  // PY-17627
+  public void testClassAttributeInitializationInSameClassMethodHasPrecedenceOverOtherClassMethods() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("current", containingMethod.getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeResolvesToNextClassMethodIfItsOwnDefinitionPrecedesUsage() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("next", containingMethod.getName());
+  }
 }
