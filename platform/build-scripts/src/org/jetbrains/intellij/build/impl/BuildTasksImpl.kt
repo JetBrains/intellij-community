@@ -441,10 +441,10 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
 private suspend fun buildSourcesArchive(entries: List<DistributionFileEntry>, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
-  val modulesFromCommunity = entries.includedModules.filter { moduleName ->
+  val openSourceModules = entries.includedModules.filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
   }.toList()
-  zipSourcesOfModules(modules = modulesFromCommunity,
+  zipSourcesOfModules(modules = openSourceModules,
                       targetFile = context.paths.artifactDir.resolve(archiveName),
                       includeLibraries = true,
                       context = context)
@@ -520,7 +520,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
           zipFileMap.put(sourceFiles, "")
         }
         else {
-          span.addEvent("skip root: file doesn\'t exist", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
+          span.addEvent("skip root: file doesn't exist", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
         }
       }
       else {
