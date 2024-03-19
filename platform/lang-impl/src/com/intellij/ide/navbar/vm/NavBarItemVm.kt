@@ -3,8 +3,10 @@ package com.intellij.ide.navbar.vm
 
 import com.intellij.ide.navbar.NavBarItemPresentation
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal interface NavBarItemVm {
+@ApiStatus.Internal
+interface NavBarItemVm {
 
   val presentation: NavBarItemPresentation
 
