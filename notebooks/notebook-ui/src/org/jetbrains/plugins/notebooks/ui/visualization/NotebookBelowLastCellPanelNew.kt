@@ -65,9 +65,9 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   private fun calculateToolbarBounds(): Rectangle {
     val toolbarPreferredSize = toolbar?.preferredSize ?: Dimension(0, 0)
     val newBounds = JupyterToolbarManager.calculateToolbarBounds(editor,
-                                                                 this,
-                                                                 toolbarPreferredSize,
-                                                                 extraYOffset = 30)
+                                                                           this,
+                                                                           toolbarPreferredSize,
+                                                                           extraYOffset = 30)
     return newBounds
   }
 

@@ -4,10 +4,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.UIFormXmlConstants
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
 import javax.swing.JPanel
 
-class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(GridBagLayout()) {
+class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(BorderLayout()) {
   private var backgroundColor: Color = editor.colorsScheme.defaultBackground
   private var cellRoofColor: Color? = null
   private var isCodeCell: Boolean = false
@@ -15,21 +17,17 @@ class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(GridBagLay
   fun initialize(isCodeCell: Boolean) {
     if (editor.editorKind == EditorKind.DIFF) return
     this.isCodeCell = isCodeCell
-
     refreshColorScheme()
-    val basePanel = createRoofAndDelimiterPanels(backgroundColor, cellRoofColor)
 
-    val c = GridBagConstraints()
-    c.weightx = 1.0
-    c.fill = GridBagConstraints.HORIZONTAL
-    add(basePanel, c)
+    val (delimiterPanel, roofPanel) = createRoofAndDelimiterPanels(cellRoofColor)
+
+    add(delimiterPanel, BorderLayout.NORTH)
+    add(roofPanel, BorderLayout.SOUTH)
 
     listenForColorSchemeChanges()
   }
 
-  private fun createRoofAndDelimiterPanels(backgroundColor: Color, cellRoofColor: Color?): JPanel {
-    val result = JPanel(BorderLayout())
-
+  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?): Pair<JPanel, JPanel> {
     val delimiterPanel = JPanel()
     delimiterPanel.background = backgroundColor
     delimiterPanel.preferredSize = Dimension(JBUIScale.scale(1), editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
@@ -38,9 +36,7 @@ class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(GridBagLay
     roofPanel.background = cellRoofColor
     roofPanel.preferredSize = Dimension(JBUIScale.scale(1), editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
 
-    result.add(delimiterPanel, BorderLayout.NORTH)
-    result.add(roofPanel, BorderLayout.SOUTH)
-    return result
+    return Pair(delimiterPanel, roofPanel)
   }
 
   private fun listenForColorSchemeChanges() = addPropertyChangeListener(UIFormXmlConstants.ELEMENT_BORDER) { updateComponentColors() }
@@ -52,11 +48,12 @@ class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(GridBagLay
 
   private fun updateComponentColors() {
     refreshColorScheme()
-    val basePanel = components[0]
+    if (components.isNotEmpty()) {
+      val delimiterPanel = components[0] as? JPanel
+      val roofPanel = components[1] as? JPanel
 
-    if (basePanel is JPanel && basePanel.layout is BorderLayout) {
-      (basePanel.getComponent(0) as? JPanel)?.background = backgroundColor  // delimiterPanel
-      (basePanel.getComponent(1) as? JPanel)?.background = cellRoofColor // roofPanel
+      delimiterPanel?.background = backgroundColor
+      roofPanel?.background = cellRoofColor
     }
   }
 }

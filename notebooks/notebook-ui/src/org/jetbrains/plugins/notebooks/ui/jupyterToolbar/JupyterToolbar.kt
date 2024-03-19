@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -24,11 +25,17 @@ class JupyterToolbar(actionGroup: ActionGroup,
   var alpha = 1.0f
 
   init {
+    val borderColor = if (NewUiValue.isEnabled()) {
+      JBColor.LIGHT_GRAY
+    } else {
+      JBColor.DARK_GRAY
+    }
+
+    border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, TOOLBAR_ARC_SIZE, TOOLBAR_BORDER_THICKNESS),
+                                                BorderFactory.createEmptyBorder(OUTER_PADDING, OUTER_PADDING, OUTER_PADDING, OUTER_PADDING))
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    border = BorderFactory.createCompoundBorder(RoundedLineBorder(JBColor.LIGHT_GRAY, TOOLBAR_ARC_SIZE, TOOLBAR_BORDER_THICKNESS),
-                                                BorderFactory.createEmptyBorder(OUTER_PADDING, OUTER_PADDING, OUTER_PADDING, OUTER_PADDING))
-    // todo: it would be preferable to set NotebookCellLines.Interval right here
+    // todo: it would be preferable to store the cell number right here instead of the first line number
     putClientProperty(JUPYTER_TOOLBAR_LINE_POSITION_KEY, firstLine)
     setSkipWindowAdjustments(false)
   }
