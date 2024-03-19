@@ -58,15 +58,3 @@ private class RemoveRedundantBackticksQuickFix : LocalQuickFix {
         element.replace(factory.createIdentifier(element.text.unquoteKotlinIdentifier()))
     }
 }
-
-private fun isKeyword(text: String): Boolean =
-    text == "yield" || text.all { it == '_' } || (KtTokens.KEYWORDS.types + KtTokens.SOFT_KEYWORDS.types).any { it.toString() == text }
-
-private fun isRedundantBackticks(node: ASTNode): Boolean {
-    val identifier = node.text
-    if (!(identifier.startsWith("`") && identifier.endsWith("`"))) return false
-    val unquotedText = identifier.unquoteKotlinIdentifier()
-    if (!unquotedText.isIdentifier() || isKeyword(unquotedText)) return false
-    val simpleNameStringTemplateEntry = node.psi.getStrictParentOfType<KtSimpleNameStringTemplateEntry>()
-    return simpleNameStringTemplateEntry == null || canPlaceAfterSimpleNameEntry(simpleNameStringTemplateEntry.nextSibling)
-}

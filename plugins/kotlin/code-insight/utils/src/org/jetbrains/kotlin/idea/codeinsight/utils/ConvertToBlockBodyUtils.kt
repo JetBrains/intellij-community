@@ -73,6 +73,43 @@ object ConvertToBlockBodyUtils {
         if (context.reformat) element.containingFile.reformat(replaced.startOffset, replaced.endOffset)
     }
 
+    fun convert(
+        declaration: KtDeclarationWithBody,
+        convertExpressionToBlockBodyData: ConvertExpressionToBlockBodyData,
+        withReformat: Boolean = false
+    ): KtDeclarationWithBody {
+        val context = createContext(declaration, convertExpressionToBlockBodyData, withReformat) ?: return declaration
+        convert(declaration, context)
+        return declaration
+    }
+
+    private fun createContext(
+        declaration: KtDeclarationWithBody,
+        convertExpressionToBlockBodyData: ConvertExpressionToBlockBodyData,
+        reformat: Boolean = false
+    ): ConvertToBlockBodyContext? {
+        if (!isConvertibleByPsi(declaration)) return null
+
+        return ConvertToBlockBodyContext(
+            returnTypeIsUnit = convertExpressionToBlockBodyData.returnTypeIsUnit,
+            returnTypeIsNothing = convertExpressionToBlockBodyData.returnTypeIsNothing &&
+                    !convertExpressionToBlockBodyData.returnTypeIsMarkedNullable,
+            returnTypeString = convertExpressionToBlockBodyData.returnTypeString,
+            bodyTypeIsUnit = convertExpressionToBlockBodyData.returnTypeIsUnit,
+            bodyTypeIsNothing = convertExpressionToBlockBodyData.returnTypeIsNothing &&
+                    !convertExpressionToBlockBodyData.returnTypeIsMarkedNullable,
+            reformat = reformat,
+            shortenReferences = ShortenReferencesFacility.getInstance()
+        )
+    }
+
+    class ConvertExpressionToBlockBodyData(
+        val returnTypeIsUnit: Boolean,
+        val returnTypeIsNothing: Boolean,
+        val returnTypeIsMarkedNullable: Boolean,
+        val returnTypeString: String
+    )
+
     private fun KtDeclarationWithBody.setTypeReferenceIfNeeded(context: ConvertToBlockBodyContext) {
         fun KtCallableDeclaration.setTypeReference() {
             val addedTypeReference = setTypeReference(KtPsiFactory(project).createType(context.returnTypeString))

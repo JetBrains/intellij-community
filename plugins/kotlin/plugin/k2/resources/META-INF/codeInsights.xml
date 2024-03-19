@@ -7,5 +7,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.compiler.K2KotlinCompilerIdeAllowedErrorFilter"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.core.NotPropertiesService"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NotPropertiesServiceImpl"/>
   </extensions>
 </idea-plugin>

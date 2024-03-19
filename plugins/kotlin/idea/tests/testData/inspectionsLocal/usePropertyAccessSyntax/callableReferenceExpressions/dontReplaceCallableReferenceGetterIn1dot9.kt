@@ -1,3 +1,4 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-ReferencesToSyntheticJavaProperties
 // PROBLEM: none
 // WITH_STDLIB
 // LANGUAGE_VERSION: 1.9

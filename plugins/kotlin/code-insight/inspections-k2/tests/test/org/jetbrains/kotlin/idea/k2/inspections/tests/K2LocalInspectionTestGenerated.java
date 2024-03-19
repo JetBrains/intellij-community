@@ -4306,6 +4306,587 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax")
+    public abstract static class UsePropertyAccessSyntax extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions")
+        public static class CallableReferenceExpressions extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("dontReplaceCallableReferenceGetterIn1dot9.kt")
+            public void testDontReplaceCallableReferenceGetterIn1dot9() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceCallableReferenceGetterIn1dot9.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterNotBuiltInFunctionType.kt")
+            public void testDontReplaceGetterNotBuiltInFunctionType() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceGetterNotBuiltInFunctionType.kt");
+            }
+
+            @TestMetadata("dontReplaceIfJavaClassHasPublicFieldWithSameName.kt")
+            public void testDontReplaceIfJavaClassHasPublicFieldWithSameName() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceIfJavaClassHasPublicFieldWithSameName.kt");
+            }
+
+            @TestMetadata("getCallableReferenceFunction.kt")
+            public void testGetCallableReferenceFunction() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/getCallableReferenceFunction.kt");
+            }
+
+            @TestMetadata("getCallableReferenceFunction0.kt")
+            public void testGetCallableReferenceFunction0() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/getCallableReferenceFunction0.kt");
+            }
+
+            @TestMetadata("getCallableReferenceFunction1.kt")
+            public void testGetCallableReferenceFunction1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/getCallableReferenceFunction1.kt");
+            }
+
+            @TestMetadata("getCallableReferenceOrdinary.kt")
+            public void testGetCallableReferenceOrdinary() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/getCallableReferenceOrdinary.kt");
+            }
+
+            @TestMetadata("referenceGetterFunctionalInterface.kt")
+            public void testReferenceGetterFunctionalInterface() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/referenceGetterFunctionalInterface.kt");
+            }
+
+            @TestMetadata("referenceIsGetter.kt")
+            public void testReferenceIsGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/referenceIsGetter.kt");
+            }
+
+            @TestMetadata("replaceCallableReferenceCalledOnConstructor.kt")
+            public void testReplaceCallableReferenceCalledOnConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/replaceCallableReferenceCalledOnConstructor.kt");
+            }
+
+            @TestMetadata("replaceCallableReferenceGetterInsideSetter.kt")
+            public void testReplaceCallableReferenceGetterInsideSetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/replaceCallableReferenceGetterInsideSetter.kt");
+            }
+
+            @TestMetadata("replaceWithBackticks.kt")
+            public void testReplaceWithBackticks() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/replaceWithBackticks.kt");
+            }
+
+            @TestMetadata("samInterface.kt")
+            public void testSamInterface() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/samInterface.kt");
+            }
+
+            @TestMetadata("typedInterface.kt")
+            public void testTypedInterface() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/typedInterface.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions")
+        public static class DotQualifiedExpressions extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("caretOnValueArgumentList.kt")
+            public void testCaretOnValueArgumentList() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/caretOnValueArgumentList.kt");
+            }
+
+            @TestMetadata("convertNullSafeToBlockBody.kt")
+            public void testConvertNullSafeToBlockBody() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/convertNullSafeToBlockBody.kt");
+            }
+
+            @TestMetadata("dontReplaceFirstSetterInChain.kt")
+            public void testDontReplaceFirstSetterInChain() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceFirstSetterInChain.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterFromKotlinFile.kt")
+            public void testDontReplaceGetterFromKotlinFile() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterFromKotlinFile.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterFromKotlinOverridenInJava.kt")
+            public void testDontReplaceGetterFromKotlinOverridenInJava() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterFromKotlinOverridenInJava.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterWithCommonGetterLikePrefix.kt")
+            public void testDontReplaceGetterWithCommonGetterLikePrefix() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterWithCommonGetterLikePrefix.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterWithReservedWord1.kt")
+            public void testDontReplaceGetterWithReservedWord1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterWithReservedWord1.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterWithReservedWord2.kt")
+            public void testDontReplaceGetterWithReservedWord2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterWithReservedWord2.kt");
+            }
+
+            @TestMetadata("dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt")
+            public void testDontReplaceIfPropertyHasLambdaAndSetterInsideIsLast() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
+            }
+
+            @TestMetadata("dontReplaceIsGetterWithNonBooleanReturnType.kt")
+            public void testDontReplaceIsGetterWithNonBooleanReturnType() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIsGetterWithNonBooleanReturnType.kt");
+            }
+
+            @TestMetadata("dontReplaceIsGetterWithNullableBooleanReturnType.kt")
+            public void testDontReplaceIsGetterWithNullableBooleanReturnType() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIsGetterWithNullableBooleanReturnType.kt");
+            }
+
+            @TestMetadata("dontReplaceNotRealGetter.kt")
+            public void testDontReplaceNotRealGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceNotRealGetter.kt");
+            }
+
+            @TestMetadata("dontReplaceNotRealSetter.kt")
+            public void testDontReplaceNotRealSetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceNotRealSetter.kt");
+            }
+
+            @TestMetadata("dontReplaceOverridenNotProperty.kt")
+            public void testDontReplaceOverridenNotProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceOverridenNotProperty.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterForFunctionWithExpressionBody.kt")
+            public void testDontReplaceSetterForFunctionWithExpressionBody() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterForFunctionWithExpressionBody.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterIfItGoesAfterReturn.kt")
+            public void testDontReplaceSetterIfItGoesAfterReturn() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterIfItGoesAfterReturn.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterUsedInProperty.kt")
+            public void testDontReplaceSetterUsedInProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterUsedInProperty.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithAnonymousFunctionArgument.kt")
+            public void testDontReplaceSetterWithAnonymousFunctionArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithAnonymousFunctionArgument.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithCallableReferenceAsArgument.kt")
+            public void testDontReplaceSetterWithCallableReferenceAsArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithCallableReferenceAsArgument.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithLambdaArgument.kt")
+            public void testDontReplaceSetterWithLambdaArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithLambdaArgument.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithLambdaArgument2.kt")
+            public void testDontReplaceSetterWithLambdaArgument2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithLambdaArgument2.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithReservedWord1.kt")
+            public void testDontReplaceSetterWithReservedWord1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithReservedWord1.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithReservedWord2.kt")
+            public void testDontReplaceSetterWithReservedWord2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithReservedWord2.kt");
+            }
+
+            @TestMetadata("get.kt")
+            public void testGet() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/get.kt");
+            }
+
+            @TestMetadata("propertyTypeIsMoreSpecific1.kt")
+            public void testPropertyTypeIsMoreSpecific1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/propertyTypeIsMoreSpecific1.kt");
+            }
+
+            @TestMetadata("propertyTypeIsMoreSpecific2.kt")
+            public void testPropertyTypeIsMoreSpecific2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/propertyTypeIsMoreSpecific2.kt");
+            }
+
+            @TestMetadata("replaceFirstGetterInChain.kt")
+            public void testReplaceFirstGetterInChain() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceFirstGetterInChain.kt");
+            }
+
+            @TestMetadata("replaceGetterAfterSafeCall.kt")
+            public void testReplaceGetterAfterSafeCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterAfterSafeCall.kt");
+            }
+
+            @TestMetadata("replaceGetterAfterSuperCall.kt")
+            public void testReplaceGetterAfterSuperCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterAfterSuperCall.kt");
+            }
+
+            @TestMetadata("replaceGetterFromGenericClassMethod.kt")
+            public void testReplaceGetterFromGenericClassMethod() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterFromGenericClassMethod.kt");
+            }
+
+            @TestMetadata("replaceGetterFromJavaOverridenInKotlin.kt")
+            public void testReplaceGetterFromJavaOverridenInKotlin() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterFromJavaOverridenInKotlin.kt");
+            }
+
+            @TestMetadata("replaceGetterOfSmartCastedInstance.kt")
+            public void testReplaceGetterOfSmartCastedInstance() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterOfSmartCastedInstance.kt");
+            }
+
+            @TestMetadata("replaceGetterThatDoesntSuitForbiddenPrefixGetAnd2.kt")
+            public void testReplaceGetterThatDoesntSuitForbiddenPrefixGetAnd2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterThatDoesntSuitForbiddenPrefixGetAnd2.kt");
+            }
+
+            @TestMetadata("replaceIsGetter.kt")
+            public void testReplaceIsGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceIsGetter.kt");
+            }
+
+            @TestMetadata("replaceOrdinaryGet.kt")
+            public void testReplaceOrdinaryGet() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceOrdinaryGet.kt");
+            }
+
+            @TestMetadata("replaceSecondGetterInChain.kt")
+            public void testReplaceSecondGetterInChain() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSecondGetterInChain.kt");
+            }
+
+            @TestMetadata("replaceSecondSetterInChain.kt")
+            public void testReplaceSecondSetterInChain() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSecondSetterInChain.kt");
+            }
+
+            @TestMetadata("replaceSeterAfterSafeCall.kt")
+            public void testReplaceSeterAfterSafeCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSeterAfterSafeCall.kt");
+            }
+
+            @TestMetadata("replaceSetterInFunctionThatReturnsUnit.kt")
+            public void testReplaceSetterInFunctionThatReturnsUnit() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSetterInFunctionThatReturnsUnit.kt");
+            }
+
+            @TestMetadata("replaceSetterReturningSomeValue.kt")
+            public void testReplaceSetterReturningSomeValue() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSetterReturningSomeValue.kt");
+            }
+
+            @TestMetadata("replaceSetterToIsSetter.kt")
+            public void testReplaceSetterToIsSetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSetterToIsSetter.kt");
+            }
+
+            @TestMetadata("replaceWithBackticks.kt")
+            public void testReplaceWithBackticks() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceWithBackticks.kt");
+            }
+
+            @TestMetadata("set.kt")
+            public void testSet() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/set.kt");
+            }
+
+            @TestMetadata("typeParameterReceiver.kt")
+            public void testTypeParameterReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/typeParameterReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression")
+        public static class ReferenceExpression extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("convertSetterToBlockBodyIfUsedAsExpressionBodyForProperty.kt")
+            public void testConvertSetterToBlockBodyIfUsedAsExpressionBodyForProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/convertSetterToBlockBodyIfUsedAsExpressionBodyForProperty.kt");
+            }
+
+            @TestMetadata("convertToBlockBody.kt")
+            public void testConvertToBlockBody() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/convertToBlockBody.kt");
+            }
+
+            @TestMetadata("dontReplaceFirstSetterInChain.kt")
+            public void testDontReplaceFirstSetterInChain() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceFirstSetterInChain.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterFromKotlinFile.kt")
+            public void testDontReplaceGetterFromKotlinFile() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceGetterFromKotlinFile.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterFromKotlinOverridenInJava.kt")
+            public void testDontReplaceGetterFromKotlinOverridenInJava() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceGetterFromKotlinOverridenInJava.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterIfSameIdentifierExistsInScope1.kt")
+            public void testDontReplaceGetterIfSameIdentifierExistsInScope1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceGetterIfSameIdentifierExistsInScope1.kt");
+            }
+
+            @TestMetadata("dontReplaceGetterIfSameIdentifierExistsInScope2.kt")
+            public void testDontReplaceGetterIfSameIdentifierExistsInScope2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceGetterIfSameIdentifierExistsInScope2.kt");
+            }
+
+            @TestMetadata("dontReplaceIfJavaClassHasPublicFieldWithSameName.kt")
+            public void testDontReplaceIfJavaClassHasPublicFieldWithSameName() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceIfJavaClassHasPublicFieldWithSameName.kt");
+            }
+
+            @TestMetadata("dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt")
+            public void testDontReplaceIfPropertyHasLambdaAndSetterInsideIsLast() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
+            }
+
+            @TestMetadata("dontReplaceOverridenNotProperty.kt")
+            public void testDontReplaceOverridenNotProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceOverridenNotProperty.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterForFunctionWithExpressionBody.kt")
+            public void testDontReplaceSetterForFunctionWithExpressionBody() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterForFunctionWithExpressionBody.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterIfFieldWithTheSameNameIsAccessible.kt")
+            public void testDontReplaceSetterIfFieldWithTheSameNameIsAccessible() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterIfFieldWithTheSameNameIsAccessible.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterIfItGoesAfterReturn.kt")
+            public void testDontReplaceSetterIfItGoesAfterReturn() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterIfItGoesAfterReturn.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterIfSameIdentifierExistsInScope.kt")
+            public void testDontReplaceSetterIfSameIdentifierExistsInScope() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterIfSameIdentifierExistsInScope.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterUsedAsArgument.1.kt")
+            public void testDontReplaceSetterUsedAsArgument_1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterUsedAsArgument.1.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterUsedInProperty.kt")
+            public void testDontReplaceSetterUsedInProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterUsedInProperty.kt");
+            }
+
+            @TestMetadata("dontReplaceSetterWithCallableReferenceAsArgument.kt")
+            public void testDontReplaceSetterWithCallableReferenceAsArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceSetterWithCallableReferenceAsArgument.kt");
+            }
+
+            @TestMetadata("replaceFirstGetterInChain.kt")
+            public void testReplaceFirstGetterInChain() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceFirstGetterInChain.kt");
+            }
+
+            @TestMetadata("replaceGetterFromJavaOverridenInKotlin.kt")
+            public void testReplaceGetterFromJavaOverridenInKotlin() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceGetterFromJavaOverridenInKotlin.kt");
+            }
+
+            @TestMetadata("replaceGetterInBlockExpression.kt")
+            public void testReplaceGetterInBlockExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceGetterInBlockExpression.kt");
+            }
+
+            @TestMetadata("replaceGetterWithImplicitReceiver.kt")
+            public void testReplaceGetterWithImplicitReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceGetterWithImplicitReceiver.kt");
+            }
+
+            @TestMetadata("replaceSetterInBlockThatReturnsNonUnit.kt")
+            public void testReplaceSetterInBlockThatReturnsNonUnit() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceSetterInBlockThatReturnsNonUnit.kt");
+            }
+
+            @TestMetadata("replaceSetterInBlockThatReturnsUnit.kt")
+            public void testReplaceSetterInBlockThatReturnsUnit() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceSetterInBlockThatReturnsUnit.kt");
+            }
+
+            @TestMetadata("replaceSetterInFunctionThatReturnsUnit.kt")
+            public void testReplaceSetterInFunctionThatReturnsUnit() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceSetterInFunctionThatReturnsUnit.kt");
+            }
+
+            @TestMetadata("replaceSetterWithImplicitReceiver.kt")
+            public void testReplaceSetterWithImplicitReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/replaceSetterWithImplicitReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors")
+        public abstract static class ReportNonTrivialAccessors extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default")
+            public static class Default extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/abstract.kt");
+                }
+
+                @TestMetadata("nonTrivialGet.kt")
+                public void testNonTrivialGet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialGet.kt");
+                }
+
+                @TestMetadata("nonTrivialGet2.kt")
+                public void testNonTrivialGet2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialGet2.kt");
+                }
+
+                @TestMetadata("nonTrivialGet3.kt")
+                public void testNonTrivialGet3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialGet3.kt");
+                }
+
+                @TestMetadata("nonTrivialSet.kt")
+                public void testNonTrivialSet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialSet.kt");
+                }
+
+                @TestMetadata("nonTrivialSet2.kt")
+                public void testNonTrivialSet2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialSet2.kt");
+                }
+
+                @TestMetadata("nonTrivialSet3.kt")
+                public void testNonTrivialSet3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialSet3.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false")
+            public static class False extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/abstract.kt");
+                }
+
+                @TestMetadata("nonTrivialGet.kt")
+                public void testNonTrivialGet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialGet.kt");
+                }
+
+                @TestMetadata("nonTrivialGet2.kt")
+                public void testNonTrivialGet2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialGet2.kt");
+                }
+
+                @TestMetadata("nonTrivialGet3.kt")
+                public void testNonTrivialGet3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialGet3.kt");
+                }
+
+                @TestMetadata("nonTrivialSet.kt")
+                public void testNonTrivialSet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialSet.kt");
+                }
+
+                @TestMetadata("nonTrivialSet2.kt")
+                public void testNonTrivialSet2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialSet2.kt");
+                }
+
+                @TestMetadata("nonTrivialSet3.kt")
+                public void testNonTrivialSet3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialSet3.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true")
+            public static class True extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/abstract.kt");
+                }
+
+                @TestMetadata("nonTrivialGet.kt")
+                public void testNonTrivialGet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivialGet.kt");
+                }
+
+                @TestMetadata("nonTrivialGet2.kt")
+                public void testNonTrivialGet2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivialGet2.kt");
+                }
+
+                @TestMetadata("nonTrivialGet3.kt")
+                public void testNonTrivialGet3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivialGet3.kt");
+                }
+
+                @TestMetadata("nonTrivialSet.kt")
+                public void testNonTrivialSet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivialSet.kt");
+                }
+
+                @TestMetadata("nonTrivialSet2.kt")
+                public void testNonTrivialSet2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivialSet2.kt");
+                }
+
+                @TestMetadata("nonTrivialSet3.kt")
+                public void testNonTrivialSet3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivialSet3.kt");
+                }
+
+                @TestMetadata("nonVoidSet.kt")
+                public void testNonVoidSet() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonVoidSet.kt");
+                }
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
