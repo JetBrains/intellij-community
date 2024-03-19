@@ -8,13 +8,12 @@ import junit.framework.JUnit4TestAdapter;
 import junit.framework.JUnit4TestAdapterCache;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
-import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.Filter;
-import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
@@ -30,6 +29,9 @@ import org.opentest4j.MultipleFailuresError;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.*;
 
 // Used to run JUnit 3/4 tests via JUnit 5 runtime
@@ -42,6 +44,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
     try {
       Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       List<? extends DiscoverySelector> selectors;
       List<Filter<?>> filters = new ArrayList<>(0);
       if (args.length == 1) {
@@ -58,6 +61,10 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       }
       else {
         selectors = Collections.singletonList(DiscoverySelectors.selectMethod(args[0], args[1]));
+      }
+      if (Boolean.getBoolean("idea.performance.tests.discovery.filter")) {
+        // Add filter
+        filters.add(createPerformancePostDiscoveryFilter(classLoader));
       }
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .selectors(selectors)
@@ -79,6 +86,45 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       System.exit(0);
     }
   }
+
+  private static PostDiscoveryFilter createPerformancePostDiscoveryFilter(ClassLoader classLoader)
+    throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
+    final MethodHandle method = MethodHandles.publicLookup()
+      .findStatic(Class.forName("com.intellij.testFramework.TestFrameworkUtil", true, classLoader),
+                  "isPerformanceTest", MethodType.methodType(boolean.class, String.class, String.class));
+    return new PostDiscoveryFilter() {
+      private FilterResult isIncluded(String className, String methodName) {
+        try {
+          if ((boolean)method.invokeExact(methodName, className)) {
+            return FilterResult.included(null);
+          }
+          return FilterResult.excluded(null);
+        }
+        catch (Throwable e) {
+          return FilterResult.excluded(e.getMessage());
+        }
+      }
+
+      @Override
+      public FilterResult apply(TestDescriptor descriptor) {
+        if (descriptor instanceof EngineDescriptor) {
+          return FilterResult.included(null);
+        }
+        TestSource source = descriptor.getSource().orElse(null);
+        if (source == null) {
+          return FilterResult.included("No source for descriptor");
+        }
+        if (source instanceof MethodSource methodSource) {
+          return isIncluded(methodSource.getClassName(), methodSource.getMethodName());
+        }
+        if (source instanceof ClassSource classSource) {
+          return isIncluded(classSource.getClassName(), null);
+        }
+        return FilterResult.included("Unknown source type " + source.getClass());
+      }
+    };
+  }
+
 
   public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
     return new JUnit4TestAdapterCache() {
