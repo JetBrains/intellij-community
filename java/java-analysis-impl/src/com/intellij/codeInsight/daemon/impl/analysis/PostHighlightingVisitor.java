@@ -57,7 +57,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 class PostHighlightingVisitor extends JavaElementVisitor {
-  private final RefCountHolder myRefCountHolder;
+  private final LocalRefUseInfo myRefCountHolder;
   @NotNull private final Project myProject;
   private final PsiFile myFile;
   @NotNull private final Document myDocument;
@@ -69,13 +69,13 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   private final HighlightInfoType myDeadCodeInfoType;
   private boolean errorFound;
 
-  PostHighlightingVisitor(@NotNull PsiFile file, @NotNull Document document, @NotNull RefCountHolder refCountHolder) throws ProcessCanceledException {
+  PostHighlightingVisitor(@NotNull PsiFile file, @NotNull Document document) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = file.getProject();
     myFile = file;
     myDocument = document;
-    myRefCountHolder = refCountHolder;
+    myRefCountHolder = LocalRefUseInfo.forFile(file);
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     UnusedDeclarationInspectionBase deadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
