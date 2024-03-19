@@ -19,6 +19,10 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     if (resultFromAction != null) {
       return resultFromAction
     }
+    val resultFromClosure = GradleClosureDelegatesToProvider().getDelegatesToInfo(expression)
+    if (resultFromClosure != null) {
+      return resultFromClosure
+    }
     val file = expression.containingFile
     if (file == null || !FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return null
 
