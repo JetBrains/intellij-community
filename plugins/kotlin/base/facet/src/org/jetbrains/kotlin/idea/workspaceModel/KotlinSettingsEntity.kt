@@ -28,8 +28,8 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val implementedModuleNames: List<String>
     val dependsOnModuleNames: List<String>
     val additionalVisibleModuleNames: Set<String>
-    val productionOutputPath: String
-    val testOutputPath: String
+    val productionOutputPath: String?
+    val testOutputPath: String?
     val sourceSetNames: List<String>
     val isTestModule: Boolean
     val externalProjectId: String
@@ -66,8 +66,8 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     override var implementedModuleNames: MutableList<String>
     override var dependsOnModuleNames: MutableList<String>
     override var additionalVisibleModuleNames: MutableSet<String>
-    override var productionOutputPath: String
-    override var testOutputPath: String
+    override var productionOutputPath: String?
+    override var testOutputPath: String?
     override var sourceSetNames: MutableList<String>
     override var isTestModule: Boolean
     override var externalProjectId: String
@@ -95,8 +95,8 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
       implementedModuleNames: List<String>,
       dependsOnModuleNames: List<String>,
       additionalVisibleModuleNames: Set<String>,
-      productionOutputPath: String,
-      testOutputPath: String,
+      productionOutputPath: String?,
+      testOutputPath: String?,
       sourceSetNames: List<String>,
       isTestModule: Boolean,
       externalProjectId: String,

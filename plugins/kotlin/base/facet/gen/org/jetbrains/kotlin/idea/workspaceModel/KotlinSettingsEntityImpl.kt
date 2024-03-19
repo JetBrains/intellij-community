@@ -98,13 +98,13 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
       return dataSource.additionalVisibleModuleNames
     }
 
-  override val productionOutputPath: String
+  override val productionOutputPath: String?
     get() {
       readField("productionOutputPath")
       return dataSource.productionOutputPath
     }
 
-  override val testOutputPath: String
+  override val testOutputPath: String?
     get() {
       readField("testOutputPath")
       return dataSource.testOutputPath
@@ -253,12 +253,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
       }
       if (!getEntityData().isAdditionalVisibleModuleNamesInitialized()) {
         error("Field KotlinSettingsEntity#additionalVisibleModuleNames should be initialized")
-      }
-      if (!getEntityData().isProductionOutputPathInitialized()) {
-        error("Field KotlinSettingsEntity#productionOutputPath should be initialized")
-      }
-      if (!getEntityData().isTestOutputPathInitialized()) {
-        error("Field KotlinSettingsEntity#testOutputPath should be initialized")
       }
       if (!getEntityData().isSourceSetNamesInitialized()) {
         error("Field KotlinSettingsEntity#sourceSetNames should be initialized")
@@ -538,7 +532,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
         additionalVisibleModuleNamesUpdater.invoke(value)
       }
 
-    override var productionOutputPath: String
+    override var productionOutputPath: String?
       get() = getEntityData().productionOutputPath
       set(value) {
         checkModificationAllowed()
@@ -546,7 +540,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
         changedProperty.add("productionOutputPath")
       }
 
-    override var testOutputPath: String
+    override var testOutputPath: String?
       get() = getEntityData().testOutputPath
       set(value) {
         checkModificationAllowed()
@@ -707,8 +701,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   lateinit var implementedModuleNames: MutableList<String>
   lateinit var dependsOnModuleNames: MutableList<String>
   lateinit var additionalVisibleModuleNames: MutableSet<String>
-  lateinit var productionOutputPath: String
-  lateinit var testOutputPath: String
   lateinit var sourceSetNames: MutableList<String>
   var isTestModule: Boolean = false
   lateinit var externalProjectId: String
@@ -721,6 +713,8 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   lateinit var externalSystemRunTasks: MutableList<String>
   var version: Int = 0
   var flushNeeded: Boolean = false
+  var productionOutputPath: String? = null
+  var testOutputPath: String? = null
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
@@ -730,8 +724,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   internal fun isImplementedModuleNamesInitialized(): Boolean = ::implementedModuleNames.isInitialized
   internal fun isDependsOnModuleNamesInitialized(): Boolean = ::dependsOnModuleNames.isInitialized
   internal fun isAdditionalVisibleModuleNamesInitialized(): Boolean = ::additionalVisibleModuleNames.isInitialized
-  internal fun isProductionOutputPathInitialized(): Boolean = ::productionOutputPath.isInitialized
-  internal fun isTestOutputPathInitialized(): Boolean = ::testOutputPath.isInitialized
   internal fun isSourceSetNamesInitialized(): Boolean = ::sourceSetNames.isInitialized
 
   internal fun isExternalProjectIdInitialized(): Boolean = ::externalProjectId.isInitialized
