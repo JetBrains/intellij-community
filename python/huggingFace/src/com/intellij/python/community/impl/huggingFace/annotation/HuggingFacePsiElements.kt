@@ -6,8 +6,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
-import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
+import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 
 
@@ -32,7 +33,8 @@ abstract class HuggingFaceEntityPsiElement(
 class HuggingFaceModelPsiElement(parent: PsiElement, private val modelName: String
 ) : HuggingFaceEntityPsiElement(parent, modelName) {
   override fun navigate(requestFocus: Boolean) {
-    HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(modelName, HuggingFaceEntityKind.MODEL)
+    val pipelineTag = HuggingFaceModelsCache.getPipelineTagForEntity(modelName) ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
+    HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(pipelineTag)
     BrowserUtil.browse(HuggingFaceURLProvider.getModelCardLink(modelName))
   }
 }
@@ -40,7 +42,7 @@ class HuggingFaceModelPsiElement(parent: PsiElement, private val modelName: Stri
 class HuggingFaceDatasetPsiElement(parent: PsiElement, private val datasetName: String
 ) : HuggingFaceEntityPsiElement(parent, datasetName) {
   override fun navigate(requestFocus: Boolean) {
-    HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(datasetName, HuggingFaceEntityKind.DATASET)
+    HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(HuggingFaceConstants.DATASET_FAKE_PIPELINE_TAG)
     BrowserUtil.browse(HuggingFaceURLProvider.getDatasetCardLink(datasetName))
   }
 }
