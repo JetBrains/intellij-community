@@ -45,7 +45,11 @@ import kotlin.math.max
 internal class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val scope = parentScope.namedChildScope("InlineBreakpoints", Dispatchers.Default.limitedParallelism(1))
+  private val scope = parentScope.namedChildScope("InlineBreakpoints",
+                                                  if (Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY))
+                                                    Dispatchers.Default.limitedParallelism (1)
+                                                  else
+                                                    Dispatchers.Default)
   private val redrawJobInternalSemaphore = Semaphore(1)
 
   private val redrawQueue = MergingUpdateQueue(
@@ -200,10 +204,20 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
       return isOutdated
     }
 
+    suspend fun withSemaphorePermit(action: suspend () -> Unit) {
+      if (!Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY)) {
+        action()
+        return
+      }
+      redrawJobInternalSemaphore.withPermit {
+        action()
+      }
+    }
+
     if (postponeOnChanged()) return
     // Double-checked now.
 
-    redrawJobInternalSemaphore.withPermit {
+    withSemaphorePermit {
       readAndWriteAction {
         if (postponeOnChanged()) return@readAndWriteAction value(Unit)
 
@@ -499,5 +513,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     @JvmStatic
     fun getInstance(project: Project): InlineBreakpointInlayManager =
       project.service<InlineBreakpointInlayManager>()
+
+    private const val LIMIT_REDRAW_JOBS_COUNT_KEY = "debugger.limit.inline.breakpoints.jobs.count"
   }
 }
