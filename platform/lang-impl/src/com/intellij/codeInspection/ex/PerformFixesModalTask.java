@@ -184,7 +184,6 @@ public abstract class PerformFixesModalTask implements SequentialTask {
         shouldDoPostponedOperations = true;
         myPackIdx++;
         myDescriptorIdx = 0;
-        assert myPackIdx <= myDescriptorPacks.size() - 1;
       }
       return Pair.create(descriptor, shouldDoPostponedOperations);
     }
