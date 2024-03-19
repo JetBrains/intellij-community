@@ -119,6 +119,14 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
       layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
 
+      // TODO(b/330399456): error-prone-annotations and grpc are used by ASwB only; these libs should be moved outside the platform.
+      layout.withProjectLibrary("error-prone-annotations")
+      layout.withProjectLibrary("grpc-core")
+      layout.withProjectLibrary("grpc-kotlin-stub")
+      layout.withProjectLibrary("grpc-netty-shaded")
+      layout.withProjectLibrary("grpc-protobuf")
+      layout.withProjectLibrary("grpc-stub")
+
       layout.withPatch { patcher, context ->
         // Patch AndroidStudioProperties.xml: set the platform API version to match the 3-component
         // IntelliJ IDEA build number. At runtime, it will be used by ApplicationInfo.getApiVersion()

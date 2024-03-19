@@ -24,5 +24,9 @@ object AndroidStudioLibraryLicenses {
     LibraryLicense(name = "Xtext", libraryName = "xtext-xbase", url = "https://eclipse.dev/Xtext").eplV1(),
     LibraryLicense(name = "Kryo", libraryName = "Kryo", url = "https://github.com/EsotericSoftware/kryo")
       .newBsd("https://github.com/EsotericSoftware/kryo/blob/master/LICENSE.md"),
+    // TODO(b/330399456): error-prone-annotations is used by ASwB only; this lib should be moved outside the platform.
+    LibraryLicense(name = "error-prone-annotations", libraryName = "error-prone-annotations", url = "https://github.com/google/error-prone")
+      .apache("https://github.com/google/error-prone/blob/master/COPYING")
+      .suppliedByOrganizations(SoftwareBillOfMaterials.Companion.Suppliers.GOOGLE),
   )
 }
