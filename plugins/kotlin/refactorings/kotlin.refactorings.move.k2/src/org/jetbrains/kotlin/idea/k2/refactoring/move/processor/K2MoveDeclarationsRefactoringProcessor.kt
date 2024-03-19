@@ -28,11 +28,12 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
         val conflicts = findAllMoveConflicts(
-            descriptor.source.elements,
-            descriptor.target.baseDirectory,
-            descriptor.target.pkgName,
-            descriptor.target.fileName,
-            usages.filterIsInstance<MoveRenameUsageInfo>()
+            declarationsToCheck = descriptor.source.elements,
+            allDeclarationsToMove = descriptor.source.elements,
+            targetDir = descriptor.target.baseDirectory,
+            targetPkg = descriptor.target.pkgName,
+            targetFileName = descriptor.target.fileName,
+            usages = usages.filterIsInstance<MoveRenameUsageInfo>()
         )
         return showConflicts(conflicts, usages)
     }

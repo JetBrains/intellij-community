@@ -30,21 +30,43 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 /**
+ * Find all conflicts when moving elements for a multi file move.
+ */
+internal fun findAllMoveConflicts(
+    filesToMove: Set<KtFile>,
+    targetDir: PsiDirectory,
+    targetPkg: FqName,
+    usages: List<MoveRenameUsageInfo>
+): MultiMap<PsiElement, String> {
+    val allDeclarationsToMove = filesToMove.flatMap { it.declarations }.filterIsInstance<KtNamedDeclaration>().toSet()
+    return MultiMap<PsiElement, String>().apply {
+        filesToMove.forEach { file ->
+            val declarations = file.declarations.filterIsInstance<KtNamedDeclaration>()
+            if (declarations.isEmpty()) return@forEach
+            val externalUsages = usages.filter { usage -> usage.referencedElement in declarations }
+            putAllValues(findAllMoveConflicts(declarations.toSet(), allDeclarationsToMove, targetDir, targetPkg, file.name, externalUsages))
+        }
+    }
+}
+
+/**
  * Find all conflicts when moving elements.
- * @param declarationsToMove the set of declarations to move, they must all be moved from the same containing file.
+ * @param declarationsToCheck the set of declarations to move, they must all be moved from the same containing file.
+ * @param allDeclarationsToMove all declarations that will be moved.
  */
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun findAllMoveConflicts(
-    declarationsToMove: Set<KtNamedDeclaration>,
+    declarationsToCheck: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Set<KtNamedDeclaration>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
     targetFileName: String,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> = allowAnalysisOnEdt {
-    val (fakeTarget, oldToNewMap) = createCopyTarget(declarationsToMove, targetDir, targetPkg, targetFileName)
+    val (fakeTarget, oldToNewMap) = createCopyTarget(declarationsToCheck, targetDir, targetPkg, targetFileName)
     MultiMap<PsiElement, String>().apply {
-        putAllValues(checkVisibilityConflictsForInternalUsages(declarationsToMove, fakeTarget))
-        putAllValues(checkVisibilityConflictForNonMovedUsages(declarationsToMove, oldToNewMap, usages))
+        putAllValues(checkVisibilityConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
+        putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
     }
 }
 
@@ -106,32 +128,35 @@ private fun PsiElement.createVisibilityConflict(referencedDeclaration: PsiElemen
  * If visibility isn't there before the refactoring starts, we don't report it as a conflict.
  */
 private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
-    val declaration = upToDateReferencedElement as? KtNamedDeclaration ?: return false
-    return declaration.kotlinIsVisibleTo(element ?: return false)
+    val declaration = upToDateReferencedElement as? PsiNamedElement ?: return false
+    return declaration.isVisibleTo(element ?: return false)
 }
 
-private fun KtNamedDeclaration.kotlinIsVisibleTo(usage: PsiElement): Boolean {
-    return if (usage is KtElement) {
-        when {
-            !isPhysical -> analyzeCopy(this, DanglingFileResolutionMode.PREFER_SELF) { kotlinIsVisibleTo(usage) }
-            !usage.isPhysical -> analyzeCopy(usage, DanglingFileResolutionMode.PREFER_SELF) { kotlinIsVisibleTo(usage) }
-            else -> analyze(this) { kotlinIsVisibleTo(usage) }
-        }
+private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
+    return if (this is KtNamedDeclaration && usage is KtElement) {
+        kotlinIsVisibleTo(usage)
     } else {
         lightIsVisibleTo(usage)
     }
 }
 
 context(KtAnalysisSession)
-private fun KtNamedDeclaration.kotlinIsVisibleTo(usage: PsiElement): Boolean {
+private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.getFileSymbol() ?: return false
     val symbol = getSymbol()
     if (symbol !is KtSymbolWithVisibility) return false
     return isVisible(symbol, file, position = usage)
 }
 
-private fun KtNamedDeclaration.lightIsVisibleTo(usage: PsiElement): Boolean {
-    return toLightElements().all { lightDecl ->
+private fun KtNamedDeclaration.kotlinIsVisibleTo(usage: KtElement) = when {
+    !isPhysical -> analyzeCopy(this, DanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
+    !usage.isPhysical -> analyzeCopy(usage, DanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
+    else -> analyze(this) { isVisibleTo(usage) }
+}
+
+private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
+    val declarations = if (this is KtNamedDeclaration) toLightElements() else listOf(this)
+    return declarations.all { lightDecl ->
         if (lightDecl !is PsiMember) return@all false
         JavaResolveUtil.isAccessible(lightDecl, lightDecl.containingClass, lightDecl.modifierList, usage, null, null)
     }
@@ -141,17 +166,17 @@ private fun KtNamedDeclaration.lightIsVisibleTo(usage: PsiElement): Boolean {
  * Check whether the moved external usages are still visible towards their non-physical declaration.
  */
 private fun checkVisibilityConflictForNonMovedUsages(
-    declarationsToMove: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Set<KtNamedDeclaration>,
     oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
     return usages
-        .filter { usage -> usage.willNotBeMoved(declarationsToMove) && usage.isVisibleBeforeMove() }
+        .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) && usage.isVisibleBeforeMove() }
         .mapNotNull { usage ->
             val usageElement = usage.element ?: return@mapNotNull null
             val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
             val declarationCopy = oldToNewMap[referencedDeclaration] ?: return@mapNotNull null
-            val isVisible = declarationCopy.kotlinIsVisibleTo(usageElement)
+            val isVisible = declarationCopy.isVisibleTo(usageElement)
             if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
         }.toMultiMap()
 }
@@ -160,17 +185,17 @@ private fun checkVisibilityConflictForNonMovedUsages(
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
 private fun checkVisibilityConflictsForInternalUsages(
-    declarationsToMove: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Set<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {
     return fakeTarget
         .collectDescendantsOfType<KtSimpleNameExpression>()
         .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
-        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(declarationsToMove) && usageInfo.isVisibleBeforeMove() }
+        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
         .mapNotNull { (usageInfo, refExprCopy) ->
             val usageElement = usageInfo.element as? KtElement ?: return@mapNotNull null
-            val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
-            val isVisible = referencedDeclaration.kotlinIsVisibleTo(refExprCopy)
+            val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@mapNotNull null
+            val isVisible = referencedDeclaration.isVisibleTo(refExprCopy)
             if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
         }.toMultiMap()
 }

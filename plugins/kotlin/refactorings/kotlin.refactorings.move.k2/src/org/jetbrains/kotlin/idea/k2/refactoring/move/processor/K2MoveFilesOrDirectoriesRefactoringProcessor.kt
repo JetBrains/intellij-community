@@ -3,18 +3,18 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.JavaDirectoryService
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.*
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
+import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -39,6 +39,21 @@ class K2MoveFilesHandler : MoveFileHandler() {
     override fun canProcessElement(element: PsiFile): Boolean {
         if (!Registry.`is`("kotlin.k2.smart.move")) return false
         return element is KtFile
+    }
+
+    override fun detectConflicts(
+        conflicts: MultiMap<PsiElement, String>,
+        elementsToMove: Array<out PsiElement>,
+        usages: Array<out UsageInfo>,
+        targetDirectory: PsiDirectory
+    ) {
+        val targetPkgFqn = JavaDirectoryService.getInstance().getPackage(targetDirectory)?.kotlinFqName ?: FqName.ROOT
+        conflicts.putAllValues(findAllMoveConflicts(
+            elementsToMove.filterIsInstance<KtFile>().toSet(),
+            targetDirectory,
+            targetPkgFqn,
+            usages.filterIsInstance<MoveRenameUsageInfo>()
+        ))
     }
 
     override fun findUsages(

@@ -148,6 +148,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/java/moveField/moveFieldToTopLevelClass/moveFieldToTopLevelClass.test");
     }
 
+    @TestMetadata("java/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test")
+    public void testJava_moveFile_moveFilePackageVisibilityInaccessible_MoveFilePackageVisibilityInaccessible() throws Exception {
+        runTest("testData/refactoring/move/java/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test");
+    }
+
     @TestMetadata("java/moveFile/moveFileToAnotherPackage/moveFileToAnotherPackage.test")
     public void testJava_moveFile_moveFileToAnotherPackage_MoveFileToAnotherPackage() throws Exception {
         runTest("testData/refactoring/move/java/moveFile/moveFileToAnotherPackage/moveFileToAnotherPackage.test");
@@ -276,6 +281,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
     @TestMetadata("kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test")
     public void testKotlin_moveFile_moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir_MoveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test");
+    }
+
+    @TestMetadata("kotlin/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test")
+    public void testKotlin_moveFile_moveFilePackageVisibilityInaccessible_MoveFilePackageVisibilityInaccessible() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test");
     }
 
     @TestMetadata("kotlin/moveFile/moveFileToFile/moveFileToFile.test")
