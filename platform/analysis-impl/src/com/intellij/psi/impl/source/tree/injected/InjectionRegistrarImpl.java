@@ -286,7 +286,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     assert place.isValid();
     assert viewProvider.isValid();
 
-    List<InjectedLanguageUtilBase.TokenInfo> newTokens = InjectedLanguageUtilBase.getHighlightTokens(psiFile);
+    List<? extends InjectedLanguageUtilBase.TokenInfo> newTokens = InjectedLanguageUtilBase.getHighlightTokens(psiFile);
     PsiFile newFile = registerDocument(documentWindow, psiFile, place, hostPsiFile, documentManager);
     boolean mergeHappened = newFile != psiFile;
     Place mergedPlace = place;
