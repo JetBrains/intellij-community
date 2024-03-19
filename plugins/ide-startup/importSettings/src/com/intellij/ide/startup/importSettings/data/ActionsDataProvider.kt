@@ -3,6 +3,8 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider.Companion.toRelativeFormat
+import com.intellij.ide.startup.importSettings.jb.JbProductInfo
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import org.jetbrains.annotations.Nls
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -94,6 +96,9 @@ interface ActionsDataProvider<T : BaseService> {
   fun getComment(contributor: SettingsContributor): @Nls String?
   val main: List<Product>?
   val other: List<Product>?
+
+  // callback actions
+  fun productSelected(contributor: SettingsContributor)
 }
 
 class JBrActionsDataProvider private constructor() : ActionsDataProvider<JbService> {
@@ -135,6 +140,11 @@ class JBrActionsDataProvider private constructor() : ActionsDataProvider<JbServi
   override val other: List<Product>?
     get() = map?.get(ActionsDataProvider.popUpPlace.OTHER)
 
+  override fun productSelected(contributor: SettingsContributor) {
+    val actual = main?.contains(contributor) == true
+    val productCodeName = (contributor as? JbProductInfo)?.codeName ?: ""
+    ImportSettingsEventsCollector.jbIdeSelected(productCodeName, actual)
+  }
 }
 
 class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncService> {
@@ -204,6 +214,9 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
       return map?.get(ActionsDataProvider.popUpPlace.OTHER)
     }
 
+  override fun productSelected(contributor: SettingsContributor) {
+    // TODO implement with the sync
+  }
 }
 
 class ExtActionsDataProvider private constructor() : ActionsDataProvider<ExternalService> {
@@ -232,6 +245,8 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider<Externa
     get() = productService.products()
   override val other: List<Product>?
     get() = null
-
+  override fun productSelected(contributor: SettingsContributor) {
+    ImportSettingsEventsCollector.externalSelected((contributor as Product).name)
+  }
 }
 
