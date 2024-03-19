@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## 0.0.20
+- Updated Mermaid.js version to `10.8.0`
+- [MERMAID-163](https://youtrack.jetbrains.com/issue/MERMAID-163) Updated GitGraph parser to allow cherry-picking of merge commit 
+- [MERMAID-165](https://youtrack.jetbrains.com/issue/MERMAID-165) Added `style` keyword support for class diagram
+- [MERMAID-153](https://youtrack.jetbrains.com/issue/MERMAID-153) Updated xyChart configuration
+- [MERMAID-171](https://youtrack.jetbrains.com/issue/MERMAID-171) Updated Flowchart configuration
+- [MERMAID-169](https://youtrack.jetbrains.com/issue/MERMAID-169) Updated GitGraph configuration
+- [MERMAID-170](https://youtrack.jetbrains.com/issue/MERMAID-170) Updated Gantt parser to allow usage of hash and semicolon in the title, section, and task title
+- [MERMAID-168](https://youtrack.jetbrains.com/issue/MERMAID-168) Added support for Block Diagram
+- [MERMAID-150](https://youtrack.jetbrains.com/issue/MERMAID-150) Fixed parsing of asynchronous messages with activation in sequence diagram
+
 ## 0.0.19
 - [MERMAID-161](https://youtrack.jetbrains.com/issue/MERMAID-161) Added an option for configuring additional code fence info string patterns
 
