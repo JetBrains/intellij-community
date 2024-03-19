@@ -1750,7 +1750,6 @@
     <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
     <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
 
-    <postStartupActivity implementation="com.intellij.lang.documentation.ide.impl.DocumentationAutoPopup"/>
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
@@ -1797,6 +1796,8 @@
     <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.TabEnterUsageDetector"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.lang.documentation.ide.impl.DocumentationAutoPopupListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.psi.impl.file.impl.PsiVFSListener$MyModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>

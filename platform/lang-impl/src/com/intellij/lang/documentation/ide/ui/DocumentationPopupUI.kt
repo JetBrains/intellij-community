@@ -193,7 +193,7 @@ internal class DocumentationPopupUI(
     override fun actionPerformed(e: AnActionEvent) {
       val documentationUI = detachUI()
       myPopup.cancel()
-      DocumentationToolWindowManager.instance(project).showInToolWindow(documentationUI)
+      DocumentationToolWindowManager.getInstance(project).showInToolWindow(documentationUI)
     }
   }
 

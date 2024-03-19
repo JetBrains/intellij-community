@@ -4,14 +4,6 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManagerListener
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
-
-private class DocumentationAutoPopup : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    project.messageBus.simpleConnect().subscribe(LookupManagerListener.TOPIC, DocumentationAutoPopupListener())
-  }
-}
 
 private class DocumentationAutoPopupListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
