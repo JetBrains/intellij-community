@@ -86,6 +86,7 @@
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="EBECF0"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="C9CCD6"/>
       <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="ED99A1"/>
+      <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="EBECF0"/>
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
@@ -1556,6 +1557,7 @@
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="393B40"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="5A5D63"/>
       <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="9C4E4E"/>
+      <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="393B40"/>
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
