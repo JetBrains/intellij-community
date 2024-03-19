@@ -79,7 +79,7 @@ private fun RowScope.ColumnOne() {
             Modifier.onActivated {
                 activated = it
             },
-            style = Typography.h3TextStyle()
+            style = Typography.h3TextStyle(),
         )
 
         Row(
