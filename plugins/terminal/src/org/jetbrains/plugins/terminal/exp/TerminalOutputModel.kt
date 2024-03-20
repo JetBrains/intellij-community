@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
@@ -59,7 +58,7 @@ class TerminalOutputModel(val editor: EditorEx) {
 
       val marker = document.createRangeMarker(startOffset, document.textLength)
       marker.isGreedyToRight = true
-      val block = CommandBlock(command, prompt, marker)
+      val block = CommandBlockImpl(command, prompt?.text, prompt?.rightText, marker)
       blocks.add(block)
       putHighlightings(block, blockHighlightings)
       block
@@ -71,7 +70,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   @RequiresEdt
   internal fun finalizeBlock(activeBlock: CommandBlock) {
     // restrict block expansion
-    activeBlock.range.isGreedyToRight = false
+    (activeBlock as CommandBlockImpl).range.isGreedyToRight = false
     listeners.forEach { it.blockFinalized(activeBlock) }
   }
 
@@ -93,7 +92,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     // Remove the text after removing the highlightings because removing text will trigger rehighlight
     // and there should be no highlightings at this moment.
     document.deleteString(rangeToDelete.startOffset, rangeToDelete.endOffset)
-    block.range.dispose()
+    (block as CommandBlockImpl).range.dispose()
   }
 
   private fun findBlockRangeToDelete(block: CommandBlock): TextRange {
@@ -341,30 +340,6 @@ private fun buildAndSortHighlightings(document: Document, highlightings: List<Hi
     result.add(HighlightingInfo(startOffset, documentLength, EmptyTextAttributesProvider))
   }
   return result
-}
-
-data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, val range: RangeMarker) {
-  val startOffset: Int
-    get() = range.startOffset
-  val endOffset: Int
-    get() = range.endOffset
-  val commandStartOffset: Int
-    get() = range.startOffset + if (withPrompt) prompt!!.text.length else 0
-  val outputStartOffset: Int
-    get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
-  val textRange: TextRange
-    get() = range.textRange
-
-  val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
-  val withCommand: Boolean = !command.isNullOrEmpty()
-
-  /** There can be no output in the result of command execution. For example, in `cd` command. */
-  val withOutput: Boolean
-    get() = outputStartOffset < endOffset
-
-  /** If block is finalized it means that its length won't be expanded if some text is added before or after it */
-  val isFinalized: Boolean
-    get() = !range.isGreedyToRight
 }
 
 data class CommandBlockInfo(val exitCode: Int)

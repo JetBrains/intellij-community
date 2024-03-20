@@ -12,6 +12,7 @@ import org.jetbrains.plugins.terminal.exp.CommandBlock
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.toCommandLine
+import org.jetbrains.plugins.terminal.exp.withCommand
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test

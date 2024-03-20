@@ -11,6 +11,7 @@ import org.jetbrains.plugins.terminal.exp.CommandBlock
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
+import org.jetbrains.plugins.terminal.exp.textRange
 
 class TerminalCopyBlockAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
