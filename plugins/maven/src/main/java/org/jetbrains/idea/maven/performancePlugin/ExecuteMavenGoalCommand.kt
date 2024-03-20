@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.execution.MavenRunAnythingProvider
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.performancePlugin.dto.MavenGoalConfigurationDto
+import org.jetbrains.idea.maven.performancePlugin.utils.MavenCommandsExecutionListener
 import org.jetbrains.idea.maven.performancePlugin.utils.MavenConfigurationUtils.createRunnerParams
 
 
@@ -49,22 +50,7 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : PerformanceCommand(text
     val promise = AsyncPromise<Any?>()
     val settings = deserializeOptionsFromJson(extractCommandArgument(PREFIX), MavenGoalConfigurationDto::class.java)
 
-    project.messageBus.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
-      override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
-        if (cause != null) {
-          promise.setError(cause)
-        }
-      }
-
-      override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-        if (exitCode != 0) {
-          promise.setError("Process finished with code exit code $exitCode")
-        }
-        else {
-          promise.setResult(null)
-        }
-      }
-    })
+    project.messageBus.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, MavenCommandsExecutionListener(promise))
 
 
     ApplicationManager.getApplication().invokeLater {

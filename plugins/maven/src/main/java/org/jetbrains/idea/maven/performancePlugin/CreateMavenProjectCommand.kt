@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.performancePlugin
 
+import com.intellij.execution.ExecutionManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.OpenProjectTask
@@ -32,7 +33,10 @@ import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapt
 import com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.performancePlugin.dto.NewMavenProjectDto
+import org.jetbrains.idea.maven.performancePlugin.utils.MavenCommandsExecutionListener
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
 import org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeItem
@@ -132,10 +136,18 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
             javaBuildSystemData?.buildSystem = "Maven"
           }
         }
+        val promise = AsyncPromise<Any?>()
+        if (withArchetype) {
+          newProject.messageBus.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, MavenCommandsExecutionListener(promise))
+        }
+        else {
+          promise.setResult(null)
+        }
 
         moduleBuilder.commit(newProject, modulesConfigurator?.moduleModel, modulesConfigurator ?: ModulesProvider.EMPTY_MODULES_PROVIDER)
 
         if (!newMavenProjectDto.asModule) runNewProject(projectPath, newProject, project, context)
+        promise.await()
       }
     }
     finally {
