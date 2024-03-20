@@ -133,7 +133,9 @@ For each version of Jewel, these are the minimum supported Kotlin and Compose Mu
 
  Jewel version | Kotlin version | Compose version
  --- | --- | ---
- 0.15.0 –> 0.15.2 | 1.8.21 | 1.6.0-dev1440
+ 0.15.2 -> * | 1.8.21 | 1.6.10-dev1490
+ 0.15.1 | 1.8.21 | 1.6.10-dev1457
+ 0.15.0 | 1.8.21 | 1.6.0-dev1440
  0.13.1 -> 0.14.1 | 1.8.21 | 1.6.0-dev1369
 
 For older versions please refer to the Jewel tags and release notes.
