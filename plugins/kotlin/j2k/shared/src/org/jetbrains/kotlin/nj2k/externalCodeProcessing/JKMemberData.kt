@@ -6,7 +6,6 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -68,7 +67,7 @@ interface JKMethodData : JKMemberDataCameFromJava<PsiMethod> {
     var usedAsAccessorOfProperty: JKFieldData?
 }
 
-data class JKPhysicalMethodData @ApiStatus.Internal constructor(
+data class JKPhysicalMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,

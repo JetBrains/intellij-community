@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -27,7 +26,7 @@ import org.jetbrains.kotlin.nj2k.types.typeFqNamePossiblyMappedToKotlin
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
-class NewExternalCodeProcessing @ApiStatus.Internal constructor(
+class NewExternalCodeProcessing(
     private val referenceSearcher: ReferenceSearcher,
     private val isInConversionContext: (PsiElement) -> Boolean
 ) : ExternalCodeProcessing {
