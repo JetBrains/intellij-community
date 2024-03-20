@@ -18,6 +18,7 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.util.isConstructorCall
@@ -1079,5 +1080,38 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("Foo", uCallExpression.receiverType?.canonicalText)
+    }
+
+    fun checkTextRangeOfLocalVariable(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo(p: Any) {
+                  val bar = { arg ->
+                    arg == p
+                  }
+                  boo(p = b<caret>ar)
+                }
+                
+                fun boo(p: (Any) -> Boolean): Boolean {
+                  return p.invoke(42)
+                }
+            """.trimIndent()
+        )
+        val nameReferenceExpression = myFixture.file.findElementAt(myFixture.caretOffset)
+            ?.getParentOfType<KtNameReferenceExpression>(strict = true)
+            .orFail("Cannot find KtNameReferenceExpression")
+
+        val uNameReferenceExpression = nameReferenceExpression.toUElementOfType<USimpleNameReferenceExpression>()
+            .orFail("Cannot convert to KotlinUSimpleReferenceExpression")
+
+        val localPsiVariable = uNameReferenceExpression.resolve()
+            .orFail("Cannot find the local variable")
+
+        // val bar = ...
+        TestCase.assertNotNull(localPsiVariable.textRange)
+        // boo(p = bar)
+        TestCase.assertNotNull(uNameReferenceExpression.textRange)
+
+        TestCase.assertNotSame(localPsiVariable.textRange, uNameReferenceExpression.textRange)
     }
 }
