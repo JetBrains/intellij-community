@@ -993,7 +993,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
+    SearchScope maximalScope;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-349679, EA-891094")) {
+      maximalScope = actionHandler.getMaximalScope();
+    }
+    if (!(maximalScope instanceof LocalSearchScope)) {
       DefaultActionGroup scopeChooserGroup = new DefaultActionGroup(createScopeChooser(project, contentDisposable, usageView, showUsagesPopupData));
       ActionToolbar scopeChooserToolbar =
         ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);
