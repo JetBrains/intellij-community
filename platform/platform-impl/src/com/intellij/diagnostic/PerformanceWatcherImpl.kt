@@ -532,10 +532,11 @@ private suspend fun reportCrashesIfAny() {
   }
 }
 
-internal val MacOSDiagnosticReportDirectories = listOf(
-  SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports",
-  SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports/Retired",
-)
+internal val MacOSDiagnosticReportDirectories: List<String>
+  get() = listOf(
+    SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports",
+    SystemProperties.getUserHome() + "/Library/Logs/DiagnosticReports/Retired",
+  )
 
 private const val CRASH_MAX_SIZE = 5 * FileUtilRt.MEGABYTE
 
@@ -580,13 +581,18 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
         // https://developer.apple.com/documentation/xcode/interpreting-the-json-format-of-a-crash-report
         val content = Files.readString(file.toPath())
         if (!content.contains(pid)) return@firstNotNullOfOrNull null // certainly not our crash report
-        val jsonObjects = content.splitToSequence("\r\n", "\n", "\r", limit = 2).toList()
-        check(jsonObjects.size == 2) { content }
-        val (metadata, report) = jsonObjects.map(Json::parseToJsonElement)
-        metadata as JsonObject
-        report as JsonObject
-        if (metadata["bug_type"] == JsonPrimitive("309") && report["pid"] == JsonPrimitive(pid.toInt())) {
-          return@firstNotNullOfOrNull content
+        try {
+          val jsonObjects = content.splitToSequence("\r\n", "\n", "\r", limit = 2).toList()
+          check(jsonObjects.size == 2) { content }
+          val (metadata, report) = jsonObjects.map(Json::parseToJsonElement)
+          metadata as JsonObject
+          report as JsonObject
+          if (metadata["bug_type"] == JsonPrimitive("309") && report["pid"] == JsonPrimitive(pid.toInt())) {
+            return@firstNotNullOfOrNull content
+          }
+        }
+        catch (e: Exception) {
+          LOG.warn("failed to process MacOS diagnostic report $file", e)
         }
         null
       }
