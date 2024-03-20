@@ -143,7 +143,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                   final int line,
                                                                                                   final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
-    return toggleAndReturnLineBreakpoint(project, Collections.singletonList(type), position, temporary, null, true);
+    return toggleAndReturnLineBreakpoint(project, Collections.singletonList(type), position, false, temporary, null, true);
   }
 
   /**
@@ -278,16 +278,30 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return bestBreakpoint;
   }
 
+  /**
+   * @deprecated use {@link #toggleAndReturnLineBreakpoint(Project, List, XSourcePosition, boolean, boolean, Editor, boolean)}
+   */
+  @Deprecated
   @NotNull
   public static Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                       @NotNull List<? extends XLineBreakpointType> types,
-                                                                       @NotNull final XSourcePosition position,
-                                                                       final boolean temporary,
-                                                                       @Nullable final Editor editor,
-                                                                       boolean canRemove) {
+                                                                                 @NotNull List<? extends XLineBreakpointType> types,
+                                                                                 @NotNull final XSourcePosition position,
+                                                                                 final boolean temporary,
+                                                                                 @Nullable final Editor editor,
+                                                                                 boolean canRemove) {
+    return toggleAndReturnLineBreakpoint(project, types, position, true, temporary, editor, canRemove);
+  }
+
+  @NotNull
+  public static Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                                 @NotNull List<? extends XLineBreakpointType> types,
+                                                                                 @NotNull final XSourcePosition position,
+                                                                                 boolean selectVariantByPositionColumn,
+                                                                                 final boolean temporary,
+                                                                                 @Nullable final Editor editor,
+                                                                                 boolean canRemove) {
     final VirtualFile file = position.getFile();
     final int line = position.getLine();
-    final int caretOffset = position.getOffset();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
 
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
@@ -295,7 +309,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return variantsAsync.then(variantsWithAll -> {
         var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
 
-        var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
+        var breakpointOrVariant = getBestMatchingBreakpoint(selectVariantByPositionColumn ? position.getOffset() : 0,
                                                             Stream.concat(
                                                               types.stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()),
                                                               variants.stream()).iterator(),
@@ -381,7 +395,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             }
           }
 
-          final int defaultIndex = getIndexOfBestMatchingInlineVariant(caretOffset, variants);
+          final int defaultIndex = getIndexOfBestMatchingInlineVariant(position.getOffset(), variants);
 
           final MySelectionListener selectionListener = new MySelectionListener();
           BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant> step =

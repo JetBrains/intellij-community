@@ -341,7 +341,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
           val line = logicalPosition.line
           val createPosition = XDebuggerUtil.getInstance().createPosition(virtualFile, line)
                                ?: error("Can't create source position: $line at $virtualFile")
-          XBreakpointUtil.toggleLineBreakpoint(project, createPosition, editor, false, false, true)
+          XBreakpointUtil.toggleLineBreakpoint(project, createPosition, false, editor, false, false, true)
           //breakpointManager.addLineBreakpoint()
         }
       }

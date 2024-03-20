@@ -34,7 +34,7 @@ public class AddLineBreakpointAction extends DumbAwareAction {
     if (editor == null) return;
     XSourcePosition position = getLineBreakpointPosition(e);
     assert position != null;
-    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
+    XBreakpointUtil.toggleLineBreakpoint(project, position, false, editor, false, false, true)
       .onSuccess(bp -> {
         if (bp != null && isConditional()) {
           EditorGutterComponentEx gutter = (EditorGutterComponentEx)editor.getGutter();

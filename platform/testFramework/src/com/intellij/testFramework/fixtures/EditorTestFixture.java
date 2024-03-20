@@ -126,11 +126,14 @@ public class EditorTestFixture {
   }
 
   public boolean performEditorAction(@NotNull String actionId) {
-    DataContext dataContext = getEditorDataContext();
+    return performEditorAction(actionId, null);
+  }
 
+  public boolean performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent) {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     AnAction action = managerEx.getAction(actionId);
-    AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    AnActionEvent event = actionEvent != null ? actionEvent
+                                              : new AnActionEvent(null, getEditorDataContext(), ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
     ActionUtil.performDumbAwareUpdate(action, event, false);
     if (event.getPresentation().isEnabled()) {

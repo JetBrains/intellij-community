@@ -19,6 +19,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -618,7 +619,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void type(@NotNull String s);
 
-  void performEditorAction(@NotNull String actionId);
+  default void performEditorAction(@NotNull String actionId) {
+    performEditorAction(actionId, null);
+  }
+
+  void performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent);
 
   /**
    * If the action is visible and enabled, perform it.

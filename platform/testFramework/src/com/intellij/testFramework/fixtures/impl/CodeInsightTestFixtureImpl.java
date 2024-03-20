@@ -994,9 +994,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void performEditorAction(@NotNull String actionId) {
+  public void performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent) {
     assertInitialized();
-    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(actionId));
+    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(actionId, actionEvent));
   }
 
   @NotNull
