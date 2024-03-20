@@ -13,7 +13,10 @@ import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -30,10 +33,19 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Path
 
-class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) {
-  private val propertyGraph = PropertyGraph()
+/**
+ * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
+ */
+class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null) {
 
-  private var selectedMode = propertyGraph.property(PROJECT_VENV)
+  private val propertyGraph = PropertyGraph()
+  private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
+    assert(it.isNotEmpty()) {
+      "When provided, onlyAllowedInterpreterTypes shouldn't be empty"
+    }
+  }
+
+  private var selectedMode = propertyGraph.property(this.allowedInterpreterTypes.first())
   private var _projectVenv = propertyGraph.booleanProperty(selectedMode, PROJECT_VENV)
   private var _baseConda = propertyGraph.booleanProperty(selectedMode, BASE_CONDA)
   private var _custom = propertyGraph.booleanProperty(selectedMode, CUSTOM)
@@ -52,8 +64,9 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
   private var initialized = false
 
   private fun updateVenvLocationHint() {
-    if (selectedMode.get() == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.get() + File.separator))
-    else if (selectedMode.get() == BASE_CONDA) venvHint.set(message("sdk.create.simple.conda.hint"))
+    val get = selectedMode.get()
+    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.get() + File.separator))
+    else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
   val state = PythonAddInterpreterState(propertyGraph,
@@ -75,9 +88,10 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
     custom = PythonAddCustomInterpreter(presenter)
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
+
     with(outerPanel) {
       row(message("sdk.create.interpreter.type")) {
-        segmentedButton(PythonInterpreterSelectionMode.entries) { text = message(it.nameKey) }
+        segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
           .bind(selectedMode)
       }.topGap(TopGap.MEDIUM)
 
@@ -97,6 +111,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
                            message("sdk.create.conda.missing.text"))
           .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)
+
 
       row("") {
         comment("").bindText(venvHint)
@@ -126,7 +141,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }
 
       custom.onShown()
-      presenter.navigator.restoreLastState()
+      presenter.navigator.restoreLastState(onlyAllowedSelectionModes = allowedInterpreterTypes)
     }
   }
 
