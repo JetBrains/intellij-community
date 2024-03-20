@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -231,7 +231,7 @@ public final class DiffUtil {
     Disposable disposable = ((EditorImpl)editor).getDisposable();
     if (project != null) {
       DiffEditorHighlighterUpdater updater = new DiffEditorHighlighterUpdater(project, disposable, editor, content);
-      updater.updateHighlightersAsync();
+      updater.updateHighlighters();
     }
     else {
       ReadAction

@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
@@ -29,27 +28,30 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.messages.MessageBusConnection
-import org.jetbrains.annotations.TestOnly
+import com.intellij.util.messages.SimpleMessageBusConnection
 
 open class EditorHighlighterUpdater(
   @JvmField protected val project: Project,
   parentDisposable: Disposable,
+  connection: SimpleMessageBusConnection,
   @JvmField protected val editor: EditorEx,
   private val file: VirtualFile?,
 ) {
+  constructor(
+    project: Project,
+    parentDisposable: Disposable,
+    editor: EditorEx,
+    file: VirtualFile?,
+  ) : this(
+    project = project,
+    parentDisposable = parentDisposable,
+    connection = project.messageBus.connect(parentDisposable),
+    editor = editor,
+    file = file,
+    asyncLoader = null,
+  )
+
   init {
-    connect(parentDisposable, project.messageBus.connect(parentDisposable))
-  }
-
-  companion object {
-    @TestOnly
-    fun completeAsyncTasks() {
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    }
-  }
-
-  private fun connect(parentDisposable: Disposable, connection: MessageBusConnection) {
     connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
     connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun enteredDumbMode() {
@@ -119,13 +121,20 @@ open class EditorHighlighterUpdater(
     }
   }
 
-  fun updateHighlightersAsync() {
+  /**
+   * Updates editors' highlighters. This should be done when the opened file changes its file type.
+   */
+  fun updateHighlighters() {
+    if (project.isDisposed || editor.isDisposed) {
+      return
+    }
+
     if (!isEditorLoaded(editor)) {
       return
     }
 
     ReadAction
-      .nonBlocking<EditorHighlighter> { createHighlighter(false) }
+      .nonBlocking<EditorHighlighter> { createHighlighter(forceEmpty = false) }
       .expireWith(project)
       .expireWhen { (file != null && !file.isValid) || editor.isDisposed }
       .coalesceBy(EditorHighlighterUpdater::class.java, editor)
@@ -146,15 +155,6 @@ open class EditorHighlighterUpdater(
 
   protected open fun setupHighlighter(highlighter: EditorHighlighter) {
     editor.highlighter = highlighter
-  }
-
-  /**
-   * Updates editors' highlighters. This should be done when the opened file changes its file type.
-   */
-  fun updateHighlighters() {
-    if (!project.isDisposed && !editor.isDisposed) {
-      updateHighlightersAsync()
-    }
   }
 
   private fun updateHighlightersSynchronously() {

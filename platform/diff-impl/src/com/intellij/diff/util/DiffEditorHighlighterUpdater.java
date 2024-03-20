@@ -27,7 +27,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
                                       @NotNull Disposable parentDisposable,
                                       @NotNull EditorEx editor,
                                       @NotNull DocumentContent content) {
-    super(project, parentDisposable, editor, content.getHighlightFile());
+    super(project, parentDisposable, project.getMessageBus().connect(parentDisposable), editor, content.getHighlightFile());
     myContent = content;
   }
 

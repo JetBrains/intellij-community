@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -33,7 +32,8 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBSwingUtilities
-import org.jetbrains.annotations.ApiStatus.Experimental
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import javax.swing.JComponent
@@ -47,7 +47,7 @@ open class TextEditorComponent(
   val file: VirtualFile,
   private val textEditor: TextEditorImpl,
   private val editorImpl: EditorImpl,
-) : JLayeredPane(), DataProvider, Disposable, BackgroundableDataProvider {
+) : JLayeredPane(), DataProvider, BackgroundableDataProvider {
   /**
    * Whether the editor's document is modified or not
    */
@@ -58,7 +58,6 @@ open class TextEditorComponent(
    * Whether the editor is valid or not
    */
   private var isValid: Boolean
-  private val editorHighlighterUpdater: EditorHighlighterUpdater
 
   @Volatile
   var isDisposed: Boolean = false
@@ -70,7 +69,6 @@ open class TextEditorComponent(
     isOpaque = true
     val editor = editorImpl
     editor.component.isFocusable = false
-    editor.document.addDocumentListener(MyDocumentListener(), this)
     (editor.markupModel as EditorMarkupModel).isErrorStripeVisible = true
     editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW)
     editor.setFile(file)
@@ -89,11 +87,30 @@ open class TextEditorComponent(
     isModified = isModifiedImpl
     isValid = isEditorValidImpl
     LOG.assertTrue(isValid)
-    val virtualFileListener = MyVirtualFileListener()
-    file.fileSystem.addVirtualFileListener(virtualFileListener)
-    Disposer.register(this) { file.fileSystem.removeVirtualFileListener(virtualFileListener) }
-    project.messageBus.connect(this).subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
-    editorHighlighterUpdater = EditorHighlighterUpdater(project, this, editor, file)
+  }
+
+  internal fun listenChanges(parentDisposable: Disposable, coroutineScope: CoroutineScope) {
+    val messageBusConnection = project.messageBus.connect(coroutineScope)
+
+    val editorHighlighterUpdater = EditorHighlighterUpdater(
+      project = project,
+      parentDisposable = parentDisposable,
+      connection = messageBusConnection,
+      editor = editor,
+      file = file,
+    )
+
+    val virtualFileListener = MyVirtualFileListener(editorHighlighterUpdater)
+    val fileSystem = file.fileSystem
+    fileSystem.addVirtualFileListener(virtualFileListener)
+    val documentListener = MyDocumentListener()
+    editor.document.addDocumentListener(documentListener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      fileSystem.removeVirtualFileListener(virtualFileListener)
+      editor.document.removeDocumentListener(documentListener)
+    }
+
+    messageBusConnection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
   }
 
   final override fun add(comp: Component): Component {
@@ -105,7 +122,6 @@ open class TextEditorComponent(
   }
 
   @Suppress("FunctionName", "unused")
-  @Experimental
   @Internal
   fun __add(component: Component, constraints: Any) {
     super.add(component, constraints)
@@ -124,8 +140,8 @@ open class TextEditorComponent(
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
    * editors, unregisters listeners. The behavior of the splitter after disposing is unpredictable.
    */
-  override fun dispose() {
-    disposeEditor()
+  open fun dispose() {
+    EditorFactory.getInstance().releaseEditor(editorImpl)
     isDisposed = true
   }
 
@@ -134,10 +150,6 @@ open class TextEditorComponent(
    */
   val editor: EditorEx
     get() = editorImpl
-
-  private fun disposeEditor() {
-    EditorFactory.getInstance().releaseEditor(editorImpl)
-  }
 
   /**
    * Just calculates "modified" property
@@ -205,15 +217,12 @@ open class TextEditorComponent(
     /**
      * We can reuse this runnable to decrease the number of allocated objects.
      */
-    private val updateRunnable: Runnable
-    private var isUpdateScheduled = false
-
-    init {
-      updateRunnable = Runnable {
-        isUpdateScheduled = false
-        updateModifiedProperty()
-      }
+    private val updateRunnable = Runnable {
+      isUpdateScheduled = false
+      updateModifiedProperty()
     }
+
+    private var isUpdateScheduled = false
 
     override fun documentChanged(e: DocumentEvent) {
       if (!isUpdateScheduled) {
@@ -234,7 +243,7 @@ open class TextEditorComponent(
   /**
    * Updates "valid" property and highlighters (if necessary)
    */
-  private inner class MyVirtualFileListener : VirtualFileListener {
+  private inner class MyVirtualFileListener(private val editorHighlighterUpdater: EditorHighlighterUpdater) : VirtualFileListener {
     override fun propertyChanged(e: VirtualFilePropertyEvent) {
       if (e.propertyName == VirtualFile.PROP_NAME) {
         // File can be invalidated after file changes name (an extension also can change). The editor should be removed if it's invalid.

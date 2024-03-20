@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.getDocumentLanguage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,10 +33,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
@@ -82,8 +78,10 @@ open class TextEditorImpl
       file.putUserData(TRANSIENT_EDITOR_STATE_KEY, null)
     }
 
-    @Suppress("LeakingThis")
-    Disposer.register(this, component)
+    // postpone subscribing - perform not in EDT
+    asyncLoader.coroutineScope.launch {
+      component.listenChanges(parentDisposable = this@TextEditorImpl, asyncLoader.coroutineScope)
+    }
   }
 
   companion object {
@@ -105,7 +103,12 @@ open class TextEditorImpl
   }
 
   override fun dispose() {
-    asyncLoader.dispose()
+    try {
+      asyncLoader.dispose()
+    }
+    finally {
+      component.dispose()
+    }
     if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == true) {
       file.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(editor))
     }
