@@ -3,18 +3,16 @@ package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
+import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcs.log.runInEdt
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
-import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeEvent
 
 abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val tabName: String) : Disposable {
@@ -51,20 +49,8 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
     if (disposableFlag.isDisposed) return
     val tab = getTab() ?: return
 
-    tab.displayName = getDisplayName()
+    tab.displayName = CommitTabTitleUpdater.getDisplayTabName(tree.project, tabName, BranchPresentation.getText(branches))
     tab.description = BranchPresentation.getTooltip(branches)
-  }
-
-  private fun getDisplayName(): @Nls String? {
-    if (ExperimentalUI.isNewUI()) {
-      val contentsCount = ChangesViewContentManager.getToolWindowFor(tree.project, tabName)?.contentManager?.contentCount ?: 0
-      if (contentsCount == 1) return null else return VcsBundle.message("tab.title.commit")
-    }
-
-    val branchesText = BranchPresentation.getText(branches)
-    if (branchesText.isBlank()) return VcsBundle.message("tab.title.commit")
-
-    return VcsBundle.message("tab.title.commit.to.branch", branchesText)
   }
 
   private fun getBranches(): Set<BranchData> {
