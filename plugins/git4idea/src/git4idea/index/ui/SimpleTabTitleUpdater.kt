@@ -4,10 +4,7 @@ package git4idea.index.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
@@ -33,8 +30,14 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
   init {
     UiNotifyConnector.doWhenFirstShown(tree, Runnable { refresh() })
     tree.addGroupingChangeListener(groupingListener)
-    tree.project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE,
-                                                    GitRepositoryChangeListener { runInEdt(disposableFlag) { refresh() } })
+    val busConnection = tree.project.messageBus.connect(this)
+    busConnection.subscribe(GitRepository.GIT_REPO_CHANGE,
+                            GitRepositoryChangeListener { runInEdt(disposableFlag) { refresh() } })
+    busConnection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() {
+        updatePresentation() // listen for new content tabs
+      }
+    })
     Disposer.register(this, disposableFlag)
   }
 
