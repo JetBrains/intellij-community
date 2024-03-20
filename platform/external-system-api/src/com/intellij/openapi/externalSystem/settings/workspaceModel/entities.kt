@@ -12,7 +12,41 @@ object ExternalProjectsBuildClasspathEntitySource: EntitySource
 
 interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
   val projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
+
+  //region generated code
+  @GeneratedCodeApiVersion(2)
+  interface Builder : ExternalProjectsBuildClasspathEntity, WorkspaceEntity.Builder<ExternalProjectsBuildClasspathEntity> {
+    override var entitySource: EntitySource
+    override var projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
+  }
+
+  companion object : EntityType<ExternalProjectsBuildClasspathEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ExternalProjectsBuildClasspathEntity {
+      val builder = builder()
+      builder.projectsBuildClasspath = projectsBuildClasspath
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
 }
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(
+  entity: ExternalProjectsBuildClasspathEntity,
+  modification: ExternalProjectsBuildClasspathEntity.Builder.() -> Unit,
+): ExternalProjectsBuildClasspathEntity {
+  return modifyEntity(ExternalProjectsBuildClasspathEntity.Builder::class.java, entity, modification)
+}
+//endregion
 
 data class ExternalModuleBuildClasspathEntity(val path: String, val entries: List<String>)
 
