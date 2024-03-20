@@ -26150,6 +26150,10 @@ f:com.intellij.ui.LicensingFacade
 - isPerpetualForProduct(java.util.Date):Z
 - s:signalUnused(Z):V
 - toJson():java.lang.String
+com.intellij.ui.LicensingFacade$LicenseStateListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:licenseStateChanged(com.intellij.ui.LicensingFacade):V
 c:com.intellij.ui.LightweightHint
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.ui.Hint
