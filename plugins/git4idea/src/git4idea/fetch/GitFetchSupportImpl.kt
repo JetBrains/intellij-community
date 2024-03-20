@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -299,15 +300,21 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return !isFailed
     }
 
-    override fun showNotificationIfFailed(title: @Nls String): Boolean {
+    override fun showNotificationIfFailed(title: @NotificationTitle String): Boolean {
       if (isFailed) doShowNotification(title)
       return !isFailed
     }
 
-    private fun doShowNotification(failureTitle: @Nls String? = null) {
+    private fun doShowNotification(failureTitle: @NotificationTitle String? = null) {
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
+      val title = if (!isFailed) {
+        GitBundle.message("notification.title.fetch.success")
+      }
+      else {
+        failureTitle ?: GitBundle.message("notification.title.fetch.failure")
+      }
       val message = buildMessage(failureTitle)
-      val notification = STANDARD_NOTIFICATION.createNotification(message, type)
+      val notification = STANDARD_NOTIFICATION.createNotification(title, message, type)
       notification.setDisplayId(if (!isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
       vcsNotifier.notify(notification)
     }
@@ -331,14 +338,9 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       }
 
       val sb = HtmlBuilder()
-      if (!isFailed) {
-        sb.append(HtmlChunk.text(GitBundle.message("notification.title.fetch.success")).bold())
-      }
-      else {
+      if (isFailed && failed.size != roots.size && failed.keys.isNotEmpty()) {
         sb.append(HtmlChunk.text(failureTitle ?: GitBundle.message("notification.title.fetch.failure")).bold())
-        if (failed.size != roots.size) {
-          sb.append(mention(failed.keys))
-        }
+        sb.append(mention(failed.keys))
       }
       appendDetails(sb, errorMessage)
       appendDetails(sb, prunedRefs)
@@ -348,7 +350,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     private fun appendDetails(sb: HtmlBuilder, details: MultiRootMessage) {
       val text = details.asString()
       if (text.isNotEmpty()) {
-        sb.br().append(text)
+        if (!sb.isEmpty) sb.br()
+        sb.append(text)
       }
     }
   }
