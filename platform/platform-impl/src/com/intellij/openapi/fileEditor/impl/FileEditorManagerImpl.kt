@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -2316,13 +2317,14 @@ open class FileEditorManagerImpl(
       }
     }
     else {
-      AsyncEditorLoader.performWhenLoaded(textEditor) {
+      // use ContextAwareRunnable to avoid unnecessary thread context capturing
+      AsyncEditorLoader.performWhenLoaded(textEditor, ContextAwareRunnable {
         val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
         StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
         coroutineScope.launch {
           FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, durationMs, composite)
         }
-      }
+      })
     }
   }
 }

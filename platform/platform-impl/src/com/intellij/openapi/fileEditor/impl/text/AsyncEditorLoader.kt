@@ -115,9 +115,9 @@ class AsyncEditorLoader internal constructor(
   private fun performWhenLoaded(runnable: Runnable) {
     val toRunLater = captureThreadContext(runnable)
     val newActions = delayedActions.updateAndGet { oldActions ->
-      if (oldActions == LOADED || oldActions.contains(toRunLater)) oldActions else oldActions + toRunLater
+      if (oldActions === LOADED || oldActions.contains(toRunLater)) oldActions else oldActions + toRunLater
     }
-    if (!newActions.contains(toRunLater)) {
+    if (newActions === LOADED || !newActions.contains(toRunLater)) {
       runnable.run()
     }
   }
@@ -126,8 +126,6 @@ class AsyncEditorLoader internal constructor(
   @Internal
   @RequiresEdt
   fun start(textEditor: TextEditorImpl, task: Deferred<*>) {
-    val editor = textEditor.editor
-
     if (ApplicationManager.getApplication().isUnitTestMode) {
       startInTests(task = task)
       return
@@ -144,16 +142,17 @@ class AsyncEditorLoader internal constructor(
 
       indicatorJob.cancel()
 
+      val scrollingModel = textEditor.editor.scrollingModel
       withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
-        editor.scrollingModel.disableAnimation()
+        scrollingModel.disableAnimation()
         try {
           markLoadedAndExecuteDelayedActions()
         }
         finally {
-          editor.scrollingModel.enableAnimation()
+          scrollingModel.enableAnimation()
         }
       }
-      EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
+      EditorNotifications.getInstance(project).scheduleUpdateNotifications(textEditor)
     }
   }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
@@ -33,7 +34,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -58,8 +58,8 @@ class EditorNotificationsImpl(private val project: Project,
 
   /**
    * The scope passed in constructor can be a project scope,
-   * for example in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
-   * Since it's cancelled in [dispose], we have to create a child.
+   * for example, in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
+   * Since it's canceled in [dispose], we have to create a child.
    */
   private val coroutineScope: CoroutineScope = coroutineScope.namedChildScope("EditorNotificationsImpl")
   private val updateAllRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -167,11 +167,22 @@ class EditorNotificationsImpl(private val project: Project,
 
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (!file.isValid) {
-        return@launch
+      if (file.isValid) {
+        doUpdateNotifications(file)
       }
+    }
+  }
 
-      doUpdateNotifications(file)
+  override fun scheduleUpdateNotifications(editor: TextEditor) {
+    ((editor as? TextEditorImpl)?.asyncLoader?.coroutineScope ?: coroutineScope).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      if (editor.isValid) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment || UIUtil.isShowing(editor.component)) {
+          updateEditors(file = editor.file, fileEditors = listOf(editor))
+        }
+        else {
+          editor.putUserData(PENDING_UPDATE, true)
+        }
+      }
     }
   }
 
@@ -187,7 +198,7 @@ class EditorNotificationsImpl(private val project: Project,
         visible
       }
     }
-    updateEditors(file, editors.toList())
+    updateEditors(file = file, fileEditors = editors.toList())
   }
 
   private fun getEditors(file: VirtualFile): Sequence<FileEditor> {
@@ -196,7 +207,7 @@ class EditorNotificationsImpl(private val project: Project,
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
-      // delay for debounce
+      // delay for debouncing
       delay(100)
 
       // Please don't remove this readAction {} here, it's needed for checking of validity of injected files,
@@ -294,9 +305,8 @@ class EditorNotificationsImpl(private val project: Project,
   private fun collectIntentionActions(fileEditor: FileEditor, project: Project) {
     val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
     val components = fileEditorManager.getTopComponents(fileEditor)
-    val intentions: List<IntentionActionWithOptions> = components.filterIsInstance(IntentionActionProvider::class.java)
-      .mapNotNull { it.intentionAction }
-    fileEditor.putUserData(FILE_LEVEL_INTENTIONS, ContainerUtil.unmodifiableOrEmptyList(intentions))
+    val intentions = components.asSequence().filterIsInstance<IntentionActionProvider>().mapNotNull { it.intentionAction }.toList()
+    fileEditor.putUserData(FILE_LEVEL_INTENTIONS, intentions)
   }
 
   override fun getStoredFileLevelIntentions(fileEditor: FileEditor) : List<IntentionActionWithOptions> {
