@@ -10,17 +10,16 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.logging.LoggingUtil.LimitLevelType
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.registerUProblem
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.siyeh.ig.psiutils.CommentTracker
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.getUastElementFactory
@@ -94,25 +93,24 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
     private val isOnTheFly: Boolean,
   ) : AbstractUastNonRecursiveVisitor() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
-      val isCustom: Boolean
-      val sourcePsi = node.sourcePsi
-      if (sourcePsi == null) return true
-      if (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(node)) {
-        isCustom = false
+      val sourcePsi = node.sourcePsi ?: return true
+      val isCustom = if (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(node)) {
+        false
       }
       else if (node.isMethodNameOneOf(customLogMethodNameList.filterNotNull())) {
         val uMethod = node.resolveToUElementOfType<UMethod>() ?: return true
         if (uMethod.getContainingUClass()?.qualifiedName != customLoggerClassName) {
           return true
         }
-        isCustom = true
+        true
       }
       else {
         return true
       }
 
-      //custom settings are supported only for java only for backward compatibility
-      if (isCustom && node.lang != JavaLanguage.INSTANCE) {
+      val fix = LoggingStatementNotGuardedByLogCustomFix.fixProvider.forLanguage(sourcePsi.getLanguage())
+
+      if (isCustom && (fix == null || !fix.isAvailable(sourcePsi))) {
         return true
       }
 
@@ -127,12 +125,9 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
 
       if (!isInformationLevel && skipIfOnlyConstantArguments(node)) return true
 
-      val message = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.problem.descriptor")
-
-      val loggerLevel = LoggingUtil.getLoggerLevel(node)
-
-      val qualifiedExpression = if (node.uastParent is UQualifiedReferenceExpression) node.uastParent else node
-      var psiElement = qualifiedExpression?.sourcePsi
+      val nodeParent = node.uastParent
+      val qualifiedExpression = if (nodeParent is UQualifiedReferenceExpression) nodeParent else node
+      var psiElement = qualifiedExpression.sourcePsi
       while (psiElement?.parent.toUElement() == qualifiedExpression) {
         psiElement = psiElement?.parent
       }
@@ -143,6 +138,7 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
           (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(beforeCall) || beforeCall.isMethodNameOneOf(customLogMethodNameList.filterNotNull()))
       ) {
         val receiverText = node.receiver?.sourcePsi?.text
+        val loggerLevel = LoggingUtil.getLoggerLevel(node)
         if (receiverText != null && beforeCall.receiver?.sourcePsi?.text == receiverText &&
             !(skipIfOnlyConstantArguments(beforeCall)) &&
             beforeCall.methodName == node.methodName &&
@@ -151,7 +147,7 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
         }
       }
 
-      var parent = node.uastParent
+      var parent = nodeParent
       if (parent is UQualifiedReferenceExpression) {
         parent = parent.uastParent
       }
@@ -168,8 +164,11 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
       else {
         null
       }
-      if (node.uastParent is UQualifiedReferenceExpression) {
-        holder.registerUProblem(node.uastParent as UExpression, message, CreateGuardFix(textCustomCondition))
+
+      val message = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.problem.descriptor")
+
+      if (nodeParent is UQualifiedReferenceExpression) {
+        holder.registerUProblem(nodeParent as UExpression, message, CreateGuardFix(textCustomCondition))
       }
       else {
         holder.registerUProblem(node, message, CreateGuardFix(textCustomCondition))
@@ -241,7 +240,8 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
       val uCallExpression: UCallExpression = element.toUElement().getUCallExpression(2) ?: return
 
       if (textCustomCondition != null) {
-        generateCustomForJava(uCallExpression)
+        val fix = LoggingStatementNotGuardedByLogCustomFix.fixProvider.forLanguage(element.getLanguage()) ?: return
+        fix.fix(uCallExpression, textCustomCondition)
         return
       }
 
@@ -255,8 +255,7 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
 
       if (currentElement == null) return
 
-      val calls = mutableListOf<UExpression>()
-      calls.add(qualifiedExpression)
+      val calls = mutableListOf(qualifiedExpression)
       val receiverText = uCallExpression.receiver?.sourcePsi?.text ?: return
 
       val loggerLevel = LoggingUtil.getLoggerLevel(uCallExpression) ?: return
@@ -307,80 +306,6 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
           calls[i].sourcePsi?.delete()
         }
       }
-    }
-
-    /**
-     * It is only used to support backward compatibility with the previous java inspections.
-     * The main generation is for UAST
-     */
-    private fun generateCustomForJava(uCallExpression: UExpression) {
-      val methodCallExpression = uCallExpression.javaPsi
-      if (methodCallExpression !is PsiMethodCallExpression) {
-        return
-      }
-      val statement = PsiTreeUtil.getParentOfType(methodCallExpression, PsiStatement::class.java) ?: return
-      val logStatements = mutableListOf<PsiStatement>()
-      logStatements.add(statement)
-      val methodExpression = methodCallExpression.getMethodExpression()
-      var nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement::class.java)
-      while (isSameLogMethodCall(nextStatement, methodExpression)) {
-        if (nextStatement != null) {
-          logStatements.add(nextStatement)
-          nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement::class.java)
-        }
-        else {
-          break
-        }
-      }
-      val factory = JavaPsiFacade.getInstance(methodExpression.project).elementFactory
-      val qualifier = methodExpression.qualifierExpression
-      if (qualifier == null) {
-        return
-      }
-      val ifStatementText = "if (" + qualifier.text + '.' + textCustomCondition + ") {}"
-      val ifStatement = factory.createStatementFromText(ifStatementText, statement) as PsiIfStatement
-      val blockStatement = (ifStatement.thenBranch as PsiBlockStatement?) ?: return
-      val codeBlock = blockStatement.codeBlock
-      for (logStatement in logStatements) {
-        codeBlock.add(logStatement)
-      }
-      val firstStatement = logStatements[0]
-      val parent = firstStatement.parent
-      val codeStyleManager = JavaCodeStyleManager.getInstance(methodCallExpression.project)
-      if (parent is PsiIfStatement && parent.elseBranch != null) {
-        val newBlockStatement = factory.createStatementFromText("{}", statement) as PsiBlockStatement
-        newBlockStatement.codeBlock.add(ifStatement)
-        val commentTracker = CommentTracker()
-        val result = commentTracker.replace(firstStatement, newBlockStatement)
-        codeStyleManager.shortenClassReferences(result)
-        return
-      }
-      val result = parent.addBefore(ifStatement, firstStatement)
-      codeStyleManager.shortenClassReferences(result)
-      for (logStatement in logStatements) {
-        logStatement.delete()
-      }
-    }
-
-    private fun isSameLogMethodCall(current: PsiStatement?, targetReference: PsiReferenceExpression): Boolean {
-      if (current == null) {
-        return false
-      }
-      if (current !is PsiExpressionStatement) {
-        return false
-      }
-      val expression = current.expression
-      if (expression !is PsiMethodCallExpression) {
-        return false
-      }
-      val methodExpression = expression.methodExpression
-      val referenceName = methodExpression.referenceName
-      if (targetReference.referenceName != referenceName) {
-        return false
-      }
-      val qualifier = methodExpression.qualifierExpression
-      val qualifierText = qualifier?.text
-      return qualifierText != null && qualifierText == targetReference.qualifierExpression?.text
     }
   }
 }
