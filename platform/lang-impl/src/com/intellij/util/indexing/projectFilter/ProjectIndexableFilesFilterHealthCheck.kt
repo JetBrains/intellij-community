@@ -96,6 +96,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
     try {
       val attemptNumber = attemptsCount.incrementAndGet()
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, attemptNumber)
+      val startTime = System.currentTimeMillis()
 
       Observation.awaitConfiguration(project) // wait for project import IDEA-348501
       val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = smartReadAction(project) {
@@ -110,6 +111,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
         filter,
         attemptNumber,
         successfulAttemptsCount.incrementAndGet(),
+        (System.currentTimeMillis() - startTime).toInt(),
         nonIndexableFilesInFilter.size,
         indexableFilesNotInFilter.size)
 

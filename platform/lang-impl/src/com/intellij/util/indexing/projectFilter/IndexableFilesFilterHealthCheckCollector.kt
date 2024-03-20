@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
  */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("indexable.files.filter",
-                                    6,
+                                    7,
                                     "FUS",
                                     "Collects statistics of ProjectIndexableFilesFilterHealthCheck. " +
                                     "See more here: https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter")
@@ -21,6 +21,7 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
   private val filterNameField = EventFields.StringValidatedByEnum("filter_name", "indexable_files_filter_name")
   private val attemptNumberInProjectField = EventFields.Int("attempt_number_in_project", "Health check attempt number in a given project. First is 1.")
   private val successfulAttemptNumberInProjectField = EventFields.Int("successful_attempt_number_in_project", "Finished (not-cancelled) health check attempt number in a given project. First is 1.")
+  private val durationMsFiled = EventFields.Int("duration_ms", "Health check duration in milliseconds")
   private val nonIndexableFilesInFilterField = EventFields.Int("non_indexable_files_in_filter_count")
   private val indexableFilesNotInFilterField = EventFields.Int("indexable_files_not_in_filter_count")
 
@@ -30,6 +31,7 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     filterNameField,
     attemptNumberInProjectField,
     successfulAttemptNumberInProjectField,
+    durationMsFiled,
     nonIndexableFilesInFilterField,
     indexableFilesNotInFilterField,
   )
@@ -56,6 +58,7 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
                                             filter: ProjectIndexableFilesFilter,
                                             attemptNumber: Int,
                                             successfulAttemptNumber: Int,
+                                            durationMs: Int,
                                             nonIndexableFilesInFilterCount: Int,
                                             indexableFilesNotInFilterCount: Int) {
     indexableFilesFilterHealthCheck.log(
@@ -63,6 +66,7 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
       filterNameField.with(getFilterName(filter)),
       attemptNumberInProjectField.with(attemptNumber),
       successfulAttemptNumberInProjectField.with(successfulAttemptNumber),
+      durationMsFiled.with(durationMs),
       nonIndexableFilesInFilterField.with(nonIndexableFilesInFilterCount),
       indexableFilesNotInFilterField.with(indexableFilesNotInFilterCount),
     )
