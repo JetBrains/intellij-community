@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentManagerImpl
@@ -124,18 +123,17 @@ internal fun hideCommitIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
 }
 
 private fun updateCommitIdLabel(toolWindow: ToolWindow) {
+  val contentManager = toolWindow.contentManager
+
   val hideIdLabel = when {
-    toolWindow.contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
-    toolWindow.contentManager.isEmpty -> null
+    contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
+    contentManager.isEmpty -> null
     else -> "true"
   }
-  if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) != hideIdLabel) {
-    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
-    updateContentUi(toolWindow.contentManager, toolWindow.project)
-  }
-}
 
-private fun updateContentUi(contentManager: ContentManager, project: Project) {
+  if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) == hideIdLabel) return
+
+  toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
   if (contentManager is ContentManagerImpl) {
     (contentManager.ui as? ToolWindowContentUi)?.update()
   }
