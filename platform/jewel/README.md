@@ -117,13 +117,23 @@ dependencies {
 
 <br/>
 
+## Using ProGuard/obfuscation/minification
+
+Jewel doesn't officially support using ProGuard to minimize and/or obfuscate your code, and there is currently no plan to. 
+That said, people are reporting successes in using it. Please note that there is no guarantee that it will keep working,
+and you most definitely need to have some rules in place. We don't provide any official rule set, but these have been known
+to work for some: https://github.com/romainguy/kotlin-explorer/blob/main/compose-desktop.pro
+
+> [!IMPORTANT]
+> We won't accept bug reports for issues caused by the use of ProGuard or similar tools.
+
 ## Dependencies matrix
 
 For each version of Jewel, these are the minimum supported Kotlin and Compose Multiplatform versions:
 
  Jewel version | Kotlin version | Compose version
  --- | --- | ---
- 0.15.0 –> * | 1.8.21 | 1.6.0-dev1440
+ 0.15.0 –> 0.15.2 | 1.8.21 | 1.6.0-dev1440
  0.13.1 -> 0.14.1 | 1.8.21 | 1.6.0-dev1369
 
 For older versions please refer to the Jewel tags and release notes.
