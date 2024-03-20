@@ -85,6 +85,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnSecondaryConstructorParameter::class, RemoveValVarFromParameterFix)
         registerFactory(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
         registerFactory(MakeSuperTypeOpenFixFactory.makeUpperBoundOpenFixFactory)
+        registerFactory(AddFunModifierFixFactory.addFunModifierFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
