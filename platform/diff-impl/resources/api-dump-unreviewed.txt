@@ -1240,27 +1240,48 @@ com.intellij.diff.tools.combined.BlockListener
 - a:blocksVisible(java.util.Collection):V
 com.intellij.diff.tools.combined.BlockOrder
 - a:getBlocksCount():I
+- a:getOrNull(I):com.intellij.diff.tools.combined.CombinedBlockId
 - a:indexOf(com.intellij.diff.tools.combined.CombinedBlockId):I
 - a:iterateBlocks():java.lang.Iterable
 f:com.intellij.diff.tools.combined.BlockState
 - com.intellij.diff.tools.combined.BlockOrder
 - com.intellij.diff.tools.util.PrevNextDifferenceIterable
-- <init>(java.util.List,com.intellij.diff.tools.combined.CombinedBlockId,kotlin.jvm.functions.Function0):V
+- <init>(java.util.List,com.intellij.diff.tools.combined.CombinedBlockId):V
+- f:addListener(com.intellij.diff.tools.combined.BlockStateListener,com.intellij.openapi.Disposable):V
 - canGoNext():Z
 - canGoPrev():Z
-- f:get(I):com.intellij.diff.tools.combined.CombinedBlockId
 - getBlocksCount():I
 - f:getCurrentBlock():com.intellij.diff.tools.combined.CombinedBlockId
+- getOrNull(I):com.intellij.diff.tools.combined.CombinedBlockId
 - goNext():V
 - goPrev():V
 - indexOf(com.intellij.diff.tools.combined.CombinedBlockId):I
 - iterateBlocks():java.lang.Iterable
 - f:setCurrentBlock(com.intellij.diff.tools.combined.CombinedBlockId):V
+com.intellij.diff.tools.combined.BlockStateListener
+- java.util.EventListener
+- a:onCurrentChanged(com.intellij.diff.tools.combined.CombinedBlockId,com.intellij.diff.tools.combined.CombinedBlockId):V
 com.intellij.diff.tools.combined.CombinedBlockId
 f:com.intellij.diff.tools.combined.CombinedBlockProducer
 - <init>(com.intellij.diff.tools.combined.CombinedBlockId,com.intellij.diff.chains.DiffRequestProducer):V
 - f:getId():com.intellij.diff.tools.combined.CombinedBlockId
 - f:getProducer():com.intellij.diff.chains.DiffRequestProducer
+f:com.intellij.diff.tools.combined.CombinedCaretToNextBlockAction
+- com.intellij.diff.tools.combined.CombinedGlobalBlockNavigationAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.diff.tools.combined.CombinedCaretToPrevBlockAction
+- com.intellij.diff.tools.combined.CombinedGlobalBlockNavigationAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.diff.tools.combined.CombinedCollapsibleDiffBlock
+- com.intellij.diff.tools.combined.CombinedDiffBlock
+- a:addListener(com.intellij.diff.tools.combined.CombinedDiffBlockListener,com.intellij.openapi.Disposable):V
+- a:setCollapsed(Z):V
+f:com.intellij.diff.tools.combined.CombinedDiffActionPromoter
+- com.intellij.openapi.actionSystem.ActionPromoter
+- <init>():V
+- promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
 f:com.intellij.diff.tools.combined.CombinedDiffActionsKt
 f:com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener
 - com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
@@ -1284,14 +1305,18 @@ com.intellij.diff.tools.combined.CombinedDiffBlock
 - a:getComponent():javax.swing.JComponent
 - a:getHeader():javax.swing.JComponent
 - a:getId():com.intellij.diff.tools.combined.CombinedBlockId
-- a:getStickyHeader():javax.swing.JComponent
+- a:getPreferredFocusComponent():javax.swing.JComponent
+- a:getStickyHeaderComponent():javax.swing.JComponent
 - updateBlockContent(com.intellij.diff.tools.combined.CombinedDiffBlockContent):V
 f:com.intellij.diff.tools.combined.CombinedDiffBlockContent
 - <init>(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.tools.combined.CombinedBlockId):V
 - f:getBlockId():com.intellij.diff.tools.combined.CombinedBlockId
 - f:getViewer():com.intellij.diff.FrameDiffTool$DiffViewer
 com.intellij.diff.tools.combined.CombinedDiffBlockFactory
-- a:createBlock(com.intellij.openapi.project.Project,com.intellij.diff.tools.combined.CombinedDiffBlockContent):com.intellij.diff.tools.combined.CombinedDiffBlock
+- a:createBlock(com.intellij.openapi.project.Project,com.intellij.diff.tools.combined.CombinedDiffBlockContent,Z):com.intellij.diff.tools.combined.CombinedDiffBlock
+com.intellij.diff.tools.combined.CombinedDiffBlockListener
+- java.util.EventListener
+- a:onCollapseStateChanged(com.intellij.diff.tools.combined.CombinedBlockId,Z):V
 f:com.intellij.diff.tools.combined.CombinedDiffBlocksPanelKt
 com.intellij.diff.tools.combined.CombinedDiffCaretNavigation
 - a:moveCaretPageDown():V
@@ -1536,6 +1561,11 @@ f:com.intellij.diff.tools.combined.CombinedDiffVirtualFileImpl
 - createViewer(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - f:getProducers():java.util.List
 - f:getProject():com.intellij.openapi.project.Project
+a:com.intellij.diff.tools.combined.CombinedGlobalBlockNavigationAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.tools.combined.CombinedPathBlockId
 - com.intellij.diff.tools.combined.CombinedBlockId
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FileStatus,java.lang.Object):V
@@ -1551,11 +1581,19 @@ f:com.intellij.diff.tools.combined.CombinedPathBlockId
 - f:getTag():java.lang.Object
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.diff.tools.combined.CombinedSimpleDiffHeader
-- com.intellij.util.ui.components.BorderLayoutPanel
-- sf:Companion:com.intellij.diff.tools.combined.CombinedSimpleDiffHeader$Companion
-- <init>(com.intellij.openapi.project.Project,com.intellij.diff.tools.combined.CombinedPathBlockId,Z):V
-f:com.intellij.diff.tools.combined.CombinedSimpleDiffHeader$Companion
+com.intellij.diff.tools.combined.CombinedSelectableDiffBlock
+- com.intellij.diff.tools.combined.CombinedDiffBlock
+- a:setSelected(Z):V
+f:com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAction
+- com.intellij.diff.tools.combined.CombinedGlobalBlockNavigationAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAllAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
 - <init>(java.util.List):V
 - f:getHolders():java.util.List

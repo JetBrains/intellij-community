@@ -111,7 +111,8 @@ internal class CombinedEditorSearchSession(private val project: Project,
   }
 
   fun <EditorHolder> update(items: List<EditorHolder>, mapper: (EditorHolder) -> List<Editor>, currentEditor: Editor = this.currentEditor) {
-    val update = holders.isNotEmpty()
+    val emptyUpdate = items.isEmpty()
+    val update = holders.isNotEmpty() || !emptyUpdate
 
     holders.forEach(EditorSearchSessionHolder::disposeLivePreview)
 
@@ -124,14 +125,19 @@ internal class CombinedEditorSearchSession(private val project: Project,
       EditorSearchSessionHolder(project, editors).also { holder -> holder.addResultListener(MySearchResultsListener()) }
     }.toList()
 
-    updateCurrentState(currentEditor)
+    if (emptyUpdate) {
+      component.updateUIWithResults(0, false)
+    }
+    else {
+      updateCurrentState(currentEditor)
+    }
 
     if (update) {
       holders.forEach(EditorSearchSessionHolder::initLivePreview)
       EditorSearchSession.updateEmptyText(component, findModel, null)
     }
 
-    EditorSearchSession.updateUIWithFindModel(component, findModel, this.currentEditor)
+    EditorSearchSession.updateUIWithFindModel(component, findModel, if (!emptyUpdate) this.currentEditor else null)
   }
 
   private inner class FindModelObserver : FindModel.FindModelObserver {

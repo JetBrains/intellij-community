@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -196,5 +197,61 @@ internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEd
     if (!DiffUtil.canNavigateToFile(project, file)) return null
 
     return PsiNavigationSupport.getInstance().createNavigatable(project!!, file!!, 0)
+  }
+}
+
+//
+// Block global navigation
+//
+
+/**
+ * Represent global block action.
+ *
+ * In contrast to [CombinedDiffBaseEditorForEachCaretHandler] actions,
+ * are not bound to particular [com.intellij.openapi.editor.Editor] instance and works even for collapsed blocks.
+ */
+abstract class CombinedGlobalBlockNavigationAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  final override fun update(e: AnActionEvent) {
+    val combinedDiffViewer = e.getData(COMBINED_DIFF_VIEWER)
+
+    e.presentation.isEnabledAndVisible = combinedDiffViewer != null
+  }
+}
+
+class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    if (viewer.canGoNextBlock()) {
+      viewer.moveCaretToNextBlock()
+    }
+  }
+}
+
+class CombinedCaretToPrevBlockAction : CombinedGlobalBlockNavigationAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    if (viewer.canGoPrevBlock()) {
+      viewer.moveCaretToPrevBlock()
+    }
+  }
+}
+
+class CombinedToggleBlockCollapseAction : CombinedGlobalBlockNavigationAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    viewer.toggleBlockCollapse()
+  }
+}
+
+class CombinedToggleBlockCollapseAllAction : CombinedGlobalBlockNavigationAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    viewer.toggleAllBlockCollapse()
   }
 }

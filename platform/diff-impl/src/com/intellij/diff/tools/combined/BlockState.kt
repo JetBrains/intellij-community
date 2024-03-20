@@ -10,6 +10,7 @@ import kotlin.properties.Delegates
 interface BlockOrder {
   fun iterateBlocks(): Iterable<CombinedBlockId>
   fun indexOf(blockId: CombinedBlockId): Int
+  fun getOrNull(index: Int): CombinedBlockId?
   val blocksCount: Int
 }
 
@@ -47,7 +48,7 @@ class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNe
 
   override fun indexOf(blockId: CombinedBlockId): Int = blockByIndex[blockId]!!
 
-  operator fun get(index: Int): CombinedBlockId? = if (index in blocks.indices) blocks[index] else null
+  override fun getOrNull(index: Int): CombinedBlockId? = if (index in blocks.indices) blocks[index] else null
 
   override val blocksCount: Int
     get() = blocks.size

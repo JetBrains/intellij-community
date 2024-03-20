@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
@@ -613,7 +613,9 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectLastExtendSelection",
     "Tree-selectLast",
     "Tree-selectFirstExtendSelection",
-    "Tree-selectFirst"
+    "Tree-selectFirst",
+    "Vcs.CombinedDiff.CaretToPrevBlock",
+    "Vcs.CombinedDiff.CaretToNextBlock"
   );
 
   private static final Set<String> DEFAULT_CONFLICT_SAFE_GROUPS = Set.of(
