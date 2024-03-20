@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
@@ -85,6 +86,8 @@ abstract class NonModalCommitPanel(
     withPreferredHeight(85)
     commitMessage.editorField.setDisposedWith(this)
     bottomPanel.background = getButtonPanelBackground()
+
+    InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
   }
 
   override fun updateUI() {
