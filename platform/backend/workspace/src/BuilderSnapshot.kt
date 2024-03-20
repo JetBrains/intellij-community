@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.workspace
 
 import com.intellij.platform.workspace.storage.EntityChange
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
  * Represents a new state of the storage, it should be obtained from [BuilderSnapshot.getStorageReplacement] and passed to 
  * [WorkspaceModel.replaceProjectModel].
  */
+@ApiStatus.Internal
 public class StorageReplacement internal constructor(
   public val version: Long,
   public val builder: MutableEntityStorage,
@@ -19,10 +20,11 @@ public class StorageReplacement internal constructor(
 )
 
 /**
- * Represents a modified state of the storage. 
+ * Represents a modified state of the storage.
  * Its instance can be obtained from [WorkspaceModel.getBuilderSnapshot].
  * This class can be used without global read or write lock, but it isn't a thread safe.
  */
+@ApiStatus.Internal
 public class BuilderSnapshot @ApiStatus.Internal constructor(private val version: Long, private val storage: ImmutableEntityStorage) {
   /**
    * Provides access to [MutableEntityStorage] which can be used to prepare the new state.
