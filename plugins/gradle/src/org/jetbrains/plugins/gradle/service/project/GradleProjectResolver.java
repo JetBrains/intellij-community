@@ -39,6 +39,7 @@ import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
 import org.gradle.tooling.BuildActionFailureException;
+import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
@@ -137,7 +138,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     DefaultProjectResolverContext resolverContext =
       new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, gradleResolverPolicy);
-    final CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
+    CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
+    CancellationToken cancellationToken = cancellationTokenSource.token();
     myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
@@ -148,14 +150,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
       if (settings != null) {
-        myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationTokenSource.token());
+        myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationToken);
       }
 
       Predicate<GradleProjectResolverExtension> extensionsFilter =
         gradleResolverPolicy != null ? gradleResolverPolicy.getExtensionsFilter() : null;
       final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext, extensionsFilter);
       final DataNode<ProjectData> projectDataNode = myHelper.execute(
-        projectPath, settings, syncTaskId, listener, cancellationTokenSource,
+        projectPath, settings, syncTaskId, listener, cancellationToken,
         getProjectDataFunction(resolverContext, projectResolverChain, false));
 
       // auto-discover buildSrc projects of the main and included builds

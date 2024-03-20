@@ -40,8 +40,14 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   ProjectConnection getConnection();
 
-  @Nullable
+  @NotNull
   CancellationTokenSource getCancellationTokenSource();
+
+  boolean isCancellationRequested();
+
+  void cancel();
+
+  void checkCancelled() throws ProcessCanceledException;
 
   @NotNull
   ExternalSystemTaskNotificationListener getListener();
@@ -95,8 +101,6 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   }
 
   boolean hasModulesWithModel(@NotNull Class<?> modelClass);
-
-  void checkCancelled() throws ProcessCanceledException;
 
   @Nullable
   String getProjectGradleVersion();

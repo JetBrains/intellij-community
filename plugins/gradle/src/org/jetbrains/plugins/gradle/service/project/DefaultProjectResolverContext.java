@@ -102,6 +102,23 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myCancellationTokenSource;
   }
 
+  @Override
+  public boolean isCancellationRequested() {
+    return myCancellationTokenSource.token().isCancellationRequested();
+  }
+
+  @Override
+  public void cancel() {
+    myCancellationTokenSource.cancel();
+  }
+
+  @Override
+  public void checkCancelled() {
+    if (isCancellationRequested()) {
+      throw new ProcessCanceledException();
+    }
+  }
+
   @NotNull
   @Override
   public ExternalSystemTaskNotificationListener getListener() {
@@ -173,13 +190,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Override
   public boolean hasModulesWithModel(@NotNull Class<?> modelClass) {
     return getModels().hasModulesWithModel(modelClass);
-  }
-
-  @Override
-  public void checkCancelled() {
-    if (myCancellationTokenSource.token().isCancellationRequested()) {
-      throw new ProcessCanceledException();
-    }
   }
 
   @Override

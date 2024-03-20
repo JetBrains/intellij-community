@@ -116,7 +116,7 @@ public class GradleExecutionHelper {
                        @Nullable GradleExecutionSettings settings,
                        @Nullable ExternalSystemTaskId taskId,
                        @Nullable ExternalSystemTaskNotificationListener listener,
-                       @Nullable CancellationTokenSource cancellationTokenSource,
+                       @Nullable CancellationToken cancellationToken,
                        @NotNull Function<? super ProjectConnection, ? extends T> f) {
     String projectDir;
     File projectPathFile = new File(projectPath);
@@ -132,7 +132,6 @@ public class GradleExecutionHelper {
     else {
       projectDir = projectPath;
     }
-    CancellationToken cancellationToken = cancellationTokenSource != null ? cancellationTokenSource.token() : null;
     return withGradleConnection(
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
@@ -326,15 +325,14 @@ public class GradleExecutionHelper {
     return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
 
-  @Nullable
-  public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
-    CancellationTokenSource cancellationTokenSource = projectResolverContext.getCancellationTokenSource();
-    CancellationToken cancellationToken = cancellationTokenSource != null ? cancellationTokenSource.token() : null;
-    return getBuildEnvironment(projectResolverContext.getConnection(),
-                               projectResolverContext.getExternalSystemTaskId(),
-                               projectResolverContext.getListener(),
-                               cancellationToken,
-                               projectResolverContext.getSettings());
+  public static @Nullable BuildEnvironment getBuildEnvironment(@NotNull ProjectResolverContext projectResolverContext) {
+    return getBuildEnvironment(
+      projectResolverContext.getConnection(),
+      projectResolverContext.getExternalSystemTaskId(),
+      projectResolverContext.getListener(),
+      projectResolverContext.getCancellationTokenSource().token(),
+      projectResolverContext.getSettings()
+    );
   }
 
   public static void prepare(
@@ -761,30 +759,6 @@ public class GradleExecutionHelper {
     catch (ExecutionException e) {
       return null;
     }
-  }
-
-  @Nullable
-  public static GradleVersion getGradleVersion(@NotNull ProjectConnection connection,
-                                               @NotNull ExternalSystemTaskId taskId,
-                                               @NotNull ExternalSystemTaskNotificationListener listener,
-                                               @Nullable CancellationTokenSource cancellationTokenSource) {
-    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection, taskId, listener, cancellationTokenSource, null);
-
-    GradleVersion gradleVersion = null;
-    if (buildEnvironment != null) {
-      gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-    }
-    return gradleVersion;
-  }
-
-  @Nullable
-  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
-                                                     @NotNull ExternalSystemTaskId taskId,
-                                                     @NotNull ExternalSystemTaskNotificationListener listener,
-                                                     @Nullable CancellationTokenSource cancellationTokenSource,
-                                                     @Nullable GradleExecutionSettings settings) {
-    CancellationToken cancellationToken = cancellationTokenSource != null ? cancellationTokenSource.token() : null;
-    return getBuildEnvironment(connection, taskId, listener, cancellationToken, settings);
   }
 
   private static @Nullable BuildEnvironment getBuildEnvironment(

@@ -62,7 +62,7 @@ class GradleBuildActionResultHandler(
         onProjectLoaded(state)
       }
       catch (e: ProcessCanceledException) {
-        resolverCtx.cancellationTokenSource.cancel()
+        resolverCtx.cancel()
       }
     }
   }
