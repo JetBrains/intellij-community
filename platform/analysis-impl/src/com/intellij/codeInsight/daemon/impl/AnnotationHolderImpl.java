@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
@@ -21,21 +20,20 @@ import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-sealed public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder
-  permits AnnotatorRunner.AnnotatorSpecificHolder {
+final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
 
   private final boolean myBatchMode;
-  private Annotator myCurrentAnnotator;
-  private ExternalAnnotator<?, ?> myExternalAnnotator;
-
+  private final AtomicReference<PsiElement> myCurrentElement = new AtomicReference<>();
+  private final @NotNull Object/*Annotator|ExternalAnnotator*/ myAnnotator;
   /**
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided via {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
@@ -44,6 +42,17 @@ sealed public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> 
   public AnnotationHolderImpl(@NotNull AnnotationSession session, boolean batchMode) {
     myAnnotationSession = session;
     myBatchMode = batchMode;
+    myAnnotator = (Annotator)(element, holder) -> {};
+  }
+
+  @ApiStatus.Internal
+  AnnotationHolderImpl(@NotNull Object/*Annotator|ExternalAnnotator*/ annotator, @NotNull AnnotationSession session, boolean batchMode) {
+    myAnnotator = annotator;
+    myAnnotationSession = session;
+    myBatchMode = batchMode;
+    if (!(annotator instanceof Annotator) && !(annotator instanceof ExternalAnnotator<?,?>)) {
+      throw new IllegalArgumentException("annotator must be instanceof Annotator|ExternalAnnotator but got "+annotator.getClass());
+    }
   }
 
   @Override
@@ -197,34 +206,39 @@ sealed public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> 
 
   @Override
   public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
-    return createBuilder(severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+    return createBuilder(severity, message);
   }
   @Override
   public @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    return createBuilder(severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+    return createBuilder(severity, null);
   }
 
   @NotNull
-  protected B createBuilder(@NotNull HighlightSeverity severity, @Nls String message, PsiElement currentElement, Object currentAnnotator) {
-    return new B(this, severity, message, currentElement, currentAnnotator);
+  private B createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
+    return new B(this, severity, message, myCurrentElement.get(), myAnnotator);
   }
 
-  private PsiElement myCurrentElement;
   @ApiStatus.Internal
-  public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
-    myCurrentAnnotator = annotator;
-    myCurrentElement = element;
-    annotator.annotate(element, this);
-    myCurrentElement = null;
-    myCurrentAnnotator = null;
+  public void runAnnotatorWithContext(@NotNull PsiElement element) {
+    myCurrentElement.set(element);
+    ((Annotator)myAnnotator).annotate(element, this);
   }
+
+  /**
+   * use {@link #runAnnotatorWithContext(PsiElement)}
+   */
   @ApiStatus.Internal
-  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, @NotNull ExternalAnnotator<?,R> annotator, R result) {
-    myExternalAnnotator = annotator;
-    myCurrentElement = file;
-    annotator.apply(file, result, this);
-    myCurrentElement = null;
-    myExternalAnnotator = null;
+  @Deprecated(forRemoval = true)
+  public void runAnnotatorWithContext(PsiElement element, Annotator annotator) {
+    myCurrentElement.set(element);
+    annotator.annotate(element, this);
+  }
+
+  @ApiStatus.Internal
+  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, R result) {
+    myCurrentElement.set(file);
+    //noinspection unchecked
+    ((ExternalAnnotator<?,R>)myAnnotator).apply(file, result, this);
   }
 
   // to assert each AnnotationBuilder did call .create() in the end
