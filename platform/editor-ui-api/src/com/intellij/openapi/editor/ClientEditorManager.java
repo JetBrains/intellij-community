@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeWithMe.ClientId;
@@ -11,6 +11,7 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -67,10 +68,14 @@ public final class ClientEditorManager {
   private static final Key<ClientId> CLIENT_ID = Key.create("CLIENT_ID");
   private static final Key<WeakList<Editor>> COPIED_EDITORS = Key.create("COPIED_EDITORS");
   private final ClientId myClientId = ClientId.getCurrent();
-  private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Editor> editors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public @NotNull Stream<Editor> editors() {
-    return myEditors.stream();
+    return editors.stream();
+  }
+
+  public @NotNull @Unmodifiable List<Editor> getEditors() {
+    return editors;
   }
 
   public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
@@ -82,13 +87,13 @@ public final class ClientEditorManager {
     if (!ClientId.isLocal(myClientId)) {
       CLIENT_ID.set(editor, myClientId);
     }
-    myEditors.add(editor);
+    editors.add(editor);
   }
 
   public boolean editorReleased(@NotNull Editor editor) {
     if (!ClientId.isLocal(myClientId)) {
       CLIENT_ID.set(editor, null);
     }
-    return myEditors.remove(editor);
+    return editors.remove(editor);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -136,11 +136,13 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void refreshAllEditors() {
-    collectAllEditors().forEach(editor -> {
-      if (AsyncEditorLoader.isEditorLoaded(editor)) {
-        ((EditorEx)editor).reinitSettings();
+    for (ClientEditorManager clientEditorManager : ClientEditorManager.getAllInstances()) {
+      for (Editor editor : clientEditorManager.getEditors()) {
+        if (AsyncEditorLoader.isEditorLoaded(editor)) {
+          ((EditorEx)editor).reinitSettings();
+        }
       }
-    });
+    }
   }
 
   @Override
