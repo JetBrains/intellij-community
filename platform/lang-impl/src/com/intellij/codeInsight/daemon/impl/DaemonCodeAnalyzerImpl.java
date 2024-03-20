@@ -1083,14 +1083,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try {
       boolean submitted = false;
       for (FileEditor fileEditor : activeEditors) {
-        if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor())) {
+        if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor)) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
           // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
           if (PassExecutorService.LOG.isDebugEnabled()) {
             PassExecutorService.log(null, null, "runUpdate for ", fileEditor, " rescheduled because the editor was not loaded yet");
           }
-          AsyncEditorLoader.Companion.performWhenLoaded(textEditor, () ->
-            dca.stopProcess(true, "restart after editor is loaded"));
+          // AsyncEditorLoader will restart
         }
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
@@ -1137,11 +1136,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       highlighter = fileEditor.getBackgroundHighlighter();
     }
-    Editor editor = fileEditor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
+    TextEditor textEditor = fileEditor instanceof TextEditor t ? t : null;
+    Editor editor = textEditor == null ? null : textEditor.getEditor();
     if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
-        PassExecutorService.log(null, null, "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
-          fileEditor,fileEditor.getClass(),(editor == null ? "editor is null" : "editor loaded:"+ AsyncEditorLoader.Companion.isEditorLoaded(editor)));
+        PassExecutorService.log(
+          null,
+          null,
+          "couldn't highlight",
+          virtualFile,
+          "because getBackgroundHighlighter() returned null. fileEditor=",
+          fileEditor,
+          fileEditor.getClass(),
+          (textEditor == null ? "editor is null" : "editor loaded:" + AsyncEditorLoader.Companion.isEditorLoaded(textEditor))
+        );
       }
       return null;
     }

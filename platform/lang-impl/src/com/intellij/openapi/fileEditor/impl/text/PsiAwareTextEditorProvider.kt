@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -105,16 +103,6 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
               catch (e: Throwable) {
                 logger<AsyncFileEditorProvider>().warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
               }
-            }
-          }
-        }
-
-        asyncLoader.coroutineScope.launch {
-          val psiManager = project.serviceAsync<PsiManager>()
-          val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
-          span("DaemonCodeAnalyzer.restart") {
-            readActionBlocking {
-              daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
             }
           }
         }
