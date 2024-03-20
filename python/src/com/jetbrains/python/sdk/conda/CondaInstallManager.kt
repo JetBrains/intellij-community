@@ -15,13 +15,29 @@ import kotlin.io.path.absolutePathString
 
 object CondaInstallManager {
 
-  private val windowsInstaller = object : ResourceTypeBinaryInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
+  class WindowsInstaller(private val installPath: String) : ResourceTypeBinaryInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
     /**
      * Miniconda3-{version}-Windows-x86_64.exe {options}
-     * /S - Silent
+     *
+     * /InstallationType=[JustMe|AllUsers] - Default is JustMe.
+     * /AddToPath=[0|1] - Default is 0.
+     * /RegisterPython=[0|1] - Make this the system’s default Python.
+     *                         Default is 0.
+     * /S - Install in silent mode.
+     * /D=<installation path> - Destination installation path.
+     *                          Must be the last argument.
+     *                          Do not wrap in quotation marks.
+     *                          Required if installing in silent mode.
      */
     override fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine {
-      return GeneralCommandLine(path.absolutePathString(), "/S")
+      return GeneralCommandLine(
+        path.absolutePathString(),
+        "/InstallationType=JustMe",
+        "/AddToPath=0",
+        "/RegisterPython=0",
+        "/S",
+        "/D=${installPath}"
+      )
     }
   }
 
@@ -55,8 +71,8 @@ object CondaInstallManager {
   }
 
   private val productInstallers = mapOf(
-    Product.Miniconda to listOf(windowsInstaller, shellScriptInstaller, applePkgInstaller),
-    Product.Anaconda to listOf(windowsInstaller, shellScriptInstaller, applePkgInstaller),
+    Product.Miniconda to listOf(WindowsInstaller("%UserProfile%\\miniconda3"), shellScriptInstaller, applePkgInstaller),
+    Product.Anaconda to listOf(WindowsInstaller("%UserProfile%\\anaconda3"), shellScriptInstaller, applePkgInstaller),
   )
 
   fun getAvailableCondaInstallations(): Map<LanguageLevel, List<BinaryInstallation>> {
