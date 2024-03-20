@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifierType
+import kotlin.reflect.KClass
 
 internal class RedundantModalityModifierInspection :
     RedundantModifierInspectionBase<KtFirDiagnostic.RedundantModalityModifier>(KtTokens.MODALITY_MODIFIERS) {
@@ -25,7 +26,8 @@ internal class RedundantModalityModifierInspection :
             KotlinBundle.message("remove.redundant.modality.modifier")
     }
 
-    override fun getDiagnosticType() = KtFirDiagnostic.RedundantModalityModifier::class
+    override val diagnosticType: KClass<KtFirDiagnostic.RedundantModalityModifier>
+        get() = KtFirDiagnostic.RedundantModalityModifier::class
 
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.modalityModifier(element)
@@ -33,8 +35,8 @@ internal class RedundantModalityModifierInspection :
     context(KtAnalysisSession)
     override fun prepareContextByDiagnostic(
         element: KtModifierListOwner,
-        diagnostic: KtFirDiagnostic.RedundantModalityModifier
-    ): ModifierContext? = when(element) {
+        diagnostic: KtFirDiagnostic.RedundantModalityModifier,
+    ): ModifierContext? = when (element) {
         is KtDeclaration -> element.modalityModifierType()?.let { ModifierContext(it) }
         else -> null
     }

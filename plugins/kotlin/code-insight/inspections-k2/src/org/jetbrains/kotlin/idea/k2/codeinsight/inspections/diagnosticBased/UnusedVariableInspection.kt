@@ -8,21 +8,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.idea.codeinsight.utils.renameToUnderscore
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
+import kotlin.reflect.KClass
 
-internal class UnusedVariableInspection : KotlinApplicableInspectionBase.Simple<KtNamedDeclaration, Unit>(),
-                                          AbstractKotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable> {
+internal class UnusedVariableInspection :
+    KotlinDiagnosticBasedInspectionBase<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -39,16 +38,17 @@ internal class UnusedVariableInspection : KotlinApplicableInspectionBase.Simple<
         context: Unit,
     ): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
 
-    override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
+    override val diagnosticType: KClass<KtFirDiagnostic.UnusedVariable>
+        get() = KtFirDiagnostic.UnusedVariable::class
 
     override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRanges.declarationName(element)
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtNamedDeclaration): Unit? {
-        val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
-        val suitableDiagnostics = diagnostics.filterIsInstance(getDiagnosticType().java)
-        val diagnostic = suitableDiagnostics.firstOrNull() ?: return null
+    override fun prepareContextByDiagnostic(
+        element: KtNamedDeclaration,
+        diagnostic: KtFirDiagnostic.UnusedVariable,
+    ): Unit? {
         val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return null
         val typeReference = ktProperty.typeReference ?: return Unit
         return (!ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference))

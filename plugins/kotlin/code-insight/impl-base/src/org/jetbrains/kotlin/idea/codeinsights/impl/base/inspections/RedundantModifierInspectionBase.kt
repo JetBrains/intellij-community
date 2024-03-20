@@ -9,7 +9,7 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<KtModifierListOwner>>(
     private val modifierSet: TokenSet,
-) : AbstractKotlinApplicableDiagnosticInspectionWithContext<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
+) : KotlinDiagnosticBasedInspectionBase<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
     CleanupLocalInspectionTool {
 
     override fun buildVisitor(

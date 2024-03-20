@@ -26,8 +26,8 @@ internal class RedundantVisibilityModifierInspection :
             KotlinBundle.message("remove.redundant.visibility.modifier")
     }
 
-    override fun getDiagnosticType(): KClass<KtFirDiagnostic.RedundantVisibilityModifier> =
-        KtFirDiagnostic.RedundantVisibilityModifier::class
+    override val diagnosticType: KClass<KtFirDiagnostic.RedundantVisibilityModifier>
+        get() = KtFirDiagnostic.RedundantVisibilityModifier::class
 
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.visibilityModifier(element)
@@ -35,7 +35,7 @@ internal class RedundantVisibilityModifierInspection :
     context(KtAnalysisSession)
     override fun prepareContextByDiagnostic(
         element: KtModifierListOwner,
-        diagnostic: KtFirDiagnostic.RedundantVisibilityModifier
+        diagnostic: KtFirDiagnostic.RedundantVisibilityModifier,
     ): ModifierContext? {
         val modifier = element.visibilityModifierType() ?: return null
         return ModifierContext(modifier)
