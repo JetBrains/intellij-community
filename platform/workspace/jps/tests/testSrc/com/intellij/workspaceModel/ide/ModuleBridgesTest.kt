@@ -391,7 +391,7 @@ class ModuleBridgesTest {
         val contentRootEntity = it addEntity ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
           module = moduleEntity
         }
-        it addEntity SourceRootEntity(virtualFileUrl, "",
+        it addEntity SourceRootEntity(virtualFileUrl, DEFAULT_SOURCE_ROOT_TYPE_ID,
                                       JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)) {
           contentRoot = contentRootEntity
         }
@@ -587,7 +587,7 @@ class ModuleBridgesTest {
 
       assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
       assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
-      assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
+      assertEquals(SourceRootTypeId(TestCustomSourceRootType.TYPE_ID), customRoots[0].sourceRoot.rootTypeId)
     }
   }
 
@@ -619,7 +619,7 @@ class ModuleBridgesTest {
         .toList().single()
 
       assertEquals("<sourceFolder param1=\"x y z\" />", customRoot.propertiesXmlTag)
-      assertEquals("unsupported-custom-source-root-type", customRoot.sourceRoot.rootType)
+      assertEquals(SourceRootTypeId("unsupported-custom-source-root-type"), customRoot.sourceRoot.rootTypeId)
     }
   }
 

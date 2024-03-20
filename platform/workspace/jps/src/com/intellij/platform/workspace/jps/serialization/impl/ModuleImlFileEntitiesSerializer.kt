@@ -51,6 +51,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                     internal val externalModuleListSerializer: JpsModuleListSerializer? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
   private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
+  private val sourceRootTypes = ConcurrentFactoryMap.createMap<String, SourceRootTypeId> { SourceRootTypeId(it) }
 
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
@@ -553,7 +554,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
       val sourceRoot = SourceRootEntity(
         url = virtualFileManager.getOrCreateFromUrl(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
-        rootType = type,
+        rootTypeId = sourceRootTypes[type]!!,
         entitySource = sourceRootSource
       )
 
@@ -902,7 +903,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun saveSourceRoot(sourceRoot: SourceRootEntity): Element {
     val sourceRootTag = Element(SOURCE_FOLDER_TAG)
     sourceRootTag.setAttribute(URL_ATTRIBUTE, sourceRoot.url.url)
-    val rootType = sourceRoot.rootType
+    val rootType = sourceRoot.rootTypeId.name
     if (rootType !in listOf(JAVA_SOURCE_ROOT_TYPE_ID, JAVA_TEST_ROOT_TYPE_ID)) {
       sourceRootTag.setAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE, rootType)
     }

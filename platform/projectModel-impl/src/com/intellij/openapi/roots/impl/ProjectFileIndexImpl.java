@@ -121,7 +121,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       myWorkspaceFileIndex.findFileSetWithCustomData(file, true, true, false, false, false, ModuleSourceRootData.class);
     if (fileSet == null) return null;
 
-    return SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootType());
+    return SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootTypeId());
   }
 
   @Override
@@ -241,7 +241,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   static boolean isSourceRootOfType(@Nullable WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     if (fileSet == null) return false;
-    JpsModuleSourceRootType<?> type = SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootType());
+    JpsModuleSourceRootType<?> type = SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootTypeId());
     return type != null && rootTypes.contains(type);
   }
 

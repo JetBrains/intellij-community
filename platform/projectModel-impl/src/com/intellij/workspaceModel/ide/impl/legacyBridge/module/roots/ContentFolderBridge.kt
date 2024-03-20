@@ -60,7 +60,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
     if (other !is SourceFolderBridge) return false
 
     if (sourceRootEntity.url != other.sourceRootEntity.url) return false
-    if (sourceRootEntity.rootType != other.sourceRootEntity.rootType) return false
+    if (sourceRootEntity.rootTypeId != other.sourceRootEntity.rootTypeId) return false
 
     val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
     val otherJavaSourceRoot = other.sourceRootEntity.asJavaSourceRoot()
@@ -109,7 +109,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
   }
 
   private fun getSourceRootType(entity: SourceRootEntity): JpsModuleSourceRootType<out JpsElement> {
-    return SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType) ?: UnknownSourceRootType.getInstance(entity.rootType)
+    return SourceRootTypeRegistry.getInstance().findTypeById(entity.rootTypeId) ?: UnknownSourceRootType.getInstance(entity.rootTypeId.name)
   }
 
   companion object {

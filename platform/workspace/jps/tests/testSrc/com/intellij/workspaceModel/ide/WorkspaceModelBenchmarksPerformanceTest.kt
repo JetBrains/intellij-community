@@ -356,11 +356,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
                 contentRoots = listOf(
                   ContentRootEntity(manager.getOrCreateFromUrl("$newFolder/data$counter"), emptyList(), OrphanageWorkerEntitySource) {
                     this.sourceRoots = listOf(
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/one$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/two$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/three$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/four$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/five$counter"), "", MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/one$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/two$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/three$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/four$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/five$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
                     )
                   })
               }
@@ -403,7 +403,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
                 contentRoots = List(10) { contentCounter ->
                   ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$contentCounter$counter")), emptyList(), OrphanageWorkerEntitySource) {
                     sourceRoots = List(10) { sourceCounter ->
-                      SourceRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/one$sourceCounter$contentCounter$counter")), "", MySource)
+                      SourceRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/one$sourceCounter$contentCounter$counter")), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource)
                     }
                   }
                 }

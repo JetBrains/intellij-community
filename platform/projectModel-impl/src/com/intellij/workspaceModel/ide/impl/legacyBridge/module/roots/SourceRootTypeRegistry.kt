@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
@@ -16,9 +17,9 @@ class SourceRootTypeRegistry {
     @JvmStatic
     fun getInstance(): SourceRootTypeRegistry = service()
   }
-  
-  fun findTypeById(rootType: String): JpsModuleSourceRootType<*>? {
-    return getMap()[rootType]
+
+  fun findTypeById(rootTypeId: SourceRootTypeId): JpsModuleSourceRootType<*>? {
+    return getMap()[rootTypeId.name]
   }
 
   private fun getMap(): Map<String, JpsModuleSourceRootType<*>> {

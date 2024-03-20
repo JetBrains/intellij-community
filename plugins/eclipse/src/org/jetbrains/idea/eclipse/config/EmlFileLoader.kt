@@ -11,13 +11,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.toPath
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.EPathUtil
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 
 /**
@@ -196,9 +197,9 @@ internal class EmlFileLoader(
     for (sourceRoot in entity.sourceRoots) {
       val url = sourceRoot.url.url
       val isForTests = url in testSourceFolders
-      val rootType = if (isForTests) JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID else JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
-      if (rootType != sourceRoot.rootType) {
-        (sourceRoot as SourceRootEntity.Builder).rootType = rootType
+      val rootTypeId = if (isForTests) JAVA_TEST_ROOT_ENTITY_TYPE_ID else JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+      if (rootTypeId != sourceRoot.rootTypeId) {
+        (sourceRoot as SourceRootEntity.Builder).rootTypeId = rootTypeId
       }
 
       val packagePrefix = packagePrefixes[url]

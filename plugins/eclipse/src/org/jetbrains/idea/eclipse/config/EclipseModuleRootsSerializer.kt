@@ -26,6 +26,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.Function
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.toPath
 import org.jdom.Element
 import org.jdom.output.EclipseJDOMUtil
@@ -42,7 +43,6 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter.addOrderEntry
 import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.io.OutputStreamWriter
@@ -182,7 +182,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             val srcUrl: VirtualFileUrl
             val sourceRoot = if (linkedPath == null) {
               srcUrl = getUrlByRelativePath(path)
-              SourceRootEntity(srcUrl, JAVA_SOURCE_ROOT_TYPE_ID, contentRootEntity.entitySource) {
+              SourceRootEntity(srcUrl, JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, contentRootEntity.entitySource) {
                 this.contentRoot = contentRootEntity
               }
             }
@@ -195,7 +195,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                    ?: ContentRootEntity(srcUrl, emptyList(), moduleEntity.entitySource) {
                                      this.module = moduleEntity
                                    }
-              SourceRootEntity(srcUrl, JAVA_SOURCE_ROOT_TYPE_ID, newContentRoot.entitySource) {
+              SourceRootEntity(srcUrl, JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, newContentRoot.entitySource) {
                 this.contentRoot = newContentRoot
               }
             }

@@ -18,6 +18,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -55,7 +56,7 @@ class ProjectFileIndexPerformanceTest {
         builder addEntity ModuleEntity("big", listOf(InheritedSdkDependency, ModuleSourceDependency), NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
             sourceRoots = listOf(
-              SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
+              SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), SourceRootTypeId(JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID), NonPersistentEntitySource))
           })
         }
         for (i in 0..499) {
@@ -86,8 +87,7 @@ class ProjectFileIndexPerformanceTest {
             contentRoots = listOf(
               ContentRootEntity(smallModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
                 sourceRoots = listOf(
-                  SourceRootEntity(srcRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID,
-                                   NonPersistentEntitySource))
+                  SourceRootEntity(srcRoot.toVirtualFileUrl(fileUrlManager), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource))
                 excludedUrls = listOf(ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(fileUrlManager), NonPersistentEntitySource))
               })
 

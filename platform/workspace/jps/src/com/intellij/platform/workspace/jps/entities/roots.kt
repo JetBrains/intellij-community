@@ -76,6 +76,9 @@ var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity?
 
 val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
 
+
+data class SourceRootTypeId(val name: @NonNls String)
+
 /**
  * Describes a [SourceFolder][com.intellij.openapi.roots.SourceFolder].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
@@ -84,7 +87,7 @@ interface SourceRootEntity : WorkspaceEntity {
     val contentRoot: ContentRootEntity
 
     val url: VirtualFileUrl
-    val rootType: @NonNls String
+    val rootTypeId: SourceRootTypeId
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -92,7 +95,7 @@ interface SourceRootEntity : WorkspaceEntity {
     override var entitySource: EntitySource
     override var contentRoot: ContentRootEntity
     override var url: VirtualFileUrl
-    override var rootType: String
+    override var rootTypeId: SourceRootTypeId
   }
 
   companion object : EntityType<SourceRootEntity, Builder>() {
@@ -101,13 +104,13 @@ interface SourceRootEntity : WorkspaceEntity {
     @JvmName("create")
     operator fun invoke(
       url: VirtualFileUrl,
-      rootType: String,
+      rootTypeId: SourceRootTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): SourceRootEntity {
       val builder = builder()
       builder.url = url
-      builder.rootType = rootType
+      builder.rootTypeId = rootTypeId
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

@@ -48,10 +48,10 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
       return dataSource.url
     }
 
-  override val rootType: String
+  override val rootTypeId: SourceRootTypeId
     get() {
-      readField("rootType")
-      return dataSource.rootType
+      readField("rootTypeId")
+      return dataSource.rootTypeId
     }
 
   override val entitySource: EntitySource
@@ -112,8 +112,8 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
       if (!getEntityData().isUrlInitialized()) {
         error("Field SourceRootEntity#url should be initialized")
       }
-      if (!getEntityData().isRootTypeInitialized()) {
-        error("Field SourceRootEntity#rootType should be initialized")
+      if (!getEntityData().isRootTypeIdInitialized()) {
+        error("Field SourceRootEntity#rootTypeId should be initialized")
       }
     }
 
@@ -126,7 +126,7 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
       dataSource as SourceRootEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.url != dataSource.url) this.url = dataSource.url
-      if (this.rootType != dataSource.rootType) this.rootType = dataSource.rootType
+      if (this.rootTypeId != dataSource.rootTypeId) this.rootTypeId = dataSource.rootTypeId
       updateChildToParentReferences(parents)
     }
 
@@ -189,12 +189,13 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
         if (_diff != null) index(this, "url", value)
       }
 
-    override var rootType: String
-      get() = getEntityData().rootType
+    override var rootTypeId: SourceRootTypeId
+      get() = getEntityData().rootTypeId
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).rootType = value
-        changedProperty.add("rootType")
+        getEntityData(true).rootTypeId = value
+        changedProperty.add("rootTypeId")
+
       }
 
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java
@@ -203,10 +204,10 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
 
 class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   lateinit var url: VirtualFileUrl
-  lateinit var rootType: String
+  lateinit var rootTypeId: SourceRootTypeId
 
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
-  internal fun isRootTypeInitialized(): Boolean = ::rootType.isInitialized
+  internal fun isRootTypeIdInitialized(): Boolean = ::rootTypeId.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceRootEntity> {
     val modifiable = SourceRootEntityImpl.Builder(null)
@@ -242,7 +243,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SourceRootEntity(url, rootType, entitySource) {
+    return SourceRootEntity(url, rootTypeId, entitySource) {
       parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
@@ -261,7 +262,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
 
     if (this.entitySource != other.entitySource) return false
     if (this.url != other.url) return false
-    if (this.rootType != other.rootType) return false
+    if (this.rootTypeId != other.rootTypeId) return false
     return true
   }
 
@@ -272,21 +273,21 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     other as SourceRootEntityData
 
     if (this.url != other.url) return false
-    if (this.rootType != other.rootType) return false
+    if (this.rootTypeId != other.rootTypeId) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + url.hashCode()
-    result = 31 * result + rootType.hashCode()
+    result = 31 * result + rootTypeId.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + url.hashCode()
-    result = 31 * result + rootType.hashCode()
+    result = 31 * result + rootTypeId.hashCode()
     return result
   }
 }

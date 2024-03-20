@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -118,7 +119,7 @@ class JpsProjectSaveAfterChangesTest {
         this@ContentRootEntity.module = module
       }
       val sourceRootEntity = builder addEntity SourceRootEntity(configLocation.baseDirectoryUrl.append("new"),
-                                                                "java-source", source) {
+                                                                JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, source) {
         contentRoot = contentRootEntity
       }
       builder addEntity JavaSourceRootPropertiesEntity(false, "", sourceRootEntity.entitySource) {

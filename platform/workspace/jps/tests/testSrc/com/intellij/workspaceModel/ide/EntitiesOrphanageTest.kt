@@ -5,10 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -27,6 +24,9 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
+
+internal val DEFAULT_SOURCE_ROOT_TYPE_ID = SourceRootTypeId("")
+
 
 @TestApplication
 class EntitiesOrphanageTest {
@@ -362,7 +362,7 @@ class EntitiesOrphanageTest {
           EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
               })
             }
           }
@@ -410,7 +410,7 @@ class EntitiesOrphanageTest {
           EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
               })
             }
           }
@@ -419,7 +419,7 @@ class EntitiesOrphanageTest {
           WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
             it addEntity ModuleEntity("MyName", emptyList(), MySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource) {
-                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
               })
             }
           }
@@ -461,7 +461,7 @@ class EntitiesOrphanageTest {
           EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-                this.sourceRoots = listOf(SourceRootEntity(sourceUrl1, "", MySource))
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl1, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
               })
             }
           }
@@ -470,7 +470,7 @@ class EntitiesOrphanageTest {
           WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
             it addEntity ModuleEntity("MyName", emptyList(), MySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-                this.sourceRoots = listOf(SourceRootEntity(sourceUrl2, "", MySource))
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl2, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
               })
             }
           }
@@ -508,7 +508,7 @@ class EntitiesOrphanageTest {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+            this.sourceRoots = listOf(SourceRootEntity(sourceUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
           })
         }
       }
@@ -736,7 +736,7 @@ class EntitiesOrphanageTest {
           EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
             builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
               this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
-                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, "", MySource))
+                this.sourceRoots = listOf(SourceRootEntity(sourceUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, MySource))
                 this.excludedUrls = listOf(ExcludeUrlEntity(excludeUrl, MySource))
               })
             }

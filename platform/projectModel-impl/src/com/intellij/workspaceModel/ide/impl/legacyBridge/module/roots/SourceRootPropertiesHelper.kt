@@ -133,7 +133,7 @@ object SourceRootPropertiesHelper {
                                   url: String): JpsModuleSourceRoot {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
 
-    val rootProperties = when (entity.rootType) {
+    val rootProperties = when (entity.rootTypeId.name) {
       JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
         val javaSourceRoot = entity.asJavaSourceRoot()
         javaExtensionService.createSourceRootProperties(
@@ -161,17 +161,17 @@ object SourceRootPropertiesHelper {
 
     val serializer = findSerializer(rootType)
     if (serializer == null) {
-      LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
+      LOG.warn("Module source root type $rootType (${entity.rootTypeId}) is not registered as JpsModelSerializerExtension")
       return elementFactory.createDummyElement()
     }
 
     return try {
       val element = JDOMUtil.load(customSourceRoot.propertiesXmlTag)
-      element.setAttribute(JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE, entity.rootType)
+      element.setAttribute(JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE, entity.rootTypeId.name)
       serializer.loadProperties(element)
     }
     catch (t: Throwable) {
-      LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
+      LOG.error("Unable to deserialize source root '${entity.rootTypeId}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
       elementFactory.createDummyElement()
     }
   }

@@ -20,7 +20,7 @@ import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -69,7 +69,7 @@ class WorkspaceModelPerformanceTest {
         builder addEntity ModuleEntity("module$i", dependencies, NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(contentRoot, emptyList(), NonPersistentEntitySource) {
             sourceRoots = listOf(
-              SourceRootEntity(srcRoot, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
+              SourceRootEntity(srcRoot, JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource))
           })
         }
       }

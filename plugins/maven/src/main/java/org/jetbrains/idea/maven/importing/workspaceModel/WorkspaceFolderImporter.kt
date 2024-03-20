@@ -13,6 +13,10 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.FileCollectionFactory
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -24,8 +28,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
 import java.util.stream.Stream
 
@@ -99,21 +101,21 @@ internal class WorkspaceFolderImporter(
 
   private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity,
                                        folder: ContentRootCollector.SourceFolderResult) {
-    val rootType = when (folder.type) {
-      JavaSourceRootType.SOURCE -> JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
-      JavaSourceRootType.TEST_SOURCE -> JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
-      JavaResourceRootType.RESOURCE -> JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID
-      JavaResourceRootType.TEST_RESOURCE -> JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID
+    val rootTypeId = when (folder.type) {
+      JavaSourceRootType.SOURCE -> JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+      JavaSourceRootType.TEST_SOURCE -> JAVA_TEST_ROOT_ENTITY_TYPE_ID
+      JavaResourceRootType.RESOURCE -> JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
+      JavaResourceRootType.TEST_RESOURCE -> JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
       else -> error("${folder.type} doesn't  match to maven root item")
     }
 
-    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(folder.path)), rootType,
+    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(folder.path)), rootTypeId,
                                                               contentRootEntity.entitySource) {
       this.contentRoot = contentRootEntity
     }
 
-    val isResource = JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID == rootType
-                     || JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID == rootType
+    val isResource = JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
+                     || JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
 
     if (isResource) {
       builder addEntity JavaResourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
