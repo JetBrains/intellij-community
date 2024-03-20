@@ -1,7 +1,7 @@
 UFile (package = ) [public final class BitwiseKt {...]
     UClass (name = BitwiseKt) [public final class BitwiseKt {...}]
         UMethod (name = foo) [public static final fun foo() : int {...}]
-            UBlockExpression [{...}] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var mask: int = 127]
                     ULocalVariable (name = mask) [var mask: int = 127]
                         ULiteralExpression (value = 127) [127] : int
@@ -38,7 +38,7 @@ UFile (package = ) [public final class BitwiseKt {...]
                         UBinaryExpression (operator = <<) [x << 31] : int
                             USimpleNameReferenceExpression (identifier = x) [x] : int
                             ULiteralExpression (value = 31) [31] : int
-                UReturnExpression [return pos + zero - zebra * signed / one] : java.lang.Void
+                UReturnExpression [return pos + zero - zebra * signed / one] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] : int
                         UBinaryExpression (operator = +) [pos + zero] : int
                             USimpleNameReferenceExpression (identifier = pos) [pos] : int
@@ -49,7 +49,7 @@ UFile (package = ) [public final class BitwiseKt {...]
                                 USimpleNameReferenceExpression (identifier = signed) [signed] : int
                             USimpleNameReferenceExpression (identifier = one) [one] : int
         UMethod (name = bar) [public static final fun bar() : long {...}]
-            UBlockExpression [{...}] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var mask: long = 127]
                     ULocalVariable (name = mask) [var mask: long = 127]
                         ULiteralExpression (value = 127) [127] : long
@@ -86,7 +86,7 @@ UFile (package = ) [public final class BitwiseKt {...]
                         UBinaryExpression (operator = <<) [x << 63] : long
                             USimpleNameReferenceExpression (identifier = x) [x] : long
                             ULiteralExpression (value = 63) [63] : int
-                UReturnExpression [return pos + zero - zebra * signed / one] : java.lang.Void
+                UReturnExpression [return pos + zero - zebra * signed / one] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] : long
                         UBinaryExpression (operator = +) [pos + zero] : long
                             USimpleNameReferenceExpression (identifier = pos) [pos] : long

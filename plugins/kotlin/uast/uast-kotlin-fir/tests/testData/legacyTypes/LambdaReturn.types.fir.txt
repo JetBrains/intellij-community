@@ -4,7 +4,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
                     ULocalVariable (name = lam1) [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
-                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
+                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : int
@@ -17,7 +17,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         USimpleNameReferenceExpression (identifier = b) [b] : int
                 UDeclarationsExpression [var lam2: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
                     ULocalVariable (name = lam2) [var lam2: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
-                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
+                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : int
@@ -37,44 +37,44 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             USimpleNameReferenceExpression (identifier = c) [c] : int
                 UDeclarationsExpression [var lam3: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
                     ULocalVariable (name = lam3) [var lam3: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
-                        ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
-                            ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
+                        ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
+                            ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                                 UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                UBlockExpression [{...}] : java.lang.Void
+                                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                     UDeclarationsExpression [var d: int = 1]
                                         ULocalVariable (name = d) [var d: int = 1]
                                             ULiteralExpression (value = 1) [1] : int
-                                    UReturnExpression [return a + d] : java.lang.Void
+                                    UReturnExpression [return a + d] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         UBinaryExpression (operator = +) [a + d] : int
                                             USimpleNameReferenceExpression (identifier = a) [a] : int
                                             USimpleNameReferenceExpression (identifier = d) [d] : int
                 UDeclarationsExpression [var lam4: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                     ULocalVariable (name = lam4) [var lam4: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
-                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.String>
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : java.lang.String
-                                UIfExpression [if (a < 5) return "5"] : kotlin.Unit
+                                UIfExpression [if (a < 5) return "5"] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                     UBinaryExpression (operator = <) [a < 5] : boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : int
                                         ULiteralExpression (value = 5) [5] : int
-                                    UReturnExpression [return "5"] : java.lang.Void
+                                    UReturnExpression [return "5"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         UPolyadicExpression (operator = +) ["5"] : java.lang.String
                                             ULiteralExpression (value = "5") ["5"] : java.lang.String
                                 UIfExpression [if (a > 0) return "1" else return "2"] : java.lang.String
                                     UBinaryExpression (operator = >) [a > 0] : boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : int
                                         ULiteralExpression (value = 0) [0] : int
-                                    UReturnExpression [return "1"] : java.lang.Void
+                                    UReturnExpression [return "1"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         UPolyadicExpression (operator = +) ["1"] : java.lang.String
                                             ULiteralExpression (value = "1") ["1"] : java.lang.String
-                                    UReturnExpression [return "2"] : java.lang.Void
+                                    UReturnExpression [return "2"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         UPolyadicExpression (operator = +) ["2"] : java.lang.String
                                             ULiteralExpression (value = "2") ["2"] : java.lang.String
                 UDeclarationsExpression [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                     ULocalVariable (name = lam5) [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
-                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.String>
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}]
@@ -83,17 +83,17 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         UPolyadicExpression (operator = +) ["a"] : java.lang.String
                                             ULiteralExpression (value = "a") ["a"] : java.lang.String
                                         USimpleNameReferenceExpression (identifier = a) [a] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : kotlin.Unit
-                    ULambdaExpression [{ var it: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    ULambdaExpression [{ var it: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                         UParameter (name = it) [var it: int]
                         UBlockExpression [{...}] : int
-                            UIfExpression [if (it > 5) return] : kotlin.Unit
+                            UIfExpression [if (it > 5) return] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UBinaryExpression (operator = >) [it > 5] : boolean
                                     USimpleNameReferenceExpression (identifier = it) [it] : int
                                     ULiteralExpression (value = 5) [5] : int
-                                UReturnExpression [return] : java.lang.Void
+                                UReturnExpression [return] : @org.jetbrains.annotations.NotNull() java.lang.Void
                             UDeclarationsExpression [var b: int = 1]
                                 ULocalVariable (name = b) [var b: int = 1]
                                     ULiteralExpression (value = 1) [1] : int
@@ -103,15 +103,15 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     USimpleNameReferenceExpression (identifier = b) [b] : int
                 UDeclarationsExpression [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
-                        ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                            UBlockExpression [{...}] : kotlin.Unit
+                        ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UReturnExpression [return @org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
                                     UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
                                         ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] : java.util.List<? extends java.lang.Integer>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                                                 UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.Integer>
+                                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                                                 ULiteralExpression (value = 1) [1] : int
                                                 ULiteralExpression (value = 2) [2] : int
                                         ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: int = vardbcd0724.<anonymous class>()]
@@ -130,12 +130,12 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
-                        ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                            UBlockExpression [{...}] : kotlin.Unit
+                        ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UReturnExpression [return listOf(1)]
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : java.util.List<? extends java.lang.Integer>
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.Integer>
+                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                                         ULiteralExpression (value = 1) [1] : int
         UMethod (name = bar) [private static final fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,java.lang.Integer>) : void {...}]
             UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,java.lang.Integer>]

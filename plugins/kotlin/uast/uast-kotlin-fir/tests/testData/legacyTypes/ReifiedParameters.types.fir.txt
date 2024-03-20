@@ -16,8 +16,8 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UParameter (name = t) [var t: T...]
             UBlockExpression [{...}]
                 UReturnExpression [return t[0]]
-                    UArrayAccessExpression [t[0]] : T
-                        USimpleNameReferenceExpression (identifier = t) [t] : T[]
+                    UArrayAccessExpression [t[0]] : @org.jetbrains.annotations.NotNull() T
+                        USimpleNameReferenceExpression (identifier = t) [t] : T @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 0) [0] : int
         UMethod (name = functionWithReceiver) [public static fun functionWithReceiver($this$functionWithReceiver: T, @org.jetbrains.annotations.Nullable i: java.lang.Integer) : T {...}]
             UParameter (name = $this$functionWithReceiver) [var $this$functionWithReceiver: T]

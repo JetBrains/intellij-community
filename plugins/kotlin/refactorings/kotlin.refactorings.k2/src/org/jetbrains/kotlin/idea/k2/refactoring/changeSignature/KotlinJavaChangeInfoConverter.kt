@@ -166,24 +166,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             allowAnalysisFromWriteAction {
                 analyze(codeFragment) {
                     val ktType = codeFragment.getContentElement()?.getKtType()!!
-                    val type = ktType.asPsiType(originalFunction, true)!!
-                    if (type is PsiPrimitiveType) return@analyze type
-                    val anno = when (ktType.nullability) {
-                        KtTypeNullability.NON_NULLABLE -> AnnotationUtil.NOT_NULL
-                        KtTypeNullability.NULLABLE -> AnnotationUtil.NULLABLE
-                        KtTypeNullability.UNKNOWN -> null
-                    }
-                    if (anno != null && !type.hasAnnotation(anno)) {
-                        val nullabilityAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$anno", originalFunction)
-                        val annotationType = nullabilityAnno.resolveAnnotationType()
-                        if (annotationType != null) {
-                            type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
-                        } else {
-                            type
-                        }
-                    } else {
-                        type
-                    }
+                    ktType.asPsiType(originalFunction, true)!!
                 }
             }
         }

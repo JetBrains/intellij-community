@@ -5,8 +5,8 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] : java.lang.String
                     UIdentifier (Identifier (buildString)) [UIdentifier (Identifier (buildString))]
                     USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] : java.lang.String
-                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super java.lang.StringBuilder, ? extends kotlin.Unit>
-                        UBlockExpression [{...}] : kotlin.Unit
+                    ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.StringBuilder, ? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UReturnExpression [return append("a")]
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : java.lang.StringBuilder
                                     UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
@@ -20,7 +20,7 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [let({ var it: int ->...})] : int
                         UIdentifier (Identifier (let)) [UIdentifier (Identifier (let))]
                         USimpleNameReferenceExpression (identifier = let, resolvesTo = null) [let] : int
-                        ULambdaExpression [{ var it: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
+                        ULambdaExpression [{ var it: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                             UParameter (name = it) [var it: int]
                             UBlockExpression [{...}] : int
                                 UReturnExpression [return it]

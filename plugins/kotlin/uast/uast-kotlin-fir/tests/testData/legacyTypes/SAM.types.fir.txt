@@ -6,65 +6,65 @@ UFile (package = ) [import java.lang.Thread...]
     UClass (name = SAMKt) [public final class SAMKt {...}]
         UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<kotlin.Unit> = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                UBlockExpression [{...}] : java.lang.Void
+            ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                UBlockExpression [{...}] : java.lang.Void
+            ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UField (name = baz) [@org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.Runnable({ ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UQualifiedReferenceExpression [java.lang.Runnable({ ...})] : java.lang.Runnable
+            UQualifiedReferenceExpression [java.lang.Runnable({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                 UQualifiedReferenceExpression [java.lang]
                     USimpleNameReferenceExpression (identifier = java) [java]
                     USimpleNameReferenceExpression (identifier = lang) [lang]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : java.lang.Runnable
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                     UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : java.lang.Runnable
-                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                        UBlockExpression [{...}] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                    ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
         UField (name = samImplicitLabel) [@org.jetbrains.annotations.NotNull private static final var samImplicitLabel: java.lang.Runnable = Runnable({ ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : java.lang.Runnable
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : java.lang.Runnable
-                ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                    UBlockExpression [{...}] : kotlin.Unit
-                        UReturnExpression [return] : java.lang.Void
+                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                        UReturnExpression [return] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UField (name = samExplicitLabel) [@org.jetbrains.annotations.NotNull private static final var samExplicitLabel: java.lang.Runnable = Runnable(l@ { ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable(l@ { ...})] : java.lang.Runnable
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable(l@ { ...})] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : java.lang.Runnable
-                ULabeledExpression (label = l) [l@ { ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                        UBlockExpression [{...}] : kotlin.Unit
-                            UReturnExpression [return] : java.lang.Void
+                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                ULabeledExpression (label = l) [l@ { ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                    ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                            UReturnExpression [return] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = getNotSam) [public static final fun getNotSam() : kotlin.jvm.functions.Function0<kotlin.Unit> = UastEmptyExpression]
         UMethod (name = getFoo) [public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = setFoo) [public static final fun setFoo(@org.jetbrains.annotations.NotNull <set-?>: java.lang.Runnable) : void = UastEmptyExpression]
             UParameter (name = <set-?>) [@org.jetbrains.annotations.NotNull var <set-?>: java.lang.Runnable]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = bar) [public static final fun bar() : java.lang.Runnable {...}]
-            UBlockExpression [{...}] : java.lang.Void
-                UBinaryExpression (operator = =) [foo = { ...}] : kotlin.Unit
-                    USimpleNameReferenceExpression (identifier = foo) [foo] : java.lang.Runnable
-                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                        UBlockExpression [{...}] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UBinaryExpression (operator = =) [foo = { ...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = foo) [foo] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                    ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
                     ULocalVariable (name = a) [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
-                        UBinaryExpressionWithType [{ ...} as java.lang.Runnable] : java.lang.Runnable
-                            ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                                UBlockExpression [{...}] : java.lang.Void
+                        UBinaryExpressionWithType [{ ...} as java.lang.Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                            ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [runRunnable({ ...})] : <ErrorType>
                     UIdentifier (Identifier (runRunnable)) [UIdentifier (Identifier (runRunnable))]
                     USimpleNameReferenceExpression (identifier = runRunnable, resolvesTo = null) [runRunnable] : <ErrorType>
-                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                        UBlockExpression [{...}] : kotlin.Unit
-                UReturnExpression [return { ...}] : java.lang.Void
-                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                        UBlockExpression [{...}] : java.lang.Void
+                    ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                UReturnExpression [return { ...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = getBaz) [public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = getSamImplicitLabel) [public static final fun getSamImplicitLabel() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = getSamExplicitLabel) [public static final fun getSamExplicitLabel() : java.lang.Runnable = UastEmptyExpression]
@@ -80,33 +80,33 @@ UFile (package = ) [import java.lang.Thread...]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var thread1: java.lang.Thread = <init>({ ...})]
                     ULocalVariable (name = thread1) [var thread1: java.lang.Thread = <init>({ ...})]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>({ ...})] : java.lang.Thread
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.Thread
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : java.lang.Thread
-                            ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                                UBlockExpression [{...}] : kotlin.Unit
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.Thread
+                            ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                     UReturnExpression [return println("hello1")]
-                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : kotlin.Unit
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                             UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : kotlin.Unit
+                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                             UPolyadicExpression (operator = +) ["hello1"] : java.lang.String
                                                 ULiteralExpression (value = "hello1") ["hello1"] : java.lang.String
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
                     ULocalVariable (name = thread2) [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(Runnable({ ...}))] : java.lang.Thread
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(Runnable({ ...}))] : @org.jetbrains.annotations.NotNull() java.lang.Thread
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : java.lang.Thread
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.Thread
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : java.lang.Runnable
-                                ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends kotlin.Unit>
-                                    UBlockExpression [{...}] : kotlin.Unit
+                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                                ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                         UReturnExpression [return println("hello2")]
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : kotlin.Unit
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                                 UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : kotlin.Unit
+                                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                                 UPolyadicExpression (operator = +) ["hello2"] : java.lang.String
                                                     ULiteralExpression (value = "hello2") ["hello2"] : java.lang.String
         UMethod (name = test3) [public static final fun test3() : void {...}]
@@ -114,10 +114,10 @@ UFile (package = ) [import java.lang.Thread...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Supplier({ ...}))] : java.lang.String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : java.lang.String
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Supplier({ ...})] : java.util.function.Supplier<java.lang.String>
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Supplier({ ...})] : @org.jetbrains.annotations.NotNull() java.util.function.Supplier<@org.jetbrains.annotations.NotNull() java.lang.String>
                         UIdentifier (Identifier (Supplier)) [UIdentifier (Identifier (Supplier))]
-                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier) [Supplier] : java.util.function.Supplier<java.lang.String>
-                        ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends java.lang.String>
+                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier) [Supplier] : @org.jetbrains.annotations.NotNull() java.util.function.Supplier<@org.jetbrains.annotations.NotNull() java.lang.String>
+                        ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UBlockExpression [{...}] : java.lang.String
                                 UReturnExpression [return "Supplier"]
                                     UPolyadicExpression (operator = +) ["Supplier"] : java.lang.String
@@ -125,10 +125,10 @@ UFile (package = ) [import java.lang.Thread...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Callable({ ...}))] : java.lang.String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : java.lang.String
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Callable({ ...})] : java.util.concurrent.Callable<java.lang.String>
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Callable({ ...})] : @org.jetbrains.annotations.NotNull() java.util.concurrent.Callable<@org.jetbrains.annotations.NotNull() java.lang.String>
                         UIdentifier (Identifier (Callable)) [UIdentifier (Identifier (Callable))]
-                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable) [Callable] : java.util.concurrent.Callable<java.lang.String>
-                        ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends java.lang.String>
+                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable) [Callable] : @org.jetbrains.annotations.NotNull() java.util.concurrent.Callable<@org.jetbrains.annotations.NotNull() java.lang.String>
+                        ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends java.lang.String>
                             UBlockExpression [{...}] : java.lang.String
                                 UReturnExpression [return "Callable"]
                                     UPolyadicExpression (operator = +) ["Callable"] : java.lang.String
@@ -138,14 +138,14 @@ UFile (package = ) [import java.lang.Thread...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return TODO()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = ambiguousSamAcceptor) [public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.concurrent.Callable<java.lang.String>) : java.lang.String {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.util.concurrent.Callable<java.lang.String>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return TODO()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void

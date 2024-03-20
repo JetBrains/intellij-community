@@ -6,4 +6,3 @@ class A(val n: Int) {
     }
 }
 
-// IGNORE_K2

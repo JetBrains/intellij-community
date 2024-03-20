@@ -7,7 +7,7 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                 UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1...@org.jetbrains.annotations.NotNull var b: int = var268d41a5.<anonymous class>()]
                     ULocalVariable (name = var268d41a5) [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UBinaryExpression (operator = <other>) ["foo" <other> 1] : kotlin.Pair<? extends java.lang.String, ? extends java.lang.Integer>
+                        UBinaryExpression (operator = <other>) ["foo" <other> 1] : @org.jetbrains.annotations.NotNull() kotlin.Pair<? extends @org.jetbrains.annotations.NotNull() java.lang.String, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                             UPolyadicExpression (operator = +) ["foo"] : java.lang.String
                                 ULiteralExpression (value = "foo") ["foo"] : java.lang.String
                             ULiteralExpression (value = 1) [1] : int
@@ -32,8 +32,8 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                             UNamedExpression (name = names) [names = "UNCHECKED_CAST"]
                                 UPolyadicExpression (operator = +) ["UNCHECKED_CAST"] : java.lang.String
                                     ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] : java.lang.String
-                        UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] : kotlin.Pair<? extends java.lang.String, ? extends java.lang.String>
-                            USimpleNameReferenceExpression (identifier = data) [data] : java.lang.Object
+                        UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] : @org.jetbrains.annotations.NotNull() kotlin.Pair<? extends @org.jetbrains.annotations.NotNull() java.lang.String, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
+                            USimpleNameReferenceExpression (identifier = data) [data] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
                     ULocalVariable (name = k) [@org.jetbrains.annotations.NotNull var k: java.lang.String = var465978a0.<anonymous class>()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

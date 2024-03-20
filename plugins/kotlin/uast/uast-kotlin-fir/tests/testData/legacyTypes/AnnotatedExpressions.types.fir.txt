@@ -2,10 +2,10 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
     UClass (name = AnnotatedExpressionsKt) [public final class AnnotatedExpressionsKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UDeclarationsExpression [@kotlin.Suppress var a: int = 1]
                     ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
@@ -14,7 +14,7 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                     ULocalVariable (name = b) [@kotlin.Suppress var b: int = 2]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                         ULiteralExpression (value = 2) [2] : int
-                UBinaryExpression (operator = =) [b = a] : kotlin.Unit
+                UBinaryExpression (operator = =) [b = a] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     USimpleNameReferenceExpression (identifier = b) [b] : int
                     USimpleNameReferenceExpression (identifier = a) [a] : int
@@ -37,7 +37,7 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                     USimpleNameReferenceExpression (identifier = varae507364) [varae507364]
                                     ULiteralExpression (value = null) [null]
                                 USimpleNameReferenceExpression (identifier = varae507364) [varae507364]
-                                USimpleNameReferenceExpression (identifier = b) [b] : java.lang.Void
+                                USimpleNameReferenceExpression (identifier = b) [b] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = annotatedSwitch) [public static final fun annotatedSwitch(@org.jetbrains.annotations.NotNull str: java.lang.String) : java.lang.Integer {...}]
             UParameter (name = str) [@org.jetbrains.annotations.NotNull var str: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -57,7 +57,7 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                         USimpleNameReferenceExpression (identifier = isBlank, resolvesTo = null) [isBlank] : boolean
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]
-                                        ULiteralExpression (value = null) [null] : java.lang.Void
+                                        ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                             USwitchClauseExpressionWithBody [str.isNotEmpty() != null -> {...]
                                 UBinaryExpression (operator = !=) [str.isNotEmpty() != null] : boolean
                                     UQualifiedReferenceExpression [str.isNotEmpty()] : boolean
@@ -65,10 +65,10 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isNotEmpty()] : boolean
                                             UIdentifier (Identifier (isNotEmpty)) [UIdentifier (Identifier (isNotEmpty))]
                                             USimpleNameReferenceExpression (identifier = isNotEmpty, resolvesTo = null) [isNotEmpty] : boolean
-                                    ULiteralExpression (value = null) [null] : java.lang.Void
+                                    ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]
-                                        ULiteralExpression (value = null) [null] : java.lang.Void
+                                        ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                             USwitchClauseExpressionWithBody [ -> {...]
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield 1]

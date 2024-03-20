@@ -6,5 +6,5 @@ UFile (package = ) [public final class DefaultParameterValuesKt {...]
                 ULiteralExpression (value = 1) [1] : int
             UParameter (name = foo) [@org.jetbrains.annotations.Nullable var foo: java.lang.String = null]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-                ULiteralExpression (value = null) [null] : java.lang.Void
+                ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
             UBlockExpression [{...}] : void

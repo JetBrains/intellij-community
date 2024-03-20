@@ -65,11 +65,11 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                         USimpleNameReferenceExpression (identifier = i) [i] : int
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UPolyadicExpression (operator = +) [baz] : java.lang.String
-                        USimpleNameReferenceExpression (identifier = baz) [baz] : kotlin.Unit
+                        USimpleNameReferenceExpression (identifier = baz) [baz] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()]
                     ULocalVariable (name = template1) [var template1: java.lang.String = simpleForTemplate()]
                         UPolyadicExpression (operator = +) [simpleForTemplate()] : java.lang.String

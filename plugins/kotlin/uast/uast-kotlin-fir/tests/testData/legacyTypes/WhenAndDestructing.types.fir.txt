@@ -6,22 +6,22 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
                     ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : java.util.List<? extends java.lang.String>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
+                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UPolyadicExpression (operator = +) ["1"] : java.lang.String
                                 ULiteralExpression (value = "1") ["1"] : java.lang.String
                             UPolyadicExpression (operator = +) ["2"] : java.lang.String
                                 ULiteralExpression (value = "2") ["2"] : java.lang.String
-                USwitchExpression [switch (string)  {...] : kotlin.Unit
+                USwitchExpression [switch (string)  {...] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = string) [string] : java.lang.String
-                    UExpressionList (when) [    "aaaa" -> {...    ] : kotlin.Unit
+                    UExpressionList (when) [    "aaaa" -> {...    ] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         USwitchClauseExpressionWithBody ["aaaa" -> {...]
                             UPolyadicExpression (operator = +) ["aaaa"] : java.lang.String
                                 ULiteralExpression (value = "aaaa") ["aaaa"] : java.lang.String
                             UExpressionList (when_entry) [{...]
                                 UYieldExpression [yield return "bindingContext"]
-                                    UReturnExpression [return "bindingContext"] : java.lang.Void
+                                    UReturnExpression [return "bindingContext"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         UPolyadicExpression (operator = +) ["bindingContext"] : java.lang.String
                                             ULiteralExpression (value = "bindingContext") ["bindingContext"] : java.lang.String
                         USwitchClauseExpressionWithBody ["empty-switch" -> {...]
@@ -33,7 +33,7 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                                 UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr...@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
                                     ULocalVariable (name = var837f2350) [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        USimpleNameReferenceExpression (identifier = arr) [arr] : java.util.List<? extends java.lang.String>
+                                        USimpleNameReferenceExpression (identifier = arr) [arr] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                     ULocalVariable (name = bindingContext) [@org.jetbrains.annotations.NotNull var bindingContext: java.lang.String = var837f2350.<anonymous class>()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                         UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : <ErrorType>
@@ -49,5 +49,5 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
                                                 USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                                 UYieldExpression [yield return bindingContext]
-                                    UReturnExpression [return bindingContext] : java.lang.Void
+                                    UReturnExpression [return bindingContext] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : java.lang.String

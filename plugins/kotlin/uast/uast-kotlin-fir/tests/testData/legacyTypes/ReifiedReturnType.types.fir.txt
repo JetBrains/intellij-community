@@ -25,7 +25,7 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return t]
-                    USimpleNameReferenceExpression (identifier = t) [t] : T
+                    USimpleNameReferenceExpression (identifier = t) [t] : @org.jetbrains.annotations.NotNull() T
         UMethod (name = copyWhenGreater) [public static final fun copyWhenGreater(@org.jetbrains.annotations.NotNull list: java.util.List<? extends T>, @org.jetbrains.annotations.NotNull threshold: T, @org.jetbrains.annotations.NotNull threshold2: B) : B {...}]
             UParameter (name = list) [@org.jetbrains.annotations.NotNull var list: java.util.List<? extends T>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -33,9 +33,9 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = threshold2) [@org.jetbrains.annotations.NotNull var threshold2: B]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : java.lang.Void
-                UReturnExpression [return threshold2] : java.lang.Void
-                    USimpleNameReferenceExpression (identifier = threshold2) [threshold2] : B
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UReturnExpression [return threshold2] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    USimpleNameReferenceExpression (identifier = threshold2) [threshold2] : @org.jetbrains.annotations.NotNull() B
         UMethod (name = function3) [public static fun function3(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {...}]
             UParameter (name = t) [var t: T]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
@@ -72,7 +72,7 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return t]
-                    USimpleNameReferenceExpression (identifier = t) [t] : T
+                    USimpleNameReferenceExpression (identifier = t) [t] : @org.jetbrains.annotations.NotNull() T
         UMethod (name = function7) [public static fun function7(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
             UParameter (name = t) [var t: T]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
@@ -130,7 +130,7 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return t]
-                    USimpleNameReferenceExpression (identifier = t) [t] : T
+                    USimpleNameReferenceExpression (identifier = t) [t] : @org.jetbrains.annotations.NotNull() T
         UMethod (name = function12CharSequence) [public static fun function12CharSequence(@org.jetbrains.annotations.NotNull $this$function12CharSequence: T, @org.jetbrains.annotations.NotNull t: B, @org.jetbrains.annotations.NotNull i: T, @org.jetbrains.annotations.NotNull s: java.lang.String) : B {...}]
             UParameter (name = $this$function12CharSequence) [@org.jetbrains.annotations.NotNull var $this$function12CharSequence: T]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -142,11 +142,11 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return t]
-                    USimpleNameReferenceExpression (identifier = t) [t] : B
+                    USimpleNameReferenceExpression (identifier = t) [t] : @org.jetbrains.annotations.NotNull() B
     UClass (name = Foo) [public final class Foo {...}]
         UMethod (name = Foo) [public fun Foo() = UastEmptyExpression]
         UMethod (name = foo) [public fun foo() : Z {...}]
-            UBlockExpression [{...}] : java.lang.Void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
