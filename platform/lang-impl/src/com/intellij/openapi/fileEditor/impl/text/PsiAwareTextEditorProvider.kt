@@ -31,6 +31,7 @@ import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
@@ -42,7 +43,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
-    val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
+    val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file)
 
     val effectiveDocument = if (document == null) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
@@ -118,10 +119,13 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       object : AsyncFileEditorProvider.Builder() {
         override fun build(): FileEditor {
-          val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter)
+          val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter, Consumer {
+            it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+          })
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           editorDeferred.complete(editor)
-          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
+          val component = createPsiAwareTextEditorComponent(file, editor to asyncLoader).first
+          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
           asyncLoader.start(textEditor = textEditor, task = task)
           return textEditor
         }
@@ -187,13 +191,13 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return state
   }
 
-  override fun setStateImpl(project: Project?, editor: Editor, textEditor: TextEditor?, state: TextEditorState, exactState: Boolean) {
-    super.setStateImpl(project = project, editor = editor, textEditor = textEditor, state = state, exactState = exactState)
+  override fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
+    super.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
 
     // folding
     val foldState = state.foldingState
     // folding state is restored by PsiAwareTextEditorImpl.loadEditorInBackground, that's why here we check isEditorLoaded
-    if (project != null && foldState != null && (textEditor == null || isEditorLoaded(textEditor))) {
+    if (project != null && foldState != null && isEditorLoaded(editor)) {
       val psiDocumentManager = PsiDocumentManager.getInstance(project)
       if (!psiDocumentManager.isCommitted(editor.document)) {
         psiDocumentManager.commitDocument(editor.document)

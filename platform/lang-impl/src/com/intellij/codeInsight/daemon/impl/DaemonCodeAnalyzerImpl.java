@@ -1083,7 +1083,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try {
       boolean submitted = false;
       for (FileEditor fileEditor : activeEditors) {
-        if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor)) {
+        if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor())) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
           // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
           if (PassExecutorService.LOG.isDebugEnabled()) {
@@ -1148,7 +1148,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           "because getBackgroundHighlighter() returned null. fileEditor=",
           fileEditor,
           fileEditor.getClass(),
-          (textEditor == null ? "editor is null" : "editor loaded:" + AsyncEditorLoader.Companion.isEditorLoaded(textEditor))
+          (textEditor == null ? "editor is null" : "editor loaded:" + AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor()))
         );
       }
       return null;

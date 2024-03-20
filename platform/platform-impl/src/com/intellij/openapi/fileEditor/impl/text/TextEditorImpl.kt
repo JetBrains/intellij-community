@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
@@ -30,7 +29,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.impl.rootTask
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
@@ -43,41 +43,54 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 private val TEXT_EDITOR_CUSTOMIZER_EP: ExtensionPointName<TextEditorCustomizer> = ExtensionPointName("com.intellij.textEditorCustomizer")
 
-open class TextEditorImpl
-@Internal constructor(
+open class TextEditorImpl @Internal constructor(
   @JvmField protected val project: Project,
   @JvmField protected val file: VirtualFile,
-  editor: EditorImpl,
-  @JvmField internal val asyncLoader: AsyncEditorLoader,
+  private val component: TextEditorComponent,
+  @JvmField @Internal val asyncLoader: AsyncEditorLoader,
+  startLoading: Boolean,
 ) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
-  private val component: TextEditorComponent
 
-  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl)
-    : this(project = project, file = file, editor = editor, asyncLoader = createAsyncEditorLoader(provider, project)) {
-    @Suppress("LeakingThis")
-    asyncLoader.start(
-      textEditor = this,
-      task = asyncLoader.coroutineScope.async(CoroutineName("HighlighterTextEditorInitializer")) {
-        setHighlighterToEditor(project = project, file = file, document = editor.document, editor = editor)
-      },
-    )
-  }
+  // for backward-compatibility only
+  constructor(
+    project: Project,
+    file: VirtualFile,
+    componentAndLoader: Pair<TextEditorComponent, AsyncEditorLoader>,
+  ) : this(
+    project = project,
+    file = file,
+    component = componentAndLoader.first,
+    asyncLoader = componentAndLoader.second,
+    startLoading = true,
+  )
 
   init {
     @Suppress("LeakingThis")
-    component = createEditorComponent(project = project, file = file, editor = editor)
+    TextEditorProvider.putTextEditor(component.editor, this)
+
+    if (startLoading) {
+      @Suppress("LeakingThis")
+      asyncLoader.start(
+        textEditor = this,
+        task = asyncLoader.coroutineScope.async(CoroutineName("HighlighterTextEditorInitializer")) {
+          setHighlighterToEditor(project = project, file = file, document = editor.document, editor = component.editorImpl)
+        },
+      )
+    }
+
     val state = file.getUserData(TRANSIENT_EDITOR_STATE_KEY)
     if (state != null) {
-      state.applyTo(component.editor)
       file.putUserData(TRANSIENT_EDITOR_STATE_KEY, null)
+      state.applyTo(component.editor)
     }
 
     // postpone subscribing - perform not in EDT
@@ -99,7 +112,7 @@ open class TextEditorImpl
         }
       }
 
-      component.listenChanges(parentDisposable = this@TextEditorImpl, asyncLoader.coroutineScope)
+      component.listenChanges(parentDisposable = this@TextEditorImpl, asyncLoader = asyncLoader, textEditor = this@TextEditorImpl, project = project)
     }
   }
 
@@ -117,16 +130,14 @@ open class TextEditorImpl
     }
   }
 
-  protected open fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    return TextEditorComponent(project = project, file = file, textEditor = this, editorImpl = editor)
-  }
-
   override fun dispose() {
     try {
       asyncLoader.dispose()
     }
     finally {
-      component.dispose()
+      if (!component.isDisposed) {
+        component.dispose()
+      }
     }
     if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == true) {
       file.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(editor))
@@ -151,7 +162,7 @@ open class TextEditorImpl
 
   override fun setState(state: FileEditorState, exactState: Boolean) {
     if (state is TextEditorState) {
-      asyncLoader.setEditorState(state = state, exactState = exactState, textEditor = this)
+      asyncLoader.setEditorState(state = state, exactState = exactState, editor = editor)
     }
   }
 
@@ -160,7 +171,7 @@ open class TextEditorImpl
   override fun isValid(): Boolean = component.isEditorValid
 
   fun updateModifiedProperty() {
-    component.updateModifiedProperty()
+    component.updateModifiedProperty(this)
   }
 
   fun firePropertyChange(propertyName: String, oldValue: Any?, newValue: Any?) {
@@ -215,21 +226,21 @@ private class TransientEditorState {
   }
 }
 
-@Internal
-fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project): AsyncEditorLoader {
-  return AsyncEditorLoader(project = project, provider = provider, coroutineScope = editorLoaderScope(project))
-}
+private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("startup")) }
 
-private fun editorLoaderScope(project: Project): CoroutineScope {
+@Internal
+fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project, fileForTelemetry: VirtualFile): AsyncEditorLoader {
   // `openEditorImpl` uses runWithModalProgressBlocking,
   // but an async editor load is performed in the background, out of the `openEditorImpl` call
-  val modality = ModalityState.any().asContextElement()
-
-  val context = if (StartUpMeasurer.isEnabled()) rootTask() else EmptyCoroutineContext
-  return project.service<AsyncEditorLoaderService>().coroutineScope.childScope(supervisor = false, context = context + modality)
+  val coroutineScope = project.service<AsyncEditorLoaderScopeHolder>().coroutineScope.childScope(
+    supervisor = false,
+    // name, not path (privacy)
+    context = tracer.rootSpan("AsyncEditorLoader", arrayOf("file", fileForTelemetry.name)) + ModalityState.any().asContextElement(),
+  )
+  return AsyncEditorLoader(project = project, provider = provider, coroutineScope = coroutineScope)
 }
 
-internal suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, document: Document, editor: EditorImpl) {
+private suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, document: Document, editor: EditorImpl) {
   val scheme = serviceAsync<EditorColorsManager>().globalScheme
   val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
   val highlighter = readAction {
@@ -249,11 +260,12 @@ internal suspend fun setHighlighterToEditor(project: Project, file: VirtualFile,
 }
 
 @Service(Service.Level.PROJECT)
-private class AsyncEditorLoaderService(@JvmField val coroutineScope: CoroutineScope)
+private class AsyncEditorLoaderScopeHolder(@JvmField val coroutineScope: CoroutineScope)
 
 @Internal
-fun createTextEditorImpl(project: Project, file: VirtualFile): EditorImpl {
-  val document = FileDocumentManager.getInstance().getDocument(file, project)
-  val factory = EditorFactory.getInstance() as EditorFactoryImpl
-  return factory.createMainEditor(document!!, project, file, null)
+fun createEditorImpl(project: Project, file: VirtualFile, asyncLoader: AsyncEditorLoader): Pair<EditorImpl, AsyncEditorLoader> {
+  val document = FileDocumentManager.getInstance().getDocument(file, project)!!
+  return (EditorFactory.getInstance() as EditorFactoryImpl).createMainEditor(document, project, file, null, Consumer {
+    it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+  }) to asyncLoader
 }

@@ -1074,8 +1074,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   // EditorFactory.releaseEditor should be used to release editor
+  @RequiresEdt
   void release() {
-    assertIsDispatchThread();
     executeNonCancelableBlock(() -> {
       if (isReleased) {
         throwDisposalError("Double release of editor:");

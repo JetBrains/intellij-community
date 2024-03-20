@@ -1670,8 +1670,8 @@ open class FileEditorManagerImpl(
     for (composite in openedComposites) {
       for ((editor, provider) in composite.allEditorsWithProviders) {
         // wait only for our platform regular text editors
-        if (provider.editorTypeId == TEXT_EDITOR_PROVIDER_TYPE_ID && editor is TextEditorImpl) {
-          AsyncEditorLoader.waitForLoaded(editor)
+        if (provider.editorTypeId == TEXT_EDITOR_PROVIDER_TYPE_ID && editor is TextEditor) {
+          AsyncEditorLoader.waitForLoaded(editor.editor)
         }
       }
     }
@@ -2325,10 +2325,10 @@ open class FileEditorManagerImpl(
     }
     else {
       // use ContextAwareRunnable to avoid unnecessary thread context capturing
-      AsyncEditorLoader.performWhenLoaded(textEditor, ContextAwareRunnable {
+      AsyncEditorLoader.performWhenLoaded(editor = textEditor.editor, ContextAwareRunnable {
         val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-        StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
         coroutineScope.launch {
+          StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
           FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, durationMs, composite)
         }
       })
@@ -2381,8 +2381,8 @@ private class SelectionState(@JvmField val composite: EditorComposite, @JvmField
 @Internal
 suspend fun FileEditorComposite.waitForFullyLoaded() {
   for (editor in allEditors) {
-    if (editor is TextEditorImpl) {
-      AsyncEditorLoader.waitForLoaded(editor)
+    if (editor is TextEditor) {
+      AsyncEditorLoader.waitForLoaded(editor.editor)
     }
   }
 }

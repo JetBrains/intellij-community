@@ -3,10 +3,12 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createAsyncEditorLoader;
+import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createEditorImpl;
+
 public final class LargeFileEditorProvider extends TextEditorProvider {
+  static final Key<Boolean> IS_LARGE = Key.create("IS_LARGE");
+
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return isTextFile(file)
@@ -27,21 +34,24 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  public @NotNull FileEditor createEditor(@NotNull Project project, final @NotNull VirtualFile file) {
-    return file.getFileType().isBinary() ? new LargeBinaryFileEditor(file) : new LargeTextFileEditor(project, file, this);
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.getFileType().isBinary()) {
+      return new LargeBinaryFileEditor(file);
+    }
+    else {
+      AsyncEditorLoader asyncLoader = createAsyncEditorLoader(this, project, file);
+      EditorImpl editor = createEditorImpl(project, file, asyncLoader).getFirst();
+      editor.setViewer(true);
+
+      TextEditorImpl testEditor = new TextEditorImpl(project, file, new TextEditorComponent(file, editor), asyncLoader, true);
+      testEditor.putUserData(IS_LARGE, true);
+      return testEditor;
+    }
   }
 
   @Override
   public @NotNull String getEditorTypeId() {
     return "LargeFileEditor";
-  }
-
-  public static final class LargeTextFileEditor extends TextEditorImpl {
-    LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
-      super(project, file, provider, TextEditorImplKt.createTextEditorImpl(project, file));
-
-      getEditor().setViewer(true);
-    }
   }
 
   private static final class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {

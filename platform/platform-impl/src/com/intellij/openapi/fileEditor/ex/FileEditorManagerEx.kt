@@ -213,13 +213,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   abstract fun notifyPublisher(runnable: Runnable)
 
   override fun runWhenLoaded(editor: Editor, runnable: Runnable) {
-    val textEditor = editor.virtualFile?.let { virtualFile -> getAllEditorList(virtualFile).firstOrNull { it is TextEditor } as TextEditor? }
-    if (textEditor == null) {
-      runnable.run()
-    }
-    else {
-      performWhenLoaded(textEditor, runnable)
-    }
+    performWhenLoaded(editor, runnable)
   }
 
   open fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {}

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -123,7 +124,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
 
     Editor editor = supplier.getEditor();
-    AsyncEditorLoader.performWhenLoaded(editor, () -> {
+    AsyncEditorLoader.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
       VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
       LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
       for (ScrollRequestListener listener : scrollRequestListeners) {
@@ -163,7 +164,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   @RequiresEdt
   public void scrollTo(@NotNull LogicalPosition logicalPosition, @NotNull ScrollType scrollType) {
     Editor editor = supplier.getEditor();
-    AsyncEditorLoader.performWhenLoaded(editor, () -> {
+    AsyncEditorLoader.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
       for (ScrollRequestListener listener : scrollRequestListeners) {
         listener.scrollRequested(logicalPosition, scrollType);
       }

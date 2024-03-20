@@ -202,7 +202,7 @@ class EditorNotificationsImpl(private val project: Project,
   }
 
   private fun getEditors(file: VirtualFile): Sequence<FileEditor> {
-    return FileEditorManager.getInstance(project).getAllEditorList(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it) }
+    return FileEditorManager.getInstance(project).getAllEditorList(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it.editor) }
   }
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {

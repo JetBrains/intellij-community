@@ -111,7 +111,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
 
     val textEditorProvider = TextEditorProvider.getInstance()
     state.activeEditorStates.zip(viewer.getDiffViewerForId(state.activeBlockId)?.editors ?: listOf()) { st, editor ->
-      textEditorProvider.setStateImpl(project = null, editor = editor, textEditor = null, state = st, exactState = true)
+      textEditorProvider.setStateImpl(project = null, editor = editor, state = st, exactState = true)
     }
 
     viewer.selectDiffBlock(state.activeBlockId, true)

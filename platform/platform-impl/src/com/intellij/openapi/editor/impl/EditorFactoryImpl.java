@@ -33,7 +33,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public final class EditorFactoryImpl extends EditorFactory {
@@ -138,6 +139,7 @@ public final class EditorFactoryImpl extends EditorFactory {
   public void refreshAllEditors() {
     for (ClientEditorManager clientEditorManager : ClientEditorManager.getAllInstances()) {
       for (Editor editor : clientEditorManager.getEditors()) {
+        //noinspection deprecation
         if (AsyncEditorLoader.isEditorLoaded(editor)) {
           ((EditorEx)editor).reinitSettings();
         }
@@ -202,25 +204,36 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, @Nullable Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    return doCreateEditor(project, hostDocument, isViewer, kind, null, null);
+    return doCreateEditor(project, hostDocument, isViewer, kind, null, null, null);
   }
 
   @ApiStatus.Internal
-  public @NotNull EditorImpl createMainEditor(@NotNull Document document,
-                                              @NotNull Project project,
-                                              @NotNull VirtualFile file,
-                                              @Nullable EditorHighlighter highlighter) {
+  public @NotNull EditorImpl createMainEditor(
+    @NotNull Document document,
+    @NotNull Project project,
+    @NotNull VirtualFile file,
+    @Nullable EditorHighlighter highlighter,
+    @Nullable Consumer<EditorImpl> afterCreation
+    ) {
     assert !(document instanceof DocumentWindow);
-    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file, highlighter);
+    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file, highlighter, afterCreation);
   }
 
-  private @NotNull EditorImpl doCreateEditor(@Nullable Project project,
-                                             @NotNull Document document,
-                                             boolean isViewer,
-                                             @NotNull EditorKind kind,
-                                             @Nullable VirtualFile file,
-                                             @Nullable EditorHighlighter highlighter) {
+  private @NotNull EditorImpl doCreateEditor(
+    @Nullable Project project,
+    @NotNull Document document,
+    boolean isViewer,
+    @NotNull EditorKind kind,
+    @Nullable VirtualFile file,
+    @Nullable EditorHighlighter highlighter,
+    @Nullable Consumer<EditorImpl> afterCreation
+  ) {
     EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file, highlighter);
+    // must be _before_ event firing
+    if (afterCreation != null) {
+      afterCreation.accept(editor);
+    }
+
     ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
     editorManager.editorCreated(editor);
     editorEventMulticaster.registerEditor(editor);
@@ -236,8 +249,8 @@ public final class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
+  @RequiresEdt
   public void releaseEditor(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
     try {
       EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
       editorFactoryEventDispatcher.getMulticaster().editorReleased(event);
@@ -277,9 +290,10 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public Editor @NotNull [] getAllEditors() {
-    return collectAllEditors().toArray(Editor[]::new);
+    return collectAllEditors().toArray(value -> value == 0 ? Editor.EMPTY_ARRAY : new Editor[value]);
   }
 
+  @SuppressWarnings("removal")
   @Override
   @Deprecated
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
@@ -291,6 +305,7 @@ public final class EditorFactoryImpl extends EditorFactory {
     editorFactoryEventDispatcher.addListener(listener, parentDisposable);
   }
 
+  @SuppressWarnings("removal")
   @Override
   @Deprecated
   public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
@@ -302,6 +317,7 @@ public final class EditorFactoryImpl extends EditorFactory {
     return editorEventMulticaster;
   }
 
+  @SuppressWarnings("unused")
   private static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler delegate;
 

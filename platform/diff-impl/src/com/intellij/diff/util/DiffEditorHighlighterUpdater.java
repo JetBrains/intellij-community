@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-
 public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   @NotNull private final DocumentContent myContent;
 
@@ -27,7 +26,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
                                       @NotNull Disposable parentDisposable,
                                       @NotNull EditorEx editor,
                                       @NotNull DocumentContent content) {
-    super(project, parentDisposable, project.getMessageBus().connect(parentDisposable), editor, content.getHighlightFile());
+    super(project, parentDisposable, project.getMessageBus().connect(parentDisposable), editor, content.getHighlightFile(), null);
     myContent = content;
   }
 

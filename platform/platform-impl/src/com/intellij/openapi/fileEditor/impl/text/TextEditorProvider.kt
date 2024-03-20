@@ -88,7 +88,13 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   final override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return TextEditorImpl(project = project, file = file, provider = this, editor = createTextEditorImpl(project, file))
+    val asyncLoader = createAsyncEditorLoader(this, project, file)
+    val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
+    return TextEditorImpl(
+      project = project,
+      file = file,
+      componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
+    )
   }
 
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
@@ -178,7 +184,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   }
 
   @RequiresEdt
-  open fun setStateImpl(project: Project?, editor: Editor, textEditor: TextEditor?, state: TextEditorState, exactState: Boolean) {
+  open fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
     val carets = state.CARETS
     if (carets.isNotEmpty()) {
       val states = ArrayList<CaretState>(carets.size)
@@ -192,7 +198,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
 
     val relativeCaretPosition = state.relativeCaretPosition
-    if (textEditor == null || AsyncEditorLoader.isEditorLoaded(textEditor) || ApplicationManager.getApplication().isUnitTestMode) {
+    if (AsyncEditorLoader.isEditorLoaded(editor) || ApplicationManager.getApplication().isUnitTestMode) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         scrollToCaret(editor = editor, exactState = exactState, relativeCaretPosition = relativeCaretPosition)
       }
@@ -239,7 +245,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
 
     override fun setState(state: FileEditorState, exactState: Boolean) {
-      setStateImpl(project = null, editor = editor, textEditor = this, state = state as TextEditorState, exactState = exactState)
+      setStateImpl(project = null, editor = editor, state = state as TextEditorState, exactState = exactState)
     }
 
     override fun isModified(): Boolean = false
@@ -267,14 +273,15 @@ private fun getLine(position: LogicalPosition?): Int = position?.line ?: 0
 private fun getColumn(position: LogicalPosition?): Int = position?.column ?: 0
 
 internal fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPosition: Int) {
-  editor.scrollingModel.disableAnimation()
+  val scrollingModel = editor.scrollingModel
+  scrollingModel.disableAnimation()
   if (relativeCaretPosition != Int.MAX_VALUE) {
     EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition)
   }
   if (!exactState) {
-    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    scrollingModel.scrollToCaret(ScrollType.RELATIVE)
   }
-  editor.scrollingModel.enableAnimation()
+  scrollingModel.enableAnimation()
 }
 
 private fun readCaretInfo(element: Element): TextEditorState.CaretState {

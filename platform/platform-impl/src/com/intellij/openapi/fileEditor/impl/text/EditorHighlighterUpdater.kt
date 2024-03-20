@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.KeyedFactoryEPBean
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileTypes.*
 import com.intellij.openapi.fileTypes.impl.AbstractFileType
 import com.intellij.openapi.project.DumbService
@@ -36,6 +35,7 @@ open class EditorHighlighterUpdater(
   connection: SimpleMessageBusConnection,
   @JvmField protected val editor: EditorEx,
   private val file: VirtualFile?,
+  private val asyncLoader: AsyncEditorLoader?,
 ) {
   constructor(
     project: Project,
@@ -129,7 +129,7 @@ open class EditorHighlighterUpdater(
       return
     }
 
-    if (!isEditorLoaded(editor)) {
+    if (asyncLoader != null && !asyncLoader.isLoaded()) {
       return
     }
 
@@ -159,6 +159,10 @@ open class EditorHighlighterUpdater(
 
   private fun updateHighlightersSynchronously() {
     if (!project.isDisposed && !editor.isDisposed) {
+      if (asyncLoader != null && !asyncLoader.isLoaded()) {
+        return
+      }
+
       setupHighlighter(createHighlighter(false))
     }
   }

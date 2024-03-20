@@ -13,7 +13,6 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -27,31 +26,32 @@ private val LOG = logger<PsiAwareTextEditorImpl>()
 open class PsiAwareTextEditorImpl : TextEditorImpl {
   private var backgroundHighlighter: TextEditorBackgroundHighlighter? = null
 
-  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider)
-    : super(project = project, file = file, provider = provider, editor = createTextEditorImpl(project, file))
+  // for backward-compatibility only
+  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(
+    project = project,
+    file = file,
+    componentAndLoader = createPsiAwareTextEditorComponent(
+      file = file,
+      editorAndLoader = createEditorImpl(project, file, createAsyncEditorLoader(provider, project, file)),
+    ),
+  )
 
-  constructor(project: Project, file: VirtualFile, editor: EditorImpl, asyncLoader: AsyncEditorLoader) :
-    super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
+  internal constructor(project: Project, file: VirtualFile, component: TextEditorComponent, asyncLoader: AsyncEditorLoader) : super(
+    project = project,
+    file = file,
+    component = component,
+    asyncLoader = asyncLoader,
+    startLoading = false,
+  )
 
-  protected constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl)
-    : super(project = project, file = file, editor = editor, asyncLoader = createAsyncEditorLoader(provider, project))
-
-  override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    val component = PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
-    component.addComponentListener(object : ComponentAdapter() {
-      override fun componentShown(e: ComponentEvent?) {
-        editor.component.isVisible = true
-      }
-
-      override fun componentHidden(e: ComponentEvent?) {
-        editor.component.isVisible = false
-      }
-    })
-    return component
-  }
+  protected constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl) : super(
+    project = project,
+    file = file,
+    componentAndLoader = createPsiAwareTextEditorComponent(file, editor to createAsyncEditorLoader(provider, project, file)),
+  )
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? {
-    if (!isEditorLoaded(editor)) {
+    if (!asyncLoader.isLoaded()) {
       return null
     }
 
@@ -64,15 +64,29 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
   }
 }
 
-private class PsiAwareTextEditorComponent(
-  private val project: Project,
+internal fun createPsiAwareTextEditorComponent(
   file: VirtualFile,
-  textEditor: TextEditorImpl,
-  editor: EditorImpl,
-) : TextEditorComponent(project = project, file = file, textEditor = textEditor, editorImpl = editor) {
+  editorAndLoader: Pair<EditorImpl, AsyncEditorLoader>,
+): Pair<TextEditorComponent, AsyncEditorLoader> {
+  val editor = editorAndLoader.first
+  val component = PsiAwareTextEditorComponent(file = file, editor = editor)
+  component.addComponentListener(object : ComponentAdapter() {
+    override fun componentShown(e: ComponentEvent?) {
+      editor.component.isVisible = true
+    }
+
+    override fun componentHidden(e: ComponentEvent?) {
+      editor.component.isVisible = false
+    }
+  })
+  return component to editorAndLoader.second
+}
+
+private class PsiAwareTextEditorComponent(file: VirtualFile, editor: EditorImpl) : TextEditorComponent(file = file, editorImpl = editor) {
   override fun dispose() {
+    val project = editor.project
     super.dispose()
-    project.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
+    project?.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
   }
 
   override fun createBackgroundDataProvider(): DataProvider? {
@@ -80,7 +94,8 @@ private class PsiAwareTextEditorComponent(
     return CompositeDataProvider.compose(
       { dataId ->
         if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId)) {
-          (LookupManager.getInstance(project).activeLookup as LookupImpl?)?.takeIf { it.isVisible }?.bounds
+          val project = editor.project
+          project?.let { (LookupManager.getInstance(project).activeLookup as LookupImpl?)?.takeIf { it.isVisible }?.bounds }
         }
         else {
           null

@@ -702,7 +702,7 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
 
     TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
     for (int i = 0; i < Math.min(editorStates.size(), editors.size()); i++) {
-      textEditorProvider.setStateImpl(myProject, editors.get(i), null, editorStates.get(i), true);
+      textEditorProvider.setStateImpl(myProject, editors.get(i), editorStates.get(i), true);
     }
   }
 

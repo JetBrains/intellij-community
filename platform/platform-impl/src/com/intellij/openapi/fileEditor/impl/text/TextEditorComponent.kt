@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -32,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBSwingUtilities
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -43,10 +41,8 @@ private val LOG = logger<TextEditorComponent>()
 
 @Internal
 open class TextEditorComponent(
-  private val project: Project,
   val file: VirtualFile,
-  private val textEditor: TextEditorImpl,
-  private val editorImpl: EditorImpl,
+  @JvmField internal val editorImpl: EditorImpl,
 ) : JLayeredPane(), DataProvider, BackgroundableDataProvider {
   /**
    * Whether the editor's document is modified or not
@@ -74,7 +70,6 @@ open class TextEditorComponent(
     editor.setFile(file)
     editor.contextMenuGroupId = IdeActions.GROUP_EDITOR_POPUP
     editor.setDropHandler(FileDropHandler(editor))
-    TextEditorProvider.putTextEditor(editor, textEditor)
 
     super.add(editor.component, GridBagConstraints().also {
       it.gridx = 0
@@ -89,8 +84,8 @@ open class TextEditorComponent(
     LOG.assertTrue(isValid)
   }
 
-  internal fun listenChanges(parentDisposable: Disposable, coroutineScope: CoroutineScope) {
-    val messageBusConnection = project.messageBus.connect(coroutineScope)
+  internal fun listenChanges(parentDisposable: Disposable, asyncLoader: AsyncEditorLoader, textEditor: TextEditorImpl, project: Project) {
+    val messageBusConnection = project.messageBus.connect(asyncLoader.coroutineScope)
 
     val editorHighlighterUpdater = EditorHighlighterUpdater(
       project = project,
@@ -98,19 +93,20 @@ open class TextEditorComponent(
       connection = messageBusConnection,
       editor = editor,
       file = file,
+      asyncLoader = asyncLoader,
     )
 
-    val virtualFileListener = MyVirtualFileListener(editorHighlighterUpdater)
+    val virtualFileListener = MyVirtualFileListener(editorHighlighterUpdater, textEditor)
     val fileSystem = file.fileSystem
     fileSystem.addVirtualFileListener(virtualFileListener)
-    val documentListener = MyDocumentListener()
+    val documentListener = MyDocumentListener(textEditor)
     editor.document.addDocumentListener(documentListener)
-    coroutineScope.coroutineContext.job.invokeOnCompletion {
+    asyncLoader.coroutineScope.coroutineContext.job.invokeOnCompletion {
       fileSystem.removeVirtualFileListener(virtualFileListener)
       editor.document.removeDocumentListener(documentListener)
     }
 
-    messageBusConnection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
+    messageBusConnection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener(textEditor))
   }
 
   final override fun add(comp: Component): Component {
@@ -160,7 +156,7 @@ open class TextEditorComponent(
   /**
    * Updates "modified" property and fires event if necessary
    */
-  fun updateModifiedProperty() {
+  fun updateModifiedProperty(textEditor: TextEditorImpl) {
     val oldModified = isModified
     isModified = isModifiedImpl
     textEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, isModified)
@@ -181,30 +177,34 @@ open class TextEditorComponent(
      */
     get() = FileDocumentManager.getInstance().getDocument(file) != null
 
-  private fun updateValidProperty() {
+  private fun updateValidProperty(textEditor: TextEditorImpl) {
     val oldValid = isValid
     isValid = isEditorValidImpl
     textEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, isValid)
   }
 
   override fun createBackgroundDataProvider(): DataProvider? {
+    val project = editorImpl.project
     if (editorImpl.isDisposed) {
       return null
     }
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
-    val fileEditorManager = if (!project.isDisposed && !project.isDefault) FileEditorManager.getInstance(project) else null
+    val fileEditorManager = if (project != null && !project.isDisposed && !project.isDefault) FileEditorManager.getInstance(project) else null
     val currentCaret = editorImpl.caretModel.currentCaret
     return DataProvider { dataId ->
       if (fileEditorManager != null) {
         val o = fileEditorManager.getData(dataId, editorImpl, currentCaret)
-        if (o != null) return@DataProvider o
+        if (o != null) {
+          return@DataProvider o
+        }
       }
       if (CommonDataKeys.EDITOR.`is`(dataId)) {
         return@DataProvider editorImpl
       }
       if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) {
-        return@DataProvider if (file.isValid) file else null // fix for SCR 40329
+        // fix for SCR 40329
+        return@DataProvider if (file.isValid) file else null
       }
       null
     }
@@ -213,13 +213,13 @@ open class TextEditorComponent(
   /**
    * Updates "modified" property
    */
-  private inner class MyDocumentListener : DocumentListener {
+  private inner class MyDocumentListener(private val textEditor: TextEditorImpl) : DocumentListener {
     /**
      * We can reuse this runnable to decrease the number of allocated objects.
      */
     private val updateRunnable = Runnable {
       isUpdateScheduled = false
-      updateModifiedProperty()
+      updateModifiedProperty(textEditor)
     }
 
     private var isUpdateScheduled = false
@@ -233,23 +233,25 @@ open class TextEditorComponent(
     }
   }
 
-  private inner class MyFileTypeListener : FileTypeListener {
+  private inner class MyFileTypeListener(private val textEditor: TextEditorImpl) : FileTypeListener {
     override fun fileTypesChanged(event: FileTypeEvent) {
       // File can be invalid after file type changing. The editor should be removed by the FileEditorManager if it's invalid.
-      updateValidProperty()
+      updateValidProperty(textEditor)
     }
   }
 
   /**
    * Updates "valid" property and highlighters (if necessary)
    */
-  private inner class MyVirtualFileListener(private val editorHighlighterUpdater: EditorHighlighterUpdater) : VirtualFileListener {
+  private inner class MyVirtualFileListener(
+    private val editorHighlighterUpdater: EditorHighlighterUpdater,
+    private val textEditor: TextEditorImpl,
+  ) : VirtualFileListener {
     override fun propertyChanged(e: VirtualFilePropertyEvent) {
       if (e.propertyName == VirtualFile.PROP_NAME) {
         // File can be invalidated after file changes name (an extension also can change). The editor should be removed if it's invalid.
-        updateValidProperty()
-        if (e.file == file &&
-            (FileContentUtilCore.FORCE_RELOAD_REQUESTOR == e.requestor || !Comparing.equal<Any>(e.oldValue, e.newValue))) {
+        updateValidProperty(textEditor)
+        if (e.file == file && (FileContentUtilCore.FORCE_RELOAD_REQUESTOR == e.requestor || e.oldValue != e.newValue)) {
           editorHighlighterUpdater.updateHighlighters()
         }
       }
@@ -262,7 +264,7 @@ open class TextEditorComponent(
         val file = event.file
         LOG.assertTrue(file.isValid)
         if (file == this@TextEditorComponent.file) {
-          updateModifiedProperty()
+          updateModifiedProperty(textEditor)
         }
       }
     }
