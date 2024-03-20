@@ -27,12 +27,12 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
       return fallbackRenderer.calculateRenderingInfo(state)
     }
     val expandedPrompt = expandPrompt(escapedPrompt)
-    val expandedRightPrompt = state.originalRightPrompt?.let { expandPrompt(it) } ?: RenderingInfo("", emptyList())
+    val expandedRightPrompt = state.originalRightPrompt?.let { expandPrompt(it) } ?: TextWithHighlightings("", emptyList())
     return PromptRenderingInfo(expandedPrompt.text, expandedPrompt.highlightings,
                                expandedRightPrompt.text, expandedRightPrompt.highlightings)
   }
 
-  private fun expandPrompt(escapedPrompt: String): RenderingInfo {
+  private fun expandPrompt(escapedPrompt: String): TextWithHighlightings {
     val styleState = StyleState()
     val defaultStyle = TextStyle(TerminalColor { session.colorPalette.defaultForeground },
                                  TerminalColor { session.colorPalette.defaultBackground })
@@ -49,10 +49,8 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
 
     val output: StyledCommandOutput = ShellCommandOutputScraper.scrapeOutput(textBuffer)
     val highlightings = output.styleRanges.toHighlightings(output.text.length)
-    return RenderingInfo(output.text, highlightings)
+    return TextWithHighlightings(output.text, highlightings)
   }
-
-  private data class RenderingInfo(val text: String, val highlightings: List<HighlightingInfo>)
 
   private fun List<StyleRange>.toHighlightings(totalTextLength: Int): List<HighlightingInfo> {
     val highlightings = mutableListOf<HighlightingInfo>()

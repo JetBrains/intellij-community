@@ -21,6 +21,8 @@ data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAt
     get() = endOffset - startOffset
 }
 
+internal data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
+
 interface TextAttributesProvider {
   fun getTextAttributes(): TextAttributes
 }

@@ -201,13 +201,13 @@ class TerminalOutputController(
     return block
   }
 
-  private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): CommandOutput {
-    return CommandOutput(output.text, output.styleRanges.map {
+  private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): TextWithHighlightings {
+    return TextWithHighlightings(output.text, output.styleRanges.map {
       HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributesProvider())
     })
   }
 
-  private fun updateBlock(block: CommandBlock, output: CommandOutput) {
+  private fun updateBlock(block: CommandBlock, output: TextWithHighlightings) {
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
     val highlightings = if (block.withPrompt || block.withCommand) {
       output.highlightings.toMutableList().also { highlightings ->
@@ -292,8 +292,6 @@ class TerminalOutputController(
       nextBlockCanBeStartedQueue.offer(callback)
     }
   }
-
-  private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
 
   private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
 

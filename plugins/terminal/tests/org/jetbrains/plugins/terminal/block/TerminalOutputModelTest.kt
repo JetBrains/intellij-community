@@ -7,12 +7,13 @@ import com.intellij.testFramework.*
 import org.jetbrains.plugins.terminal.block.TerminalTextHighlighterTest.Companion.green
 import org.jetbrains.plugins.terminal.exp.HighlightingInfo
 import org.jetbrains.plugins.terminal.exp.NEW_TERMINAL_OUTPUT_CAPACITY_KB
+import org.jetbrains.plugins.terminal.exp.TextWithHighlightings
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 
 @RunsInEdt
-class TerminalOutputModelTest {
+internal class TerminalOutputModelTest {
 
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule: DisposableRule = DisposableRule()
@@ -23,27 +24,27 @@ class TerminalOutputModelTest {
 
   @Test
   fun `trim top block output when editor max capacity reached`() {
-    checkOutputTrimming(listOf(TestCommandOutput("foo".repeat(200), listOf(HighlightingInfo(1, 2, green()))),
-                               TestCommandOutput("bar".repeat(200), listOf(HighlightingInfo(1, 2, green())))))
+    checkOutputTrimming(listOf(TextWithHighlightings("foo".repeat(200), listOf(HighlightingInfo(1, 2, green()))),
+                               TextWithHighlightings("bar".repeat(200), listOf(HighlightingInfo(1, 2, green())))))
   }
 
   @Test
   fun `remove several top blocks when trimming output`() {
     val firstCharHighlighting = listOf(HighlightingInfo(0, 1, green()))
     val outputs = (0..1000).map {
-      TestCommandOutput(it.toString(), firstCharHighlighting)
+      TextWithHighlightings(it.toString(), firstCharHighlighting)
     } + (0..100).map {
-      TestCommandOutput(it.toString().repeat(100), firstCharHighlighting)
-    } + TestCommandOutput("a".repeat(2000), firstCharHighlighting)
+      TextWithHighlightings(it.toString().repeat(100), firstCharHighlighting)
+    } + TextWithHighlightings("a".repeat(2000), firstCharHighlighting)
 
     checkOutputTrimming(outputs, 1)
   }
 
-  private fun checkOutputTrimming(outputs: List<TestCommandOutput>, outputCapacityKB: Int = 1) {
+  private fun checkOutputTrimming(outputs: List<TextWithHighlightings>, outputCapacityKB: Int = 1) {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
     setNewTerminalOutputCapacityKB(outputCapacityKB)
     Assert.assertEquals("", outputManager.document.text)
-    val addedOutputs = mutableListOf<TestCommandOutput>()
+    val addedOutputs = mutableListOf<TextWithHighlightings>()
     for (output in outputs) {
       outputManager.createBlock(null, output)
       addedOutputs.add(output)

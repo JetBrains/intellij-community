@@ -7,13 +7,14 @@ import org.jetbrains.plugins.terminal.exp.HighlightingInfo
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.plainAttributesProvider
 import org.jetbrains.plugins.terminal.exp.TextAttributesProvider
+import org.jetbrains.plugins.terminal.exp.TextWithHighlightings
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 
 @RunsInEdt
-class TerminalTextHighlighterTest {
+internal class TerminalTextHighlighterTest {
 
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule: DisposableRule = DisposableRule()
@@ -25,7 +26,7 @@ class TerminalTextHighlighterTest {
   @Test
   fun `editor highlighter finds proper initial range`() {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
-    outputManager.createBlock("echo foo", TestCommandOutput("foo bar baz",
+    outputManager.createBlock("echo foo", TextWithHighlightings("foo bar baz",
                                                             listOf(HighlightingInfo(1, 2, green()),
                                                                    HighlightingInfo(5, 6, yellow()))))
     checkHighlighter(outputManager, listOf(TextRange(0, 1),

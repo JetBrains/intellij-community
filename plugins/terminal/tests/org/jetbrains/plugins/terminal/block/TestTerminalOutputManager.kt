@@ -13,7 +13,7 @@ import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.exp.*
 import org.junit.Assert
 
-class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
+internal class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
   private val editor: EditorEx = createEditor(project, parentDisposable)
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
 
@@ -27,7 +27,7 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
   val document: DocumentEx
     get() = editor.document
 
-  fun createBlock(command: String?, output: TestCommandOutput): Pair<CommandBlock, TestCommandOutput> {
+  fun createBlock(command: String?, output: TextWithHighlightings): Pair<CommandBlock, TextWithHighlightings> {
     val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
     val updatedHighlightings = output.highlightings.map {
@@ -38,7 +38,7 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
     editor.document.replaceString(block.startOffset, block.endOffset, output.text)
     outputModel.trimOutput()
     outputModel.finalizeBlock(block)
-    return block to TestCommandOutput(output.text, updatedHighlightings)
+    return block to TextWithHighlightings(output.text, updatedHighlightings)
   }
 
   companion object {
@@ -53,5 +53,3 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
     }
   }
 }
-
-data class TestCommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
