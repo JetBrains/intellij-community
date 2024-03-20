@@ -167,7 +167,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtExpression.replaceWithQualified(fqName: FqName, selectorExpression: KtExpression): KtExpression {
         val parentFqName = fqName.parent()
-        if (parentFqName.isRoot) return selectorExpression
+        if (parentFqName.isRoot) return replaced(selectorExpression)
         val packageName = fqName.parent().asString()
         val newQualifiedExpression = KtPsiFactory(project).createExpression("$packageName.${selectorExpression.text}")
         return replaced(newQualifiedExpression)

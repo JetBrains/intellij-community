@@ -125,6 +125,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
                 runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImport.kt");
             }
 
+            @TestMetadata("ChangeImportQualified.kt")
+            public void testChangeImportQualified() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImportQualified.kt");
+            }
+
             @TestMetadata("FullyQualified.kt")
             public void testFullyQualified() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/FullyQualified.kt");

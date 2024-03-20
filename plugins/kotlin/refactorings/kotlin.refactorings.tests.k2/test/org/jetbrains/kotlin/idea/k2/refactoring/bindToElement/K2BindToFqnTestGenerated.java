@@ -123,6 +123,11 @@ public abstract class K2BindToFqnTestGenerated extends AbstractK2BindToFqnTest {
             runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImport.kt");
         }
 
+        @TestMetadata("ChangeImportQualified.kt")
+        public void testChangeImportQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImportQualified.kt");
+        }
+
         @TestMetadata("FullyQualified.kt")
         public void testFullyQualified() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/FullyQualified.kt");
