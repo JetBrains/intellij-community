@@ -28,14 +28,14 @@ import kotlin.time.toDuration
 
 private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
-internal class MvStoreManager {
+internal class MvStoreManager(readOnly: Boolean = false) {
   // yes - save is ignored first 5 minutes
   private var lastSaved: Duration = nowAsDuration()
 
   // compact only once per-app launch
   private var isCompacted = AtomicBoolean(false)
 
-  private val store: MVStore = createOrResetMvStore(getDatabaseFile()) { logger<MvMapManager>() }
+  private val store: MVStore = createOrResetMvStore(getDatabaseFile(), readOnly) { logger<MvMapManager>() }
 
   fun openMap(name: String): MvMapManager = MvMapManager(openMap(store, name))
 

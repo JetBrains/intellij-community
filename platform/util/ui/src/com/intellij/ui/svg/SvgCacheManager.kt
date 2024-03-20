@@ -122,7 +122,7 @@ class SvgCacheManager private constructor(
         return withTimeout(30.seconds) {
           withContext(Dispatchers.IO) {
             val logSupplier = ::thisLogger
-            val store = createOrResetMvStore(cacheFile, logSupplier)
+            val store = createOrResetMvStore(cacheFile, readOnly = false, logSupplier)
             SvgCacheManager(
               prebuiltMap = openSvgCache(store, "prebuilt-icon-cache", logSupplier),
               map = openSvgCache(store, "icon-cache", logSupplier),

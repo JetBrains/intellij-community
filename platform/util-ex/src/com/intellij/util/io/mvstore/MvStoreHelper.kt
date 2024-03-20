@@ -42,7 +42,13 @@ fun <K, V> openOrResetMap(
 }
 
 @Internal
-fun createOrResetMvStore(file: Path, logSupplier: () -> Logger): MVStore {
+fun createOrResetMvStore(file: Path?, readOnly: Boolean = false, logSupplier: () -> Logger): MVStore {
+  // If read-only and DB does not yet exist, create an in-memory DB
+  if (file == null || (readOnly && Files.notExists(file))) {
+    // in-memory
+    return tryOpenMvStore(file = null, readOnly = readOnly, logSupplier = logSupplier)
+  }
+
   val markerFile = getInvalidateMarkerFile(file)
   if (Files.exists(markerFile)) {
     Files.deleteIfExists(file)
@@ -51,27 +57,30 @@ fun createOrResetMvStore(file: Path, logSupplier: () -> Logger): MVStore {
 
   file.parent?.let { Files.createDirectories(it) }
   try {
-    return tryOpenMvStore(file, logSupplier)
+    return tryOpenMvStore(file, readOnly, logSupplier)
   }
   catch (e: Throwable) {
     logSupplier().warn("Cannot open cache state storage, will be recreated", e)
   }
 
   Files.deleteIfExists(file)
-  return tryOpenMvStore(file, logSupplier)
+  return tryOpenMvStore(file, readOnly, logSupplier)
 }
 
 private fun getInvalidateMarkerFile(file: Path): Path = file.resolveSibling("${file.fileName}.invalidated")
 
-private fun tryOpenMvStore(file: Path, logSupplier: () -> Logger): MVStore {
+private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Logger): MVStore {
   val storeErrorHandler = StoreErrorHandler(file, logSupplier)
   val store = MVStore.Builder()
-    .fileName(file.toAbsolutePath().toString())
+    .fileName(file?.toAbsolutePath()?.toString())
     .backgroundExceptionHandler(storeErrorHandler)
     // avoid extra thread - db maintainer should use coroutines
     .autoCommitDisabled()
     // default cache size is 16MB
     .cacheSize(8)
+    .let {
+      if (readOnly) it.readOnly() else it
+    }
     .open()
   storeErrorHandler.isStoreOpened = true
   // versioning isn't required, otherwise the file size will be larger than needed
@@ -79,7 +88,7 @@ private fun tryOpenMvStore(file: Path, logSupplier: () -> Logger): MVStore {
   return store
 }
 
-private class StoreErrorHandler(private val dbFile: Path, private val logSupplier: () -> Logger) : Thread.UncaughtExceptionHandler {
+private class StoreErrorHandler(private val dbFile: Path?, private val logSupplier: () -> Logger) : Thread.UncaughtExceptionHandler {
   @JvmField
   var isStoreOpened: Boolean = false
 

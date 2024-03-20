@@ -61,8 +61,6 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void releaseWriteIntentLock() {}
 
-  boolean isSaveAllowed();
-
   void setSaveAllowed(boolean value);
 
   default void exit(int flags) {
