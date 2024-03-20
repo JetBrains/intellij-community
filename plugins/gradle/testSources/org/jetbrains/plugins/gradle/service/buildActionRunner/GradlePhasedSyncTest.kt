@@ -196,4 +196,82 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       }
     }
   }
+
+  @Test
+  fun `test multi-phased Gradle sync cancellation during project loaded action`() {
+    `test multi-phased Gradle sync cancellation`(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
+  }
+
+  @Test
+  fun `test multi-phased Gradle sync cancellation during build finished action`() {
+    `test multi-phased Gradle sync cancellation`(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+  }
+
+  private fun `test multi-phased Gradle sync cancellation`(cancellationPhase: GradleModelFetchPhase) {
+    Disposer.newDisposable().use { disposable ->
+      val isProjectLoaded = AtomicBoolean(false)
+      val isBuildCompleted = AtomicBoolean(false)
+      val isSyncCancelled = AtomicBoolean(false)
+
+      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+
+      val allPhases = GradleModelFetchPhase.entries
+      val phasedModelProviders = allPhases.map { TestPhasedModelProvider(it) }
+
+      addProjectModelProviders(disposable, phasedModelProviders)
+      whenPhaseCompleted(disposable) { _, phase ->
+        if (phase == cancellationPhase) {
+          throw ProcessCanceledException()
+        }
+        completedPhases.add(phase)
+      }
+      whenProjectLoaded(disposable) {
+        isProjectLoaded.set(true)
+      }
+      whenBuildCompleted(disposable) {
+        isBuildCompleted.set(true)
+      }
+
+      createSettingsFile("")
+      importProject(errorHandler = { _, _ ->
+        isSyncCancelled.set(true)
+      })
+
+      Assertions.assertTrue(isSyncCancelled.get()) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+      Assertions.assertFalse(isBuildCompleted.get()) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Therefore the project build action shouldn't be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+      if (cancellationPhase <= GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        Assertions.assertFalse(isProjectLoaded.get()) {
+          "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+          "Therefore the project loaded actions shouldn't be completed.\n" +
+          "Requested phases = $allPhases\n" +
+          "Completed phases = $completedPhases"
+        }
+      }
+      else {
+        Assertions.assertTrue(isProjectLoaded.get()) {
+          "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+          "Therefore the project loaded action should be completed.\n" +
+          "Requested phases = $allPhases\n" +
+          "Completed phases = $completedPhases"
+        }
+      }
+      for (completedPhase in completedPhases) {
+        Assertions.assertTrue(completedPhase < cancellationPhase) {
+          "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+          "Therefore the $completedPhase shouldn't be executed.\n" +
+          "Requested phases = $allPhases\n" +
+          "Completed phases = $completedPhases"
+        }
+      }
+    }
+  }
 }
