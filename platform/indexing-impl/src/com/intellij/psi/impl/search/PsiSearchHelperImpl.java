@@ -323,7 +323,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         ProgressManager.checkCanceled();
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
         int currentFilesCount = filesCount.incrementAndGet();
-        long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(file.isDirectory() ? 0 : file.getLength());
+
+        VirtualFile frontFile = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
+        file = frontFile != null ? frontFile : file;
+
+        assert file != null;
+        long fileLength = file.isDirectory() ? 0 : file.getLength();
+        //Backed files can have different front file and back file size.
+        // For instance, notebook can be 1mb but there jsut 2 short lines inside where we will search.
+        Float ratio = file.getCopyableUserData(BackFileViewProvider.FRONT_FILE_SIZE_RATIO_KEY);
+        long estimatedLength = ratio != null ? Math.round(fileLength * ratio) : fileLength;
+
+        long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(estimatedLength);
         return currentFilesCount < maxFilesToProcess && accumulatedFileSizeToProcess < maxFilesSizeToProcess;
       }
     };
