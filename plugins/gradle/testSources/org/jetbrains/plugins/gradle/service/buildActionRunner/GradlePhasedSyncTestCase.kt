@@ -15,13 +15,36 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtensi
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
 
+  private lateinit var syncErrorHandler: AtomicReference<(String, String?) -> Unit>
+  private val defaultSyncErrorHandler = { errorMessage: String, errorDetails: String? ->
+    super.handleImportFailure(errorMessage, errorDetails)
+  }
+
   override fun setUp() {
     super.setUp()
+
     myProject.registerServiceInstance(TestProjectResolverExtensionService::class.java, TestProjectResolverExtensionService())
     GradleProjectResolverExtension.EP_NAME.point.registerExtension(TestProjectResolverExtension(), testRootDisposable)
+
+    syncErrorHandler = AtomicReference(defaultSyncErrorHandler)
+  }
+
+  fun importProject(errorHandler: (String, String?) -> Unit) {
+    syncErrorHandler.set(errorHandler)
+    try {
+      importProject()
+    }
+    finally {
+      syncErrorHandler.set(defaultSyncErrorHandler)
+    }
+  }
+
+  override fun handleImportFailure(errorMessage: String, errorDetails: String?) {
+    syncErrorHandler.get()(errorMessage, errorDetails)
   }
 
   fun addToolingExtensionClasses(parentDisposable: Disposable, vararg toolingExtensionClasses: Class<*>) {

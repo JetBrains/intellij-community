@@ -65,18 +65,17 @@ class GradleBuildActionResultHandler(
 
   fun createProjectLoadedHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
-      try {
+      runCancellable {
         onProjectLoaded(state)
-      }
-      catch (e: ProcessCanceledException) {
-        resolverCtx.cancel()
       }
     }
   }
 
   fun createBuildFinishedHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
-      onBuildCompleted(state)
+      runCancellable {
+        onBuildCompleted(state)
+      }
     }
   }
 
@@ -91,7 +90,9 @@ class GradleBuildActionResultHandler(
       override fun onComplete(result: Any?) {
         try {
           if (result is GradleModelHolderState) {
-            onBuildCompleted(result)
+            runCancellable {
+              onBuildCompleted(result)
+            }
           }
         }
         finally {
@@ -101,12 +102,25 @@ class GradleBuildActionResultHandler(
 
       override fun onFailure(failure: GradleConnectionException) {
         try {
-          onBuildFailed(failure)
+          runCancellable {
+            onBuildFailed(failure)
+          }
         }
         finally {
           buildFinishWaiter.countDown()
         }
       }
+    }
+  }
+
+  private fun runCancellable(action: () -> Unit) {
+    try {
+      if (!resolverCtx.isCancellationRequested) {
+        action()
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      resolverCtx.cancel()
     }
   }
 }

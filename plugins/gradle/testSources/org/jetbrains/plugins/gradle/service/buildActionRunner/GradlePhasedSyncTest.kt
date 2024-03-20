@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import org.jetbrains.plugins.gradle.importing.BuildFinishedModel
@@ -9,6 +10,8 @@ import org.jetbrains.plugins.gradle.importing.ProjectLoadedModel
 import org.jetbrains.plugins.gradle.importing.ProjectLoadedModelProvider
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder
 import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import java.util.concurrent.atomic.AtomicBoolean
 
 class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
@@ -69,6 +72,54 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       projectLoadingAssertion.assertListenerState(1) { "Project loaded phase should be finished only once" }
       buildCompletionAssertion.assertListenerState(1) { "Build action should be finished only once" }
+    }
+  }
+
+  @Test
+  fun `test one-phased Gradle sync cancellation`() {
+    Disposer.newDisposable().use { disposable ->
+      val isSyncCancelled = AtomicBoolean(false)
+
+      whenBuildCompleted(disposable) {
+        throw ProcessCanceledException()
+      }
+
+      createSettingsFile("")
+      importProject(errorHandler = { _, _ ->
+        isSyncCancelled.set(true)
+      })
+
+      Assertions.assertTrue(isSyncCancelled.get()) {
+        "Gradle sync should be cancelled."
+      }
+    }
+  }
+
+  @Test
+  fun `test two-phased Gradle sync cancellation`() {
+    Disposer.newDisposable().use { disposable ->
+      val isBuildFinished = AtomicBoolean(false)
+      val isSyncCancelled = AtomicBoolean(false)
+
+      whenProjectLoaded(disposable) {
+        throw ProcessCanceledException()
+      }
+      whenBuildCompleted(disposable) {
+        isBuildFinished.set(true)
+      }
+
+      createSettingsFile("")
+      importProject(errorHandler = { _, _ ->
+        isSyncCancelled.set(true)
+      })
+
+      Assertions.assertTrue(isSyncCancelled.get()) {
+        "Gradle sync should be cancelled during the project loaded action."
+      }
+      Assertions.assertFalse(isBuildFinished.get()) {
+        "Gradle sync should be cancelled during the project loaded action.\n" +
+        "Therefore the project build action shouldn't be completed."
+      }
     }
   }
 }
