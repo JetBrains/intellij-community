@@ -95,6 +95,11 @@ public class TwosideContentPanel extends JPanel {
 
   @NotNull
   public static TwosideContentPanel createFromHolders(@NotNull List<? extends EditorHolder> holders) {
-    return new TwosideContentPanel(ContainerUtil.map(holders, holder -> holder.getComponent()));
+    TwosideContentPanel panel = new TwosideContentPanel(ContainerUtil.map(holders, holder -> holder.getComponent()));
+
+    EditorHolder holder = Side.RIGHT.select(holders);
+    panel.mySplitter.redispatchWheelEventsTo(holder);
+
+    return panel;
   }
 }

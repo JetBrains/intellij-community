@@ -1,22 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.tools.holders.EditorHolder;
+import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.MouseEventAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -112,5 +119,22 @@ public class DiffSplitter extends JBSplitter {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setCursor(Cursor.getDefaultCursor());
     return toolbar.getComponent();
+  }
+
+  public void redispatchWheelEventsTo(@Nullable EditorHolder holder) {
+    redispatchWheelEventsToDivider(myDivider, holder);
+  }
+
+  static void redispatchWheelEventsToDivider(@NotNull JPanel divider, @Nullable EditorHolder holder) {
+    if (holder instanceof TextEditorHolder textEditorHolder) {
+      divider.addMouseWheelListener(new MouseWheelListener() {
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+          EditorEx editor = textEditorHolder.getEditor();
+          JScrollPane scrollPane = ComponentUtil.getParentOfType(JScrollPane.class, editor.getContentComponent());
+          MouseEventAdapter.redispatch(e, scrollPane);
+        }
+      });
+    }
   }
 }
