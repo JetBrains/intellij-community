@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis")
+@file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.openapi.fileEditor.impl
@@ -1599,12 +1599,13 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  final override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray()
-                                                                        ?: FileEditor.EMPTY_ARRAY
+  final override fun getEditors(file: VirtualFile): Array<FileEditor> {
+    return getComposite(file)?.allEditors?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+  }
 
   final override fun getEditorList(file: VirtualFile): List<FileEditor> = getComposite(file)?.allEditors ?: emptyList()
 
-  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+  override fun getAllEditorList(file: VirtualFile): MutableList<FileEditor> {
     val result = ArrayList<FileEditor>()
     // reuse getAllComposites(file)? Are there cases some composites are not accessible via splitters?
     for (composite in openedComposites) {
@@ -1615,7 +1616,13 @@ open class FileEditorManagerImpl(
     for (clientManager in allClientFileEditorManagers) {
       result.addAll(clientManager.getEditors(file))
     }
-    return result.toTypedArray()
+    return if (result.isEmpty()) java.util.List.of() else result
+  }
+
+  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+    val list = getAllEditorList(file)
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+    return if (list.isEmpty()) FileEditor.EMPTY_ARRAY else (list as java.util.Collection<FileEditor>).toArray(FileEditor.EMPTY_ARRAY)
   }
 
   @RequiresEdt

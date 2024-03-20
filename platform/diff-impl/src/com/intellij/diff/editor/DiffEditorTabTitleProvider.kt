@@ -37,8 +37,8 @@ private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
       return null
     }
     val supplier = {
-      val editors = FileEditorManager.getInstance(project).getEditors(file)
-      file.getEditorTabName(project, editors.asList())
+      val editors = FileEditorManager.getInstance(project).getEditorList(file)
+      file.getEditorTabName(project, editors)
     }
     if (EDT.isCurrentThreadEdt()) {
       return supplier()

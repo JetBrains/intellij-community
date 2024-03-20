@@ -59,14 +59,12 @@ class AsyncEditorLoader internal constructor(
     fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
 
     private fun findTextEditor(editor: Editor): TextEditor? {
-      val project = editor.project
-      val virtualFile = editor.virtualFile
-      if (project == null || virtualFile == null) {
-        return null
-      }
-      return FileEditorManager.getInstance(project).getAllEditors(virtualFile).find { f -> f is TextEditor } as TextEditor?
+      val project = editor.project ?: return null
+      val virtualFile = editor.virtualFile ?: return null
+      return FileEditorManager.getInstance(project).getAllEditorList(virtualFile).find { f -> f is TextEditor } as TextEditor?
     }
 
+    @Deprecated("Use performWhenLoaded(TextEditor, Runnable)", ReplaceWith("isEditorLoaded(textEditor, Runnable)"))
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {

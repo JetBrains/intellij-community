@@ -87,7 +87,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
@@ -212,11 +211,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     assertMyFile(file.getProject(), file);
     assertMyFile(project, file);
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
-    return Arrays.stream(getFileEditorManager().getAllEditors(vFile))
-      .map(fileEditor -> fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS))
-      .filter(Objects::nonNull)
-      .flatMap(Collection::stream)
-      .collect(Collectors.toList());
+    List<HighlightInfo> list = new ArrayList<>();
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
+      List<HighlightInfo> data = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+      if (data != null) {
+        list.addAll(data);
+      }
+    }
+    return list;
   }
 
   private void assertMyFile(@NotNull Project project, @NotNull PsiFile file) {
@@ -233,7 +235,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ThreadingAssertions.assertEventDispatchThread();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : getFileEditorManager().getAllEditors(vFile)) {
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
       cleanFileLevelHighlights(fileEditor, group);
     }
   }
@@ -242,7 +244,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ApplicationManager.getApplication().assertReadAccessAllowed();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : getFileEditorManager().getAllEditors(vFile)) {
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
       List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
       if (infos != null && !infos.isEmpty()) {
         for (HighlightInfo info : infos) {
@@ -296,7 +298,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ThreadingAssertions.assertEventDispatchThread();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : getFileEditorManager().getAllEditors(vFile)) {
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
       List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
       if (infos != null) {
         infos.remove(info);
@@ -319,7 +321,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     FileEditorManager fileEditorManager = getFileEditorManager();
-    for (FileEditor fileEditor : fileEditorManager.getAllEditors(vFile)) {
+    for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
         info.findRegisteredQuickFix((descriptor, range) -> {
@@ -728,11 +730,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   public @NotNull List<ProgressableTextEditorHighlightingPass> getPassesToShowProgressFor(@NotNull Document document) {
     List<HighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
-    return allPasses.stream()
-      .map(p->p instanceof ProgressableTextEditorHighlightingPass pPass ? pPass : null)
-      .filter(p-> p != null && p.getDocument() == document)
-      .sorted(Comparator.comparingInt(p->p.getId()))
-      .collect(Collectors.toList());
+    List<ProgressableTextEditorHighlightingPass> list = new ArrayList<>(allPasses.size());
+    for (HighlightingPass allPass : allPasses) {
+      ProgressableTextEditorHighlightingPass pass = allPass instanceof ProgressableTextEditorHighlightingPass pPass ? pPass : null;
+      if (pass != null && pass.getDocument() == document) {
+        list.add(pass);
+      }
+    }
+    list.sort(Comparator.comparingInt(p -> p.getId()));
+    return list;
   }
 
   /**

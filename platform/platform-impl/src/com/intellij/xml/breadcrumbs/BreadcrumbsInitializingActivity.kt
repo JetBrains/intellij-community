@@ -57,7 +57,7 @@ private class BreadcrumbsInitializingActivity : ProjectActivity {
     val fileEditorManager = project.serviceAsync<FileEditorManager>()
     val above = isAbove()
     for (virtualFile in fileEditorManager.openFiles) {
-      for (fileEditor in fileEditorManager.getAllEditors(virtualFile)) {
+      for (fileEditor in fileEditorManager.getAllEditorList(virtualFile)) {
         if (fileEditor is TextEditor) {
           withContext(Dispatchers.EDT) {
             blockingContext {
@@ -107,7 +107,7 @@ private class MyVirtualFileListener(private val myProject: Project) : VirtualFil
 private fun isAbove() = ClientId.withClientId(ClientId.localId) { EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove }
 
 private fun reinitBreadcrumbsComponent(fileEditorManager: FileEditorManager, file: VirtualFile, above: Boolean, allClients: Boolean) {
-  val editors = if (allClients) fileEditorManager.getAllEditors(file) else fileEditorManager.getEditors(file)
+  val editors = if (allClients) fileEditorManager.getAllEditorList(file) else fileEditorManager.getEditorList(file)
   for (fileEditor in editors) {
     if (fileEditor is TextEditor) {
       reinitBreadcrumbComponent(fileEditor = fileEditor, fileEditorManager = fileEditorManager, file = file, above = above)
