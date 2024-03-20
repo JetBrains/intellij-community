@@ -78,7 +78,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
-class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
+open class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
@@ -793,11 +793,11 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  private fun executeConfiguration(environment: ExecutionEnvironment,
-                                   runner: @NotNull ProgramRunner<*>,
-                                   assignNewId: Boolean,
-                                   project: @NotNull Project,
-                                   runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
+  protected open fun executeConfiguration(environment: ExecutionEnvironment,
+                                          runner: @NotNull ProgramRunner<*>,
+                                          assignNewId: Boolean,
+                                          project: @NotNull Project,
+                                          runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
     try {
       var effectiveEnvironment = environment
       if (runner != effectiveEnvironment.runner) {
