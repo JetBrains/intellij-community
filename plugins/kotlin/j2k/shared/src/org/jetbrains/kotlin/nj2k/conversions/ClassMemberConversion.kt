@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.nj2k.tree.Mutability.MUTABLE
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.arrayInnerType
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -53,7 +54,8 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
             }
         }
 
-        psi<PsiMethod>()?.let { psiMethod ->
+        if (isExternallyAccessible()) {
+            val psiMethod = psi<PsiMethod>() ?: return
             context.externalCodeProcessor.addMember(JKPhysicalMethodData(psiMethod))
         }
     }
@@ -83,8 +85,24 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
         removeStaticModifierFromAnonymousClassMember()
         mutability = if (modality == FINAL) IMMUTABLE else MUTABLE
         modality = FINAL
-        psi<PsiField>()?.let { psiField ->
+
+        if (isExternallyAccessible()) {
+            val psiField = psi<PsiField>() ?: return
             context.externalCodeProcessor.addMember(JKFieldDataFromJava(psiField))
         }
+    }
+
+    private fun JKDeclaration.isExternallyAccessible(): Boolean {
+        require(this is JKVisibilityOwner)
+        val container = parentOfType<JKClass>() ?: return false
+        if (container.visibility == PRIVATE) return false
+        if (container.isLocalClass()) return false
+        if (this is JKMethod && visibility == PRIVATE) {
+            // This condition does not apply to private fields, that may be later merged
+            // with public accessors, and so become public Kotlin properties
+            return false
+        }
+
+        return true
     }
 }
