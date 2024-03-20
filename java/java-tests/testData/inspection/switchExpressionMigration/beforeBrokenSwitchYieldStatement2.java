@@ -1,7 +1,7 @@
 // "Replace with 'switch' expression" "false"
 import java.util.*;
 
-class NestedPatterns {
+class NestedReturn {
   public static List<Class<?>> parse(String value) {
     switc<caret>h (value) {
       case "string":
