@@ -78,8 +78,19 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     Iterable<JvmField> addedNonPrivateFields = filter(diff.fields().added(), f -> !f.isPrivate());
     Iterable<JvmField> exposedFields = filter(map(diff.fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
 
+    boolean hierarchyChanged = diff.superClassChanged() || !diff.interfaces().unchanged();
+    if (hierarchyChanged) {
+      boolean extendsChanged = diff.superClassChanged() && !diff.extendsAdded();
+      if (extendsChanged || !isEmpty(diff.interfaces().removed())) {
+        debug("Affecting class lookups due to changes in class hierarchy");
+        for (JvmClass sub : flat(map(future.withAllSubclasses(change.getNow().getReferenceID()), id -> future.getNodes(id, JvmClass.class)))) {
+          affectClassLookupUsages(context, sub);
+        }
+      }
+    }
+    
     if (isKotlinNode(changedClass)) {
-      if (diff.superClassChanged() || !diff.interfaces().unchanged()) {
+      if (hierarchyChanged) {
         Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
           map(filter(present.allDirectSupertypes(change.getPast()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID),
           map(filter(future.allDirectSupertypes(change.getNow()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID)

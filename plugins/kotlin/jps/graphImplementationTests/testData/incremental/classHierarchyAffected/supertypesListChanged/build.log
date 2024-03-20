@@ -40,6 +40,7 @@ Cleaning output files:
   out/production/module/foo/AChild.class
   out/production/module/foo/AGrandChild.class
   out/production/module/foo/ATypeParameter.class
+  out/production/module/foo/ClassLiteralKt.class
   out/production/module/foo/FunctionParameterKt.class
   out/production/module/foo/GetAKt.class
   out/production/module/foo/ReturnTypeImplicitKt.class
@@ -49,6 +50,7 @@ Compiling files:
   src/AChild.kt
   src/AGrandChild.kt
   src/ATypeParameter.kt
+  src/classLiteral.kt
   src/functionParameter.kt
   src/getA.kt
   src/importStar.kt

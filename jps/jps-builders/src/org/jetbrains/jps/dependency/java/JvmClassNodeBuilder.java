@@ -733,8 +733,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       @Override
       public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
-        processSignature(signature);
         if (!"this".equals(n)) {
+          processSignature(signature);
           Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
         }
         super.visitLocalVariable(n, desc, signature, start, end, index);
