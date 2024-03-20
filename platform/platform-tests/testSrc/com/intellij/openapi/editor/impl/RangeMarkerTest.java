@@ -32,6 +32,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1446,17 +1447,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private void gcDocument() {
+    EDT.assertIsEdt();
     FileDocumentManager.getInstance().saveAllDocuments();
     assertNotNull(document);
     Reference<Document> ref = new WeakReference<>(document);
     psiFile = null;
     fileNode = null;
     document = null;
-    TestTimeOut t = TestTimeOut.setTimeout(60, TimeUnit.SECONDS);
-    while (ref.get() != null && !t.isTimedOut()) {
-      GCUtil.tryGcSoftlyReachableObjects();
+    TestTimeOut t = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    GCUtil.tryGcSoftlyReachableObjects(() -> {
       UIUtil.dispatchAllInvocationEvents();
-    }
+      return ref.get() == null || t.isTimedOut();
+    });
     Document d = ref.get();
     if (t.isTimedOut() && d != null) {
       int hashCode = System.identityHashCode(d);
