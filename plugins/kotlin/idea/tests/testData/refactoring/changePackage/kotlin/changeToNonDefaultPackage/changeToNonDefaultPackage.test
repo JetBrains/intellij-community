@@ -1,7 +1,7 @@
 {
   "mainFile": "source/test.kt",
   "type": "CHANGE_PACKAGE_DIRECTIVE",
-  "newPackageName": "",
+  "newPackageName": "target",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

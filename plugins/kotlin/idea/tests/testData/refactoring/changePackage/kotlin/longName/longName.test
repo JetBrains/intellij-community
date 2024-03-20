@@ -3,5 +3,5 @@
   "type": "CHANGE_PACKAGE_DIRECTIVE",
   "newPackageName": "org.xxxxxx.yyyyyy.zzzzzz.ttttt",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

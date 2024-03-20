@@ -34,6 +34,23 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
  */
 internal fun findAllMoveConflicts(
     filesToMove: Set<KtFile>,
+    targetPkg: FqName,
+    usages: List<MoveRenameUsageInfo>
+): MultiMap<PsiElement, String> {
+    val filesByDir = filesToMove.groupBy { it.containingDirectory }
+    return MultiMap<PsiElement, String>().apply {
+        filesByDir.forEach { (dir, files) ->
+            if (dir == null) return@forEach
+            putAllValues(findAllMoveConflicts(files.toSet(), dir, targetPkg, usages))
+        }
+    }
+}
+
+/**
+ * Find all conflicts when moving elements for a multi file move.
+ */
+internal fun findAllMoveConflicts(
+    filesToMove: Set<KtFile>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
     usages: List<MoveRenameUsageInfo>

@@ -67,11 +67,11 @@ abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
         file.name.replace(".k2.kt", ".kt")
 }
 
-fun runMoveRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
+private fun runMoveRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
     runRefactoringTest(path, config, rootDir, project, K2MoveAction)
 }
 
-object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
+private object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
 
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         if (doJavaMove(rootDir, mainFile, elementsAtCaret, config)) return

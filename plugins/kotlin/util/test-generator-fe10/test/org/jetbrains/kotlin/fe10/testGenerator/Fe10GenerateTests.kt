@@ -161,8 +161,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
 import org.jetbrains.uast.test.kotlin.comparison.*
-import org.junit.Test
-import org.junit.runners.Parameterized
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK1Tests()
@@ -725,6 +723,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractMoveTest> {
+            model("refactoring/changePackage", pattern = TEST, flatten = true)
             model("refactoring/move", pattern = TEST, flatten = true)
         }
 
