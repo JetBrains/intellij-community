@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
@@ -17,9 +17,11 @@ import com.intellij.platform.workspace.storage.impl.DummyVersionedEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.system.measureTimeMillis
 
+@ApiStatus.Obsolete
 class DisposableCachedValue<R : Disposable>(
   private val entityStorage: () -> VersionedEntityStorage,
   private val cachedValue: CachedValue<R>,
