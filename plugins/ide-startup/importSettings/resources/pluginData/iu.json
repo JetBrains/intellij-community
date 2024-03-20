@@ -25,6 +25,11 @@
     "ideaId": "AngularJS"
   },
   {
+    "vsCodeId": "astro-build.astro-vscode",
+    "ideaName": "Astro",
+    "ideaId": "org.jetbrains.plugins.astro"
+  },
+  {
     "vsCodeId": "bajdzis.vscode-database",
     "ideaName": "vscode-database",
     "builtIn": true
@@ -328,6 +333,11 @@
     "vsCodeId": "pranaygp.vscode-css-peek",
     "ideaName": "CSS Peek",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "Prisma.prisma",
+    "ideaName": "Prisma ORM",
+    "ideaId": "org.intellij.prisma"
   },
   {
     "vsCodeId": "redhat.java",
