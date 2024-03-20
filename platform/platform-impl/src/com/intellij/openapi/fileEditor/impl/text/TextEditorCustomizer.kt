@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.fileEditor.impl.text;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.TextEditor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.TextEditor
+import org.jetbrains.annotations.ApiStatus
 
-public interface TextEditorCustomizer {
-  ExtensionPointName<TextEditorCustomizer> EP = new ExtensionPointName<>("com.intellij.textEditorCustomizer");
-
+@ApiStatus.Internal
+interface TextEditorCustomizer {
   /**
    * Use to customize editor after it was created
    */
-  void customize(@NotNull TextEditor textEditor);
+  fun customize(textEditor: TextEditor)
+
+  companion object {
+    val EP: ExtensionPointName<TextEditorCustomizer> = ExtensionPointName("com.intellij.textEditorCustomizer")
+  }
 }
