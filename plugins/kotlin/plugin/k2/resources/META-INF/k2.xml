@@ -291,6 +291,7 @@
     <module name="kotlin.compiler-plugins.allopen.maven"/>
     <module name="kotlin.compiler-plugins.noarg.maven"/>
     <module name="kotlin.compiler-plugins.sam-with-receiver.maven"/>
+    <module name="kotlin.compiler-plugins.kapt"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
