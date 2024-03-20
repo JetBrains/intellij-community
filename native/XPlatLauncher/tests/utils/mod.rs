@@ -384,26 +384,20 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 }
 
 #[cfg(target_os = "windows")]
-#[cfg(feature = "symlink_creation")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
-    if original.is_dir() {
-        std::os::windows::fs::symlink_dir(original, link)
-    } else {
-        std::os::windows::fs::symlink_file(original, link)
-    }
-        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))
-}
+    let result = match original.is_dir() {
+        true => std::os::windows::fs::symlink_dir(original, link),
+        false => std::os::windows::fs::symlink_file(original, link)
+    };
 
-#[cfg(target_os = "windows")]
-#[cfg(not(feature = "symlink_creation"))]
-fn symlink(original: &Path, link: &Path) -> Result<()> {
-    if (original.is_file()) {
-        bail!("symlink_creation feature is not enabled, can not use CreateSymbolicLink.\
-         Consider having a privilege to do that or enabling Developer Mode");
-    }
+    let message = match &result {
+        Ok(_) => "",
+        Err(e) if e.raw_os_error() == Some(1314) => "can not use CreateSymbolicLink.\
+         Consider having a privilege to do that or enabling Developer Mode",
+        Err(_) => "failed to create symlink, but not due to privileges",
+    };
 
-    junction::create(original, link)
-        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))
+    result.with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}; {message}"))
 }
 
 pub fn get_custom_config_dir() -> PathBuf {

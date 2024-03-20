@@ -49,7 +49,3 @@ winresource = "0.1.17"
 
 [dev-dependencies]
 tempfile = "3.8.0"
-junction = "1.0.0"
-
-[features]
-symlink_creation = []
