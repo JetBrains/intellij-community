@@ -2,12 +2,27 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 @ApiStatus.Internal
+@OverrideOnly
 interface TextEditorCustomizer {
   /**
-   * Use to customize editor after it was created
+   * Use to customize editor after it was created.
+   * Executed inside a coroutine scope spanning from editor opening to editor closing (or plugin unloading).
    */
-  fun customize(textEditor: TextEditor)
+  suspend fun execute(textEditor: TextEditor) {
+    blockingContext {
+      @Suppress("DEPRECATION")
+      customize(textEditor)
+    }
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Override execute(textEditor)")
+  fun customize(textEditor: TextEditor) {
+    throw AbstractMethodError("Implement customize(textEditor, coroutineScope)")
+  }
 }

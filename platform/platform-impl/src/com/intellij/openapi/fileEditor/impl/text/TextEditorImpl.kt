@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
@@ -31,9 +32,12 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.serviceContainer.ComponentManagerImpl
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -68,11 +72,8 @@ open class TextEditorImpl
   }
 
   init {
+    @Suppress("LeakingThis")
     component = createEditorComponent(project = project, file = file, editor = editor)
-    for (customizer in TEXT_EDITOR_CUSTOMIZER_EP.extensionList) {
-      @Suppress("LeakingThis")
-      customizer.customize(this)
-    }
     val state = file.getUserData(TRANSIENT_EDITOR_STATE_KEY)
     if (state != null) {
       state.applyTo(component.editor)
@@ -81,6 +82,23 @@ open class TextEditorImpl
 
     // postpone subscribing - perform not in EDT
     asyncLoader.coroutineScope.launch {
+      for (extension in TEXT_EDITOR_CUSTOMIZER_EP.filterableLazySequence()) {
+        try {
+          val customizer = extension.instance ?: continue
+          val scope = asyncLoader.coroutineScope.namedChildScope(extension.implementationClassName)
+          scope.attachAsChildTo((project as ComponentManagerImpl).pluginCoroutineScope(customizer::class.java.classLoader))
+          scope.launch {
+            customizer.execute(textEditor = this@TextEditorImpl)
+          }
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          logger<TextEditorImpl>().error(PluginException(e, extension.pluginDescriptor.pluginId))
+        }
+      }
+
       component.listenChanges(parentDisposable = this@TextEditorImpl, asyncLoader.coroutineScope)
     }
   }
