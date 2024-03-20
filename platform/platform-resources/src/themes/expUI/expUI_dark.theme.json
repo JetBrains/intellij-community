@@ -898,6 +898,22 @@
           "FollowingBorderTextForeground": "Gray1"
         }
       },
+      "Buttons": {
+        "LinkCopied": {
+          "Background": "Green7",
+          "Foreground": "Green3"
+        },
+        "RedButton": {
+          "Background": "Gray2",
+          "Foreground": "Red7",
+          "Hovered": {
+            "Background": "Red7",
+            "Foreground": "Gray14"
+          }
+        },
+        "BadgeBackground": "Gray5"
+        }
+      },
       "EndSessionPopup": {
         "EndButton": {
           "Background": "Gray6",
