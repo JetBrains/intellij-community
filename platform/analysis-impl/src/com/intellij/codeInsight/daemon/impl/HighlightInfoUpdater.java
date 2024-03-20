@@ -56,7 +56,7 @@ final class HighlightInfoUpdater implements Disposable {
   }
 
   static class ToolHighlights {
-    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap(evicted -> removeEvicted(evicted));
+    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap((m,evicted) -> removeEvicted(evicted));
 
     @NotNull ToolLatencies latencies = new ToolLatencies(0,0,0);
   }
@@ -117,7 +117,7 @@ final class HighlightInfoUpdater implements Disposable {
   private static @NotNull Map<PsiFile, Map<Object, ToolHighlights>> getOrCreateHostMap(@NotNull Document hostDocument) {
     Map<PsiFile, Map<Object, ToolHighlights>> map = hostDocument.getUserData(VISITED_PSI_ELEMENTS);
     if (map == null) {
-      map = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, CollectionFactory.createConcurrentSoftMap(oldMap -> removeEvictedFile(oldMap)));
+      map = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, CollectionFactory.createConcurrentSoftMap((m,oldMap) -> removeEvictedFile(oldMap)));
     }
     return map;
   }

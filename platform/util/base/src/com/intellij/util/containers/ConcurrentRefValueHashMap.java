@@ -10,7 +10,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * Base class for concurrent strong key:K -> (soft/weak) value:V map
@@ -20,10 +20,10 @@ import java.util.function.Consumer;
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
-  private final Consumer<? super K> myEvictionListener;
+  private final BiConsumer<? super ConcurrentMap<K, V>, ? super K> myEvictionListener;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  ConcurrentRefValueHashMap(@Nullable Consumer<? super K> evictionListener) {
+  ConcurrentRefValueHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
     myEvictionListener = evictionListener;
   }
 
@@ -44,7 +44,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
       if (ref == null) break;
       K key = ref.getKey();
       if (myMap.remove(key, ref) && myEvictionListener != null) {
-        myEvictionListener.accept(key);
+        myEvictionListener.accept(this, key);
       }
       processed = true;
     }

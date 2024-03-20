@@ -6,7 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.function.Consumer;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * Concurrent soft key:K -> strong value:V map
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
  * Use {@link ContainerUtil#createConcurrentSoftMap()} to create this
  */
 final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  ConcurrentSoftHashMap(@Nullable Consumer<? super V> evictionListener) {
+  ConcurrentSoftHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
     super(evictionListener);
   }
 
