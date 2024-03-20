@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -142,6 +143,9 @@ class TerminalOutputController(
 
   @RequiresEdt(generateAssertion = false)
   internal fun alternateBufferStateChanged(enabled: Boolean) {
+    if (runningCommandContext == null) {
+      thisLogger().warn("Alternate screen buffer changed ($enabled), but no running command")
+    }
     if (enabled) {
       if (runningCommandInteractivity != null) {
         // stop updating the block content, because alternate buffer application will be shown in a separate component
@@ -149,7 +153,7 @@ class TerminalOutputController(
       }
     }
     else {
-      outputModel.getActiveBlock().takeIf { runningCommandInteractivity == null }?.let {
+      runningCommandContext.takeIf { runningCommandInteractivity == null }?.let {
         installRunningCommandInteractivity(it.command)
       }
     }
