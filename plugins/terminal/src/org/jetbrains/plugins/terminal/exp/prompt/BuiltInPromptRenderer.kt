@@ -9,25 +9,18 @@ import org.jetbrains.plugins.terminal.exp.*
 
 internal class BuiltInPromptRenderer(private val session: BlockTerminalSession) : TerminalPromptRenderer {
   override fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
-    val components = getPromptComponents(state)
-    val builder = StringBuilder()
-    val highlightings = mutableListOf<HighlightingInfo>()
-    for (component in components) {
-      val startOffset = builder.length
-      builder.append(component.text)
-      highlightings.add(HighlightingInfo(startOffset, builder.length, component.attributes))
-    }
-    return PromptRenderingInfo(builder.toString(), highlightings)
+    val content: TextWithHighlightings = getPromptComponents(state).toTextWithHighlightings()
+    return PromptRenderingInfo(content.text, content.highlightings)
   }
 
-  private fun getPromptComponents(state: TerminalPromptState): List<PromptComponentInfo> {
-    val result = mutableListOf<PromptComponentInfo>()
+  private fun getPromptComponents(state: TerminalPromptState): List<TextWithAttributes> {
+    val result = mutableListOf<TextWithAttributes>()
     val greenAttributes = plainAttributes(TerminalUiUtils.GREEN_COLOR_INDEX)
     val yellowAttributes = plainAttributes(TerminalUiUtils.YELLOW_COLOR_INDEX)
     val defaultAttributes = EmptyTextAttributesProvider
 
     fun addComponent(text: String, attributesProvider: TextAttributesProvider) {
-      result.add(PromptComponentInfo(text, attributesProvider))
+      result.add(TextWithAttributes(text, attributesProvider))
     }
 
     if (!state.virtualEnv.isNullOrBlank()) {
@@ -60,6 +53,4 @@ internal class BuiltInPromptRenderer(private val session: BlockTerminalSession) 
   private fun plainAttributes(colorIndex: Int): TextAttributesProvider {
     return TerminalUiUtils.plainAttributesProvider(colorIndex, session.colorPalette)
   }
-
-  private class PromptComponentInfo(val text: String, val attributes: TextAttributesProvider)
 }

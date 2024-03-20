@@ -23,6 +23,8 @@ data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAt
 
 internal data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
 
+internal data class TextWithAttributes(val text: String, val attributes: TextAttributesProvider)
+
 interface TextAttributesProvider {
   fun getTextAttributes(): TextAttributes
 }
@@ -38,6 +40,17 @@ class TextStyleAdapter(private val style: TextStyle,
 
 class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = editor.colorsScheme.getAttributes(textAttributesKey)
+}
+
+internal fun List<TextWithAttributes>.toTextWithHighlightings(): TextWithHighlightings {
+  val builder = StringBuilder()
+  val highlightings = mutableListOf<HighlightingInfo>()
+  for (component in this) {
+    val startOffset = builder.length
+    builder.append(component.text)
+    highlightings.add(HighlightingInfo(startOffset, builder.length, component.attributes))
+  }
+  return TextWithHighlightings(builder.toString(), highlightings)
 }
 
 class TerminalTextHighlighter private constructor(
