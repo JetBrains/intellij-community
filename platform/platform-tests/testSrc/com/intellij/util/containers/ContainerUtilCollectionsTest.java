@@ -865,28 +865,32 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test
   public void testKeyEvictionListenerWorks() {
     AtomicReference<Object> evicted = new AtomicReference<>();
-    Map<Object, Object> map = CollectionFactory.createConcurrentSoftMap(value -> {
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createConcurrentSoftMap((thisMap,value) -> {
       assertTrue(evicted.compareAndSet(null, value));
-    });
+      assertSame(map.get(), thisMap);
+    }));
     Object value = new Object();
-    map.put(new Object(), value);
+    map.get().put(new Object(), value);
 
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.remove("") != null/*to call processQueue()*/ || map.isEmpty());
-    map.remove(""); // to call processQueue()
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
+    map.get().remove(""); // to call processQueue()
     assertSame(value, evicted.get());
   }
 
   @Test
   public void testValueEvictionListenerWorks() {
     AtomicReference<Object> evicted = new AtomicReference<>();
-    Map<Object, Object> map = CollectionFactory.createConcurrentSoftValueMap(key -> {
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createConcurrentSoftValueMap((thisMap,key) -> {
       assertTrue(evicted.compareAndSet(null, key));
-    });
+      assertSame(map.get(), thisMap);
+    }));
     Object key = new Object();
-    map.put(key, new Object());
+    map.get().put(key, new Object());
 
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.remove("") != null/*to call processQueue()*/ || map.isEmpty());
-    map.remove(""); // to call processQueue()
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
+    map.get().remove(""); // to call processQueue()
     assertSame(key, evicted.get());
   }
 }
