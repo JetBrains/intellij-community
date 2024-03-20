@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
  */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("indexable.files.filter",
-                                    7,
+                                    8,
                                     "FUS",
                                     "Collects statistics of ProjectIndexableFilesFilterHealthCheck. " +
                                     "See more here: https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter")
@@ -22,6 +22,7 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
   private val attemptNumberInProjectField = EventFields.Int("attempt_number_in_project", "Health check attempt number in a given project. First is 1.")
   private val successfulAttemptNumberInProjectField = EventFields.Int("successful_attempt_number_in_project", "Finished (not-cancelled) health check attempt number in a given project. First is 1.")
   private val durationMsFiled = EventFields.Int("duration_ms", "Health check duration in milliseconds")
+  private val cancelledAttemptNumberInProjectField = EventFields.Int("cancelled_attempt_number_in_project", "Cancelled health check attempt number in a given project. First is 1.")
   private val nonIndexableFilesInFilterField = EventFields.Int("non_indexable_files_in_filter_count")
   private val indexableFilesNotInFilterField = EventFields.Int("indexable_files_not_in_filter_count")
 
@@ -40,7 +41,16 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     "indexable_files_filter_health_check_started",
     filterNameField,
     attemptNumberInProjectField,
-    description = "Even which happens every time health check is started."
+    description = "Event which happens every time health check is started."
+  )
+
+  private val indexableFilesFilterHealthCheckCancelled = GROUP.registerVarargEvent(
+    "indexable_files_filter_health_check_cancelled",
+    description = "Event which happens every time health check is cancelled e.g. because scanning was in progress.",
+    filterNameField,
+    attemptNumberInProjectField,
+    cancelledAttemptNumberInProjectField,
+    durationMsFiled,
   )
 
   fun reportIndexableFilesFilterHealthcheckStarted(project: Project,
@@ -69,6 +79,20 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
       durationMsFiled.with(durationMs),
       nonIndexableFilesInFilterField.with(nonIndexableFilesInFilterCount),
       indexableFilesNotInFilterField.with(indexableFilesNotInFilterCount),
+    )
+  }
+
+  fun reportIndexableFilesFilterHealthcheckCancelled(project: Project,
+                                                     filter: ProjectIndexableFilesFilter,
+                                                     attemptNumber: Int,
+                                                     cancelledAttemptNumber: Int,
+                                                     durationMs: Int) {
+    indexableFilesFilterHealthCheckCancelled.log(
+      project,
+      filterNameField.with(getFilterName(filter)),
+      attemptNumberInProjectField.with(attemptNumber),
+      cancelledAttemptNumberInProjectField.with(cancelledAttemptNumber),
+      durationMsFiled.with(durationMs),
     )
   }
 

@@ -59,6 +59,7 @@ private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
 class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val isRunning = AtomicBoolean()
   private val attemptsCount = AtomicInteger()
+  private val cancelledAttemptsCount = AtomicInteger()
   private val successfulAttemptsCount = AtomicInteger()
 
   fun launchHealthCheck() {
@@ -99,9 +100,19 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
       val startTime = System.currentTimeMillis()
 
       Observation.awaitConfiguration(project) // wait for project import IDEA-348501
-      val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = smartReadAction(project) {
+      val res = smartReadAction(project) {
         runHealthCheck(project, filter)
-      } ?: return
+      }
+      if (res == null) {
+        IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckCancelled(
+          project,
+          filter,
+          attemptNumber,
+          cancelledAttemptsCount.incrementAndGet(),
+          (System.currentTimeMillis() - startTime).toInt())
+        return
+      }
+      val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = res
 
       nonIndexableFilesInFilter.fix(filter)
       indexableFilesNotInFilter.fix(filter)
