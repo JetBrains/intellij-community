@@ -111,7 +111,7 @@ object LogsPacker {
                 for (path in paths) {
                   coroutineContext.ensureActive()
                   val name = path.fileName.toString()
-                  if (name.endsWith(".ips") && Files.isRegularFile(path)) {
+                  if (name.endsWith(".ips") && Files.isRegularFile(path) && doesMacOSDiagnosticReportBelongToThisApp(path)) {
                     zip.addFile("MacOS_DiagnosticReports/$name", path.readBytes())
                   }
                 }
@@ -214,5 +214,15 @@ object LogsPacker {
    */
   private fun buildEntryName(prefix: String?, file: Path): String {
     return if (!prefix.isNullOrEmpty()) "$prefix/${file.name}" else ""
+  }
+
+  private fun doesMacOSDiagnosticReportBelongToThisApp(path: Path): Boolean {
+    val name = path.name
+    if (name.contains(ApplicationNamesInfo.getInstance().scriptName, ignoreCase = true)) return true
+    if (name.contains("java", ignoreCase = true)) {
+      // if IDE is run from sources
+      return Files.readString(path).contains("jetbrains", ignoreCase = true)
+    }
+    return false
   }
 }
