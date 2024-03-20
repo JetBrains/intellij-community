@@ -15,10 +15,11 @@
  */
 package org.intellij.plugins.xpathView.util;
 
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class MyPsiUtil {
     private static final Logger LOG = Logger.getInstance(MyPsiUtil.class);
@@ -155,9 +158,9 @@ public final class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-              AnnotationSessionImpl.computeWithSession(file, false, holder -> {
-                holder.runAnnotatorWithContext(element, annotator);
-                for (Annotation annotation : holder) {
+              AnnotationSessionImpl.computeWithSession(file, false, annotator, annotationHolder -> {
+                ((AnnotationHolderImpl)annotationHolder).runAnnotatorWithContext(element);
+                for (Annotation annotation : (List<Annotation>)annotationHolder) {
                   if (annotation.getSeverity() == HighlightSeverity.ERROR) {
                     error[0] = annotation.getMessage();
                     break;

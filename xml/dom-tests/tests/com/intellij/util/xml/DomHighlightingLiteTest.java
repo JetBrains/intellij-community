@@ -2,11 +2,12 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.mock.MockInspectionProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.Collections;
 
 public class DomHighlightingLiteTest extends DomTestCase {
@@ -118,7 +120,8 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private DomElementAnnotationHolderImpl createHolder() {
-    return AnnotationSessionImpl.computeWithSession(myElement.getFile(), false, holder -> new DomElementAnnotationHolderImpl(true, myElement, holder));
+    Annotator annotator = (element, holder) -> {};
+    return AnnotationSessionImpl.computeWithSession(myElement.getFile(), false, annotator, holder -> new DomElementAnnotationHolderImpl(true, myElement, holder));
   }
 
   private static DomElementsProblemsHolderImpl assertNotEmptyHolder(final DomElementsProblemsHolder holder1) {
@@ -168,7 +171,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
     };
     final StringBuilder s = new StringBuilder();
-    AnnotationSessionImpl.computeWithSession(myElement.getFile(), false, toFill -> {
+    AnnotationSessionImpl.computeWithSession(myElement.getFile(), false, annotator, annotationHolder -> {
       final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
         @Override
@@ -176,15 +179,15 @@ public class DomHighlightingLiteTest extends DomTestCase {
           s.append("visited");
         }
       };
-      annotator.runInspection(inspection, myElement, toFill);
+      annotator.runInspection(inspection, myElement, annotationHolder);
       assertEquals("visited", s.toString());
       final DomElementsProblemsHolderImpl holder = assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement));
-      assertEmpty(toFill);
+      assertEmpty((Collection<?>)annotationHolder);
 
-      annotator.runInspection(inspection, myElement, toFill);
+      annotator.runInspection(inspection, myElement, annotationHolder);
       assertEquals("visited", s.toString());
       assertSame(holder, assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement)));
-      assertEmpty(toFill);
+      assertEmpty((Collection<?>)annotationHolder);
 
       return null;
     });
