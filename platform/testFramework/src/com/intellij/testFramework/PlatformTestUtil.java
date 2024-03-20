@@ -1147,7 +1147,7 @@ public final class PlatformTestUtil {
     boolean[] failure = {false};
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
       @Override
-      public void processNotStarted() {
+      public void processNotStarted(@Nullable Throwable error) {
         failure[0] = true;
       }
 
