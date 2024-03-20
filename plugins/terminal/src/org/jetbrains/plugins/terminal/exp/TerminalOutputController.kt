@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -188,14 +187,7 @@ class TerminalOutputController(
 
   private fun createNewBlock(context: RunningCommandContext): CommandBlock {
     val block = outputModel.createBlock(context.command, context.prompt)
-    if (block.withPrompt) {
-      val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
-      appendToBlock(block, block.prompt.text, highlightings)
-    }
-    if (block.withCommand) {
-      appendToBlock(block, context.command!!, listOf(createCommandHighlighting(block)))
-    }
-    if (block.withPrompt || block.withCommand) {
+    if (!block.textRange.isEmpty) {
       blocksDecorator.installDecoration(block)
     }
     return block
@@ -209,19 +201,12 @@ class TerminalOutputController(
 
   private fun updateBlock(block: CommandBlock, output: TextWithHighlightings) {
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
-    val highlightings = if (block.withPrompt || block.withCommand) {
-      output.highlightings.toMutableList().also { highlightings ->
-        if (block.withCommand) {
-          highlightings.add(0, createCommandHighlighting(block))
-        }
-        if (block.withPrompt) {
-          highlightings.addAll(0, adjustHighlightings(block.prompt!!.highlightings, block.startOffset))
-        }
-      }
-    }
-    else output.highlightings
-
+    val highlightings = outputModel.getHighlightings(block).asSequence()
+      .filter { it.endOffset <= block.outputStartOffset }
+      .plus(output.highlightings)
+      .toList()
     outputModel.putHighlightings(block, highlightings)
+
     // add leading \n here, because \n is not added after command in `startCommandBlock`
     val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
     editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
@@ -257,24 +242,6 @@ class TerminalOutputController(
   }
 
   private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)
-
-  private fun appendToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>) {
-    val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
-    outputModel.putHighlightings(block, existingHighlightings + highlightings)
-    editor.document.insertString(block.endOffset, text)
-  }
-
-  /** It is implied that [CommandBlock.command] is not null */
-  private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
-    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length,
-                            TextAttributesKeyAdapter(editor, BlockTerminalColors.COMMAND))
-  }
-
-  private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
-    return highlightings.map {
-      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributesProvider)
-    }
-  }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {

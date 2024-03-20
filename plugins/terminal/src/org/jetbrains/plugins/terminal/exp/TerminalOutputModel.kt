@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.awt.Rectangle
@@ -35,16 +36,34 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
-    if (document.textLength > 0) {
-      document.insertString(document.textLength, "\n")
+    // Execute document insertions in bulk to make sure that EditorHighlighter
+    // is not requesting the highlightings before we set them.
+    val block = document.executeInBulk {
+      if (document.textLength > 0) {
+        document.insertString(document.textLength, "\n")
+      }
+      val startOffset = document.textLength
+
+      val blockHighlightings = mutableListOf<HighlightingInfo>()
+      if (prompt != null) {
+        val adjustedHighlightings = adjustHighlightings(prompt.highlightings, document.textLength)
+        document.insertString(document.textLength, prompt.text)
+        blockHighlightings.addAll(adjustedHighlightings)
+      }
+      if (command != null) {
+        val highlighting = HighlightingInfo(document.textLength, document.textLength + command.length,
+                                            TextAttributesKeyAdapter(editor, BlockTerminalColors.COMMAND))
+        document.insertString(document.textLength, command)
+        blockHighlightings.add(highlighting)
+      }
+
+      val marker = document.createRangeMarker(startOffset, document.textLength)
+      marker.isGreedyToRight = true
+      val block = CommandBlock(command, prompt, marker)
+      blocks.add(block)
+      putHighlightings(block, blockHighlightings)
+      block
     }
-    val startOffset = document.textLength
-    val marker = document.createRangeMarker(startOffset, startOffset)
-    marker.isGreedyToRight = true
-
-    val block = CommandBlock(command, prompt, marker)
-    blocks.add(block)
-
     listeners.forEach { it.blockCreated(block) }
     return block
   }
@@ -152,8 +171,8 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun getHighlightings(block: CommandBlock): List<HighlightingInfo>? {
-    return highlightings[block]
+  fun getHighlightings(block: CommandBlock): List<HighlightingInfo> {
+    return highlightings[block] ?: emptyList()
   }
 
   @RequiresEdt
@@ -220,7 +239,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   private fun deleteDocumentRangeInHighlightings(block: CommandBlock, deleteRange: TextRange) {
-    val highlightings = getHighlightings(block) ?: emptyList()
+    val highlightings = getHighlightings(block)
     val updatedHighlightings: List<HighlightingInfo> = highlightings.mapNotNull {
       when {
         it.endOffset <= deleteRange.startOffset -> it
@@ -250,6 +269,12 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   private fun getMaxCapacity(): Int {
     return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
+  }
+
+  private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
+    return highlightings.map {
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributesProvider)
+    }
   }
 
   interface TerminalOutputListener {

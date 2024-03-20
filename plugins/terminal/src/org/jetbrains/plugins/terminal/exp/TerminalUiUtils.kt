@@ -26,6 +26,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
+import com.intellij.util.DocumentUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -263,3 +264,12 @@ fun invokeLater(expired: (() -> Boolean)? = null,
 }
 
 fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }
+
+internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> T): T {
+  var result: T? = null
+  DocumentUtil.executeInBulk(this) {
+    result = block()
+  }
+  return result!!
+}
+

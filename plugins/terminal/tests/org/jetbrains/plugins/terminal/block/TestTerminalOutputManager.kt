@@ -30,15 +30,19 @@ internal class TestTerminalOutputManager(project: Project, parentDisposable: Dis
   fun createBlock(command: String?, output: TextWithHighlightings): Pair<CommandBlock, TextWithHighlightings> {
     val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
-    val updatedHighlightings = output.highlightings.map {
-      HighlightingInfo(it.startOffset + lastBlockEndOffset, it.endOffset + lastBlockEndOffset, it.textAttributesProvider)
-    }
     val block = outputModel.createBlock(command, null)
-    outputModel.putHighlightings(block, updatedHighlightings)
-    editor.document.replaceString(block.startOffset, block.endOffset, output.text)
+    if (output.text.isNotEmpty()) {
+      val promptAndCommandHighlightings = outputModel.getHighlightings(block)
+      val outputHighlightings = output.highlightings.map {
+        HighlightingInfo(it.startOffset + block.outputStartOffset, it.endOffset + block.outputStartOffset, it.textAttributesProvider)
+      }
+      val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
+      outputModel.putHighlightings(block, promptAndCommandHighlightings + outputHighlightings)
+      editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
+    }
     outputModel.trimOutput()
     outputModel.finalizeBlock(block)
-    return block to TextWithHighlightings(output.text, updatedHighlightings)
+    return block to TextWithHighlightings(document.getText(block.textRange), outputModel.getHighlightings(block))
   }
 
   companion object {
