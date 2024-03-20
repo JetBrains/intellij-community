@@ -25,7 +25,7 @@ import static junit.framework.TestSuite.warning;
  * To run a test with needed {@link IndexingMode}, it's enough to make getIndexingMode return it and run the test with IDE's gutter action.
  * To run all dumb mode completion tests, check JavaDoc of
  * {@link com.intellij.java.codeInsight.completion.JavaCompletionTestSuite} or
- * {@link com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite}
+ * {@link com.jetbrains.php.PhpDumbCompletionTest}
  */
 public interface TestIndexingModeSupporter {
   enum IndexingMode {
@@ -225,7 +225,7 @@ public interface TestIndexingModeSupporter {
      * with path of buildAgent directory in TeamCity installation. To get it unpack TeamCity archive and start TeamCity with
      * {@code ./bin/runAll.sh start}
      * <p>
-     * Also these properties may be useful for debugging of tests, making them wait for remote debug connection:
+     * Also, these properties may be useful for debugging of tests, making them wait for remote debug connection:
      * {@code
      * -Dintellij.build.test.debug.port=<port>
      * -Dintellij.build.test.debug.suspend=true
@@ -281,6 +281,7 @@ public interface TestIndexingModeSupporter {
 
     @Override
     public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       return IndexingModeTestHandler.shouldIgnoreInFullIndexSuite(aClass);
     }
   }
@@ -293,6 +294,7 @@ public interface TestIndexingModeSupporter {
 
     @Override
     public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       return IndexingModeTestHandler.shouldIgnoreInRuntimeOnlyIndexSuite(aClass);
     }
   }
@@ -305,6 +307,7 @@ public interface TestIndexingModeSupporter {
 
     @Override
     public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       return IndexingModeTestHandler.shouldIgnoreInEmptyIndexSuite(aClass);
     }
   }
