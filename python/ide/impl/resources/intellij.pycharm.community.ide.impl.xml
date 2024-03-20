@@ -77,6 +77,10 @@
       implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
     <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.ui.OnboardingBackgroundImageProvider"
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmOnboardingBackgroundImageProvider"
+                        overrides="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
