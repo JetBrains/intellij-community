@@ -113,7 +113,7 @@ object LogPacker {
             Path.of(reportDir).forEachDirectoryEntry { path ->
               coroutineContext.ensureActive()
               val name = path.name
-              if (name.endsWith(".ips") && Files.isRegularFile(path)) {
+              if (name.endsWith(".ips") && Files.isRegularFile(path) && doesMacOSDiagnosticReportBelongToThisApp(path)) {
                 zip.addFile("MacOS_DiagnosticReports/$name", path)
               }
             }
@@ -196,4 +196,14 @@ object LogPacker {
   }
 
   fun getBrowseUrl(folderName: String): String = "$UPLOADS_SERVICE_URL/browse#$folderName"
+
+  private fun doesMacOSDiagnosticReportBelongToThisApp(path: Path): Boolean {
+    val name = path.name
+    if (name.contains(ApplicationNamesInfo.getInstance().scriptName, ignoreCase = true)) return true
+    if (name.contains("java", ignoreCase = true)) {
+      // if IDE is run from sources
+      return Files.readString(path).contains("jetbrains", ignoreCase = true)
+    }
+    return false
+  }
 }
