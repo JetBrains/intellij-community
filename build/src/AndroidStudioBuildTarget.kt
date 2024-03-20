@@ -14,7 +14,6 @@ object AndroidStudioBuildTarget {
       val buildContext = BuildContextImpl.createContext(home.communityRoot, properties)
       val tasks = BuildTasks.create(buildContext)
       tasks.buildDistributions()
-      tasks.buildFullUpdaterJar()
     }
   }
 }
