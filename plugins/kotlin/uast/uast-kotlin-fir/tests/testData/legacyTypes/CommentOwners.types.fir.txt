@@ -7,45 +7,45 @@ UFile (package = ) [public final class CommentOwnersKt {...]
         UMethod (name = topLevelFun) [public static final fun topLevelFun() : void {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return TODO()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = funPlainCall) [public static final fun funPlainCall(@org.jetbrains.annotations.NotNull a: int) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return TODO()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = funNamedArgumentsCall) [public static final fun funNamedArgumentsCall(@org.jetbrains.annotations.NotNull a: int) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return TODO()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = func) [public static final fun func(@org.jetbrains.annotations.NotNull a: int) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funPlainCall(42)] : kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funPlainCall(42)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (funPlainCall)) [UIdentifier (Identifier (funPlainCall))]
-                    USimpleNameReferenceExpression (identifier = funPlainCall, resolvesTo = null) [funPlainCall] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = funPlainCall, resolvesTo = null) [funPlainCall] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     ULiteralExpression (value = 42) [42] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funNamedArgumentsCall(42)] : kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funNamedArgumentsCall(42)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (funNamedArgumentsCall)) [UIdentifier (Identifier (funNamedArgumentsCall))]
-                    USimpleNameReferenceExpression (identifier = funNamedArgumentsCall, resolvesTo = null) [funNamedArgumentsCall] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = funNamedArgumentsCall, resolvesTo = null) [funNamedArgumentsCall] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     ULiteralExpression (value = 42) [42] : int
                 UWhileExpression [while (true) {...}]
                     ULiteralExpression (value = true) [true] : boolean
-                    UBlockExpression [{...}] : java.lang.Void
+                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UBreakExpression (label = null) [break]
-                UIfExpression [if (true) {...}] : kotlin.Unit
+                UIfExpression [if (true) {...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     ULiteralExpression (value = true) [true] : boolean
-                    UBlockExpression [{...}] : kotlin.Unit
-                    UBlockExpression [{...}] : kotlin.Unit
+                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UDeclarationsExpression [var localValueDefinition: int = 42]
                     ULocalVariable (name = localValueDefinition) [var localValueDefinition: int = 42]
                         ULiteralExpression (value = 42) [42] : int
@@ -57,9 +57,9 @@ UFile (package = ) [public final class CommentOwnersKt {...]
         UMethod (name = classLevelMethod) [public final fun classLevelMethod() : void {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return TODO()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
         UMethod (name = TopLevelClass) [public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {...}]
             UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

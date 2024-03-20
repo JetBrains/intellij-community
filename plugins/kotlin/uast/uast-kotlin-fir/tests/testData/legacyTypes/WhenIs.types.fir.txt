@@ -6,7 +6,7 @@ UFile (package = ) [public final class WhenIsKt {...]
             UBlockExpression [{...}]
                 UReturnExpression [return switch (bar)  {...]
                     USwitchExpression [switch (bar)  {...] : java.lang.String
-                        USimpleNameReferenceExpression (identifier = bar) [bar] : java.lang.Object
+                        USimpleNameReferenceExpression (identifier = bar) [bar] : @org.jetbrains.annotations.NotNull() java.lang.Object
                         UExpressionList (when) [    it is java.lang.String -> {...    ] : java.lang.String
                             USwitchClauseExpressionWithBody [it is java.lang.String -> {...]
                                 UBinaryExpressionWithType [it is java.lang.String]

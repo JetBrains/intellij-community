@@ -14,6 +14,8 @@ import com.intellij.util.ProcessingContext
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -359,8 +361,16 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
     }
 
     private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
-        TestCase.assertEquals(1, psiType.annotations.size)
-        val annotation = psiType.annotations[0]
+        val annotations = psiType.annotations.asList()
+        val nullabilityAnnotation = annotations.find {
+            when (it.qualifiedName) {
+                JvmAnnotationNames.JETBRAINS_NULLABLE_ANNOTATION.asString(), JvmAnnotationNames.JETBRAINS_NOT_NULL_ANNOTATION.asString() -> true
+                else -> false
+            }
+        }
+
+        TestCase.assertEquals(1 + (1.takeIf { nullabilityAnnotation != null } ?: 0), psiType.annotations.size)
+        val annotation = annotations.minus(listOfNotNull(nullabilityAnnotation)).single()
         TestCase.assertEquals(fqName, annotation.qualifiedName)
     }
 

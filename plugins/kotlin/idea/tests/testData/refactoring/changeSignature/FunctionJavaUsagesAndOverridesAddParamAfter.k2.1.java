@@ -3,7 +3,6 @@ import org.jetbrains.annotations.Nullable;
 
 class X extends A {
     @Override
-    @NotNull
     String foo(int n, @NotNull String s, @Nullable Object o) {
         return "";
     }
@@ -11,7 +10,6 @@ class X extends A {
 
 class Y extends X {
     @Override
-    @NotNull
     String foo(int n, @NotNull String s, @Nullable Object o) {
         return super.foo(n, s, o);
     }

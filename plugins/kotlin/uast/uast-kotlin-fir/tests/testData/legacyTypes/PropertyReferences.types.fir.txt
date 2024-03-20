@@ -4,33 +4,33 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UBlockExpression [{...}] : int
                 UDeclarationsExpression [var a: A = <init>(17)]
                     ULocalVariable (name = a) [var a: A = <init>(17)]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(17)] : A
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(17)] : @org.jetbrains.annotations.NotNull() A
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : A
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : @org.jetbrains.annotations.NotNull() A
                             ULiteralExpression (value = 17) [17] : int
                 UDeclarationsExpression [var x: int = -a.mutableProp]
                     ULocalVariable (name = x) [var x: int = -a.mutableProp]
                         UPrefixExpression (operator = -) [-a.mutableProp] : int
                             UQualifiedReferenceExpression [a.mutableProp] : int
-                                USimpleNameReferenceExpression (identifier = a) [a] : A
+                                USimpleNameReferenceExpression (identifier = a) [a] : @org.jetbrains.annotations.NotNull() A
                                 USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
-                UBinaryExpression (operator = =) [a.mutableProp = 1] : kotlin.Unit
+                UBinaryExpression (operator = =) [a.mutableProp = 1] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UQualifiedReferenceExpression [a.mutableProp] : int
-                        USimpleNameReferenceExpression (identifier = a) [a] : A
+                        USimpleNameReferenceExpression (identifier = a) [a] : @org.jetbrains.annotations.NotNull() A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
                     ULiteralExpression (value = 1) [1] : int
-                UBinaryExpression (operator = +=) [a.mutableProp += x] : kotlin.Unit
+                UBinaryExpression (operator = +=) [a.mutableProp += x] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UQualifiedReferenceExpression [a.mutableProp] : int
-                        USimpleNameReferenceExpression (identifier = a) [a] : A
+                        USimpleNameReferenceExpression (identifier = a) [a] : @org.jetbrains.annotations.NotNull() A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
                     USimpleNameReferenceExpression (identifier = x) [x] : int
                 UPrefixExpression (operator = ++) [++a.mutableProp] : int
                     UQualifiedReferenceExpression [a.mutableProp] : int
-                        USimpleNameReferenceExpression (identifier = a) [a] : A
+                        USimpleNameReferenceExpression (identifier = a) [a] : @org.jetbrains.annotations.NotNull() A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
                 UPostfixExpression (operator = --) [a.mutableProp--] : int
                     UQualifiedReferenceExpression [a.mutableProp] : int
-                        USimpleNameReferenceExpression (identifier = a) [a] : A
+                        USimpleNameReferenceExpression (identifier = a) [a] : @org.jetbrains.annotations.NotNull() A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
         UMethod (name = ext) [public static final fun ext(@org.jetbrains.annotations.NotNull $this$ext: A) : void {...}]
             UParameter (name = $this$ext) [@org.jetbrains.annotations.NotNull var $this$ext: A]
@@ -40,10 +40,10 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     ULocalVariable (name = x) [var x: int = -mutableProp]
                         UPrefixExpression (operator = -) [-mutableProp] : int
                             USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
-                UBinaryExpression (operator = =) [mutableProp = 1] : kotlin.Unit
+                UBinaryExpression (operator = =) [mutableProp = 1] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
                     ULiteralExpression (value = 1) [1] : int
-                UBinaryExpression (operator = +=) [mutableProp += x] : kotlin.Unit
+                UBinaryExpression (operator = +=) [mutableProp += x] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
                     USimpleNameReferenceExpression (identifier = x) [x] : int
                 UPrefixExpression (operator = ++) [++mutableProp] : int
@@ -62,20 +62,20 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = add) [public final fun add(@org.jetbrains.annotations.NotNull x: int) : int {...}]
             UParameter (name = x) [@org.jetbrains.annotations.NotNull var x: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var result: int = privateProp]
                     ULocalVariable (name = result) [var result: int = privateProp]
                         USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : int
-                UBinaryExpression (operator = =) [privateProp = x] : kotlin.Unit
+                UBinaryExpression (operator = =) [privateProp = x] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : int
                     USimpleNameReferenceExpression (identifier = x) [x] : int
-                UReturnExpression [return privateProp] : java.lang.Void
+                UReturnExpression [return privateProp] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : int
         UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull init: int) {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UBlockExpression [{...}] : kotlin.Unit
-                    UBinaryExpression (operator = =) [mutableProp = init] : kotlin.Unit
+                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    UBinaryExpression (operator = =) [mutableProp = init] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : int
                         USimpleNameReferenceExpression (identifier = init) [init] : int

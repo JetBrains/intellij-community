@@ -1,7 +1,7 @@
 UFile (package = ) [public final class ObjectLiteralKt {...]
     UClass (name = ObjectLiteralKt) [public final class ObjectLiteralKt {...}]
         UMethod (name = box) [public static final fun box() : int {...}]
-            UBlockExpression [{...}] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var o: java.lang.Object = anonymous object : I, A() {...    }]
                     ULocalVariable (name = o) [var o: java.lang.Object = anonymous object : I, A() {...    }]
                         UObjectLiteralExpression [anonymous object : I, A() {...    }] : A
@@ -15,9 +15,9 @@ UFile (package = ) [public final class ObjectLiteralKt {...]
                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
                                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
-                UReturnExpression [return o.foo()] : java.lang.Void
+                UReturnExpression [return o.foo()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UQualifiedReferenceExpression [o.foo()] : int
-                        USimpleNameReferenceExpression (identifier = o) [o] : java.lang.Object
+                        USimpleNameReferenceExpression (identifier = o) [o] : @org.jetbrains.annotations.NotNull() java.lang.Object
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : int
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : int

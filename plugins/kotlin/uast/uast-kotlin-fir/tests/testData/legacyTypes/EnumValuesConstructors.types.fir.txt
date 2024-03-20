@@ -20,7 +20,7 @@ UFile (package = ) [public final enum Style {...]
         UEnumConstant (name = UNKNOWN) [@null UNKNOWN(null)]
             UAnnotation (fqName = null) [@null]
             USimpleNameReferenceExpression (identifier = Style) [Style]
-            ULiteralExpression (value = null) [null] : java.lang.Void
+            ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
         UMethod (name = values) [public static fun values() : Style[] = UastEmptyExpression]
         UMethod (name = valueOf) [public static fun valueOf(value: java.lang.String) : Style = UastEmptyExpression]
             UParameter (name = value) [var value: java.lang.String]

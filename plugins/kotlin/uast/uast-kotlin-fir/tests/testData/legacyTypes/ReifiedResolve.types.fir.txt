@@ -3,12 +3,12 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
         UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit>) : T {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super T, ? extends kotlin.Unit>
-                    UBlockExpression [{...}] : kotlin.Unit
-            UBlockExpression [{...}] : java.lang.Void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : java.lang.Void
+                ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() T, ? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UPolyadicExpression (operator = +) ["message"] : java.lang.String
                         ULiteralExpression (value = "message") ["message"] : java.lang.String
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
@@ -31,23 +31,23 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                             USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : java.lang.String
                 UDeclarationsExpression [var z: java.util.List<? extends java.lang.String> = listOf("foo").filterIsInstance()]
                     ULocalVariable (name = z) [var z: java.util.List<? extends java.lang.String> = listOf("foo").filterIsInstance()]
-                        UQualifiedReferenceExpression [listOf("foo").filterIsInstance()] : java.util.List<? extends java.lang.String>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("foo")] : java.util.List<? extends java.lang.String>
+                        UQualifiedReferenceExpression [listOf("foo").filterIsInstance()] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("foo")] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
+                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 UPolyadicExpression (operator = +) ["foo"] : java.lang.String
                                     ULiteralExpression (value = "foo") ["foo"] : java.lang.String
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : java.util.List<? extends java.lang.String>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
-                                USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : java.util.List<? extends java.lang.String>
+                                USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
         UMethod (name = foo) [public static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit>) : T {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super T, ? extends kotlin.Unit>
-                    UBlockExpression [{...}] : kotlin.Unit
-            UBlockExpression [{...}] : java.lang.Void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : java.lang.Void
+                ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() T, ? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                    UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UPolyadicExpression (operator = +) ["message"] : java.lang.String
                         ULiteralExpression (value = "message") ["message"] : java.lang.String

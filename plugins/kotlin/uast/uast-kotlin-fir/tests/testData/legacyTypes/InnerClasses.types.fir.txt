@@ -23,5 +23,5 @@ UFile (package = ) [public final class Foo {...]
                 UMethod (name = doNothing) [public final fun doNothing() : void {...}]
                     UBlockExpression [{...}]
                         UReturnExpression [return Unit]
-                            USimpleNameReferenceExpression (identifier = Unit) [Unit] : kotlin.Unit
+                            USimpleNameReferenceExpression (identifier = Unit) [Unit] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UMethod (name = Baz) [public fun Baz() = UastEmptyExpression]

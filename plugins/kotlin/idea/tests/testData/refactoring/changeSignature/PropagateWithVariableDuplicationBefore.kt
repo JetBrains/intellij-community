@@ -5,4 +5,3 @@ val n = 1
 fun bar(): Int {
     return foo() + n
 }
-// IGNORE_K2

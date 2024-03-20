@@ -12,50 +12,50 @@ UFile (package = ) [import java.lang.Runnable...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return if (isSafe) x as java.lang.Runnable else x as? java.lang.Runnable]
-                    UIfExpression [if (isSafe) x as java.lang.Runnable else x as? java.lang.Runnable] : java.lang.Runnable
+                    UIfExpression [if (isSafe) x as java.lang.Runnable else x as? java.lang.Runnable] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                         USimpleNameReferenceExpression (identifier = isSafe) [isSafe] : boolean
-                        UBinaryExpressionWithType [x as java.lang.Runnable] : java.lang.Runnable
-                            USimpleNameReferenceExpression (identifier = x) [x] : java.lang.Object
+                        UBinaryExpressionWithType [x as java.lang.Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = x) [x] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable]
-                        UBinaryExpressionWithType [x as? java.lang.Runnable] : java.lang.Runnable
-                            USimpleNameReferenceExpression (identifier = x) [x] : java.lang.Object
+                        UBinaryExpressionWithType [x as? java.lang.Runnable] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = x) [x] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
-            UBlockExpression [{...}] : java.lang.Void
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UDeclarationsExpression [var x: java.lang.Object = stringConsumer("Hi") as java.lang.Object]
                     ULocalVariable (name = x) [var x: java.lang.Object = stringConsumer("Hi") as java.lang.Object]
-                        UBinaryExpressionWithType [stringConsumer("Hi") as java.lang.Object] : java.lang.Object
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi")] : kotlin.Unit
+                        UBinaryExpressionWithType [stringConsumer("Hi") as java.lang.Object] : @org.jetbrains.annotations.NotNull() java.lang.Object
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
-                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : kotlin.Unit
+                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UPolyadicExpression (operator = +) ["Hi"] : java.lang.String
                                     ULiteralExpression (value = "Hi") ["Hi"] : java.lang.String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
-                UIfExpression [if (x != Unit) return "Fail: " + x] : kotlin.Unit
+                UIfExpression [if (x != Unit) return "Fail: " + x] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBinaryExpression (operator = !=) [x != Unit] : boolean
-                        USimpleNameReferenceExpression (identifier = x) [x] : java.lang.Object
-                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : kotlin.Unit
-                    UReturnExpression [return "Fail: " + x] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = x) [x] : @org.jetbrains.annotations.NotNull() java.lang.Object
+                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    UReturnExpression [return "Fail: " + x] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UPolyadicExpression (operator = +) ["Fail: " + x] : java.lang.String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : java.lang.String
-                            USimpleNameReferenceExpression (identifier = x) [x] : java.lang.Object
+                            USimpleNameReferenceExpression (identifier = x) [x] : @org.jetbrains.annotations.NotNull() java.lang.Object
                 UDeclarationsExpression [var y: java.lang.Object = stringConsumer("Hi, again") as java.lang.Object]
                     ULocalVariable (name = y) [var y: java.lang.Object = stringConsumer("Hi, again") as java.lang.Object]
-                        UBinaryExpressionWithType [stringConsumer("Hi, again") as java.lang.Object] : java.lang.Object
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi, again")] : kotlin.Unit
+                        UBinaryExpressionWithType [stringConsumer("Hi, again") as java.lang.Object] : @org.jetbrains.annotations.NotNull() java.lang.Object
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi, again")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
-                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : kotlin.Unit
+                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UPolyadicExpression (operator = +) ["Hi, again"] : java.lang.String
                                     ULiteralExpression (value = "Hi, again") ["Hi, again"] : java.lang.String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
-                UIfExpression [if (y != Unit) return "Fail: " + y] : kotlin.Unit
+                UIfExpression [if (y != Unit) return "Fail: " + y] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBinaryExpression (operator = !=) [y != Unit] : boolean
-                        USimpleNameReferenceExpression (identifier = y) [y] : java.lang.Object
-                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : kotlin.Unit
-                    UReturnExpression [return "Fail: " + y] : java.lang.Void
+                        USimpleNameReferenceExpression (identifier = y) [y] : @org.jetbrains.annotations.NotNull() java.lang.Object
+                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    UReturnExpression [return "Fail: " + y] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UPolyadicExpression (operator = +) ["Fail: " + y] : java.lang.String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : java.lang.String
-                            USimpleNameReferenceExpression (identifier = y) [y] : java.lang.Object
+                            USimpleNameReferenceExpression (identifier = y) [y] : @org.jetbrains.annotations.NotNull() java.lang.Object
                 UDeclarationsExpression [var r: java.lang.Runnable = anonymous object : Runnable {...    }]
                     ULocalVariable (name = r) [var r: java.lang.Runnable = anonymous object : Runnable {...    }]
                         UObjectLiteralExpression [anonymous object : Runnable {...    }] : java.lang.Runnable
@@ -63,34 +63,34 @@ UFile (package = ) [import java.lang.Runnable...]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : void
                                 UMethod (name = ) [private fun () = UastEmptyExpression]
-                UIfExpression [if (foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : kotlin.Unit
+                UIfExpression [if (foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBinaryExpression (operator = !==) [foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression] : boolean
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, true)] : java.lang.Runnable
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, true)] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : java.lang.Runnable
-                            USimpleNameReferenceExpression (identifier = r) [r] : java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                             ULiteralExpression (value = true) [true] : boolean
                         UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : <ErrorType>
                             UastEmptyExpression [UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
-                    UReturnExpression [return "Fail: " + r] : java.lang.Void
+                    UReturnExpression [return "Fail: " + r] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UPolyadicExpression (operator = +) ["Fail: " + r] : java.lang.String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : java.lang.String
-                            USimpleNameReferenceExpression (identifier = r) [r] : java.lang.Runnable
-                UIfExpression [if (foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : kotlin.Unit
+                            USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                UIfExpression [if (foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBinaryExpression (operator = !==) [foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression] : boolean
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, false)] : java.lang.Runnable
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, false)] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : java.lang.Runnable
-                            USimpleNameReferenceExpression (identifier = r) [r] : java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
+                            USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                             ULiteralExpression (value = false) [false] : boolean
                         UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : <ErrorType>
                             UastEmptyExpression [UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
-                    UReturnExpression [return "Fail: " + r] : java.lang.Void
+                    UReturnExpression [return "Fail: " + r] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UPolyadicExpression (operator = +) ["Fail: " + r] : java.lang.String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : java.lang.String
-                            USimpleNameReferenceExpression (identifier = r) [r] : java.lang.Runnable
-                UReturnExpression [return "OK"] : java.lang.Void
+                            USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
+                UReturnExpression [return "OK"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UPolyadicExpression (operator = +) ["OK"] : java.lang.String
                         ULiteralExpression (value = "OK") ["OK"] : java.lang.String

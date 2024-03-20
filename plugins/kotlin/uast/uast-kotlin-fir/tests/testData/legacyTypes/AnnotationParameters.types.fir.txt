@@ -3,9 +3,9 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
         UMethod (name = foo) [@RequiresPermission(anyOf = intArrayOf(1, 2, 3))...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = intArrayOf(1, 2, 3))]
                 UNamedExpression (name = anyOf) [anyOf = intArrayOf(1, 2, 3)]
-                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [intArrayOf(1, 2, 3)] : int[]
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [intArrayOf(1, 2, 3)] : int @org.jetbrains.annotations.NotNull() []
                         UIdentifier (Identifier (intArrayOf)) [UIdentifier (Identifier (intArrayOf))]
-                        USimpleNameReferenceExpression (identifier = intArrayOf, resolvesTo = null) [intArrayOf] : int[]
+                        USimpleNameReferenceExpression (identifier = intArrayOf, resolvesTo = null) [intArrayOf] : int @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 1) [1] : int
                         ULiteralExpression (value = 2) [2] : int
                         ULiteralExpression (value = 3) [3] : int
@@ -39,11 +39,11 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                             ULiteralExpression (value = "Dolor") ["Dolor"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return Unit]
-                    USimpleNameReferenceExpression (identifier = Unit) [Unit] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = Unit) [Unit] : @org.jetbrains.annotations.NotNull() kotlin.Unit
         UMethod (name = fooWithArrLiteral) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])]
                 UNamedExpression (name = anyOf) [anyOf = collectionLiteral[1, 2, 3]]
-                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral[1, 2, 3]] : int[]
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral[1, 2, 3]] : int @org.jetbrains.annotations.NotNull() []
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
                         ULiteralExpression (value = 1) [1] : int
                         ULiteralExpression (value = 2) [2] : int
@@ -54,7 +54,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
         UMethod (name = fooWithStrArrLiteral) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])...}]
             UAnnotation (fqName = RequiresStrPermission) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])]
                 UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]]
-                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] : java.lang.String[]
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
                         UPolyadicExpression (operator = +) ["a"] : java.lang.String
                             ULiteralExpression (value = "a") ["a"] : java.lang.String

@@ -9,9 +9,9 @@ UFile (package = ) [public abstract interface Pizza {...]
         UClass (name = Builder) [public static abstract class Builder {...}]
             UField (name = ingredients) [@org.jetbrains.annotations.NotNull private final var ingredients: java.util.Set<Pizza.Ingredient> = mutableSetOf()]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [mutableSetOf()] : java.util.Set<Pizza.Ingredient>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [mutableSetOf()] : @org.jetbrains.annotations.NotNull() java.util.Set<@org.jetbrains.annotations.NotNull() Pizza.Ingredient>
                     UIdentifier (Identifier (mutableSetOf)) [UIdentifier (Identifier (mutableSetOf))]
-                    USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null) [mutableSetOf] : java.util.Set<Pizza.Ingredient>
+                    USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null) [mutableSetOf] : @org.jetbrains.annotations.NotNull() java.util.Set<@org.jetbrains.annotations.NotNull() Pizza.Ingredient>
             UMethod (name = addIngredient) [public abstract fun addIngredient(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : P = UastEmptyExpression]
                 UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -25,13 +25,13 @@ UFile (package = ) [public abstract interface Pizza {...]
         UMethod (name = getName) [public fun getName() : java.lang.String {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return java.lang.<init>("Margherita")]
-                    UQualifiedReferenceExpression [java.lang.<init>("Margherita")] : java.lang.String
+                    UQualifiedReferenceExpression [java.lang.<init>("Margherita")] : @org.jetbrains.annotations.NotNull() java.lang.String
                         UQualifiedReferenceExpression [java.lang]
                             USimpleNameReferenceExpression (identifier = java) [java]
                             USimpleNameReferenceExpression (identifier = lang) [lang]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("Margherita")] : java.lang.String
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("Margherita")] : @org.jetbrains.annotations.NotNull() java.lang.String
                             UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [<init>] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.String
                             UPolyadicExpression (operator = +) ["Margherita"] : java.lang.String
                                 ULiteralExpression (value = "Margherita") ["Margherita"] : java.lang.String
         UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]

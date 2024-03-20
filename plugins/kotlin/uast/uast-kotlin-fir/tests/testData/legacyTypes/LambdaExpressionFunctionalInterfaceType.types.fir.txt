@@ -19,7 +19,7 @@ UFile (package = ) [public final class LambdaExpressionFunctionalInterfaceTypeKt
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: java.lang.Integer ->...})] : java.util.stream.Stream<java.lang.String>
                         UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
                         USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] : java.util.stream.Stream<java.lang.String>
-                        ULambdaExpression [{ var it: java.lang.Integer ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.String>
+                        ULambdaExpression [{ var it: java.lang.Integer ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.String>
                             UParameter (name = it) [var it: java.lang.Integer]
                             UBlockExpression [{...}] : java.lang.String
                                 UReturnExpression [return it.toString()]

@@ -6,9 +6,9 @@ UFile (package = test.pkg) [package test.pkg...]
         UMethod (name = test2) [@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")...}]
             UAnnotation (fqName = kotlin.Deprecated) [@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")]
                 UNamedExpression (name = level) [level = DeprecationLevel.HIDDEN]
-                    UQualifiedReferenceExpression [DeprecationLevel.HIDDEN] : kotlin.DeprecationLevel
+                    UQualifiedReferenceExpression [DeprecationLevel.HIDDEN] : @org.jetbrains.annotations.NotNull() kotlin.DeprecationLevel
                         USimpleNameReferenceExpression (identifier = DeprecationLevel) [DeprecationLevel]
-                        USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] : kotlin.DeprecationLevel
+                        USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] : @org.jetbrains.annotations.NotNull() kotlin.DeprecationLevel
                 UNamedExpression (name = message) [message = "nothing"]
                     UPolyadicExpression (operator = +) ["nothing"] : java.lang.String
                         ULiteralExpression (value = "nothing") ["nothing"] : java.lang.String

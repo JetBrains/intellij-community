@@ -2,11 +2,11 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
     UClass (name = AccessArrayOfInlineClassKt) [public final class AccessArrayOfInlineClassKt {...}]
         UField (name = xs) [@org.jetbrains.annotations.NotNull private static final var xs: Z[] = <init>(2, { var it: int ->...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(2, { var it: int ->...})] : Z[]
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(2, { var it: int ->...})] : @org.jetbrains.annotations.NotNull() Z @org.jetbrains.annotations.NotNull() []
                 UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
-                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : Z[]
+                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : @org.jetbrains.annotations.NotNull() Z @org.jetbrains.annotations.NotNull() []
                 ULiteralExpression (value = 2) [2] : int
-                ULambdaExpression [{ var it: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends Z>
+                ULambdaExpression [{ var it: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() Z>
                     UParameter (name = it) [var it: int]
                     UBlockExpression [{...}] : int
                         UReturnExpression [return <init>(42)]
@@ -16,10 +16,10 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                                 ULiteralExpression (value = 42) [42] : int
         UMethod (name = getXs) [public static final fun getXs() : Z[] = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
-            UBlockExpression [{...}] : java.lang.Void
-                UBinaryExpression (operator = =) [xs[0] = <init>(12)] : kotlin.Unit
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UBinaryExpression (operator = =) [xs[0] = <init>(12)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UArrayAccessExpression [xs[0]] : int
-                        USimpleNameReferenceExpression (identifier = xs) [xs] : Z[]
+                        USimpleNameReferenceExpression (identifier = xs) [xs] : @org.jetbrains.annotations.NotNull() Z @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 0) [0] : int
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(12)] : int
                         UIdentifier (Identifier (Z)) [UIdentifier (Identifier (Z))]
@@ -28,21 +28,21 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                 UDeclarationsExpression [var t: int = xs[0]]
                     ULocalVariable (name = t) [var t: int = xs[0]]
                         UArrayAccessExpression [xs[0]] : int
-                            USimpleNameReferenceExpression (identifier = xs) [xs] : Z[]
+                            USimpleNameReferenceExpression (identifier = xs) [xs] : @org.jetbrains.annotations.NotNull() Z @org.jetbrains.annotations.NotNull() []
                             ULiteralExpression (value = 0) [0] : int
-                UIfExpression [if (t.data != 12) throw <init>(t)] : kotlin.Unit
+                UIfExpression [if (t.data != 12) throw <init>(t)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBinaryExpression (operator = !=) [t.data != 12] : boolean
                         UQualifiedReferenceExpression [t.data] : int
                             USimpleNameReferenceExpression (identifier = t) [t] : int
                             USimpleNameReferenceExpression (identifier = data) [data] : int
                         ULiteralExpression (value = 12) [12] : int
-                    UThrowExpression [throw <init>(t)] : java.lang.Void
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(t)] : java.lang.AssertionError
+                    UThrowExpression [throw <init>(t)] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(t)] : @org.jetbrains.annotations.NotNull() java.lang.AssertionError
                             UIdentifier (Identifier (AssertionError)) [UIdentifier (Identifier (AssertionError))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AssertionError) [<init>] : java.lang.AssertionError
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AssertionError) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.AssertionError
                             UPolyadicExpression (operator = +) [t] : java.lang.String
                                 USimpleNameReferenceExpression (identifier = t) [t] : int
-                UReturnExpression [return "OK"] : java.lang.Void
+                UReturnExpression [return "OK"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UPolyadicExpression (operator = +) ["OK"] : java.lang.String
                         ULiteralExpression (value = "OK") ["OK"] : java.lang.String
     UClass (name = Z) [public final class Z {...}]

@@ -16,11 +16,11 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                         UPolyadicExpression (operator = +) ["RegExp"] : java.lang.String
                             ULiteralExpression (value = "RegExp") ["RegExp"] : java.lang.String
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : java.lang.Void
-                UReturnExpression [return toRegex()] : java.lang.Void
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] : kotlin.text.Regex
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UReturnExpression [return toRegex()] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] : @org.jetbrains.annotations.NotNull() kotlin.text.Regex
                         UIdentifier (Identifier (toRegex)) [UIdentifier (Identifier (toRegex))]
-                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] : kotlin.text.Regex
+                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] : @org.jetbrains.annotations.NotNull() kotlin.text.Regex
     UClass (name = MyReceiverAnnotation) [public abstract annotation MyReceiverAnnotation {...}]
         UAnnotationMethod (name = name) [public abstract fun name() : java.lang.String = UastEmptyExpression]
             UPolyadicExpression (operator = +) [""] : java.lang.String

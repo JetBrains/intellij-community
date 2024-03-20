@@ -8,9 +8,9 @@ UFile (package = ) [public final class SuperCallsKt {...]
                 UClass (name = null) [final class null : A {...}]
                     UMethod (name = bar) [public final fun bar() : void {...}]
                         UBlockExpression [{...}] : void
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [cons(anonymous object : A("inner literal") { })] : kotlin.Unit
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [cons(anonymous object : A("inner literal") { })] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (cons)) [UIdentifier (Identifier (cons))]
-                                USimpleNameReferenceExpression (identifier = cons, resolvesTo = null) [cons] : kotlin.Unit
+                                USimpleNameReferenceExpression (identifier = cons, resolvesTo = null) [cons] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UObjectLiteralExpression [anonymous object : A("inner literal") { }] : A
                                     UPolyadicExpression (operator = +) ["inner literal"] : java.lang.String
                                         ULiteralExpression (value = "inner literal") ["inner literal"] : java.lang.String
@@ -79,11 +79,11 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: long]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : void
-                UQualifiedReferenceExpression [super.foo(a)] : kotlin.Unit
-                    USuperExpression (label = null) [super] : A
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo(a)] : kotlin.Unit
+                UQualifiedReferenceExpression [super.foo(a)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    USuperExpression (label = null) [super] : @org.jetbrains.annotations.NotNull() A
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo(a)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : kotlin.Unit
+                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         USimpleNameReferenceExpression (identifier = a) [a] : long
         UMethod (name = C) [public fun C(@org.jetbrains.annotations.NotNull p: java.lang.String) {...}]
             UParameter (name = p) [@org.jetbrains.annotations.NotNull var p: java.lang.String]
@@ -101,9 +101,9 @@ UFile (package = ) [public final class SuperCallsKt {...]
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
                     USimpleNameReferenceExpression (identifier = i) [i] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] : kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : @org.jetbrains.annotations.NotNull() kotlin.Unit
     UClass (name = O) [public final class O : A {...}]
         UField (name = INSTANCE) [@null public static final var INSTANCE: O]
             UAnnotation (fqName = null) [@null]
