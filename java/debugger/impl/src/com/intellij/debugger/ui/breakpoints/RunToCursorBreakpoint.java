@@ -19,6 +19,8 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -104,5 +106,10 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     // It may be nice to refactor it to calculate the presence of coroutine job in the moment of this breakpoint creation.
     if (!myNeedReplaceWithAllThreadSuspendContext || suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) return false;
     return SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, c -> true);
+  }
+
+  @Override
+  public @Nullable Function<SuspendContextImpl, Boolean> applyAfterContextSwitch() {
+    return null; // in DebuggerUtils#isAlwaysSuspendThreadBeforeSwitch mode the debugger engine should just use the standard switch
   }
 }

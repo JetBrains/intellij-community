@@ -41,9 +41,18 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
         .error("Replacing for all-thread mode can be done only from the suspend-thread mode");
       return false;
     }
+    @NotNull DebugProcessImpl process = suspendContext.getDebugProcess();
+    if (process.myPreparingToSuspendAll) {
+      process.mySuspendAllListeners.add(() -> {
+        // Now all threads are stopped. But it would be nice to report about it.
+        process.getSuspendManager().voteResume(suspendContext);
+      });
+      return true;
+    }
+
+    process.myPreparingToSuspendAll = true;
+
     if (Registry.is("debugger.transfer.context.to.suspend.all.with.method.breakpoint")) {
-      @NotNull DebugProcessImpl process = suspendContext.getDebugProcess();
-      process.myPreparingToSuspendAll = true;
       process.myParametersForSuspendAllReplacing = new ParametersForSuspendAllReplacing(suspendContext, performOnSuspendAll);
       EvaluationListener listener = addFinishEvaluationListener(process);
       boolean isSuccessTry = tryToIssueSuspendContextReplacement(process);
@@ -66,7 +75,6 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
                                               @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     DebugProcessImpl process = suspendContext.getDebugProcess();
     if (!switchContextWithSuspend(process, suspendContext, performOnSuspendAll)) {
-      process.myPreparingToSuspendAll = true;
       process.addEvaluationListener(new EvaluationListener() {
         @Override
         public void evaluationFinished(SuspendContextImpl context) {
@@ -75,7 +83,6 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
             return;
           }
           if (switchContextWithSuspend(process, suspendContext, performOnSuspendAll)) {
-            process.myPreparingToSuspendAll = false;
             process.removeEvaluationListener(this);
           }
           else {
@@ -96,7 +103,12 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
       SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
       newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
       if (processSuspendAll(newSuspendContext, suspendContext, performOnSuspendAll)) {
-        suspendManager.voteSuspend(newSuspendContext);
+        process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+            suspendManager.voteSuspend(newSuspendContext);
+          }
+        });
       }
       else {
         suspendManager.resume(newSuspendContext);
@@ -179,8 +191,6 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
       return false;
     }
 
-    myProcess.myPreparingToSuspendAll = false;
-
     return processSuspendAll(suspendContext, myParameters.getThreadSuspendContext(), myParameters.getPerformOnSuspendAll());
   }
 
@@ -193,6 +203,14 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     // Note, myThreadSuspendContext is resuming without SuspendManager#voteSuspend.
     // Look at the end of DebugProcessEvents#processLocatableEvent for more details.
     suspendContext.getDebugProcess().getSuspendManager().voteResume(originalContext);
+
+    suspendContext.mySuspendAllSwitchedContext = true;
+    DebugProcessImpl process = suspendContext.getDebugProcess();
+    for (Runnable listener : process.mySuspendAllListeners) {
+      listener.run();
+    }
+    process.mySuspendAllListeners.clear();
+    process.myPreparingToSuspendAll = false;
 
     return performOnSuspendAll.apply(suspendContext);
   }

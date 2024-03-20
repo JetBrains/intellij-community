@@ -146,6 +146,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
   volatile boolean myPreparingToSuspendAll = false;
 
+  List<Runnable> mySuspendAllListeners = new ArrayList<>();
+
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
@@ -1909,8 +1911,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
       applyThreadFilter(threadFilterFromContext);
       int breakpointSuspendPolicy = context.getSuspendPolicy();
-      if (threadFilterFromContext != null && threadFilterFromContext.getRealThread() == null) {
-        breakpointSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+      // In the case of the isAlwaysSuspendThreadBeforeSwitch mode, the switch will be performed for all breakpoints by engine
+      if (!DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
+        if (threadFilterFromContext != null && threadFilterFromContext.getRealThread() == null) {
+          breakpointSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+        }
       }
       prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, breakpointSuspendPolicy);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
