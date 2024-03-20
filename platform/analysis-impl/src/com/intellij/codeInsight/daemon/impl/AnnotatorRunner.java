@@ -131,7 +131,7 @@ final class AnnotatorRunner {
       return;
     }
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
-    AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, (AnnotationSessionImpl)myHighlightInfoHolder.getAnnotationSession(), annotationHolder -> {
+    AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, myHighlightInfoHolder.getAnnotationSession(), annotationHolder -> {
       HighlightersRecycler emptyElementRecycler = new HighlightersRecycler(); // no need to call incinerate/release because it's always empty
       for (PsiElement element : insideThenOutside) {
         if (!supported.contains(element.getLanguage())) {
