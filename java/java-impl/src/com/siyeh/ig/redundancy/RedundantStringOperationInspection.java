@@ -85,12 +85,15 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
+  public boolean ignoreSingleArgSubstring = true;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreStringConstructor",
-               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors")));
+               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors")),
+      checkbox("ignoreSingleArgSubstring",
+               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.single.argument.substring")));
   }
 
   @NotNull
@@ -572,7 +575,8 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       PsiExpression[] args = call.getArgumentList().getExpressions();
       PsiExpression stringExpression = call.getMethodExpression().getQualifierExpression();
       if (args.length == 1) {
-        if (ExpressionUtils.isZero(args[0]) ||
+        if (myInspection.ignoreSingleArgSubstring ||
+            ExpressionUtils.isZero(args[0]) ||
             isLengthOf(args[0], stringExpression) ||
             !(PsiUtil.deparenthesizeExpression(stringExpression) instanceof PsiReferenceExpression)) {
           return null;

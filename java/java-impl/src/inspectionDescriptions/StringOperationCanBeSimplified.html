@@ -24,6 +24,16 @@ that can be replaced with a simpler expression.
   This will avoid changing the outcome of String comparisons with <code>==</code> or <code>!=</code> after applying
   the quick-fix in code that uses <code>new String()</code> calls to guarantee a different object identity.
 </p>
+<p>
+  Use the <b>Do not report single argument substring() calls</b> option below to not report code like the following.
+</p>
+<pre><code>
+  stringBuilder.append(string.substring(5));
+</code></pre>
+<p>which can be replaced with the following.
+<pre><code>
+  stringBuilder.append(string, 5, string.length());
+</code></pre>
 <p><small>New in 2018.1</small></p>
 </body>
 </html>
