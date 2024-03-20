@@ -446,7 +446,7 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
     return
   }
 
-  ((project as ComponentManagerImpl).instanceCoroutineScope(activity.javaClass)).launch {
+  ((project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader)).launch {
     try {
       blockingContext {
         @Suppress("UsagesOfObsoleteApi")
