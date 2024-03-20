@@ -3,51 +3,51 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
         UMethod (name = getElementsAdditionalResolve) [public static final fun getElementsAdditionalResolve(@org.jetbrains.annotations.NotNull string: java.lang.String) : java.lang.String {...}]
             UParameter (name = string) [@org.jetbrains.annotations.NotNull var string: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : void
                 UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
                     ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : PsiType:List<? extends String>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : java.util.List<? extends java.lang.String>
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                            UPolyadicExpression (operator = +) ["1"] : PsiType:String
-                                ULiteralExpression (value = "1") ["1"] : PsiType:String
-                            UPolyadicExpression (operator = +) ["2"] : PsiType:String
-                                ULiteralExpression (value = "2") ["2"] : PsiType:String
-                USwitchExpression [switch (string)  {...] : PsiType:Unit
-                    USimpleNameReferenceExpression (identifier = string) [string] : PsiType:String
-                    UExpressionList (when) [    "aaaa" -> {...    ] : PsiType:Unit
+                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
+                            UPolyadicExpression (operator = +) ["1"] : java.lang.String
+                                ULiteralExpression (value = "1") ["1"] : java.lang.String
+                            UPolyadicExpression (operator = +) ["2"] : java.lang.String
+                                ULiteralExpression (value = "2") ["2"] : java.lang.String
+                USwitchExpression [switch (string)  {...] : kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = string) [string] : java.lang.String
+                    UExpressionList (when) [    "aaaa" -> {...    ] : kotlin.Unit
                         USwitchClauseExpressionWithBody ["aaaa" -> {...]
-                            UPolyadicExpression (operator = +) ["aaaa"] : PsiType:String
-                                ULiteralExpression (value = "aaaa") ["aaaa"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["aaaa"] : java.lang.String
+                                ULiteralExpression (value = "aaaa") ["aaaa"] : java.lang.String
                             UExpressionList (when_entry) [{...]
                                 UYieldExpression [yield return "bindingContext"]
-                                    UReturnExpression [return "bindingContext"] : PsiType:Void
-                                        UPolyadicExpression (operator = +) ["bindingContext"] : PsiType:String
-                                            ULiteralExpression (value = "bindingContext") ["bindingContext"] : PsiType:String
+                                    UReturnExpression [return "bindingContext"] : java.lang.Void
+                                        UPolyadicExpression (operator = +) ["bindingContext"] : java.lang.String
+                                            ULiteralExpression (value = "bindingContext") ["bindingContext"] : java.lang.String
                         USwitchClauseExpressionWithBody ["empty-switch" -> {...]
-                            UPolyadicExpression (operator = +) ["empty-switch"] : PsiType:String
-                                ULiteralExpression (value = "empty-switch") ["empty-switch"] : PsiType:String
+                            UPolyadicExpression (operator = +) ["empty-switch"] : java.lang.String
+                                ULiteralExpression (value = "empty-switch") ["empty-switch"] : java.lang.String
                             UExpressionList (when_entry) [{...]
                         USwitchClauseExpressionWithBody [ -> {...]
                             UExpressionList (when_entry) [{...]
                                 UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr...@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
                                     ULocalVariable (name = var837f2350) [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        USimpleNameReferenceExpression (identifier = arr) [arr] : PsiType:List<? extends String>
+                                        USimpleNameReferenceExpression (identifier = arr) [arr] : java.util.List<? extends java.lang.String>
                                     ULocalVariable (name = bindingContext) [@org.jetbrains.annotations.NotNull var bindingContext: java.lang.String = var837f2350.<anonymous class>()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:<ErrorType>
-                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:<ErrorType>
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
+                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : <ErrorType>
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : <ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
                                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                                     ULocalVariable (name = statementFilter) [@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:<ErrorType>
-                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:<ErrorType>
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
+                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : <ErrorType>
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : <ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                                 UYieldExpression [yield return bindingContext]
-                                    UReturnExpression [return bindingContext] : PsiType:Void
-                                        USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : PsiType:String
+                                    UReturnExpression [return bindingContext] : java.lang.Void
+                                        USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : java.lang.String

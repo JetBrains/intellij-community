@@ -8,10 +8,10 @@ UFile (package = test.pkg) [package test.pkg...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(java.lang.String.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                        UQualifiedReferenceExpression [java.lang.String.java] : PsiType:Class<String>
-                            UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
+                        UQualifiedReferenceExpression [java.lang.String.java] : java.lang.Class<java.lang.String>
+                            UClassLiteralExpression [java.lang.String] : kotlin.reflect.KClass<java.lang.String>
                                 USimpleNameReferenceExpression (identifier = String) [String]
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<String>
+                            USimpleNameReferenceExpression (identifier = java) [java] : java.lang.Class<java.lang.String>
         UMethod (name = systemService1) [public static fun systemService1(@org.jetbrains.annotations.NotNull $this$systemService1: test.pkg.Context) : <ErrorType> {...}]
             UParameter (name = $this$systemService1) [@org.jetbrains.annotations.NotNull var $this$systemService1: test.pkg.Context]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -20,10 +20,10 @@ UFile (package = test.pkg) [package test.pkg...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(T.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                        UQualifiedReferenceExpression [T.java] : PsiType:Class<T>
-                            UClassLiteralExpression [T] : PsiType:KClass<T>
+                        UQualifiedReferenceExpression [T.java] : java.lang.Class<T>
+                            UClassLiteralExpression [T] : kotlin.reflect.KClass<T>
                                 USimpleNameReferenceExpression (identifier = T) [T]
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<T>
+                            USimpleNameReferenceExpression (identifier = java) [java] : java.lang.Class<T>
     UClass (name = Context) [public final class Context {...}]
         UMethod (name = ownSystemService2) [public final fun ownSystemService2() : error.NonExistentClass {...}]
             UBlockExpression [{...}]
@@ -31,10 +31,10 @@ UFile (package = test.pkg) [package test.pkg...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(java.lang.String.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                        UQualifiedReferenceExpression [java.lang.String.java] : PsiType:Class<String>
-                            UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
+                        UQualifiedReferenceExpression [java.lang.String.java] : java.lang.Class<java.lang.String>
+                            UClassLiteralExpression [java.lang.String] : kotlin.reflect.KClass<java.lang.String>
                                 USimpleNameReferenceExpression (identifier = String) [String]
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<String>
+                            USimpleNameReferenceExpression (identifier = java) [java] : java.lang.Class<java.lang.String>
         UMethod (name = Context) [public fun Context() = UastEmptyExpression]
         UMethod (name = ownSystemService1) [public fun ownSystemService1() : <ErrorType> {...}]
             UBlockExpression [{...}]
@@ -42,7 +42,7 @@ UFile (package = test.pkg) [package test.pkg...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(T.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                        UQualifiedReferenceExpression [T.java] : PsiType:Class<T>
-                            UClassLiteralExpression [T] : PsiType:KClass<T>
+                        UQualifiedReferenceExpression [T.java] : java.lang.Class<T>
+                            UClassLiteralExpression [T] : kotlin.reflect.KClass<T>
                                 USimpleNameReferenceExpression (identifier = T) [T]
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<T>
+                            USimpleNameReferenceExpression (identifier = java) [java] : java.lang.Class<T>

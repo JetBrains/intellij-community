@@ -3,51 +3,51 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
         UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit>) : T {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULambdaExpression [{ ...}] : PsiType:Function1<? super T, ? extends Unit>
+                ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super T, ? extends kotlin.Unit>
                     UBlockExpression [{...}]
-            UBlockExpression [{...}] : PsiType:Void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : PsiType:Void
+            UBlockExpression [{...}] : java.lang.Void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : PsiType:Void
-                    UPolyadicExpression (operator = +) ["message"] : PsiType:String
-                        ULiteralExpression (value = "message") ["message"] : PsiType:String
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                    UPolyadicExpression (operator = +) ["message"] : java.lang.String
+                        ULiteralExpression (value = "message") ["message"] : java.lang.String
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:String
+            UBlockExpression [{...}] : void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : java.lang.String
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String
+                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : java.lang.String
                 UDeclarationsExpression [var x: java.lang.String = foo()]
                     ULocalVariable (name = x) [var x: java.lang.String = foo()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:String
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : java.lang.String
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : java.lang.String
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : java.lang.String
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:String
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : java.lang.String
                 UDeclarationsExpression [var y: java.lang.String = bar()]
                     ULocalVariable (name = y) [var y: java.lang.String = bar()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : PsiType:String
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : java.lang.String
                             UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                            USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : java.lang.String
                 UDeclarationsExpression [var z: java.util.List<? extends java.lang.String> = listOf("foo").filterIsInstance()]
                     ULocalVariable (name = z) [var z: java.util.List<? extends java.lang.String> = listOf("foo").filterIsInstance()]
-                        UQualifiedReferenceExpression [listOf("foo").filterIsInstance()] : PsiType:List<? extends String>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("foo")] : PsiType:List<? extends String>
+                        UQualifiedReferenceExpression [listOf("foo").filterIsInstance()] : java.util.List<? extends java.lang.String>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("foo")] : java.util.List<? extends java.lang.String>
                                 UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                                UPolyadicExpression (operator = +) ["foo"] : PsiType:String
-                                    ULiteralExpression (value = "foo") ["foo"] : PsiType:String
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : PsiType:List<? extends String>
+                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
+                                UPolyadicExpression (operator = +) ["foo"] : java.lang.String
+                                    ULiteralExpression (value = "foo") ["foo"] : java.lang.String
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : java.util.List<? extends java.lang.String>
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
-                                USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : PsiType:List<? extends String>
+                                USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : java.util.List<? extends java.lang.String>
         UMethod (name = foo) [public static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit>) : T {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULambdaExpression [{ ...}] : PsiType:Function1<? super T, ? extends Unit>
+                ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super T, ? extends kotlin.Unit>
                     UBlockExpression [{...}]
-            UBlockExpression [{...}] : PsiType:Void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : PsiType:Void
+            UBlockExpression [{...}] : java.lang.Void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : PsiType:Void
-                    UPolyadicExpression (operator = +) ["message"] : PsiType:String
-                        ULiteralExpression (value = "message") ["message"] : PsiType:String
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void
+                    UPolyadicExpression (operator = +) ["message"] : java.lang.String
+                        ULiteralExpression (value = "message") ["message"] : java.lang.String

@@ -9,34 +9,34 @@ UFile (package = ) [public abstract interface Callback {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = factory) [@org.jetbrains.annotations.NotNull var factory: kotlin.jvm.functions.Function0<? extends T>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Void
-                UThrowExpression [throw <init>()] : PsiType:Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:UnsupportedOperationException
+            UBlockExpression [{...}] : java.lang.Void
+                UThrowExpression [throw <init>()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : java.lang.UnsupportedOperationException
                         UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : PsiType:UnsupportedOperationException
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : java.lang.UnsupportedOperationException
         UMethod (name = Model) [public fun Model() {...}]
             UBlockExpression [{...}]
-                UBlockExpression [{...}] : PsiType:Unit
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [crashMe(Callback.java, { ...})] : PsiType:Unit
+                UBlockExpression [{...}] : kotlin.Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [crashMe(Callback.java, { ...})] : kotlin.Unit
                         UIdentifier (Identifier (crashMe)) [UIdentifier (Identifier (crashMe))]
-                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null) [crashMe] : PsiType:Unit
-                        UQualifiedReferenceExpression [Callback.java] : PsiType:Class<Callback>
-                            UClassLiteralExpression [Callback] : PsiType:KClass<Callback>
+                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null) [crashMe] : kotlin.Unit
+                        UQualifiedReferenceExpression [Callback.java] : java.lang.Class<Callback>
+                            UClassLiteralExpression [Callback] : kotlin.reflect.KClass<Callback>
                                 USimpleNameReferenceExpression (identifier = Callback) [Callback]
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<Callback>
-                        ULambdaExpression [{ ...}] : PsiType:Function0<? extends Callback>
+                            USimpleNameReferenceExpression (identifier = java) [java] : java.lang.Class<Callback>
+                        ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends Callback>
                             UBlockExpression [{...}]
                                 UReturnExpression [return anonymous object : Callback {...            }]
-                                    UObjectLiteralExpression [anonymous object : Callback {...            }] : PsiType:Callback
+                                    UObjectLiteralExpression [anonymous object : Callback {...            }] : Callback
                                         UClass (name = null) [final class null : Callback {...}]
                                             UMethod (name = onError) [public fun onError(@org.jetbrains.annotations.NotNull throwable: java.lang.Throwable) : void {...}]
                                                 UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
                                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                                UBlockExpression [{...}] : PsiType:Void
-                                                    UThrowExpression [throw <init>("")] : PsiType:Void
-                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] : PsiType:UnsupportedOperationException
+                                                UBlockExpression [{...}] : java.lang.Void
+                                                    UThrowExpression [throw <init>("")] : java.lang.Void
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] : java.lang.UnsupportedOperationException
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : PsiType:UnsupportedOperationException
-                                                            UPolyadicExpression (operator = +) [""] : PsiType:String
-                                                                ULiteralExpression (value = "") [""] : PsiType:String
+                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : java.lang.UnsupportedOperationException
+                                                            UPolyadicExpression (operator = +) [""] : java.lang.String
+                                                                ULiteralExpression (value = "") [""] : java.lang.String
                                             UMethod (name = ) [private fun () = UastEmptyExpression]

@@ -2,58 +2,58 @@ UFile (package = ) [public final class ClassLiteralKt {...]
     UClass (name = ClassLiteralKt) [public final class ClassLiteralKt {...}]
         UField (name = stringClass) [@org.jetbrains.annotations.NotNull private static final var stringClass: kotlin.reflect.KClass<java.lang.String> = java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
+            UClassLiteralExpression [java.lang.String] : kotlin.reflect.KClass<java.lang.String>
                 USimpleNameReferenceExpression (identifier = String) [String]
         UMethod (name = getStringClass) [public static final fun getStringClass() : kotlin.reflect.KClass<java.lang.String> = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
-            UBlockExpression [{...}] : PsiType:Void
+            UBlockExpression [{...}] : java.lang.Void
                 UDeclarationsExpression [var x: java.lang.CharSequence = ""]
                     ULocalVariable (name = x) [var x: java.lang.CharSequence = ""]
-                        UPolyadicExpression (operator = +) [""] : PsiType:String
-                            ULiteralExpression (value = "") [""] : PsiType:String
+                        UPolyadicExpression (operator = +) [""] : java.lang.String
+                            ULiteralExpression (value = "") [""] : java.lang.String
                 UDeclarationsExpression [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
                     ULocalVariable (name = xClass) [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
-                        UClassLiteralExpression [java.lang.CharSequence] : PsiType:KClass<? extends CharSequence>
-                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:CharSequence
-                UReturnExpression [return if (xClass == stringClass) "OK" else xClass] : PsiType:Void
-                    UIfExpression [if (xClass == stringClass) "OK" else xClass] : PsiType:String
-                        UBinaryExpression (operator = ==) [xClass == stringClass] : PsiType:boolean
-                            USimpleNameReferenceExpression (identifier = xClass) [xClass] : PsiType:KClass<? extends CharSequence>
-                            USimpleNameReferenceExpression (identifier = stringClass) [stringClass] : PsiType:KClass<String>
-                        UPolyadicExpression (operator = +) ["OK"] : PsiType:String
-                            ULiteralExpression (value = "OK") ["OK"] : PsiType:String
-                        UPolyadicExpression (operator = +) [xClass] : PsiType:String
-                            USimpleNameReferenceExpression (identifier = xClass) [xClass] : PsiType:KClass<? extends CharSequence>
+                        UClassLiteralExpression [java.lang.CharSequence] : kotlin.reflect.KClass<? extends java.lang.CharSequence>
+                            USimpleNameReferenceExpression (identifier = x) [x] : java.lang.CharSequence
+                UReturnExpression [return if (xClass == stringClass) "OK" else xClass] : java.lang.Void
+                    UIfExpression [if (xClass == stringClass) "OK" else xClass] : java.lang.String
+                        UBinaryExpression (operator = ==) [xClass == stringClass] : boolean
+                            USimpleNameReferenceExpression (identifier = xClass) [xClass] : kotlin.reflect.KClass<? extends java.lang.CharSequence>
+                            USimpleNameReferenceExpression (identifier = stringClass) [stringClass] : kotlin.reflect.KClass<java.lang.String>
+                        UPolyadicExpression (operator = +) ["OK"] : java.lang.String
+                            ULiteralExpression (value = "OK") ["OK"] : java.lang.String
+                        UPolyadicExpression (operator = +) [xClass] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = xClass) [xClass] : kotlin.reflect.KClass<? extends java.lang.CharSequence>
     UClass (name = Foo) [public final class Foo {...}]
         UField (name = s) [@org.jetbrains.annotations.NotNull private final var s: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = equals) [public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean {...}]
             UParameter (name = other) [@org.jetbrains.annotations.Nullable var other: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UBlockExpression [{...}] : PsiType:Void
-                UIfExpression [if (other == null) return false] : PsiType:Unit
-                    UBinaryExpression (operator = ==) [other == null] : PsiType:boolean
-                        USimpleNameReferenceExpression (identifier = other) [other] : PsiType:Object
-                        ULiteralExpression (value = null) [null] : PsiType:Void
-                    UReturnExpression [return false] : PsiType:Void
-                        ULiteralExpression (value = false) [false] : PsiType:boolean
-                UIfExpression [if (java.lang.Object != Foo) return false] : PsiType:Unit
-                    UBinaryExpression (operator = !=) [java.lang.Object != Foo] : PsiType:boolean
-                        UClassLiteralExpression [java.lang.Object] : PsiType:KClass<? extends Object>
-                            USimpleNameReferenceExpression (identifier = other) [other] : PsiType:Object
-                        UClassLiteralExpression [Foo] : PsiType:KClass<? extends Foo>
-                            UThisExpression (label = null) [this] : PsiType:Foo
-                    UReturnExpression [return false] : PsiType:Void
-                        ULiteralExpression (value = false) [false] : PsiType:boolean
-                UReturnExpression [return s == (other as Foo).s] : PsiType:Void
-                    UBinaryExpression (operator = ==) [s == (other as Foo).s] : PsiType:boolean
-                        USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
-                        UQualifiedReferenceExpression [(other as Foo).s] : PsiType:String
-                            UParenthesizedExpression [(other as Foo)] : PsiType:Foo
-                                UBinaryExpressionWithType [other as Foo] : PsiType:Foo
-                                    USimpleNameReferenceExpression (identifier = other) [other] : PsiType:Object
+            UBlockExpression [{...}] : java.lang.Void
+                UIfExpression [if (other == null) return false] : kotlin.Unit
+                    UBinaryExpression (operator = ==) [other == null] : boolean
+                        USimpleNameReferenceExpression (identifier = other) [other] : java.lang.Object
+                        ULiteralExpression (value = null) [null] : java.lang.Void
+                    UReturnExpression [return false] : java.lang.Void
+                        ULiteralExpression (value = false) [false] : boolean
+                UIfExpression [if (java.lang.Object != Foo) return false] : kotlin.Unit
+                    UBinaryExpression (operator = !=) [java.lang.Object != Foo] : boolean
+                        UClassLiteralExpression [java.lang.Object] : kotlin.reflect.KClass<? extends java.lang.Object>
+                            USimpleNameReferenceExpression (identifier = other) [other] : java.lang.Object
+                        UClassLiteralExpression [Foo] : kotlin.reflect.KClass<? extends Foo>
+                            UThisExpression (label = null) [this] : Foo
+                    UReturnExpression [return false] : java.lang.Void
+                        ULiteralExpression (value = false) [false] : boolean
+                UReturnExpression [return s == (other as Foo).s] : java.lang.Void
+                    UBinaryExpression (operator = ==) [s == (other as Foo).s] : boolean
+                        USimpleNameReferenceExpression (identifier = s) [s] : java.lang.String
+                        UQualifiedReferenceExpression [(other as Foo).s] : java.lang.String
+                            UParenthesizedExpression [(other as Foo)] : Foo
+                                UBinaryExpressionWithType [other as Foo] : Foo
+                                    USimpleNameReferenceExpression (identifier = other) [other] : java.lang.Object
                                     UTypeReferenceExpression (name = Foo) [Foo]
-                            USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = s) [s] : java.lang.String
         UMethod (name = getS) [public final fun getS() : java.lang.String = UastEmptyExpression]
         UMethod (name = Foo) [public fun Foo(@org.jetbrains.annotations.NotNull s: java.lang.String) = UastEmptyExpression]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]

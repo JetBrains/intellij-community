@@ -1,27 +1,27 @@
 UFile (package = ) [public final class LambdaParametersKt {...]
     UClass (name = LambdaParametersKt) [public final class LambdaParametersKt {...}]
         UMethod (name = lambdaWithRecivier) [public static final fun lambdaWithRecivier() : void {...}]
-            UBlockExpression [{...}] : PsiType:String
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] : PsiType:String
+            UBlockExpression [{...}] : java.lang.String
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] : java.lang.String
                     UIdentifier (Identifier (buildString)) [UIdentifier (Identifier (buildString))]
-                    USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] : PsiType:String
-                    ULambdaExpression [{ ...}] : PsiType:Function1<? super StringBuilder, ? extends Unit>
+                    USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] : java.lang.String
+                    ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super java.lang.StringBuilder, ? extends kotlin.Unit>
                         UBlockExpression [{...}]
                             UReturnExpression [return append("a")]
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : PsiType:StringBuilder
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : java.lang.StringBuilder
                                     UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
-                                    USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : PsiType:StringBuilder
-                                    UPolyadicExpression (operator = +) ["a"] : PsiType:String
-                                        ULiteralExpression (value = "a") ["a"] : PsiType:String
+                                    USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : java.lang.StringBuilder
+                                    UPolyadicExpression (operator = +) ["a"] : java.lang.String
+                                        ULiteralExpression (value = "a") ["a"] : java.lang.String
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
-            UBlockExpression [{...}] : PsiType:int
-                UQualifiedReferenceExpression [10.let({ var it: int ->...})] : PsiType:int
-                    ULiteralExpression (value = 10) [10] : PsiType:int
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [let({ var it: int ->...})] : PsiType:int
+            UBlockExpression [{...}] : int
+                UQualifiedReferenceExpression [10.let({ var it: int ->...})] : int
+                    ULiteralExpression (value = 10) [10] : int
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [let({ var it: int ->...})] : int
                         UIdentifier (Identifier (let)) [UIdentifier (Identifier (let))]
-                        USimpleNameReferenceExpression (identifier = let, resolvesTo = null) [let] : PsiType:int
-                        ULambdaExpression [{ var it: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                        USimpleNameReferenceExpression (identifier = let, resolvesTo = null) [let] : int
+                        ULambdaExpression [{ var it: int ->...}] : kotlin.jvm.functions.Function1<? super java.lang.Integer, ? extends java.lang.Integer>
                             UParameter (name = it) [var it: int]
                             UBlockExpression [{...}]
                                 UReturnExpression [return it]
-                                    USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
+                                    USimpleNameReferenceExpression (identifier = it) [it] : int
