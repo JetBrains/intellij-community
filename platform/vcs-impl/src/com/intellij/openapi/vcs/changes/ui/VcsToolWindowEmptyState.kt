@@ -139,20 +139,4 @@ private fun updateContentUi(contentManager: ContentManager, project: Project) {
   if (contentManager is ContentManagerImpl) {
     (contentManager.ui as? ToolWindowContentUi)?.update()
   }
-
-  updateCommitTabName(contentManager, project)
-}
-
-private fun updateCommitTabName(contentManager: ContentManager, project: Project) {
-  val singleContent = contentManager.contents.singleOrNull()
-
-  if (ExperimentalUI.isNewUI() && singleContent != null && singleContent.tabName == ChangesViewContentManager.LOCAL_CHANGES) {
-    singleContent.displayName = null
-  }
-  else {
-    contentManager.contents.filter { it.tabName == ChangesViewContentManager.LOCAL_CHANGES }.forEach {
-      val displayName = it.getUserData(CHANGES_VIEW_EXTENSION)?.getDisplayName(project)
-      it.displayName = displayName
-    }
-  }
 }
