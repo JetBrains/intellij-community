@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.getDocumentLanguage
@@ -42,6 +43,7 @@ import javax.swing.JComponent
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
+private val TEXT_EDITOR_CUSTOMIZER_EP: ExtensionPointName<TextEditorCustomizer> = ExtensionPointName("com.intellij.textEditorCustomizer")
 
 open class TextEditorImpl
 @Internal constructor(
@@ -66,9 +68,8 @@ open class TextEditorImpl
   }
 
   init {
-    @Suppress("LeakingThis")
     component = createEditorComponent(project = project, file = file, editor = editor)
-    for (customizer in TextEditorCustomizer.EP.extensionList) {
+    for (customizer in TEXT_EDITOR_CUSTOMIZER_EP.extensionList) {
       @Suppress("LeakingThis")
       customizer.customize(this)
     }
