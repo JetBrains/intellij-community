@@ -7,7 +7,6 @@ import org.jetbrains.plugins.gradle.importing.BuildFinishedModel
 import org.jetbrains.plugins.gradle.importing.BuildFinishedModelProvider
 import org.jetbrains.plugins.gradle.importing.ProjectLoadedModel
 import org.jetbrains.plugins.gradle.importing.ProjectLoadedModelProvider
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder
 import org.junit.Test
 
@@ -39,7 +38,6 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   }
 
   @Test
-  @TargetVersions("4.8+")
   fun `test two-phased Gradle sync`() {
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
@@ -52,9 +50,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           val buildModel = resolverContext.allBuilds.single()
           val projectModel = buildModel.projects.single()
           val projectLoadedModel = resolverContext.getProjectModel(projectModel, ProjectLoadedModel::class.java)
-          val buildFinishedModel = resolverContext.getProjectModel(projectModel, BuildFinishedModel::class.java)
           assertNotNull("Expected ProjectLoadedModel on the project loaded phase", projectLoadedModel)
-          assertNull("Unexpected BuildFinishedModel on the project loaded phase", buildFinishedModel)
         }
       }
       whenBuildCompleted(disposable) { resolverContext ->

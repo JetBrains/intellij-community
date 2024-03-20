@@ -69,8 +69,8 @@ class GradleBuildActionRunner(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction() {
-    buildAction.setUseProjectsLoadedPhase(true)
-    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildActionMulticaster)
+    buildAction.isUseProjectsLoadedPhase = true
+    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildAction, buildActionMulticaster)
     resolverCtx.connection.action()
       .projectsLoaded(buildAction, resultHandler.createProjectLoadedHandler())
       .buildFinished(buildAction, resultHandler.createBuildFinishedHandler())
@@ -83,7 +83,7 @@ class GradleBuildActionRunner(
   }
 
   private fun runDefaultBuildAction() {
-    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildActionMulticaster)
+    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildAction, buildActionMulticaster)
     resolverCtx.connection.action(buildAction)
       .prepareOperationForSync()
       .withCancellationToken(resolverCtx.cancellationTokenSource.token())

@@ -66,14 +66,9 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
 
     override fun createBuildListener() = object : GradleBuildActionListener {
       override fun onProjectLoaded() {
-        val buildFinishedModel = resolverCtx.getRootModel(BuildFinishedModel::class.java)
-        if (buildFinishedModel != null) {
-          throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
-        }
-
         val rootProjectLoadedModel = resolverCtx.getRootModel(ProjectLoadedModel::class.java)
         if (rootProjectLoadedModel == null) {
-          throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
+          throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for onProjectLoaded callback"))
         }
 
         if (rootProjectLoadedModel.map.containsValue("error")) {
@@ -84,6 +79,27 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
             modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
           }
           throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))
+        }
+      }
+
+      override fun onBuildCompleted() {
+        val rootBuildFinishedModel = resolverCtx.getRootModel(BuildFinishedModel::class.java)
+        if (rootBuildFinishedModel == null) {
+          throw ProcessCanceledException(RuntimeException("buildFinishedModel should be available for onBuildCompleted callback"))
+        }
+        val rootProjectLoadedModel = resolverCtx.getRootModel(ProjectLoadedModel::class.java)
+        if (rootProjectLoadedModel == null) {
+          throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for onBuildCompleted callback"))
+        }
+
+        if (rootBuildFinishedModel.map.containsValue("error")) {
+          val project = resolverCtx.externalSystemTaskId.findProject()!!
+          val modelConsumer = project.getService(ModelConsumer::class.java)
+          for (gradleProject in resolverCtx.rootBuild.projects) {
+            val buildFinishedModel = resolverCtx.getProjectModel(gradleProject, BuildFinishedModel::class.java)!!
+            modelConsumer.buildFinishedModels.add(gradleProject to buildFinishedModel)
+          }
+          throw ProcessCanceledException(RuntimeException(rootBuildFinishedModel.map.toString()))
         }
       }
     }

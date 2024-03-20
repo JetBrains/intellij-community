@@ -219,18 +219,9 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
     cleanupBeforeReImport()
     ExternalSystemUtil.refreshProject(projectPath, ImportSpecBuilder(myProject, SYSTEM_ID).use(ProgressExecutionMode.MODAL_SYNC))
 
-    if (isGradleAtLeast("4.8")) {
-      assertReceivedModels(
-        projectPath, "project",
-        mapOf("name" to "project", "prop_loaded_1" to "error")
-      )
-    }
-    else {
-      assertReceivedModels(
-        projectPath, "project",
-        mapOf("name" to "project", "prop_loaded_1" to "error"),
-        mapOf("name" to "project", "prop_finished_2" to "val22")
-      )
-    }
+    assertReceivedModels(
+      projectPath, "project",
+      mapOf("name" to "project", "prop_loaded_1" to "error")
+    )
   }
 }

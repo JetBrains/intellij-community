@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 class GradleBuildActionResultHandler(
   private val resolverCtx: DefaultProjectResolverContext,
+  private val buildAction: GradleModelFetchAction,
   private val buildActionMulticaster: GradleBuildActionListener
 ) {
 
@@ -32,6 +34,11 @@ class GradleBuildActionResultHandler(
   private fun onBuildCompleted(state: GradleModelHolderState) {
     resolverCtx.models.addState(state)
     isBuildActionInterrupted.set(false)
+
+    if (!buildAction.isUseProjectsLoadedPhase) {
+      buildActionMulticaster.onProjectLoaded()
+    }
+
     buildActionMulticaster.onBuildCompleted()
   }
 

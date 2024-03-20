@@ -65,6 +65,10 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myTargetTypes.addAll(targetTypes);
   }
 
+  public boolean isUseProjectsLoadedPhase() {
+    return myUseProjectsLoadedPhase;
+  }
+
   public void setUseProjectsLoadedPhase(boolean useProjectsLoadedPhase) {
     myUseProjectsLoadedPhase = useProjectsLoadedPhase;
   }
