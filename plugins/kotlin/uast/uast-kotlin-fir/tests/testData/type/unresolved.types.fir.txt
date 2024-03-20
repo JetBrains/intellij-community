@@ -3,15 +3,15 @@ UFile (package = ) [public final class UnresolvedKt {...]
         UMethod (name = foo) [public static final fun foo(@null x: Unresolved) : void {...}]
             UParameter (name = x) [@null var x: Unresolved]
                 UAnnotation (fqName = null) [@null]
-            UBlockExpression [{...}] : PsiType:<ErrorType>
-                UQualifiedReferenceExpression [x?.prop] : PsiType:<ErrorType>
-                    USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
-                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:<ErrorType>
+            UBlockExpression [{...}] : <ErrorType>
+                UQualifiedReferenceExpression [x?.prop] : <ErrorType>
+                    USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>
+                    USimpleNameReferenceExpression (identifier = prop) [prop] : <ErrorType>
     UClass (name = A) [public final class A : <ErrorType> {...}]
         UField (name = prop) [@null private final var prop: Unresolved]
             UAnnotation (fqName = null) [@null]
         UMethod (name = bar) [public fun bar() : UnresolvedBase {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : void
         UMethod (name = getProp) [public final fun getProp() : Unresolved = UastEmptyExpression]
         UMethod (name = A) [public fun A(@null prop: Unresolved) {...}]
             UParameter (name = prop) [@null var prop: Unresolved]
@@ -20,4 +20,4 @@ UFile (package = ) [public final class UnresolvedKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(prop)]
                     UIdentifier (Identifier (UnresolvedBase)) [UIdentifier (Identifier (UnresolvedBase))]
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:<ErrorType>
+                    USimpleNameReferenceExpression (identifier = prop) [prop] : <ErrorType>

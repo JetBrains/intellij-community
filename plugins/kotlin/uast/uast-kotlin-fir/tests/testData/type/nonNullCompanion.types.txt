@@ -10,11 +10,11 @@ UFile (package = test.pkg) [package test.pkg...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = explanation) [@org.jetbrains.annotations.NotNull var explanation: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Void
-                UReturnExpression [return <init>()] : PsiType:Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:Issue
+            UBlockExpression [{...}] : java.lang.Void
+                UReturnExpression [return <init>()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : test.pkg.Issue
                         UIdentifier (Identifier (Issue)) [UIdentifier (Identifier (Issue))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Issue) [<init>] : PsiType:Issue
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Issue) [<init>] : test.pkg.Issue
         UClass (name = Companion) [public static final class Companion {...}]
             UMethod (name = create) [@kotlin.jvm.JvmStatic...}]
                 UAnnotation (fqName = kotlin.jvm.JvmStatic) [@kotlin.jvm.JvmStatic]
@@ -24,9 +24,9 @@ UFile (package = test.pkg) [package test.pkg...]
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 UParameter (name = explanation) [@org.jetbrains.annotations.NotNull var explanation: java.lang.String]
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                UBlockExpression [{...}] : PsiType:Void
-                    UReturnExpression [return <init>()] : PsiType:Void
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:Issue
+                UBlockExpression [{...}] : java.lang.Void
+                    UReturnExpression [return <init>()] : java.lang.Void
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : test.pkg.Issue
                             UIdentifier (Identifier (Issue)) [UIdentifier (Identifier (Issue))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Issue) [<init>] : PsiType:Issue
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Issue) [<init>] : test.pkg.Issue
             UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]

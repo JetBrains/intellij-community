@@ -6,22 +6,22 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return this.length]
-                    UQualifiedReferenceExpression [this.length] : PsiType:int
-                        UThisExpression (label = null) [this] : PsiType:String
-                        USimpleNameReferenceExpression (identifier = length) [length] : PsiType:int
+                    UQualifiedReferenceExpression [this.length] : int
+                        UThisExpression (label = null) [this] : java.lang.String
+                        USimpleNameReferenceExpression (identifier = length) [length] : int
         UMethod (name = getRx) [public static final fun getRx(@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {...}]
             UParameter (name = $this$rx) [@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull var $this$rx: java.lang.String]
                 UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation(name = "RegExp")]
                     UNamedExpression (name = name) [name = "RegExp"]
-                        UPolyadicExpression (operator = +) ["RegExp"] : PsiType:String
-                            ULiteralExpression (value = "RegExp") ["RegExp"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["RegExp"] : java.lang.String
+                            ULiteralExpression (value = "RegExp") ["RegExp"] : java.lang.String
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Void
-                UReturnExpression [return toRegex()] : PsiType:Void
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] : PsiType:Regex
+            UBlockExpression [{...}] : java.lang.Void
+                UReturnExpression [return toRegex()] : java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] : kotlin.text.Regex
                         UIdentifier (Identifier (toRegex)) [UIdentifier (Identifier (toRegex))]
-                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] : PsiType:Regex
+                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] : kotlin.text.Regex
     UClass (name = MyReceiverAnnotation) [public abstract annotation MyReceiverAnnotation {...}]
         UAnnotationMethod (name = name) [public abstract fun name() : java.lang.String = UastEmptyExpression]
-            UPolyadicExpression (operator = +) [""] : PsiType:String
-                ULiteralExpression (value = "") [""] : PsiType:String
+            UPolyadicExpression (operator = +) [""] : java.lang.String
+                ULiteralExpression (value = "") [""] : java.lang.String
