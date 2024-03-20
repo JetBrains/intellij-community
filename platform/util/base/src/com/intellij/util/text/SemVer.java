@@ -80,6 +80,10 @@ public final class SemVer implements Comparable<SemVer> {
     return compareTo(version) >= 0;
   }
 
+  public boolean isGreaterThan(@NotNull SemVer version) {
+    return compareTo(version) > 0;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
