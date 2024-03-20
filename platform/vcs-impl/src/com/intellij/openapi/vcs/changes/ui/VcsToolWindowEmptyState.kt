@@ -111,28 +111,28 @@ private fun createDataContext(project: Project): DataContext {
 
 
 internal fun hideCommitIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
-  fun updateCommitIdLabel() {
-    val hideIdLabel = when {
-      toolWindow.contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
-      toolWindow.contentManager.isEmpty -> null
-      else -> "true"
-    }
-    if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) != hideIdLabel) {
-      toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
-      updateContentUi(toolWindow.contentManager, toolWindow.project)
-    }
-  }
-
   toolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      updateCommitIdLabel()
+      updateCommitIdLabel(toolWindow)
     }
 
     override fun contentRemoved(event: ContentManagerEvent) {
-      updateCommitIdLabel()
+      updateCommitIdLabel(toolWindow)
     }
   })
-  updateCommitIdLabel()
+  updateCommitIdLabel(toolWindow)
+}
+
+private fun updateCommitIdLabel(toolWindow: ToolWindow) {
+  val hideIdLabel = when {
+    toolWindow.contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
+    toolWindow.contentManager.isEmpty -> null
+    else -> "true"
+  }
+  if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) != hideIdLabel) {
+    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
+    updateContentUi(toolWindow.contentManager, toolWindow.project)
+  }
 }
 
 private fun updateContentUi(contentManager: ContentManager, project: Project) {
