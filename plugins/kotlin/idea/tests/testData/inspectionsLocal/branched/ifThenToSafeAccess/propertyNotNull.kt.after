@@ -1,3 +1,4 @@
+// HIGHLIGHT: WARNING
 
 // FIX: Remove redundant 'if' expression
 

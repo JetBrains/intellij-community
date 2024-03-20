@@ -1,3 +1,4 @@
+// FIX: Replace 'if' expression with safe access expression
 // WITH_STDLIB
 // HIGHLIGHT: INFORMATION
 fun maybeFoo(): String? {

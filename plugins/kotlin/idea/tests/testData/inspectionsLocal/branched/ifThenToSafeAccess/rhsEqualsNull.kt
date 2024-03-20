@@ -1,3 +1,5 @@
+// HIGHLIGHT: WARNING
+// FIX: Replace 'if' expression with safe access expression
 fun maybeFoo(): String? {
     return "foo"
 }

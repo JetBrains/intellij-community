@@ -1,3 +1,5 @@
+// HIGHLIGHT: INFORMATION
+// FIX: Replace 'if' expression with safe access expression
 class Some {
     fun bar() {}
 }

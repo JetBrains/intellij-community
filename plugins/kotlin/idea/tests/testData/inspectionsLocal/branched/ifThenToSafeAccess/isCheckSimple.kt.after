@@ -1,3 +1,4 @@
+// FIX: Replace 'if' expression with safe cast expression
 // HIGHLIGHT: INFORMATION
 class My(val x: Int)
 
