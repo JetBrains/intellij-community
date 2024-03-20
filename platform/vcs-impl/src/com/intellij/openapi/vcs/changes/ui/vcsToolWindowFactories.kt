@@ -1,25 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.StatusText
 import java.util.function.Supplier
-import javax.swing.JComponent
 
 private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   private val shouldShowWithoutActiveVcs = Registry.get("vcs.empty.toolwindow.show")
@@ -83,7 +75,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     super.createToolWindowContent(project, toolWindow)
 
-    hideIdLabelIfNotEmptyState(toolWindow)
+    hideCommitIdLabelIfNotEmptyState(toolWindow)
 
     // to show id label
     if (toolWindow.contentManager.isEmpty) {

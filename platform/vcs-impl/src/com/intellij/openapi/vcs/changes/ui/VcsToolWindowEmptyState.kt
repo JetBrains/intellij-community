@@ -110,8 +110,8 @@ private fun createDataContext(project: Project): DataContext {
 }
 
 
-internal fun hideIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
-  fun updateIdLabel() {
+internal fun hideCommitIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
+  fun updateCommitIdLabel() {
     val hideIdLabel = when {
       toolWindow.contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
       toolWindow.contentManager.isEmpty -> null
@@ -125,14 +125,14 @@ internal fun hideIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
 
   toolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      updateIdLabel()
+      updateCommitIdLabel()
     }
 
     override fun contentRemoved(event: ContentManagerEvent) {
-      updateIdLabel()
+      updateCommitIdLabel()
     }
   })
-  updateIdLabel()
+  updateCommitIdLabel()
 }
 
 private fun updateContentUi(contentManager: ContentManager, project: Project) {
