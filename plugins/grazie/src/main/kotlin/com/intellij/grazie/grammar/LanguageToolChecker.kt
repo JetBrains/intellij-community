@@ -230,6 +230,12 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     return true
   }
 
+  if (match.rule.id == "A_RB_NN" &&
+      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true)  &&
+      (text.domain == TextContent.TextDomain.DOCUMENTATION || text.domain == TextContent.TextDomain.COMMENTS)) {
+    return true // https://github.com/languagetool-org/languagetool/issues/9511
+  }
+
   return false
 }
 
