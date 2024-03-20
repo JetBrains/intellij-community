@@ -126,4 +126,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testReceiverTypeOfExtensionFunction() {
         checkReceiverTypeOfExtensionFunction(myFixture)
     }
+
+    fun testTextRangeOfLocalVariable() {
+        checkTextRangeOfLocalVariable(myFixture)
+    }
 }
