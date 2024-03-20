@@ -123,6 +123,15 @@ final class SettingsHelper {
         }
       }
     }
+    if (SystemInfoRt.isMac && JBCefApp.isRemoteEnabled()) {// Implemented in JCEF, TODO: remove
+      ProcessHandle.Info i = ProcessHandle.current().info();
+      Optional<String> processAppPath = i.command();
+      if (processAppPath.isPresent()) {
+        File javaexe = new File(processAppPath.get());
+        File contents = javaexe.getParentFile().getParentFile().getParentFile();
+        settings.browser_subprocess_path = contents.getAbsolutePath() + "/Frameworks/cef_server.app/Contents/Frameworks/cef_server Helper.app/Contents/MacOS/cef_server Helper";
+      }
+    }
     return settings;
   }
 
