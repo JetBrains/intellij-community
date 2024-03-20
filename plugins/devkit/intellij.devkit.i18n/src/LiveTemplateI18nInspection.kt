@@ -6,8 +6,8 @@ import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
-import org.jetbrains.idea.devkit.dom.liveTemplates.Template
-import org.jetbrains.idea.devkit.dom.liveTemplates.TemplateSet
+import org.jetbrains.idea.devkit.dom.templates.Template
+import org.jetbrains.idea.devkit.dom.templates.TemplateSet
 import org.jetbrains.idea.devkit.i18n.PluginXmlI18nInspection.highlightNonLocalizableElement
 
 class LiveTemplateI18nInspection: BasicDomElementsInspection<TemplateSet>(TemplateSet::class.java) {
