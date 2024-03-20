@@ -1,46 +1,48 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.highlighting
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@SuppressWarnings(["JUnitTestClassNamingConvention"])
-class Groovy16HighlightingTest extends LightJavaCodeInsightFixtureTestCase {
-
-  @NotNull
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_1_6
-
-  final String basePath = TestUtils.testDataPath + "highlighting/"
-
+@SuppressWarnings({"JUnitTestClassNamingConvention"})
+public class Groovy16HighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   private void doTest(LocalInspectionTool... tools) {
-    myFixture.enableInspections(tools)
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
+    myFixture.enableInspections(tools);
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
 
-  void testInnerEnum() { doTest() }
+  public void testInnerEnum() { doTest(); }
 
-  void testSuperWithNotEnclosingClass() { doTest() }
+  public void testSuperWithNotEnclosingClass() { doTest(); }
 
-  void _testThisWithWrongQualifier() { doTest() }
+  public void _testThisWithWrongQualifier() { doTest(); }
 
-  void testImplicitEnumCoercion1_6() { doTest(new GroovyAssignabilityCheckInspection()) }
+  public void testImplicitEnumCoercion1_6() { doTest(new GroovyAssignabilityCheckInspection()); }
 
-  void testSlashyStrings() { doTest() }
+  public void testSlashyStrings() { doTest(); }
 
-  void testDiamonds() { doTest() }
+  public void testDiamonds() { doTest(); }
 
-  void 'test static modifier on toplevel definition is allowed'() {
-    myFixture.with {
-      configureByText '_.groovy', '''\
-static class A {}
-static interface I {} 
-'''
-      checkHighlighting()
-    }
+  public void testStaticModifierOnToplevelDefinitionIsAllowed() {
+    myFixture.configureByText("_.groovy", """
+          static class A {}
+          static interface I {}\s
+          """);
+    myFixture.checkHighlighting();
+  }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_1_6;
+  }
+
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "highlighting/";
   }
 }
