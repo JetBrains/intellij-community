@@ -60,7 +60,7 @@ public final class LocalRefUseInfo {
   }
 
   @NotNull
-  GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
+  public GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
     FileViewProvider viewProvider = file.getViewProvider();
     Project project = file.getProject();
 
@@ -134,7 +134,7 @@ public final class LocalRefUseInfo {
    * @param element element to check (variable, method, parameter, field, etc.)
    * @return true if the element is referenced in the same file
    */
-  boolean isReferenced(@NotNull PsiElement element) {
+  public boolean isReferenced(@NotNull PsiElement element) {
     Collection<PsiReference> array = myLocalRefsMap.get(element);
     if (!array.isEmpty() &&
         !isParameterUsedRecursively(element, array) &&
@@ -197,7 +197,7 @@ public final class LocalRefUseInfo {
     return true;
   }
 
-  boolean isReferencedForRead(@NotNull PsiVariable variable) {
+  public boolean isReferencedForRead(@NotNull PsiVariable variable) {
     Collection<PsiReference> array = myLocalRefsMap.get(variable);
     if (array.isEmpty()) return false;
     for (PsiReference ref : array) {
@@ -231,7 +231,7 @@ public final class LocalRefUseInfo {
            refElement.getParent().getParent() instanceof PsiExpressionStatement;
   }
 
-  boolean isReferencedForWrite(@NotNull PsiVariable variable) {
+  public boolean isReferencedForWrite(@NotNull PsiVariable variable) {
     Collection<PsiReference> array = myLocalRefsMap.get(variable);
     if (array.isEmpty()) return false;
     for (PsiReference ref : array) {

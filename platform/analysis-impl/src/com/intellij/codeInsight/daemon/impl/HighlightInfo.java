@@ -798,12 +798,6 @@ public class HighlightInfo implements Segment {
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
       InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
-      if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
-        HighlightDisplayKey idKey = HighlightDisplayKey.findById(key.toString());
-        if (idKey != null) {
-          toolWrapper = profile.getInspectionTool(idKey.toString(), element);
-        }
-      }
       if (toolWrapper != null) {
         myCanCleanup = toolWrapper.isCleanupTool();
 
