@@ -342,8 +342,9 @@ private fun getLocalizedContent(path: String, pathResolver: Function<String, Str
   val result = pathResolver.apply(fullPath.invariantSeparatorsPathString)
   if (result == null) {
     logger<FileTemplatesLoader>().error("Cannot find file by path: $path")
+    return "Unexpected error occurred"
   }
-  return result ?: ""
+  return result
 }
 
 private fun loadFileContent(root: Path, filePath: String): String? {

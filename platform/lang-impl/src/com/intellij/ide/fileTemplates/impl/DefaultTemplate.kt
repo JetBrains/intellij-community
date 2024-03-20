@@ -101,8 +101,9 @@ class DefaultTemplate(val name: String,
 
     if (text == null) {
       logger<DefaultTemplate>().error("Cannot find file by path: $fullPath")
+      return "Unexpected error occurred"
     }
-    return text ?: ""
+    return text
   }
 
   // the only external usage - https://github.com/wrdv/testme-idea/blob/8e314aea969619f43f0c6bb17f53f1d95b1072be/src/main/java/com/weirddev/testme/intellij/ui/template/FTManager.java#L200
