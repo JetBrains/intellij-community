@@ -10,9 +10,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -30,11 +28,9 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -127,25 +123,6 @@ final class AnnotatorRunner {
     }
   }
 
-  static final class AnnotatorSpecificHolder extends AnnotationHolderImpl {
-    private final @NotNull Annotator myAnnotator;
-    private final @NotNull AtomicReference<? extends PsiElement> myCurrentElement;
-
-    AnnotatorSpecificHolder(@NotNull Annotator annotator,
-                            @NotNull AtomicReference<? extends PsiElement> currentElement,
-                            @NotNull AnnotationSession annotationSession,
-                            boolean batchMode) {
-      super(annotationSession, batchMode);
-      myAnnotator = annotator;
-      myCurrentElement = currentElement;
-    }
-
-    @Override
-    protected @NotNull B createBuilder(@NotNull HighlightSeverity severity, @Nls String message, PsiElement __, Object ___) {
-      return super.createBuilder(severity, message, myCurrentElement.get(), myAnnotator);
-    }
-  }
-
   private void runAnnotator(@NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
                             @NotNull Map<Annotator, Set<Language>> supportedLanguages, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
@@ -153,48 +130,46 @@ final class AnnotatorRunner {
     if (supported.isEmpty()) {
       return;
     }
-    AtomicReference<PsiElement> currentElement = new AtomicReference<>();
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
-    AnnotationHolderImpl annotationHolder = new AnnotatorSpecificHolder(annotator, currentElement,
-                                                                        AnnotatorRunner.this.myHighlightInfoHolder.getAnnotationSession(),
-                                                                        AnnotatorRunner.this.myBatchMode);
-    HighlightersRecycler emptyElementRecycler = new HighlightersRecycler(); // no need to call incinerate/release because it's always empty
-    for (PsiElement element : insideThenOutside) {
-      if (!supported.contains(element.getLanguage())) {
-        continue;
-      }
-      if (myDumb && !DumbService.isDumbAware(annotator)) {
-        continue;
-      }
-      ProgressManager.checkCanceled();
-      currentElement.set(element);
-      int sizeBefore = annotationHolder.size();
-      annotator.annotate(element, annotationHolder);
-      int sizeAfter = annotationHolder.size();
-
-      List<HighlightInfo> newInfos;
-      if (sizeBefore == sizeAfter) {
-        newInfos = List.of();
-      }
-      else {
-        newInfos = new ArrayList<>(sizeAfter - sizeBefore);
-        for (int i = sizeBefore; i < sizeAfter; i++) {
-          Annotation annotation = annotationHolder.get(i);
-          HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode);
-          info.setGroup(-1); // prevent DefaultHighlightProcessor from removing this info, we want to control it ourselves via `psiElementVisited` below
-          addConvertedToHostInfo(info, newInfos);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("runAnnotator annotation="+annotation+" -> "+newInfos);
-          }
-          myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
+    AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, (AnnotationSessionImpl)myHighlightInfoHolder.getAnnotationSession(), annotationHolder -> {
+      HighlightersRecycler emptyElementRecycler = new HighlightersRecycler(); // no need to call incinerate/release because it's always empty
+      for (PsiElement element : insideThenOutside) {
+        if (!supported.contains(element.getLanguage())) {
+          continue;
         }
-        results.addAll(newInfos);
+        if (myDumb && !DumbService.isDumbAware(annotator)) {
+          continue;
+        }
+        ProgressManager.checkCanceled();
+        int sizeBefore = annotationHolder.size();
+        annotationHolder.runAnnotatorWithContext(element);
+        int sizeAfter = annotationHolder.size();
+
+        List<HighlightInfo> newInfos;
+        if (sizeBefore == sizeAfter) {
+          newInfos = List.of();
+        }
+        else {
+          newInfos = new ArrayList<>(sizeAfter - sizeBefore);
+          for (int i = sizeBefore; i < sizeAfter; i++) {
+            Annotation annotation = annotationHolder.get(i);
+            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode);
+            info.setGroup(-1); // prevent DefaultHighlightProcessor from removing this info, we want to control it ourselves via `psiElementVisited` below
+            addConvertedToHostInfo(info, newInfos);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("runAnnotator annotation="+annotation+" -> "+newInfos);
+            }
+            myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
+          }
+          results.addAll(newInfos);
+        }
+        Document hostDocument = myPsiFile.getFileDocument();
+        if (hostDocument instanceof DocumentWindow w) hostDocument = w.getDelegate();
+        highlightInfoUpdater.psiElementVisited(annotator.getClass(), element, newInfos, hostDocument, myPsiFile, myProject,
+                                               emptyElementRecycler, myHighlightingSession);
       }
-      Document hostDocument = myPsiFile.getFileDocument();
-      if (hostDocument instanceof DocumentWindow w) hostDocument = w.getDelegate();
-      highlightInfoUpdater.psiElementVisited(annotator.getClass(), element, newInfos, hostDocument, myPsiFile, myProject,
-                                             emptyElementRecycler, myHighlightingSession);
-    }
+      return null;
+    });
   }
 
   private static void addPatchedInfos(@NotNull HighlightInfo info,
