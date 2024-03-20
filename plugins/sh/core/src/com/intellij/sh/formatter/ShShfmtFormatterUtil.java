@@ -246,7 +246,7 @@ public final class ShShfmtFormatterUtil {
         return Pair.create(current, updateVersion);
       }
       SemVer currentVersion = SemVer.parseFromText(current);
-      if (currentVersion == null || updateVersionVer.isGreaterOrEqualThan(currentVersion)) {
+      if (currentVersion == null || updateVersionVer.isGreaterThan(currentVersion)) {
         return Pair.create(current, updateVersion);
       }
       return null;
