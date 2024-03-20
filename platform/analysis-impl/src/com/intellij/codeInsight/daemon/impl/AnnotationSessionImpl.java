@@ -74,7 +74,7 @@ public final class AnnotationSessionImpl extends AnnotationSession {
 
   static <T> T computeWithSession(boolean batchMode,
                                   @NotNull Object annotator,
-                                  @NotNull AnnotationSessionImpl session,
+                                  @NotNull AnnotationSession session,
                                   @NotNull Function<? super AnnotationHolderImpl, T> runnable) {
     AnnotationHolderImpl holder = new AnnotationHolderImpl(annotator, session, batchMode);
     return runnable.apply(holder);
