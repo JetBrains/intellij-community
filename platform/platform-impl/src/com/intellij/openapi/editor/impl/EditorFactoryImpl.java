@@ -47,8 +47,8 @@ public final class EditorFactoryImpl extends EditorFactory {
   private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
 
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
-  private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
-  private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
+  private final EditorEventMulticasterImpl editorEventMulticaster = new EditorEventMulticasterImpl();
+  private final EventDispatcher<EditorFactoryListener> editorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
 
   public EditorFactoryImpl() {
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
@@ -118,19 +118,19 @@ public final class EditorFactoryImpl extends EditorFactory {
   @Override
   public @NotNull Document createDocument(@NotNull CharSequence text) {
     DocumentEx document = new DocumentImpl(text);
-    myEditorEventMulticaster.registerDocument(document);
+    editorEventMulticaster.registerDocument(document);
     return document;
   }
 
   public @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction) {
     DocumentEx document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
-    myEditorEventMulticaster.registerDocument(document);
+    editorEventMulticaster.registerDocument(document);
     return document;
   }
 
   public @NotNull Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
     DocumentEx document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
-    myEditorEventMulticaster.registerDocument(document);
+    editorEventMulticaster.registerDocument(document);
     return document;
   }
 
@@ -206,7 +206,6 @@ public final class EditorFactoryImpl extends EditorFactory {
   }
 
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   public @NotNull EditorImpl createMainEditor(@NotNull Document document,
                                               @NotNull Project project,
                                               @NotNull VirtualFile file,
@@ -224,10 +223,10 @@ public final class EditorFactoryImpl extends EditorFactory {
     EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file, highlighter);
     ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
     editorManager.editorCreated(editor);
-    myEditorEventMulticaster.registerEditor(editor);
+    editorEventMulticaster.registerEditor(editor);
 
     EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
-    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(event);
+    editorFactoryEventDispatcher.getMulticaster().editorCreated(event);
     EP.forEachExtensionSafe(it -> it.editorCreated(event));
 
     if (LOG.isDebugEnabled()) {
@@ -241,7 +240,7 @@ public final class EditorFactoryImpl extends EditorFactory {
     ThreadingAssertions.assertEventDispatchThread();
     try {
       EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
-      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(event);
+      editorFactoryEventDispatcher.getMulticaster().editorReleased(event);
       EP.forEachExtensionSafe(it -> it.editorReleased(event));
     }
     finally {
@@ -284,37 +283,37 @@ public final class EditorFactoryImpl extends EditorFactory {
   @Override
   @Deprecated
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
-    myEditorFactoryEventDispatcher.addListener(listener);
+    editorFactoryEventDispatcher.addListener(listener);
   }
 
   @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
-    myEditorFactoryEventDispatcher.addListener(listener, parentDisposable);
+    editorFactoryEventDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
   @Deprecated
   public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
-    myEditorFactoryEventDispatcher.removeListener(listener);
+    editorFactoryEventDispatcher.removeListener(listener);
   }
 
   @Override
   public @NotNull EditorEventMulticaster getEventMulticaster() {
-    return myEditorEventMulticaster;
+    return editorEventMulticaster;
   }
 
   private static final class MyRawTypedHandler implements TypedActionHandlerEx {
-    private final TypedActionHandler myDelegate;
+    private final TypedActionHandler delegate;
 
     private MyRawTypedHandler(TypedActionHandler delegate) {
-      myDelegate = delegate;
+      this.delegate = delegate;
     }
 
     @Override
     public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
       editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, Boolean.TRUE);
       try {
-        myDelegate.execute(editor, charTyped, dataContext);
+        delegate.execute(editor, charTyped, dataContext);
       }
       finally {
         editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null);
@@ -323,8 +322,8 @@ public final class EditorFactoryImpl extends EditorFactory {
 
     @Override
     public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-      if (myDelegate instanceof TypedActionHandlerEx) {
-        ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
+      if (delegate instanceof TypedActionHandlerEx d) {
+        d.beforeExecute(editor, c, context, plan);
       }
     }
   }
