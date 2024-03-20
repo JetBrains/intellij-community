@@ -201,7 +201,7 @@ fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtVal
     return null
 }
 
-fun KtCallExpression.samConstructorValueArgument(): KtValueArgument? {
+fun KtCallExpression.getSamConstructorValueArgument(): KtValueArgument? {
     return valueArguments.singleOrNull()?.takeIf { it.getArgumentExpression() is KtLambdaExpression }
 }
 
