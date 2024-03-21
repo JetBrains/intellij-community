@@ -29,7 +29,9 @@ import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
@@ -100,7 +102,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
       val startTime = System.currentTimeMillis()
 
       Observation.awaitConfiguration(project) // wait for project import IDEA-348501
-      val res: HealthCheckResult = smartReadAction(project) {
+      val res: HealthCheckResult = smartReadActionWithDelays(5.seconds, 20) {
         try {
           runHealthCheck(project, filter)
         }
@@ -141,6 +143,25 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
     }
     catch (e: Exception) {
       LOG.error(e)
+    }
+  }
+
+  private suspend fun smartReadActionWithDelays(delay: Duration, attemptsAtATime: Int, action: () -> HealthCheckResult): HealthCheckResult {
+    while (true) {
+      val res = smartReadActionWithMaxAttempts(attemptsAtATime, action)
+      if (res != null) {
+        return res
+      }
+      delay(delay) // allow a batch of write actions to finish
+    }
+  }
+
+  private suspend fun smartReadActionWithMaxAttempts(maxAttemptsCount: Int, action: () -> HealthCheckResult): HealthCheckResult? {
+    val attemptsCount = AtomicInteger(0)
+
+    return smartReadAction(project) {
+      if (attemptsCount.getAndIncrement() > maxAttemptsCount) null
+      else action()
     }
   }
 
