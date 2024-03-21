@@ -201,10 +201,6 @@ fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtVal
     return null
 }
 
-fun KtCallExpression.samConstructorValueArgument(): KtValueArgument? {
-    return valueArguments.singleOrNull()?.takeIf { it.getArgumentExpression() is KtLambdaExpression }
-}
-
 fun KtClass.mustHaveNonEmptyPrimaryConstructor(): Boolean =
     isData() || isInlineOrValue()
 

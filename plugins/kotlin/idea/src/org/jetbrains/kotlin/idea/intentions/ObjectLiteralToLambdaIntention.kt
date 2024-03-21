@@ -10,7 +10,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -168,7 +167,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
             runWriteActionIfPhysical(element) {
                 commentSaver.restore(replaced, forceAdjustIndent = true/* by some reason lambda body is sometimes not properly indented */)
             }
-            replaceSamConstructorCall(callExpression)
+            RedundantSamConstructorInspection.Util.replaceSamConstructorCall(callExpression)
             if (parentCall.canMoveLambdaOutsideParentheses()) runWriteActionIfPhysical(element) {
                 parentCall.moveFunctionLiteralOutsideParentheses()
             }

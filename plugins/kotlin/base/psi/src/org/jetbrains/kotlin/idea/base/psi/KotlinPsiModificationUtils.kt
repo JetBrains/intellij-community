@@ -10,13 +10,10 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 
 inline fun <reified T : PsiElement> T.copied(): T {
@@ -162,11 +159,4 @@ fun shouldLambdaParameterBeNamed(argument: KtLambdaArgument): Boolean {
     if (args.any { it.isNamed() }) return true
     val callee = (callExpression.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
     return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
-}
-
-fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
-    val functionalArgument = callExpression.samConstructorValueArgument()?.getArgumentExpression()
-        ?: throw AssertionError("SAM-constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
-    val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
-    return runWriteActionIfPhysical(ktExpression) { ktExpression.replace(functionalArgument) as KtLambdaExpression }
 }
