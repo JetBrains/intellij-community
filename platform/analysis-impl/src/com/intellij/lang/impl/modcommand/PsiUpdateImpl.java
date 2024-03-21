@@ -452,6 +452,9 @@ final class PsiUpdateImpl {
         offset = instance.injectedToHost(file, offset);
       }
       myCaretOffset = myCaretVirtualEnd = offset;
+      if (!mySelection.containsOffset(offset)) {
+        mySelection = TextRange.create(offset, offset);
+      }
     }
 
     @Override
