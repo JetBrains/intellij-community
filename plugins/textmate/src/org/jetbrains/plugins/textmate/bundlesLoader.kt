@@ -15,12 +15,10 @@ import java.util.function.Consumer
 
 @IntellijInternalApi
 @JvmOverloads
-internal fun registerBundlesInParallel(
-  scope: CoroutineScope,
-  bundlesToLoad: List<TextMateBundleToLoad>,
-  registrar: suspend (TextMateBundleToLoad) -> Boolean,
-  registrationFailed: Consumer<TextMateBundleToLoad>? = null,
-) {
+internal fun registerBundlesInParallel(scope: CoroutineScope,
+                                       bundlesToLoad: List<TextMateBundleToLoad>,
+                                       registrar: suspend (TextMateBundleToLoad) -> Boolean,
+                                       registrationFailed: Consumer<TextMateBundleToLoad>? = null) {
   fun handleError(bundleToLoad: TextMateBundleToLoad, t: Throwable? = null) {
     if (registrationFailed == null || ApplicationManager.getApplication().isHeadlessEnvironment) {
       TextMateService.LOG.error("Cannot load builtin textmate bundle", t, bundleToLoad.toString())
@@ -56,4 +54,4 @@ internal fun registerBundlesInParallel(
   ProgressIndicatorUtils.awaitWithCheckCanceled(initializationJob.asCompletableFuture())
 }
 
-internal data class TextMateBundleToLoad(@JvmField val name: String, @JvmField val path: String)
+data class TextMateBundleToLoad(val name: String, val path: String)

@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.textmate.configuration
 
-internal class TextMateConfigurableData(private val builtinBundlesSettings: TextMateBuiltinBundlesSettings,
+class TextMateConfigurableData(private val builtinBundlesSettings: TextMateBuiltinBundlesSettings,
                                private val userBundlesSettings: TextMateUserBundlesSettings) {
   companion object {
     fun getInstance(): TextMateConfigurableData? {
-      return TextMateBuiltinBundlesSettings.getInstance()?.let { builtinBundles ->
+      return TextMateBuiltinBundlesSettings.instance?.let { builtinBundles ->
         TextMateUserBundlesSettings.getInstance()?.let { userBundles ->
           TextMateConfigurableData(builtinBundles, userBundles)
         }
