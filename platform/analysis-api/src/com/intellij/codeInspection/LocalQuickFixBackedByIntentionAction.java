@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -20,8 +21,8 @@ import java.util.Objects;
  * Mostly necessary for outdated code. In new code, it's preferred to use {@link com.intellij.modcommand.ModCommandAction}
  * which could be adapted using {@link LocalQuickFix#from(ModCommandAction)}.
  */
-public class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Iconable {
-    private final IntentionAction myAction;
+public class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Iconable, ReportingClassSubstitutor {
+    private final @NotNull IntentionAction myAction;
 
     public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
       myAction = action;
@@ -54,7 +55,12 @@ public class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Icon
       return myAction.getElementToMakeWritable(file);
     }
 
-    private static @Nullable PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
+  @Override
+  public @NotNull Class<?> getSubstitutedClass() {
+    return ReportingClassSubstitutor.getClassToReport(myAction);
+  }
+
+  private static @Nullable PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
       PsiElement startElement = descriptor.getStartElement();
       if (startElement != null) {
         return startElement.getContainingFile();
