@@ -31,8 +31,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
-import org.jetbrains.plugins.notebooks.visualization.UpdateInlaysTask.Companion.CELL_MARKER
-import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
 import java.awt.Graphics
 import javax.swing.JComponent
 import kotlin.math.max
@@ -174,36 +172,18 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
 
       override fun documentChanged(event: DocumentEvent) {
         if (isBulkModeEnabled) return
-        if (event.oldLength == 0 && event.newFragment.contains(CELL_MARKER)) {
-          refreshInlays()
-        }
-
         val logicalLines = interestingLogicalLines(event.document, event.offset, event.newLength)
         ensureInlaysAndHighlightersExist(matchingCellsBeforeChange, logicalLines)
       }
 
       override fun bulkUpdateFinished(document: Document) {
         isBulkModeEnabled = false
-
         // bulk mode is over, now we could access inlays, let's update them all
-        refreshInlays()
         ensureInlaysAndHighlightersExist(matchingCellsBeforeChange, 0 until document.lineCount)
       }
     }
 
     editor.document.addDocumentListener(documentListener, editor.disposable)
-  }
-
-  /**
-   * Hack. When we are adding cell in notebook, previous cell changes their range and we need to update it.
-   */
-  private fun refreshInlays() {
-    val outputInlays = inlays.values.filterIsInstance<NotebookOutputInlayController>()
-    for (outputInlay in outputInlays) {
-      val oldInlay = outputInlay.checkAndUpdateInlayPosition() ?: continue
-      inlays.remove(oldInlay)
-      inlays[outputInlay.inlay] = outputInlay
-    }
   }
 
   private fun ensureInlaysAndHighlightersExist(matchingCellsBeforeChange: List<NotebookCellLines.Interval>, logicalLines: IntRange) {
@@ -472,9 +452,5 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
 
     pointerSet.addAll(update.pointerSet)
     return true
-  }
-
-  companion object {
-    const val CELL_MARKER = "#%%"
   }
 }
