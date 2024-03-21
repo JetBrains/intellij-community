@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -18,7 +19,7 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 5);
 
   private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
   private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();
@@ -26,6 +27,26 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
 
   private static final Map<String, String> SESSION_TYPES = new LinkedHashMap<>();
   private static final List<String> ALL_SESSION_NAMES = new ArrayList<>();
+
+  @VisibleForTesting
+  public static final String EMPTY_THEME = "empty";
+  @VisibleForTesting
+  public static final String UNKNOWN_THEME = "unknown";
+  private static final List<String> GNOME_THEME_NAMES = Arrays.asList(
+    "Adwaita",
+    "Adwaita-dark",
+    "Breeze",
+    "Breeze-dark",
+    "HighContrast",
+    "HighContrastInverse",
+    "Yaru",
+    "Yaru-dark"
+  );
+  private static final List<String> GNOME_THEME_FAMILIES = Arrays.asList(
+    "Yaru-"
+  );
+  @VisibleForTesting
+  public static final List<String> ALL_THEME_NAMES = new ArrayList<>();
 
   static {
     GNOME_WINDOW_MANAGERS.put("shell", "Gnome Shell");
@@ -70,6 +91,13 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
     ALL_SESSION_NAMES.addAll(SESSION_TYPES.values());
     ALL_SESSION_NAMES.add("empty");
     ALL_SESSION_NAMES.add("Unknown");
+
+    ALL_THEME_NAMES.add(EMPTY_THEME);
+    ALL_THEME_NAMES.add(UNKNOWN_THEME);
+    ALL_THEME_NAMES.addAll(GNOME_THEME_NAMES);
+    for (String family : GNOME_THEME_FAMILIES) {
+      ALL_THEME_NAMES.add(family + "*");
+    }
   }
 
   private static final EventId1<String> CURRENT_DESKTOP =
@@ -77,6 +105,9 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
 
   private static final EventId1<String> SESSION_TYPE =
     GROUP.registerEvent("xdg.session.type", EventFields.String("value", ALL_SESSION_NAMES));
+
+  private static final EventId1<String> THEME =
+    GROUP.registerEvent("theme", EventFields.String("value", ALL_THEME_NAMES));
 
   @Override
   public EventLogGroup getGroup() {
@@ -89,6 +120,7 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
       Set<MetricEvent> result = new HashSet<>();
       result.add(CURRENT_DESKTOP.metric(toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
       result.add(SESSION_TYPE.metric(toReportedSessionName(System.getenv("XDG_SESSION_TYPE"))));
+      result.add(THEME.metric(toReportedTheme(X11UiUtil.getTheme())));
       return result;
     }
     return Collections.emptySet();
@@ -101,6 +133,26 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
     }
 
     return SESSION_TYPES.getOrDefault(sessionType, "Unknown");
+  }
+
+  @VisibleForTesting
+  public static @NotNull String toReportedTheme(@Nullable String theme) {
+    if (theme == null) {
+      return EMPTY_THEME;
+    }
+
+    Optional<String> result = GNOME_THEME_NAMES.stream()
+      .filter(s -> s.equalsIgnoreCase(theme))
+      .findFirst();
+    if (result.isPresent()) {
+      return result.get();
+    }
+
+    result = GNOME_THEME_FAMILIES.stream()
+      .filter(s -> theme.startsWith(s))
+      .findFirst();
+
+    return result.map(s -> s + "*").orElse(UNKNOWN_THEME);
   }
 
   @VisibleForTesting

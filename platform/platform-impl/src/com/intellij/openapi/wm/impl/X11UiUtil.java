@@ -2,10 +2,14 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -22,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -315,6 +320,39 @@ public final class X11UiUtil {
   public static boolean isUndefinedDesktop() {
     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
     return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop == null;
+  }
+
+  @RequiresBackgroundThread
+  public static @Nullable String getTheme() {
+    ThreadingAssertions.assertBackgroundThread();
+    if (SystemInfo.isGNOME) {
+      try {
+        Process process = new ProcessBuilder("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme").start();
+        if (!process.waitFor(5, TimeUnit.SECONDS)) {
+          LOG.info("Cannot get theme, timeout");
+          process.destroyForcibly();
+          return null;
+        }
+
+        if (process.exitValue() != 0) {
+          LOG.info("Cannot get theme, exit code " + process.exitValue());
+          return null;
+        }
+
+        String result = FileUtil.loadTextAndClose(process.getInputStream()).trim();
+        if (result.startsWith("'") && result.endsWith("'")) {
+          result = result.substring(1, result.length() - 1);
+        }
+
+        return result;
+      }
+      catch (Exception e) {
+        LOG.info("Cannot get theme", e);
+        return null;
+      }
+    }
+
+    return null;
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
