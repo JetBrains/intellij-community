@@ -9,13 +9,10 @@ import org.intellij.markdown.parser.LinkMap
 
 internal class InlineLinkGeneratingProvider : LinkGeneratingProvider() {
   override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
-    val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT)
-                ?: return null
+    val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT) ?: return null
     return RenderInfo(
       label,
-      node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.let {
-        LinkMap.normalizeDestination(it, true)
-      } ?: "",
+      node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text) ?: "",
       node.findChildOfType(MarkdownElementTypes.LINK_TITLE)?.getTextInNode(text)?.let {
         LinkMap.normalizeTitle(it)
       }
