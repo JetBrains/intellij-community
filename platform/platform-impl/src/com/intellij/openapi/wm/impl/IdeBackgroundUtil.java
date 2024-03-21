@@ -193,7 +193,7 @@ public final class IdeBackgroundUtil {
   };
 
   @ApiStatus.Internal
-  public static final RenderingHints.Key AVOID_OVERRIDING = new RenderingHints.Key(2) {
+  public static final RenderingHints.Key NO_BACKGROUND_HINT = new RenderingHints.Key(2) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;
@@ -226,8 +226,8 @@ public final class IdeBackgroundUtil {
       return new MyGraphics(getDelegate().create(), helper, offsets, preserved);
     }
 
-    private Boolean shouldAvoidOverriding() {
-      Object obj = getRenderingHint(AVOID_OVERRIDING);
+    private Boolean isNoBackground() {
+      Object obj = getRenderingHint(NO_BACKGROUND_HINT);
       return obj != null && Boolean.TRUE.equals(obj);
     }
 
@@ -332,7 +332,7 @@ public final class IdeBackgroundUtil {
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
-      if (width <= 1 || height <= 1 || shouldAvoidOverriding()) return;
+      if (width <= 1 || height <= 1 || isNoBackground()) return;
       boolean hasAlpha;
       if (reason instanceof Color) {
         hasAlpha = ((Color)reason).getAlpha() < 255;
