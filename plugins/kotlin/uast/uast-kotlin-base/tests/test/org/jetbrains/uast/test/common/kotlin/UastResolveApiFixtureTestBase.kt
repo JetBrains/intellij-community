@@ -1311,7 +1311,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
     }
 
-    fun checkResolveSyntheticJavaPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
+    fun checkResolveSyntheticJavaPropertyAccessor_setter(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """public class X {
         |String getFoo();
@@ -1338,6 +1338,44 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolvedPsiElements = visitor.resolvedElements.values.toSet()
         TestCase.assertEquals(1, resolvedPsiElements.size)
         TestCase.assertEquals("setFoo", (resolvedPsiElements.single() as PsiMethod).name)
+    }
+
+    fun checkResolveSyntheticJavaPropertyAccessor_getter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """public class X {
+        |String getFoo();
+        |void setFoo(String s);
+        |}""".trimMargin()
+        )
+
+        myFixture.addClass(
+            """public interface I {
+        |String getFoo();
+        |}""".trimMargin()
+        )
+
+        myFixture.configureByText(
+            "main.kt", """
+                class Y : X(), I {
+                }
+                fun box(y : Y): Boolean {
+                  val yo = y.foo ?: return false
+                  return yo == "42"
+                }
+            """.trimIndent()
+        )
+
+        val visitor = PropertyAccessorVisitor { it.endsWith("foo") || it.endsWith("getFoo") }
+        myFixture.file.toUElement()!!.accept(visitor)
+        TestCase.assertEquals(2, visitor.resolvedElements.size)
+        val nodes = visitor.resolvedElements.keys
+        TestCase.assertTrue(nodes.any { it is USimpleNameReferenceExpression })
+        // Will create on-the-fly accessor call for Java synthetic property
+        TestCase.assertTrue(nodes.any { it is UCallExpression})
+        // Both simple name reference (`foo`) and its on-the-fly accessor call are resolved to the same Java synthetic property accessor.
+        val resolvedPsiElements = visitor.resolvedElements.values.toSet()
+        TestCase.assertEquals(1, resolvedPsiElements.size)
+        TestCase.assertEquals("getFoo", (resolvedPsiElements.single() as PsiMethod).name)
     }
 
     fun checkResolveKotlinPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {

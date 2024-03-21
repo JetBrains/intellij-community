@@ -151,8 +151,12 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveSyntheticJavaPropertyCompoundAccess(myFixture, isK2 = false)
     }
 
-    fun testResolveSyntheticJavaPropertyAccessor() {
-        checkResolveSyntheticJavaPropertyAccessor(myFixture)
+    fun testResolveSyntheticJavaPropertyAccessor_setter() {
+        checkResolveSyntheticJavaPropertyAccessor_setter(myFixture)
+    }
+
+    fun testResolveSyntheticJavaPropertyAccessor_getter() {
+        checkResolveSyntheticJavaPropertyAccessor_getter(myFixture)
     }
 
     fun testResolveKotlinPropertyAccessor() {
