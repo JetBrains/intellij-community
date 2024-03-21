@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode;
 import com.jetbrains.python.statistics.PyStatisticToolsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,8 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 
@@ -100,15 +103,28 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   protected Consumer<String> myErrorCallback;
 
-  protected PythonProjectGenerator() {
-    this(false);
-  }
+  @Nullable
+  private final PythonInterpreterSelectionMode preferredEnvironmentType;
 
   /**
    * @param allowRemoteProjectCreation if project of this type could be created remotely
    */
   protected PythonProjectGenerator(final boolean allowRemoteProjectCreation) {
+    this(allowRemoteProjectCreation, null);
+  }
+
+  protected PythonProjectGenerator() {
+    this(false, null);
+  }
+
+  /**
+   * @param allowRemoteProjectCreation if project of this type could be created remotely
+   * @param preferredInterpreter       interpreter type to select by default
+   */
+  protected PythonProjectGenerator(final boolean allowRemoteProjectCreation,
+                                   @Nullable PythonInterpreterSelectionMode preferredInterpreter) {
     myAllowRemoteProjectCreation = allowRemoteProjectCreation;
+    preferredEnvironmentType = preferredInterpreter;
   }
 
   public final void setErrorCallback(@NotNull final Consumer<String> errorCallback) {
@@ -281,6 +297,13 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   public void locationChanged(@NotNull final String newLocation) {
   }
 
+  /**
+   * @return Python interpreter type this generator prefered to use. Null if no preferences
+   */
+  public final @Nullable PythonInterpreterSelectionMode getPreferredEnvironmentType() {
+    return preferredEnvironmentType;
+  }
+
   public interface SettingsListener {
     void stateChanged();
   }
@@ -360,36 +383,40 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param requirement           name of requirement to install (i.e. "django")
    * @param forceInstallFramework pass true if you are sure required framework is missing
    * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
+   * @return future to be used instead of callback.
    */
-  public static void installFrameworkIfNeeded(@NotNull final Project project,
-                                              @NotNull final String frameworkName,
-                                              @NotNull final String requirement,
-                                              @Nullable final Sdk sdk,
-                                              final boolean forceInstallFramework,
-                                              @Nullable final Runnable callback) {
-    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
+  public static @NotNull Future<Void> installFrameworkIfNeeded(@NotNull final Project project,
+                                                               @NotNull final String frameworkName,
+                                                               @NotNull final String requirement,
+                                                               @Nullable final Sdk sdk,
+                                                               final boolean forceInstallFramework,
+                                                               @Nullable final Runnable callback) {
+    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
   }
 
-  public static void installFrameworkInBackground(@NotNull final Project project,
-                                                  @NotNull final String frameworkName,
-                                                  @NotNull final String requirement,
-                                                  @Nullable final Sdk sdk,
-                                                  final boolean forceInstallFramework,
-                                                  @Nullable final Runnable callback) {
-    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
+  public static @NotNull Future<Void> installFrameworkInBackground(@NotNull final Project project,
+                                                                   @NotNull final String frameworkName,
+                                                                   @NotNull final String requirement,
+                                                                   @Nullable final Sdk sdk,
+                                                                   final boolean forceInstallFramework,
+                                                                   @Nullable final Runnable callback) {
+    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
   }
 
-  private static void installFrameworkIfNeeded(@NotNull final Project project,
-                                               @NotNull final String frameworkName,
-                                               @NotNull final String requirement,
-                                               @Nullable final Sdk sdk,
-                                               final boolean forceInstallFramework,
-                                               boolean asBackgroundTask,
-                                               @Nullable final Runnable callback) {
+  @NotNull
+  private static Future<Void> installFrameworkIfNeeded(@NotNull final Project project,
+                                                       @NotNull final String frameworkName,
+                                                       @NotNull final String requirement,
+                                                       @Nullable final Sdk sdk,
+                                                       final boolean forceInstallFramework,
+                                                       boolean asBackgroundTask,
+                                                       @Nullable final Runnable callback) {
 
+    var future = new CompletableFuture<Void>();
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
-      return;
+      future.completeExceptionally(new RuntimeException(("No SDK provided")));
+      return future;
     }
 
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
@@ -404,7 +431,13 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
             }
 
             @Override
+            public void onThrowable(@NotNull Throwable error) {
+              future.completeExceptionally(error);
+            }
+
+            @Override
             public void onSuccess() {
+              future.complete(null);
               // Installed / checked successfully, call callback on AWT
               if (callback != null) {
                 callback.run();
@@ -421,7 +454,13 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
             }
 
             @Override
+            public void onThrowable(@NotNull Throwable error) {
+              future.completeExceptionally(error);
+            }
+
+            @Override
             public void onSuccess() {
+              future.complete(null);
               // Installed / checked successfully, call callback on AWT
               if (callback != null) {
                 callback.run();
@@ -431,18 +470,16 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       }
     }
     else {
+      future.complete(null);
       // No need to install, but still need to call callback on AWT
       if (callback != null) {
         assert SwingUtilities.isEventDispatchThread();
         callback.run();
       }
     }
+    return future;
   }
 
-  @Nullable
-  public String getPreferredEnvironmentType() {
-    return null;
-  }
 
   @Nullable
   public String getNewProjectPrefix() {
