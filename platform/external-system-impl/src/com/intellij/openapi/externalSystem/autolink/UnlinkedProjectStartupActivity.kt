@@ -18,7 +18,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
@@ -76,7 +75,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   }
 
   private suspend fun loadProjectIfSingleUnlinkedProjectFound(project: Project) {
-    val externalProjectPath = project.guessProjectDir()?.path ?: return
+    val externalProjectPath = project.basePath ?: return
     val isNewExternalProject = isNewExternalProject(project)
     val isEnabledAutoLink = isEnabledAutoLink(project)
     val isNewPlatformProject = isNewPlatformProject(project)
@@ -127,7 +126,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun installProjectRootsScanner(project: Project): ProjectRoots {
     val projectRoots = ProjectRoots()
-    val rootProjectPath = project.guessProjectDir()?.path
+    val rootProjectPath = project.basePath
     if (rootProjectPath != null) {
       projectRoots.addProjectRoot(rootProjectPath)
     }
