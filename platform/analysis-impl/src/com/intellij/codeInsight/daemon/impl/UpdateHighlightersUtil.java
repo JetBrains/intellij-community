@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Document markup manipulation methods during the highlighting.
@@ -65,14 +66,18 @@ public final class UpdateHighlightersUtil {
     }
 
     if (!Comparing.equal(o1.forcedTextAttributes, o2.forcedTextAttributes)) {
-      return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
+      return String.valueOf(o1.forcedTextAttributes).compareTo(String.valueOf(o2.forcedTextAttributes));
     }
 
     if (!Comparing.equal(o1.forcedTextAttributesKey, o2.forcedTextAttributesKey)) {
-      return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
+      return String.valueOf(o1.forcedTextAttributesKey).compareTo(String.valueOf(o2.forcedTextAttributesKey));
     }
 
-    return Comparing.compare(o1.getDescription(), o2.getDescription());
+    d = Comparing.compare(o1.getDescription(), o2.getDescription());
+    if (d != 0) {
+      return d;
+    }
+    return Integer.compare(System.identityHashCode(o1), System.identityHashCode(o2));
   };
 
   private static boolean isCoveredByOffsets(@NotNull HighlightInfo info, @NotNull HighlightInfo coveredBy) {
@@ -94,6 +99,17 @@ public final class UpdateHighlightersUtil {
       List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
       for (HighlightInfo info : highlightInfos) {
         if (accept(project, info)) {
+          result.add(info);
+        }
+      }
+      return result;
+    }
+    static @NotNull List<HighlightInfo> applyPostAndAdditionalFilter(@NotNull Project project,
+                                                                     @NotNull List<? extends HighlightInfo> highlightInfos,
+                                                                     @NotNull Predicate<? super HighlightInfo> additionalFilter) {
+      List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
+      for (HighlightInfo info : highlightInfos) {
+        if (accept(project, info) && additionalFilter.test(info)) {
           result.add(info);
         }
       }
