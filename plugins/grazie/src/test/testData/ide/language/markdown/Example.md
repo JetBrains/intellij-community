@@ -58,3 +58,7 @@ foo(<GRAMMAR_ERROR descr="THE_PUNCT">a,</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="TH
 Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
 das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
 das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+
+Indices are up-to-date.
+Indices are up to date.
+This is an <GRAMMAR_ERROR descr="UP_TO_DATE_HYPHEN">up to date</GRAMMAR_ERROR> product.

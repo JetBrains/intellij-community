@@ -236,6 +236,10 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     return true // https://github.com/languagetool-org/languagetool/issues/9511
   }
 
+  if (match.rule.fullId == "UP_TO_DATE_HYPHEN[1]") {
+    return true // https://github.com/languagetool-org/languagetool/issues/8285
+  }
+
   return false
 }
 
