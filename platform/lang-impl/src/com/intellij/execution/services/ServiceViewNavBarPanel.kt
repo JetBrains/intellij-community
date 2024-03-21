@@ -4,13 +4,11 @@ package com.intellij.execution.services
 import com.intellij.execution.services.ServiceModel.ServiceViewItem
 import com.intellij.execution.services.ServiceViewNavBarService.ServiceViewNavBarSelector
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.ide.NavBarVmImpl
 import com.intellij.ide.navbar.ide.NavBarVmItem
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.vm.NavBarVm
-import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -117,9 +115,7 @@ private fun trackVisibility(component: Component): StateFlow<Boolean> {
 
 internal class ServiceViewRootNavBarItem(
   private val viewModel: ServiceViewModel,
-) : NavBarVmItem,
-    NavBarItem,
-    Pointer<ServiceViewRootNavBarItem> {
+) : NavBarVmItem {
 
   override fun equals(other: Any?): Boolean {
     return this === other || other is ServiceViewRootNavBarItem && viewModel == other.viewModel
@@ -129,10 +125,6 @@ internal class ServiceViewRootNavBarItem(
     return viewModel.hashCode()
   }
 
-  override fun createPointer(): Pointer<out ServiceViewRootNavBarItem> = this
-  override fun dereference(): ServiceViewRootNavBarItem = this // hard pointer
-
-  override fun presentation(): NavBarItemPresentation = presentation
   override val presentation: NavBarItemPresentation = NavBarItemPresentation(
     AllIcons.Nodes.Services, "", null,
     REGULAR_ATTRIBUTES,
@@ -149,9 +141,7 @@ internal class ServiceViewRootNavBarItem(
 private class ServiceViewNavBarItem(
   private val viewModel: ServiceViewModel,
   val item: ServiceViewItem,
-) : NavBarItem,
-    NavBarVmItem,
-    Pointer<ServiceViewNavBarItem> {
+) : NavBarVmItem {
 
   override fun equals(other: Any?): Boolean {
     return this === other || other is ServiceViewNavBarItem && viewModel == other.viewModel && item == other.item
@@ -161,10 +151,6 @@ private class ServiceViewNavBarItem(
     return Objects.hash(viewModel, item)
   }
 
-  override fun createPointer(): Pointer<out NavBarItem> = this
-  override fun dereference(): ServiceViewNavBarItem = this // hard pointer
-
-  override fun presentation(): NavBarItemPresentation = presentation
   override val presentation: NavBarItemPresentation = run {
     val icon = item.getViewDescriptor().getPresentation().getIcon(false)
     val text = ServiceViewDragHelper.getDisplayName(item.getViewDescriptor().getPresentation())
