@@ -94,7 +94,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     if (getNumberOfEvaluations(process) == 0) {
       SuspendManager suspendManager = process.getSuspendManager();
       SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
-      newSuspendContext.setThread(suspendContext.getThread().getThreadReference());
+      newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
       if (processSuspendAll(newSuspendContext, suspendContext, performOnSuspendAll)) {
         suspendManager.voteSuspend(newSuspendContext);
       }
@@ -188,7 +188,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
                                            @NotNull SuspendContextImpl originalContext,
                                            @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     // Need to 'replace' the myThreadSuspendContext (single-thread suspend context passed filtering) with this one.
-    suspendContext.resetThread(Objects.requireNonNull(originalContext.getThread()));
+    suspendContext.resetThread(Objects.requireNonNull(originalContext.getEventThread()));
 
     // Note, myThreadSuspendContext is resuming without SuspendManager#voteSuspend.
     // Look at the end of DebugProcessEvents#processLocatableEvent for more details.

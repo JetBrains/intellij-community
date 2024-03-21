@@ -60,10 +60,10 @@ public class SuspendManagerImpl implements SuspendManager {
             LOG.debug("VM resumed ");
           }
           case EventRequest.SUSPEND_EVENT_THREAD -> {
-            myFrozenThreads.remove(getThread());
-            getThread().resume();
+            myFrozenThreads.remove(getEventThread());
+            getEventThread().resume();
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Thread resumed : " + getThread().toString());
+              LOG.debug("Thread resumed : " + getEventThread().toString());
             }
           }
           case EventRequest.SUSPEND_NONE -> LOG.debug("None resumed");
@@ -122,7 +122,7 @@ public class SuspendManagerImpl implements SuspendManager {
     popContext(suspendContext);
     suspendContext.resume(false); // just set resumed flag for correct commands cancellation
     SuspendContextImpl newSuspendContext = pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
-    newSuspendContext.setThread(suspendContext.getThread().getThreadReference());
+    newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
     notifyPaused(newSuspendContext, paused);
   }
 
@@ -182,7 +182,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void suspendThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {
-    LOG.assertTrue(thread != context.getThread(), "Thread is already suspended at the breakpoint");
+    LOG.assertTrue(thread != context.getEventThread(), "Thread is already suspended at the breakpoint");
 
     if (context.isExplicitlyResumed(thread)) {
       context.myResumedThreads.remove(thread);
@@ -233,7 +233,7 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         myDebugProcess.cancelRunToCursorBreakpoint();
         if (!Registry.is("debugger.keep.step.requests")) {
-          ThreadReferenceProxyImpl thread = suspendContext.getThread();
+          ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
           myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
         }
         notifyPaused(suspendContext, true);

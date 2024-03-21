@@ -502,11 +502,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     public void paused(final SuspendContextImpl suspendContext) {
       LOG.debug("paused");
 
-      ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
+      ThreadReferenceProxyImpl currentThread = suspendContext.getEventThread();
 
       if (!shouldSetAsActiveContext(suspendContext)) {
         notifyThreadsRefresh();
-        ThreadReferenceProxyImpl thread = suspendContext.getThread();
+        ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
@@ -653,7 +653,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     }
 
     private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext) {
-      final ThreadReferenceProxyImpl newThread = suspendContext.getThread();
+      final ThreadReferenceProxyImpl newThread = suspendContext.getEventThread();
       if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || isSteppingThrough(newThread)) {
         return true;
       }

@@ -329,7 +329,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private static void preprocessEvent(SuspendContextImpl suspendContext, ThreadReference thread) {
-    ThreadReferenceProxyImpl oldThread = suspendContext.getThread();
+    ThreadReferenceProxyImpl oldThread = suspendContext.getEventThread();
     suspendContext.setThread(thread);
 
     if (oldThread == null) {
@@ -553,7 +553,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
         else {
-          final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
+          final ThreadReferenceProxyImpl threadProxy = suspendContext.getEventThread();
           hint.doStep(this, suspendContext, threadProxy, hint.getSize(), nextStepDepth, commandToken);
           shouldResume = true;
         }
@@ -634,7 +634,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         final SuspendManager suspendManager = getSuspendManager();
-        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
+        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getEventThread());
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
         if (evaluatingContext != null &&

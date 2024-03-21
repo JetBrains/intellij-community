@@ -510,8 +510,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static int getFrameCount(@Nullable ThreadReferenceProxyImpl thread, @NotNull SuspendContextImpl suspendContext) {
     if (thread != null) {
-      if (thread.equals(suspendContext.getThread())) {
-        return suspendContext.frameCount();
+      if (thread.equals(suspendContext.getEventThread())) {
+        return suspendContext.getCachedThreadFrameCount();
       }
       else {
         try {
@@ -2054,7 +2054,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
       for (SuspendContextImpl suspendContext : suspendingContexts) {
-        if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && suspendContext.getThread() == myThread) {
+        if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && suspendContext.getEventThread() == myThread) {
           getSession().getXDebugSession().sessionResumed();
           getManagerThread().invoke(createResumeCommand(suspendContext));
         }

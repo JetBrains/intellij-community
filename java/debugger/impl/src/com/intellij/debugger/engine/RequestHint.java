@@ -129,7 +129,7 @@ public class RequestHint {
     if (mySteppedOut) return false;
     ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
-      int currentDepth = context.frameCount();
+      int currentDepth = DebugProcessImpl.getFrameCount(contextThread, context);
       if (currentDepth < myFrameCount) mySteppedOut = true;
       return currentDepth == myFrameCount;
     }
