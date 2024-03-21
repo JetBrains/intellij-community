@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
+import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
@@ -90,6 +91,10 @@ abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
           action(resolverContext)
         }
       })
+  }
+
+  fun addProjectModelContributor(parentDisposable: Disposable, contributor: ProjectModelContributor) {
+    ProjectModelContributor.EP_NAME.point.registerExtension(contributor, parentDisposable)
   }
 
   fun initMultiModuleProject() {

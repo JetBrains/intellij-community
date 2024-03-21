@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
 import org.jetbrains.plugins.gradle.importing.TestPhasedModelProvider
+import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
@@ -18,6 +19,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   fun `test one-phased Gradle sync`() {
     Disposer.newDisposable().use { disposable ->
       val buildCompletionAssertion = ListenerAssertion()
+      val projectModelContributorAssertion = ListenerAssertion()
 
       addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenBuildCompleted(disposable) { resolverContext ->
@@ -26,18 +28,39 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
             for (projectModel in buildModel.projects) {
               val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
               val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
-              Assertions.assertNotNull(buildFinishedModel) { "Expected BuildFinishedModel on the build completion" }
+              Assertions.assertNotNull(buildFinishedModel) {
+                "Expected BuildFinishedModel on the build completion"
+              }
             }
           }
         }
       }
+      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+        projectModelContributorAssertion.trace {
+          for (buildModel in resolverContext.allBuilds) {
+            for (projectModel in buildModel.projects) {
+              val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+              val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
+              Assertions.assertNotNull(buildFinishedModel) {
+                "Expected BuildFinishedModel in the project model contributor"
+              }
+            }
+          }
+        }
+      })
 
       initMultiModuleProject()
       importProject()
       assertMultiModuleProjectStructure()
 
       buildCompletionAssertion.assertListenerFailures()
-      buildCompletionAssertion.assertListenerState(1) { "Build action should be finished only once" }
+      projectModelContributorAssertion.assertListenerFailures()
+      buildCompletionAssertion.assertListenerState(1) {
+        "Build action should be finished only once"
+      }
+      projectModelContributorAssertion.assertListenerState(1) {
+        "Project module contributor should be called only once"
+      }
     }
   }
 
@@ -46,6 +69,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val buildCompletionAssertion = ListenerAssertion()
+      val projectModelContributorAssertion = ListenerAssertion()
 
       addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
       addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
@@ -55,7 +79,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
             for (projectModel in buildModel.projects) {
               val projectLoadedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
               val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
-              Assertions.assertNotNull(projectLoadedModel) { "Expected ProjectLoadedModel on the project loaded phase" }
+              Assertions.assertNotNull(projectLoadedModel) {
+                "Expected ProjectLoadedModel on the project loaded phase"
+              }
             }
           }
         }
@@ -68,12 +94,34 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
               val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
               val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
               val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
-              Assertions.assertNotNull(projectLoadedModel) { "Expected ProjectLoadedModel on the build completion" }
-              Assertions.assertNotNull(buildFinishedModel) { "Expected BuildFinishedModel on the build completion" }
+              Assertions.assertNotNull(projectLoadedModel) {
+                "Expected ProjectLoadedModel on the build completion"
+              }
+              Assertions.assertNotNull(buildFinishedModel) {
+                "Expected BuildFinishedModel on the build completion"
+              }
             }
           }
         }
       }
+      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+        projectModelContributorAssertion.trace {
+          for (buildModel in resolverContext.allBuilds) {
+            for (projectModel in buildModel.projects) {
+              val projectLoadedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
+              val buildFinishedModelClass = TestPhasedModel.getModelClass(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+              val projectLoadedModel = resolverContext.getProjectModel(projectModel, projectLoadedModelClass)
+              val buildFinishedModel = resolverContext.getProjectModel(projectModel, buildFinishedModelClass)
+              Assertions.assertNotNull(projectLoadedModel) {
+                "Expected ProjectLoadedModel in the project model contributor"
+              }
+              Assertions.assertNotNull(buildFinishedModel) {
+                "Expected BuildFinishedModel in the project model contributor"
+              }
+            }
+          }
+        }
+      })
 
       initMultiModuleProject()
       importProject()
@@ -81,8 +129,16 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       projectLoadingAssertion.assertListenerFailures()
       buildCompletionAssertion.assertListenerFailures()
-      projectLoadingAssertion.assertListenerState(1) { "Project loaded phase should be finished only once" }
-      buildCompletionAssertion.assertListenerState(1) { "Build action should be finished only once" }
+      projectModelContributorAssertion.assertListenerFailures()
+      projectLoadingAssertion.assertListenerState(1) {
+        "Project loaded phase should be finished only once"
+      }
+      buildCompletionAssertion.assertListenerState(1) {
+        "Build action should be finished only once"
+      }
+      projectModelContributorAssertion.assertListenerState(1) {
+        "Project module contributor should be called only once"
+      }
     }
   }
 
@@ -91,6 +147,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val buildCompletionAssertion = ListenerAssertion()
+      val projectModelContributorAssertion = ListenerAssertion()
 
       val phaseCompletionAssertion = ListenerAssertion()
       val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
@@ -143,6 +200,13 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
+      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+        projectModelContributorAssertion.trace {
+          Assertions.assertEquals(allPhases.toList(), completedPhases.toList()) {
+            "All phases should be completed before running the project model contributor"
+          }
+        }
+      })
 
       initMultiModuleProject()
       importProject()
@@ -150,6 +214,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       projectLoadingAssertion.assertListenerFailures()
       buildCompletionAssertion.assertListenerFailures()
+      projectModelContributorAssertion.assertListenerFailures()
       phaseCompletionAssertion.assertListenerFailures()
       phaseCompletionAssertion.assertListenerState(allPhases.size) {
         "All requested phases should be completed.\n" +
@@ -162,11 +227,15 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test one-phased Gradle sync cancellation`() {
     Disposer.newDisposable().use { disposable ->
+      val isProjectModelContributorRunned = AtomicBoolean(false)
       val isSyncCancelled = AtomicBoolean(false)
 
       whenBuildCompleted(disposable) {
         throw ProcessCanceledException()
       }
+      addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
+        isProjectModelContributorRunned.set(true)
+      })
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
@@ -174,7 +243,11 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       })
 
       Assertions.assertTrue(isSyncCancelled.get()) {
-        "Gradle sync should be cancelled."
+        "Gradle sync should be cancelled during execution."
+      }
+      Assertions.assertFalse(isProjectModelContributorRunned.get()) {
+        "Gradle sync should be cancelled during execution.\n" +
+        "Therefore the project model contributor shouldn't be runned."
       }
     }
   }
@@ -183,6 +256,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   fun `test two-phased Gradle sync cancellation`() {
     Disposer.newDisposable().use { disposable ->
       val isBuildFinished = AtomicBoolean(false)
+      val isProjectModelContributorRunned = AtomicBoolean(false)
       val isSyncCancelled = AtomicBoolean(false)
 
       whenProjectLoaded(disposable) {
@@ -191,6 +265,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       whenBuildCompleted(disposable) {
         isBuildFinished.set(true)
       }
+      addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
+        isProjectModelContributorRunned.set(true)
+      })
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
@@ -203,6 +280,10 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       Assertions.assertFalse(isBuildFinished.get()) {
         "Gradle sync should be cancelled during the project loaded action.\n" +
         "Therefore the project build action shouldn't be completed."
+      }
+      Assertions.assertFalse(isProjectModelContributorRunned.get()) {
+        "Gradle sync should be cancelled during the project loaded action.\n" +
+        "Therefore the project model contributor shouldn't be runned."
       }
     }
   }
@@ -221,6 +302,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val isProjectLoaded = AtomicBoolean(false)
       val isBuildCompleted = AtomicBoolean(false)
+      val isProjectModelContributorRunned = AtomicBoolean(false)
       val isSyncCancelled = AtomicBoolean(false)
 
       val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
@@ -241,6 +323,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       whenBuildCompleted(disposable) {
         isBuildCompleted.set(true)
       }
+      addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
+        isProjectModelContributorRunned.set(true)
+      })
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
@@ -255,6 +340,12 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       Assertions.assertFalse(isBuildCompleted.get()) {
         "Gradle sync should be cancelled during the $cancellationPhase.\n" +
         "Therefore the project build action shouldn't be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+      Assertions.assertFalse(isProjectModelContributorRunned.get()) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Therefore the project model contributor shouldn't be runned.\n"
         "Requested phases = $allPhases\n" +
         "Completed phases = $completedPhases"
       }
