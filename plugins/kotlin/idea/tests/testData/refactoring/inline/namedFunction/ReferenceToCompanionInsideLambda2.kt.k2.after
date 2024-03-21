@@ -1,5 +1,7 @@
 package abc
 
+import abc.A.Companion
+
 private class A {
 
     companion object {
@@ -9,5 +11,5 @@ private class A {
 
 private fun test(a: A) {
     val bar = 42
-    val c = A.Companion.bar
+    val c = Companion.bar
 }
