@@ -89,7 +89,8 @@ internal class DocumentationUI(
     }.apply {
       iconTextGap = 6
       border = JBUI.Borders.empty(
-        0, 2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+        0,
+        DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
         2 + DocumentationHtmlUtil.contentOuterPadding, DocumentationHtmlUtil.contentOuterPadding)
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
     }
