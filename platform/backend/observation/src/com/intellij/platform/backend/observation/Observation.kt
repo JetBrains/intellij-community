@@ -2,8 +2,16 @@
 package com.intellij.platform.backend.observation
 
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.flow.StateFlow
 
 object Observation {
+
+  /**
+   * Returns the flow representing ongoing configuration processes in a project.
+   * @return a state flow containing `true` if the configuration process is currently running,
+   * or `false` otherwise.
+   */
+  fun configurationFlow(project: Project): StateFlow<Boolean> = PlatformActivityTrackerService.getInstance(project).configurationFlow
 
   /**
    * Suspends until configuration processes in the IDE are completed.
