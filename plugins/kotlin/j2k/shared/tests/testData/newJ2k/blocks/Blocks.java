@@ -1,4 +1,3 @@
-// IGNORE_K2
 //method
 void bar(int a) {}
 void foo() {

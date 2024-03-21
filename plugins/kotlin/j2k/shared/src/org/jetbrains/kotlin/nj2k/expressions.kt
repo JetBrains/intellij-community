@@ -120,7 +120,8 @@ fun useExpression(
 fun kotlinAssert(assertion: JKExpression, message: JKExpression?, symbolProvider: JKSymbolProvider): JKCallExpressionImpl =
     JKCallExpressionImpl(
         symbolProvider.provideMethodSymbol("kotlin.assert"),
-        listOfNotNull(assertion, message).toArgumentList(), canExtractLastArgumentIfLambda = true
+        listOfNotNull(assertion, message).toArgumentList(),
+        canExtractLastArgumentIfLambda = true
     )
 
 fun jvmAnnotation(name: String, symbolProvider: JKSymbolProvider): JKAnnotation =
@@ -306,8 +307,8 @@ fun JKExpression.asLiteralTextWithPrefix(): String? = when {
 
 fun JKClass.primaryConstructor(): JKKtPrimaryConstructor? = classBody.declarations.firstIsInstanceOrNull()
 
-fun List<JKExpression>.toArgumentList(hasTrailingComma: Boolean = false): JKArgumentList =
-    JKArgumentList(map { JKArgumentImpl(it) }, hasTrailingComma = hasTrailingComma)
+fun List<JKExpression>.toArgumentList(): JKArgumentList =
+    JKArgumentList(map { JKArgumentImpl(it) })
 
 fun JKExpression.asStatement(): JKExpressionStatement =
     JKExpressionStatement(this)

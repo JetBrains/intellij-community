@@ -104,6 +104,24 @@ class Java8Class {
         doNotTouch({ "first arg" }, "last arg")
     }
 
+    fun moreTests(
+        m1: MutableMap<String?, String?>,
+        m2: MutableMap<String?, String?>,
+        m3: MutableMap<String?, String?>,
+        m4: MutableMap<String?, String>
+    ) {
+        m1.compute("m1") { k: String?, v: String? -> v }
+        m2.computeIfAbsent("m2") { k: String? -> "value" }
+        m3.computeIfPresent("m1") { k: String?, v: String? -> v }
+        m4.merge("", "") { k: String?, v: String? -> v }
+        m4.merge("", "") { obj: String, str: String -> obj + str }
+
+        val ss = Array(5) { arrayOfNulls<String>(5) }
+
+        val s = "test"
+        s.trim { it <= ' ' }
+    }
+
     companion object {
         fun runnableFun(r: Runnable?) {}
     }

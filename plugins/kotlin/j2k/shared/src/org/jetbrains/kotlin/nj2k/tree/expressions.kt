@@ -195,6 +195,12 @@ class JKDelegationConstructorCall(
     override fun accept(visitor: JKVisitor) = visitor.visitDelegationConstructorCall(this)
 }
 
+/**
+ * @param canExtractLastArgumentIfLambda - Useful during the printing phase for rendering lambda arguments when the method's full signature
+ * can't be determined (e.g. when a node is created midway through conversion for a reference to a Kotlin method like `map`). If
+ * `canExtractLastArgumentIfLambda` isn't set, the printing phase will still try to determine whether the last argument should be printed
+ * outside parentheses
+ */
 class JKCallExpressionImpl(
     override var identifier: JKMethodSymbol,
     arguments: JKArgumentList = JKArgumentList(),
@@ -207,6 +213,12 @@ class JKCallExpressionImpl(
     override fun accept(visitor: JKVisitor) = visitor.visitCallExpressionImpl(this)
 }
 
+/**
+ * @param canExtractLastArgumentIfLambda - Useful during the printing phase for rendering lambda arguments when the method's full signature
+ * can't be determined (e.g. when a node is created midway through conversion for a reference to an `Array` constructor). If
+ * `canExtractLastArgumentIfLambda` isn't set, the printing phase will still try to determine whether the last argument should be printed
+ * outside parentheses
+ */
 class JKNewExpression(
     val classSymbol: JKClassSymbol,
     arguments: JKArgumentList,

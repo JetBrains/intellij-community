@@ -1,5 +1,6 @@
 // IGNORE_K2
 
+import java.util.*;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
@@ -135,5 +136,23 @@ public class Java8Class {
         doNotTouch(() -> {
             return "first arg";
         }, "last arg");
+    }
+
+    void moreTests(
+            Map<String, String> m1,
+            Map<String, String> m2,
+            Map<String, String> m3,
+            Map<String, String> m4
+    ) {
+        m1.compute("m1", (k, v) -> v);
+        m2.computeIfAbsent("m2", (k) -> "value");
+        m3.computeIfPresent("m1", (k, v) -> v);
+        m4.merge("", "", (k, v) -> v);
+        m4.merge("", "", String::concat);
+
+        String [][] ss = new String[5][5];
+
+        String s = "test";
+        s.trim();
     }
 }

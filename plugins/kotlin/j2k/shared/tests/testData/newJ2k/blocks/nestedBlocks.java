@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Foo {
     void x() {
         {

@@ -5,14 +5,11 @@ package org.jetbrains.kotlin.nj2k.printing
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNewExpression
-import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
-import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedMethod
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
@@ -20,13 +17,9 @@ import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.*
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.function.Predicate
-import java.util.function.Consumer
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
@@ -469,12 +462,23 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             val parent = argumentList.parent
             val lastArgument = arguments.lastOrNull()
             val lastArgumentValue = lastArgument?.value
-            if (lastArgumentValue !is JKLambdaExpression || (lastArgumentValue.functionalType.present()) || (parent !is JKCallExpressionImpl && parent !is JKNewExpression)) {
+
+            // If the last argument is a lambda expression, we'll try to print it outside the parentheses. The logic below is similar to
+            // `MoveLambdaOutsideParenthesesProcessing` but less comprehensive, especially where functional interfaces are concerned
+            if (lastArgumentValue !is JKLambdaExpression || (parent !is JKCallExpressionImpl && parent !is JKNewExpression)) {
                 return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
             }
 
-            if ((parent is JKCallExpressionImpl && parent.canExtractLastArgumentIfLambda) || (parent is JKNewExpression && parent.canExtractLastArgumentIfLambda)) {
+            // If a node has the `canExtractLastArgumentIfLambda` field set to true, we can bypass the remaining checks. This flag is useful
+            // when a JKElement doesn't resolve to a method/constructor implementation whose signature we can examine
+            if ((parent is JKCallExpressionImpl && parent.canExtractLastArgumentIfLambda) ||
+                (parent is JKNewExpression && parent.canExtractLastArgumentIfLambda)
+            ) {
                 return renderArgumentListWithLastLambdaOutsideParentheses(arguments)
+            }
+
+            if (lastArgumentValue.functionalType.present()) {
+                return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
             }
 
             val parentPsi = parent.psi
@@ -504,25 +508,23 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
                 renderArgumentList(arguments.subList(0, arguments.lastIndex), false)
             }
             printer.print(" ")
-            arguments.last().accept(this)
+            renderLambdaExpressionWithoutFunctionalType(arguments.last().value as JKLambdaExpression)
             printer.print(" ")
         }
-
-        private val javaFunctionalTypes = setOf(
-            "java.util.function.Function",
-            "java.util.function.BiFunction",
-            "java.util.function.BiConsumer",
-            "java.util.function.Consumer",
-            "java.util.function.Predicate",
-            "java.util.function.UnaryOperator",
-            "java.util.function.BinaryOperator",
-            "java.util.function.Supplier"
-        )
 
         private fun PsiType.isFunctionalType(): Boolean {
             if (isKotlinFunctionalType) return true
             val fqn = canonicalText.substringBefore("<")
-            return fqn in javaFunctionalTypes
+            return fqn in setOf(
+                "java.util.function.Function",
+                "java.util.function.BiFunction",
+                "java.util.function.BiConsumer",
+                "java.util.function.Consumer",
+                "java.util.function.Predicate",
+                "java.util.function.UnaryOperator",
+                "java.util.function.BinaryOperator",
+                "java.util.function.Supplier"
+            )
         }
 
         private fun KtParameter.hasFunctionalType(): Boolean =
@@ -839,6 +841,10 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
                 printer.print(" ")
             }
 
+            renderLambdaExpressionWithoutFunctionalType(lambdaExpression)
+        }
+
+        private fun renderLambdaExpressionWithoutFunctionalType(lambdaExpression: JKLambdaExpression) {
             printer.par(ParenthesisKind.CURVED) {
                 val isMultiStatement = lambdaExpression.statement.statements.size > 1
                 if (isMultiStatement) printer.println()

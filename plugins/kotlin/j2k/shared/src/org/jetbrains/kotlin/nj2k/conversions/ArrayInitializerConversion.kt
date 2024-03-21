@@ -23,7 +23,8 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
                     ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
                 else
                     ArrayFqNames.ARRAY_OF_FUNCTION.asString()
-            val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList(element.hasTrailingComma)
+            val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
+            arguments.hasTrailingComma = element.hasTrailingComma
             val typeArguments =
                 if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
                 else JKTypeArgumentList()
@@ -63,15 +64,12 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
             val arrayType = dimensions.drop(1).fold(type) { currentType, _ ->
                 JKJavaArrayType(currentType)
             }
-
-            val argList = JKArgumentList(
-                dimensions[0],
-                JKLambdaExpression(JKExpressionStatement(buildArrayInitializer(dimensions.subList(1, dimensions.size), type)))
-            )
-
             return JKNewExpression(
                 symbolProvider.provideClassSymbol("kotlin.Array"),
-                argList,
+                JKArgumentList(
+                    dimensions[0],
+                    JKLambdaExpression(JKExpressionStatement(buildArrayInitializer(dimensions.subList(1, dimensions.size), type)))
+                ),
                 JKTypeArgumentList(arrayType),
                 canExtractLastArgumentIfLambda = true
             )
