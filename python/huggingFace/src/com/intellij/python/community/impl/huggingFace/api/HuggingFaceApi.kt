@@ -10,7 +10,9 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEn
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCardsCache
 import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationPlaceholdersUtil
 import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceReadmeCleaner
-import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
+import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCoroutine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.time.Instant
@@ -20,9 +22,8 @@ object HuggingFaceApi {
   private val nextLinkRegex = Regex("""<(.+)>; rel="next"""")
 
   fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int) {
-    val executor = HuggingFaceSafeExecutor.instance
 
-    executor.asyncSuspend("FetchHuggingFace$endpoint") {
+    HuggingFaceCoroutine.Utils.ioScope.launch {
       var nextPageUrl: String? = HuggingFaceURLProvider.fetchApiDataUrl(endpoint).toString()
 
       while (nextPageUrl != null && cache.getCacheSize() < maxCount) {
@@ -38,20 +39,17 @@ object HuggingFaceApi {
     }
   }
 
-  suspend fun performSearch(query: String, tags: String?, sortKey: HuggingFaceModelSortKey): Map<String, HuggingFaceEntityBasicApiData> {
+  suspend fun performSearch(query: String, tags: String?, sortKey: HuggingFaceModelSortKey
+  ): Map<String, HuggingFaceEntityBasicApiData> = withContext(HuggingFaceCoroutine.Utils.ioScope.coroutineContext) {
     val queryUrl = HuggingFaceURLProvider.getModelSearchQuery(query, tags, sortKey)
-    val executor = HuggingFaceSafeExecutor.instance
 
-    return executor.asyncSuspend("SearchHuggingFace") {
-      // todo: add pagination - but only if needed (user scrolls down)
-      val nextPageUrl: String = queryUrl.toString()
-      val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
-        .getOrDefault(HfHttpResponseWithHeaders(null, null))
-      response.content?.let {
-        val dataMap = parseBasicEntityData(HuggingFaceEntityKind.MODEL, it)
-        dataMap
-      } ?: emptyMap()
-    }.await()
+    val nextPageUrl: String = queryUrl.toString()
+    val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
+      .getOrDefault(HfHttpResponseWithHeaders(null, null))
+    response.content?.let {
+      val dataMap = parseBasicEntityData(HuggingFaceEntityKind.MODEL, it)
+      dataMap
+    } ?: emptyMap()
   }
 
   private fun extractNextPageUrl(linkHeader: String?): String? {
