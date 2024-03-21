@@ -14,11 +14,11 @@ codegen-units = 1
 
 [dependencies]
 log = { version = "0.4.20", features = ["std"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
 jni = "0.21.1"
 libloading = "0.8.0"
-anyhow = { version = "1", features = ["std", "backtrace"] }
+anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
 
 [target.'cfg(not(all(target_os = "windows", target_arch = "aarch64")))'.dependencies]
 va_list = "0.1.4"
