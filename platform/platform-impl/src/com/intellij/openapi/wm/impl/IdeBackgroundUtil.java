@@ -234,40 +234,30 @@ public final class IdeBackgroundUtil {
     @Override
     public void clearRect(int x, int y, int width, int height) {
       super.clearRect(x, y, width, height);
-      if (shouldAvoidOverriding()) return;
-
       runAllPainters(x, y, width, height, null, getColor());
     }
 
     @Override
     public void fillRect(int x, int y, int width, int height) {
       super.fillRect(x, y, width, height);
-      if (shouldAvoidOverriding()) return;
-
       runAllPainters(x, y, width, height, null, getColor());
     }
 
     @Override
     public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
       super.fillArc(x, y, width, height, startAngle, arcAngle);
-      if (shouldAvoidOverriding()) return;
-
       runAllPainters(x, y, width, height, new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.PIE), getColor());
     }
 
     @Override
     public void fillOval(int x, int y, int width, int height) {
       super.fillOval(x, y, width, height);
-      if (shouldAvoidOverriding()) return;
-
       runAllPainters(x, y, width, height, new Ellipse2D.Double(x, y, width, height), getColor());
     }
 
     @Override
     public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
       super.fillPolygon(xPoints, yPoints, nPoints);
-      if (shouldAvoidOverriding()) return;
-
       Polygon s = new Polygon(xPoints, yPoints, nPoints);
       Rectangle r = s.getBounds();
       runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
@@ -276,8 +266,6 @@ public final class IdeBackgroundUtil {
     @Override
     public void fillPolygon(Polygon s) {
       super.fillPolygon(s);
-      if (shouldAvoidOverriding()) return;
-
       Rectangle r = s.getBounds();
       runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
     }
@@ -285,16 +273,12 @@ public final class IdeBackgroundUtil {
     @Override
     public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
       super.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
-      if (shouldAvoidOverriding()) return;
-
       runAllPainters(x, y, width, height, new RoundRectangle2D.Double(x, y, width, height, arcHeight, arcHeight), getColor());
     }
 
     @Override
     public void fill(Shape s) {
       super.fill(s);
-      if (shouldAvoidOverriding()) return;
-
       Rectangle r = s.getBounds();
       runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
     }
@@ -302,16 +286,12 @@ public final class IdeBackgroundUtil {
     @Override
     public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
       super.drawImage(img, op, x, y);
-      if (shouldAvoidOverriding()) return;
-
       runAllPainters(x, y, img.getWidth(), img.getHeight(), null, img);
     }
 
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, width, height, observer);
-      if (shouldAvoidOverriding()) return b;
-
       runAllPainters(x, y, width, height, null, img);
       return b;
     }
@@ -319,8 +299,6 @@ public final class IdeBackgroundUtil {
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, Color c,ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, width, height, c, observer);
-      if (shouldAvoidOverriding()) return b;
-
       runAllPainters(x, y, width, height, null, img);
       return b;
     }
@@ -328,8 +306,6 @@ public final class IdeBackgroundUtil {
     @Override
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, observer);
-      if (shouldAvoidOverriding()) return b;
-
       runAllPainters(x, y, img.getWidth(null), img.getHeight(null), null, img);
       return b;
     }
@@ -337,8 +313,6 @@ public final class IdeBackgroundUtil {
     @Override
     public boolean drawImage(Image img, int x, int y, Color c, ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, c, observer);
-      if (shouldAvoidOverriding()) return b;
-
       runAllPainters(x, y, img.getWidth(null), img.getHeight(null), null, img);
       return b;
     }
@@ -346,8 +320,6 @@ public final class IdeBackgroundUtil {
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
       boolean b = super.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
-      if (shouldAvoidOverriding()) return b;
-
       runAllPainters(dx1, dy1, dx2 - dx1, dy2 - dy1, null, img);
       return b;
     }
@@ -355,14 +327,12 @@ public final class IdeBackgroundUtil {
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color c, ImageObserver observer) {
       boolean b = super.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, c, observer);
-      if (shouldAvoidOverriding()) return b;
-
       runAllPainters(dx1, dy1, dx2 - dx1, dy2 - dy1, null, img);
       return b;
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
-      if (width <= 1 || height <= 1) return;
+      if (width <= 1 || height <= 1 || shouldAvoidOverriding()) return;
       boolean hasAlpha;
       if (reason instanceof Color) {
         hasAlpha = ((Color)reason).getAlpha() < 255;
