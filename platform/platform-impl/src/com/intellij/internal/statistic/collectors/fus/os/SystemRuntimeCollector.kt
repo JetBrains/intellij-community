@@ -51,6 +51,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTY: EventId2<String?, Boolean> =
     GROUP.registerEvent("jvm.client.properties", String("name", SYSTEM_PROPERTIES), Boolean("value"))
   private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
+  private val AGENTS_COUNT: EventId2<Int, Int> = GROUP.registerEvent("agents.count", Int("java_agents"), Int("native_agents"))
   private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -91,7 +92,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       result += SYSTEM_PROPERTY.metric(property.key, property.value.toBoolean())
     }
 
-    result += DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled())
+    result += collectAgentMetrics()
 
     return result
   }
@@ -175,4 +176,23 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       .map { it to System.getProperty(it) }
       .filter { it.second != null }
       .toMap()
+
+  private fun collectAgentMetrics(): Set<MetricEvent> {
+    var nativeAgents = 0
+    var javaAgents = 0
+
+    for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
+      if (arg.startsWith("-javaagent:")) {
+        javaAgents++
+      }
+      if (arg.startsWith("-agentlib:") || arg.startsWith("-agentpath:")) {
+        nativeAgents++
+      }
+    }
+
+    return buildSet {
+      add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
+      add(AGENTS_COUNT.metric(javaAgents, nativeAgents))
+    }
+  }
 }
