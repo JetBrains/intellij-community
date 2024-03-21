@@ -61,8 +61,16 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   }
 
   return when (context.loggerType) {
-    SLF4J, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
+    SLF4J -> {
       loggerReferenceList.take(if (context.lastArgumentIsException) placeholderParametersSize - 1 else placeholderParametersSize)
+    }
+    LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
+      if (context.lastArgumentIsException && placeholderParametersSize == 1) {
+        emptyList()
+      }
+      else {
+        loggerReferenceList
+      }
     }
     SLF4J_EQUAL_PLACEHOLDERS, LOG4J_EQUAL_PLACEHOLDERS -> {
       loggerReferenceList
