@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.api
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEntry
@@ -62,32 +60,12 @@ object HuggingFaceApi {
     json: String
   ): Map<String, HuggingFaceEntityBasicApiData> {
     val objectMapper = ObjectMapper().registerKotlinModule()
-    val jsonArray: JsonNode = objectMapper.readTree(json)
+    val jsonArray: ArrayNode = objectMapper.readTree(json) as ArrayNode
     val modelDataMap = mutableMapOf<String, HuggingFaceEntityBasicApiData>()
 
-    jsonArray.forEach { element ->
-      val jsonObject: JsonNode = element
-      val id = jsonObject.get("id")?.asText()?.takeIf { it.isNotEmpty() } ?: return@forEach
-
-      @NlsSafe val nlsSafeId = id
-      @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
-      val gated = jsonObject.get("gated")?.asText() ?: "true"
-      val downloads = jsonObject.get("downloads")?.asInt() ?: -1
-      val likes = jsonObject.get("likes")?.asInt() ?: -1
-      val lastModified = jsonObject.get("lastModified")?.asText() ?: "1000-01-01T01:01:01.000Z"
-      val libraryName = jsonObject.get("library_name")?.asText() ?: "unknown"
-
-      val modelData = HuggingFaceEntityBasicApiData(
-        endpointKind,
-        nlsSafeId,
-        gated,
-        downloads,
-        likes,
-        lastModified,
-        libraryName,
-        pipelineTag,
-      )
-      modelDataMap[nlsSafeId] = modelData
+    jsonArray.forEach { jsonNode ->
+      val data = objectMapper.treeToValue(jsonNode, HuggingFaceEntityBasicApiData::class.java).copy(kind = endpointKind)
+      modelDataMap[data.itemId] = data
     }
 
     return modelDataMap
