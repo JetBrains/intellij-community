@@ -54,6 +54,12 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
 
+  /**
+   * For overriding background of an element Graphics object might be wrapped into a customizing Graphics.
+   * (see {@link com.intellij.openapi.wm.impl.IdeBackgroundUtil})
+   * For some buttons we need to override background painting, but keep the original border.
+   * In such cases, this key is used.
+   */
   @ApiStatus.Internal
   public static final Key<Boolean> AVOID_EXTENDING_BORDER_GRAPHICS = Key.create("JButton.avoidExtendingBorderGraphics");
 
