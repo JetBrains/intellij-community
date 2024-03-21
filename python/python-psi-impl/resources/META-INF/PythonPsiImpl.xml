@@ -8,7 +8,6 @@
 
     <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
 
-    <highlightRangeExtension implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <!-- We run it before FilePathCompletionContributor (id="filePath") to get help text about full path results in the extended completion -->
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PySoftFileReferenceContributor" language="Python"
                               order="before filePath"/>

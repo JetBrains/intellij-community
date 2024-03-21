@@ -62,4 +62,9 @@ public interface PyAstFile extends PyAstElement, PsiFile, PyAstDocStringOwner, A
     }
     return null;
   }
+
+  @ApiStatus.Internal
+  default boolean isAcceptedFor(@NotNull Class<?> visitorClass) {
+    return true;
+  }
 }

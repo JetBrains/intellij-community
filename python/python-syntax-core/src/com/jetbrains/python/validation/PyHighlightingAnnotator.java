@@ -21,9 +21,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public final class PyHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
+public final class PyHighlightingAnnotator extends PyFrontendAnnotator implements HighlightRangeExtension {
 
   @Override
-  public void visitPyFunction(@NotNull PyFunction node) {
+  public void visitPyFunction(@NotNull PyAstFunction node) {
     if (node.isAsyncAllowed()) {
       highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
     }
@@ -43,57 +44,57 @@ public final class PyHighlightingAnnotator extends PyAnnotator implements Highli
         .ofNullable(node.getNode())
         .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
         .ifPresent(asyncNode -> getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                                          PyPsiBundle.message("ANN.function.cannot.be.async", node.getName())).range(asyncNode).create());
+                                                          PySyntaxCoreBundle.message("ANN.function.cannot.be.async", node.getName())).range(asyncNode).create());
     }
   }
 
   @Override
-  public void visitPyNumericLiteralExpression(@NotNull PyNumericLiteralExpression node) {
+  public void visitPyNumericLiteralExpression(@NotNull PyAstNumericLiteralExpression node) {
     String suffix = node.getIntegerLiteralSuffix();
     if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
     if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
-    getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("INSP.python.trailing.suffix.not.support", suffix))
+    getHolder().newAnnotation(HighlightSeverity.ERROR, PySyntaxCoreBundle.message("INSP.python.trailing.suffix.not.support", suffix))
       .range(node).create();
   }
 
   @Override
-  public void visitPyForStatement(@NotNull PyForStatement node) {
+  public void visitPyForStatement(@NotNull PyAstForStatement node) {
     highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
-  public void visitPyWithStatement(@NotNull PyWithStatement node) {
+  public void visitPyWithStatement(@NotNull PyAstWithStatement node) {
     highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
-  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
+  public void visitPyPrefixExpression(@NotNull PyAstPrefixExpression node) {
     highlightKeyword(node, PyTokenTypes.AWAIT_KEYWORD);
   }
 
   @Override
-  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
+  public void visitPyComprehensionElement(@NotNull PyAstComprehensionElement node) {
     highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
-  public void visitPyMatchStatement(@NotNull PyMatchStatement node) {
+  public void visitPyMatchStatement(@NotNull PyAstMatchStatement node) {
     highlightKeyword(node, PyTokenTypes.MATCH_KEYWORD);
   }
 
   @Override
-  public void visitPyCaseClause(@NotNull PyCaseClause node) {
+  public void visitPyCaseClause(@NotNull PyAstCaseClause node) {
     highlightKeyword(node, PyTokenTypes.CASE_KEYWORD);
   }
 
   @Override
-  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+  public void visitPyTypeAliasStatement(@NotNull PyAstTypeAliasStatement node) {
     highlightKeyword(node, PyTokenTypes.TYPE_KEYWORD);
   }
 
   @Override
   public boolean isForceHighlightParents(@NotNull PsiFile file) {
-    return file instanceof PyFile;
+    return file instanceof PyAstFile;
   }
 
   private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {

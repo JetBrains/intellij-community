@@ -289,6 +289,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   //  return element != null ? element : super.getNavigationElement();
   //}
 
+  @Override
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
     for (Language lang : getViewProvider().getLanguages()) {
       final List<PythonVisitorFilter> filters = PythonVisitorFilter.INSTANCE.allForLanguage(lang);

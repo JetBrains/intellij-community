@@ -97,7 +97,6 @@
                                 order="before pythonDocumentationProvider"/>
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
 
     <enterBetweenBracesDelegate language="Python"
@@ -600,7 +599,6 @@
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
                     interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"
                     dynamic="true"/>
@@ -702,7 +700,6 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>

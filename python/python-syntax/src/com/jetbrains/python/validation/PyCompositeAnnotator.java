@@ -7,11 +7,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-
 public final class PyCompositeAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    PyAnnotator[] annotators = ExtensionPointName.<PyAnnotator>create("Pythonid.pyAnnotator").getExtensions();
-    PyAnnotatingVisitor.runAnnotators(element, holder, annotators);
+    PyAnnotatorBase[] annotators = ExtensionPointName.<PyAnnotatorBase>create("Pythonid.pyAnnotator").getExtensions();
+    PyAnnotatorBase.runAnnotators(element, holder, annotators);
   }
 }
