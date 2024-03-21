@@ -259,7 +259,7 @@ private fun VcsLogFilter.withPrefix(): String {
   when (this) {
     is VcsLogTextFilter -> return VcsLogBundle.message("vcs.log.filter.text.presentation.with.prefix", displayText)
     is VcsLogUserFilter -> return VcsLogBundle.message("vcs.log.filter.user.presentation.with.prefix", displayText)
-    is VcsLogDateFilter -> return displayTextWithPrefix
+    is VcsLogDateFilter -> return VcsLogDateFilterImpl.getDisplayTextWithPrefix(this)
     is VcsLogBranchFilter -> return VcsLogBundle.message("vcs.log.filter.branch.presentation.with.prefix", displayText)
     is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
     is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)
