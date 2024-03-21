@@ -31,17 +31,21 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfigured
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectActivity {
+
   @Service(Service.Level.PROJECT)
-  private class CoroutineScopeService(val coroutineScope: CoroutineScope)
+  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
+    companion object {
+      fun getCoroutineScope(project: Project): CoroutineScope {
+        return project.service<CoroutineScopeService>().coroutineScope
+      }
+    }
+  }
 
   override suspend fun execute(project: Project) {
     project.trackActivity(ExternalSystemActivityKey) {
@@ -130,18 +134,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     if (rootProjectPath != null) {
       projectRoots.addProjectRoot(rootProjectPath)
     }
-    val cs = project.getService(CoroutineScopeService::class.java).coroutineScope
+    val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
 
         override fun onProjectLinked(externalProjectPath: String) {
-          cs.launch(extensionDisposable) {
+          coroutineScope.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
 
         override fun onProjectUnlinked(externalProjectPath: String) {
-          cs.launch(extensionDisposable) {
+          coroutineScope.launch(extensionDisposable) {
             projectRoots.addProjectRoot(externalProjectPath)
           }
         }
@@ -152,7 +156,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   }
 
   private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
-    whenProjectRootsChanged(projectRoots, project) { changedRoots ->
+    whenProjectRootsChanged(project, projectRoots) { changedRoots ->
       EP_NAME.forEachExtensionSafeAsync { extension ->
         project.trackActivity(ExternalSystemActivityKey) {
           for (projectRoot in changedRoots) {
@@ -193,8 +197,8 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
       UnlinkedProjectNotificationAware.getInstance(project)
         .notificationNotify(extension.createProjectId(externalProjectPath)) {
-          val cs = project.service<CoroutineScopeService>().coroutineScope
-          cs.launch(extensionDisposable) {
+          val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
+          coroutineScope.launch(extensionDisposable) {
             project.trackActivity(ExternalSystemActivityKey) {
               extension.linkAndLoadProjectAsync(project, externalProjectPath)
             }
@@ -216,17 +220,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun whenProjectRootsChanged(
+    project: Project,
     projectRoots: ProjectRoots,
-    parentDisposable: Disposable,
     action: suspend (Set<String>) -> Unit
   ) {
-    val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
+    val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
+    val virtualFileDispatcher = Dispatchers.Default.limitedParallelism(1)
     val listener = UnlinkedProjectWatcher(projectRoots) { changedRoots ->
-      backgroundScope.launch(parentDisposable) {
+      coroutineScope.launch(virtualFileDispatcher) {
         action(changedRoots)
       }
     }
-    installAsyncVirtualFileListener(listener, parentDisposable)
+    installAsyncVirtualFileListener(listener, project)
   }
 
   private class UnlinkedProjectWatcher(
