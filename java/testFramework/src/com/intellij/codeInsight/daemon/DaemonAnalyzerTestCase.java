@@ -105,6 +105,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       if (project != null) {
         StartupManager startupManager = project.getServiceIfCreated(StartupManager.class);
         if (startupManager != null) {
+          StartupActivityTestUtil.waitForProjectActivitiesToComplete(project);
+
           ((StartupManagerImpl)startupManager).checkCleared();
         }
         DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
