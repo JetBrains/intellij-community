@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
@@ -19,7 +19,7 @@ import java.beans.PropertyChangeListener;
 public final class LargeFileEditorProvider extends TextEditorProvider {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return TextEditorProvider.isTextFile(file)
+    return isTextFile(file)
            && SingleRootFileViewProvider.isTooLargeForContentLoading(file)
            && !(Experiments.getInstance().isFeatureEnabled("new.large.text.file.viewer")
                 && !file.getFileType().isBinary()
@@ -38,22 +38,22 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
   public static final class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
-      super(project, file, provider, TextEditorImpl.Companion.createTextEditor(project, file));
+      super(project, file, provider, Companion.createTextEditor(project, file));
 
       getEditor().setViewer(true);
     }
   }
 
   private static final class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
-    private final VirtualFile myFile;
+    private final VirtualFile file;
 
     LargeBinaryFileEditor(VirtualFile file) {
-      myFile = file;
+      this.file = file;
     }
 
     @Override
     public @NotNull JComponent getComponent() {
-      JLabel label = new JLabel(IdeBundle.message("binary.file.too.large", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
+      JLabel label = new JLabel(IdeBundle.message("binary.file.too.large", file.getPath(), StringUtil.formatFileSize(file.getLength())));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }
@@ -83,7 +83,7 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
     @Override
     public boolean isValid() {
-      return myFile.isValid();
+      return file.isValid();
     }
 
     @Override
@@ -94,7 +94,7 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
     @Override
     public @NotNull VirtualFile getFile() {
-      return myFile;
+      return file;
     }
 
     @Override
