@@ -71,6 +71,7 @@ object LoggingTestUtils {
           void fatal(String message, Object... params);
           void error(Supplier<?> var1, Throwable var2);
           void info(String message, Supplier<?>... params);
+          void log(Level level, String message, Object... params);
           LogBuilder atInfo();
           LogBuilder atDebug();
           LogBuilder atWarn();
@@ -106,6 +107,16 @@ object LoggingTestUtils {
           void log(String format, Supplier<?>... params);
         }
       """.trimIndent())
+    fixture.addClass("""
+      package org.apache.logging.log4j;
+      public enum Level {
+         OFF,
+         INFO,
+         FATAL,
+         ERROR,
+         ALL
+      }
+    """.trimIndent())
   }
 
   fun addIdeaLog(fixture: JavaCodeInsightTestFixture) {
