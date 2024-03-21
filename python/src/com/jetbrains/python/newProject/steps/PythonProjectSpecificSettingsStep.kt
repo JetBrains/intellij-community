@@ -99,7 +99,9 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     projectName.set(nextProjectName.nameWithoutExtension)
     projectLocation.set(nextProjectName.parent)
 
-    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName)).also { interpreterPanel = it }
+    // Instead of setting this type as default, we limit types to it
+    val onlyAllowedInterpreterTypes = projectGenerator.preferredEnvironmentType?.let { setOf(it) }
+    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName), onlyAllowedInterpreterTypes).also { interpreterPanel = it }
 
     mainPanel = panel {
       row(message("new.project.name")) {

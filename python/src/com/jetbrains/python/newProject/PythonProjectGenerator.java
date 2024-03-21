@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode;
 import com.jetbrains.python.statistics.PyStatisticToolsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,15 +103,28 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   protected Consumer<String> myErrorCallback;
 
-  protected PythonProjectGenerator() {
-    this(false);
-  }
+  @Nullable
+  private final PythonInterpreterSelectionMode preferredEnvironmentType;
 
   /**
    * @param allowRemoteProjectCreation if project of this type could be created remotely
    */
   protected PythonProjectGenerator(final boolean allowRemoteProjectCreation) {
+    this(allowRemoteProjectCreation, null);
+  }
+
+  protected PythonProjectGenerator() {
+    this(false, null);
+  }
+
+  /**
+   * @param allowRemoteProjectCreation if project of this type could be created remotely
+   * @param preferredInterpreter       interpreter type to select by default
+   */
+  protected PythonProjectGenerator(final boolean allowRemoteProjectCreation,
+                                   @Nullable PythonInterpreterSelectionMode preferredInterpreter) {
     myAllowRemoteProjectCreation = allowRemoteProjectCreation;
+    preferredEnvironmentType = preferredInterpreter;
   }
 
   public final void setErrorCallback(@NotNull final Consumer<String> errorCallback) {
@@ -281,6 +295,13 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   }
 
   public void locationChanged(@NotNull final String newLocation) {
+  }
+
+  /**
+   * @return Python interpreter type this generator prefered to use. Null if no preferences
+   */
+  public final @Nullable PythonInterpreterSelectionMode getPreferredEnvironmentType() {
+    return preferredEnvironmentType;
   }
 
   public interface SettingsListener {
@@ -459,10 +480,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return future;
   }
 
-  @Nullable
-  public String getPreferredEnvironmentType() {
-    return null;
-  }
 
   @Nullable
   public String getNewProjectPrefix() {

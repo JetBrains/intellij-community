@@ -38,6 +38,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -319,7 +320,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private JPanel createInterpretersPanel(@Nullable final String preferredEnvironment) {
+  private JPanel createInterpretersPanel(final @Nullable PythonInterpreterSelectionMode preferredEnvironment) {
     final JPanel container = new JPanel(new BorderLayout());
     final JPanel decoratorPanel = new JPanel(new VerticalFlowLayout());
 
