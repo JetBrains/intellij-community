@@ -27,16 +27,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class YAMLUtil {
+public final class YAMLUtil {
+  /**
+   * @deprecated Use {@link YAMLFileBasedIndexUtil#getYamlInputFilter()}
+   */
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused") // keep compatibility with external plugins
-  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER = YAMLFileBasedIndexUtil.YAML_INPUT_FILTER;
+  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER = YAMLFileBasedIndexUtil.getYamlInputFilter();
 
   private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
 
   /**
-   * This method return flattened key path (consist of ancestors until document).
+   * This method return flattened key path (consist of ancestors until a document).
    * </p>
-   * YAML are frequently used in configure files. Access to child keys are preformed by dot separator.
+   * YAML is frequently used in configured files.
+   * Dot separator preforms access to child keys.
    * <pre>{@code
    *  top:
    *    next:
@@ -50,7 +55,7 @@ public class YAMLUtil {
   }
 
   public static @NotNull List<String> getConfigFullNameParts(@NotNull YAMLPsiElement target) {
-    SmartList<String> result = new SmartList<>();
+    List<String> result = new SmartList<>();
     PsiElement element = target;
     while (element != null) {
       String elementIndexSuffix = "";
@@ -84,7 +89,7 @@ public class YAMLUtil {
   }
 
   public static @Nullable YAMLKeyValue getQualifiedKeyInDocument(@NotNull YAMLDocument document, @NotNull List<String> key) {
-    assert key.size() != 0;
+    assert !key.isEmpty();
 
     YAMLMapping mapping = ObjectUtils.tryCast(document.getTopLevelValue(), YAMLMapping.class);
     for (int i = 0; i < key.size(); i++) {
@@ -127,57 +132,7 @@ public class YAMLUtil {
     return null;
   }
 
-  //public List<String> getAllKeys(final YAMLFile file){
-  //  return getAllKeys(file, ArrayUtil.EMPTY_STRING_ARRAY);
-  //}
-  //
-  //public List<String> getAllKeys(final YAMLFile file, final String[] key){
-  //  final YAMLPsiElement record = getQualifiedKeyInFile(file, key);
-  //  if (record == null){
-  //    return Collections.emptyList();
-  //  }
-  //  PsiElement psiValue = ((YAMLKeyValue)record).getValue();
-  //
-  //  final StringBuilder builder = new StringBuilder();
-  //  for (String keyPart : key) {
-  //    if (builder.length() != 0){
-  //      builder.append(".");
-  //    }
-  //    builder.append(keyPart);
-  //  }
-  //
-  //  final ArrayList<String> list = new ArrayList<String>();
-  //
-  //  addKeysRec(builder.toString(), psiValue, list);
-  //  return list;
-  //}
-
-  //private static void addKeysRec(final String prefix, final PsiElement element, final List<String> list) {
-  //  if (element instanceof YAMLCompoundValue){
-  //    for (YAMLPsiElement child : ((YAMLCompoundValue)element).getYAMLElements()) {
-  //      addKeysRec(prefix, child, list);
-  //    }
-  //  }
-  //  if (element instanceof YAMLKeyValue){
-  //    final YAMLKeyValue yamlKeyValue = (YAMLKeyValue)element;
-  //    final PsiElement psiValue = yamlKeyValue.getValue();
-  //    String key = yamlKeyValue.getKeyText();
-  //    if (prefix.length() > 0){
-  //      key = prefix + "." + key;
-  //    }
-  //    if (YAMLUtil.isScalarOrEmptyCompoundValue(psiValue)) {
-  //      list.add(key);
-  //    } else {
-  //      addKeysRec(key, psiValue, list);
-  //    }
-  //  }
-  //}
-
-  public YAMLKeyValue createI18nRecord(final YAMLFile file, final String key, final String text) {
-    return createI18nRecord(file, key.split("\\."), text);
-  }
-
-  public static @Nullable YAMLKeyValue createI18nRecord(final YAMLFile file, final String[] key, final String text) {
+  public static @NotNull YAMLKeyValue createI18nRecord(final YAMLFile file, final String[] key, final String text) {
     final YAMLDocument root = file.getDocuments().get(0);
     assert root != null;
     assert key.length > 0;
@@ -240,7 +195,7 @@ public class YAMLUtil {
     final StringBuilder builder = new StringBuilder();
     final int top = Math.min(i + 1, keyLength);
     for (int j=0;j<top;j++){
-      if (builder.length() > 0){
+      if (!builder.isEmpty()){
         builder.append('.');
       }
       builder.append(key[j]);
@@ -284,7 +239,7 @@ public class YAMLUtil {
         element = ((YAMLBlockMappingImpl)element).getFirstKeyValue();
       } catch (IllegalStateException e) {
         // Spring Boot plug-in modifies PSI-tree into invalid state
-        // This is workaround over EA-133507 IDEA-210113
+        // This is a workaround over EA-133507 IDEA-210113
         if (!e.getMessage().equals(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE)) {
           throw e;
         }

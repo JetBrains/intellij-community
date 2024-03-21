@@ -70,7 +70,7 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return YAMLFileBasedIndexUtil.YAML_INPUT_FILTER;
+    return YAMLFileBasedIndexUtil.getYamlInputFilter();
   }
 
   @Override
