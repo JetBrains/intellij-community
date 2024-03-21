@@ -55,7 +55,6 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.tabs.JBEditorTabsBase;
@@ -65,10 +64,8 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.JBUI;
@@ -162,7 +159,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private final JBTabs myTabs;
 
   @NotNull
-  private final Alarm myPsiUpdateAlarm;
+  private final SingleAlarm myPsiUpdateAlarm;
 
   private static class ExtensionComparator implements Comparator<String> {
     private final String myOnTop;
@@ -190,10 +187,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myTabs = createTabPanel(project);
     myRefs = new JBList<>(new DefaultListModel<>());
 
-    myPsiUpdateAlarm = new Alarm(getDisposable());
+    myPsiUpdateAlarm = new SingleAlarm(() -> doUpdatePsi(), 1500, getDisposable(), Alarm.ThreadToUse.SWING_THREAD);
 
     myCoroutineScope = CoroutineScopeKt.CoroutineScope(ModalityKt.asContextElement(ModalityState.nonModal()));
-    myPsiViewerPropertiesTabViewModel = new PsiViewerPropertiesTabViewModel(myCoroutineScope, PsiViewerSettings.getSettings(), (psiElement) -> {
+    myPsiViewerPropertiesTabViewModel = new PsiViewerPropertiesTabViewModel(myProject, myCoroutineScope, PsiViewerSettings.getSettings(), (psiElement) -> {
       focusTree();
       selectElement(psiElement);
     });
@@ -298,8 +295,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
           if (c instanceof NodeRenderer nodeRenderer) {
             nodeRenderer.setToolTipText(getElementDescription(element));
           }
-          if (element instanceof PsiElement psiElement && FileContextUtil.getFileContext(psiElement.getContainingFile()) != null ||
-              element instanceof ViewerTreeStructure.Inject) {
+
+          PsiElement fileContext = null;
+          if (element instanceof PsiElement psiElement) {
+            PsiFile containingFile = ReadAction.compute(psiElement::getContainingFile);
+            if (containingFile != null) fileContext = FileContextUtil.getFileContext(containingFile);
+          }
+
+          boolean isInjected = (element instanceof ViewerTreeStructure.Inject) || fileContext != null;
+          if (isInjected) {
             TextAttributes attr =
               EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
             c.setBackground(attr.getBackgroundColor());
@@ -710,7 +714,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   private void queueUpdatePsi() {
     if (PsiViewerSettings.getSettings().updatePsiTreeOnChanges) {
-      myPsiUpdateAlarm.addRequest(() -> doUpdatePsi(), 5000);
+      myPsiUpdateAlarm.cancelAndRequest();
     }
   }
 
@@ -1036,7 +1040,36 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   }
 
   private void selectElement(@NotNull PsiElement element) {
-    myStructureTreeModel.select(element, myPsiTree, path -> {});
+    ReadAction
+      .nonBlocking(() -> getElementToChooseInPsiTree(element))
+      .finishOnUiThread(ModalityState.nonModal(), elementToChoose -> {
+        myStructureTreeModel.select(elementToChoose, myPsiTree, path -> {});
+      })
+      .expireWith(getDisposable())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private @NotNull PsiElement getElementToChooseInPsiTree(@NotNull PsiElement element) {
+    if (element.getFirstChild() != null) {
+      return element;
+    }
+    var parent = element.getParent();
+    if (parent == null) {
+      return element;
+    }
+
+    var isIdentifierName = element.toString().toLowerCase().contains("identifier"); // heuristic
+    if (isIdentifierName) {
+      return parent;
+    }
+
+    if (parent instanceof PsiNameIdentifierOwner parentAsNameIdentifierOwner) {
+      var parentNameIdentifier = parentAsNameIdentifierOwner.getNameIdentifier();
+      if (Objects.equals(parentNameIdentifier, element)) {
+        return parent;
+      }
+    }
+    return element;
   }
 
   private class EditorListener implements SelectionListener, DocumentListener, CaretListener {

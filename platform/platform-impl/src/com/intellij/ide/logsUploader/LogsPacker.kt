@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import com.intellij.diagnostic.MacOSDiagnosticReportDirectories
 import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.CollectZippedLogsAction
@@ -19,6 +20,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.withRawProgressReporter
@@ -43,10 +45,7 @@ import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.exists
-import kotlin.io.path.fileSize
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 object LogsPacker {
@@ -102,7 +101,20 @@ object LogsPacker {
               val name = path.fileName.toString()
               if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(
                   path)) {
-                zip.addFolder(name, path)
+                zip.addFile(name, path.readBytes())
+              }
+            }
+          }
+          if (SystemInfoRt.isMac) {
+            for (reportDir in MacOSDiagnosticReportDirectories) {
+              Files.newDirectoryStream(Path.of(reportDir)).use { paths ->
+                for (path in paths) {
+                  coroutineContext.ensureActive()
+                  val name = path.fileName.toString()
+                  if (name.endsWith(".ips") && Files.isRegularFile(path) && doesMacOSDiagnosticReportBelongToThisApp(path)) {
+                    zip.addFile("MacOS_DiagnosticReports/$name", path.readBytes())
+                  }
+                }
               }
             }
           }
@@ -202,5 +214,15 @@ object LogsPacker {
    */
   private fun buildEntryName(prefix: String?, file: Path): String {
     return if (!prefix.isNullOrEmpty()) "$prefix/${file.name}" else ""
+  }
+
+  private fun doesMacOSDiagnosticReportBelongToThisApp(path: Path): Boolean {
+    val name = path.name
+    if (name.contains(ApplicationNamesInfo.getInstance().scriptName, ignoreCase = true)) return true
+    if (name.contains("java", ignoreCase = true)) {
+      // if IDE is run from sources
+      return Files.readString(path).contains("jetbrains", ignoreCase = true)
+    }
+    return false
   }
 }

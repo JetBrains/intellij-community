@@ -16,7 +16,6 @@ import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.findPythonTargetInterpreter
-import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
@@ -216,9 +215,9 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
 
       val targetEnvironmentRequest = findPythonTargetInterpreter(sdk, project)
-      val helpersTargetPath = targetEnvironmentRequest.preparePyCharmHelpers()
+      val (communityHelpers) = targetEnvironmentRequest.preparePyCharmHelpers()
       for (helper in listOf("pycharm", "pydev")) {
-        paths.add(helpersTargetPath.getRelativeTargetPath(helper))
+        paths.add(communityHelpers.targetPathFun.getRelativeTargetPath(helper))
       }
 
       val pathStr = paths.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)

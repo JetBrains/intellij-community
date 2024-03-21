@@ -36,6 +36,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -196,26 +197,21 @@ public class PythonTask {
     TargetEnvironmentRequest request;
 
     var uploadedPaths = new HashMap<@NotNull Path, @NotNull Function<TargetEnvironment, String>>();
+    var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
+    assert helpersAwareRequest != null : data.getClass() + " is not supported";
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
-      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
       helpersAwareRequest.preparePyCharmHelpers();
-      assert helpersAwareRequest != null : data.getClass() + " is not supported";
       execution = PythonScripts.prepareHelperScriptExecution(helper, helpersAwareRequest);
-      request = helpersAwareRequest.getTargetEnvironmentRequest();
     }
     else {
-      // For scripts (not helpers) create configuration manually
-      var configuration = data.getTargetEnvironmentConfiguration();
-      assert configuration != null : data.getClass() + " is not supported";
-
-      request = configuration.createEnvironmentRequest(myModule.getProject());
       execution = new PythonScriptExecution();
       // We do not know if script path is local or not, so we only support target script
       execution.setPythonScriptPath(constant(script));
     }
+    request = helpersAwareRequest.getTargetEnvironmentRequest();
 
-    customizePythonExecution(request, execution, myModule);
+    customizePythonExecution(helpersAwareRequest, execution, myModule);
 
     // All paths params must be uploaded before call
     for (int i = 0; i < myParameters.size(); i++) {
@@ -294,7 +290,7 @@ public class PythonTask {
                                            addSource, false, request);
   }
 
-  protected void customizePythonExecution(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
+  protected void customizePythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
                                           @NotNull Module module) { }
 
   /**

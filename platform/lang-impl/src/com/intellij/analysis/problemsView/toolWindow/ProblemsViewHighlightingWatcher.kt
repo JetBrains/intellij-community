@@ -48,7 +48,7 @@ internal class ProblemsViewHighlightingWatcher(
   override fun afterAdded(highlighter: RangeHighlighterEx) {
     val problem = getProblem(highlighter)
     if (problem != null) {
-      EdtInvocationManager.invokeLaterIfNeeded {
+      EdtInvocationManager.getInstance().invokeLater {
         if (!disposed) {
           listener.problemAppeared(problem)
         }
@@ -58,22 +58,22 @@ internal class ProblemsViewHighlightingWatcher(
 
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
     val problem = getProblem(highlighter)
-      if (problem != null) {
-        EdtInvocationManager.invokeLaterIfNeeded {
-          if (!disposed) {
-            listener.problemDisappeared(problem)
-            synchronized(lock) {
-              problems.remove(highlighter)
-            }
+    if (problem != null) {
+      EdtInvocationManager.getInstance().invokeLater {
+        if (!disposed) {
+          listener.problemDisappeared(problem)
+          synchronized(lock) {
+            problems.remove(highlighter)
           }
         }
       }
+    }
   }
 
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
     val problem = getProblem(highlighter)
     if (problem != null) {
-      EdtInvocationManager.invokeLaterIfNeeded {
+      EdtInvocationManager.getInstance().invokeLater {
         if (!disposed) {
           listener.problemUpdated(problem)
         }

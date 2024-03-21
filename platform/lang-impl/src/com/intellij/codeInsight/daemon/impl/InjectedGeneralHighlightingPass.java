@@ -79,9 +79,9 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
     List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.outside()));
 
-    List<HighlightInfo> resultInside = new ArrayList<>(100);
-    List<HighlightInfo> resultOutside = new ArrayList<>(100);
-
+    List<HighlightInfo> resultInside = new ArrayList<>(100); // guarded by myHighlights
+    List<HighlightInfo> resultOutside = new ArrayList<>(100); // guarded by myHighlights
+    Set<PsiFile> injected = new HashSet<>(); // guarded by myHighlights
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = createInjectedLanguageFragmentKey(myFile.getLanguage());
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, (injectedPsi, places) ->
@@ -95,10 +95,14 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
             // non-conditionally apply injected results regardless whether they are in myRestrictRange
             resultOutside.add(patchedInfo);
           }
+          injected.add(injectedPsi);
         }
       }));
 
     synchronized (myHighlights) {
+      // injections were re-calculated, remove highlights stuck in highlightInfoUpdater from the previous invalid injection fragments
+      HighlightInfoUpdater.getInstance(myProject).removeInjectedFilesOtherThan(myFile, myRestrictRange, myHighlightingSession, injected);
+
       // all infos for the "injected fragment for the host which is inside" are inside indeed,
       // but some infos for the "injected fragment for the host which is outside" can be still inside
       if (resultOutside.isEmpty()) {

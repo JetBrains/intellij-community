@@ -708,6 +708,10 @@ internal class ActionUpdater @JvmOverloads constructor(
       updater.updatedPresentations.keys.removeIf(predicate)
       updater.groupChildren.keys.removeIf(predicate)
     }
+
+    override suspend fun <T> readAction(block: () -> T): T {
+      return readActionUndispatchedForActionExpand(block)
+    }
   }
 }
 

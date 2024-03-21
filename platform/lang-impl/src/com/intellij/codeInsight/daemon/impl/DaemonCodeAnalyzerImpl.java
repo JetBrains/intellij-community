@@ -787,13 +787,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     cancelAllUpdateProgresses(toRestartAlarm, reason);
     boolean restart = toRestartAlarm && !myDisposed;
     if (restart) {
-      long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
-      myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
-      // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
-      boolean isDone = myUpdateRunnableFuture.isDone();
-      if (isDone) {
-        scheduleUpdateRunnable(autoReparseDelayNanos);
-      }
+      scheduleIfNotRunning();
+    }
+  }
+
+  private void scheduleIfNotRunning() {
+    long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
+    myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
+    // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
+    boolean isDone = myUpdateRunnableFuture.isDone();
+    if (isDone) {
+      scheduleUpdateRunnable(autoReparseDelayNanos);
     }
   }
 
@@ -1007,18 +1011,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     private UpdateRunnable(@NotNull Project project) {
       myProject = project;
     }
-
-    @Override
-    public void run() {
-      runUpdate(myProject, this);
-    }
-
     private void clearFieldsOnDispose() {
       myProject = null;
     }
+    @Override
+    public void run() {
+      runUpdate(myProject);
+    }
   }
 
-  private static void runUpdate(@Nullable Project project, @NotNull UpdateRunnable updateRunnable) {
+  private static void runUpdate(@Nullable Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     DaemonCodeAnalyzerImpl dca;
     if (project == null ||
@@ -1063,7 +1065,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     if (dca.getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments()) {
       // restart when everything committed
-      dca.getPsiDocumentManager().performLaterWhenAllCommitted(updateRunnable);
+      dca.getPsiDocumentManager().performLaterWhenAllCommitted(() -> {
+        LOG.debug("Rescheduled after commit");
+        dca.scheduleIfNotRunning();
+      });
       return;
     }
 
@@ -1073,13 +1078,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor())) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
           // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
-          AsyncEditorLoader.Companion.performWhenLoaded(((TextEditor)fileEditor).getEditor(), updateRunnable);
+          if (PassExecutorService.LOG.isDebugEnabled()) {
+            PassExecutorService.log(null, null, "runUpdate for ", fileEditor, " rescheduled because the editor was not loaded yet");
+          }
+          AsyncEditorLoader.Companion.performWhenLoaded(textEditor.getEditor(), () ->
+            dca.stopProcess(true, "restart after editor is loaded"));
         }
-        VirtualFile virtualFile = getVirtualFile(fileEditor);
-        PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
-        submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
-        if (PassExecutorService.LOG.isDebugEnabled()) {
-          PassExecutorService.log(null, null, "submitting psiFile:", psiFile+" ("+virtualFile+"); submitted=", submitted);
+        else {
+          VirtualFile virtualFile = getVirtualFile(fileEditor);
+          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
+          submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+          if (PassExecutorService.LOG.isDebugEnabled()) {
+            PassExecutorService.log(null, null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
+          }
         }
       }
       if (!submitted) {
@@ -1233,10 +1244,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   private synchronized @NotNull DaemonProgressIndicator createUpdateProgress(@NotNull FileEditor fileEditor) {
-    DaemonProgressIndicator old = myUpdateProgress.get(fileEditor);
-    if (old != null && !old.isCanceled()) {
-      old.cancel();
-    }
     myUpdateProgress.entrySet().removeIf(entry -> !entry.getKey().isValid());
     DaemonProgressIndicator progress = new MyDaemonProgressIndicator(myProject, fileEditor);
     progress.setModalityProgress(null);
@@ -1245,7 +1252,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (isRestartToCompleteEssentialHighlightingRequested()) {
       progress.putUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY, true);
     }
-    myUpdateProgress.put(fileEditor, progress);
+    DaemonProgressIndicator old = myUpdateProgress.put(fileEditor, progress);
+    if (old != null && !old.isCanceled()) {
+      old.cancel();
+    }
     return progress;
   }
 

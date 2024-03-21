@@ -25,6 +25,7 @@ class PsiViewerPropertiesTreeViewModel(
 
   val root = PsiViewerPropertyNodeHolder(
     rootNode,
+    nodeContext,
     depth = 0,
     scope
   )

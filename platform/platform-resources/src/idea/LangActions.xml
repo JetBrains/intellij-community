@@ -7,8 +7,9 @@
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
 
     <group id="RunContextGroup" popup="false">
-      <!-- A dynamic group filled with executor actions -->
       <group id="RunContextGroupInner">
+        <!-- A dynamic group filled with executor actions -->
+        <group id="RunContextExecutorsGroup"/>
         <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
           <separator/>

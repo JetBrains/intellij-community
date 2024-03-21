@@ -403,6 +403,9 @@
     <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
 
+    <registryKey defaultValue="true" description="Enables the Python debugger Cython speed-ups" restartRequired="false"
+                 key="python.debug.enable.cython.speedups"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 

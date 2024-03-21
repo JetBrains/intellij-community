@@ -4,7 +4,7 @@ import java.util.function.Function;
 class Test {
 
   {
-    transform(1,  (String l) -> null);
+    transform(1,  (String <warning descr="Parameter 'l' is never used">l</warning>) -> null);
   }
 
   public static <I, O> void transform(int input, Function<I,  O> function) {

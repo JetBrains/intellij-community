@@ -874,7 +874,9 @@ object Utils {
                                               actionFilter: (AnAction) -> Boolean,
                                               block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
     val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
-    val updater = ActionUpdater(factory, e.dataContext, e.place, e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher, actionFilter)
+    val dataContext = createAsyncDataContext(e.dataContext)
+    checkAsyncDataContext(dataContext, "withSuspendingUpdateSession")
+    val updater = ActionUpdater(factory, dataContext, e.place, e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher, actionFilter)
     e.updateSession = updater.asUpdateSession()
     updater.runUpdateSession(updaterContext(e.place, 0, e.isFromContextMenu, e.isFromActionToolbar)) {
       block(e.updateSession as SuspendingUpdateSession)
@@ -1208,4 +1210,5 @@ interface SuspendingUpdateSession: UpdateSession {
 
   fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
   fun dropCaches(predicate: (Any) -> Boolean)
+  suspend fun <T: Any?> readAction(block: () -> T) : T
 }

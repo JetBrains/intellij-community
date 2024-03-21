@@ -74,6 +74,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
   public static final String RUN_CONTEXT_GROUP_MORE = "RunContextGroupMore";
+  public static final String RUN_CONTEXT_EXECUTORS_GROUP = "RunContextExecutorsGroup";
 
   private static final Key<SpinningProgressIcon> spinningIconKey = Key.create("spinning-icon-key");
 
@@ -142,8 +143,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = registerAction(actionRegistrar, executor.getContextActionId(), runContextAction, contextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
-      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP));
-      actionRegistrar.addToGroup(group, action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE));
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_EXECUTORS_GROUP));
+      actionRegistrar.addToGroup(group, action, Constraints.LAST);
     }
     else {
       DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
@@ -243,7 +244,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     ActionManager actionManager = ActionManager.getInstance();
     unregisterAction(executor.getId(), RUNNERS_GROUP, idToAction, actionManager);
     if (isExecutorInMainGroup(executor)) {
-      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, contextActionIdToAction, actionManager);
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_EXECUTORS_GROUP, contextActionIdToAction, actionManager);
     }
     else {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction, actionManager);

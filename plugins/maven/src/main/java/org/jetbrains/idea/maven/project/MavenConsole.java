@@ -20,16 +20,20 @@ import com.google.common.collect.ImmutableBiMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.server.MavenArtifactEvent;
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * @deprecated Use MavenSyncConsole instead
  */
 @Deprecated
-public abstract class MavenConsole {
+public abstract class MavenConsole implements MavenEventHandler {
   private static final String LINE_SEPARATOR = System.lineSeparator();
 
   public enum OutputType {
@@ -53,6 +57,26 @@ public abstract class MavenConsole {
 
   public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel) {
     myOutputLevel = outputLevel.getLevel();
+  }
+
+  @Override
+  public void handleConsoleEvents(List<? extends MavenServerConsoleEvent> consoleEvents) {
+    for (MavenServerConsoleEvent e : consoleEvents) {
+      printMessage(e.getLevel(), e.getMessage(), e.getThrowable());
+    }
+  }
+
+  @Override
+  public void handleDownloadEvents(List<? extends MavenArtifactEvent> downloadEvents) {
+    for (MavenArtifactEvent e : downloadEvents) {
+      String id = e.getDependencyId();
+      var message = switch (e.getArtifactEventType()) {
+        case DOWNLOAD_STARTED -> "Download started: " + id;
+        case DOWNLOAD_COMPLETED -> "Download completed: " + id;
+        case DOWNLOAD_FAILED -> "Download failed: " + id + "\n" + e.getErrorMessage() + "\n" + e.getStackTrace();
+      };
+      printMessage(MavenServerConsoleIndicator.LEVEL_DEBUG, message, null);
+    }
   }
 
   private boolean isSuppressed(int level) {

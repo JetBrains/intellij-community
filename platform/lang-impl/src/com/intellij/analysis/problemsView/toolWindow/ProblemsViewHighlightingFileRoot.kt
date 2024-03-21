@@ -4,11 +4,9 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile, val document: Document) : Root(panel) {
@@ -57,14 +55,6 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
       return
     }
     notify(problem = problem, state = synchronized(problems) { SetUpdateState.add(problem, problems) })
-    if (Registry.`is`("wolf.the.problem.solver")) {
-      return
-    }
-    // start filling HighlightingErrorsProvider if WolfTheProblemSolver is disabled
-    if (problem.severity < HighlightSeverity.ERROR.myVal) {
-      return
-    }
-    problem.provider.project.service<HighlightingErrorsProviderBase>().problemsAppeared(file)
   }
 
   override fun problemDisappeared(problem: Problem) {

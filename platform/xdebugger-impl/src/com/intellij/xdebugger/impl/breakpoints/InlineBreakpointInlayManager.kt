@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -32,12 +33,24 @@ import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
 @Service(Service.Level.PROJECT)
-internal class InlineBreakpointInlayManager(private val project: Project, private val scope: CoroutineScope) {
+internal class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val scope = parentScope.namedChildScope("InlineBreakpoints",
+                                                  if (Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY))
+                                                    Dispatchers.Default.limitedParallelism (1)
+                                                  else
+                                                    Dispatchers.Default)
+  private val redrawJobInternalSemaphore = Semaphore(1)
 
   private val redrawQueue = MergingUpdateQueue(
     "inline breakpoint inlay redraw queue",
@@ -191,47 +204,59 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       return isOutdated
     }
 
+    suspend fun withSemaphorePermit(action: suspend () -> Unit) {
+      if (!Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY)) {
+        action()
+        return
+      }
+      redrawJobInternalSemaphore.withPermit {
+        action()
+      }
+    }
+
     if (postponeOnChanged()) return
     // Double-checked now.
 
-    readAndWriteAction {
-      if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+    withSemaphorePermit {
+      readAndWriteAction {
+        if (postponeOnChanged()) return@readAndWriteAction value(Unit)
 
-      val allBreakpoints = allBreakpointsIn(document)
+        val allBreakpoints = allBreakpointsIn(document)
 
-      val inlays = mutableListOf<SingleInlayDatum>()
-      if (onlyLine != null) {
-        if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndWriteAction value(Unit)
+        val inlays = mutableListOf<SingleInlayDatum>()
+        if (onlyLine != null) {
+          if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndWriteAction value(Unit)
 
-        val breakpoints = allBreakpoints.filter { it.line == onlyLine }
-        if (!breakpoints.isEmpty()) {
-          inlays += collectInlayData(document, onlyLine, breakpoints)
+          val breakpoints = allBreakpoints.filter { it.line == onlyLine }
+          if (!breakpoints.isEmpty()) {
+            inlays += collectInlayData(document, onlyLine, breakpoints)
+          }
         }
-      }
-      else {
-        for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
-          // We could process lines concurrently, but it doesn't seem to be really required.
-          inlays += collectInlayData(document, line, breakpoints)
+        else {
+          for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
+            // We could process lines concurrently, but it doesn't seem to be really required.
+            inlays += collectInlayData(document, line, breakpoints)
+          }
         }
-      }
 
-      if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+        if (postponeOnChanged()) return@readAndWriteAction value(Unit)
 
-      if (onlyLine != null && inlays.isEmpty() &&
-          allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
-      ) {
-        // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
-        // It's required to prevent performance degradations due to IDEA-339224,
-        // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
-        return@readAndWriteAction value(Unit)
-      }
+        if (onlyLine != null && inlays.isEmpty() &&
+            allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
+        ) {
+          // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
+          // It's required to prevent performance degradations due to IDEA-339224,
+          // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
+          return@readAndWriteAction value(Unit)
+        }
 
-      writeAction {
-        if (postponeOnChanged()) return@writeAction
+        writeAction {
+          if (postponeOnChanged()) return@writeAction
 
-        insertInlays(document, onlyEditor, onlyLine, inlays)
+          insertInlays(document, onlyEditor, onlyLine, inlays)
 
-        if (postponeOnChanged()) return@writeAction
+          if (postponeOnChanged()) return@writeAction
+        }
       }
     }
   }
@@ -488,5 +513,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     @JvmStatic
     fun getInstance(project: Project): InlineBreakpointInlayManager =
       project.service<InlineBreakpointInlayManager>()
+
+    private const val LIMIT_REDRAW_JOBS_COUNT_KEY = "debugger.limit.inline.breakpoints.jobs.count"
   }
 }

@@ -16,7 +16,7 @@ from _pydev_bundle.pydev_console_types import CodeFragment, Command
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 from _pydevd_bundle.pydevd_console_pytest import enable_pytest_output
-from _pydevd_bundle.pydevd_asyncio_provider import asyncio_command_compiler, exec_async_code, apply
+from _pydevd_bundle.pydevd_asyncio_provider import get_asyncio_command_compiler, get_exec_async_code, get_apply
 
 try:
     import __builtin__
@@ -192,8 +192,9 @@ def console_exec(thread_id, frame_id, expression, dbg):
         enable_pytest_output()
 
     if IPYTHON:
-        if apply is not None:
-            apply()
+        apply_func = get_apply()
+        if apply_func is not None:
+            apply_func()
         need_more, exception_occurred = ipython_exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
         if not need_more:
             update_frame_local_variables_and_save(frame, updated_globals)
@@ -202,8 +203,9 @@ def console_exec(thread_id, frame_id, expression, dbg):
     interpreter = ConsoleWriter()
 
     try:
-        if asyncio_command_compiler is not None:
-            compiler = asyncio_command_compiler
+        async_compiler = get_asyncio_command_compiler()
+        if async_compiler is not None:
+            compiler = async_compiler
         else:
             compiler = compile_command
         try:
@@ -223,8 +225,9 @@ def console_exec(thread_id, frame_id, expression, dbg):
     code_executor.interruptable = True
     exception_occurred = False
     try:
-        if exec_async_code is not None:
-            exec_async_code(code, updated_globals)
+        exec_func = get_exec_async_code()
+        if exec_func is not None:
+            exec_func(code, updated_globals)
         else:
             # It is important that globals and locals we pass to the exec function are the same object.
             # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
