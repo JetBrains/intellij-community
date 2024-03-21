@@ -45,7 +45,9 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
 
         buildProperties.forEach { this.setProperty(it.first, it.second) }
 
-        store(tempPropertiesFile.outputStream(), "")
+        tempPropertiesFile.outputStream().use {
+          store(it, "")
+        }
       }
 
       return tempPropertiesFile.toPath()
