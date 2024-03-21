@@ -18,7 +18,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 private val javaLoopMethods: CallMatcher = CallMatcher.anyOf(
   CallMatcher.instanceCall(JAVA_LANG_ITERABLE, "forEach").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER),
   CallMatcher.instanceCall(JAVA_UTIL_ITERATOR, "forEachRemaining").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER),
-  CallMatcher.instanceCall(JAVA_UTIL_STREAM_STREAM, "forEach", "forEachOrdered").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER), // TODO: IntStream, etc.?
+  CallMatcher.instanceCall(JAVA_UTIL_STREAM_STREAM, "forEach", "forEachOrdered").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER),
   CallMatcher.instanceCall(JAVA_UTIL_MAP, "forEach").parameterTypes("java.util.function.BiConsumer"),
   CallMatcher.staticCall(ContainerUtil::class.java.name, "process")
 )
