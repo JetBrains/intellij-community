@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.awt.Rectangle
 import java.util.*
@@ -293,10 +294,11 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   companion object {
-    private fun createCommandAndRightPromptText(command: String?,
-                                                prompt: PromptRenderingInfo?,
-                                                commandAttributes: TextAttributesProvider,
-                                                terminalWidth: Int): TextWithHighlightings {
+    @VisibleForTesting
+    internal fun createCommandAndRightPromptText(command: String?,
+                                                 prompt: PromptRenderingInfo?,
+                                                 commandAttributes: TextAttributesProvider,
+                                                 terminalWidth: Int): TextWithHighlightings {
       val commandText = command ?: ""
       val rightPromptText = prompt?.rightText ?: ""
       if (rightPromptText.isEmpty()) {
