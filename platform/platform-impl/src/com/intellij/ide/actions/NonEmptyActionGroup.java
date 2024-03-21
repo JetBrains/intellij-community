@@ -22,7 +22,7 @@ public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return getClass() == NonEmptyActionGroup.class ? ActionUpdateThread.BGT : super.getActionUpdateThread();
+    return ActionUpdateThread.BGT;
   }
 
   @Override
