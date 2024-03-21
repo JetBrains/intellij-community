@@ -4,7 +4,6 @@ class BindField {
     private final Integer myInstrumentAgent;
 
     public BindField(String agent, Integer instrumentAgent) {
-
         myAgent = agent;
         myInstrumentAgent = instrumentAgent;
     }

@@ -1036,13 +1036,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createCreateFieldFromParameterFix() {
-    return new CreateFieldFromParameterAction(true);
+  public @NotNull IntentionAction createCreateFieldFromParameterFix(@NotNull PsiParameter parameter) {
+    return new CreateFieldFromParameterAction(parameter).asIntention();
   }
 
   @Override
-  public @NotNull IntentionAction createAssignFieldFromParameterFix() {
-    return new AssignFieldFromParameterAction(true).asIntention();
+  public @NotNull IntentionAction createAssignFieldFromParameterFix(@NotNull PsiParameter parameter) {
+    return new AssignFieldFromParameterAction(parameter).asIntention();
   }
 
   @Override

@@ -2,7 +2,7 @@
 
 class Person {
     private String __fname;
-    private final int myId;
+    private final int <caret>myId;
     private String __lname;
     private String __street;
  
@@ -14,7 +14,7 @@ class Person {
         __street = i_street;
     }
  
-    public Person ( int id<caret>, String i_lname, String i_fname, String i_street)
+    public Person ( int id, String i_lname, String i_fname, String i_street)
     {
         myId = id;
         __lname = i_lname;

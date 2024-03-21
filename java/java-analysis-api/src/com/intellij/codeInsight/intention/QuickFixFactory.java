@@ -492,9 +492,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass record);
 
   @NotNull
-  public abstract IntentionAction createCreateFieldFromParameterFix();
+  public abstract IntentionAction createCreateFieldFromParameterFix(@NotNull PsiParameter parameter);
   @NotNull
-  public abstract IntentionAction createAssignFieldFromParameterFix();
+  public abstract IntentionAction createAssignFieldFromParameterFix(@NotNull PsiParameter parameter);
 
   @NotNull
   public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);

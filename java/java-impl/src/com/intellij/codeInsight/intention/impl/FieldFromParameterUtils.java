@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -219,6 +220,18 @@ public final class FieldFromParameterUtils {
     if (methodBody == null) return null;
     PsiStatement[] statements = methodBody.getStatements();
 
+    if (statements.length == 0) {
+      PsiElement element = methodBody.getFirstBodyElement();
+      if (element instanceof PsiWhiteSpace whiteSpace) {
+        String text = whiteSpace.getText();
+        int lastLineBreak = text.lastIndexOf('\n');
+        if (lastLineBreak >= 0 && text.indexOf('\n') != lastLineBreak) {
+          // At least two linebreaks in the body: remove last one
+          text = text.substring(0, lastLineBreak);
+          methodBody.getNode().replaceChild(whiteSpace.getNode(), ASTFactory.leaf(TokenType.WHITE_SPACE, text));
+        }
+      }
+    }
 
     Ref<PsiField> anchor = new Ref<>();
     AtomicBoolean isBefore = new AtomicBoolean();

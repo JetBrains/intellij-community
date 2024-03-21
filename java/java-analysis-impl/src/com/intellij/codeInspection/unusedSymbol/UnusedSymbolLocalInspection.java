@@ -281,7 +281,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
               registerProblem(
                 parameter, message,
                 ContainerUtil.append(
-                  getFixesForUnusedParameter(method),
+                  getFixesForUnusedParameter(method, parameter),
                   quickFixFactory.createRenameToIgnoredFix(parameter, true),
                   PriorityIntentionActionWrapper.highPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(
                     parameter, checkParameterExcludingHierarchy() && isOverriddenOrOverrides(method)))));
@@ -341,17 +341,14 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         return null;
       }
 
-      private static @NotNull List<IntentionAction> getFixesForUnusedParameter(@Nullable PsiMethod declarationMethod) {
-        if (declarationMethod != null) {
-          IntentionAction assignFix = QuickFixFactory.getInstance().createAssignFieldFromParameterFix();
-          IntentionAction createFieldFix = QuickFixFactory.getInstance().createCreateFieldFromParameterFix();
-          if (!declarationMethod.isConstructor()) {
-            assignFix = PriorityIntentionActionWrapper.lowPriority(assignFix);
-            createFieldFix = PriorityIntentionActionWrapper.lowPriority(createFieldFix);
-          }
-          return List.of(assignFix, createFieldFix);
+      private static @NotNull List<IntentionAction> getFixesForUnusedParameter(@NotNull PsiMethod declarationMethod, @NotNull PsiParameter parameter) {
+        IntentionAction assignFix = QuickFixFactory.getInstance().createAssignFieldFromParameterFix(parameter);
+        IntentionAction createFieldFix = QuickFixFactory.getInstance().createCreateFieldFromParameterFix(parameter);
+        if (!declarationMethod.isConstructor()) {
+          assignFix = PriorityIntentionActionWrapper.lowPriority(assignFix);
+          createFieldFix = PriorityIntentionActionWrapper.lowPriority(createFieldFix);
         }
-        return List.of();
+        return List.of(assignFix, createFieldFix);
       }
 
       @Override
