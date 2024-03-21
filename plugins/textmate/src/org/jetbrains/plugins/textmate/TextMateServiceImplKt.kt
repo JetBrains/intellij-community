@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.plugins.textmate.api.TextMateBundleProvider
 import kotlin.io.path.absolutePathString
 
-fun TextMateServiceImpl.getPluginBundles(): MutableList<TextMateBundleToLoad> {
+fun TextMateServiceImpl.getPluginBundles(): List<TextMateBundleToLoad> {
   val bundleProviders = TextMateBundleProvider.EP_NAME.extensionList
   val pluginBundles = mutableListOf<TextMateBundleProvider.PluginBundle>()
   for (provider in bundleProviders) {
@@ -15,5 +15,5 @@ fun TextMateServiceImpl.getPluginBundles(): MutableList<TextMateBundleToLoad> {
       thisLogger().error("${provider} failed", e)
     }
   }
-  return pluginBundles.distinctBy { it.path }.mapTo(mutableListOf()) { TextMateBundleToLoad(it.name, it.path.absolutePathString()) }
+  return pluginBundles.distinctBy { it.path }.map { TextMateBundleToLoad(it.name, it.path.absolutePathString()) }
 }
