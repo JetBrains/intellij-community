@@ -4,6 +4,7 @@ package com.intellij.python.community.impl.huggingFace.api
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -19,37 +20,34 @@ object HuggingFaceHttpClient {
     return false
   }
 
-  private fun existsSingle(url: String) = try {
-    val code = HttpRequests.request(url).connect {
-      (it.connection as HttpURLConnection).responseCode
-    }
-
-    code in 200..299
-  }
-  catch (t: Throwable) {
-    thisLogger().warn(t)
-    false
-  }
-
-  fun downloadFile(url: String): String? {
+  private fun existsSingle(url: String): Boolean {
     return try {
+      val code = HttpRequests.request(url).connect {
+        (it.connection as HttpURLConnection).responseCode
+      }
+      code in 200..299
+    } catch (e: IOException) {
+      thisLogger().warn(e)
+      false
+    }
+  }
+
+  fun downloadFile(url: String): Result<String> =
+    runCatching {
       HttpRequests.request(url).readString()
-    } catch (t: Throwable) {
-      thisLogger().warn("Failed to download file: $url", t)
-      null
+    }.onFailure {
+      thisLogger().warn("Failed to download file: $url", it)
     }
-  }
 
-  fun downloadContentAndHeaders(url: String): HfHttpResponseWithHeaders {
-    return try {
+  fun downloadContentAndHeaders(url: String): Result<HfHttpResponseWithHeaders> {
+    return runCatching {
       val connection = URL(url).openConnection() as HttpURLConnection
       val content = connection.inputStream.bufferedReader().use { it.readText() }
       val linkHeader = connection.getHeaderField("Link")
       connection.disconnect()
       HfHttpResponseWithHeaders(content, linkHeader)
-    } catch (t: Throwable) {
-      thisLogger().warn("Failed to download: $url", t)
-      HfHttpResponseWithHeaders(null, null)
+    }.onFailure {
+      thisLogger().warn("Failed to download: $url", it)
     }
   }
 }
