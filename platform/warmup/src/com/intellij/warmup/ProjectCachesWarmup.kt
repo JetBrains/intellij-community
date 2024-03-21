@@ -22,8 +22,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.timerTask
 import kotlin.math.max
 import kotlin.system.exitProcess
+import kotlin.time.measureTime
 
 internal class ProjectCachesWarmup : ModernApplicationStarter() {
   override val commandName: String
@@ -54,87 +56,36 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
   }
 
   override suspend fun start(args: List<String>) {
-    val commandArgs = try {
-      val parser = ArgsParser(args)
-      val commandArgs = WarmupProjectArgsImpl(parser)
-      parser.tryReadAll()
-      if (commandArgs.build && commandArgs.rebuild) {
-        throw InvalidWarmupArgumentsException("Only one of --build and --rebuild can be specified")
-      }
-      commandArgs
-    }
-    catch (t: Throwable) {
-      val argsParser = ArgsParser(listOf())
-      runCatching { WarmupProjectArgsImpl(argsParser) }
-      ConsoleLog.error(
-"""Failed to parse commandline: ${t.message}
-  Usage:
-
-  options:
-    ${argsParser.usage(includeHidden = true)}""")
-      exitProcess(2)
-    }
+    val commandArgs = parseCommandLineArguments(args)
 
     setEnvironmentConfiguration(commandArgs)
-
     configureVcsIndexing(commandArgs)
 
-    val buildMode = getBuildMode(commandArgs)
-    val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
-
-    val application = ApplicationManager.getApplication()
-    WarmupStatus.statusChanged(application, WarmupStatus.InProgress)
-    val timeStart = System.currentTimeMillis()
-
-    initLogger(args)
-
-    val totalIndexedFiles = AtomicInteger(0)
-    val handler = object : ProjectIndexingActivityHistoryListener {
-      override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
-        totalIndexedFiles.addAndGet(history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles })
-      }
-    }
-    application.messageBus.simpleConnect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
-
-    val project = withLoggingProgresses {
+    runWarmupActivity {
+      initLogger(args)
       waitIndexInitialization()
       val project = try {
-        importOrOpenProject(commandArgs)
+        importOrOpenProjectAsync(commandArgs)
       }
-      catch(t: Throwable) {
+      catch (t: Throwable) {
         WarmupLogger.logError("Failed to load project", t)
-        return@withLoggingProgresses null
+        null
+      }
+      if (project == null) {
+        exitProcess(AppExitCodes.STARTUP_EXCEPTION)
       }
 
       waitForCachesSupports(project)
+      buildProject(project, commandArgs)
 
-      if (buildMode != null) {
-        waitForBuilders(project, buildMode, builders)
+      if (!isPredicateBasedWarmup()) {
+        waitUntilProgressTasksAreFinishedOrFail()
+        waitForRefreshQueue()
       }
-      project
-    } ?: exitProcess(AppExitCodes.STARTUP_EXCEPTION)
-
-    waitUntilProgressTasksAreFinishedOrFail()
-
-    waitForRefreshQueue()
-
-    withLoggingProgresses {
       ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = true)
     }
 
-    WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles.get()))
-    val timeEnd = System.currentTimeMillis()
-
-    WarmupLogger.logInfo("""IDE Warm-up finished.
- - Elapsed time: ${Formats.formatDuration(timeEnd - timeStart)}
- - Number of indexed files: $totalIndexedFiles. 
-Exiting the application...""")
-
-    withContext(Dispatchers.EDT) {
-      blockingContext {
-        application.exit(false, true, false)
-      }
-    }
+    exitApplication()
   }
 }
 
@@ -149,12 +100,14 @@ private enum class BuildMode {
   REBUILD
 }
 
-private fun getBuildMode(args: WarmupProjectArgs) : BuildMode? {
+private fun getBuildMode(args: WarmupProjectArgs): BuildMode? {
   return if (args.build) {
     BuildMode.BUILD
-  } else if (args.rebuild) {
+  }
+  else if (args.rebuild) {
     BuildMode.REBUILD
-  } else when (System.getenv("IJ_WARMUP_BUILD")) {
+  }
+  else when (System.getenv("IJ_WARMUP_BUILD")) {
     null -> null
     "REBUILD" -> BuildMode.REBUILD
     else -> BuildMode.BUILD
@@ -184,7 +137,7 @@ private suspend fun waitForCachesSupports(project: Project) {
   WarmupLogger.logInfo("All ProjectIndexesWarmupSupport.waitForCaches completed")
 }
 
-private fun setEnvironmentConfiguration(commandArgs : WarmupProjectArgs) {
+private fun setEnvironmentConfiguration(commandArgs: WarmupProjectArgs) {
   val pathToConfig = commandArgs.pathToConfigurationFile
   if (pathToConfig != null) {
     EnvironmentUtil.setPathToConfigurationFile(pathToConfig.toAbsolutePath())
@@ -244,3 +197,74 @@ private suspend fun waitForRefreshQueue() {
     }
   }
 }
+
+private fun parseCommandLineArguments(args: List<String>): WarmupProjectArgs {
+  try {
+    val parser = ArgsParser(args)
+    val commandArgs = WarmupProjectArgsImpl(parser)
+    parser.tryReadAll()
+    if (commandArgs.build && commandArgs.rebuild) {
+      throw InvalidWarmupArgumentsException("Only one of --build and --rebuild can be specified")
+    }
+    return commandArgs
+  }
+  catch (t: Throwable) {
+    val argsParser = ArgsParser(listOf())
+    runCatching { WarmupProjectArgsImpl(argsParser) }
+    ConsoleLog.error(
+      """Failed to parse commandline: ${t.message}
+  Usage:
+
+  options:
+    ${argsParser.usage(includeHidden = true)}""")
+    exitProcess(2)
+  }
+}
+
+private suspend fun buildProject(project: Project, commandArgs: WarmupProjectArgs) {
+  val buildMode = getBuildMode(commandArgs)
+  val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
+  if (buildMode != null) {
+    waitForBuilders(project, buildMode, builders)
+  }
+}
+
+private suspend fun runWarmupActivity(action: suspend () -> Unit) {
+  val indexedFiles = installStatisticsCollector()
+  WarmupStatus.statusChanged(WarmupStatus.InProgress)
+  try {
+    val duration = measureTime {
+      withLoggingProgresses {
+        action()
+      }
+    }
+    WarmupLogger.logInfo(
+      """IDE Warm-up finished.
+ - Elapsed time: ${Formats.formatDuration(duration.inWholeMilliseconds)}
+ - Number of indexed files: ${indexedFiles.get()}. 
+Exiting the application...""")
+  }
+  finally {
+    WarmupStatus.statusChanged(WarmupStatus.Finished(indexedFiles.get()))
+  }
+}
+
+private fun installStatisticsCollector(): AtomicInteger {
+  val totalIndexedFiles = AtomicInteger(0)
+  val handler = object : ProjectIndexingActivityHistoryListener {
+    override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
+      totalIndexedFiles.addAndGet(history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles })
+    }
+  }
+  ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
+  return totalIndexedFiles
+}
+
+private suspend fun exitApplication() {
+  withContext(Dispatchers.EDT) {
+    blockingContext {
+      ApplicationManager.getApplication().exit(false, true, false)
+    }
+  }
+}
+

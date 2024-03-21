@@ -16,8 +16,7 @@ import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProg
 
 class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress || !Registry.`is`(
-        "ide.warmup.use.predicates")) {
+    if (WarmupStatus.currentStatus() != WarmupStatus.InProgress || !Registry.`is`("ide.warmup.use.predicates")) {
       return
     }
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()

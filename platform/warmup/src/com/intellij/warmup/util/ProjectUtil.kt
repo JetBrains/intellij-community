@@ -21,25 +21,16 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.asSafely
-import com.intellij.util.awaitCompleteProjectConfiguration
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import com.intellij.warmup.impl.getCommandLineReporter
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.job
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
@@ -63,80 +54,32 @@ suspend fun importOrOpenProjectAsync(args: OpenProjectArgs): Project {
 }
 
 private suspend fun importOrOpenProjectImpl0(args: OpenProjectArgs): Project {
-  val currentStatus = WarmupStatus.currentStatus(ApplicationManager.getApplication())
-  WarmupStatus.statusChanged(ApplicationManager.getApplication(), WarmupStatus.InProgress)
+  val currentStatus = WarmupStatus.currentStatus()
+  WarmupStatus.statusChanged(WarmupStatus.InProgress)
   try {
-    return importOrOpenProjectImpl(args)
+    return if (isPredicateBasedWarmup()) {
+      configureProjectByActivities(args)
+    } else {
+      configureProjectByConfigurators(args)
+    }
   } finally {
-    WarmupStatus.statusChanged(ApplicationManager.getApplication(), currentStatus)
+    WarmupStatus.statusChanged(currentStatus)
   }
 }
 
-val abortFlow : MutableStateFlow<String?> = MutableStateFlow(null)
+private suspend fun configureProjectByConfigurators(args: OpenProjectArgs): Project {
+  val projectFile = getProjectFile(args)
 
-fun CoroutineScope.getFailureDeferred() : Deferred<String> {
-  return async {
-    while (coroutineContext.job.isActive) {
-      val message = abortFlow.value
-      if (message != null) {
-        return@async message
-      }
-      delay(500)
-    }
-    error("unreachable")
-  }
-}
-
-fun CoroutineScope.getConfigurationDeferred(project : Project) : Deferred<Unit> {
-  return async(start = CoroutineStart.UNDISPATCHED) {
-    withLoggingProgressReporter {
-      project.awaitCompleteProjectConfiguration(WarmupLogger::logInfo)
-    }
-  }
-}
-
-fun CoroutineScope.awaitProjectConfigurationOrFail(project : Project) : Deferred<String?> {
-  val abortDeferred = getFailureDeferred()
-  val deferredConfiguration = getConfigurationDeferred(project)
-
-  return async {
-    select<String?> {
-      deferredConfiguration.onAwait {
-        abortDeferred.cancel()
-        null
-      }
-      abortDeferred.onAwait { it ->
-        deferredConfiguration.cancel()
-        it
-      }
-    }
-  }
-}
-
-private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
-  val vfsProject = blockingContext {
-    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
-    ?: throw RuntimeException("Project path ${args.projectDir} is not found")
-  }
-
-  runTaskAndLogTime("refresh VFS") {
-    WarmupLogger.logInfo("Refreshing VFS ${args.projectDir}...")
-    blockingContext {
-      VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
-    }
-  }
   yieldThroughInvokeLater()
 
   callProjectConversion(args)
 
-  if (!isPredicateBasedWarmup()) {
-    callProjectConfigurators(args) {
-      this.prepareEnvironment(args.projectDir)
-    }
+  callProjectConfigurators(args) {
+    this.prepareEnvironment(args.projectDir)
   }
 
   val project = runTaskAndLogTime("open project") {
-    ProjectUtil.openOrImportAsync(vfsProject.toNioPath(), OpenProjectTask())
+    ProjectUtil.openOrImportAsync(projectFile.toNioPath(), OpenProjectTask())
   } ?: throw RuntimeException("Failed to open project, null is returned")
   yieldThroughInvokeLater()
 
@@ -147,106 +90,20 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
     }
   }
 
-  if (isPredicateBasedWarmup()) {
-    val configurationError = runTaskAndLogTime("awaiting completion predicates") {
-      val configurationError = awaitProjectConfigurationOrFail(project).await()
-      dumpThreadsAfterConfiguration()
-      configurationError
-    }
-    if (configurationError != null) {
-      WarmupLogger.logError("Project configuration has failed: $configurationError")
-      throw RuntimeException(configurationError)
-    }
-  }
 
+  callProjectConfigurators(args) {
+    this.runWarmup(project)
 
-  if (!isPredicateBasedWarmup()) {
-    callProjectConfigurators(args) {
-      this.runWarmup(project)
-
-      FileBasedIndex.getInstance().asSafely<FileBasedIndexImpl>()?.changedFilesCollector?.ensureUpToDate()
-      //the configuration may add more dumb tasks to complete
-      //we flush the queue to avoid a deadlock between a modal progress & invokeLater
-      yieldAndWaitForDumbModeEnd(project)
-    }
-  }
-
-  runTaskAndLogTime("check project roots") {
-    val errors = TreeSet<String>()
-    val missingSDKs = TreeSet<String>()
-    readAction {
-      ProjectRootManager.getInstance(project).contentRoots.forEach { file ->
-        if (!file.exists()) {
-          errors += "Missing root: $file"
-        }
-      }
-
-      ProjectRootManager.getInstance(project).orderEntries().forEach { root ->
-        OrderRootType.getAllTypes().flatMap { root.getFiles(it).toList() }.forEach { file ->
-          if (!file.exists()) {
-            errors += "Missing root: $file for ${root.ownerModule.name} for ${root.presentableName}"
-          }
-        }
-
-        if (root is JdkOrderEntry && root.jdk == null) {
-          root.jdkName?.let { missingSDKs += it }
-        }
-
-        true
-      }
-    }
-
-    errors += missingSDKs.map { "Missing JDK entry: ${it}" }
-    errors.forEach { WarmupLogger.logInfo(it) }
+    FileBasedIndex.getInstance().asSafely<FileBasedIndexImpl>()?.changedFilesCollector?.ensureUpToDate()
+    //the configuration may add more dumb tasks to complete
+    //we flush the queue to avoid a deadlock between a modal progress & invokeLater
+    yieldAndWaitForDumbModeEnd(project)
   }
 
   WarmupLogger.logInfo("Project is ready for the import")
   return project
 }
 
-private val listener = object : ConversionListener {
-
-  override fun error(message: String) {
-    WarmupLogger.logInfo("PROGRESS: $message")
-  }
-
-  override fun conversionNeeded() {
-    WarmupLogger.logInfo("PROGRESS: Project conversion is needed")
-  }
-
-  override fun successfullyConverted(backupDir: Path) {
-    WarmupLogger.logInfo("PROGRESS: Project was successfully converted")
-  }
-
-  override fun cannotWriteToFiles(readonlyFiles: List<Path>) {
-    WarmupLogger.logInfo("PROGRESS: Project conversion failed for:\n" + readonlyFiles.joinToString("\n"))
-  }
-}
-
-
-private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
-  if (!projectArgs.convertProject) {
-    return
-  }
-
-  val conversionService = ConversionService.getInstance() ?: return
-  runTaskAndLogTime("convert project") {
-    WarmupLogger.logInfo("Checking if conversions are needed for the project")
-    val conversionResult = withContext(Dispatchers.EDT) {
-      conversionService.convertSilently(projectArgs.projectDir, listener)
-    }
-
-    if (conversionResult.openingIsCanceled()) {
-      throw RuntimeException("Failed to run project conversions before open")
-    }
-
-    if (conversionResult.conversionNotNeeded()) {
-      WarmupLogger.logInfo("No conversions were needed")
-    }
-  }
-
-  yieldThroughInvokeLater()
-}
 
 private suspend fun callProjectConfigurators(
   projectArgs: OpenProjectArgs,
@@ -299,5 +156,4 @@ private fun getAllConfigurators() : List<WarmupConfigurator> {
            .map(::WarmupConfiguratorOfCLIConfigurator)
 }
 
-
-private fun isPredicateBasedWarmup() = Registry.`is`("ide.warmup.use.predicates")
+internal fun isPredicateBasedWarmup() = Registry.`is`("ide.warmup.use.predicates")

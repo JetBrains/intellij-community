@@ -19,7 +19,7 @@ class ExternalSystemTracker : ActivityTracker {
   override suspend fun awaitConfiguration(project: Project) {
     val isAwaitingActivities = project.serviceAsync<ExternalSystemInProgressService>().isInProgress()
     if (isAwaitingActivities) {
-      delay(100)
+      delay(1000)
     }
   }
 }

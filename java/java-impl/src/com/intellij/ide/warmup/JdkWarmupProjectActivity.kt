@@ -22,7 +22,7 @@ internal class JdkWarmupProjectActivity : ProjectActivity {
   }
 
   suspend fun configureJdk(project: Project) {
-    if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
+    if (WarmupStatus.currentStatus() != WarmupStatus.InProgress) {
       return
     }
 

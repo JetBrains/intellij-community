@@ -266,7 +266,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     }
 
     private fun processMessage(gradleText: String): String? {
-      if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
+      if (WarmupStatus.currentStatus() != WarmupStatus.InProgress) {
         return gradleText
       }
       val cropped = gradleText.trimStart('\r').trimEnd('\n')

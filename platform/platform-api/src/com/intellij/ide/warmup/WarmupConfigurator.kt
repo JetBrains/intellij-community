@@ -14,7 +14,8 @@ import java.nio.file.Path
  *
  * Obsolescence notice: A more complete approach would be to use [com.intellij.platform.backend.observation.ActivityTracker]
  */
-@ApiStatus.Obsolete
+@ApiStatus.ScheduledForRemoval
+@Deprecated("This file represents the obsolete way of configuring a project. Consider using ActivityTracker")
 interface WarmupConfigurator {
 
   companion object {
