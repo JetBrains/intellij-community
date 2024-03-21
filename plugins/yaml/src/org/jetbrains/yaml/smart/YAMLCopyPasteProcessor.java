@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.smart;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -30,11 +30,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
-  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "\\.*([^\\s{}\\[\\].][^\\s.]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
+  private static final String CONFIG_KEY_SEQUENCE_PATTERN = "\\.*([^\\s{}\\[\\].][^\\s.]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
 
-  @Nullable
   @Override
-  public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+  public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     if (startOffsets.length != 1 || endOffsets.length != 1) {
       return null;
     }
@@ -121,9 +120,8 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     return PsiUtilCore.getElementType(element) instanceof YAMLElementType;
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+  public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (!file.getViewProvider().hasLanguage(YAMLLanguage.INSTANCE)) return text;
     CaretModel caretModel = editor.getCaretModel();
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -203,8 +201,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
            PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.SEQUENCE_MARKER;
   }
 
-  @NotNull
-  private static String indentText(@NotNull String text, @NotNull String curLineIndent, boolean shouldInsertIndentInTheEnd) {
+  private static @NotNull String indentText(@NotNull String text, @NotNull String curLineIndent, boolean shouldInsertIndentInTheEnd) {
     List<String> lines = LineTokenizer.tokenizeIntoList(text, false, false);
     if (lines.isEmpty()) {
       // Such situation sometimes happens but I don't know how it is possible
@@ -263,8 +260,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   /** @return text to be pasted or null if it is not possible to paste text as key sequence */
-  @Nullable
-  private static String tryToPasteAsKeySequence(@NotNull String text,
+  private static @Nullable String tryToPasteAsKeySequence(@NotNull String text,
                                                 @NotNull PsiFile file,
                                                 @NotNull Editor editor,
                                                 int caretOffset,
@@ -319,8 +315,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   /** @return found preceding block-style key-value pair after eol or null */
-  @Nullable
-  private static YAMLKeyValue getPreviousKeyValuePairBeforeEOL(@NotNull PsiElement element) {
+  private static @Nullable YAMLKeyValue getPreviousKeyValuePairBeforeEOL(@NotNull PsiElement element) {
     if (PsiUtilCore.getElementType(element.getParent()) != YAMLElementTypes.MAPPING) {
       // TODO: RUBY-22437 support JSON-like mappings
       return null;
@@ -342,8 +337,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   /** @return text to be pasted or null if it is not possible to paste key sequence */
-  @Nullable
-  private static String tryToPasteAsKeySequenceAtMapping(@NotNull Editor editor,
+  private static @Nullable String tryToPasteAsKeySequenceAtMapping(@NotNull Editor editor,
                                                          @NotNull List<String> keys,
                                                          @NotNull PsiElement element,
                                                          int caretOffset, int indent) {
@@ -394,8 +388,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   /** @return separated key sequence or null if text is not a key sequence */
-  @NotNull
-  private static List<String> separateCompositeKey(@NotNull String text) {
+  private static @NotNull List<String> separateCompositeKey(@NotNull String text) {
     text = text.trim();
     text = StringUtil.trimEnd(text, ':');
     int leadingDotsNumber = StringUtil.countChars(text, '.', 0, true);

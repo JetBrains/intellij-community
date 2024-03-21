@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -17,9 +17,8 @@ class YAMLQuotedTextTextEvaluator extends YamlScalarTextEvaluator<YAMLQuotedText
     super(text);
   }
 
-  @NotNull
   @Override
-  public List<TextRange> getContentRanges() {
+  public @NotNull List<TextRange> getContentRanges() {
     final ASTNode firstContentNode = myHost.getFirstContentNode();
     if (firstContentNode == null) {
       return Collections.emptyList();
@@ -62,9 +61,8 @@ class YAMLQuotedTextTextEvaluator extends YamlScalarTextEvaluator<YAMLQuotedText
     return result;
   }
 
-  @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+  protected @NotNull String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
     final TextRange leftRange = contentRanges.get(indexBefore);
     if (leftRange.isEmpty() || !myHost.isSingleQuote() && text.charAt(leftRange.getEndOffset() - 1) == '\\') {
       return "\n";

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -33,8 +33,7 @@ public class YamlEnumType extends YamlScalarType {
     super(typeName, displayName);
   }
 
-  @NotNull
-  public YamlEnumType withLiterals(String... literals) {
+  public @NotNull YamlEnumType withLiterals(String... literals) {
     myLiterals = cloneArray(literals);
     return this;
   }
@@ -44,8 +43,7 @@ public class YamlEnumType extends YamlScalarType {
    * completion lists. These values must not overlap with the visible (see {@link #withLiterals(String...)}),
    * but may overlap with the deprecated (see {@link #withDeprecatedLiterals(String...)})
    */
-  @NotNull
-  public YamlEnumType withHiddenLiterals(String... hiddenLiterals) {
+  public @NotNull YamlEnumType withHiddenLiterals(String... hiddenLiterals) {
     myHiddenLiterals = hiddenLiterals.clone();
     return this;
   }
@@ -56,14 +54,12 @@ public class YamlEnumType extends YamlScalarType {
    * These values must not overlap with the visible (see {@link #withLiterals(String...)}),
    * but may overlap with the hidden (see {@link #withHiddenLiterals(String...)})
    */
-  @NotNull
-  public YamlEnumType withDeprecatedLiterals(String... deprecatedLiterals) {
+  public @NotNull YamlEnumType withDeprecatedLiterals(String... deprecatedLiterals) {
     myDeprecatedLiterals = deprecatedLiterals.clone();
     return this;
   }
 
-  @NotNull
-  protected final Stream<String> getLiteralsStream() {
+  protected final @NotNull Stream<String> getLiteralsStream() {
     return Stream.concat(Arrays.stream(myLiterals), Arrays.stream(myDeprecatedLiterals));
   }
 
@@ -90,9 +86,8 @@ public class YamlEnumType extends YamlScalarType {
     }
   }
 
-  @NotNull
   @Override
-  public List<LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
+  public @NotNull List<LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
     return Stream.concat(
       Arrays.stream(myLiterals).map((String literal) -> createValueLookup(literal, false)),
       Arrays.stream(myDeprecatedLiterals).map((String literal) -> createValueLookup(literal, true))
@@ -101,8 +96,7 @@ public class YamlEnumType extends YamlScalarType {
       .collect(Collectors.toList());
   }
 
-  @Nullable
-  protected LookupElement createValueLookup(@NotNull String literal, boolean deprecated) {
+  protected @Nullable LookupElement createValueLookup(@NotNull String literal, boolean deprecated) {
     return LookupElementBuilder.create(literal).withStrikeoutness(deprecated);
   }
 

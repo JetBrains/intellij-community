@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -15,9 +15,8 @@ import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 import org.jetbrains.yaml.resolve.YAMLAliasReference;
 
 public class YAMLRecursiveAliasInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new YamlPsiElementVisitor() {
       @Override
       public void visitAlias(@NotNull YAMLAlias alias) {

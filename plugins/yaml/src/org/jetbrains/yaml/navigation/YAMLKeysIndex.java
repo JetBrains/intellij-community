@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.navigation;
 
 import com.intellij.psi.PsiElement;
@@ -20,21 +20,18 @@ import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor;
 import java.util.Map;
 
 public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
-  @NonNls
-  public static final ID<String, Integer> KEY = ID.create("yaml.keys.name");
+  public static final @NonNls ID<String, Integer> KEY = ID.create("yaml.keys.name");
 
   @Override
   public int getVersion() {
     return 1;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Integer, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Integer, FileContent> getIndexer() {
     return new DataIndexer<>() {
-      @NotNull
       @Override
-      public Map<String, Integer> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Integer> map(@NotNull FileContent inputData) {
         Object2IntMap<String> map = new Object2IntOpenHashMap<>();
         inputData.getPsiFile().accept(new YamlRecursivePsiElementVisitor() {
           @Override
@@ -56,27 +53,23 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Integer> getValueExternalizer() {
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public ID<String, Integer> getName() {
+  public @NotNull ID<String, Integer> getName() {
     return KEY;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return YAMLFileBasedIndexUtil.YAML_INPUT_FILTER;
   }
 

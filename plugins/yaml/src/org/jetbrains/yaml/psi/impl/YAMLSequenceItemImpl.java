@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -13,19 +13,17 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class YAMLSequenceItemImpl extends YAMLPsiElementImpl implements YAMLSequenceItem {
-  public YAMLSequenceItemImpl(@NotNull final ASTNode node) {
+  public YAMLSequenceItemImpl(final @NotNull ASTNode node) {
     super(node);
   }
 
-  @Nullable
   @Override
-  public YAMLValue getValue() {
+  public @Nullable YAMLValue getValue() {
     return PsiTreeUtil.findChildOfType(this, YAMLValue.class);
   }
 
   @Override
-  @NotNull
-  public Collection<YAMLKeyValue> getKeysValues() {
+  public @NotNull Collection<YAMLKeyValue> getKeysValues() {
     final YAMLMapping mapping = PsiTreeUtil.findChildOfType(this, YAMLMapping.class);
     if (mapping == null) {
       return Collections.emptyList();

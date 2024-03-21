@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -22,8 +22,7 @@ import java.util.Objects;
 public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override
-  @NotNull
-  protected PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
+  protected @NotNull PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
     return new StructureChecker(holder, metaTypeProvider);
   }
 
@@ -53,15 +52,12 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
     }
 
     private static final class StripNonEditableKeysQuickFix implements LocalQuickFix {
-      @SafeFieldForPreview @NotNull
-      private final YamlMetaTypeProvider myMetaTypeProvider;
+      @SafeFieldForPreview private final @NotNull YamlMetaTypeProvider myMetaTypeProvider;
 
       private StripNonEditableKeysQuickFix(@NotNull YamlMetaTypeProvider provider) {myMetaTypeProvider = provider;}
 
-      @Nls
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls @NotNull String getFamilyName() {
         return YAMLBundle.message("YamlNonEditableKeyInspectionBase.strip.noneditable.keys.quickfix.name");
       }
 

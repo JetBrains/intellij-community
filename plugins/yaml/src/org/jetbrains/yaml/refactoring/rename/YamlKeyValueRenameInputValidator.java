@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.refactoring.rename;
 
 import com.intellij.openapi.project.Project;
@@ -31,20 +31,18 @@ public final class YamlKeyValueRenameInputValidator implements RenameInputValida
     "('[^\\n']*')|(\"[^\\n\"]*\")"
   );
 
-  @Nullable
   @Override
-  public String getErrorMessage(@NotNull final String newName, @NotNull final Project project) {
+  public @Nullable String getErrorMessage(final @NotNull String newName, final @NotNull Project project) {
     return IDENTIFIER_PATTERN.matcher(newName).matches() ? null : YAMLBundle.message("rename.invalid.name", newName);
   }
 
-  @NotNull
   @Override
-  public ElementPattern<? extends PsiElement> getPattern() {
+  public @NotNull ElementPattern<? extends PsiElement> getPattern() {
     return PlatformPatterns.psiElement(YAMLKeyValue.class);
   }
 
   @Override
-  public boolean isInputValid(@NotNull final String newName, @NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public boolean isInputValid(final @NotNull String newName, final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
     return true;
   }
 }

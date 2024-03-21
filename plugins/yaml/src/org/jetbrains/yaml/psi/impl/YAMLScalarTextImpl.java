@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -21,13 +21,12 @@ import java.util.List;
 
 
 public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScalarText, YAMLBlockScalar {
-  public YAMLScalarTextImpl(@NotNull final ASTNode node) {
+  public YAMLScalarTextImpl(final @NotNull ASTNode node) {
     super(node);
   }
 
-  @NotNull
   @Override
-  protected IElementType getContentType() {
+  protected @NotNull IElementType getContentType() {
     return YAMLTokenTypes.SCALAR_TEXT;
   }
 
@@ -35,9 +34,8 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
   public @NotNull YamlScalarTextEvaluator<YAMLScalarTextImpl> getTextEvaluator() {
     return new YAMLBlockScalarTextEvaluator<>(this) {
 
-      @NotNull
       @Override
-      protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+      protected @NotNull String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
         final TextRange leftRange = contentRanges.get(indexBefore);
         final TextRange rightRange = contentRanges.get(indexBefore + 1);
         if (leftRange.isEmpty()) {
@@ -71,9 +69,8 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
         return " ";
       }
 
-      @NotNull
       @Override
-      public String getTextValue(@Nullable TextRange rangeInHost) {
+      public @NotNull String getTextValue(@Nullable TextRange rangeInHost) {
         String value = super.getTextValue(rangeInHost);
         if (!StringUtil.isEmptyOrSpaces(value) && getChompingIndicator() != ChompingIndicator.STRIP && isEnding(rangeInHost)) {
           value += "\n";

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -17,15 +18,13 @@ public abstract class YAMLMappingImpl extends YAMLCompoundValueImpl implements Y
     super(node);
   }
 
-  @NotNull
   @Override
-  public Collection<YAMLKeyValue> getKeyValues() {
+  public @NotNull Collection<YAMLKeyValue> getKeyValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, YAMLKeyValue.class);
   }
 
-  @Nullable
   @Override
-  public YAMLKeyValue getKeyValueByKey(@NotNull String keyText) {
+  public @Nullable YAMLKeyValue getKeyValueByKey(@NotNull String keyText) {
     for (YAMLKeyValue keyValue : getKeyValues()) {
       if (keyText.equals(keyValue.getKeyText())) {
         return keyValue;
@@ -63,9 +62,8 @@ public abstract class YAMLMappingImpl extends YAMLCompoundValueImpl implements Y
     return "YAML mapping";
   }
 
-  @NotNull
   @Override
-  public String getTextValue() {
+  public @NotNull String getTextValue() {
     return "<mapping:" + Integer.toHexString(getText().hashCode()) + ">";
   }
 

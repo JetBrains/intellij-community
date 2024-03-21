@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,8 +45,7 @@ public class YAMLUtil {
    * }</pre>
    * Flattened {@code needKey} is {@code top.next.list[0].needKey}
    */
-  @NotNull
-  public static String getConfigFullName(@NotNull YAMLPsiElement target) {
+  public static @NotNull String getConfigFullName(@NotNull YAMLPsiElement target) {
     return StringUtil.join(getConfigFullNameParts(target), ".");
   }
 
@@ -70,8 +69,7 @@ public class YAMLUtil {
   }
 
 
-  @NotNull
-  public static Collection<YAMLKeyValue> getTopLevelKeys(final YAMLFile file) {
+  public static @NotNull Collection<YAMLKeyValue> getTopLevelKeys(final YAMLFile file) {
     final YAMLValue topLevelValue = file.getDocuments().get(0).getTopLevelValue();
     if (topLevelValue instanceof YAMLMapping) {
       return ((YAMLMapping)topLevelValue).getKeyValues();
@@ -81,13 +79,11 @@ public class YAMLUtil {
     }
   }
 
-  @Nullable
-  public static YAMLKeyValue getQualifiedKeyInFile(final YAMLFile file, List<String> key) {
+  public static @Nullable YAMLKeyValue getQualifiedKeyInFile(final YAMLFile file, List<String> key) {
     return getQualifiedKeyInDocument(file.getDocuments().get(0), key);
   }
 
-  @Nullable
-  public static YAMLKeyValue getQualifiedKeyInDocument(@NotNull YAMLDocument document, @NotNull List<String> key) {
+  public static @Nullable YAMLKeyValue getQualifiedKeyInDocument(@NotNull YAMLDocument document, @NotNull List<String> key) {
     assert key.size() != 0;
 
     YAMLMapping mapping = ObjectUtils.tryCast(document.getTopLevelValue(), YAMLMapping.class);
@@ -111,21 +107,18 @@ public class YAMLUtil {
     throw new IllegalStateException("Should have returned from the loop");
   }
 
-  @Nullable
-  public static YAMLKeyValue getQualifiedKeyInFile(final YAMLFile file, String... key) {
+  public static @Nullable YAMLKeyValue getQualifiedKeyInFile(final YAMLFile file, String... key) {
     return getQualifiedKeyInFile(file, Arrays.asList(key));
   }
 
-  @Nullable
-  public static YAMLKeyValue findKeyInProbablyMapping(@Nullable YAMLValue node, @NotNull String keyText) {
+  public static @Nullable YAMLKeyValue findKeyInProbablyMapping(@Nullable YAMLValue node, @NotNull String keyText) {
     if (!(node instanceof YAMLMapping)) {
       return null;
     }
     return ((YAMLMapping)node).getKeyValueByKey(keyText);
   }
 
-  @Nullable
-  public static Pair<PsiElement, String> getValue(final YAMLFile file, String... key) {
+  public static @Nullable Pair<PsiElement, String> getValue(final YAMLFile file, String... key) {
     final YAMLKeyValue record = getQualifiedKeyInFile(file, key);
     if (record != null) {
       final PsiElement psiValue = record.getValue();
@@ -184,8 +177,7 @@ public class YAMLUtil {
     return createI18nRecord(file, key.split("\\."), text);
   }
 
-  @Nullable
-  public static YAMLKeyValue createI18nRecord(final YAMLFile file, final String[] key, final String text) {
+  public static @Nullable YAMLKeyValue createI18nRecord(final YAMLFile file, final String[] key, final String text) {
     final YAMLDocument root = file.getDocuments().get(0);
     assert root != null;
     assert key.length > 0;
@@ -270,7 +262,7 @@ public class YAMLUtil {
     return element;
   }
 
-  public static int getIndentInThisLine(@NotNull final PsiElement elementInLine) {
+  public static int getIndentInThisLine(final @NotNull PsiElement elementInLine) {
     PsiElement currentElement = elementInLine;
     while (currentElement != null) {
       final IElementType type = currentElement.getNode().getElementType();
@@ -362,7 +354,7 @@ public class YAMLUtil {
    *   baz: value2
    * }</pre>
    */
-  public static void deleteSurroundingWhitespace(@NotNull final PsiElement element) {
+  public static void deleteSurroundingWhitespace(final @NotNull PsiElement element) {
     if (element.getNextSibling() != null) {
       deleteElementsOfType(element::getNextSibling, BLANK_LINE_ELEMENTS);
       deleteElementsOfType(element::getNextSibling, YAMLElementTypes.SPACE_ELEMENTS);
@@ -372,7 +364,7 @@ public class YAMLUtil {
     }
   }
 
-  private static void deleteElementsOfType(@NotNull final Supplier<? extends PsiElement> element, @NotNull final TokenSet types) {
+  private static void deleteElementsOfType(final @NotNull Supplier<? extends PsiElement> element, final @NotNull TokenSet types) {
     while (element.get() != null && types.contains(PsiUtilCore.getElementType(element.get()))) {
       element.get().delete();
     }

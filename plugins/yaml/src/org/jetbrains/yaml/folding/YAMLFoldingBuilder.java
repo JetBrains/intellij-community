@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.folding;
 
 import com.intellij.lang.ASTNode;
@@ -36,7 +36,7 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     collectDescriptors(root, descriptors);
   }
 
-  private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<? super FoldingDescriptor> descriptors) {
+  private static void collectDescriptors(final @NotNull PsiElement element, final @NotNull List<? super FoldingDescriptor> descriptors) {
     TextRange nodeTextRange = element.getTextRange();
     if (nodeTextRange.getLength() < 2) {
       return;
@@ -64,8 +64,7 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     }
   }
 
-  @Nullable
-  private static PsiElement foldComments(PsiElement child, @NotNull List<? super FoldingDescriptor> descriptors) {
+  private static @Nullable PsiElement foldComments(PsiElement child, @NotNull List<? super FoldingDescriptor> descriptors) {
     PsiComment startComment = null;
     PsiComment endComment = null;
     int commentsCount = 0;
@@ -102,13 +101,11 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
   }
 
   @Override
-  @Nullable
-  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
+  protected @Nullable String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
   }
 
-  @NotNull
-  private static String getPlaceholderText(@Nullable PsiElement psiElement) {
+  private static @NotNull String getPlaceholderText(@Nullable PsiElement psiElement) {
 
     if (psiElement instanceof YAMLDocument) {
       return "---";

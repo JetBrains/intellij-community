@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -10,7 +10,7 @@ import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 public class YAMLCompoundValueImpl extends YAMLValueImpl implements YAMLCompoundValue {
-  public YAMLCompoundValueImpl(@NotNull final ASTNode node) {
+  public YAMLCompoundValueImpl(final @NotNull ASTNode node) {
     super(node);
   }
 
@@ -19,9 +19,8 @@ public class YAMLCompoundValueImpl extends YAMLValueImpl implements YAMLCompound
     return "YAML compound value";
   }
 
-  @NotNull
   @Override
-  public String getTextValue() {
+  public @NotNull String getTextValue() {
     PsiElement element = getTag() != null ? getTag().getNextSibling() : getFirstChild();
 
     while (element != null && !(element instanceof YAMLScalar)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.psi.PsiElement;
@@ -44,27 +44,23 @@ public class YamlEmptyObjectAdapter implements JsonObjectValueAdapter {
     return false;
   }
 
-  @NotNull
   @Override
-  public List<JsonPropertyAdapter> getPropertyList() {
+  public @NotNull List<JsonPropertyAdapter> getPropertyList() {
     return ContainerUtil.emptyList();
   }
 
-  @NotNull
   @Override
-  public PsiElement getDelegate() {
+  public @NotNull PsiElement getDelegate() {
     return myElement;
   }
 
-  @Nullable
   @Override
-  public JsonObjectValueAdapter getAsObject() {
+  public @Nullable JsonObjectValueAdapter getAsObject() {
     return this;
   }
 
-  @Nullable
   @Override
-  public JsonArrayValueAdapter getAsArray() {
+  public @Nullable JsonArrayValueAdapter getAsArray() {
     return null;
   }
 
