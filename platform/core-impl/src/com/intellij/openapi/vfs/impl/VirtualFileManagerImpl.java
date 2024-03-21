@@ -29,6 +29,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -191,8 +192,8 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   }
 
   @ApiStatus.Internal
-  public void addAsyncFileListenersTo(@NotNull List<? super AsyncFileListener> listeners) {
-    listeners.addAll(asyncFileListeners);
+  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<AsyncFileListener> listeners) {
+    return ContainerUtil.concat(listeners, asyncFileListeners);
   }
 
   @Override

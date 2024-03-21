@@ -80,8 +80,8 @@ public final class AsyncEventSupport {
     }
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
-    List<AsyncFileListener> allListeners = new ArrayList<>(EP_NAME.getExtensionList());
-    ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).addAsyncFileListenersTo(allListeners);
+    List<AsyncFileListener> allListeners =
+      ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).withAsyncFileListeners(EP_NAME.getExtensionList());
     for (AsyncFileListener listener : allListeners) {
       ProgressManager.checkCanceled();
       long startNs = System.nanoTime();
