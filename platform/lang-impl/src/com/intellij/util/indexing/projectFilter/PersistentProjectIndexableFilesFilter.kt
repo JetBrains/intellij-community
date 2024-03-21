@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import java.io.DataInputStream
@@ -21,6 +22,17 @@ private val filtersDir: Path
   get() = PathManager.getIndexRoot() / "index-file-filters"
 
 private const val version = 1
+
+/**
+ * We don't have to delete these files explicitly
+ * They won't be used anyway because [com.intellij.util.indexing.dependencies.AppIndexingDependenciesService.getCurrent]
+ * will be changed and [com.intellij.util.indexing.isIndexableFilesFilterUpToDate] will return false.
+ *
+ * But it's better to do it explicitly.
+ */
+fun deletePersistentIndexableFilesFilters() {
+  FileUtil.deleteRecursively(filtersDir)
+}
 
 internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {
   override fun create(project: Project): ProjectIndexableFilesFilter {
