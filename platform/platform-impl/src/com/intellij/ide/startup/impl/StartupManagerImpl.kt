@@ -396,7 +396,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       synchronized(lock) {
         assert(initProjectStartupActivities.isEmpty()) { "InitProject Activities: $initProjectStartupActivities" }
         assert(postStartupActivities.isEmpty()) { "DumbAware Post Activities: $postStartupActivities" }
-        assert(runningProjectActivities.isEmpty()) { "ProjectActivities: $postStartupActivities" }
+        assert(runningProjectActivities.isEmpty()) { "ProjectActivities: $runningProjectActivities" }
       }
     }
     finally {
