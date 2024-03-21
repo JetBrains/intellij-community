@@ -268,11 +268,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val variableAccessCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>() ?: return null
             val propertySymbol = variableAccessCall.symbol as? KtSyntheticJavaPropertySymbol ?: return null
             when (variableAccessCall.simpleAccess) {
-                is KtSimpleVariableAccess.Read ->
-                    toPsiMethod(propertySymbol.getter, ktSimpleNameExpression)
-
-                is KtSimpleVariableAccess.Write ->
-                    toPsiMethod(propertySymbol.setter ?: return null, ktSimpleNameExpression)
+                is KtSimpleVariableAccess.Read -> {
+                    toPsiMethod(propertySymbol.javaGetterSymbol, ktSimpleNameExpression)
+                }
+                is KtSimpleVariableAccess.Write -> {
+                    toPsiMethod(propertySymbol.javaSetterSymbol?: return null, ktSimpleNameExpression)
+                }
             }
         }
     }
