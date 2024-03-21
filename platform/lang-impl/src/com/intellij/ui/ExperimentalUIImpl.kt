@@ -281,7 +281,8 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
   return object : IconPathPatcher() {
     private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
     // https://youtrack.jetbrains.com/issue/IDEA-335974
-    private val useReflectivePath = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()
+    private val useReflectivePath
+      get() = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()
 
     override fun patchPath(path: String, classLoader: ClassLoader?): String? {
       val mappings = paths.get(classLoader) ?: return null
