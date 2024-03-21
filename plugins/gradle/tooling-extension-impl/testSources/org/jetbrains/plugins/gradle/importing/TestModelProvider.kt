@@ -7,17 +7,20 @@ import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
-class TestPhasedModelProvider(
-  private val phase: GradleModelFetchPhase
+class TestModelProvider(
+  private val phase: GradleModelFetchPhase,
+  private val modelClass: Class<out TestModel>
 ) : ProjectImportModelProvider {
+
+  constructor(phase: GradleModelFetchPhase) : this(phase, TestPhasedModel.getModelClass(phase))
+  constructor(modelClass: Class<out TestModel>) : this(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE, modelClass)
 
   override fun getPhase(): GradleModelFetchPhase {
     return phase
   }
 
   override fun populateProjectModels(controller: BuildController, projectModel: BasicGradleProject, modelConsumer: GradleModelConsumer) {
-    val model = TestPhasedModel.createModel(phase)
-    val modelClass = TestPhasedModel.getModelClass(phase)
+    val model = modelClass.getConstructor().newInstance()
     modelConsumer.consumeProjectModel(projectModel, model, modelClass)
   }
 }

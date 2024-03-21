@@ -114,6 +114,9 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @ApiStatus.Experimental
   void report(@NotNull MessageEvent.Kind kind, @NotNull BuildIssue buildIssue);
 
+  @ApiStatus.Experimental
+  @Nullable GradlePartialResolverPolicy getPolicy();
+
   /**
    * @return Maps of artifact paths to moduleIds
    */

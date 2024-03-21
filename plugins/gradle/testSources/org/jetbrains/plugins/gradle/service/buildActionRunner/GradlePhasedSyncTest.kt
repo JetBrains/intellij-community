@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
-import org.jetbrains.plugins.gradle.importing.TestPhasedModelProvider
+import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
@@ -21,7 +21,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val buildCompletionAssertion = ListenerAssertion()
       val projectModelContributorAssertion = ListenerAssertion()
 
-      addModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      addModelProviders(disposable, TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenBuildCompleted(disposable) { resolverContext ->
         buildCompletionAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
@@ -71,8 +71,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val buildCompletionAssertion = ListenerAssertion()
       val projectModelContributorAssertion = ListenerAssertion()
 
-      addModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
-      addModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      addModelProviders(disposable, TestModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
+      addModelProviders(disposable, TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenProjectLoaded(disposable) { resolverContext ->
         projectLoadingAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
@@ -154,7 +154,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       val allPhases = GradleModelFetchPhase.entries
       val projectLoadedPhases = allPhases.filter { it <= GradleModelFetchPhase.PROJECT_LOADED_PHASE }
-      val phasedModelProviders = allPhases.map { TestPhasedModelProvider(it) }
+      val phasedModelProviders = allPhases.map { TestModelProvider(it) }
 
       addModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { resolverContext, phase ->
@@ -308,7 +308,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
       val allPhases = GradleModelFetchPhase.entries
-      val phasedModelProviders = allPhases.map { TestPhasedModelProvider(it) }
+      val phasedModelProviders = allPhases.map { TestModelProvider(it) }
 
       addModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { _, phase ->

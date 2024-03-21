@@ -245,9 +245,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myBuildEnvironment;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public GradlePartialResolverPolicy getPolicy() {
+  @Override
+  public @Nullable GradlePartialResolverPolicy getPolicy() {
     return myPolicy;
   }
 

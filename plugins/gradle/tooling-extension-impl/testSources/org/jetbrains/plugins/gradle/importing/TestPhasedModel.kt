@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import java.io.Serializable
 
-interface TestPhasedModel : Serializable {
+interface TestPhasedModel : TestModel {
 
   val phase: GradleModelFetchPhase
 
@@ -33,17 +32,6 @@ interface TestPhasedModel : Serializable {
   }
 
   companion object {
-
-    fun createModel(phase: GradleModelFetchPhase): TestPhasedModel {
-      return when (phase) {
-        GradleModelFetchPhase.PROJECT_LOADED_PHASE -> ProjectLoadedPhase()
-        GradleModelFetchPhase.WARM_UP_PHASE -> WarmUpPhase()
-        GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE -> ProjectSourceSetPhase()
-        GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> ProjectSourceSetDependencyPhase()
-        GradleModelFetchPhase.PROJECT_MODEL_PHASE -> ProjectModelPhase()
-        GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE -> AdditionalModelPhase()
-      }
-    }
 
     fun getModelClass(phase: GradleModelFetchPhase): Class<out TestPhasedModel> {
       return when (phase) {
