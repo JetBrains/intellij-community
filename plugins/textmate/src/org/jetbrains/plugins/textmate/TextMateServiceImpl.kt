@@ -11,7 +11,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
@@ -376,7 +377,8 @@ private fun fireFileTypesChangedEvent(reason: @NonNls String, update: Runnable) 
   ApplicationManager.getApplication().invokeLater(
     {
       ApplicationManager.getApplication().runWriteAction {
-        FileTypeManagerEx.getInstanceEx().makeFileTypesChange(reason, update)
+        val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerImpl
+        fileTypeManager.makeFileTypesChange(reason, update)
       }
     }, ModalityState.nonModal())
 }
