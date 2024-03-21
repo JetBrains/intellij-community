@@ -2,7 +2,9 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
@@ -12,27 +14,32 @@ import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Image
-import java.util.function.Consumer
+import java.net.URL
 
 @Internal
 abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImageProvider {
-  override fun loadImage(callback: Consumer<Image?>) {
-    loadImage { image -> callback.accept(image) }
-  }
+  open fun getImageUrl(): URL? = null
 
-  private fun loadImage(callback: (Image?) -> Unit) {
-    val imageUrl = getImageUrl()?.takeIf { isAvailable && it.path.endsWith(".svg"); }
-    if (imageUrl == null) {
-      callback(null)
-      return
-    }
+  override fun getImage(): Image? {
+    val imageUrl = getImageUrl()?.takeIf { isAvailable && it.path.endsWith(".svg"); } ?: return null
 
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val image = SVGLoader.load(imageUrl, 1f)
-      ApplicationManager.getApplication().invokeLater {
-        callback(image)
-      }
-    }
+    var image: Image? = null
+    BackgroundTaskUtil.executeAndTryWait(
+      { indicator: ProgressIndicator ->
+        val loadedImage = SVGLoader.load(imageUrl, 1f)
+
+        Runnable {
+          if (indicator.isCanceled) return@Runnable
+          image = loadedImage
+        }
+      },
+      {
+        LOG.warn("Onboarding image loading failed (> $LOADING_TIMEOUT_MILLIS ms): ")
+      },
+      LOADING_TIMEOUT_MILLIS,
+      false)
+
+    return image
   }
 
   override fun setBackgroundImageToDialog(dialog: DialogWrapper, image: Image?) {
@@ -57,5 +64,7 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
 
   companion object {
     private val BACKGROUND_IMAGE_DISPOSABLE_KEY: Key<Disposable> = Key.create("ide.background.image.provider.background.image")
+    private const val LOADING_TIMEOUT_MILLIS: Long = 300
+    private val LOG = Logger.getInstance(OnboardingBackgroundImageProviderBase::class.java)
   }
 }

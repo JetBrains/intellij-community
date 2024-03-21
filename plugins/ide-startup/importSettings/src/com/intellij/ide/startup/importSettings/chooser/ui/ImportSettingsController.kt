@@ -8,8 +8,8 @@ import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.data.SettingsService
-import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
+import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 
 interface ImportSettingsController : BaseController {
@@ -22,7 +22,7 @@ interface ImportSettingsController : BaseController {
   val skipImportAction: () -> Unit
 
   fun goToSettingsPage(provider: ActionsDataProvider<*>, product: SettingsContributor)
-  fun goToProductChooserPage(callback: () -> Unit)
+  fun goToProductChooserPage()
   fun goToImportPage(importFromProduct: DialogImportData)
 
   fun skipImport()
@@ -54,15 +54,11 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     dialog.changePage(page)
   }
 
-  override fun goToProductChooserPage(callback: () -> Unit) {
-    OnboardingBackgroundImageProvider.getInstance().loadImage { image ->
-      val page = ProductChooserPage(this, image)
-      Disposer.tryRegister(dialog.disposable, page)
-      ImportSettingsEventsCollector.firstPageShown()
-      dialog.changePage(page)
-
-      callback()
-    }
+  override fun goToProductChooserPage() {
+    val page = ProductChooserPage(this, OnboardingBackgroundImageProvider.getInstance().getImage())
+    Disposer.tryRegister(dialog.disposable, page)
+    ImportSettingsEventsCollector.firstPageShown()
+    dialog.changePage(page)
   }
 
   override fun goToImportPage(importFromProduct: DialogImportData) {

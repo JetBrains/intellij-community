@@ -43,7 +43,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
   protected val settingPanes = mutableListOf<BaseSettingPane>()
 
   protected val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
-    controller.goToProductChooserPage {}
+    controller.goToProductChooserPage()
   }
 
   abstract val buttons: List<JButton>

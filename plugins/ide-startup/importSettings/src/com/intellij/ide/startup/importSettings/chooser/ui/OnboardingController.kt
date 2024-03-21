@@ -51,16 +51,15 @@ class OnboardingController private constructor(){
     val controller = ImportSettingsController.createController(dl, skipAction)
 
     cancelImportCallback = cancelCallback
-    controller.goToProductChooserPage {
-      dl.isModal = isModal
+    controller.goToProductChooserPage()
+    dl.isModal = isModal
 
-      if (!dl.isShowing) {
-        dl.initialize()
-        dl.show()
-      }
-
-      state = State.IMPORT
+    if (!dl.isShowing) {
+      dl.initialize()
+      dl.show()
     }
+
+    state = State.IMPORT
   }
 
   fun dialogClose() {

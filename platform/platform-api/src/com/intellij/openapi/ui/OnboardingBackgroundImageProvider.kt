@@ -7,8 +7,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Image
-import java.net.URL
-import java.util.function.Consumer
 
 @Internal
 interface OnboardingBackgroundImageProvider {
@@ -19,7 +17,6 @@ interface OnboardingBackgroundImageProvider {
 
   val isAvailable: Boolean get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.onboarding.background.enabled", true)
 
-  fun getImageUrl(): URL?
-  fun loadImage(callback: Consumer<Image?>)
+  fun getImage(): Image?
   fun setBackgroundImageToDialog(dialog: DialogWrapper, image: Image?)
 }
