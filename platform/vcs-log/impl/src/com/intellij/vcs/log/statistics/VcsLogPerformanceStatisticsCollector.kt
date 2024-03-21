@@ -16,7 +16,7 @@ import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.FilterKind
 
 object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.performance", 5)
+  private val GROUP = EventLogGroup("vcs.log.performance", 6)
 
   val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computed",
                                                    VcsLogRepoSizeCollector.VCS_FIELD,

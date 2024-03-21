@@ -129,6 +129,7 @@ com.intellij.vcs.log.VcsLogFilterCollection
 - sf:BRANCH_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
 - sf:DATE_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
 - sf:HASH_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:PARENT_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
 - sf:RANGE_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
 - sf:REVISION_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
 - sf:ROOT_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
@@ -177,6 +178,11 @@ com.intellij.vcs.log.VcsLogObjectsFactory
 - a:createShortDetails(com.intellij.vcs.log.Hash,java.util.List,J,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,J):com.intellij.vcs.log.VcsShortCommitDetails
 - a:createTimedCommit(com.intellij.vcs.log.Hash,java.util.List,J):com.intellij.vcs.log.TimedVcsCommit
 - a:createUser(java.lang.String,java.lang.String):com.intellij.vcs.log.VcsUser
+com.intellij.vcs.log.VcsLogParentFilter
+- com.intellij.vcs.log.VcsLogFilter
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getMaxParents():I
+- a:getMinParents():I
 f:com.intellij.vcs.log.VcsLogProperties
 - sf:CASE_INSENSITIVE_REGEX:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:HAS_COMMITTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
@@ -184,6 +190,7 @@ f:com.intellij.vcs.log.VcsLogProperties
 - sf:SUPPORTS_INCREMENTAL_REFRESH:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_INDEXING:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_LOG_DIRECTORY_HISTORY:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:SUPPORTS_PARENTS_FILTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - <init>():V
 f:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - getOrDefault(com.intellij.vcs.log.VcsLogProvider):java.lang.Object

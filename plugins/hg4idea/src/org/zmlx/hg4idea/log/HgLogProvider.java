@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -317,7 +317,7 @@ public final class HgLogProvider implements VcsLogProvider {
 
   @Override
   public @Nullable <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
-    if (property == VcsLogProperties.CASE_INSENSITIVE_REGEX) {
+    if (property == VcsLogProperties.CASE_INSENSITIVE_REGEX || property == VcsLogProperties.SUPPORTS_PARENTS_FILTER) {
       return (T)Boolean.FALSE;
     }
     return null;

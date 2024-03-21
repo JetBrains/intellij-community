@@ -169,9 +169,6 @@
       </action>
     </group>
 
-    <group id="Vcs.Log.GraphOptionsGroup" class="com.intellij.vcs.log.ui.actions.VcsLogGraphOptionsChooserGroup" popup="true"
-           icon="com.intellij.vcs.log.impl.VcsLogIcons.IntelliSort"/>
-
     <group id="Vcs.Log.BranchActionsGroup" popup="false">
       <separator key="action.vcs.log.branches.separator"/>
       <reference id="Vcs.Log.CollapseAll"/>

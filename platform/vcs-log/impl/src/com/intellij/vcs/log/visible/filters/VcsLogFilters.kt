@@ -196,6 +196,16 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun noMerges(): VcsLogParentFilter {
+    return fromParentCount(maxParents = 1)
+  }
+
+  @JvmStatic
+  fun fromParentCount(minParents: Int? = null, maxParents: Int? = null): VcsLogParentFilter {
+    return VcsLogParentFilterImpl(minParents ?: 0, maxParents ?: Int.MAX_VALUE)
+  }
+
+  @JvmStatic
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {

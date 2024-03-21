@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.actions;
+package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -8,14 +8,17 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogParentFilter;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogIcons;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.GraphOptionsUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogParentFilterImplKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +27,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implements DumbAware {
+
+  private final @NotNull ParentFilterModel myParentFilterModel;
+
+  public VcsLogGraphOptionsChooserGroup(@NotNull ParentFilterModel parentFilterModel) {
+    super(VcsLogBundle.message("group.Vcs.Log.GraphOptionsGroup.text"),
+          VcsLogBundle.message("group.Vcs.Log.GraphOptionsGroup.description"),
+          VcsLogIcons.IntelliSort);
+    myParentFilterModel = parentFilterModel;
+    setPopup(true);
+  }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -46,6 +59,7 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implement
       actions.add(new SelectNonBaseOptionsAction(logUI, properties, PermanentGraph.Options.LinearBek.INSTANCE));
     }
     actions.add(new SelectNonBaseOptionsAction(logUI, properties, PermanentGraph.Options.FirstParent.INSTANCE));
+    actions.add(new NoMergesFilterAction(myParentFilterModel));
 
     actions.add(ActionManager.getInstance().getAction(VcsLogActionIds.BRANCH_ACTIONS_GROUP));
 
@@ -61,7 +75,7 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implement
     if (isEnabled) {
       Icon icon = getTemplatePresentation().getIcon();
       if (icon != null) {
-        if (!PermanentGraph.Options.Default.equals(properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS))) {
+        if (hasNonDefaultOptions(properties)) {
           e.getPresentation().setIcon(IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS));
         }
         else {
@@ -74,6 +88,13 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implement
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
+  }
+
+  private boolean hasNonDefaultOptions(@NotNull VcsLogUiProperties properties) {
+    VcsLogParentFilter parentFilter = myParentFilterModel.getFilter();
+    if (parentFilter != null && !VcsLogParentFilterImplKt.getMatchesAll(parentFilter)) return true;
+    PermanentGraph.Options options = properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS);
+    return !PermanentGraph.Options.Default.equals(options);
   }
 
   private static @NotNull List<PermanentGraph.SortType> getAvailableSortTypes() {

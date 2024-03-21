@@ -54,6 +54,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   protected val dateFilterModel: DateFilterModel
   protected val structureFilterModel: FileFilterModel
   protected val textFilterModel: TextFilterModel
+  protected val parentFilterModel: ParentFilterModel
 
   private val textFilterField: VcsLogTextFilterField
 
@@ -65,12 +66,13 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     dateFilterModel = DateFilterModel(uiProperties, filters)
     structureFilterModel = FileFilterModel(logData.logProviders.keys, uiProperties, filters)
     textFilterModel = TextFilterModel(uiProperties, filters, parentDisposable)
+    parentFilterModel = ParentFilterModel(uiProperties, logData.logProviders, ::visibleRoots, filters)
 
     val field = TextFilterField(textFilterModel, parentDisposable)
     val toolbar = createTextActionsToolbar(field.textEditor)
     textFilterField = MyVcsLogTextFilterField(SearchFieldWithExtension(toolbar.component, field))
 
-    val models = arrayOf(branchFilterModel, userFilterModel, dateFilterModel, structureFilterModel, textFilterModel)
+    val models = arrayOf(branchFilterModel, userFilterModel, dateFilterModel, structureFilterModel, textFilterModel, parentFilterModel)
     for (model in models) {
       model.addSetFilterListener {
         filterConsumer.accept(getFilters())
@@ -140,6 +142,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       addAll(structureFilterModel.filtersList)
       add(dateFilterModel.getFilter())
       add(userFilterModel.getFilter())
+      add(parentFilterModel.getFilter())
     }.filterNotNull()
     return VcsLogFilterObject.collection(*filters.toTypedArray())
   }
@@ -151,6 +154,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     textFilterModel.setFilter(collection)
     dateFilterModel.setFilter(collection.get(VcsLogFilterCollection.DATE_FILTER))
     userFilterModel.setFilter(collection.get(VcsLogFilterCollection.USER_FILTER))
+    parentFilterModel.setFilter(collection.get(VcsLogFilterCollection.PARENT_FILTER))
   }
 
   protected open fun createBranchComponent(): AnAction? {
@@ -178,7 +182,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   }
 
   protected fun createGraphComponent(): AnAction? {
-    return ActionManager.getInstance().getAction(VcsLogActionIds.GRAPH_OPTIONS_GROUP)
+    return VcsLogGraphOptionsChooserGroup(parentFilterModel)
   }
 
   override fun addFilterListener(listener: VcsLogFilterListener) {
