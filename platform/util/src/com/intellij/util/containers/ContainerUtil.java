@@ -2535,6 +2535,25 @@ public final class ContainerUtil {
     return -1;
   }
 
+  /**
+   * Finds the first element in the array that satisfies given condition.
+   *
+   * @param list array to scan
+   * @param condition condition that should be satisfied
+   * @param <T> type of the list elements
+   * @return index of the first element in the array that satisfies the condition; -1 if no element satisfies the condition.
+   */
+  @Contract(pure=true)
+  public static <T> int indexOf(T @NotNull [] list, @NotNull Condition<? super T> condition) {
+    for (int i = 0; i < list.length; i++) {
+      T t = list[i];
+      if (condition.value(t)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     for (int i = list.size() - 1; i >= 0; i--) {

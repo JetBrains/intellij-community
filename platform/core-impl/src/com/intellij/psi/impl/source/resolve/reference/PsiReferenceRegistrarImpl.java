@@ -14,9 +14,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -177,8 +179,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   @ApiStatus.Internal
-  public @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
-                                                                                          @NotNull PsiReferenceService.Hints hints) {
+  @Unmodifiable
+  @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
+                                                                                   @NotNull PsiReferenceService.Hints hints) {
     ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
@@ -187,5 +190,11 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       binding.addAcceptableReferenceProviders(element, ret, hints);
     }
     return ret;
+  }
+  @ApiStatus.Internal
+  @Unmodifiable
+  public @NotNull List<PsiReferenceProvider> getPsiReferenceProvidersByElement(@NotNull PsiElement element,
+                                                                               @NotNull PsiReferenceService.Hints hints) {
+    return ContainerUtil.map(getPairsByElement(element, hints), info -> info.provider);
   }
 }
