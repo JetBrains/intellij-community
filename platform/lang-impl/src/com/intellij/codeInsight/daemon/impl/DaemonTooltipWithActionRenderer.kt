@@ -115,7 +115,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                 JBUI.insets(7, 7, 0, 2),
+                                                 JBUI.insets(7, 7, 0, 5),
                                                  0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
@@ -154,7 +154,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
 
     val topInset = 5
     val bottomInset = (if (highlightActions) 4 else 10)
-    buttons.add(createActionLabel(tooltipAction.text, hintHint.textBackground, runFixAction), gridBag.next().insets(topInset, 10, bottomInset, 4))
+    buttons.add(createActionLabel(tooltipAction.text, hintHint.textBackground, runFixAction), gridBag.next().insets(topInset, 12, bottomInset, 4))
     buttons.add(createKeymapHint(shortcutRunActionText), gridBag.next().insets(topInset, 4, bottomInset, 12))
 
     val actionLabel = createActionLabel(DaemonBundle.message("daemon.tooltip.more.actions.link.label"), hintHint.textBackground) {
