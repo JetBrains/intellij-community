@@ -133,7 +133,7 @@ internal class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
  * @property placeholderRangeList                The list of the ranges, corresponding to the placeholder
  * @property status                              The status of the placeholders ranges extraction.
  *
- * @see countBracesPlaceholders
+ * @see countBracesBasedPlaceholders
  */
 internal data class PlaceholderCountResult(val placeholderRangeList: List<TextRange?>, val status: PlaceholdersStatus) {
   val count = placeholderRangeList.size
@@ -300,15 +300,15 @@ internal fun solvePlaceholderCount(
   holders: List<LoggingStringPartEvaluator.PartHolder>,
 ): PlaceholderCountResult {
   return if (loggerType == PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
-    countFormattedPlaceholders(holders, argumentCount)
+    countFormattedBasedPlaceholders(holders, argumentCount)
   }
   else {
-    countBracesPlaceholders(holders, loggerType)
+    countBracesBasedPlaceholders(holders, loggerType)
   }
 }
 
-private fun countFormattedPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>,
-                                       argumentCount: Int): PlaceholderCountResult {
+private fun countFormattedBasedPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>,
+                                            argumentCount: Int): PlaceholderCountResult {
   val prefix = StringBuilder()
   var full = true
   for (holder in holders) {
@@ -414,7 +414,7 @@ internal fun hasThrowableType(lastArgument: UExpression): Boolean {
   return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
 }
 
-private fun countBracesPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
+private fun countBracesBasedPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
   var count = 0
   var full = true
   val placeholderRangeList: MutableList<TextRange> = mutableListOf()
