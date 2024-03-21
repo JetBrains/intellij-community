@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
@@ -19,7 +19,7 @@ internal class IdeNavBarVmItem @RequiresReadLock constructor(
     ThreadingAssertions.assertReadAccess()
   }
 
-  override val pointer: Pointer<out NavBarItem> = item.createPointer()
+  val pointer: Pointer<out NavBarItem> = item.createPointer()
 
   override val presentation: NavBarItemPresentation = item.presentation()
 
@@ -63,7 +63,7 @@ internal class IdeNavBarVmItem @RequiresReadLock constructor(
   }
 }
 
-private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
+private suspend fun <T> IdeNavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
   return readAction {
     pointer.dereference()?.selector()
   }

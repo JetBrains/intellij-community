@@ -130,7 +130,6 @@ internal class ServiceViewRootNavBarItem(
   }
 
   override fun createPointer(): Pointer<out ServiceViewRootNavBarItem> = this
-  override val pointer: Pointer<out ServiceViewRootNavBarItem> get() = this
   override fun dereference(): ServiceViewRootNavBarItem = this // hard pointer
 
   override fun presentation(): NavBarItemPresentation = presentation
@@ -163,7 +162,6 @@ private class ServiceViewNavBarItem(
   }
 
   override fun createPointer(): Pointer<out NavBarItem> = this
-  override val pointer: Pointer<out NavBarItem> get() = this
   override fun dereference(): ServiceViewNavBarItem = this // hard pointer
 
   override fun presentation(): NavBarItemPresentation = presentation
