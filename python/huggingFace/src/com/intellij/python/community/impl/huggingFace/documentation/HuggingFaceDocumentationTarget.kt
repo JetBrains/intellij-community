@@ -43,33 +43,27 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
     val (entityId, entityKind) = HuggingFaceUtil.extractStringValueAndEntityKindFromElement(myElement)
                                  ?: return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.no.string.value.found"))
 
-    try {
-      val entityDataApiContent = if (entityKind == HuggingFaceEntityKind.MODEL) {
-        HuggingFaceModelsCache.getBasicData(entityId)
-      } else {
-        HuggingFaceDatasetsCache.getBasicData(entityId)
-      }
-
-      if (entityDataApiContent == null) { return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.could.not.fetch")) }
-      val modelCardContent = fetchOrRetrieveModelCard(entityDataApiContent, entityId, entityKind)
-      val project = readAction { myElement.project }
-
-      val pipelineTag = when (entityKind) {
-        HuggingFaceEntityKind.MODEL -> HuggingFaceModelsCache.getPipelineTagForEntity(entityId) ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
-        HuggingFaceEntityKind.DATASET -> HuggingFaceConstants.DATASET_FAKE_PIPELINE_TAG
-      }
-      HuggingFaceCardsUsageCollector.CARD_SHOWN_ON_HOVER.log(pipelineTag)
-
-      val htmlContent = HuggingFaceHtmlBuilder(
-        project,
-        entityDataApiContent,
-        modelCardContent,
-        entityKind
-      ).build()
-      DocumentationResult.documentation(html = htmlContent)
-    } catch (e: Exception) {
-      e.printStackTrace()
-      DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.not.found", e.message ?: ""))
+    val entityDataApiContent = when (entityKind) {
+      HuggingFaceEntityKind.MODEL -> HuggingFaceModelsCache.getBasicData(entityId)
+      HuggingFaceEntityKind.DATASET -> HuggingFaceDatasetsCache.getBasicData(entityId)
     }
+
+    if (entityDataApiContent == null) return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.could.not.fetch"))
+    val modelCardContent = fetchOrRetrieveModelCard(entityDataApiContent, entityId, entityKind)
+    val project = readAction { myElement.project }
+
+    val pipelineTag = when (entityKind) {
+      HuggingFaceEntityKind.MODEL -> HuggingFaceModelsCache.getPipelineTagForEntity(entityId) ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
+      HuggingFaceEntityKind.DATASET -> HuggingFaceConstants.DATASET_FAKE_PIPELINE_TAG
+    }
+
+    HuggingFaceCardsUsageCollector.CARD_SHOWN_ON_HOVER.log(pipelineTag)
+    val htmlContent = HuggingFaceHtmlBuilder(
+      project,
+      entityDataApiContent,
+      modelCardContent,
+      entityKind
+    ).build()
+    DocumentationResult.documentation(html = htmlContent)
   }
 }

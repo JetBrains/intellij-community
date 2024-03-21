@@ -12,6 +12,7 @@ import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceD
 import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceReadmeCleaner
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.time.Instant
 
 @ApiStatus.Internal
@@ -74,6 +75,7 @@ object HuggingFaceApi {
     return modelDataMap
   }
 
+  @Nls
   fun fetchOrRetrieveModelCard(entityDataApiContent: HuggingFaceEntityBasicApiData,
                                entityId: String,
                                entityKind: HuggingFaceEntityKind,
