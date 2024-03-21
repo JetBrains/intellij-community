@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -7,10 +7,10 @@ import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.references.MutableReferenceContainer
 import com.intellij.platform.workspace.storage.impl.references.ReferenceContainer
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
-import kotlin.test.assertNotSame
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.*
 
 class StorageMutabilityTest {
 
@@ -65,6 +65,85 @@ class StorageMutabilityTest {
                          listOf("OneToOneContainer"))
     compareRefsInstances(emptyBuilderCopy, snapshot,
                          listOf("OneToOneContainer", "OneToManyContainer"))
+  }
+
+  @Test
+  fun `add child by modifying parent`() {
+    val builder = createEmptyBuilder()
+
+    val parent = builder addEntity ParentEntity("123", MySource)
+
+    val updatedParent = builder.modifyEntity(parent) {
+      this.child = ChildEntity("child", MySource)
+    }
+
+    assertNotNull(updatedParent.child)
+    assertNotNull(builder.entities(ChildEntity::class.java).singleOrNull())
+  }
+
+  @Test
+  fun `add reference between two existing entities`() {
+    val builder = createEmptyBuilder()
+
+    val parent = builder addEntity SelfLinkedEntity(MySource)
+    val child = builder addEntity SelfLinkedEntity(AnotherSource)
+
+    val updatedParent = builder.modifyEntity(parent) parent@{
+      builder.modifyEntity(child) child@{
+        this@child.parentEntity = this@parent
+      }
+    }
+
+    assertEquals(AnotherSource, updatedParent.children.single().entitySource)
+    assertEquals(MySource, builder.entities(SelfLinkedEntity::class.java).single { it.entitySource == AnotherSource }.parentEntity!!.entitySource)
+  }
+
+  @Test
+  fun `create entity builder and add child by plus equals`() {
+    val parent = ParentMultipleEntity("data", MySource) {
+      this.children += ChildMultipleEntity("data", MySource)
+    }
+
+    assertEquals("data", parent.children.single().childData)
+  }
+
+  @Test
+  fun `add entity with multiple existing parents`() {
+    val builder = createEmptyBuilder()
+
+    val root = builder addEntity TreeMultiparentRootEntity("data", MySource)
+    val parent = builder addEntity TreeMultiparentLeafEntity("data", MySource)
+
+    val updatedRoot = builder.modifyEntity(root) root@{
+      builder.modifyEntity(parent) parent@{
+        builder addEntity TreeMultiparentLeafEntity("AnotherData", MySource) child@{
+          this@child.mainParent = this@root
+          this@child.leafParent = this@parent
+        }
+      }
+    }
+
+    assertEquals("AnotherData", updatedRoot.children.single().data)
+
+    val foundEntity = builder.entities(TreeMultiparentLeafEntity::class.java).single { it.data == "AnotherData" }
+    assertNotNull(foundEntity.mainParent)
+    assertNotNull(foundEntity.leafParent)
+  }
+
+  @Test
+  fun `modification on second level`() {
+    val builder = createEmptyBuilder()
+    val parent = builder addEntity ParentEntity("123", MySource) {
+      this.child = ChildEntity("child", MySource)
+    }
+
+    val secondBuilder = builder.toSnapshot().toBuilder()
+
+    assertThrows<IllegalStateException> {
+      secondBuilder.modifyEntity(parent) {
+        this.child!!.childData = "NEW_DATA"
+      }
+    }
   }
 
   private fun compareRefsInstances(originalStorage: EntityStorage, copiedStorage: EntityStorage,
