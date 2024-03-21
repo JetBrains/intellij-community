@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ProgressManager
@@ -22,7 +21,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.textmate.TextMateService.LOG
-import org.jetbrains.plugins.textmate.api.TextMateBundleProvider
 import org.jetbrains.plugins.textmate.bundles.*
 import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleType
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings
@@ -42,7 +40,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
-import kotlin.io.path.absolutePathString
 
 class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService() {
   private var builtinBundlesDisabled = false
@@ -445,17 +442,3 @@ private fun CoroutineScope.registerBundlesInParallel(
 }
 
 internal data class TextMateBundleToLoad(@JvmField val name: String, @JvmField val path: String)
-
-private fun getPluginBundles(): MutableList<TextMateBundleToLoad> {
-  val bundleProviders = TextMateBundleProvider.EP_NAME.extensionList
-  val pluginBundles = mutableListOf<TextMateBundleProvider.PluginBundle>()
-  for (provider in bundleProviders) {
-    try {
-      pluginBundles.addAll(provider.getBundles())
-    }
-    catch (e: Exception) {
-      logger<TextMateServiceImpl>().error("${provider} failed", e)
-    }
-  }
-  return pluginBundles.distinctBy { it.path }.mapTo(mutableListOf()) { TextMateBundleToLoad(it.name, it.path.absolutePathString()) }
-}
