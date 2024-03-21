@@ -7,12 +7,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
-
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class HuggingFaceExecutorService(val coroutineScope: CoroutineScope)
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class HuggingFaceSafeExecutor(private val coroutineScope: CoroutineScope, private val defaultTimeout: Duration): Disposable {
 

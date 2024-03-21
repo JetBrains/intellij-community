@@ -6,8 +6,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceDatasetPsiElement
-import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceModelPsiElement
+import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceApi
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceLastCacheRefresh
@@ -15,16 +14,18 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCac
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPlainStringElementImpl
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
-val huggingFaceRelevantLibraries = setOf(
-  "diffusers", "transformers", "allennlp", "spacy",
-  "asteroid", "flair", "keras", "sentence-transformers",
-  "stable-baselines3", "adapters", "huggingface_hub",
-)
 
-
+@ApiStatus.Internal
 object HuggingFaceUtil {
+  private val huggingFaceRelevantLibraries = setOf(
+    "diffusers", "transformers", "allennlp", "spacy",
+    "asteroid", "flair", "keras", "sentence-transformers",
+    "stable-baselines3", "adapters", "huggingface_hub",
+  )
+
   private fun isAnyHFLibraryImportedInFile(file: PyFile): Boolean {
     val isDirectlyImported = file.importTargets.any { importStmt ->
       huggingFaceRelevantLibraries.any { lib -> importStmt.importedQName.toString().contains(lib) }
@@ -56,7 +57,7 @@ object HuggingFaceUtil {
     return isLibraryImported
   }
 
-  private fun isWhatHuggingFaceEntity(text: String): HuggingFaceEntityKind? {
+  fun isWhatHuggingFaceEntity(text: String): HuggingFaceEntityKind? {
     return when {
       isHuggingFaceModel(text) -> HuggingFaceEntityKind.MODEL
       isHuggingFaceDataset(text) -> HuggingFaceEntityKind.DATASET
@@ -64,9 +65,9 @@ object HuggingFaceUtil {
     }
   }
 
-  fun isHuggingFaceModel(text: String): Boolean = HuggingFaceModelsCache.isInCache(text)
+  private fun isHuggingFaceModel(text: String): Boolean = HuggingFaceModelsCache.isInCache(text)
 
-  fun isHuggingFaceDataset(text: String): Boolean = HuggingFaceDatasetsCache.isInCache(text)
+  private fun isHuggingFaceDataset(text: String): Boolean = HuggingFaceDatasetsCache.isInCache(text)
 
   fun isHuggingFaceEntity(text: String): Boolean = isHuggingFaceModel(text) || isHuggingFaceDataset(text)
 
@@ -81,35 +82,34 @@ object HuggingFaceUtil {
     }
   }
 
-  private fun extractStringAndKindFromStringLiteralExpression(stringValue: String?): Pair<String?, HuggingFaceEntityKind?> {
+  private fun extractStringAndKindFromStringLiteralExpression(stringValue: String?): Pair<String, HuggingFaceEntityKind>? {
     val entityKind = if (stringValue != null) isWhatHuggingFaceEntity(stringValue) else null
-    return Pair(stringValue, entityKind)
+    return stringValue?.takeIf { entityKind != null }?.let { Pair(it, entityKind!!) }
   }
 
-  fun extractStringValueAndEntityKindFromElement(element: PsiElement): Pair<String?, HuggingFaceEntityKind?> {
+  fun extractStringValueAndEntityKindFromElement(element: PsiElement): Pair<String, HuggingFaceEntityKind>? {
     return when (val parent = element.parent) {
       is PyAssignmentStatement -> when (element) {
         is PyTargetExpression -> {
           val stringValue = (parent.assignedValue as? PyStringLiteralExpression)?.stringValue
           extractStringAndKindFromStringLiteralExpression(stringValue)
         }
-        else -> Pair(null, null)
+        else -> null
       }
       is PyStringLiteralExpression -> when (element) {
-        is HuggingFaceModelPsiElement -> Pair(parent.stringValue, HuggingFaceEntityKind.MODEL)
-        is HuggingFaceDatasetPsiElement -> Pair(parent.stringValue, HuggingFaceEntityKind.DATASET)
+        is HuggingFaceIdentifierPsiElement -> Pair(element.entityName, element.entityKind)
         is PyPlainStringElementImpl -> {
           extractStringAndKindFromStringLiteralExpression(parent.stringValue)
         }
-        else -> Pair(null, null)
+        else -> null
       }
       is PyArgumentList -> when (element) {
         is PyStringLiteralExpression -> {
           extractStringAndKindFromStringLiteralExpression(element.stringValue)
         }
-        else -> Pair(null, null)
+        else -> null
       }
-      else -> Pair(null, null)
+      else -> null
     }
   }
 
@@ -126,5 +126,17 @@ object HuggingFaceUtil {
     HuggingFaceApi.fillCacheWithBasicApiData(HuggingFaceEntityKind.DATASET,
                                              HuggingFaceDatasetsCache,
                                              HuggingFaceConstants.MAX_DATASETS_IN_CACHE)
+  }
+
+  fun humanReadableNumber(rawNumber: Int): String {
+    if (rawNumber < 1000) return rawNumber.toString()
+    val suffixes = arrayOf("K", "M", "B", "T")
+    var count = rawNumber.toDouble()
+    var i = 0
+    while (i < suffixes.size && count >= 1000) {
+      count /= 1000
+      i++
+    }
+    return String.format("%.1f%s", count, suffixes[i - 1])
   }
 }

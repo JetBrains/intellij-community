@@ -3,12 +3,13 @@ package com.intellij.python.community.impl.huggingFace.api
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.HttpRequests
+import org.jetbrains.annotations.ApiStatus
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class HfHttpResponseWithHeaders(val content: String?, val linkHeader: String?)
+@ApiStatus.Internal data class HfHttpResponseWithHeaders(val content: String?, val linkHeader: String?)
 
-
+@ApiStatus.Internal
 object HuggingFaceHttpClient {
   fun exists(url: String, retries: Int = 2): Boolean {
     repeat(retries) {

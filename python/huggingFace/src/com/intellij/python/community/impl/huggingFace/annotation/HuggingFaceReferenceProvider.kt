@@ -5,31 +5,27 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceProvider
-import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManagerService
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
+import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManager
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import org.jetbrains.annotations.ApiStatus
 
-abstract class HuggingFaceReferenceProvider : PsiReferenceProvider() {
-
+@ApiStatus.Internal
+class HuggingFaceIdentifierReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val pyStringLiteralExpression = element as? PyStringLiteralExpression ?: return PsiReference.EMPTY_ARRAY
 
     val project = element.project
-    val service = project.getService(HuggingFaceImportedLibrariesManagerService::class.java)
-    val manager = service.getManager()
+    val manager = project.getService(HuggingFaceImportedLibrariesManager::class.java)
     if (!manager.isLibraryImported()) return PsiReference.EMPTY_ARRAY
 
     val text = pyStringLiteralExpression.stringValue
-    if (!isValidReference(text)) return PsiReference.EMPTY_ARRAY
+    val entityKind = HuggingFaceUtil.isWhatHuggingFaceEntity(text) ?: return PsiReference.EMPTY_ARRAY
 
     val textRange = getTextRange(element, text)
-    return getReferenceArray(element, textRange, text)
+    return arrayOf(HuggingFaceReference(element, textRange, text, entityKind))
   }
-
-  abstract fun isValidReference(text: String) : Boolean
-
-  abstract fun getReferenceArray(element: PsiElement, textRange: TextRange, text: String) : Array<PsiReference>
 
   private fun getTextRange(element: PsiElement, text: String): TextRange {
     val startOffset = element.text.indexOf(text)
@@ -39,18 +35,4 @@ abstract class HuggingFaceReferenceProvider : PsiReferenceProvider() {
       TextRange.EMPTY_RANGE
     }
   }
-}
-
-class HuggingFaceModelReferenceProvider : HuggingFaceReferenceProvider() {
-  override fun isValidReference(text: String) = HuggingFaceUtil.isHuggingFaceModel(text)
-
-  override fun getReferenceArray(element: PsiElement, textRange: TextRange, text: String): Array<PsiReference> =
-    arrayOf(HuggingFaceModelReference(element, textRange, text))
-}
-
-class HuggingFaceDatasetReferenceProvider : HuggingFaceReferenceProvider() {
-  override fun isValidReference(text: String) = HuggingFaceUtil.isHuggingFaceDataset(text)
-
-  override fun getReferenceArray(element: PsiElement, textRange: TextRange, text: String): Array<PsiReference> =
-    arrayOf(HuggingFaceDatasetReference(element, textRange, text))
 }

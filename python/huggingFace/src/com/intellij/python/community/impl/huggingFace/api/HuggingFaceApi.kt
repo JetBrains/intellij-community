@@ -8,9 +8,18 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEntry
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCardsCache
+import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationPlaceholdersUtil
+import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceReadmeCleaner
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
+import org.jetbrains.annotations.ApiStatus
+import java.time.Instant
 
+@ApiStatus.Internal
 object HuggingFaceApi {
+  private val nextLinkRegex = Regex("""<(.+)>; rel="next"""")
+
   fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int) {
     val executor = HuggingFaceSafeExecutor.instance
 
@@ -28,8 +37,8 @@ object HuggingFaceApi {
     }
   }
 
-  suspend fun performSearch(query: String, tags: String?): Map<String, HuggingFaceEntityBasicApiData> {
-    val queryUrl = HuggingFaceURLProvider.getModelSearchQuery(query, tags)
+  suspend fun performSearch(query: String, tags: String?, sortKey: HuggingFaceModelSortKey): Map<String, HuggingFaceEntityBasicApiData> {
+    val queryUrl = HuggingFaceURLProvider.getModelSearchQuery(query, tags, sortKey)
     val executor = HuggingFaceSafeExecutor.instance
 
     return executor.asyncSuspend("SearchHuggingFace") {
@@ -44,7 +53,7 @@ object HuggingFaceApi {
   }
 
   private fun extractNextPageUrl(linkHeader: String?): String? {
-    val nextLinkMatch = Regex("""<(.+)>; rel="next"""").find(linkHeader ?: "")
+    val nextLinkMatch = nextLinkRegex.find(linkHeader ?: "")
     return nextLinkMatch?.groupValues?.get(1)
   }
 
@@ -82,5 +91,29 @@ object HuggingFaceApi {
     }
 
     return modelDataMap
+  }
+
+  fun fetchOrRetrieveModelCard(entityDataApiContent: HuggingFaceEntityBasicApiData,
+                               entityId: String,
+                               entityKind: HuggingFaceEntityKind,
+                               prefix: String = "markdown"): String {
+    return if (entityDataApiContent.gated != "false") {
+      HuggingFaceDocumentationPlaceholdersUtil.generateGatedEntityMarkdownString(entityId, entityKind)
+    }
+    else {
+      val cached = HuggingFaceMdCardsCache.getData("${prefix}_${entityId}")
+      cached?.data
+      ?: try {
+        val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
+        val rawData = HuggingFaceHttpClient.downloadFile(mdUrl)
+                      ?: HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
+        val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
+        HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now()))
+        cleanedData
+      }
+      catch (e: Exception) {
+        HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
+      }
+    }
   }
 }

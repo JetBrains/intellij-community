@@ -2,6 +2,7 @@ package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.intellij.ui.scale.JBUIScale
 import org.intellij.lang.annotations.Language
 
@@ -28,8 +29,7 @@ object HuggingFaceQuickDocStyles {  // see PY-70541
   const val HAIR_SPACE = "&ensp;"
 
   @Language("CSS")
-  @NlsSafe
-  private val styleContent = listOf(
+  val styleRules = listOf(
     "$HF_P_TAG_CLASS { margin-top: ${scale(4)}px; margin-bottom: ${scale(6)}px; }",
 
     ".$CODE_DIV_CLASS { padding-top: ${scale(4)}px; padding-bottom: ${scale(4)}px;  padding-left: ${scale(4)}px; " +
@@ -47,7 +47,10 @@ object HuggingFaceQuickDocStyles {  // see PY-70541
     "blockquote { border-left: ${scale(4)}px solid #cccccc; }",
 
     "blockquote p { border-left: none; }",
-  ).joinToString(separator = " ")
+  )
 
-  fun styleChunk(): HtmlChunk = HtmlChunk.raw("<style>$styleContent</style>")
+  @NlsSafe
+  private val styleContent = styleRules.joinToString(separator = " ")
+
+  fun styleChunk(): HtmlChunk = HtmlChunk.raw(PyHuggingFaceBundle.message("python.hugging.face.tags.style", styleContent))
 }

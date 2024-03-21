@@ -5,11 +5,13 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.time.Instant
 
 
-data class HuggingFaceMdCacheEntry(val data: String, val timeFetched: Instant)
+@ApiStatus.Internal data class HuggingFaceMdCacheEntry(val data: String, val timeFetched: Instant)
 
+@ApiStatus.Internal
 @State(name = "HuggingFaceMdCardsCache", storages = [Storage("HuggingFaceMdCardsCache.xml")])
 object HuggingFaceMdCardsCache: PersistentStateComponent<HuggingFaceMdCardsCache> {
 

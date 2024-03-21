@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.documentation
 
-import com.intellij.json.JsonLanguage
+import com.intellij.json.json5.Json5Language
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS
 import com.intellij.markdown.utils.convertMarkdownToHtml
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 
@@ -17,25 +18,23 @@ import org.jetbrains.annotations.Nls
  * Justification for the complexity of the HuggingFaceMarkdownToHtmlConverter class:
  * it is driven by the unique rendering needs within the quickDoc display context.
  * Specifically, pre-tags were enhanced with a subclass to ensure they adapt to the quickDoc window width.
- * Similarly, processing for blockquotes and tables was customized to  respect the display area's constraints.
+ * Similarly, processing for blockquotes and tables was customized to respect the display area's constraints.
  * These adjustments guarantee that the converted HTML content seamlessly fits within the quickDoc environment,
  * enhancing readability and user interaction.
  */
+@ApiStatus.Internal
 class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
   @NlsSafe
   @Nls
   fun convert(markdown: String): String {
     val convertedHtml = convertMarkdownToHtml(markdown)
-    val htmlWithoutBaseTags = convertedHtml.replace(
-      Regex("<(/)?(html|head|body)( [^>]*)?>"),
-      ""
-    )
+    val htmlWithoutBaseTags = convertedHtml.replace(HTML_BASE_TAGS_REGEX, "")
     val htmlWithFixedPreTags = htmlWithoutBaseTags.replace(
-      Regex("<pre>"),
+      PRE_TAG_REGEX,
       "<pre class=${HuggingFaceQuickDocStyles.HF_PRE_TAG_CLASS}>"
     )
     val htmlWithFixedPTags = htmlWithFixedPreTags.replace(
-      Regex("<p>"),
+      P_TAG_REGEX,
       "<p class=${HuggingFaceQuickDocStyles.HF_P_TAG_CLASS}>"
     )
     val htmlWithFixedQuotes = addDivToBlockquotes(htmlWithFixedPTags)
@@ -45,21 +44,19 @@ class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
   }
 
   private fun addDivToBlockquotes(html: String): String {
-    val blockquoteRegex = Regex("<blockquote>(.*?)</blockquote>", RegexOption.DOT_MATCHES_ALL)
-    return html.replace(blockquoteRegex) {
+    return html.replace(BLOCKQUOTE_REGEX) {
       "<blockquote><div class=\"${HuggingFaceQuickDocStyles.QUOTE_CLASS}\">${it.groupValues[1]}</div></blockquote>"
     }
   }
 
   private fun formatTablesInHtml(html: String): String {
     val htmlNoIntellijRowEven = html.replace(" class=\"intellij-row-even\"", "")
-    val tableRegex = Regex("<table.*?>(.*?)</table>", RegexOption.DOT_MATCHES_ALL)
-    val tdRegex = Regex("<td>(.*?)</td>", RegexOption.DOT_MATCHES_ALL)
 
-    return htmlNoIntellijRowEven.replace(tableRegex) { tableMatch ->
+
+    return htmlNoIntellijRowEven.replace(TABLE_REGEX) { tableMatch ->
       val formattedTable = "<table class='$CLASS_SECTIONS'>${tableMatch.groupValues[1]}</table>"
 
-      formattedTable.replace(tdRegex) { tdMatch ->
+      formattedTable.replace(TD_REGEX) { tdMatch ->
         "<td valign='top' class='$CLASS_SECTION'>${tdMatch.groupValues[1]}</td>"
       }
     }
@@ -78,7 +75,7 @@ class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
       val language = when {
         // PY-70540 - if additional languages are needed - to be added here
         "language-python" in codeAttributes -> PythonLanguage.INSTANCE
-        "language-json" in codeAttributes -> JsonLanguage.INSTANCE
+        "language-json" in codeAttributes -> Json5Language.INSTANCE
         else -> null
       }
 
@@ -108,5 +105,14 @@ class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
       .replace("&quot;", "\"")
       .replace("&apos;", "'")
       .replace("&amp;", "&")
+  }
+
+  companion object {
+    private val HTML_BASE_TAGS_REGEX = Regex("<(/)?(html|head|body)( [^>]*)?>")
+    private val PRE_TAG_REGEX = Regex("<pre>")
+    private val P_TAG_REGEX = Regex("<p>")
+    private val BLOCKQUOTE_REGEX = Regex("<blockquote>(.*?)</blockquote>", RegexOption.DOT_MATCHES_ALL)
+    private val TABLE_REGEX = Regex("<table.*?>(.*?)</table>", RegexOption.DOT_MATCHES_ALL)
+    private val TD_REGEX = Regex("<td>(.*?)</td>", RegexOption.DOT_MATCHES_ALL)
   }
 }

@@ -3,12 +3,15 @@ package com.intellij.python.community.impl.huggingFace.api
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
+import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil.humanReadableNumber
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 
+@ApiStatus.Internal
 data class HuggingFaceEntityBasicApiData (
   val kind: HuggingFaceEntityKind,
   @Nls val itemId: String,
@@ -19,31 +22,9 @@ data class HuggingFaceEntityBasicApiData (
   val libraryName: String?,
   @NlsSafe val pipelineTag: String
 ) {
-  @Nls
-  private fun humanReadableNumber(rawNumber: Int): String {
-    if (rawNumber < 1000) return rawNumber.toString()
-    val suffixes = arrayOf("K", "M", "B", "T")
-    var count = rawNumber.toDouble()
-    var i = 0
-    while (i < suffixes.size && count >= 1000) {
-      count /= 1000
-      i++
-    }
-    return String.format("%.1f%s", count, suffixes[i - 1])
-  }
-
-  @Nls
-  fun humanReadableLikes(): String {
-    return humanReadableNumber(likes)
-  }
-
-  @Nls
-  fun humanReadableDownloads(): String {
-    return humanReadableNumber(downloads)
-  }
-
-  fun humanReadableLastUpdated(): String {
-    val parsedDate = LocalDateTime.parse(lastModified, DateTimeFormatter.ISO_DATE_TIME)
-    return parsedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-  }
+  val humanReadableLikes: String = humanReadableNumber(likes)
+  val humanReadableDownloads: String = humanReadableNumber(downloads)
+  val humanReadableLastUpdated: String =
+    LocalDateTime.parse(lastModified, DateTimeFormatter.ISO_DATE_TIME)
+      .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
 }
