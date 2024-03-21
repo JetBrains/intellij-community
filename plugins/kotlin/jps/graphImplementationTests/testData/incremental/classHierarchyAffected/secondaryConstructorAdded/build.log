@@ -30,10 +30,12 @@ Cleaning output files:
   out/production/module/AChild.class
   out/production/module/CreateAFromIntKt.class
   out/production/module/META-INF/module.kotlin_module
+  out/production/module/UseAKt.class
 End of files
 Compiling files:
   src/AChild.kt
   src/createAFromInt.kt
+  src/useA.kt
 End of files
 Exit code: OK
 ------------------------------------------
