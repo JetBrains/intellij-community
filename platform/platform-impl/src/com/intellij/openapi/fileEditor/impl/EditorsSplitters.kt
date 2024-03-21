@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
@@ -930,9 +931,16 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         span("opening editor") {
           val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
+          // preload filetype
+          splitters.coroutineScope.launch {
+            blockingContext {
+              file.fileType
+            }
+          }
+
           if (isFirstInBulk) {
-            // add selected tab on EditorTabs without waiting for the rest tabs on startup.
-            // this allows painting the first editor as soon as it is ready IJPL-687
+            // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
+            // This enables painting the first editor as soon as it's ready (IJPL-687).
             file.putUserData(AsyncEditorLoader.FIRST_IN_BULK, true)
             isFirstInBulk = false
           }

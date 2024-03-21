@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,7 +51,8 @@ class FileEditorProviderManagerImpl
         FileDocumentManager.getInstance().getDocument(file) != null
       }
     }
-    val fileType = lazy { file.fileType }
+
+    val fileType = file.fileType
     for (item in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence()) {
       if (!isAcceptedByFileType(item = item, fileType = fileType, file = file) || (item.isDocumentRequired && !hasDocument)) {
         continue
@@ -78,7 +80,9 @@ class FileEditorProviderManagerImpl
     // collect all possible editors
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
 
-    val fileType = lazy { file.fileType }
+    // Not lazy - avoid thread starvation.
+    // We run in parallel, and each provider can get blocked while getting the file type (e.g., during TextMate bundle initialization).
+    val fileType = blockingContext { file.fileType }
 
     val sharedProviders = coroutineScope {
       var hasDocument: Boolean? = null
@@ -91,7 +95,8 @@ class FileEditorProviderManagerImpl
 
           if (item.isDocumentRequired) {
             if (hasDocument == null) {
-              hasDocument = readAction { FileDocumentManager.getInstance().getDocument(file) != null }
+              val fileDocumentManager = serviceAsync<FileDocumentManager>()
+              hasDocument = readAction { fileDocumentManager.getDocument(file) != null }
             }
 
             if (hasDocument == false) {
@@ -244,12 +249,10 @@ private val LazyExtension<FileEditorProvider>.isDocumentRequired
 private val LazyExtension<FileEditorProvider>.fileType
   get() = getCustomAttribute("fileType")
 
-private fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>,
-                                 fileType: Lazy<FileType>,
-                                 file: VirtualFile): Boolean {
+private fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>, fileType: FileType, file: VirtualFile): Boolean {
   val providerFileTypeName = item.fileType
   // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
-  if (providerFileTypeName != null && fileType.value.name != providerFileTypeName) {
+  if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
     val fileTypeRegistry = FileTypeRegistry.getInstance()
     val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
     if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
