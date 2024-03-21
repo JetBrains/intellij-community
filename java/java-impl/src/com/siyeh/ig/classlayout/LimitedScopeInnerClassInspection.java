@@ -62,9 +62,6 @@ public final class LimitedScopeInnerClassInspection extends BaseInspection {
         if (lBrace != null) {
           registerErrorAtOffset(aClass, 0, lBrace.getStartOffsetInParent());
         }
-        else {
-          registerClassError(aClass);
-        }
       }
     }
   }

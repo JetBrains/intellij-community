@@ -3,12 +3,10 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +17,8 @@ public class LimitedScopeInnerClassInspectionInfoTest extends LightJavaInspectio
     super.setUp();
     Project project = getProject();
     HighlightDisplayKey displayKey = HighlightDisplayKey.find(getInspection().getShortName());
-     InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
-    HighlightDisplayLevel errorLevel = currentProfile.getErrorLevel(displayKey, null);
-      currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.DO_NOT_SHOW, project);
+    InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
+    currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.DO_NOT_SHOW, project);
   }
 
   public void testUncompletedNestedClass() {
@@ -31,15 +28,6 @@ public class LimitedScopeInnerClassInspectionInfoTest extends LightJavaInspectio
                      class Loc<caret>al<EOLError descr="'{' expected"></EOLError>
                  }
              }""");
-
-    final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("move.local.to.inner.quickfix"));
-    assertEquals("""
-                   class Example {
-                       void test() {
-                       }
-                   
-                       private static class Local
-                   }""", myFixture.getIntentionPreviewText(intention));
   }
 
   @Override
