@@ -1,12 +1,12 @@
 package com.intellij.python.community.impl.huggingFace.documentation
 
-import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
+import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 import java.util.*
 
-
+@ApiStatus.Internal
 class HuggingFaceReadmeCleaner(
   private var markdown: String,
   private val entityId: String,
@@ -177,36 +177,6 @@ class HuggingFaceReadmeCleaner(
   fun getMarkdown(): String {
     return markdown.ifEmpty {
       HuggingFaceDocumentationPlaceholdersUtil.noReadmePlaceholder(entityId, entityKind)
-    }
-  }
-
-  @Suppress("unused")  // may be activated if we decide to trim model cards
-  private fun trimLongMd() {
-    markdown = if (markdown.length < HuggingFaceConstants.MAX_MD_CHAR_NUM) markdown else {
-      var trimmedMd = markdown.substring(0, HuggingFaceConstants.MAX_MD_CHAR_NUM)
-      val numCodeFences = trimmedMd.split(CODE_FENCE_MARKER).size - 1
-
-      // Check for an odd number of code fences
-      if (numCodeFences % 2 != 0) {
-        val lastCodeFenceIndex = trimmedMd.lastIndexOf("```")
-        if (lastCodeFenceIndex != -1) {
-          trimmedMd = trimmedMd.substring(0, lastCodeFenceIndex)
-        }
-      }
-
-      val sentenceBoundary = trimmedMd.lastIndexOf(". ")
-      val imageBoundary = trimmedMd.lastIndexOf("![")
-      val tableBoundary = trimmedMd.lastIndexOf("|")
-      val lastNewLine = trimmedMd.lastIndexOf("\n")
-
-      val maxBoundary = maxOf(sentenceBoundary, imageBoundary, tableBoundary, lastNewLine)
-
-      if (maxBoundary != -1) {
-        trimmedMd = trimmedMd.substring(0, maxBoundary + 1)
-      }
-
-      val placeholder = HuggingFaceDocumentationPlaceholdersUtil.trimmedMdPlaceholder(entityId, entityKind)
-      "${trimmedMd.trimEnd()}\n\n${placeholder}"
     }
   }
 
