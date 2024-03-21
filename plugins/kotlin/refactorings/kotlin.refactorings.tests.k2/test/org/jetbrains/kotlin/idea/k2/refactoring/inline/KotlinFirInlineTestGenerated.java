@@ -1090,6 +1090,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/UnitReturnType4.kt");
         }
 
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/unresolvedReference.kt");
+        }
+
         @TestMetadata("withImportAlias.kt")
         public void testWithImportAlias() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withImportAlias.kt");
