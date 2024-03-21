@@ -21,27 +21,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="false"
-                 description="When enabled ML experiments with actions order won't be performed"
-                 key="search.everywhere.force.disable.experiment.action.ml"/>
-    <registryKey defaultValue="false"
-                 description="When enabled ML experiments with files order won't be performed"
-                 key="search.everywhere.force.disable.experiment.files.ml"/>
-    <registryKey defaultValue="false"
-                 description="When enabled ML experiments with classes order won't be performed"
-                 key="search.everywhere.force.disable.experiment.classes.ml"/>
-    <registryKey defaultValue="false"
-                 description="When enabled ML experiments with symbols order won't be performed"
-                 key="search.everywhere.force.disable.experiment.symbols.ml"/>
-    <registryKey defaultValue="false"
-                 description="When enabled ML experiments to order All tab items won't be performed"
-                 key="search.everywhere.force.disable.experiment.all.ml"/>
-    <registryKey defaultValue="false"
-                 description="When enabled ML logs and experiments in Search Everywhere will be disabled"
-                 key="search.everywhere.force.disable.logging.ml"/>
-    <registryKey defaultValue="-1"
-                 description="Defines the experiment group number. Negative value will be ignored."
-                 key="search.everywhere.ml.experiment.group"/>
+
     <registryKey defaultValue="false"
                  description="Mark position changes in Search Everywhere"
                  key="search.everywhere.ml.show.diff"/>
