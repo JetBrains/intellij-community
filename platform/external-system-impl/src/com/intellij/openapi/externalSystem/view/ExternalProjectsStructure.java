@@ -145,7 +145,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     final ExternalSystemNode<?>[] cached = currentNode.getCached();
     if (cached == null) {
       //noinspection unchecked
-      currentNode.setFrom(newNode);
+      currentNode.mergeWith(newNode);
       return;
     }
     final List<Object> duplicates = new ArrayList<>();
@@ -188,7 +188,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
     updateFrom(currentNode);
     //noinspection unchecked
-    currentNode.setFrom(newNode);
+    currentNode.mergeWith(newNode);
     currentNode.addAll(newDataMap.values());
   }
 
