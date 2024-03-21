@@ -21,7 +21,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val buildCompletionAssertion = ListenerAssertion()
       val projectModelContributorAssertion = ListenerAssertion()
 
-      addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      addModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenBuildCompleted(disposable) { resolverContext ->
         buildCompletionAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
@@ -71,8 +71,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val buildCompletionAssertion = ListenerAssertion()
       val projectModelContributorAssertion = ListenerAssertion()
 
-      addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
-      addProjectModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      addModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
+      addModelProviders(disposable, TestPhasedModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       whenProjectLoaded(disposable) { resolverContext ->
         projectLoadingAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
@@ -156,7 +156,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val projectLoadedPhases = allPhases.filter { it <= GradleModelFetchPhase.PROJECT_LOADED_PHASE }
       val phasedModelProviders = allPhases.map { TestPhasedModelProvider(it) }
 
-      addProjectModelProviders(disposable, phasedModelProviders)
+      addModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { resolverContext, phase ->
         phaseCompletionAssertion.trace {
           for (completedPhase in completedPhases) {
@@ -310,7 +310,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val allPhases = GradleModelFetchPhase.entries
       val phasedModelProviders = allPhases.map { TestPhasedModelProvider(it) }
 
-      addProjectModelProviders(disposable, phasedModelProviders)
+      addModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { _, phase ->
         if (phase == cancellationPhase) {
           throw ProcessCanceledException()
