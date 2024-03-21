@@ -40,7 +40,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
   private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 17)
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 18)
   private val CORES: EventId1<Int> = GROUP.registerEvent(
     "cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
   private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent(
