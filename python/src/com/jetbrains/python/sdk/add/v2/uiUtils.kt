@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_E
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
 import com.jetbrains.python.sdk.conda.CondaInstallManager
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -371,6 +372,7 @@ fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
 
 internal fun createInstallCondaFix(presenter: PythonAddInterpreterPresenter): ActionLink {
   return ActionLink(message("sdk.create.conda.install.fix")) {
+    PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     presenter.scope.launch(presenter.uiContext) {
       presenter.reloadConda(presenter.projectLocationContext)
