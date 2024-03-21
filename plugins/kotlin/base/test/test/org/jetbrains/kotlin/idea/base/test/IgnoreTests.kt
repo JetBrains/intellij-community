@@ -80,6 +80,33 @@ object IgnoreTests {
         )
     }
 
+    /**
+     * Runs [test] normally if it is enabled via [isEnabled]. If not, runs the disabled test experimentally and reports an error if it
+     * passes unexpectedly.
+     *
+     * [runTestIfEnabled] should be used instead of a directive function if an enable/disable directive is not suitable for the test data.
+     *
+     * @param testFile A path to the file which contains the "enable" or "disable" setting.
+     */
+    fun runTestIfEnabled(
+        isEnabled: Boolean,
+        testFile: Path,
+        test: () -> Unit
+    ) {
+        if (isEnabled) {
+            test()
+            return
+        }
+
+        try {
+            test()
+        } catch (_: Throwable) {
+            return
+        }
+
+        throw AssertionError("The test passes but is disabled. Please enable the test in the following file: `$testFile`.")
+    }
+
     private fun runTestIfEnabledByDirective(
         testFile: Path,
         directive: EnableOrDisableTestDirective,

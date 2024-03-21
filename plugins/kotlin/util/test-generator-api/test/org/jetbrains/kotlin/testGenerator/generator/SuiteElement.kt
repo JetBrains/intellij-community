@@ -64,6 +64,10 @@ class SuiteElement private constructor(
                 }
 
                 val match = model.matcher(file.name) ?: continue
+
+                // Don't generate a directory-based test if the directory is excluded.
+                if (file.isDirectory && file.name in model.excludedDirectories) continue
+
                 val methodNameBase = getTestMethodNameBase(match.methodName)
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
                 methods += TestCaseMethod(

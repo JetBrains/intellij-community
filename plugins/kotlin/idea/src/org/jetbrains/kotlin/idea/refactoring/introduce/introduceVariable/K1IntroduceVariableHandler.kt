@@ -198,7 +198,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         val scope = physicalExpression.getResolutionScope(bindingContext, resolutionFacade)
         val dataFlowInfo = bindingContext.getDataFlowInfoAfter(physicalExpression)
 
-        val bindingTrace = ObservableBindingTrace(BindingTraceContext())
+        val bindingTrace = ObservableBindingTrace(BindingTraceContext(project))
         val typeInfoComputable = {
             physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
         }

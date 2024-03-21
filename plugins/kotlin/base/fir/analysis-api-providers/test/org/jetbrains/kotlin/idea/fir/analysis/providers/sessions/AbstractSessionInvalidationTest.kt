@@ -10,24 +10,19 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
 import java.io.File
 
-sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>() {
+sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>(
+    SessionInvalidationTestProjectStructureParser,
+) {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sessionInvalidation")
 
-    protected abstract fun publishModificationEvents(
-        testStructure: SessionInvalidationTestProjectStructure,
-        projectLibrariesByName: ProjectLibrariesByName,
-        modulesByName: ModulesByName,
-    )
+    protected abstract fun publishModificationEvents()
 
     protected abstract fun checkSessions(
-        testStructure: SessionInvalidationTestProjectStructure,
         sessionsBeforeModification: List<LLFirSession>,
         sessionsAfterModification: List<LLFirSession>,
     )
@@ -46,20 +41,17 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
         }
     }
 
-    protected fun doTest(path: String) {
-        val (testStructure, projectLibrariesByName, modulesByName) =
-            initializeProjectStructure(path, SessionInvalidationTestProjectStructureParser)
-
-        val rootIdeaModule = modulesByName.getValue(testStructure.rootModule)
+    override fun doTestWithProjectStructure(testDirectory: String) {
+        val rootIdeaModule = modulesByName.getValue(testProjectStructure.rootModule)
         val rootModule = rootIdeaModule.getMainKtSourceModule()!!
 
         val sessionsBeforeModification = getAllModuleSessions(rootModule)
 
-        publishModificationEvents(testStructure, projectLibrariesByName, modulesByName)
+        publishModificationEvents()
 
         val sessionsAfterModification = getAllModuleSessions(rootModule)
 
-        checkSessions(testStructure, sessionsBeforeModification, sessionsAfterModification)
+        checkSessions(sessionsBeforeModification, sessionsAfterModification)
     }
 
     private fun getAllModuleSessions(mainModule: KtModule): List<LLFirSession> {
@@ -71,4 +63,3 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
         return projectModules.map(resolveSession::getSessionFor)
     }
 }
-

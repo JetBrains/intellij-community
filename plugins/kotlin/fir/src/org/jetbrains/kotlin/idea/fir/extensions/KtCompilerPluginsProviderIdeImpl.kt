@@ -73,7 +73,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
                         change.facetTypes.any { it == KotlinFacetType.ID }
                     }
                     if (hasChanges) {
-                        pluginsCacheCachedValue.drop()
+                        resetPluginsCache()
                     }
                 }
             }
@@ -82,7 +82,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         messageBusConnection.subscribe(KotlinCompilerSettingsListener.TOPIC,
             object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-                    pluginsCacheCachedValue.drop()
+                    resetPluginsCache()
                 }
             }
         )
@@ -90,7 +90,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         onlyBundledPluginsEnabledRegistryValue.addListener(
             object : RegistryValueListener {
                 override fun afterValueChanged(value: RegistryValue) {
-                    pluginsCacheCachedValue.drop()
+                    resetPluginsCache()
                 }
             },
             this
@@ -236,7 +236,25 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     }
 
     override fun dispose() {
-        pluginsCacheCachedValue.drop()
+        resetPluginsCache()
+    }
+
+    /**
+     * Throws away the cache for all the registered plugins, and executes all the disposables
+     * registered in the corresponding [CompilerPluginRegistrar.ExtensionStorage]s.
+     */
+    private fun resetPluginsCache() {
+        val droppedCache = pluginsCacheCachedValue.drop() ?: return
+
+        val extensionStorages = droppedCache.registrarForModule.values.mapNotNull { it.orNull() }
+
+        for (storage in extensionStorages) {
+            for (disposable in storage.disposables) {
+                LOG.runAndLogException {
+                    disposable.dispose()
+                }
+            }
+        }
     }
 
     companion object {

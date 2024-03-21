@@ -47,13 +47,6 @@ class KlibInfoProviderTest : TestCase() {
                 potentialKlibPaths += resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, "ios_arm64").children()
                 potentialKlibPaths += resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, "ios_x64").children()
             }
-
-            with(resolve(KONAN_DISTRIBUTION_COMMONIZED_LIBS_DIR, "ios_arm32-ios_arm64-ios_x64-discriminator")) {
-                potentialKlibPaths += resolve(KONAN_DISTRIBUTION_COMMON_LIBS_DIR).children()
-                potentialKlibPaths += resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, "ios_arm32").children()
-                potentialKlibPaths += resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, "ios_arm64").children()
-                potentialKlibPaths += resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, "ios_x64").children()
-            }
         }
 
         val actualKlibs = potentialKlibPaths.mapNotNull { klibProvider.getKlibInfo(it) }
@@ -139,7 +132,6 @@ class KlibInfoProviderTest : TestCase() {
             val targets = rawTargets.map {
                 when (it) {
                     "ios_x64" -> KonanTarget.IOS_X64
-                    "ios_arm32" -> KonanTarget.IOS_ARM32
                     "ios_arm64" -> KonanTarget.IOS_ARM64
                     else -> error("Unexpected target: $it")
                 }
@@ -172,8 +164,7 @@ class KlibInfoProviderTest : TestCase() {
             return result.associateBy { it.path.relativeTo(kotlinNativeHome) }
         }
 
-        return generateCommonizedKlibsForDir("ios_arm64-ios_x64-discriminator") +
-                generateCommonizedKlibsForDir("ios_arm32-ios_arm64-ios_x64-discriminator")
+        return generateCommonizedKlibsForDir("ios_arm64-ios_x64-discriminator")
     }
 
     companion object {

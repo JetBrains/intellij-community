@@ -46,7 +46,7 @@ class WasmResolverForModuleFactory(
         val container = createContainerForLazyResolve(
             moduleContext,
             declarationProviderFactory,
-            BindingTraceContext(/* allowSliceRewrite = */ true),
+            BindingTraceContext(/* allowSliceRewrite = */ true, project),
             moduleDescriptor.platform!!,
             WasmPlatformAnalyzerServices,
             targetEnvironment,

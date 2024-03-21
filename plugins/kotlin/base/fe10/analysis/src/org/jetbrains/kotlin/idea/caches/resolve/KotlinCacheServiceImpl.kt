@@ -418,7 +418,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     private val kotlinSuppressCache: CachedValue<KotlinSuppressCache> = CachedValuesManager.getManager(project).createCachedValue(
         {
             CachedValueProvider.Result(
-                object : KotlinSuppressCache() {
+                object : KotlinSuppressCache(project) {
                     override fun getSuppressionAnnotations(annotated: PsiElement): List<AnnotationDescriptor> {
                         if (annotated !is KtAnnotated) return emptyList()
                         if (!KotlinPsiHeuristics.hasSuppressAnnotation(annotated)) {

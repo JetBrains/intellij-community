@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.google.common.collect.ImmutableMap
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
@@ -36,6 +37,10 @@ class KtSymbolBasedBindingContext(val context: Fe10WrapperContext) : BindingCont
     }
 
     override fun getDiagnostics(): Diagnostics = context.incorrectImplementation { Diagnostics.EMPTY }
+
+    override fun getProject(): Project? {
+        return context.bindingContext.project
+    }
 
     override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? {
         val getter = getterBySlice[slice]

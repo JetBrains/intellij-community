@@ -21,10 +21,12 @@ import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinModuleDependentsProviderBase
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -137,4 +139,11 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             // computed for select modules, so the performance impact of this computation is expected to be negligible.
             computeTransitiveDependents(it)
         }
+
+    @OptIn(Frontend10ApiUsage::class)
+    override fun getRefinementDependents(module: KtModule): Set<KtModule> {
+        val moduleInfo = module.moduleInfo as? ModuleSourceInfo ?: return emptySet()
+        val implementingModules = moduleInfo.module.implementingModules
+        return implementingModules.mapNotNullTo(mutableSetOf()) { it.productionOrTestSourceModuleInfo?.toKtModule() }.ifEmpty { emptySet() }
+    }
 }

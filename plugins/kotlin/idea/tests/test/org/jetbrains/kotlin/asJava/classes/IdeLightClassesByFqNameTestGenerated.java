@@ -682,6 +682,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/NestedObjects.kt"));
         }
 
+        @TestMetadata("NestedTypeAnnotations.kt")
+        public void testNestedTypeAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/NestedTypeAnnotations.kt"));
+        }
+
         @TestMetadata("NonDataClassWithComponentFunctions.kt")
         public void testNonDataClassWithComponentFunctions() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/NonDataClassWithComponentFunctions.kt"));

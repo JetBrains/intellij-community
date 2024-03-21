@@ -46,20 +46,6 @@ class IdeKotlinVersion private constructor(
         }
 
         @JvmStatic
-        fun fromKotlinVersion(version: KotlinVersion): IdeKotlinVersion {
-            val languageVersion = LanguageVersion.values().first { it.major == version.major && it.minor == version.minor }
-            return IdeKotlinVersion(
-                rawVersion = version.toString(),
-                kotlinVersion = version,
-                kind = Kind.Release,
-                requireBuildNumberForArtifact = false,
-                buildNumber = null,
-                languageVersion = languageVersion,
-                apiVersion = ApiVersion.createByLanguageVersion(languageVersion)
-            )
-        }
-
-        @JvmStatic
         fun fromLanguageVersion(languageVersion: LanguageVersion): IdeKotlinVersion {
             return IdeKotlinVersion(
                 rawVersion = "${languageVersion.major}.${languageVersion.minor}.0",
@@ -119,6 +105,7 @@ class IdeKotlinVersion private constructor(
                 kindSuffix.startsWith("beta") -> parseKind(kindSuffix, "beta") { Kind.Beta(it) }
                 kindSuffix.startsWith("m")  -> parseKind(kindSuffix, "m") { Kind.Milestone(it) }
                 kindSuffix.startsWith("eap") -> parseKind(kindSuffix, "eap") { Kind.Eap(it) }
+                kindSuffix.matches(Regex("ij\\d+")) -> Kind.ForIde(kindSuffix)
                 else -> null
             } ?: return Result.failure(IllegalArgumentException("Unsupported version kind suffix: \"$kindSuffix\" ($rawVersion)"))
 
@@ -146,6 +133,7 @@ class IdeKotlinVersion private constructor(
         // M should always have a number, so default to M1
         data class Milestone(val number: Int?) : Kind(artifactSuffix = if (number == null) "M1" else "M$number")
         data class Eap(val number: Int?) : Kind(artifactSuffix = if (number == null) "eap" else "eap$number")
+        data class ForIde(val platform: String) : Kind(artifactSuffix = platform)
         object Dev : Kind(artifactSuffix = "dev")
         object Snapshot : Kind(artifactSuffix = "SNAPSHOT")
 

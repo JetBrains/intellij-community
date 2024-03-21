@@ -57,7 +57,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
 
         initializeKotlinEnvironment()
 
-        val trace = NoScopeRecordCliBindingTrace()
+        val trace = NoScopeRecordCliBindingTrace(project)
 
         val environment = kotlinCoreEnvironment!!
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(

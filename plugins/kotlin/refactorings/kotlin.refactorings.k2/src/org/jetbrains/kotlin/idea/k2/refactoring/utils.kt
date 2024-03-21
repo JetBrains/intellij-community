@@ -179,14 +179,16 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
             }
         }
 
-        val lastParameter = call.argumentMapping[lastLambdaExpression] ?: return false
+        val lastParameter = call.argumentMapping[lastLambdaExpression]
+            ?: lastLambdaExpression.parentLabeledExpression()?.let(call.argumentMapping::get)
+            ?: return false
+
         if (lastParameter.symbol != call.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()?.symbol) {
             return false
         }
 
         return lastParameter.returnType.isFunctionalType()
     }
-    return false
 }
 
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {

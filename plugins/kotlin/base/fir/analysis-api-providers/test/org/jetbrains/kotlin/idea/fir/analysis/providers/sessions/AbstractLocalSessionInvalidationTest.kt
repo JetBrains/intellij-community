@@ -6,8 +6,6 @@ import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
 import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
 
 /**
@@ -15,12 +13,8 @@ import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
  * structure.
  */
 abstract class AbstractLocalSessionInvalidationTest : AbstractSessionInvalidationTest() {
-    override fun publishModificationEvents(
-        testStructure: SessionInvalidationTestProjectStructure,
-        projectLibrariesByName: ProjectLibrariesByName,
-        modulesByName: ModulesByName,
-    ) {
-        val modulesToMakeOOBM = testStructure.modulesToMakeOOBM.map(modulesByName::getValue)
+    override fun publishModificationEvents() {
+        val modulesToMakeOOBM = testProjectStructure.modulesToMakeOOBM.map(modulesByName::getValue)
         runWriteAction {
             modulesToMakeOOBM.forEach { module ->
                 module.publishModuleOutOfBlockModification()
@@ -29,16 +23,14 @@ abstract class AbstractLocalSessionInvalidationTest : AbstractSessionInvalidatio
     }
 
     override fun checkSessions(
-        testStructure: SessionInvalidationTestProjectStructure,
         sessionsBeforeModification: List<LLFirSession>,
         sessionsAfterModification: List<LLFirSession>,
     ) {
-        checkInvalidatedModules(testStructure, sessionsBeforeModification, sessionsAfterModification)
+        checkInvalidatedModules(sessionsBeforeModification, sessionsAfterModification)
         checkSessionsMarkedInvalid(sessionsBeforeModification, sessionsAfterModification)
     }
 
     private fun checkInvalidatedModules(
-        testStructure: SessionInvalidationTestProjectStructure,
         sessionsBeforeModification: List<LLFirSession>,
         sessionsAfterModification: List<LLFirSession>,
     ) {
@@ -57,6 +49,6 @@ abstract class AbstractLocalSessionInvalidationTest : AbstractSessionInvalidatio
             .distinct()
             .sorted()
 
-        assertEquals(testStructure.expectedInvalidatedModules, changedSessionsModuleNames)
+        assertEquals(testProjectStructure.expectedInvalidatedModules, changedSessionsModuleNames)
     }
 }

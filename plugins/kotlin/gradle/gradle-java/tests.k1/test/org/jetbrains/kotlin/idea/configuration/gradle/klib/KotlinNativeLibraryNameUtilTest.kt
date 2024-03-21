@@ -78,13 +78,13 @@ class KotlinNativeLibraryNameUtilTest : TestCase() {
         )
 
         assertEquals(
-            Triple("1.3.60-eap-23", "Accelerate", "ios_arm32, ios_arm64, ios_x64"),
-            parseIDELibraryName("Kotlin/Native 1.3.60-eap-23 - Accelerate [ios_arm32, ios_arm64, ios_x64]")
+            Triple("1.3.60-eap-23", "Accelerate", "ios_arm64, ios_x64"),
+            parseIDELibraryName("Kotlin/Native 1.3.60-eap-23 - Accelerate [ios_arm64, ios_x64]")
         )
 
         assertEquals(
-            Triple("1.3.60-eap-23", "Accelerate", "ios_arm32, ios_arm64(*), ios_x64"),
-            parseIDELibraryName("Kotlin/Native 1.3.60-eap-23 - Accelerate [ios_arm32, ios_arm64(*), ios_x64]")
+            Triple("1.3.60-eap-23", "Accelerate", "ios_arm64(*), ios_x64"),
+            parseIDELibraryName("Kotlin/Native 1.3.60-eap-23 - Accelerate [ios_arm64(*), ios_x64]")
         )
 
         assertNull(parseIDELibraryName("Kotlin/Native - something unexpected"))
@@ -104,4 +104,3 @@ class KotlinNativeLibraryNameUtilTest : TestCase() {
         assertTrue(isGradleLibraryName("Gradle: some:third-party-library:1.2"))
     }
 }
-
