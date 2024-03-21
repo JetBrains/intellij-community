@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
@@ -114,12 +115,15 @@ class IncrementalDOMBuilder(
 
   private fun actuallyProcessImageNode(node: Node, baseFile: VirtualFile, projectRoot: VirtualFile) {
     var path = node.attr("src")
+    if (SystemInfo.isWindows) {
+      path = StringUtil.replace(path, "\\", "/")
+    }
     if (!path.startsWith('/')) {
       val resolved = baseFile.findFileByRelativePath(path) ?: return
       path = VfsUtilCore.getRelativePath(resolved, projectRoot) ?: path
     }
     if (SystemInfo.isWindows && path.startsWith("/")) {
-      path = path.trimStart('/', '\\')
+      path = path.trimStart('/')
     }
     val fixedPath = FileUtil.toSystemIndependentName(path)
     if (fileSchemeResourceProcessor != null) {
