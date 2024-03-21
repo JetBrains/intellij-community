@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -1305,6 +1304,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   public void loadState(@NotNull Element element) {
+    List<LocalChangeListImpl> changeLists = ChangeListManagerSerialization.readExternal(element, myProject);
+
     synchronized (myDataLock) {
       if (!myInitialUpdate) {
         LOG.warn("Local changes overwritten");
@@ -1314,7 +1315,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       boolean areChangeListsEnabled = shouldEnableChangeLists();
       myWorker.setChangeListsEnabled(areChangeListsEnabled);
 
-      List<LocalChangeListImpl> changeLists = ChangeListManagerSerialization.readExternal(element, myProject);
       if (areChangeListsEnabled) {
         myWorker.setChangeLists(changeLists);
       }
@@ -1328,11 +1328,14 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
+
+    boolean areChangeListsEnabled;
+    List<? extends LocalChangeList> changesToSave;
     synchronized (myDataLock) {
-      boolean areChangeListsEnabled = myWorker.areChangeListsEnabled();
-      List<? extends LocalChangeList> changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
-      ChangeListManagerSerialization.writeExternal(element, changesToSave, areChangeListsEnabled);
+      areChangeListsEnabled = myWorker.areChangeListsEnabled();
+      changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
     }
+    ChangeListManagerSerialization.writeExternal(element, changesToSave, areChangeListsEnabled);
     myConflictTracker.saveState(element);
     return element;
   }
