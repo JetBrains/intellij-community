@@ -18,6 +18,11 @@ abstract public class BaseEventLogMetadataPersistence {
   public static final String DEPRECATED_FUS_METADATA_DIR = "event-log-whitelist";
   public static final String FUS_METADATA_DIR = "event-log-metadata";
 
+  /**
+   * This property should be only used in cases when it's impossible to set up a custom schema in another way,
+   * e.g., via the Statistics Event Log tool window.
+   * In particular, this allows applying a custom schema during the initial IDE startup.
+   */
   private static final String CUSTOM_FUS_SCHEMA_DIR_PROPERTY = "intellij.fus.custom.schema.dir";
 
   @Nullable
