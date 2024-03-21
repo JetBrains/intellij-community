@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -36,40 +36,40 @@ public final class AsyncEventSupport {
   // One may fire new events (for example, using `syncPublisher()`) while processing current events in `before()` or `after()`.
   // So, we cannot rely on listener's execution and nesting order in this case and have to explicitly mark events
   // that are supposed to be processed asynchronously.
-  private static final @NotNull Set<List<? extends VFileEvent>> ourAsyncProcessedEvents =
+  private static final @NotNull Set<List<? extends VFileEvent>> asyncProcessedEvents =
     CollectionFactory.createCustomHashingStrategySet(HashingStrategy.identity());
-  private static final @NotNull Map<List<? extends VFileEvent>, List<AsyncFileListener.ChangeApplier>> ourAppliers =
+  private static final @NotNull Map<List<? extends VFileEvent>, List<AsyncFileListener.ChangeApplier>> appliers =
     CollectionFactory.createSmallMemoryFootprintMap(1);
 
   public static void startListening() {
     Application app = ApplicationManager.getApplication();
     Disposer.register(app, AsyncEventSupport::ensureAllEventsProcessed);
 
-    app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    app.getMessageBus().simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-        if (ourAsyncProcessedEvents.contains(events)) {
+        if (asyncProcessedEvents.contains(events)) {
           return;
         }
         List<AsyncFileListener.ChangeApplier> appliers = runAsyncListeners(events);
-        ourAppliers.put(events, appliers);
+        AsyncEventSupport.appliers.put(events, appliers);
         beforeVfsChange(appliers);
       }
 
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        if (ourAsyncProcessedEvents.contains(events)) {
+        if (asyncProcessedEvents.contains(events)) {
           return;
         }
-        List<AsyncFileListener.ChangeApplier> appliers = ourAppliers.remove(events);
+        List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.appliers.remove(events);
         afterVfsChange(appliers);
       }
     });
   }
 
   private static void ensureAllEventsProcessed() {
-    LOG.assertTrue(ourAsyncProcessedEvents.isEmpty(), "Some VFS events were not properly processed " + ourAsyncProcessedEvents);
-    LOG.assertTrue(ourAppliers.isEmpty(), "Some VFS events were not processed after VFS change performed " + ourAppliers);
+    LOG.assertTrue(asyncProcessedEvents.isEmpty(), "Some VFS events were not properly processed " + asyncProcessedEvents);
+    LOG.assertTrue(appliers.isEmpty(), "Some VFS events were not processed after VFS change performed " + appliers);
   }
 
   static @NotNull List<AsyncFileListener.ChangeApplier> runAsyncListeners(@NotNull List<? extends VFileEvent> events) {
@@ -107,11 +107,11 @@ public final class AsyncEventSupport {
   }
 
   public static void markAsynchronouslyProcessedEvents(@NotNull List<? extends VFileEvent> events) {
-    ourAsyncProcessedEvents.add(events);
+    asyncProcessedEvents.add(events);
   }
 
   public static void unmarkAsynchronouslyProcessedEvents(@NotNull List<? extends VFileEvent> events) {
-    LOG.assertTrue(ourAsyncProcessedEvents.remove(events));
+    LOG.assertTrue(asyncProcessedEvents.remove(events));
   }
 
   private static void beforeVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
