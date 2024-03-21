@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
@@ -140,11 +141,25 @@ class ActionsOnSaveManager(val coroutineScope: CoroutineScope) {
     }
   }
 
+  /**
+   * Be careful when waiting in a modal context (ex: under a modal progress dialog).
+   * The on-save actions need [ModalityState.nonModal] to be completed.
+   */
+  @ApiStatus.Experimental
+  suspend fun awaitPendingActions() {
+    coroutineScope.coroutineContext.job.children.toList().joinAll()
+  }
+
+  @ApiStatus.Experimental
+  fun hasPendingActions(): Boolean {
+    return coroutineScope.coroutineContext.job.children.iterator().hasNext()
+  }
+
   @TestOnly
   fun waitForTasks() {
     @Suppress("DEPRECATION")
     runUnderModalProgressIfIsEdt {
-      coroutineScope.coroutineContext.job.children.toList().joinAll()
+      awaitPendingActions()
     }
   }
 }

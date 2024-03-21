@@ -4,10 +4,11 @@ package com.intellij.vcs.commit
 import com.intellij.BundleBase
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -232,6 +233,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         fireBeforeCommitChecksEnded(sessionInfo, result)
 
         if (result.shouldCommit) {
+          if (service<ActionsOnSaveManager>().hasPendingActions()) {
+            logger<AbstractCommitWorkflow>().warn("Couldn't wait for 'Actions on Save' on commit")
+          }
+
           performCommit(sessionInfo)
           return@withContext true
         }
