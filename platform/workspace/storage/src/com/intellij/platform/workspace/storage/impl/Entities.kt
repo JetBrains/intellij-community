@@ -622,10 +622,6 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
     return "${this::class.simpleName}($fields, id=${this.id})"
   }
 
-  public open fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    throw NotImplementedError()
-  }
-
   public open fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     throw NotImplementedError()
   }
