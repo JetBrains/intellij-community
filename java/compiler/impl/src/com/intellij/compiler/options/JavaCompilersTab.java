@@ -13,12 +13,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,18 +24,12 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable, Configurable.NoScroll {
-  private JPanel myPanel;
-  private JPanel myContentPanel;
-  private JComboBox<BackendCompiler> myCompiler;
-  private JPanel myTargetOptionsPanel;
-  private JBCheckBox myCbUseReleaseOption;
-  private final CardLayout myCardLayout;
+public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable {
+  private final JavaCompilersTabUi myUi;
 
   private final Project myProject;
   private final CompilerConfigurationImpl myCompilerConfiguration;
   private final BackendCompiler myDefaultCompiler;
-  private final TargetOptionsComponent myTargetLevelComponent;
   private final List<Configurable> myConfigurables;
   private BackendCompiler mySelectedCompiler;
 
@@ -46,31 +37,16 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
     myProject = project;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     myDefaultCompiler = myCompilerConfiguration.getDefaultCompiler();
-    myTargetLevelComponent = new TargetOptionsComponent(project);
-
-    myCardLayout = new CardLayout();
-    myContentPanel.setLayout(myCardLayout);
-    myTargetOptionsPanel.setLayout(new BorderLayout());
-    myTargetOptionsPanel.add(myTargetLevelComponent, BorderLayout.CENTER);
 
     Collection<BackendCompiler> compilers = myCompilerConfiguration.getRegisteredJavaCompilers();
     myConfigurables = new ArrayList<>(compilers.size());
-    for (BackendCompiler compiler : compilers) {
-      Configurable configurable = compiler.createConfigurable();
-      myConfigurables.add(configurable);
-      JComponent component = configurable.createComponent();
-      assert component != null : configurable.getClass();
-      myContentPanel.add(component, compiler.getId());
-    }
 
-    myCompiler.setModel(new DefaultComboBoxModel<>(compilers.toArray(new BackendCompiler[0])));
-    myCompiler.setRenderer(SimpleListCellRenderer.create("", BackendCompiler::getPresentableName));
-    myCompiler.addActionListener(e -> {
-      BackendCompiler compiler = (BackendCompiler)myCompiler.getSelectedItem();
-      if (compiler != null) {
-        selectCompiler(compiler);
-      }
-    });
+    myUi = new JavaCompilersTabUi(
+      project,
+      compilers,
+      configurable -> myConfigurables.add(configurable),
+      compiler -> selectCompiler(compiler)
+    );
   }
 
   @Override
@@ -93,15 +69,15 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
 
   @Override
   public JComponent createComponent() {
-    return myPanel;
+    return myUi.getPanel();
   }
 
   @Override
   public boolean isModified() {
     return !Comparing.equal(mySelectedCompiler, myCompilerConfiguration.getDefaultCompiler()) ||
-           myCbUseReleaseOption.isSelected() != myCompilerConfiguration.useReleaseOption() ||
-           !Objects.equals(myTargetLevelComponent.getProjectBytecodeTarget(), myCompilerConfiguration.getProjectBytecodeTarget()) ||
-           !Comparing.equal(myTargetLevelComponent.getModulesBytecodeTargetMap(), myCompilerConfiguration.getModulesBytecodeTargetMap()) ||
+           myUi.useReleaseOptionCb.isSelected() != myCompilerConfiguration.useReleaseOption() ||
+           !Objects.equals(myUi.targetOptionsComponent.getProjectBytecodeTarget(), myCompilerConfiguration.getProjectBytecodeTarget()) ||
+           !Comparing.equal(myUi.targetOptionsComponent.getModulesBytecodeTargetMap(), myCompilerConfiguration.getModulesBytecodeTargetMap()) ||
            super.isModified();
   }
 
@@ -109,14 +85,14 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
   public void apply() throws ConfigurationException {
     try {
       myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
-      myCompilerConfiguration.setUseReleaseOption(myCbUseReleaseOption.isSelected());
-      myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
-      myCompilerConfiguration.setModulesBytecodeTargetMap(myTargetLevelComponent.getModulesBytecodeTargetMap());
+      myCompilerConfiguration.setUseReleaseOption(myUi.useReleaseOptionCb.isSelected());
+      myCompilerConfiguration.setProjectBytecodeTarget(myUi.targetOptionsComponent.getProjectBytecodeTarget());
+      myCompilerConfiguration.setModulesBytecodeTargetMap(myUi.targetOptionsComponent.getModulesBytecodeTargetMap());
 
       super.apply();
 
-      myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
-      myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
+      myUi.targetOptionsComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
+      myUi.targetOptionsComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
     }
     finally {
       if (!myProject.isDefault()) {
@@ -130,20 +106,18 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
   public void reset() {
     super.reset();
     selectCompiler(myCompilerConfiguration.getDefaultCompiler());
-    myCbUseReleaseOption.setSelected(myCompilerConfiguration.useReleaseOption());
-    myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
-    myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
+    myUi.useReleaseOptionCb.setSelected(myCompilerConfiguration.useReleaseOption());
+    myUi.targetOptionsComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
+    myUi.targetOptionsComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
   }
 
   private void selectCompiler(BackendCompiler compiler) {
     if (compiler == null) {
       compiler = myDefaultCompiler;
     }
-    myCompiler.setSelectedItem(compiler);
+    myUi.compilerComboBox.setSelectedItem(compiler);
     mySelectedCompiler = compiler;
-    myCardLayout.show(myContentPanel, compiler.getId());
-    myContentPanel.revalidate();
-    myContentPanel.repaint();
+    myUi.show(compiler.getId());
   }
 
   @NotNull
