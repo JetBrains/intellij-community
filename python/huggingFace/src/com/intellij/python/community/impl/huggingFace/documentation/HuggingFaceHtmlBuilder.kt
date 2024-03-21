@@ -2,6 +2,7 @@
 package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -11,13 +12,14 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasic
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 
 @ApiStatus.Internal
 class HuggingFaceHtmlBuilder(
   private val project: Project,
   private val modelDataApiContent: HuggingFaceEntityBasicApiData,
-  private val modelCardContent: String,
+  @Nls private val modelCardContent: String,
   private val entityKind: HuggingFaceEntityKind
 ) {
   @NlsSafe
@@ -28,7 +30,7 @@ class HuggingFaceHtmlBuilder(
     } else {
       generateCardHeader(modelDataApiContent)
     }
-    @NlsSafe val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter(project).convert(modelCardContent) }
+    @NlsSafe val convertedHtml = readAction { DocMarkdownToHtmlConverter.convert(project, modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
       .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)

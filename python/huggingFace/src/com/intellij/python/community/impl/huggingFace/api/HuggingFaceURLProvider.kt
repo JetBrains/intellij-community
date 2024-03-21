@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets
 object HuggingFaceURLProvider {
   // todo: there must be already existing solutions for URL building in the platform, find and apply them
   private val baseURL = PyHuggingFaceBundle.message("python.hugging.face.base.url")
-  private val modelsExpandParameters = listOf("gated", "downloads", "likes", "lastModified", "pipeline_tag")
+  private val modelsExpandParameters = listOf("gated", "downloads", "likes", "lastModified", "pipeline_tag", "library_name")
   private val datasetsExpandParameters = listOf("gated", "downloads", "likes", "lastModified")
 
   fun getEntityMarkdownURL(entityId: String, entityKind: HuggingFaceEntityKind): URL {

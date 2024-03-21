@@ -13,7 +13,7 @@ class HuggingFaceIdentifierReferenceContributor: PsiReferenceContributor() {
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(PyElementTypes.STRING_LITERAL_EXPRESSION),
       HuggingFaceIdentifierReferenceProvider(),
-      PsiReferenceRegistrar.DEFAULT_PRIORITY
+      PsiReferenceRegistrar.LOWER_PRIORITY
     )
   }
 }
