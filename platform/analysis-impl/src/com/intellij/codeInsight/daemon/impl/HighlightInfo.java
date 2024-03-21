@@ -1081,4 +1081,7 @@ public class HighlightInfo implements Segment {
   boolean isFromAnnotator() {
     return toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c);
   }
+  boolean isFromInspection() {
+    return toolId instanceof String;
+  }
 }
