@@ -10,6 +10,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.removeCurrentFile
 import com.intellij.util.indexing.UnindexedFilesScanner.LOG
@@ -101,10 +102,22 @@ private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection
   return readAction {
     val fs = ManagingFS.getInstance()
     val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+    var exceptionLogged = false
     dirtyFilesIds.asSequence()
       .mapNotNull { fileId ->
-        val file = fs.findFileById(fileId)
-        if (file != null && fileBasedIndex.getContainingProjects(file).contains(project)) file else null
+        try {
+          val file = fs.findFileById(fileId)
+          if (file != null && fileBasedIndex.getContainingProjects(file).contains(project)) file else null
+        }
+        catch (e: VfsRootAccessNotAllowedError) {
+          if (!exceptionLogged) {
+            LOG.debug("VfsRootAccessNotAllowedError occurred. " +
+                      "Probably previous test with different rules for project roots saved these files to dirty files queue. " +
+                      "Example of error:", e)
+            exceptionLogged = true
+          }
+          null
+        }
       }.run {
         if (limit <= 0) this
         else this.take(limit)
