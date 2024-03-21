@@ -26,6 +26,8 @@ object HuggingFaceApi {
 
       while (nextPageUrl != null && cache.getCacheSize() < maxCount) {
         val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
+          .getOrDefault(HfHttpResponseWithHeaders(null, null))
+
         response.content?.let {
           val dataMap = parseBasicEntityData(endpoint, it)
           cache.saveEntities(dataMap)
@@ -43,6 +45,7 @@ object HuggingFaceApi {
       // todo: add pagination - but only if needed (user scrolls down)
       val nextPageUrl: String = queryUrl.toString()
       val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
+        .getOrDefault(HfHttpResponseWithHeaders(null, null))
       response.content?.let {
         val dataMap = parseBasicEntityData(HuggingFaceEntityKind.MODEL, it)
         dataMap
@@ -75,23 +78,20 @@ object HuggingFaceApi {
                                entityId: String,
                                entityKind: HuggingFaceEntityKind,
                                prefix: String = "markdown"): String {
-    return if (entityDataApiContent.gated != "false") {
-      HuggingFaceDocumentationPlaceholdersUtil.generateGatedEntityMarkdownString(entityId, entityKind)
-    }
-    else {
-      val cached = HuggingFaceMdCardsCache.getData("${prefix}_${entityId}")
-      cached?.data
-      ?: try {
-        val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
-        val rawData = HuggingFaceHttpClient.downloadFile(mdUrl)
-                      ?: HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
-        val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
-        HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now()))
-        cleanedData
-      }
-      catch (e: Exception) {
-        HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
-      }
+    if (entityDataApiContent.gated != "false") return HuggingFaceDocumentationPlaceholdersUtil.generateGatedEntityMarkdownString(entityId, entityKind)
+    val cached = HuggingFaceMdCardsCache.getData("${prefix}_${entityId}")
+    cached?.let { return cached.data }
+
+    val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
+    val rawDataResult = HuggingFaceHttpClient.downloadFile(mdUrl)
+
+    if (rawDataResult.isSuccess) {
+      val rawData = rawDataResult.getOrThrow()
+      val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
+      HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now().epochSecond))
+      return cleanedData
+    } else {
+      return HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
     }
   }
 }
