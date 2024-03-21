@@ -143,6 +143,9 @@ public interface MutableEntityStorage : EntityStorage {
    * Modifies the given entity [e] by passing a builder interface for it to [change]. 
    * This function isn't supposed to be used directly, it's more convenient to use a specialized `modifyEntity` extension function which
    * is generated for each entity type.
+   *
+   * @return updated entity [e]. There is no guarantee if the modifications are visible or not in the instance of [e],
+   *   so [e] should not be used after the modification
    */
   public fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
