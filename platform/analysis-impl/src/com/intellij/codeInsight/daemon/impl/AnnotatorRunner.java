@@ -65,24 +65,17 @@ final class AnnotatorRunner {
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
     HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(myProject);
-    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(myPsiFile, "AnnotationRunner", false, true, myHighlightingSession);
-    try {
-      PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
-        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, highlightInfoUpdater));
-      boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
-        for (Annotator annotator : supportedLanguages.keySet()) {
-          addToQueue.enqueue(annotator);
-        }
-        addToQueue.finish();
-        return runnable.getAsBoolean();
-      });
-      myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myHighlightInfoHolder.getAnnotationSession(), myPsiFile);
-      return result;
-    }
-    finally {
-      UpdateHighlightersUtil.incinerateObsoleteHighlighters(invalidElementsRecycler, myHighlightingSession);
-      invalidElementsRecycler.releaseHighlighters();
-    }
+    PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, highlightInfoUpdater));
+    boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
+      for (Annotator annotator : supportedLanguages.keySet()) {
+        addToQueue.enqueue(annotator);
+      }
+      addToQueue.finish();
+      return runnable.getAsBoolean();
+    });
+    myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myHighlightInfoHolder.getAnnotationSession(), myPsiFile);
+    return result;
   }
 
   @NotNull
@@ -125,14 +118,14 @@ final class AnnotatorRunner {
 
   private void runAnnotator(@NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
-                            @NotNull Map<Annotator, Set<Language>> supportedLanguages, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+                            @NotNull Map<Annotator, Set<Language>> supportedLanguages,
+                            @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     Set<Language> supported = supportedLanguages.get(annotator);
     if (supported.isEmpty()) {
       return;
     }
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
     AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, myHighlightInfoHolder.getAnnotationSession(), annotationHolder -> {
-      HighlightersRecycler emptyElementRecycler = new HighlightersRecycler(); // no need to call incinerate/release because it's always empty
       for (PsiElement element : insideThenOutside) {
         if (!supported.contains(element.getLanguage())) {
           continue;
@@ -165,8 +158,7 @@ final class AnnotatorRunner {
         }
         Document hostDocument = myPsiFile.getFileDocument();
         if (hostDocument instanceof DocumentWindow w) hostDocument = w.getDelegate();
-        highlightInfoUpdater.psiElementVisited(annotator.getClass(), element, newInfos, hostDocument, myPsiFile, myProject,
-                                               emptyElementRecycler, myHighlightingSession);
+        highlightInfoUpdater.psiElementVisited(annotator.getClass(), element, newInfos, hostDocument, myPsiFile, myProject, myHighlightingSession);
       }
       return null;
     });
