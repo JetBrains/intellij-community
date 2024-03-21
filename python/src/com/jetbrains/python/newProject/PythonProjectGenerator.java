@@ -59,6 +59,8 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 
@@ -360,36 +362,40 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param requirement           name of requirement to install (i.e. "django")
    * @param forceInstallFramework pass true if you are sure required framework is missing
    * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
+   * @return future to be used instead of callback.
    */
-  public static void installFrameworkIfNeeded(@NotNull final Project project,
-                                              @NotNull final String frameworkName,
-                                              @NotNull final String requirement,
-                                              @Nullable final Sdk sdk,
-                                              final boolean forceInstallFramework,
-                                              @Nullable final Runnable callback) {
-    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
+  public static @NotNull Future<Void> installFrameworkIfNeeded(@NotNull final Project project,
+                                                               @NotNull final String frameworkName,
+                                                               @NotNull final String requirement,
+                                                               @Nullable final Sdk sdk,
+                                                               final boolean forceInstallFramework,
+                                                               @Nullable final Runnable callback) {
+    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
   }
 
-  public static void installFrameworkInBackground(@NotNull final Project project,
-                                                  @NotNull final String frameworkName,
-                                                  @NotNull final String requirement,
-                                                  @Nullable final Sdk sdk,
-                                                  final boolean forceInstallFramework,
-                                                  @Nullable final Runnable callback) {
-    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
+  public static @NotNull Future<Void> installFrameworkInBackground(@NotNull final Project project,
+                                                                   @NotNull final String frameworkName,
+                                                                   @NotNull final String requirement,
+                                                                   @Nullable final Sdk sdk,
+                                                                   final boolean forceInstallFramework,
+                                                                   @Nullable final Runnable callback) {
+    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
   }
 
-  private static void installFrameworkIfNeeded(@NotNull final Project project,
-                                               @NotNull final String frameworkName,
-                                               @NotNull final String requirement,
-                                               @Nullable final Sdk sdk,
-                                               final boolean forceInstallFramework,
-                                               boolean asBackgroundTask,
-                                               @Nullable final Runnable callback) {
+  @NotNull
+  private static Future<Void> installFrameworkIfNeeded(@NotNull final Project project,
+                                                       @NotNull final String frameworkName,
+                                                       @NotNull final String requirement,
+                                                       @Nullable final Sdk sdk,
+                                                       final boolean forceInstallFramework,
+                                                       boolean asBackgroundTask,
+                                                       @Nullable final Runnable callback) {
 
+    var future = new CompletableFuture<Void>();
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
-      return;
+      future.completeExceptionally(new RuntimeException(("No SDK provided")));
+      return future;
     }
 
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
@@ -404,7 +410,13 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
             }
 
             @Override
+            public void onThrowable(@NotNull Throwable error) {
+              future.completeExceptionally(error);
+            }
+
+            @Override
             public void onSuccess() {
+              future.complete(null);
               // Installed / checked successfully, call callback on AWT
               if (callback != null) {
                 callback.run();
@@ -421,7 +433,13 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
             }
 
             @Override
+            public void onThrowable(@NotNull Throwable error) {
+              future.completeExceptionally(error);
+            }
+
+            @Override
             public void onSuccess() {
+              future.complete(null);
               // Installed / checked successfully, call callback on AWT
               if (callback != null) {
                 callback.run();
@@ -431,12 +449,14 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       }
     }
     else {
+      future.complete(null);
       // No need to install, but still need to call callback on AWT
       if (callback != null) {
         assert SwingUtilities.isEventDispatchThread();
         callback.run();
       }
     }
+    return future;
   }
 
   @Nullable
