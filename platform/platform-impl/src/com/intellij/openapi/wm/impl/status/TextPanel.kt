@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
@@ -55,8 +56,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
 
   override fun updateUI() {
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS,
-                      UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+    UISettings.setupFractionalMetrics(this)
     recomputeSize()
   }
 
