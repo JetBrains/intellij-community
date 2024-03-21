@@ -18,8 +18,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.Interner
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.textmate.TextMateService.LOG
@@ -40,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
 
-class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService() {
+class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService() {
   private var builtinBundlesDisabled = false
 
   @Volatile
@@ -87,7 +85,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
             builtInBundles.filter { !turnedOffBundleNames.contains(it.name) }
           }
           registerBundlesInParallel(
-            scope = scope,
+            scope = myScope,
             bundlesToLoad = bundlesToEnable,
             registrar = { registerBundle(Path.of(it.path), newExtensionsMapping) },
           )
@@ -103,9 +101,9 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
       }
       if (!bundlesToLoad.isEmpty()) {
         registerBundlesInParallel(
-          scope = scope,
+          scope = myScope,
           bundlesToLoad = bundlesToLoad,
-          registrar = { registerBundle(Path.of(it.path), newExtensionsMapping) },
+          registrar = { bundleToLoad -> registerBundle(Path.of(bundleToLoad.path), newExtensionsMapping) },
           registrationFailed = { bundleToLoad ->
             val bundleName = bundleToLoad.name
             val errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName)
@@ -200,29 +198,28 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
   }
 
   override fun readBundle(directory: Path?): TextMateBundleReader? {
-    if (directory == null) {
-      return null
-    }
-
-    val bundleType = detectBundleType(directory)
-    return when (bundleType) {
-      BundleType.TEXTMATE -> readTextMateBundle(directory)
-      BundleType.SUBLIME -> readSublimeBundle(directory)
-      BundleType.VSCODE -> readVSCBundle { relativePath ->
-        try {
-          return@readVSCBundle Files.newInputStream(directory.resolve(relativePath))
+    if (directory != null) {
+      val bundleType = detectBundleType(directory)
+      return when (bundleType) {
+        BundleType.TEXTMATE -> readTextMateBundle(directory)
+        BundleType.SUBLIME -> readSublimeBundle(directory)
+        BundleType.VSCODE -> readVSCBundle { relativePath: String ->
+          try {
+            return@readVSCBundle Files.newInputStream(directory.resolve(relativePath))
+          }
+          catch (e: NoSuchFileException) {
+            LOG.warn("Cannot find referenced file `$relativePath` in bundle `$directory`")
+            return@readVSCBundle null
+          }
+          catch (e: Throwable) {
+            LOG.warn("Cannot read referenced file `$relativePath` in bundle `$directory`", e)
+            return@readVSCBundle null
+          }
         }
-        catch (e: NoSuchFileException) {
-          LOG.warn("Cannot find referenced file `$relativePath` in bundle `$directory`")
-          return@readVSCBundle null
-        }
-        catch (e: Throwable) {
-          LOG.warn("Cannot read referenced file `$relativePath` in bundle `$directory`", e)
-          return@readVSCBundle null
-        }
+        BundleType.UNDEFINED -> null
       }
-      BundleType.UNDEFINED -> null
     }
+    return null
   }
 
   private fun ensureInitialized() {
@@ -239,14 +236,15 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
     }
   }
 
-  private suspend fun registerBundle(directory: Path?, extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>): Boolean {
-    val reader = withContext(Dispatchers.IO) {
-      readBundle(directory)
-    } ?: return false
-    registerLanguageSupport(reader, extensionMapping)
-    registerPreferences(reader)
-    registerSnippets(reader)
-    return true
+  private fun registerBundle(directory: Path?, extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>): Boolean {
+    val reader = readBundle(directory)
+    if (reader != null) {
+      registerLanguageSupport(reader, extensionMapping)
+      registerPreferences(reader)
+      registerSnippets(reader)
+      return true
+    }
+    return false
   }
 
   private fun registerSnippets(reader: TextMateBundleReader) {

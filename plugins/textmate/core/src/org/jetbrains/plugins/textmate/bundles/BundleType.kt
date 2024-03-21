@@ -4,6 +4,9 @@ import org.jetbrains.plugins.textmate.Constants
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 import kotlin.streams.asSequence
 
 enum class BundleType {
@@ -14,7 +17,7 @@ enum class BundleType {
 
   companion object {
     /**
-     * Detect a bundle type by directory.
+     * Detect bundle type by directory.
      *
      * @param directory Bundle directory.
      * @return bundle type.
@@ -23,34 +26,34 @@ enum class BundleType {
      */
     @JvmStatic
     fun detectBundleType(directory: Path?): BundleType {
-      if (directory == null || !Files.isDirectory(directory)) {
-        return UNDEFINED
-      }
+      if (directory != null && directory.isDirectory()) {
+        if ("tmBundle".equals(directory.extension, ignoreCase = true)) {
+          return TEXTMATE
+        }
+        val packageJson = directory.resolve(Constants.PACKAGE_JSON_NAME)
+        if (packageJson.isRegularFile()) {
+          return VSCODE
+        }
 
-      if (directory.extension.endsWith(".tmBundle", ignoreCase = true)) {
-        return TEXTMATE
-      }
-
-      val packageJson = directory.resolve(Constants.PACKAGE_JSON_NAME)
-      if (Files.isRegularFile(packageJson)) {
-        return VSCODE
-      }
-
-      val hasTmFiles = runCatching {
-        Files.list(directory).use { children ->
-          children.asSequence().any { child ->
-            val name = child.fileName.toString()
-            name.endsWith(".tmLanguage", ignoreCase = true) || name.endsWith(".tmPreferences", ignoreCase = true)
+        val hasTmFiles = runCatching {
+          Files.list(directory).use { children ->
+            children.asSequence().any { child ->
+              child.name.endsWith(".tmLanguage", ignoreCase = true) ||
+              child.name.endsWith(".tmPreferences", ignoreCase = true)
+            }
           }
         }
-      }
-      if (hasTmFiles.getOrNull() == true) {
-        return SUBLIME
-      }
+        if (hasTmFiles.getOrNull() == true) {
+          return SUBLIME
+        }
 
-      val infoPlist = directory.resolve(Constants.BUNDLE_INFO_PLIST_NAME)
-      val hasInfoPlistFile = Files.isRegularFile(infoPlist)
-      return if (hasInfoPlistFile) TEXTMATE else UNDEFINED
+        val infoPlist = directory.resolve(Constants.BUNDLE_INFO_PLIST_NAME)
+        val hasInfoPlistFile = infoPlist.isRegularFile()
+        if (hasInfoPlistFile) {
+          return TEXTMATE
+        }
+      }
+      return UNDEFINED
     }
   }
 }

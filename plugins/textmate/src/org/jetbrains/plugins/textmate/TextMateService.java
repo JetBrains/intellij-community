@@ -25,7 +25,7 @@ public abstract class TextMateService {
   }
 
   /**
-   * Create a bundle object from a given directory.
+   * Create bundle object from given directory.
    *
    * @return bundle object or {@code null} if directory doesn't exist or bundle type can't be defined
    */
@@ -38,7 +38,7 @@ public abstract class TextMateService {
    * Unregister all and register all enabled bundles in IDE {@link TextMateUserBundlesSettings#getBundles()}, {@link TextMateBuiltinBundlesSettings#builtinBundles}
    * 1. read all enabled bundles
    * 2. prepare syntax table of supported languages
-   * 3. prepare preference table of enabled bundles
+   * 3. prepare preferences table of enabled bundles
    * 4. fill the extensions mapping for {@link TextMateFileType}
    */
   public abstract void reloadEnabledBundles();
@@ -63,7 +63,7 @@ public abstract class TextMateService {
 
   /**
    * @return custom highlighting colors defined inside bundles (not in themes).
-   * Note that background color in text attributes is stored in raw format and isn't merged with a default background.
+   * Note that background color in text attributes is stored in raw format and isn't merged with default background.
    */
   @NotNull
   public abstract Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors();
