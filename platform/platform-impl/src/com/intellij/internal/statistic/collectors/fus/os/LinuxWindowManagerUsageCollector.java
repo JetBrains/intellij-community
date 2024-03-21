@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,6 +46,12 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
   private static final List<String> GNOME_THEME_FAMILIES = Arrays.asList(
     "Yaru-"
   );
+  private static final List<String> KDE_THEME_NAMES = Arrays.asList(
+    "org.kde.breezedark.desktop",
+    "org.kde.breezetwilight.desktop",
+    "org.kde.breeze.desktop"
+  );
+
   @VisibleForTesting
   public static final List<String> ALL_THEME_NAMES = new ArrayList<>();
 
@@ -98,6 +105,7 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
     for (String family : GNOME_THEME_FAMILIES) {
       ALL_THEME_NAMES.add(family + "*");
     }
+    ALL_THEME_NAMES.addAll(KDE_THEME_NAMES);
   }
 
   private static final EventId1<String> CURRENT_DESKTOP =
@@ -141,18 +149,18 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
       return EMPTY_THEME;
     }
 
-    Optional<String> result = GNOME_THEME_NAMES.stream()
-      .filter(s -> s.equalsIgnoreCase(theme))
-      .findFirst();
-    if (result.isPresent()) {
-      return result.get();
+    String result = find(GNOME_THEME_NAMES, s -> s.equalsIgnoreCase(theme));
+    if (result != null) {
+      return result;
     }
 
-    result = GNOME_THEME_FAMILIES.stream()
-      .filter(s -> theme.startsWith(s))
-      .findFirst();
+    result = find(KDE_THEME_NAMES, s -> s.equalsIgnoreCase(theme));
+    if (result != null) {
+      return result;
+    }
 
-    return result.map(s -> s + "*").orElse(UNKNOWN_THEME);
+    result = find(GNOME_THEME_FAMILIES, s -> theme.startsWith(s));
+    return result == null ? UNKNOWN_THEME : result + "*";
   }
 
   @VisibleForTesting
@@ -164,6 +172,12 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
     windowManger = StringUtil.toLowerCase(windowManger);
     final boolean isGnome = windowManger.contains("gnome");
     return isGnome ? findReportedName(windowManger, GNOME_WINDOW_MANAGERS) : findReportedName(windowManger, WINDOW_MANAGERS);
+  }
+
+  private static @Nullable String find(@NotNull List<String> list, @NotNull Predicate<String> predicate) {
+    return list.stream()
+      .filter(predicate)
+      .findFirst().orElse(null);
   }
 
   private static @NotNull String findReportedName(@NotNull String original, @NotNull Map<String, String> keywordToName) {
