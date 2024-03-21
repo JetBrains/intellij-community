@@ -745,6 +745,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/EmptyFunction.kt");
         }
 
+        @TestMetadata("emptyVarargs.kt")
+        public void testEmptyVarargs() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/emptyVarargs.kt");
+        }
+
         @TestMetadata("expect.kt")
         public void testExpect() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/expect.kt");
@@ -1033,6 +1038,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("setOperator.kt")
         public void testSetOperator() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/setOperator.kt");
+        }
+
+        @TestMetadata("singleArgumentVarargs.kt")
+        public void testSingleArgumentVarargs() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/singleArgumentVarargs.kt");
         }
 
         @TestMetadata("throwAsBody.kt")

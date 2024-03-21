@@ -1964,6 +1964,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/EmptyFunction.kt");
             }
 
+            @TestMetadata("emptyVarargs.kt")
+            public void testEmptyVarargs() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/emptyVarargs.kt");
+            }
+
             @TestMetadata("expect.kt")
             public void testExpect() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/expect.kt");
@@ -2252,6 +2257,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("setOperator.kt")
             public void testSetOperator() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/setOperator.kt");
+            }
+
+            @TestMetadata("singleArgumentVarargs.kt")
+            public void testSingleArgumentVarargs() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/singleArgumentVarargs.kt");
             }
 
             @TestMetadata("throwAsBody.kt")

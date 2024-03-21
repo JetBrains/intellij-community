@@ -281,7 +281,7 @@ class CodeInliner(
             value == parameter.name()
         }?.map { it.key } ?: return null
 
-        if (expressions.size > 1) {
+        if (parameter.isVarArg) {
             return analyze(call) {
                 val parameterType = parameter.getReturnKtType()
                 val elementType = (parameterType as KtUsualClassType).ownTypeArguments.first().type!!

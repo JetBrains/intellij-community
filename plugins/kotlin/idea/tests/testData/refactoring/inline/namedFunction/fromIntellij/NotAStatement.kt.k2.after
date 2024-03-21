@@ -1,6 +1,6 @@
 class AAA {
     fun fff(myProject: Project) {
-        !ensureFilesWritable(Array<String>(1) { "2" }).hasReadonlyFiles()
+        !ensureFilesWritable(arrayOf<String>(*Array<String>(1) { "2" })).hasReadonlyFiles()
     }
 
     private fun ensureFilesWritable(strings: Array<out String>): Status {
