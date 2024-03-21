@@ -1,19 +1,9 @@
 package com.intellij.logging.resolve
 
-import com.intellij.analysis.logging.resolve.LoggingArgumentSymbol
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingArgumentSymbolReferenceProviderTestBase
-import com.intellij.model.psi.PsiSymbolReference
-import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiLiteralExpression
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import junit.framework.TestCase
-import org.jetbrains.uast.ULiteralExpression
 
 class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolReferenceProviderTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_LATEST_WITH_LATEST_JDK
-
   fun `test log4j2 info`() {
     myFixture.configureByText("Logging.java", """
       import org.apache.logging.log4j.*;
@@ -357,27 +347,5 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
      }
       """.trimIndent())
     doTest(emptyMap())
-  }
-
-  private fun doTest(bindings: Map<TextRange, String>) {
-    val literalExpression = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiLiteralExpression::class.java)
-    TestCase.assertFalse(literalExpression == null)
-    val refs: Collection<PsiSymbolReference> = PsiSymbolReferenceService.getService().getReferences(literalExpression!!)
-    TestCase.assertEquals(bindings.size, refs.size)
-    val usedRanges = mutableSetOf<TextRange>()
-    refs.forEach { ref ->
-      assertEquals(literalExpression, ref.element)
-      val symbols = ref.resolveReference()
-      assertEquals(1, symbols.size)
-      val symbol = symbols.single()
-      assertTrue(symbol is LoggingArgumentSymbol)
-      val formatSymbol = symbol as LoggingArgumentSymbol
-      assertTrue(formatSymbol.getPlaceholderString() is ULiteralExpression)
-      val expressionText = formatSymbol.expression.text
-      TestCase.assertFalse(ref.rangeInElement in usedRanges)
-      assertEquals(bindings[ref.rangeInElement], expressionText)
-      usedRanges.add(ref.rangeInElement)
-    }
-    TestCase.assertTrue(bindings.map { it.key }.toSet() == usedRanges)
   }
 }
