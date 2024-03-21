@@ -82,13 +82,15 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
     val distState = createDistributionBuilderState(pluginsToPublish = pluginsToPublish, context = context)
     val compilationTasks = CompilationTasks.create(context = context)
-    compilationTasks.compileModules(
-      moduleNames = distState.getModulesForPluginsToPublish() + listOf("intellij.idea.community.build.tasks",
-                                                                       "intellij.platform.images.build",
-                                                                       "intellij.tools.launcherGenerator"),
-    )
+    distState.getModulesForPluginsToPublish() + listOf(
+      "intellij.idea.community.build.tasks",
+      "intellij.platform.images.build",
+      "intellij.tools.launcherGenerator"
+    ).let {
+      compilationTasks.compileModules(moduleNames = it)
+      localizeModules(context, moduleNames = it)
+    }
 
-    localizeModules(context)
     buildProjectArtifacts(
       platform = distState.platform,
       enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish,
@@ -168,10 +170,10 @@ suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildCont
   )
 }
 
-private suspend fun localizeModules(context: BuildContext) {
+private suspend fun localizeModules(context: BuildContext, moduleNames: Collection<String> = emptyList()) {
   val localizationDir = getLocalizationDir(context)
   if (localizationDir != null) {
-    val modules = context.project.modules
+    val modules = if (moduleNames.isEmpty()) context.project.modules else moduleNames.mapNotNull { context.findModule(it) }
     spanBuilder("bundle localizations").setAttribute("moduleCount", modules.size.toLong()).useWithScope {
       modules.map { module ->
         async {
@@ -571,7 +573,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val productLayout = context.productProperties.productLayout
 
   val compilationTasks = CompilationTasks.create(context)
-  compilationTasks.compileModules(collectModulesToCompileForDistribution(context))
+  collectModulesToCompileForDistribution(context).let {
+    compilationTasks.compileModules(moduleNames = it)
+    localizeModules(context, moduleNames = it)
+  }
 
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
   filterPluginsToPublish(pluginsToPublish, context)
@@ -591,7 +596,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
       val platform = createPlatformLayout(pluginsToPublish, context)
-      compilationTasks.compileModules(moduleNames = getModulesForPluginsToPublish(platform, pluginsToPublish))
+      getModulesForPluginsToPublish(platform, pluginsToPublish).let {
+        compilationTasks.compileModules(moduleNames = it)
+        localizeModules(context, moduleNames = it)
+      }
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         val ideClasspath = createIdeClassPath(platform = platform, context = context)
 
@@ -616,7 +624,6 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       context.notifyArtifactBuilt(artifactPath = providedModuleFile)
       if (!productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-        localizeModules(context)
         buildProjectArtifacts(platform = distState.platform,
                               enabledPluginModules = enabledPluginModules,
                               compilationTasks = compilationTasks,
@@ -638,9 +645,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     context = context,
   )
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-  compilationTasks.compileModules(distState.getModulesForPluginsToPublish())
-
-  localizeModules(context)
+  distState.getModulesForPluginsToPublish().let {
+    compilationTasks.compileModules(moduleNames = it)
+    localizeModules(context, moduleNames = it)
+  }
   buildProjectArtifacts(platform = distState.platform,
                         enabledPluginModules = enabledPluginModules,
                         compilationTasks = compilationTasks,
