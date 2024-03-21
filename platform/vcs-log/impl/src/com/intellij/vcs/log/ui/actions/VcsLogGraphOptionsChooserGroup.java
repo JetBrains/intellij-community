@@ -10,6 +10,7 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.GraphOptionsUtil;
@@ -42,6 +43,9 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
       actions.add(new SelectNonBaseOptionsAction(logUI, properties, PermanentGraph.Options.LinearBek.INSTANCE));
     }
     actions.add(new SelectNonBaseOptionsAction(logUI, properties, PermanentGraph.Options.FirstParent.INSTANCE));
+
+    actions.add(ActionManager.getInstance().getAction(VcsLogActionIds.BRANCH_ACTIONS_GROUP));
+
     return actions.toArray(EMPTY_ARRAY);
   }
 

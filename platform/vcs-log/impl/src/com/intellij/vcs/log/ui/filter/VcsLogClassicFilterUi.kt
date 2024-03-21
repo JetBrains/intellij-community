@@ -124,7 +124,8 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   }
 
   override fun createActionGroup(): ActionGroup {
-    val actions = listOfNotNull(createBranchComponent(), createUserComponent(), createDateComponent(), createStructureFilterComponent())
+    val actions = listOfNotNull(createBranchComponent(), createUserComponent(), createDateComponent(), createStructureFilterComponent(),
+                                createGraphComponent())
     return DefaultActionGroup(actions)
   }
 
@@ -171,6 +172,10 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     return MainUiActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text")) {
       StructureFilterPopupComponent(uiProperties, structureFilterModel, colorManager).initUi()
     }
+  }
+
+  protected fun createGraphComponent(): AnAction? {
+    return ActionManager.getInstance().getAction(VcsLogActionIds.GRAPH_OPTIONS_GROUP)
   }
 
   override fun addFilterListener(listener: VcsLogFilterListener) {
