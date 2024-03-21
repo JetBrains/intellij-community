@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -65,8 +65,11 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     get() = SdkEntity::class.java
 
 
-  override fun loadEntities(reader: JpsFileContentReader, errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+  override fun loadEntities(
+    reader: JpsFileContentReader,
+    errorReporter: ErrorReporter,
+    virtualFileManager: VirtualFileUrlManager,
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> {
     val sdkTag = reader.loadComponent(entitySource.file.url, SDK_TABLE_COMPONENT_NAME) ?: return LoadingResult(emptyMap(), null)
     val sdkEntities = sdkTag.getChildren(ELEMENT_JDK).map { sdkElement -> loadSdkEntity(sdkElement, virtualFileManager) }
     return LoadingResult(mapOf(SdkEntity::class.java to sdkEntities))
@@ -121,8 +124,9 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     return result
   }
 
-  override fun checkAndAddToBuilder(builder: MutableEntityStorage, orphanage: MutableEntityStorage,
-                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage,
+                                    orphanage: MutableEntityStorage,
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
     newEntities.values.flatten().forEach { builder addEntity  it }
   }
 

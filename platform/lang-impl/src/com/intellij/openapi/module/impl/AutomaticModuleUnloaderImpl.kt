@@ -19,6 +19,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
 import com.intellij.xml.util.XmlStringUtil
@@ -31,6 +33,7 @@ import kotlinx.coroutines.launch
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun calculateNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
     val defaultResult = Pair(emptyList<String>(), emptyList<String>())
 
@@ -78,7 +81,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
       val moduleEntitiesToAdd = snapshot.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
       val moduleEntitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
       for (moduleEntity in moduleEntitiesToAdd) {
-        unloadedEntityBuilder.addEntity(moduleEntity)
+        (unloadedEntityBuilder as MutableEntityStorageInstrumentation).addEntity(moduleEntity)
         moduleEntity.getModuleLevelLibraries(snapshot).forEach { libraryEntity ->
           unloadedEntityBuilder.addEntity(libraryEntity)
         }

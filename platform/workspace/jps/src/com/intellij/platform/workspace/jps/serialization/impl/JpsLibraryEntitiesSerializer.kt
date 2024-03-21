@@ -135,7 +135,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
     reader: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager
-  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTime {
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
     val libraryTableTag = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) }
                             .onFailure { return@addMeasuredTime LoadingResult(emptyMap(), null) }
                             .getOrThrow() ?: return@addMeasuredTime LoadingResult(emptyMap(), null)
@@ -159,7 +159,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
   @Suppress("UNCHECKED_CAST")
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
-                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
     val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity.Builder>) ?: emptyList()
     libraries.forEach {
       val symbolicId = LibraryId(it.name, it.tableId)

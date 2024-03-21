@@ -138,7 +138,6 @@ public interface MutableEntityStorage : EntityStorage {
    * If any of the children exists in `this` storage, the reference to this child will be added instead of creating a new child entity.
    */
   public infix fun <M: WorkspaceEntity.Builder<T>, T : WorkspaceEntity> addEntity(entity: M): T
-  public infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   /**
    * Modifies the given entity [e] by passing a builder interface for it to [change]. 

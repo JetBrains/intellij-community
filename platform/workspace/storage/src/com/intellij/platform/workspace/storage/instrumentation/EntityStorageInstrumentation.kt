@@ -128,6 +128,8 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
   public fun getManyChildrenBuilders(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): Sequence<WorkspaceEntity.Builder<*>>
 
   public fun getParentBuilder(connectionId: ConnectionId, child: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>?
+
+  public infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 }
 
 /**

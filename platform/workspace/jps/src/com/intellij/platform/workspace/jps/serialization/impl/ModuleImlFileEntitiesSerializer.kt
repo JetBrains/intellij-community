@@ -67,7 +67,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     reader: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager
-  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTime {
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
 
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder> = HashMap()
     val newModuleEntity: ModuleEntity.Builder?
@@ -174,7 +174,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
-                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
 
     val (orphans, elements) = newEntities.values.asSequence().flatten().partition { it.entitySource is OrphanageWorkerEntitySource }
 
