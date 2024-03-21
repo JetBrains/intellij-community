@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
+import java.nio.file.Path
 
 open class RecentProjectListActionProvider {
   companion object {
@@ -112,14 +113,19 @@ open class RecentProjectListActionProvider {
     var displayName = recentProjectManager.getDisplayName(path)
     val projectName = recentProjectManager.getProjectName(path)
 
+    var branch: String? = null
+
     if (displayName.isNullOrBlank()) {
-      displayName = if (duplicates.contains(projectName)) FileUtil.toSystemDependentName(path) else projectName
+      displayName = if(duplicates.contains(projectName)) {
+        branch = RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(Path.of(path))?.currentBranch
+        FileUtil.toSystemDependentName(path)
+      } else projectName
     }
 
     // It's better don't to remove non-existent projects. Sometimes projects stored
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
-    return ReopenProjectAction(path, projectName, displayName)
+    return ReopenProjectAction(path, projectName, displayName, branch)
   }
 
   private fun createRecentProject(path: String, duplicates: Set<String>, projectGroup: ProjectGroup?): RecentProjectItem {
@@ -128,6 +134,7 @@ open class RecentProjectListActionProvider {
       projectPath = reopenProjectAction.projectPath,
       projectName = reopenProjectAction.projectName,
       displayName = reopenProjectAction.projectNameToDisplay ?: "",
+      branchName = reopenProjectAction.branchName,
       projectGroup = projectGroup
     )
   }

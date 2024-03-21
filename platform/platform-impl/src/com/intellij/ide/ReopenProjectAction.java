@@ -29,22 +29,33 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   private final @SystemIndependent String myProjectPath;
   private final @NlsSafe String myProjectName;
   private final @NlsSafe String myDisplayName;
+
+  private final @NlsSafe @Nullable String myBranchName;
+
   private boolean myIsRemoved = false;
   private @Nullable ProjectGroup myProjectGroup;
 
   public ReopenProjectAction(@NotNull @SystemIndependent String projectPath,
                              @NlsSafe String projectName,
-                             @NlsSafe String displayName) {
+                             @NlsSafe String displayName,
+                             @NlsSafe @Nullable String branchName) {
     getTemplatePresentation().setText(IdeBundle.message("action.ReopenProject.reopen.project.text"));
     getTemplatePresentation().setApplicationScope(true);
     myProjectPath = projectPath;
     myProjectName = projectName;
     myDisplayName = displayName;
+    myBranchName = branchName;
 
     if (Strings.isEmpty(getProjectDisplayName())) {
       Logger.getInstance(ReopenProjectAction.class).error(
         String.format("Empty action text for projectName='%s' displayName='%s' path='%s'", projectName, displayName, projectPath));
     }
+  }
+
+  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath,
+                             @NlsSafe String projectName,
+                             @NlsSafe String displayName) {
+    this(projectPath, projectName, displayName, null);
   }
 
   @Override
@@ -61,7 +72,11 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   }
 
   public @Nullable @NlsSafe String getProjectDisplayName() {
-    return myProjectPath.equals(myDisplayName) ? FileUtil.getLocationRelativeToUserHome(myProjectPath) : myDisplayName;
+    String s = myProjectPath.equals(myDisplayName) ? FileUtil.getLocationRelativeToUserHome(myProjectPath) : myDisplayName;
+    if(myBranchName != null) {
+      return IdeBundle.message("action.reopen.project.display.name.with.branch", s, myBranchName);
+    }
+    return s;
   }
 
   @Override
@@ -96,6 +111,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
 
   public @SystemIndependent String getProjectPath() {
     return myProjectPath;
+  }
+
+  public @NlsSafe @Nullable String getBranchName() {
+    return myBranchName;
   }
 
   public boolean isRemoved() {

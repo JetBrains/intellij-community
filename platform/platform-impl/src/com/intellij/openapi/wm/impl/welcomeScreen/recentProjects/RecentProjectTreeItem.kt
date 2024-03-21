@@ -51,6 +51,7 @@ internal data class RecentProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
+  @NlsSafe val branchName: String? = null,
   val projectGroup: ProjectGroup?
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
