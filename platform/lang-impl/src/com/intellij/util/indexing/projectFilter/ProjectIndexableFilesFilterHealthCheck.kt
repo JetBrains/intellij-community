@@ -100,34 +100,41 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
       val startTime = System.currentTimeMillis()
 
       Observation.awaitConfiguration(project) // wait for project import IDEA-348501
-      val res = smartReadAction(project) {
-        runHealthCheck(project, filter)
+      val res: HealthCheckResult = smartReadAction(project) {
+        try {
+          runHealthCheck(project, filter)
+        }
+        catch (e: FilterActionCancelledException) {
+          HealthCheckCancelled(e.reason)
+        }
       }
-      if (res == null) {
-        IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckCancelled(
-          project,
-          filter,
-          attemptNumber,
-          cancelledAttemptsCount.incrementAndGet(),
-          (System.currentTimeMillis() - startTime).toInt())
-        return
+      when (res) {
+        is HealthCheckFinished -> {
+          res.nonIndexableFilesInFilter.fix(filter)
+          res.indexableFilesNotInFilter.fix(filter)
+
+          IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(
+            project,
+            filter,
+            attemptNumber,
+            successfulAttemptsCount.incrementAndGet(),
+            (System.currentTimeMillis() - startTime).toInt(),
+            res.nonIndexableFilesInFilter.size,
+            res.indexableFilesNotInFilter.size)
+
+          res.nonIndexableFilesInFilter.logMessage()
+          res.indexableFilesNotInFilter.logMessage()
+        }
+        is HealthCheckCancelled -> {
+          IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckCancelled(
+            project,
+            filter,
+            attemptNumber,
+            cancelledAttemptsCount.incrementAndGet(),
+            (System.currentTimeMillis() - startTime).toInt(),
+            res.reason)
+        }
       }
-      val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = res
-
-      nonIndexableFilesInFilter.fix(filter)
-      indexableFilesNotInFilter.fix(filter)
-
-      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(
-        project,
-        filter,
-        attemptNumber,
-        successfulAttemptsCount.incrementAndGet(),
-        (System.currentTimeMillis() - startTime).toInt(),
-        nonIndexableFilesInFilter.size,
-        indexableFilesNotInFilter.size)
-
-      nonIndexableFilesInFilter.logMessage()
-      indexableFilesNotInFilter.logMessage()
     }
     catch (_: ProcessCanceledException) {
 
@@ -137,9 +144,9 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
     }
   }
 
-  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup>? {
-    return runIfScanningScanningIsCompleted(project) {
-      filter.runAndCheckThatNoChangesHappened {
+  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): HealthCheckResult {
+    return filter.runAndCheckThatNoChangesHappened {
+      runIfScanningScanningIsCompleted(project) {
         // It is possible that scanning will start and finish while we are performing healthcheck,
         // but then healthcheck will be terminated by the fact that filter was update.
         // If it was not updated, then we don't care that scanning happened, and we can trust healthcheck result
@@ -159,7 +166,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
    */
   private fun doRunHealthCheck(project: Project,
                                checkAllExpectedIndexableFiles: Boolean,
-                               fileStatuses: Sequence<Pair<FileId, Boolean>>): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
+                               fileStatuses: Sequence<Pair<FileId, Boolean>>): HealthCheckFinished {
     val nonIndexableFilesInFilter = mutableListOf<FileId>()
     val indexableFilesNotInFilter = mutableListOf<FileId>()
 
@@ -187,8 +194,8 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
       }
     }
 
-    return NonIndexableFilesInFilterGroup(nonIndexableFilesInFilter) to
-      IndexableFilesNotInFilterGroup(indexableFilesNotInFilter, shouldBeIndexable)
+    return HealthCheckFinished(NonIndexableFilesInFilterGroup(nonIndexableFilesInFilter),
+                               IndexableFilesNotInFilterGroup(indexableFilesNotInFilter, shouldBeIndexable))
   }
 
   private fun getFilesThatShouldBeIndexable(project: Project): IndexableFiles {
@@ -314,3 +321,8 @@ private class IndexableFiles {
     return perProvider.find { it.second.get(fileId) }?.first
   }
 }
+
+sealed interface HealthCheckResult
+
+private class HealthCheckFinished(val nonIndexableFilesInFilter: NonIndexableFilesInFilterGroup, val indexableFilesNotInFilter: IndexableFilesNotInFilterGroup) : HealthCheckResult
+private class HealthCheckCancelled(val reason: FilterActionCancellationReason) : HealthCheckResult
