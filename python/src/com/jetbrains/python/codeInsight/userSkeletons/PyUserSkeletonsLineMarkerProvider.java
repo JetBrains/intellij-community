@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -45,8 +45,7 @@ public final class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvid
     }
   }
 
-  @Nullable
-  private static PyElement getUserSkeleton(@NotNull PsiElement element) {
+  private static @Nullable PyElement getUserSkeleton(@NotNull PsiElement element) {
     if (element instanceof PyFunction || element instanceof PyTargetExpression) {
       return PyUserSkeletonsUtil.getUserSkeleton((PyElement)element);
     }

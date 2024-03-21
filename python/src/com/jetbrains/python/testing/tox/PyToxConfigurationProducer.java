@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.Location;
@@ -18,14 +18,13 @@ import org.jetbrains.annotations.NotNull;
 public final class PyToxConfigurationProducer extends LazyRunConfigurationProducer<PyToxConfiguration> {
   private static final String TOX_FILE_NAME = "tox.ini";
 
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return PyToxConfigurationFactory.INSTANCE;
   }
 
   @Override
-  public boolean isConfigurationFromContext(@NotNull final PyToxConfiguration configuration, @NotNull final ConfigurationContext context) {
+  public boolean isConfigurationFromContext(final @NotNull PyToxConfiguration configuration, final @NotNull ConfigurationContext context) {
     final Location<?> location = context.getLocation();
     if (location == null) {
       return false;
@@ -46,9 +45,9 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull final PyToxConfiguration configuration,
-                                                  @NotNull final ConfigurationContext context,
-                                                  @NotNull final Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(final @NotNull PyToxConfiguration configuration,
+                                                  final @NotNull ConfigurationContext context,
+                                                  final @NotNull Ref<PsiElement> sourceElement) {
     final PsiFile file = sourceElement.get().getContainingFile();
     if (file == null) {
       return false;

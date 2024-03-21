@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -61,8 +61,7 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
   }
 
   @Override
-  @NotNull
-  protected PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+  protected @NotNull PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, ignoredIdentifiers, this, PyInspectionVisitor.getContext(session));
   }
 

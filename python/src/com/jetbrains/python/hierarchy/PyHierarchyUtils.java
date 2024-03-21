@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
@@ -15,8 +15,7 @@ public final class PyHierarchyUtils {
   private PyHierarchyUtils() {
   }
 
-  @NotNull
-  public static Comparator<NodeDescriptor<?>> getComparator(final Project project) {
+  public static @NotNull Comparator<NodeDescriptor<?>> getComparator(final Project project) {
     if (HierarchyBrowserManager.getInstance(project).getState().SORT_ALPHABETICALLY) {
       return AlphaComparator.INSTANCE;
     }

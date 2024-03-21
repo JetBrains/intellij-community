@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
@@ -33,8 +33,7 @@ import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
  * <a href="https://www.python.org/dev/peps/pep-0514/">PEP 514</a>
  */
 public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
-  @NotNull
-  private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
+  private static final @NotNull String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
   /**
    * There may be a lot of python files in APPX folder. We do not need "w" files, but may need "python[version]?.exe"
    */
@@ -47,11 +46,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     ImmutableMap.of("Python", "python.exe",
                     "IronPython", "ipy.exe");
 
-  @NotNull
-  private final SynchronizedClearableLazy<Set<String>> myRegistryCache =
+  private final @NotNull SynchronizedClearableLazy<Set<String>> myRegistryCache =
     new SynchronizedClearableLazy<>(() -> findInRegistry(getWinRegistryService()));
-  @NotNull
-  private final SynchronizedClearableLazy<Set<String>> myAppxCache = new SynchronizedClearableLazy<>(
+  private final @NotNull SynchronizedClearableLazy<Set<String>> myAppxCache = new SynchronizedClearableLazy<>(
     WinPythonSdkFlavor::getPythonsFromStore);
 
   public static WinPythonSdkFlavor getInstance() {
@@ -69,7 +66,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
@@ -102,7 +99,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
-  public boolean isValidSdkHome(@NotNull final String path) {
+  public boolean isValidSdkHome(final @NotNull String path) {
     if (super.isValidSdkHome(path)) {
       return true;
     }
@@ -126,12 +123,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
 
-  void findInRegistry(@NotNull final Collection<String> candidates) {
+  void findInRegistry(final @NotNull Collection<String> candidates) {
     candidates.addAll(myRegistryCache.getValue());
   }
 
-  @NotNull
-  protected WinRegistryService getWinRegistryService() {
+  protected @NotNull WinRegistryService getWinRegistryService() {
     return ApplicationManager.getApplication().getService(WinRegistryService.class);
   }
 
@@ -156,13 +152,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     }
   }
 
-  @NotNull
-  private static Set<String> getPythonsFromStore() {
+  private static @NotNull Set<String> getPythonsFromStore() {
     return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.toAbsolutePath().toString());
   }
 
-  @NotNull
-  private static Set<String> findInRegistry(@NotNull WinRegistryService registryService) {
+  private static @NotNull Set<String> findInRegistry(@NotNull WinRegistryService registryService) {
     final Set<String> result = new HashSet<>();
 
     /*

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -45,9 +31,8 @@ public final class PyIterableVariableMacro extends Macro {
     return "pyIterableVariable";
   }
 
-  @Nullable
   @Override
-  public Result calculateResult(Expression @NotNull [] params, @NotNull ExpressionContext context) {
+  public @Nullable Result calculateResult(Expression @NotNull [] params, @NotNull ExpressionContext context) {
     final PsiElement element = context.getPsiElementAtStartOffset();
     if (element != null) {
       final List<PsiNamedElement> components = getIterableElements(element);
@@ -81,8 +66,7 @@ public final class PyIterableVariableMacro extends Macro {
     return context instanceof PythonTemplateContextType;
   }
 
-  @NotNull
-  private static List<PsiNamedElement> getIterableElements(@NotNull PsiElement element) {
+  private static @NotNull List<PsiNamedElement> getIterableElements(@NotNull PsiElement element) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
     final List<PsiNamedElement> components = new ArrayList<>();
     for (PsiNamedElement namedElement : getVisibleNamedElements(element)) {
@@ -96,8 +80,7 @@ public final class PyIterableVariableMacro extends Macro {
     return components;
   }
 
-  @NotNull
-  private static List<PsiNamedElement> getVisibleNamedElements(@NotNull PsiElement anchor) {
+  private static @NotNull List<PsiNamedElement> getVisibleNamedElements(@NotNull PsiElement anchor) {
     final List<PsiNamedElement> results = new ArrayList<>();
     for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
       final Scope scope = ControlFlowCache.getScope(owner);

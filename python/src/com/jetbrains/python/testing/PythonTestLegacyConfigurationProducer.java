@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
@@ -32,16 +32,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPythonLegacyTestRunConfiguration<T>>
+public abstract class PythonTestLegacyConfigurationProducer<T extends AbstractPythonLegacyTestRunConfiguration<T>>
   extends AbstractPythonTestConfigurationProducer<AbstractPythonLegacyTestRunConfiguration<T>> {
 
   protected PythonTestLegacyConfigurationProducer() {
     // ExtensionNotApplicableException cannot be thrown here because PythonDocTestConfigurationProducer is applicable regardless of mode
   }
 
-  @NotNull
   @Override
-  public Class<? super AbstractPythonLegacyTestRunConfiguration<T>> getConfigurationClass() {
+  public @NotNull Class<? super AbstractPythonLegacyTestRunConfiguration<T>> getConfigurationClass() {
     return AbstractPythonLegacyTestRunConfiguration.class;
   }
 
@@ -133,8 +132,8 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return false;
   }
 
-  private boolean setupConfigurationFromFolder(@NotNull final PsiDirectory element,
-                                               @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+  private boolean setupConfigurationFromFolder(final @NotNull PsiDirectory element,
+                                               final @NotNull AbstractPythonLegacyTestRunConfiguration configuration) {
     final VirtualFile virtualFile = element.getVirtualFile();
     if (!isTestFolder(virtualFile, element.getProject())) return false;
     final String path = virtualFile.getPath();
@@ -147,14 +146,14 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return true;
   }
 
-  private static void setModuleSdk(@NotNull final PsiElement element,
-                                   @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+  private static void setModuleSdk(final @NotNull PsiElement element,
+                                   final @NotNull AbstractPythonLegacyTestRunConfiguration configuration) {
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
-  protected boolean setupConfigurationFromFunction(@NotNull final PyFunction pyFunction,
-                                                   @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean setupConfigurationFromFunction(final @NotNull PyFunction pyFunction,
+                                                   final @NotNull AbstractPythonLegacyTestRunConfiguration configuration) {
     final PyClass containingClass = pyFunction.getContainingClass();
     configuration.setMethodName(pyFunction.getName());
 
@@ -168,21 +167,21 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return setupConfigurationScript(configuration, pyFunction);
   }
 
-  protected boolean setupConfigurationFromClass(@NotNull final PyClass pyClass,
-                                                @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean setupConfigurationFromClass(final @NotNull PyClass pyClass,
+                                                final @NotNull AbstractPythonLegacyTestRunConfiguration configuration) {
     configuration.setTestType(AbstractPythonLegacyTestRunConfiguration.TestType.TEST_CLASS);
     configuration.setClassName(pyClass.getName());
     return setupConfigurationScript(configuration, pyClass);
   }
 
-  protected boolean setupConfigurationFromFile(@NotNull final PyFile pyFile,
-                                               @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean setupConfigurationFromFile(final @NotNull PyFile pyFile,
+                                               final @NotNull AbstractPythonLegacyTestRunConfiguration configuration) {
     configuration.setTestType(AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT);
     return setupConfigurationScript(configuration, pyFile);
   }
 
-  protected static boolean setupConfigurationScript(@NotNull final AbstractPythonLegacyTestRunConfiguration cfg,
-                                                    @NotNull final PyElement element) {
+  protected static boolean setupConfigurationScript(final @NotNull AbstractPythonLegacyTestRunConfiguration cfg,
+                                                    final @NotNull PyElement element) {
     final PyFile containingFile = PyUtil.getContainingPyFile(element);
     if (containingFile == null) return false;
     final VirtualFile vFile = containingFile.getVirtualFile();
@@ -200,8 +199,8 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return true;
   }
 
-  protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
-    @NonNls final String name = virtualFile.getName();
+  protected boolean isTestFolder(final @NotNull VirtualFile virtualFile, final @NotNull Project project) {
+    final @NonNls String name = virtualFile.getName();
     final HashSet<VirtualFile> roots = new HashSet<>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
@@ -211,22 +210,22 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return StringUtil.toLowerCase(name).contains("test") || roots.contains(virtualFile);
   }
 
-  protected boolean isAvailable(@NotNull final Location location) {
+  protected boolean isAvailable(final @NotNull Location location) {
     return false;
   }
 
-  protected boolean isTestClass(@NotNull final PyClass pyClass,
-                                @Nullable final AbstractPythonLegacyTestRunConfiguration configuration,
-                                @Nullable final TypeEvalContext context) {
+  protected boolean isTestClass(final @NotNull PyClass pyClass,
+                                final @Nullable AbstractPythonLegacyTestRunConfiguration configuration,
+                                final @Nullable TypeEvalContext context) {
     return PythonUnitTestDetectorsBasedOnSettings.isTestClass(pyClass, ThreeState.UNSURE, context);
   }
 
-  protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
-                                   @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean isTestFunction(final @NotNull PyFunction pyFunction,
+                                   final @Nullable AbstractPythonLegacyTestRunConfiguration configuration) {
     return PythonUnitTestDetectorsBasedOnSettings.isTestFunction(pyFunction, ThreeState.UNSURE, null);
   }
 
-  protected boolean isTestFile(@NotNull final PyFile file) {
+  protected boolean isTestFile(final @NotNull PyFile file) {
     final List<PyStatement> testCases = getTestCaseClassesFromFile(file);
     if (testCases.isEmpty()) return false;
     return true;
@@ -248,7 +247,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return false;
   }
 
-  protected List<PyStatement> getTestCaseClassesFromFile(@NotNull final PyFile pyFile) {
+  protected List<PyStatement> getTestCaseClassesFromFile(final @NotNull PyFile pyFile) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(pyFile.getProject(), pyFile);
     return pyFile.getTopLevelClasses().stream()
       .filter(o -> PythonUnitTestDetectorsBasedOnSettings.isTestClass(o, ThreeState.UNSURE, context))

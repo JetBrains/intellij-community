@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.configurations.ConfigurationType;
@@ -8,10 +8,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,8 +26,7 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
 
   private final List<PyAbstractTestFactory<?>> myTypedFactories;
 
-  @NotNull
-  public static PythonTestConfigurationType getInstance() {
+  public static @NotNull PythonTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
@@ -48,28 +47,23 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     addFactory(myDocTestFactory);
   }
 
-  @NotNull
-  public PyTestFactory getPyTestFactory() {
+  public @NotNull PyTestFactory getPyTestFactory() {
     return myPyTestFactory;
   }
 
-  @NotNull
-  public PythonConfigurationFactoryBase getDocTestFactory() {
+  public @NotNull PythonConfigurationFactoryBase getDocTestFactory() {
     return myDocTestFactory;
   }
 
-  @NotNull
-  public PyUnitTestFactory getUnitTestFactory() {
+  public @NotNull PyUnitTestFactory getUnitTestFactory() {
     return myUnitTestFactory;
   }
 
-  @NotNull
-  public PyAutoDetectionConfigurationFactory getAutoDetectFactory() {
+  public @NotNull PyAutoDetectionConfigurationFactory getAutoDetectFactory() {
     return myAutoFactory;
   }
 
-  @NotNull
-  public List<PyAbstractTestFactory<?>> getTypedFactories() {
+  public @NotNull List<PyAbstractTestFactory<?>> getTypedFactories() {
     return myTypedFactories;
   }
 
@@ -78,9 +72,8 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     return "reference.dialogs.rundebug.tests";
   }
 
-  @NotNull
   @Override
-  public String getTag() {
+  public @NotNull String getTag() {
     return "pythonTest";
   }
 
@@ -95,15 +88,13 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
       super(configurationType);
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonDocTestRunConfiguration(project, this);
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return PyBundle.message("runcfg.doctest.display_name");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Sets;
@@ -51,32 +51,23 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private boolean myModified = false;
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
-  @Nullable
-  private final Module myModule;
+  private final @Nullable Module myModule;
 
-  @NotNull
-  private final NullableConsumer<? super Sdk> mySelectedSdkCallback;
+  private final @NotNull NullableConsumer<? super Sdk> mySelectedSdkCallback;
 
-  @NotNull
-  private final Consumer<Boolean> myCancelCallback;
+  private final @NotNull Consumer<Boolean> myCancelCallback;
 
-  @NotNull
-  private final SdkModel.Listener mySdkModelListener;
+  private final @NotNull SdkModel.Listener mySdkModelListener;
 
-  @NotNull
-  private final PyConfigurableInterpreterList myInterpreterList;
+  private final @NotNull PyConfigurableInterpreterList myInterpreterList;
 
-  @NotNull
-  private final ProjectSdksModel myProjectSdksModel;
+  private final @NotNull ProjectSdksModel myProjectSdksModel;
 
-  @NotNull
-  private final JBList<Sdk> mySdkList;
+  private final @NotNull JBList<Sdk> mySdkList;
 
-  @NotNull
-  private final JPanel myMainPanel;
+  private final @NotNull JPanel myMainPanel;
 
   private boolean myHideOtherProjectVirtualenvs = false;
 
@@ -139,8 +130,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super.dispose();
   }
 
-  @NotNull
-  private static JBList<Sdk> buildSdkList(@NotNull ListSelectionListener selectionListener) {
+  private static @NotNull JBList<Sdk> buildSdkList(@NotNull ListSelectionListener selectionListener) {
     final JBList<Sdk> result = new JBList<>();
     result.setCellRenderer(new PySdkListCellRenderer());
     result.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -149,12 +139,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  private static JPanel buildPanel(@NotNull JBList<Sdk> sdkList,
-                                   @NotNull AnActionButtonRunnable addAction,
-                                   @NotNull AnActionButtonRunnable editAction,
-                                   @NotNull AnActionButtonRunnable removeAction,
-                                   AnAction @NotNull ... extraActions) {
+  private static @NotNull JPanel buildPanel(@NotNull JBList<Sdk> sdkList,
+                                            @NotNull AnActionButtonRunnable addAction,
+                                            @NotNull AnActionButtonRunnable editAction,
+                                            @NotNull AnActionButtonRunnable removeAction,
+                                            AnAction @NotNull ... extraActions) {
     return ToolbarDecorator.createDecorator(sdkList)
       .disableUpDownActions()
       .setAddAction(addAction)
@@ -165,15 +154,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       .createPanel();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return mySdkList;
   }
 
@@ -229,19 +216,16 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     Disposer.dispose(getDisposable());
   }
 
-  @Nullable
-  private Sdk getOriginalSelectedSdk() {
+  private @Nullable Sdk getOriginalSelectedSdk() {
     final Sdk editableSdk = getEditableSelectedSdk();
     return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
   }
 
-  @Nullable
-  private Sdk getEditableSelectedSdk() {
+  private @Nullable Sdk getEditableSelectedSdk() {
     return getTheOnlyItemOrNull(mySdkList.getSelectedValuesList());
   }
 
-  @Nullable
-  private static <T> T getTheOnlyItemOrNull(@NotNull List<T> collection) {
+  private static @Nullable <T> T getTheOnlyItemOrNull(@NotNull List<T> collection) {
     if (collection.size() == 1) {
       return collection.get(0);
     }
@@ -269,8 +253,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private Sdk getSdk() {
+  private @Nullable Sdk getSdk() {
     if (myModule == null) {
       return ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
@@ -451,7 +434,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
   }
 
-  private @NotNull PythonPathEditor createPathEditor(@NotNull final Sdk sdk) {
+  private @NotNull PythonPathEditor createPathEditor(final @NotNull Sdk sdk) {
     PythonPathEditor pathEditor;
     if (PythonSdkUtil.isRemote(sdk)) {
       pathEditor = new PyRemotePathEditor(myProject, sdk);

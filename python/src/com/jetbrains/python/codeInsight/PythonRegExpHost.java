@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -59,9 +59,8 @@ public final class PythonRegExpHost implements RegExpLanguageHost {
     return ref.isPythonNamedGroupRef();
   }
 
-  @NotNull
   @Override
-  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+  public @NotNull EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
     return EnumSet.of(RegExpGroup.Type.PYTHON_NAMED_GROUP);
   }
 
@@ -97,9 +96,8 @@ public final class PythonRegExpHost implements RegExpLanguageHost {
     return myPropertiesProvider.getAllKnownProperties();
   }
 
-  @Nullable
   @Override
-  public String getPropertyDescription(@Nullable String name) {
+  public @Nullable String getPropertyDescription(@Nullable String name) {
     return myPropertiesProvider.getPropertyDescription(name);
   }
 

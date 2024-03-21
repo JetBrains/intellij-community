@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -52,7 +52,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   protected static final String UNINSTALL = "uninstall";
   protected String mySeparator = File.separator;
 
-  @Nullable protected volatile List<PyPackage> myPackagesCache = null;
+  protected volatile @Nullable List<PyPackage> myPackagesCache = null;
   private final AtomicBoolean myUpdatingCache = new AtomicBoolean(false);
 
   @Override
@@ -117,8 +117,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return hasSetuptools && hasPip;
   }
 
-  @Nullable
-  protected final PyPackage refreshAndCheckForSetuptools() throws ExecutionException {
+  protected final @Nullable PyPackage refreshAndCheckForSetuptools() throws ExecutionException {
     try {
       final List<PyPackage> packages = refreshAndGetPackages(false);
       final PyPackage setuptoolsPackage = PyPsiPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS);
@@ -141,8 +140,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   protected PyPackageManagerImplBase(@NotNull Sdk sdk) { super(sdk); }
 
   @Override
-  @NotNull
-  public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
+  public @NotNull Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
     final List<PyPackage> packages = refreshAndGetPackages(false);
     final Set<PyPackage> dependents = new HashSet<>();
     for (PyPackage p : packages) {
@@ -156,8 +154,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return dependents;
   }
 
-  @NotNull
-  protected static LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
+  protected static @NotNull LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
     if (sdk instanceof PyDetectedSdk) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
       if (flavor != null && sdk.getHomePath() != null) {
@@ -170,34 +167,29 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   }
 
   @Override
-  @Nullable
-  public List<PyRequirement> getRequirements(@NotNull Module module) {
+  public @Nullable List<PyRequirement> getRequirements(@NotNull Module module) {
     return Optional
       .ofNullable(PyPackageUtil.getRequirementsFromTxt(module))
       .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
   }
 
-  @Nullable
   @Override
-  public PyRequirement parseRequirement(@NotNull String line) {
+  public @Nullable PyRequirement parseRequirement(@NotNull String line) {
     return PyRequirementParser.fromLine(line);
   }
 
-  @NotNull
   @Override
-  public List<PyRequirement> parseRequirements(@NotNull String text) {
+  public @NotNull List<PyRequirement> parseRequirements(@NotNull String text) {
     return PyRequirementParser.fromText(text);
   }
 
-  @NotNull
   @Override
-  public List<PyRequirement> parseRequirements(@NotNull VirtualFile file) {
+  public @NotNull List<PyRequirement> parseRequirements(@NotNull VirtualFile file) {
     return PyRequirementParser.fromFile(file);
   }
 
   @Override
-  @NotNull
-  public final List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
+  public final @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
     final List<PyPackage> currentPackages = myPackagesCache;
     if (alwaysRefresh || currentPackages == null) {
       myPackagesCache = null;
@@ -222,8 +214,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     PyPackageUtil.updatePackagesSynchronouslyWithGuard(this, myUpdatingCache);
   }
 
-  @Nullable
-  protected static String getProxyString() {
+  protected static @Nullable String getProxyString() {
     final HttpConfigurable settings = HttpConfigurable.getInstance();
     if (settings != null && settings.USE_HTTP_PROXY) {
       final String credentials;
@@ -238,13 +229,11 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return null;
   }
 
-  @Nullable
-  protected String getHelperPath(@NotNull final String helper) throws ExecutionException {
+  protected @Nullable String getHelperPath(final @NotNull String helper) throws ExecutionException {
     return PythonHelpersLocator.getHelperPath(helper);
   }
 
-  @NotNull
-  protected static List<String> makeSafeToDisplayCommand(@NotNull List<String> cmdline) {
+  protected static @NotNull List<String> makeSafeToDisplayCommand(@NotNull List<String> cmdline) {
     final List<String> safeCommand = new ArrayList<>(cmdline);
     for (int i = 0; i < safeCommand.size(); i++) {
       if (cmdline.get(i).equals("--proxy") && i + 1 < cmdline.size()) {
@@ -257,8 +246,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return safeCommand;
   }
 
-  @NotNull
-  private static String makeSafeUrlArgument(@NotNull String urlArgument) {
+  private static @NotNull String makeSafeUrlArgument(@NotNull String urlArgument) {
     try {
       final URI proxyUri = new URI(urlArgument);
       final String credentials = proxyUri.getUserInfo();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.project.Project;
@@ -20,13 +20,13 @@ import java.util.Collection;
 public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
   public PyPushDownProcessor(
-    @NotNull final Project project,
-    @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
-    @NotNull final PyClass from) {
+    final @NotNull Project project,
+    final @NotNull Collection<PyMemberInfo<PyElement>> membersToMove,
+    final @NotNull PyClass from) {
     super(project, membersToMove, from, getChildren(from));
   }
 
-  private static PyClass @NotNull [] getChildren(@NotNull final PyClass from) {
+  private static PyClass @NotNull [] getChildren(final @NotNull PyClass from) {
     final Collection<PyClass> all = getInheritors(from);
     return all.toArray(PyClass.EMPTY_ARRAY);
   }
@@ -35,8 +35,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
    * @param from class to check for inheritors
    * @return inheritors of class
    */
-  @NotNull
-  static Collection<PyClass> getInheritors(@NotNull final PyClass from) {
+  static @NotNull Collection<PyClass> getInheritors(final @NotNull PyClass from) {
     return PyClassInheritorsSearch.search(from, false).findAll();
   }
 
@@ -46,21 +45,18 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
     return RefactoringBundle.message("push.down.members.elements.header", "");
   }
 
-  @NotNull
   @Override
-  public String getCodeReferencesText(int usagesCount, int filesCount) {
+  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return PyPushDownHandler.getRefactoringName();
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.python.push.down";
   }
 }

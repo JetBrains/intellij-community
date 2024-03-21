@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,15 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PythonConsoleRunnerFactory {
-  @NotNull
-  public static PythonConsoleRunnerFactory getInstance() {
+  public static @NotNull PythonConsoleRunnerFactory getInstance() {
     return ApplicationManager.getApplication().getService(PythonConsoleRunnerFactory.class);
   }
 
-  @NotNull
-  public abstract PydevConsoleRunner createConsoleRunner(@NotNull Project project, @Nullable Module contextModule);
+  public abstract @NotNull PydevConsoleRunner createConsoleRunner(@NotNull Project project, @Nullable Module contextModule);
 
-  @NotNull
-  public abstract PydevConsoleRunner createConsoleRunnerWithFile(@NotNull Project project,
-                                                                 @NotNull PythonRunConfiguration config);
+  public abstract @NotNull PydevConsoleRunner createConsoleRunnerWithFile(@NotNull Project project,
+                                                                          @NotNull PythonRunConfiguration config);
 }

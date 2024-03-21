@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
@@ -12,9 +12,10 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
 
 
 public final class PyParametersRenameFactory implements AutomaticRenamerFactory {
@@ -42,9 +43,8 @@ public final class PyParametersRenameFactory implements AutomaticRenamerFactory 
     PyCodeInsightSettings.getInstance().RENAME_PARAMETERS_IN_HIERARCHY = enabled;
   }
 
-  @NotNull
   @Override
-  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new PyParametersRenamer((PyParameter)element, newName);
   }
 

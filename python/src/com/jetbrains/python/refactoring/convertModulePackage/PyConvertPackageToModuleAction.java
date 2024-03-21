@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -45,8 +45,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
     return false;
   }
 
-  @Nullable
-  private static PsiDirectory getPackageDir(@NotNull PsiElement elem) {
+  private static @Nullable PsiDirectory getPackageDir(@NotNull PsiElement elem) {
     if (elem instanceof PsiDirectory && PyUtil.isPackage(((PsiDirectory)elem), null)) {
       return (PsiDirectory)elem;
     }
@@ -61,9 +60,8 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
     return module == null || (PyUtil.getSourceRoots(module).contains(element.getVirtualFile()));
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+  protected @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new RefactoringActionHandler() {
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -86,7 +84,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
   }
 
   @VisibleForTesting
-  public void createModuleFromPackage(@NotNull final PsiDirectory pyPackage) {
+  public void createModuleFromPackage(final @NotNull PsiDirectory pyPackage) {
     if (pyPackage.getParent() == null) {
       return;
     }

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Platform;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -35,8 +34,8 @@ import java.util.List;
 class PyRemotePathEditor extends PythonPathEditor {
   private static final Logger LOG = Logger.getInstance(PyRemotePathEditor.class);
   private final RemoteSdkProperties myRemoteSdkData;
-  @NotNull private final Project myProject;
-  @NotNull private final Sdk mySdk;
+  private final @NotNull Project myProject;
+  private final @NotNull Sdk mySdk;
 
   private final List<PathMappingSettings.PathMapping> myNewMappings = new ArrayList<>();
 

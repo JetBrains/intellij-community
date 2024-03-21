@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -13,7 +13,7 @@ public final class SmartEnterUtil {
     return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
   }
 
-  public static void plainEnter(@NotNull final Editor editor) {
+  public static void plainEnter(final @NotNull Editor editor) {
     getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), EditorUtil.getEditorDataContext(editor));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewBundle;
@@ -25,9 +25,8 @@ public class PyFieldsFilter implements Filter {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 
@@ -36,9 +35,8 @@ public class PyFieldsFilter implements Filter {
     return getName();
   }
 
-  @NotNull
   @Override
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(StructureViewBundle.message("action.structureview.show.fields"), null,
                                       IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field));
   }

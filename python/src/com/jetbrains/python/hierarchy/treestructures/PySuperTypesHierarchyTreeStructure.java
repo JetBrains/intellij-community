@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.treestructures;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  public PySuperTypesHierarchyTreeStructure(@NotNull final PyClass cl) {
+  public PySuperTypesHierarchyTreeStructure(final @NotNull PyClass cl) {
     super(cl.getProject(), new PyHierarchyNodeDescriptor(null, cl, true));
   }
 

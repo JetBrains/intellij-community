@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
@@ -69,22 +69,16 @@ import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfigurat
  */
 public final class PythonSdkType extends SdkType {
 
-  @NotNull
-  @ApiStatus.Internal
-  public static final Key<List<String>> MOCK_SYS_PATH_KEY = Key.create("PY_MOCK_SYS_PATH_KEY");
+  @ApiStatus.Internal public static final @NotNull Key<List<String>> MOCK_SYS_PATH_KEY = Key.create("PY_MOCK_SYS_PATH_KEY");
 
-  @NotNull
-  @ApiStatus.Internal
-  public static final Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
+  @ApiStatus.Internal public static final @NotNull Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
 
-  @NotNull
-  @ApiStatus.Internal
-  public static final Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
+  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
-  @NonNls private static final String SKELETONS_TOPIC = "Skeletons";
+  private static final @NonNls String SKELETONS_TOPIC = "Skeletons";
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
@@ -98,8 +92,7 @@ public final class PythonSdkType extends SdkType {
   /**
    * Old configuration may have this prefix in homepath. We must remove it
    */
-  @NotNull
-  private static final String LEGACY_TARGET_PREFIX = "target://";
+  private static final @NotNull String LEGACY_TARGET_PREFIX = "target://";
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -114,22 +107,18 @@ public final class PythonSdkType extends SdkType {
     return PythonPsiApiIcons.Python;
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.project.structure.sdk.python";
   }
 
   @Override
-  @NonNls
-  @Nullable
-  public String suggestHomePath() {
+  public @NonNls @Nullable String suggestHomePath() {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths() {
+  public @NotNull Collection<String> suggestHomePaths() {
     final Sdk[] existingSdks = ReadAction.compute(() -> ProjectJdkTable.getInstance().getAllJdks());
     final List<PyDetectedSdk> sdks = PySdkExtKt.detectSystemWideSdks(null, Arrays.asList(existingSdks));
     //return all detected items after PY-41218 is fixed
@@ -145,9 +134,8 @@ public final class PythonSdkType extends SdkType {
     return PythonSdkFlavor.getFlavor(path) != null;
   }
 
-  @NotNull
   @Override
-  public FileChooserDescriptor getHomeChooserDescriptor() {
+  public @NotNull FileChooserDescriptor getHomeChooserDescriptor() {
     final var descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
@@ -251,9 +239,8 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
-  @NotNull
   @Override
-  public String suggestSdkName(@Nullable final String currentSdkName, final @NotNull String sdkHome) {
+  public @NotNull String suggestSdkName(final @Nullable String currentSdkName, final @NotNull String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
     final File virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome);
     if (virtualEnvRoot != null) {
@@ -265,29 +252,27 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
-  @Nullable
-  public static String suggestBaseSdkName(@NotNull String sdkHome) {
+  public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     if (flavor == null) return null;
     return flavor.getName() + " " + flavor.getLanguageLevel(sdkHome);
   }
 
   @Override
-  @Nullable
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel,
-                                                                     @NotNull final SdkModificator sdkModificator) {
+  public @Nullable AdditionalDataConfigurable createAdditionalDataConfigurable(final @NotNull SdkModel sdkModel,
+                                                                               final @NotNull SdkModificator sdkModificator) {
     return null;
   }
 
   @Override
-  public void saveAdditionalData(@NotNull final SdkAdditionalData additionalData, @NotNull final Element additional) {
+  public void saveAdditionalData(final @NotNull SdkAdditionalData additionalData, final @NotNull Element additional) {
     if (additionalData instanceof PythonSdkAdditionalData) {
       ((PythonSdkAdditionalData)additionalData).save(additional);
     }
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
+  public SdkAdditionalData loadAdditionalData(final @NotNull Sdk currentSdk, final @NotNull Element additional) {
     String homePath = currentSdk.getHomePath();
 
     if (homePath != null) {
@@ -346,15 +331,12 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getPresentableName() {
+  public @NotNull @NonNls String getPresentableName() {
     return "Python SDK";
   }
 
-  @NotNull
   @Override
-  public String sdkPath(@NotNull VirtualFile homePath) {
+  public @NotNull String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);
     PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(path);
     if (flavor != null) {
@@ -388,7 +370,7 @@ public final class PythonSdkType extends SdkType {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
-  public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, @Nullable final Runnable restartAction) {
+  public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, final @Nullable Runnable restartAction) {
     NotificationListener notificationListener;
     String notificationMessage;
     if (e.getCause() instanceof VagrantNotStartedException) {
@@ -436,8 +418,7 @@ public final class PythonSdkType extends SdkType {
     notification.notify(null);
   }
 
-  @NotNull
-  public static VirtualFile getSdkRootVirtualFile(@NotNull VirtualFile path) {
+  public static @NotNull VirtualFile getSdkRootVirtualFile(@NotNull VirtualFile path) {
     String suffix = path.getExtension();
     if (suffix != null) {
       suffix = StringUtil.toLowerCase(suffix); // Why on earth empty suffix is null and not ""?
@@ -496,14 +477,13 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  @Nullable
-  public String getVersionString(final @NotNull String sdkHome) {
+  public @Nullable String getVersionString(final @NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
 
   @Override
-  public boolean isRootTypeApplicable(@NotNull final OrderRootType type) {
+  public boolean isRootTypeApplicable(final @NotNull OrderRootType type) {
     return type == OrderRootType.CLASSES;
   }
 
@@ -547,8 +527,7 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
-  @NotNull
-  public static String getSdkKey(@NotNull Sdk sdk) {
+  public static @NotNull String getSdkKey(@NotNull Sdk sdk) {
     return sdk.getName();
   }
 
@@ -558,14 +537,12 @@ public final class PythonSdkType extends SdkType {
     return !PythonSdkUtil.isRemote(sdk);
   }
 
-  @Nullable
-  public static Sdk findLocalCPython(@Nullable Module module) {
+  public static @Nullable Sdk findLocalCPython(@Nullable Module module) {
     final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
     return findLocalCPythonForSdk(moduleSDK);
   }
 
-  @Nullable
-  public static Sdk findLocalCPythonForSdk(@Nullable Sdk existingSdk) {
+  public static @Nullable Sdk findLocalCPythonForSdk(@Nullable Sdk existingSdk) {
     if (existingSdk != null && !PythonSdkUtil.isRemote(existingSdk) && PythonSdkFlavor.getFlavor(existingSdk) instanceof CPythonSdkFlavor) {
       return existingSdk;
     }
@@ -581,13 +558,11 @@ public final class PythonSdkType extends SdkType {
    * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk)} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+  public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PySdkUtil.getLanguageLevelForSdk(sdk);
   }
 
-  @Nullable
-  public static Sdk findPython2Sdk(@Nullable Module module) {
+  public static @Nullable Sdk findPython2Sdk(@Nullable Module module) {
     final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
     if (moduleSDK != null && getLanguageLevelForSdk(moduleSDK).isPython2()) {
       return moduleSDK;
@@ -595,8 +570,7 @@ public final class PythonSdkType extends SdkType {
     return findPython2Sdk(PythonSdkUtil.getAllSdks());
   }
 
-  @Nullable
-  public static Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
+  public static @Nullable Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
     for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (getLanguageLevelForSdk(sdk).isPython2()) {
         return sdk;
@@ -623,8 +597,7 @@ public final class PythonSdkType extends SdkType {
   /**
    * Returns mocked path (stored in sdk with {@link #MOCK_SYS_PATH_KEY} in test)
    */
-  @NotNull
-  public static List<String> getMockPath(@NotNull Sdk sdk) {
+  public static @NotNull List<String> getMockPath(@NotNull Sdk sdk) {
     var workDir = Paths.get(Objects.requireNonNull(sdk.getHomePath())).getParent().toString();
     var mockPaths = sdk.getUserData(MOCK_SYS_PATH_KEY);
     return mockPaths != null ? Collections.unmodifiableList(mockPaths) : Collections.singletonList(workDir);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableList;
@@ -95,9 +95,8 @@ public final class PythonSdkUpdater {
       myTraceback = traceback;
     }
 
-    @NotNull
-    private static PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
-                                                @NotNull PyUpdateSdkRequestData newRequest) {
+    private static @NotNull PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
+                                                         @NotNull PyUpdateSdkRequestData newRequest) {
       return new PyUpdateSdkRequestData(oldRequest.myTimestamp, newRequest.myTraceback);
     }
   }
@@ -500,10 +499,9 @@ public final class PythonSdkUpdater {
     return false;
   }
 
-  @NotNull
-  private static List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk,
-                                                 @NotNull List<VirtualFile> sdkRoots,
-                                                 @NotNull List<VirtualFile> userAddedRoots) {
+  private static @NotNull List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk,
+                                                          @NotNull List<VirtualFile> sdkRoots,
+                                                          @NotNull List<VirtualFile> userAddedRoots) {
     return ImmutableList.<VirtualFile>builder()
       .addAll(sdkRoots)
       .addAll(getSkeletonsPaths(sdk))
@@ -515,8 +513,7 @@ public final class PythonSdkUpdater {
   /**
    * Returns all the paths manually added to an SDK by the user.
    */
-  @NotNull
-  private static List<VirtualFile> getUserAddedPaths(@NotNull Sdk sdk) {
+  private static @NotNull List<VirtualFile> getUserAddedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(additionalData, PythonSdkAdditionalData.class);
     return pythonAdditionalData != null ? Lists.newArrayList(pythonAdditionalData.getAddedPathFiles()) :
@@ -528,8 +525,7 @@ public final class PythonSdkUpdater {
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
-  @NotNull
-  private static List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
+  private static @NotNull List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     if (additionalData instanceof RemoteSdkProperties remoteSdkData) {
       final List<String> paths = new ArrayList<>();
@@ -611,8 +607,7 @@ public final class PythonSdkUpdater {
   /**
    * Returns the paths of the binary skeletons and user skeletons for an SDK.
    */
-  @NotNull
-  private static List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
+  private static @NotNull List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
     final List<VirtualFile> results = new ArrayList<>();
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
     if (skeletonsPath != null) {
@@ -630,8 +625,7 @@ public final class PythonSdkUpdater {
     return results;
   }
 
-  @NotNull
-  private static String getSdkPresentableName(@NotNull Sdk sdk) {
+  private static @NotNull String getSdkPresentableName(@NotNull Sdk sdk) {
     final String homePath = sdk.getHomePath();
     final String name = sdk.getName();
     return homePath != null ? name + " (" + homePath + ")" : name;
@@ -642,8 +636,7 @@ public final class PythonSdkUpdater {
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
-  @NotNull
-  private static List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
+  private static @NotNull List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
     final long startTime = System.currentTimeMillis();
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
     if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
@@ -661,7 +654,7 @@ public final class PythonSdkUpdater {
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
-                                              @NotNull final List<VirtualFile> sdkPaths,
+                                              final @NotNull List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
     final List<VirtualFile> currentSdkPaths = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
@@ -693,8 +686,7 @@ public final class PythonSdkUpdater {
   /**
    * Returns unique Python SDKs for the open modules of the project.
    */
-  @NotNull
-  static Set<Sdk> getPythonSdks(@NotNull Project project) {
+  static @NotNull Set<Sdk> getPythonSdks(@NotNull Project project) {
     final Set<Sdk> pythonSdks = new LinkedHashSet<>();
 
     ReadAction.run(
@@ -729,8 +721,7 @@ public final class PythonSdkUpdater {
       myFrameMarker = frameMarker;
     }
 
-    @NotNull
-    public static String getCauseByTrace(@NotNull Throwable trace) {
+    public static @NotNull String getCauseByTrace(@NotNull Throwable trace) {
       final Trigger trigger = findTriggerByTrace(trace);
       if (trigger != null) {
         return trigger.name();
@@ -738,8 +729,7 @@ public final class PythonSdkUpdater {
       return "Unknown trigger:\n" + ExceptionUtil.getThrowableText(trace);
     }
 
-    @Nullable
-    public static Trigger findTriggerByTrace(@NotNull Throwable trace) {
+    public static @Nullable Trigger findTriggerByTrace(@NotNull Throwable trace) {
       final String traceText = ExceptionUtil.getThrowableText(trace);
       for (Trigger value : values()) {
         if (traceText.contains(value.myFrameMarker)) {

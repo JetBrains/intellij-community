@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -6,9 +6,9 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
+import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +47,8 @@ public final class JythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
     return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("jython");
   }
 
-  @Nullable
   @Override
-  public String getVersionStringFromOutput(@NotNull String output) {
+  public @Nullable String getVersionStringFromOutput(@NotNull String output) {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
@@ -80,9 +79,8 @@ public final class JythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
     PythonEnvUtil.addToEnv(JYTHONPATH, jythonPath, env);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Jython";
   }
 

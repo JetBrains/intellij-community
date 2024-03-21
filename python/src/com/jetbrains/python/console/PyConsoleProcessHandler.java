@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.process.ProcessEvent;
@@ -58,9 +58,8 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     return false;
   }
 
-  @NotNull
   @Override
-  protected BaseOutputReader.Options readerOptions() {
+  protected @NotNull BaseOutputReader.Options readerOptions() {
     return BaseOutputReader.Options.forMostlySilentProcess();
   }
 
@@ -81,8 +80,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     }
   }
 
-  @NotNull
-  public PydevConsoleCommunication getPydevConsoleCommunication() {
+  public @NotNull PydevConsoleCommunication getPydevConsoleCommunication() {
     return myPydevConsoleCommunication;
   }
 }

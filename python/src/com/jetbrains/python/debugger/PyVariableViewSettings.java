@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
@@ -29,7 +29,7 @@ public final class PyVariableViewSettings {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
@@ -55,7 +55,7 @@ public final class PyVariableViewSettings {
     }
   }
 
-  public static void showWarningMessage(@Nullable final XCompositeNode node) {
+  public static void showWarningMessage(final @Nullable XCompositeNode node) {
     if (node == null) return;
     final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
     if (debuggerSettings.getValuesPolicy() == ValuesPolicy.ON_DEMAND) return;
@@ -73,9 +73,8 @@ public final class PyVariableViewSettings {
           linkClicked = true;
         }
 
-        @NotNull
         @Override
-        public String getLinkText() {
+        public @NotNull String getLinkText() {
           if (linkClicked) {
             return "";
           }
@@ -156,10 +155,10 @@ public final class PyVariableViewSettings {
     }
   }
 
-  private static abstract class AbstractPolicyAction<Policy extends AbstractPolicy, PolicyGroup extends AbstractPolicyGroup<Policy, ? extends ToggleAction>>
+  private abstract static class AbstractPolicyAction<Policy extends AbstractPolicy, PolicyGroup extends AbstractPolicyGroup<Policy, ? extends ToggleAction>>
     extends ToggleAction {
-    @NotNull private final Policy myPolicy;
-    @NotNull private final PolicyGroup myActionGroup;
+    private final @NotNull Policy myPolicy;
+    private final @NotNull PolicyGroup myActionGroup;
     private volatile boolean isEnabled;
 
     private AbstractPolicyAction(@NotNull @Nls String text,
@@ -181,7 +180,7 @@ public final class PyVariableViewSettings {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       myActionGroup.updatePolicyActions();
       final Presentation presentation = e.getPresentation();
@@ -215,9 +214,9 @@ public final class PyVariableViewSettings {
     protected abstract void changeDebuggerSettings();
   }
 
-  private static abstract class AbstractPolicyGroup<Policy extends AbstractPolicy, PolicyAction extends AbstractPolicyAction<Policy, ? extends DefaultActionGroup>>
+  private abstract static class AbstractPolicyGroup<Policy extends AbstractPolicy, PolicyAction extends AbstractPolicyAction<Policy, ? extends DefaultActionGroup>>
     extends DefaultActionGroup {
-    @NotNull private final List<PolicyAction> myPolicyActions = new ArrayList<>();
+    private final @NotNull List<PolicyAction> myPolicyActions = new ArrayList<>();
     private final List<PolicyListener> myPolicyListeners = new ArrayList<>();
 
     private AbstractPolicyGroup(@NlsActions.ActionText String name) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.magicLiteral;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider, DumbAware {
   @Override
-  public UsageTarget @Nullable [] getTargets(@NotNull final Editor editor, @NotNull final PsiFile file) {
+  public UsageTarget @Nullable [] getTargets(final @NotNull Editor editor, final @NotNull PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element != null) {
       final PyStringLiteralExpression literal = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);

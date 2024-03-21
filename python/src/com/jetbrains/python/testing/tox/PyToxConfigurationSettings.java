@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.openapi.module.Module;
@@ -24,25 +24,24 @@ import java.util.regex.Pattern;
  */
 final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration> {
   private static final Pattern ARG_SEPARATOR = Pattern.compile("\\s+");
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private AbstractPyCommonOptionsForm myForm;
   private JPanel myPanel;
   private JTextField myArgumentsField;
   private JTextField myRunOnlyTestsField;
 
-  PyToxConfigurationSettings(@NotNull final Project project) {
+  PyToxConfigurationSettings(final @NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  protected void applyEditorTo(@NotNull final PyToxConfiguration s) {
+  protected void applyEditorTo(final @NotNull PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(myForm, s);
     s.setArguments(asArray(myArgumentsField));
     s.setRunOnlyEnvs(asArray(myRunOnlyTestsField));
   }
 
-  private static String @NotNull [] asArray(@NotNull final JTextComponent field) {
+  private static String @NotNull [] asArray(final @NotNull JTextComponent field) {
     final String text = field.getText();
     if (text.isEmpty()) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
@@ -51,20 +50,18 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull final PyToxConfiguration s) {
+  protected void resetEditorFrom(final @NotNull PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myForm);
     myArgumentsField.setText(fromArray(s.getArguments()));
     myRunOnlyTestsField.setText(fromArray(s.getRunOnlyEnvs()));
   }
 
-  @Nullable
-  private static String fromArray(final String @NotNull ... arguments) {
+  private static @Nullable String fromArray(final String @NotNull ... arguments) {
     return StringUtil.join(arguments, " ");
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myPanel, BorderLayout.PAGE_START);
@@ -77,8 +74,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
     return panel;
   }
 
-  @NotNull
-  private AbstractPyCommonOptionsForm createEnvPanel() {
+  private @NotNull AbstractPyCommonOptionsForm createEnvPanel() {
     return PyCommonOptionsFormFactory.getInstance().createForm(new PyCommonOptionsFormData() {
       @Override
       public Project getProject() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -116,9 +116,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     };
   }
 
-  @NotNull
   @Override
-  public final SettingsEditor<T> getConfigurationEditor() {
+  public final @NotNull SettingsEditor<T> getConfigurationEditor() {
     if (Registry.is("python.new.run.config", false) && isNewUiSupported()) {
       // TODO: actually, we should return result of `PythonExtendedConfigurationEditor.create()` call, but it produces side effects
       // investigation needed PY-17716
@@ -211,8 +210,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return sdkHome;
   }
 
-  @Nullable
-  public String getInterpreterPath() {
+  public @Nullable String getInterpreterPath() {
     String sdkHome;
     if (myUseModuleSdk) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -229,9 +227,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  @Nullable
   @Transient
-  public Sdk getSdk() {
+  public @Nullable Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
     }
@@ -243,12 +240,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
   }
 
-  @NotNull
-  private List<String> myEnvFiles = Collections.emptyList();
+  private @NotNull List<String> myEnvFiles = Collections.emptyList();
 
-  @NotNull
   @Override
-  public List<String> getEnvFilePaths() {
+  public @NotNull List<String> getEnvFilePaths() {
     return myEnvFiles;
   }
 
@@ -356,9 +351,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  @Nullable
   @Transient
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return getConfigurationModule().getModule();
   }
 
@@ -471,8 +465,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * @return working directory to run, never null, does its best to guess which dir to use.
    * Unlike {@link #getWorkingDirectory()} it does not simply take directory from config.
    */
-  @NotNull
-  public String getWorkingDirectorySafe() {
+  public @NotNull String getWorkingDirectorySafe() {
     final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : getExpandedWorkingDir(this);
     if (result != null) {
       return result;
@@ -485,8 +478,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return new File(".").getAbsolutePath();
   }
 
-  @Nullable
-  private String getFirstModuleRoot() {
+  private @Nullable String getFirstModuleRoot() {
     final Module module = getModule();
     if (module == null) {
       return null;
@@ -513,7 +505,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
+  public void addTestSpecsAsParameters(final @NotNull ParamsGroup paramsGroup, final @NotNull List<String> testSpecs) {
     // By default we simply add them as arguments
     paramsGroup.addParameters(testSpecs);
   }

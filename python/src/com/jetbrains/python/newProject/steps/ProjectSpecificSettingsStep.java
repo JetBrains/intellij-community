@@ -55,11 +55,11 @@ import java.util.stream.Collectors;
 
 public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> implements DumbAware {
   private boolean myInstallFramework;
-  @Nullable private PyAddSdkGroupPanel myInterpreterPanel;
-  @Nullable private HideableDecorator myInterpretersDecorator;
+  private @Nullable PyAddSdkGroupPanel myInterpreterPanel;
+  private @Nullable HideableDecorator myInterpretersDecorator;
 
-  public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator<T> projectGenerator,
-                                     @NotNull final AbstractNewProjectStep.AbstractCallback<T> callback) {
+  public ProjectSpecificSettingsStep(final @NotNull DirectoryProjectGenerator<T> projectGenerator,
+                                     final @NotNull AbstractNewProjectStep.AbstractCallback<T> callback) {
     super(projectGenerator, callback);
   }
 
@@ -73,8 +73,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @Override
-  @Nullable
-  protected JPanel createAdvancedSettings() {
+  protected @Nullable JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       advancedSettings = ((PythonProjectGenerator<?>)myProjectGenerator).getSettingsPanel(myProjectDirectory.get());
@@ -95,8 +94,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return null;
   }
 
-  @Nullable
-  public Sdk getSdk() {
+  public @Nullable Sdk getSdk() {
     if (!(myProjectGenerator instanceof PythonProjectGenerator)) return null;
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
@@ -112,15 +110,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
   }
 
-  @Nullable
-  public InterpreterStatisticsInfo getInterpreterInfoForStatistics() {
+  public @Nullable InterpreterStatisticsInfo getInterpreterInfoForStatistics() {
     if (myInterpreterPanel == null) return null;
     PyAddSdkPanel panel = myInterpreterPanel.getSelectedPanel();
     return panel.getStatisticInfo();
   }
 
-  @Nullable
-  private Sdk getInterpreterPanelSdk() {
+  private @Nullable Sdk getInterpreterPanelSdk() {
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     return interpreterPanel.getSdk();
@@ -144,8 +140,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   /**
    * @return path for project on remote side provided by user
    */
-  @Nullable
-  public String getRemotePath() {
+  public @Nullable String getRemotePath() {
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     final PyAddExistingSdkPanel panel = ObjectUtils.tryCast(interpreterPanel.getSelectedPanel(), PyAddExistingSdkPanel.class);
@@ -276,8 +271,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
                                                   : null;
   }
 
-  @NotNull
-  private static Pair<Boolean, List<String>> validateFramework(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
+  private static @NotNull Pair<Boolean, List<String>> validateFramework(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
     final List<String> warnings = new ArrayList<>();
     boolean installFramework = false;
     if (!generator.isFrameworkInstalled(sdk)) {
@@ -380,8 +374,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       .replaceFirst("[name]", name);
   }
 
-  @Nullable
-  private Sdk getPreferredSdk(@NotNull List<Sdk> sdks) {
+  private @Nullable Sdk getPreferredSdk(@NotNull List<Sdk> sdks) {
     final PyFrameworkProjectGenerator projectGenerator = ObjectUtils.tryCast(getProjectGenerator(), PyFrameworkProjectGenerator.class);
     final boolean onlyPython2 = projectGenerator != null && !projectGenerator.supportsPython3();
     final Sdk preferred = ContainerUtil.getFirstItem(sdks);
@@ -393,8 +386,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return preferred;
   }
 
-  @NotNull
-  public static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
+  public static @NotNull List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
     return StreamEx
       .of(existingSdks)
       .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && PySdkExtKt.getSdkSeemsValid(sdk))

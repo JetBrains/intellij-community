@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
@@ -33,7 +33,7 @@ public class PythonProcessHandler extends KillableProcessHandler implements Ansi
   }
 
   @Override
-  public final void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
+  public final void notifyTextAvailable(final @NotNull String text, final @NotNull Key outputType) {
     if (hasPty()) {
       super.notifyTextAvailable(text, outputType);
     } else {

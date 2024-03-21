@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.facet.FacetType;
@@ -23,14 +23,12 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyBundle.message("python.module.name");
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     String basicDescription = PyBundle.message("python.module.description");
     for (FacetType type : FacetType.EP_NAME.getExtensionList()) {
       if (type.getId().toString().equalsIgnoreCase("django")) {
@@ -40,9 +38,8 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
     return basicDescription;
   }
 
-  @NotNull
   @Override
-  public Icon getNodeIcon(final boolean isOpened) {
+  public @NotNull Icon getNodeIcon(final boolean isOpened) {
     return PythonIcons.Python.PythonClosed;
   }
 

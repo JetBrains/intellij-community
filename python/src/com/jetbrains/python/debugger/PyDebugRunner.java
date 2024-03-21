@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.codeWithMe.ClientId;
@@ -103,20 +103,19 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
 
-  @NonNls private static final String PYTHON_DONT_WRITE_PYC_FLAG = "-B";
+  private static final @NonNls String PYTHON_DONT_WRITE_PYC_FLAG = "-B";
 
-  @NonNls private static final String PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix=";
+  private static final @NonNls String PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix=";
 
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
   @Override
-  @NotNull
-  public String getRunnerId() {
+  public @NotNull String getRunnerId() {
     return PY_DEBUG_RUNNER;
   }
 
   @Override
-  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
+  public boolean canRun(final @NotNull String executorId, final @NotNull RunProfile profile) {
     if (!DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)) {
       // If not debug at all
       return false;
@@ -133,7 +132,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return isDebuggable(profile);
   }
 
-  private static boolean isDebuggable(@NotNull final RunProfile profile) {
+  private static boolean isDebuggable(final @NotNull RunProfile profile) {
     if (profile instanceof DebugAwareConfiguration) {
       // if configuration knows whether debug is allowed
       return ((DebugAwareConfiguration)profile).canRunUnderDebug();
@@ -146,7 +145,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return false;
   }
 
-  protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
+  protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment) {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored -> {
@@ -163,9 +162,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       });
   }
 
-  @NotNull
-  private Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,
-                                                              @NotNull final ExecutionEnvironment environment) {
+  private @NotNull Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,
+                                                                       final @NotNull ExecutionEnvironment environment) {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
     RunProfile profile = environment.getRunProfile();
     var clientId = ClientId.getCurrentOrNull();
@@ -221,8 +219,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
-        @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
+        public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
           PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
@@ -243,8 +240,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  @NotNull
-  private Promise<XDebugSession> createSessionLegacy(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
+  private @NotNull Promise<XDebugSession> createSessionLegacy(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
     final RunProfile profile = environment.getRunProfile();
 
@@ -274,11 +270,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       }));
   }
 
-  @NotNull
-  protected PyDebugProcess createDebugProcess(@NotNull XDebugSession session,
-                                              ServerSocket serverSocket,
-                                              ExecutionResult result,
-                                              PythonCommandLineState pyState) {
+  protected @NotNull PyDebugProcess createDebugProcess(@NotNull XDebugSession session,
+                                                       ServerSocket serverSocket,
+                                                       ExecutionResult result,
+                                                       PythonCommandLineState pyState) {
     return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
                               pyState.isMultiprocessDebug());
   }
@@ -290,8 +285,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * @deprecated Override {@link #execute(ExecutionEnvironment, RunProfileState)} instead.
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
+  protected @NotNull RunContentDescriptor doExecute(@NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     // The PyDebugRunner class might inherit AsyncProgramRunner, but some magic is added for backward compatibility
     // with GenericProgramRunner. Consider changing the base class when doExecute method is deleted.
@@ -322,8 +316,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * The same signature and the same meaning as in
    * {@link com.intellij.execution.runners.AsyncProgramRunner#execute(ExecutionEnvironment, RunProfileState)}.
    */
-  @NotNull
-  protected Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
+  protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
     throws ExecutionException {
     return createSession(state, environment)
       .thenAsync(session -> AppUIExecutor.onUiThread().submit(() -> {
@@ -347,8 +340,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
-  @NotNull
-  private Promise<@Nullable RunContentDescriptor> executeWithLegacyWorkaround(
+  private @NotNull Promise<@Nullable RunContentDescriptor> executeWithLegacyWorkaround(
     @NotNull ExecutionEnvironment environment,
     @NotNull RunProfileState state
   ) throws ExecutionException {
@@ -380,8 +372,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return -1;
   }
 
-  public static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
-                                                               @NotNull final ExecutionResult result,
+  public static void createConsoleCommunicationAndSetupActions(final @NotNull Project project,
+                                                               final @NotNull ExecutionResult result,
                                                                @NotNull PyDebugProcess debugProcess, @NotNull XDebugSession session) {
     ExecutionConsole console = result.getExecutionConsole();
     if (console instanceof PythonDebugLanguageConsoleView) {
@@ -460,8 +452,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  @Nullable
-  public static CommandLinePatcher createRunConfigPatcher(RunProfileState state, RunProfile profile) {
+  public static @Nullable CommandLinePatcher createRunConfigPatcher(RunProfileState state, RunProfile profile) {
     CommandLinePatcher runConfigPatcher = null;
     if (state instanceof PythonCommandLineState && profile instanceof AbstractPythonRunConfiguration) {
       runConfigPatcher = (AbstractPythonRunConfiguration)profile;
@@ -885,9 +876,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   private class PythonDebuggerScriptTargetedCommandLineBuilder implements PythonScriptTargetedCommandLineBuilder {
-    private @NotNull final Project myProject;
-    private @NotNull final PythonCommandLineState myPyState;
-    private @NotNull final RunProfile myProfile;
+    private final @NotNull Project myProject;
+    private final @NotNull PythonCommandLineState myPyState;
+    private final @NotNull RunProfile myProfile;
     private final int myIdeDebugServerLocalPort;
     private volatile @Nullable ServerSocket myServerSocketForDebugging;
 
@@ -901,10 +892,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       myIdeDebugServerLocalPort = ideDebugServerPort;
     }
 
-    @NotNull
     @Override
-    public PythonExecution build(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
-                                 @NotNull PythonExecution pythonScript) {
+    public @NotNull PythonExecution build(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                          @NotNull PythonExecution pythonScript) {
       TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(myIdeDebugServerLocalPort, null);
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(ideServerPortBinding);
 

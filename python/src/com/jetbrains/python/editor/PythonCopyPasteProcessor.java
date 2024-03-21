@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.editor;
 
 import com.google.common.collect.ImmutableSet;
@@ -54,9 +40,8 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                                                     "while", "for",
                                                                     "try", "except", "finally");
 
-  @Nullable
   @Override
-  public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+  public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || !isSupportedFile(file)) {
       return null;
     }
@@ -90,13 +75,12 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return null;
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(Project project,
-                                  PsiFile file,
-                                  Editor editor,
-                                  String text,
-                                  RawText rawText) {
+  public @NotNull String preprocessOnPaste(Project project,
+                                           PsiFile file,
+                                           Editor editor,
+                                           String text,
+                                           RawText rawText) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || !isSupportedFile(file)) {
       return text;
     }
@@ -146,8 +130,7 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return file instanceof PyFile;
   }
 
-  @NotNull
-  private static String addLeadingSpacesToNormalizeSelection(@NotNull PsiFile file, @NotNull String text) {
+  private static @NotNull String addLeadingSpacesToNormalizeSelection(@NotNull PsiFile file, @NotNull String text) {
     if (!fragmentBeginsWithBlockStatement(text)) {
       return text;
     }
@@ -177,12 +160,11 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return ContainerUtil.exists(START_KEYWORDS, keyword -> text.startsWith(keyword + " ") || text.startsWith(keyword + ":"));
   }
 
-  @NotNull
-  private static String inferBestIndent(@NotNull PsiFile file,
-                                        @NotNull Document document,
-                                        int caretOffset,
-                                        int lineNumber,
-                                        @NotNull String fragmentIndent) {
+  private static @NotNull String inferBestIndent(@NotNull PsiFile file,
+                                                 @NotNull Document document,
+                                                 int caretOffset,
+                                                 int lineNumber,
+                                                 @NotNull String fragmentIndent) {
 
     PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS != null) {
@@ -229,8 +211,7 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return userIndent;
   }
 
-  @Nullable
-  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiFile file, int offset) {
+  private static @Nullable PyStatementList findEmptyStatementListNearby(@NotNull PsiFile file, int offset) {
     final PsiWhiteSpace whitespace = findWhitespaceAtCaret(file, offset);
     if (whitespace == null) {
       return null;
@@ -247,13 +228,11 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return statementList != null && statementList.getStatements().length == 0 ? statementList : null;
   }
 
-  @Nullable
-  private static PsiWhiteSpace findWhitespaceAtCaret(@NotNull PsiFile file, int offset) {
+  private static @Nullable PsiWhiteSpace findWhitespaceAtCaret(@NotNull PsiFile file, int offset) {
     return as(file.findElementAt(offset == file.getTextLength() && offset > 0 ? offset - 1 : offset), PsiWhiteSpace.class);
   }
 
-  @Nullable
-  private static PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiFile file, int offset) {
+  private static @Nullable PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiFile file, int offset) {
     final PsiWhiteSpace whitespace = findWhitespaceAtCaret(file, offset);
     if (whitespace == null) {
       return null;
@@ -262,7 +241,7 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return PsiTreeUtil.getParentOfType(prevLeaf, PyStatementListContainer.class);
   }
 
-  private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
+  private static boolean shouldPasteOnPreviousLine(final @NotNull PsiFile file, @NotNull String text, int caretOffset) {
     final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS == null || text.endsWith("\n")) {
@@ -274,8 +253,7 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return false;
   }
 
-  @Nullable
-  private static PsiElement getPrevNonCommentLeaf(@NotNull PsiElement element) {
+  private static @Nullable PsiElement getPrevNonCommentLeaf(@NotNull PsiElement element) {
     PsiElement anchor = PsiTreeUtil.prevLeaf(element);
     while (anchor instanceof PsiComment || anchor instanceof PsiWhiteSpace) {
       anchor = PsiTreeUtil.prevLeaf(anchor, false);
@@ -283,7 +261,7 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return anchor;
   }
 
-  private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
+  private static boolean inStatementList(final @NotNull PsiFile file, int caretOffset) {
     final PsiElement element = file.findElementAt(caretOffset);
     return PsiTreeUtil.getParentOfType(element, PyStatementListContainer.class) != null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -30,8 +30,7 @@ import java.util.regex.PatternSyntaxException;
 public final class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkeletonsProvider {
   private static final Logger LOG = Logger.getInstance(DefaultPregeneratedSkeletonsProvider.class);
 
-  @Nullable
-  private static File findPregeneratedSkeletonsRoot() {
+  private static @Nullable File findPregeneratedSkeletonsRoot() {
     final String path = PathManager.getHomePath();
     LOG.info("Home path is " + path);
     File f = new File(path, "python/skeletons");  // from sources
@@ -50,11 +49,10 @@ public final class DefaultPregeneratedSkeletonsProvider implements PyPregenerate
     }
   }
 
-  @Nullable
-  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk,
-                                                    int generatorVersion,
-                                                    boolean withMinorVersion,
-                                                    boolean withExtension) {
+  public static @Nullable String getPregeneratedSkeletonsName(@NotNull Sdk sdk,
+                                                              int generatorVersion,
+                                                              boolean withMinorVersion,
+                                                              boolean withExtension) {
     if (PythonSdkUtil.isRemote(sdk)) {
       return null;
     }
@@ -70,12 +68,11 @@ public final class DefaultPregeneratedSkeletonsProvider implements PyPregenerate
     return getPrebuiltSkeletonsName(generatorVersion, versionString, withMinorVersion, withExtension);
   }
 
-  @NotNull
   @VisibleForTesting
-  public static String getPrebuiltSkeletonsName(int generatorVersion,
-                                                @NotNull @NonNls String versionString,
-                                                boolean withMinorVersion,
-                                                boolean withExtension) {
+  public static @NotNull String getPrebuiltSkeletonsName(int generatorVersion,
+                                                         @NotNull @NonNls String versionString,
+                                                         boolean withMinorVersion,
+                                                         boolean withExtension) {
 
     String version = StringUtil.toLowerCase(versionString).replace(" ", "-");
     if (!withMinorVersion) {

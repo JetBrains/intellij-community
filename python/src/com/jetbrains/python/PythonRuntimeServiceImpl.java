@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -39,9 +39,8 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
     return ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element));
   }
 
-  @Nullable
   @Override
-  public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
+  public @Nullable Sdk getConsoleSdk(@NotNull PsiElement foothold) {
     return PydevConsoleRunnerUtil.getConsoleSdk(foothold);
   }
 
@@ -50,9 +49,8 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
     return PydevDocumentationProvider.createDoc(element, originalElement);
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+  public @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 

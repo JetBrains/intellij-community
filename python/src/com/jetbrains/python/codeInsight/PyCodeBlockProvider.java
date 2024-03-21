@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.editorActions.CodeBlockProvider;
@@ -14,9 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 
 public final class PyCodeBlockProvider implements CodeBlockProvider {
-  @Nullable
   @Override
-  public TextRange getCodeBlockRange(Editor editor, PsiFile psiFile) {
+  public @Nullable TextRange getCodeBlockRange(Editor editor, PsiFile psiFile) {
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {

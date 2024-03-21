@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.highlighting;
 
 import com.google.common.collect.ImmutableMap;
@@ -71,7 +71,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PyBundle.messagePointer("python.colors.type.parameters"), PyHighlighter.PY_TYPE_PARAMETER),
   };
 
-  @NonNls private static final Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
+  private static final @NonNls Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
     .put("docComment", PyHighlighter.PY_DOC_COMMENT)
     .put("docCommentTag", PyHighlighter.PY_DOC_COMMENT_TAG)
     .put("decorator", PyHighlighter.PY_DECORATOR)
@@ -93,8 +93,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .build();
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return PyBundle.message("python.colors.python");
   }
 
@@ -114,8 +113,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     final SyntaxHighlighterFactory factory = SyntaxHighlighterFactory.LANGUAGE_FACTORY.forLanguage(PythonLanguage.getInstance());
     if (factory instanceof PySyntaxHighlighterFactory) {
       return ((PySyntaxHighlighterFactory)factory).getSyntaxHighlighterForLanguageLevel(LanguageLevel.getLatest());
@@ -124,8 +122,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
   }
 
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return
       "@<decorator>decorator</decorator>(<kwarg>param</kwarg>=1)\n" +
       "def f(<param>x</param>):\n" +
@@ -174,9 +171,8 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     return PyRainbowVisitor.Holder.getHIGHLIGHTING_KEYS().contains(type);
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return PythonLanguage.INSTANCE;
   }
 }

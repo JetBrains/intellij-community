@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
@@ -14,9 +14,8 @@ public class PyReturnPostfixTemplate extends StringBasedPostfixTemplate implemen
   }
 
 
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
+  public @Nullable String getTemplateString(@NotNull PsiElement element) {
     return "return $expr$$END$";
   }
 }

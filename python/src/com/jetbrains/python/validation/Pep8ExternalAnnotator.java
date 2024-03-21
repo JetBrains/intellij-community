@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
@@ -8,7 +8,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -94,13 +94,11 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       return myColumn;
     }
 
-    @NotNull
-    public String getCode() {
+    public @NotNull String getCode() {
       return myCode;
     }
 
-    @NotNull
-    public String getDescription() {
+    public @NotNull String getDescription() {
       return myDescription;
     }
   }
@@ -147,9 +145,8 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     return PyPep8Inspection.INSPECTION_SHORT_NAME;
   }
 
-  @Nullable
   @Override
-  public State collectInformation(@NotNull PsiFile file) {
+  public @Nullable State collectInformation(@NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null || !FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)) {
       return null;
@@ -212,9 +209,8 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     LOG.info("]");
   }
 
-  @Nullable
   @Override
-  public Results doAnnotate(State collectedInfo) {
+  public @Nullable Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
     ArrayList<String> options = new ArrayList<>();
 
@@ -313,8 +309,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
           problemRange = new TextRange(offset, lineEndOffset);
         }
 
-        @NonNls
-        final String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
+        final @NonNls String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
         HighlightSeverity severity;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
           severity = HighlightSeverity.ERROR;
@@ -448,8 +443,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
 
   private static final Pattern PROBLEM_PATTERN = Pattern.compile(".+:(\\d+):(\\d+): ([EW]\\d{3}) (.+)");
 
-  @Nullable
-  private static Problem parseProblem(String s) {
+  private static @Nullable Problem parseProblem(String s) {
     Matcher m = PROBLEM_PATTERN.matcher(s);
     if (m.matches()) {
       int line = Integer.parseInt(m.group(1));
@@ -469,15 +463,13 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       myCode = code;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return PyPsiBundle.message("ANN.ignore.errors.like.this");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getText();
     }
 

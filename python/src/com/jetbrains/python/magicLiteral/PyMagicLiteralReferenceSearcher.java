@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 final class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>  {
 
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiReference> consumer) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final PsiElement refElement = queryParameters.getElementToSearch();
       if (PyMagicLiteralTools.couldBeMagicLiteral(refElement)) {

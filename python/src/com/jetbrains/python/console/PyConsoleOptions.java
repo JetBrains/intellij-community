@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -38,8 +38,7 @@ import java.util.Map;
 public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptions.State> {
   private final State myState = new State();
 
-  @NotNull
-  public PyConsoleSettings getPythonConsoleSettings() {
+  public @NotNull PyConsoleSettings getPythonConsoleSettings() {
     return myState.myPythonConsoleState;
   }
 
@@ -138,14 +137,12 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myUseModuleSdk;
     public String myModuleName = null;
     public Map<String, String> myEnvs = Maps.newHashMap();
-    @NotNull
-    public List<String> myEnvFiles = Collections.emptyList();
+    public @NotNull List<String> myEnvFiles = Collections.emptyList();
     public boolean myPassParentEnvs = true;
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots = true;
-    @NotNull
-    private PathMappingSettings myMappings = new PathMappingSettings();
+    private @NotNull PathMappingSettings myMappings = new PathMappingSettings();
     private boolean myUseSoftWraps = false;
 
     public PyConsoleSettings() {
@@ -228,8 +225,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     }
 
     @Override
-    @Nullable
-    public Sdk getSdk() {
+    public @Nullable Sdk getSdk() {
       return mySdk;
     }
 
@@ -275,9 +271,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return myInterpreterOptions;
     }
 
-    @NotNull
     @XCollection
-    public PathMappingSettings getMappings() {
+    public @NotNull PathMappingSettings getMappings() {
       return myMappings;
     }
 
@@ -330,9 +325,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       myEnvs = envs;
     }
 
-    @Nullable
     @Override
-    public PathMappingSettings getMappingSettings() {
+    public @Nullable PathMappingSettings getMappingSettings() {
       return getMappings();
     }
 
@@ -368,9 +362,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       myUseSoftWraps = useSoftWraps;
     }
 
-    @NotNull
     @Override
-    public List<String> getEnvFilePaths() {
+    public @NotNull List<String> getEnvFilePaths() {
       return myEnvFiles;
     }
 

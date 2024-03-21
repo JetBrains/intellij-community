@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,8 +38,7 @@ public final class PyNameSuggestionProvider implements NameSuggestionProvider {
     return SuggestedNameInfo.NULL_INFO;
   }
 
-  @NotNull
-  public static String toUnderscores(@NotNull final String name) {
+  public static @NotNull String toUnderscores(final @NotNull String name) {
     final StringBuilder result = new StringBuilder();
     for (int i = 0; i < name.length(); i++) {
       final char prev = i > 0 ? name.charAt(i - 1) : '\0';
@@ -58,8 +57,7 @@ public final class PyNameSuggestionProvider implements NameSuggestionProvider {
     return result.toString();
   }
 
-  @NotNull
-  private static String toCamelCase(@NotNull final String name, boolean uppercaseFirstLetter) {
+  private static @NotNull String toCamelCase(final @NotNull String name, boolean uppercaseFirstLetter) {
     final List<String> strings = StringUtil.split(name, "_");
     if (strings.size() > 0) {
       final StringBuilder buf = new StringBuilder();

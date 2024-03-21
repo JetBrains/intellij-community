@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
 import com.intellij.openapi.util.TextRange;
@@ -17,9 +17,9 @@ import java.util.Objects;
  *
  */
 public abstract class PySmartStepIntoVariant extends XSmartStepIntoVariant {
-  @NotNull protected final PsiElement myElement;
+  protected final @NotNull PsiElement myElement;
   protected final int myCallOrder;
-  @NotNull protected final PySmartStepIntoContext myContext;
+  protected final @NotNull PySmartStepIntoContext myContext;
 
   protected PySmartStepIntoVariant(@NotNull PsiElement element, int callOrder, @NotNull PySmartStepIntoContext context) {
     myElement = element;
@@ -27,18 +27,18 @@ public abstract class PySmartStepIntoVariant extends XSmartStepIntoVariant {
     myContext = context;
   }
 
-  @Nullable public abstract String getFunctionName();
+  public abstract @Nullable String getFunctionName();
 
   public int getCallOrder() {
     return myCallOrder;
   }
 
-  @NotNull public PySmartStepIntoContext getContext() {
+  public @NotNull PySmartStepIntoContext getContext() {
     return myContext;
   }
 
   @Override
-  @Nullable public TextRange getHighlightRange() {
+  public @Nullable TextRange getHighlightRange() {
     return myElement.getTextRange();
   }
 

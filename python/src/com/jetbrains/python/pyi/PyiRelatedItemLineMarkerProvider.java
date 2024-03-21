@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.pyi;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -44,10 +44,9 @@ public final class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarke
     }
   }
 
-  @NotNull
-  private static RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
-                                                                            @NotNull PsiElement relatedElement,
-                                                                            @NotNull String itemTitle) {
+  private static @NotNull RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
+                                                                                     @NotNull PsiElement relatedElement,
+                                                                                     @NotNull String itemTitle) {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(element.getProject());
     final SmartPsiElementPointer<PsiElement> relatedElementPointer = pointerManager.createSmartPsiElementPointer(relatedElement);
     final String stubFileName = relatedElement.getContainingFile().getName();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
@@ -62,19 +62,17 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public final class PyPackageRequirementsInspection extends PyInspection {
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
 
-  @NotNull
-  private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Package requirements");
+  private static final @NotNull NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Package requirements");
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(OptPane.stringList("ignoredPackages", PyPsiBundle.message("INSP.requirements.ignore.packages.label")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     if (!(holder.getFile() instanceof PyFile) && !isPythonInTemplateLanguages(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -87,8 +85,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       .isPresent();
   }
 
-  @Nullable
-  public static PyPackageRequirementsInspection getInstance(@NotNull PsiElement element) {
+  public static @Nullable PyPackageRequirementsInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
     return (PyPackageRequirementsInspection)inspectionProfile.getUnwrappedTool(toolName, element);
@@ -239,8 +236,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     }
   }
 
-  @Nullable
-  private static Set<PyRequirement> getRequirementsInclTransitive(@NotNull PyPackageManager packageManager, @NotNull Module module) {
+  private static @Nullable Set<PyRequirement> getRequirementsInclTransitive(@NotNull PyPackageManager packageManager, @NotNull Module module) {
     final List<PyRequirement> requirements = getListedRequirements(packageManager, module);
     if (requirements == null) return null;
     if (requirements.isEmpty()) return Collections.emptySet();
@@ -253,8 +249,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return result;
   }
 
-  @Nullable
-  private static List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
+  private static @Nullable List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
     final List<PyRequirement> requirements = packageManager.getRequirements(module);
     final List<PyRequirement> extrasRequirements = getExtrasRequirements(module);
     if (requirements == null) return extrasRequirements;
@@ -262,16 +257,14 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return ContainerUtil.concat(requirements, extrasRequirements);
   }
 
-  @Nullable
-  private static List<PyRequirement> getExtrasRequirements(@NotNull Module module) {
+  private static @Nullable List<PyRequirement> getExtrasRequirements(@NotNull Module module) {
     final Map<String, List<PyRequirement>> extrasRequire = PyPackageUtil.findSetupPyExtrasRequire(module);
     return extrasRequire == null ? null : ContainerUtil.flatten(extrasRequire.values());
   }
 
-  @NotNull
-  private static Set<PyRequirement> getTransitiveRequirements(@NotNull List<PyPackage> packages,
-                                                              @NotNull Collection<PyRequirement> requirements,
-                                                              @NotNull Set<PyPackage> visited) {
+  private static @NotNull Set<PyRequirement> getTransitiveRequirements(@NotNull List<PyPackage> packages,
+                                                                       @NotNull Collection<PyRequirement> requirements,
+                                                                       @NotNull Set<PyPackage> visited) {
     final Set<PyRequirement> result = new HashSet<>();
 
     for (PyRequirement req : requirements) {
@@ -284,9 +277,8 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return result;
   }
 
-  @Nullable
-  private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
-                                                                 @NotNull Set<String> ignoredPackages) {
+  private static @Nullable List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
+                                                                           @NotNull Set<String> ignoredPackages) {
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
     final List<PyRequirement> requirements = manager.getRequirements(module);
     if (requirements != null) {
@@ -306,8 +298,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return null;
   }
 
-  @NotNull
-  private static List<PyPackage> collectPackagesInModule(@NotNull Module module) {
+  private static @NotNull List<PyPackage> collectPackagesInModule(@NotNull Module module) {
     final String[] metadataExtensions = {"egg-info", "dist-info"};
     final List<PyPackage> result = new SmartList<>();
 
@@ -369,12 +360,12 @@ public final class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class PyInstallRequirementsFix implements LocalQuickFix {
-    @NotNull private final @IntentionFamilyName String myName;
-    @NotNull private final Module myModule;
-    @NotNull private final Sdk mySdk;
-    @NotNull private final List<PyRequirement> myUnsatisfied;
-    @NotNull private final List<String> myExtraArgs;
-    @Nullable private final PyPackageManagerUI.Listener myListener;
+    private final @NotNull @IntentionFamilyName String myName;
+    private final @NotNull Module myModule;
+    private final @NotNull Sdk mySdk;
+    private final @NotNull List<PyRequirement> myUnsatisfied;
+    private final @NotNull List<String> myExtraArgs;
+    private final @Nullable PyPackageManagerUI.Listener myListener;
 
     public PyInstallRequirementsFix(@Nullable @IntentionFamilyName String name,
                                     @NotNull Module module, @NotNull Sdk sdk,
@@ -396,9 +387,8 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       myListener = listener;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return myName;
     }
 
@@ -415,7 +405,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       }
     }
 
-    private void installPackages(@NotNull final Project project) {
+    private void installPackages(final @NotNull Project project) {
       final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
       final List<PyPackage> packages = manager.getPackages();
       if (packages == null) {
@@ -620,7 +610,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class RunningPackagingTasksListener implements PyPackageManagerUI.Listener {
-    @NotNull private final Module myModule;
+    private final @NotNull Module myModule;
 
     public RunningPackagingTasksListener(@NotNull Module module) {
       myModule = module;
@@ -640,16 +630,14 @@ public final class PyPackageRequirementsInspection extends PyInspection {
 
   private static final class IgnoreRequirementFix implements LocalQuickFix {
 
-    @NotNull
-    private final Set<String> myPackageNames;
+    private final @NotNull Set<String> myPackageNames;
 
     private IgnoreRequirementFix(@NotNull Set<String> packageNames) {
       myPackageNames = packageNames;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.ignore.requirements", myPackageNames.size());
     }
 
