@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
-import org.jetbrains.kotlin.idea.base.psi.getSamConstructorValueArgument
+import org.jetbrains.kotlin.idea.base.psi.samConstructorValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -155,7 +155,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
                 val factory = KtPsiFactory(callElement.project)
                 newArguments = original.valueArguments.map { argument ->
                     val call = callArgumentMapToConvert[argument]
-                    val newExpression = call?.getSamConstructorValueArgument()?.getArgumentExpression() ?: return@map argument
+                    val newExpression = call?.samConstructorValueArgument()?.getArgumentExpression() ?: return@map argument
                     factory.createArgument(newExpression, argument.getArgumentName()?.asName, reformat = false)
                 }
             }
@@ -218,7 +218,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
             }
         }
 
-        private fun canBeSamConstructorCall(argument: KtValueArgument) = argument.toCallExpression()?.getSamConstructorValueArgument() != null
+        private fun canBeSamConstructorCall(argument: KtValueArgument) = argument.toCallExpression()?.samConstructorValueArgument() != null
 
         private fun ValueArgument.toCallExpression(): KtCallExpression? {
             val argumentExpression = getArgumentExpression()
@@ -229,7 +229,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
         }
 
         private fun containsLabeledReturnPreventingConversion(it: KtCallExpression): Boolean {
-            val samValueArgument = it.getSamConstructorValueArgument()
+            val samValueArgument = it.samConstructorValueArgument()
             val samConstructorName = (it.calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName()
             return samValueArgument == null ||
                     samConstructorName == null ||
