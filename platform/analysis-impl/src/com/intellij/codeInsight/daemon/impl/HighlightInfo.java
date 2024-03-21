@@ -500,7 +500,8 @@ public class HighlightInfo implements Segment {
     s += "; severity=" + getSeverity();
     synchronized (this) {
       if (quickFixActionRanges != null) {
-        s += "; quickFixes: " + StringUtil.join(quickFixActionRanges, q-> q.getFirst().myAction.getClass().getName(), ", ");
+        s += "; quickFixes: " + StringUtil.join(
+          quickFixActionRanges, q -> ReportingClassSubstitutor.getClassToReport(q.getFirst().myAction).getName(), ", ");
       }
     }
     if (gutterIconRenderer != null) {
