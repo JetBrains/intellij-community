@@ -1,5 +1,5 @@
 internal class Test {
-    fun <A, B> foo(value: A, `fun`: FunctionalI<A, B>?): B {
+    fun <A, B> foo(value: A, `fun`: FunctionalI<A, B>): B {
         TODO()
     }
 

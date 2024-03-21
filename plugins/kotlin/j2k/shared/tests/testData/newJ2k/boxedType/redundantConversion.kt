@@ -1,5 +1,5 @@
 object J {
-    fun foo(bool: Boolean?, c: Char?, b: Byte?, s: Short?, i: Int?, l: Long?, f: Float?, d: Double?, obj: Any?) {
+    fun foo(bool: Boolean, c: Char, b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double, obj: Any?) {
         println(bool)
         println(c)
         println(b)

@@ -8,7 +8,7 @@ import java.io.File
 
 class TEST1 {
     @Anon5(1)
-    fun foo(@Anon5(2) o: @TypeUseAnon1 Any?): @TypeUseAnon1 String? {
+    fun foo(@Anon5(2) o: @TypeUseAnon1 Any?): @TypeUseAnon1 String {
         @Anon5(3) val baz: @TypeUseAnon1 String = ""
         return ""
     }
@@ -19,7 +19,7 @@ class TEST1 {
 
 class TEST2 {
     @Anon5(1)
-    fun foo(@Anon5(2) o: @TypeUseAnon2 Any?): @TypeUseAnon2 String? {
+    fun foo(@Anon5(2) o: @TypeUseAnon2 Any?): @TypeUseAnon2 String {
         @Anon5(3) val baz: @TypeUseAnon2 String = ""
         return ""
     }
@@ -30,7 +30,7 @@ class TEST2 {
 
 class TEST3 {
     @Anon5(1)
-    fun foo(@Anon5(2) o: @TypeUseAnon3 Any?): @TypeUseAnon3 String? {
+    fun foo(@Anon5(2) o: @TypeUseAnon3 Any?): @TypeUseAnon3 String {
         @Anon5(3) val baz: @TypeUseAnon3 String = ""
         return ""
     }

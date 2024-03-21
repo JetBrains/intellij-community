@@ -3,7 +3,7 @@ internal enum class ColorEnum {
 }
 
 internal class MyClass {
-    fun method(colorEnum: ColorEnum?): Int {
+    fun method(colorEnum: ColorEnum): Int {
         return when (colorEnum) {
             ColorEnum.GREEN -> 1
             else -> 2

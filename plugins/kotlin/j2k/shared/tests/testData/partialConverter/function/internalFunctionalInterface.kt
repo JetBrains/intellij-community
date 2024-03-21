@@ -7,7 +7,7 @@ internal class Test {
         return `fun`.apply(value)
     }
 
-    fun toDouble(x: Int?): Double {
+    fun toDouble(x: Int): Double {
         TODO()
     }
 

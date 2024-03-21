@@ -3,7 +3,7 @@ import java.util.Locale
 
 internal class A {
     @Throws(Exception::class)
-    fun constructors(s: String?) {
+    fun constructors(s: String) {
         ""
 
         "original"
