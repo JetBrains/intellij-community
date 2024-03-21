@@ -1193,6 +1193,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(getPsiDocumentManager().getUncommittedDocuments())));
       return;
     }
+    // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
+    ReadAction.run(() -> HighlightInfoUpdater.getInstance(myProject).removeInvalidPsiElements(psiFile, this, true, true, session));
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         // wait for heavy processing to stop, re-schedule daemon but not too soon
@@ -1211,7 +1213,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                    textHighlighter.getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
                                    backgroundEditorHighlighter.createPassesForEditor();
             if (heavyProcessIsRunning) {
-              r = ContainerUtil.findAllAsArray(r, DumbService::isDumbAware);
+              r = ContainerUtil.findAllAsArray(r, o -> DumbService.isDumbAware(o));
             }
             return r;
           }

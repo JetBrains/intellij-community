@@ -91,74 +91,66 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(getFile().getProject());
-    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile(), this, true, false, myHighlightingSession);
-    try {
-      List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
-      List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
-      List<? extends InspectionRunner.InspectionContext> resultContexts;
-      List<PsiFile> injectedFragments;
-      if (toolWrappers.isEmpty()) {
-        resultContexts = List.of();
-        injectedFragments = List.of();
-      }
-      else {
-        InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
-          List<HighlightInfo> result = descriptors.isEmpty() ? null : new ArrayList<>(descriptors.size());
-          for (ProblemDescriptor descriptor : descriptors) {
-            PsiElement descriptorPsiElement = descriptor.getPsiElement();
-            HighlightDisplayKey key = HighlightDisplayKey.find(holder.myToolWrapper.getShortName());
-            if (LOG.isTraceEnabled()) {
-              LOG.trace("collectInformationWithProgress:applyIncrementallyCallback: toolId:" + holder.myToolWrapper.getShortName() + ": " +
-                        descriptor + "; psi:" + descriptorPsiElement + "; isEnabled:" +
-                        myProfileWrapper.getInspectionProfile().isToolEnabled(key, getFile()));
-            }
-            if (descriptorPsiElement != null) {
-              createHighlightsForDescriptor(descriptor, descriptorPsiElement, holder.myToolWrapper, info -> {
-                synchronized (holder.toolInfos) {
-                  holder.toolInfos.add(info);
-                  result.add(info);
-                }
-              });
-            }
-          }
-          highlightInfoUpdater.psiElementVisited(shortName, visitingPsiElement, ContainerUtil.notNullize(result), getDocument(), holder.getFile(),
-                                                 myProject, invalidElementsRecycler, myHighlightingSession);
-          if (result != null) {
-            fileInfos.addAll(result);
-          }
-        };
-        Consumer<InspectionRunner.InspectionContext> contextFinishedCallback = context -> {
-          InspectionRunner.InspectionProblemHolder holder = context.holder();
-          Collection<HighlightInfo> infos;
-          synchronized (holder.toolInfos) {
-            infos = new ArrayList<>(holder.toolInfos);
-          }
+    List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
+    List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
+    List<? extends InspectionRunner.InspectionContext> resultContexts;
+    List<PsiFile> injectedFragments;
+    if (toolWrappers.isEmpty()) {
+      resultContexts = List.of();
+      injectedFragments = List.of();
+    }
+    else {
+      InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
+        List<HighlightInfo> result = descriptors.isEmpty() ? null : new ArrayList<>(descriptors.size());
+        for (ProblemDescriptor descriptor : descriptors) {
+          PsiElement descriptorPsiElement = descriptor.getPsiElement();
+          HighlightDisplayKey key = HighlightDisplayKey.find(holder.myToolWrapper.getShortName());
           if (LOG.isTraceEnabled()) {
-            LOG.trace("contextFinishedCallback: " + context.tool() + "; toolId:" + context.tool().getShortName() + "; " +
-                      infos + "; " + context.elementsInside().size() + "/" + context.elementsOutside().size()+" elements");
+            LOG.trace("collectInformationWithProgress:applyIncrementallyCallback: toolId:" + holder.myToolWrapper.getShortName() + ": " +
+                      descriptor + "; psi:" + descriptorPsiElement + "; isEnabled:" +
+                      myProfileWrapper.getInspectionProfile().isToolEnabled(key, getFile()));
           }
-        };
-        InspectionRunner runner =
-          new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
-                               myProfileWrapper, mySuppressedElements);
-        resultContexts = runner.inspect(toolWrappers,
-                                        myHighlightingSession.getMinimumSeverity(),
-                                        true,
-                                        applyIncrementallyCallback,
-                                        contextFinishedCallback,
-                                        wrapper -> !wrapper.getTool().isSuppressedFor(getFile()));
-        myInfos = fileInfos;
-        injectedFragments = runner.getInjectedFragments();
-      }
-      Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      highlightInfoUpdater.recycleHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, invalidElementsRecycler);
-      highlightInfoUpdater.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
+          if (descriptorPsiElement != null) {
+            createHighlightsForDescriptor(descriptor, descriptorPsiElement, holder.myToolWrapper, info -> {
+              synchronized (holder.toolInfos) {
+                holder.toolInfos.add(info);
+                result.add(info);
+              }
+            });
+          }
+        }
+        highlightInfoUpdater.psiElementVisited(shortName, visitingPsiElement, ContainerUtil.notNullize(result), getDocument(), holder.getFile(),
+                                               myProject, myHighlightingSession);
+        if (result != null) {
+          fileInfos.addAll(result);
+        }
+      };
+      Consumer<InspectionRunner.InspectionContext> contextFinishedCallback = context -> {
+        InspectionRunner.InspectionProblemHolder holder = context.holder();
+        Collection<HighlightInfo> infos;
+        synchronized (holder.toolInfos) {
+          infos = new ArrayList<>(holder.toolInfos);
+        }
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("contextFinishedCallback: " + context.tool() + "; toolId:" + context.tool().getShortName() + "; " +
+                    infos + "; " + context.elementsInside().size() + "/" + context.elementsOutside().size()+" elements");
+        }
+      };
+      InspectionRunner runner =
+        new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
+                             myProfileWrapper, mySuppressedElements);
+      resultContexts = runner.inspect(toolWrappers,
+                                      myHighlightingSession.getMinimumSeverity(),
+                                      true,
+                                      applyIncrementallyCallback,
+                                      contextFinishedCallback,
+                                      wrapper -> !wrapper.getTool().isSuppressedFor(getFile()));
+      myInfos = fileInfos;
+      injectedFragments = runner.getInjectedFragments();
     }
-    finally {
-      // incinerate range highlighters for invalid PSI elements even in the case of PCE, or otherwise these dangling range highlighters will stay onscreen forever
-      UpdateHighlightersUtil.incinerateObsoleteHighlighters(invalidElementsRecycler, myHighlightingSession);
-      invalidElementsRecycler.releaseHighlighters();
-    }
+    Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
+    highlightInfoUpdater.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, myHighlightingSession);
+    highlightInfoUpdater.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){

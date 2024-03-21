@@ -46,6 +46,7 @@ import java.util.List;
  * Must be used inside the highlighting process only (e.g., in your {@link HighlightingPass#applyInformationToEditor()})
  */
 public final class UpdateHighlightersUtil {
+  static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static final Comparator<HighlightInfo> BY_ACTUAL_START_OFFSET_NO_DUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
     if (d != 0) return d;
@@ -209,7 +210,6 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static boolean incinerateObsoleteHighlighters(@NotNull HighlightersRecycler infosToRemove, @NotNull HighlightingSession session) {
     boolean changed = false;
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
