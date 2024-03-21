@@ -489,6 +489,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       fun restartIde() {
         LOG.info("Calling restart...")
         ApplicationManager.getApplication().invokeLater({
+                                                          ImportSettingsEventsCollector.importFinished()
                                                           ApplicationManagerEx.getApplicationEx().restart(true)
                                                         }, modalityState)
       }
