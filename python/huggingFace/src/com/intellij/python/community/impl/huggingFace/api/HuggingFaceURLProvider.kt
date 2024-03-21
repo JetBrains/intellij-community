@@ -4,13 +4,15 @@ package com.intellij.python.community.impl.huggingFace.api
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
+import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 
+@ApiStatus.Internal
 object HuggingFaceURLProvider {
 
   private val baseURL = PyHuggingFaceBundle.message("python.hugging.face.base.url")
-  private val models_expand_parameters = listOf("gated", "downloads", "likes", "lastModified", "pipeline_tag")
-  private val datasets_expand_parameters = listOf("gated", "downloads", "likes", "lastModified")
+  private val modelsExpandParameters = listOf("gated", "downloads", "likes", "lastModified", "pipeline_tag")
+  private val datasetsExpandParameters = listOf("gated", "downloads", "likes", "lastModified")
 
   fun getEntityMarkdownURL(entityId: String, entityKind: HuggingFaceEntityKind): URL {
     return when(entityKind) {
@@ -30,19 +32,14 @@ object HuggingFaceURLProvider {
 
   fun getDatasetCardLink(datasetId: String): URL = URL("$baseURL/datasets/$datasetId")
 
-  fun getModelApiLink(modelId: String): URL = URL("$baseURL/api/models/$modelId")
-
-  fun getModelSearchQuery(query: String, tags: String? = null, sort: String = "downloads", limit: Int = 20): URL {
-    return URL("$baseURL/api/models?search=$query&sort=$sort&limit=$limit&direction=-1"
-    ).let { url ->
-      tags?.let { URL("${url}&filter=${tags}") } ?: url
-    }
+  fun getModelSearchQuery(query: String,
+                          tags: String? = null,
+                          sortKey: HuggingFaceModelSortKey = HuggingFaceModelSortKey.DOWNLOADS,
+                          limit: Int = 20
+  ): URL {
+    val urlString = "$baseURL/api/models?search=$query&sort=${sortKey.value}&limit=$limit&direction=-1&expand[]=gated&expand[]=downloads&expand[]=likes&expand[]=lastModified&expand[]=pipeline_tag&expand=library_name"
+    return URL(urlString + if (tags.isNullOrBlank()) "" else "&filter=$tags")
   }
-
-  // Will be necessary to fetch detailed information for dataset
-  // fun getDatasetApiLink(datasetId: String): URL = URL("$baseURL/api/models/$datasetId")
-  // may be needed for dataset viewer button:
-  // fun getDatasetViewerLink(datasetName: String): URL = URL("$baseURL/datasets/$datasetName/viewer")
 
   fun fetchApiDataUrl(
     entityKind: HuggingFaceEntityKind,
@@ -50,9 +47,9 @@ object HuggingFaceURLProvider {
     sort: String = HuggingFaceConstants.API_FETCH_SORT_KEY
   ): URL {
     val expand = if (entityKind == HuggingFaceEntityKind.MODEL) {
-      models_expand_parameters
+      modelsExpandParameters
     } else {
-      datasets_expand_parameters
+      datasetsExpandParameters
     }
 
     val parameters = mapOf(
@@ -72,9 +69,6 @@ object HuggingFaceURLProvider {
     val url = URL("$baseURL/api/${entityKind.urlFragment}?$query")
     return url
   }
-
-  fun makeAbsoluteImageLink(entityId: String, relativeImagePath: String): URL =
-    URL("$baseURL/$entityId/resolve/main/$relativeImagePath")
 
   fun makeAbsoluteFileLink(entityId: String, relativeFilePath: String): URL =
     URL("$baseURL/$entityId/blob/main/$relativeFilePath")

@@ -8,17 +8,18 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
-import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceEntityPsiElement.Companion.HUGGING_FACE_ENTITY_NAME_KEY
-import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManagerService
+import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement.Companion.HUGGING_FACE_ENTITY_NAME_KEY
+import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManager
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class HuggingFaceEntityNameAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element !is PyStringLiteralExpression) return
 
     val project = element.project
-    val service = project.getService(HuggingFaceImportedLibrariesManagerService::class.java)
-    val manager = service.getManager()
+    val manager = project.getService(HuggingFaceImportedLibrariesManager::class.java)
     if (!manager.isLibraryImported()) return
 
     val text = element.stringValue
@@ -36,7 +37,6 @@ class HuggingFaceEntityNameAnnotator : Annotator {
   }
 
   private fun isValidHfString(element: PyStringLiteralExpression, text: String): Boolean {
-    val userData = element.getUserData(HUGGING_FACE_ENTITY_NAME_KEY)
-    return (userData == true) || HuggingFaceUtil.isHuggingFaceEntity(text)
+    return (element.getUserData(HUGGING_FACE_ENTITY_NAME_KEY) == true) || HuggingFaceUtil.isHuggingFaceEntity(text)
   }
 }

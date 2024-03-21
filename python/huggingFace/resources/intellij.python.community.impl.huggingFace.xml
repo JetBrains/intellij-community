@@ -4,9 +4,7 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <annotator language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceEntityNameAnnotator"/>
-    <psi.referenceContributor implementation="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceModelReferenceContributor"
-                              language="Python"/>
-    <psi.referenceContributor implementation="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceDatasetReferenceContributor"
+    <psi.referenceContributor implementation="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierReferenceContributor"
                               language="Python"/>
     <platform.backend.documentation.psiTargetProvider id="HuggingFaceDocumentationProvider"
                                                       implementation="com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationTargetProvider"/>

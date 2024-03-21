@@ -10,8 +10,10 @@ import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class HuggingFaceHtmlBuilder(
   private val project: Project,
   private val modelDataApiContent: HuggingFaceEntityBasicApiData,
@@ -19,9 +21,13 @@ class HuggingFaceHtmlBuilder(
   private val entityKind: HuggingFaceEntityKind
 ) {
   @NlsSafe
-  suspend fun build(): String {
+  suspend fun build(noHeader: Boolean = false): String {
     val headChunk = HtmlChunk.tag("head").child(HuggingFaceQuickDocStyles.styleChunk())
-    val cardHeaderChunk = generateCardHeader(modelDataApiContent)
+    val cardHeaderChunk = if (noHeader) {
+      HtmlChunk.empty()
+    } else {
+      generateCardHeader(modelDataApiContent)
+    }
     @NlsSafe val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter(project).convert(modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
@@ -54,23 +60,21 @@ class HuggingFaceHtmlBuilder(
     val modelInfoRow = DocumentationMarkup.GRAYED_ELEMENT
       .children(
         *conditionalChunks.toTypedArray(),
-        HtmlChunk.text(PyHuggingFaceBundle.message("updated.0", modelInfo.humanReadableLastUpdated())),
+        HtmlChunk.text(PyHuggingFaceBundle.message("python.hugging.face.updated.suffix", modelInfo.humanReadableLastUpdated)),
         HtmlChunk.nbsp(2),
 
         DOWNLOADS_ICON,
-        HtmlChunk.raw(HuggingFaceQuickDocStyles.HAIR_SPACE),
-        HtmlChunk.text(modelInfo.humanReadableDownloads()),
+        HtmlChunk.text(modelInfo.humanReadableDownloads),
         HtmlChunk.nbsp(2),
 
         LIKES_ICON,
-        HtmlChunk.raw(HuggingFaceQuickDocStyles.HAIR_SPACE),
-        HtmlChunk.raw(modelInfo.humanReadableLikes()),
+        HtmlChunk.raw(modelInfo.humanReadableLikes),
         HtmlChunk.nbsp(),
       )
 
     val linkRow = HtmlChunk.tag("a")
       .attr("href", HuggingFaceURLProvider.getEntityCardLink(modelInfo.itemId, entityKind).toString())
-      .child(HtmlChunk.text(PyHuggingFaceBundle.getMessage("open.on.hugging.face")))
+      .child(HtmlChunk.text(PyHuggingFaceBundle.getMessage("python.hugging.face.open.on.link.text")))
       .wrapWith("p")
 
       val headerContainer = HtmlChunk.div()
@@ -85,12 +89,8 @@ class HuggingFaceHtmlBuilder(
 
   companion object {
     private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
-      // .attr("src", "com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons.Download")
       .attr("src", "AllIcons.Actions.Download")
     private val LIKES_ICON = HtmlChunk.tag("icon")
-      // .attr(".src", "com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons.Like")
       .attr(".src", "AllIcons.Toolwindows.ToolWindowFavorites")
-    //private val LOGO_ICON = HtmlChunk.tag("icon")
-    //  .attr(".src", "/com/intellij/python/community/impl/huggingFace/icons/logo.svg")
   }
 }

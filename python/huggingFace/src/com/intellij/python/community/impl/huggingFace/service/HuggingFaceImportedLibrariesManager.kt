@@ -5,39 +5,26 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.project.Project
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
 import com.intellij.util.messages.MessageBusConnection
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class HuggingFaceImportedLibrariesManagerService(project: Project) {
-  private val manager = HuggingFaceImportedLibrariesManager(project)
-
-  fun getManager(): HuggingFaceImportedLibrariesManager {
-    return manager
-  }
-}
-
-
-class HuggingFaceImportedLibrariesManager(project: Project) {
-
+class HuggingFaceImportedLibrariesManager(val project: Project) {
   private var cachedResult: Result? = null
   private var cacheTimestamp: Long = 0
   private val invalidationThresholdMinutes = 5
-
   private var changesCount: Int = 0
   private val changesThreshold = 10
-  private var project: Project? = null
 
   private data class Result(val isImported: Boolean)
 
   init {
-    this.project = project
-
     val connection: MessageBusConnection = project.messageBus.connect()
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
@@ -60,7 +47,7 @@ class HuggingFaceImportedLibrariesManager(project: Project) {
   }
 
   fun isLibraryImported(): Boolean {
-    val project = this.project ?: throw IllegalStateException("Init the ImportedLibrariesManager with project first.")
+    val project = this.project
     if (System.currentTimeMillis() - cacheTimestamp > invalidationThresholdMinutes * 60 * 1000 || cachedResult == null) {
       val isImported = HuggingFaceUtil.isAnyHFLibraryImportedInProject(project)
       if (isImported) {
