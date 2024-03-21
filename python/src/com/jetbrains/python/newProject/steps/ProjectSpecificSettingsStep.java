@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
@@ -409,6 +410,15 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       .map(PythonProjectGenerator::getNewProjectPrefix)
       .map(it -> FileUtil.findSequentNonexistentFile(getBaseDir(), it, ""))
       .orElseGet(() -> super.findSequentNonExistingUntitled());
+  }
+
+  /**
+   * If {@link PythonProjectGenerator} {@link PythonProjectGenerator#supportsWelcomeScript()},
+   * {@link ProjectSpecificSettingsStep} and inheritors should ask use if one should be created, and return true if so.
+   */
+  @RequiresEdt
+  public boolean createWelcomeScript() {
+    return false;
   }
 
   private static @NotNull File getBaseDir() {

@@ -28,6 +28,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.PythonPromoProjectGenerator
@@ -65,6 +66,9 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     }
     return createContentPanelWithAdvancedSettingsPanel()
   }
+
+  @RequiresEdt
+  override fun createWelcomeScript(): Boolean  = createScript.get()
 
   /**
    * Returns the project location that is either:
