@@ -4576,68 +4576,7 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/quickfix/addFunModifier")
-    public static class AddFunModifier extends AbstractHighLevelQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
 
-        @TestMetadata("asFirstArgument.kt")
-        public void testAsFirstArgument() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/asFirstArgument.kt");
-        }
-
-        @TestMetadata("asLastArgument.kt")
-        public void testAsLastArgument() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/asLastArgument.kt");
-        }
-
-        @TestMetadata("hasArguments.kt")
-        public void testHasArguments() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/hasArguments.kt");
-        }
-
-        @TestMetadata("hasNoArguments.kt")
-        public void testHasNoArguments() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/hasNoArguments.kt");
-        }
-
-        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
-        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
-        }
-
-        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
-        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
-        }
-
-        @TestMetadata("nonSource.kt")
-        public void testNonSource() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/nonSource.kt");
-        }
-
-        @TestMetadata("notSam.kt")
-        public void testNotSam() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/notSam.kt");
-        }
-
-        @TestMetadata("notSam2.kt")
-        public void testNotSam2() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/notSam2.kt");
-        }
-
-        @TestMetadata("notSam3.kt")
-        public void testNotSam3() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/notSam3.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/addFunModifier/simple.kt");
-        }
-    }
 
 
 
