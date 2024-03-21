@@ -30,7 +30,8 @@ internal class TestTerminalOutputManager(project: Project, parentDisposable: Dis
   fun createBlock(command: String?, output: TextWithHighlightings): Pair<CommandBlock, TextWithHighlightings> {
     val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
-    val block = outputModel.createBlock(command, null)
+    // Terminal width is important only when there is a right prompt
+    val block = outputModel.createBlock(command, null, terminalWidth = 80)
     if (output.text.isNotEmpty()) {
       val promptAndCommandHighlightings = outputModel.getHighlightings(block)
       val outputHighlightings = output.highlightings.map {

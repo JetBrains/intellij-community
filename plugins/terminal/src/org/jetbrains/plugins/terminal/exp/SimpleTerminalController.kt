@@ -37,7 +37,7 @@ class SimpleTerminalController(
     Disposer.register(this, caretPainter)
 
     // create dummy logical block, that will cover all the output, needed only for caret model
-    outputModel.createBlock(command = null, prompt = null)
+    outputModel.createBlock(command = null, prompt = null, session.model.width)
     terminalModel.isCommandRunning = true
 
     setupContentListener()

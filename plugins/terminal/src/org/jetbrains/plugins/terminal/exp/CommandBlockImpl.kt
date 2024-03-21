@@ -8,7 +8,8 @@ internal data class CommandBlockImpl(
   override val command: String?,
   override val prompt: String?,
   override val rightPrompt: String?,
-  val range: RangeMarker
+  val range: RangeMarker,
+  private val commandAndRightPromptLength: Int
 ) : CommandBlock {
   override val startOffset: Int
     get() = range.startOffset
@@ -20,7 +21,8 @@ internal data class CommandBlockImpl(
     get() = range.startOffset + prompt.orEmpty().length
 
   override val outputStartOffset: Int
-    get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
+    // If command or right prompt are not empty, the line break will be added after them, so add +1
+    get() = commandStartOffset + if (commandAndRightPromptLength > 0) commandAndRightPromptLength + 1 else 0
 
   override val isFinalized: Boolean
     get() = !range.isGreedyToRight

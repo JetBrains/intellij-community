@@ -73,7 +73,8 @@ class TerminalOutputController(
     val createBlockRequest: () -> Unit = {
       doWithScrollingAware {
         val context = runningCommandContext ?: error("No running command context")
-        createNewBlock(context)
+        val terminalWidth = session.model.withContentLock { session.model.width }
+        createNewBlock(context, terminalWidth)
       }
     }
     blockCreationAlarm.addRequest(createBlockRequest, 200)
@@ -94,9 +95,10 @@ class TerminalOutputController(
 
   fun finishCommandBlock(exitCode: Int) {
     val output = scraper.scrapeOutput()
+    val terminalWidth = session.model.withContentLock { session.model.width }
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = doWithScrollingAware {
-        updateCommandOutput(output)
+        updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
       }
       disposeRunningCommandInteractivity()
       val document = editor.document
@@ -162,10 +164,11 @@ class TerminalOutputController(
   private fun setupContentListener(disposable: Disposable) {
     scraper.addListener(object : ShellCommandOutputListener {
       override fun commandOutputChanged(output: StyledCommandOutput) {
+        val terminalWidth = session.model.withContentLock { session.model.width }
         invokeLater(editor.getDisposed(), ModalityState.any()) {
           if (runningCommandContext != null) {
             doWithScrollingAware {
-              updateCommandOutput(output)
+              updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
             }
           }
         }
@@ -174,19 +177,19 @@ class TerminalOutputController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun updateCommandOutput(output: StyledCommandOutput): CommandBlock {
+  private fun updateCommandOutput(snapshot: TerminalOutputSnapshot): CommandBlock {
     val activeBlock = outputModel.getActiveBlock() ?: run {
       // If there is no active block, it means that it is the first content update. Create the new block here.
       blockCreationAlarm.cancelAllRequests()
       val context = runningCommandContext ?: error("No running command context")
-      createNewBlock(context)
+      createNewBlock(context, snapshot.width)
     }
-    updateBlock(activeBlock, toHighlightedCommandOutput(output, baseOffset = activeBlock.outputStartOffset))
+    updateBlock(activeBlock, toHighlightedCommandOutput(snapshot.output, baseOffset = activeBlock.outputStartOffset))
     return activeBlock
   }
 
-  private fun createNewBlock(context: RunningCommandContext): CommandBlock {
-    val block = outputModel.createBlock(context.command, context.prompt)
+  private fun createNewBlock(context: RunningCommandContext, terminalWidth: Int): CommandBlock {
+    val block = outputModel.createBlock(context.command, context.prompt, terminalWidth)
     if (!block.textRange.isEmpty) {
       blocksDecorator.installDecoration(block)
     }
@@ -259,6 +262,8 @@ class TerminalOutputController(
       nextBlockCanBeStartedQueue.offer(callback)
     }
   }
+
+  private data class TerminalOutputSnapshot(val width: Int, val output: StyledCommandOutput)
 
   private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
 
