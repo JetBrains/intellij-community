@@ -17,19 +17,18 @@ fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
 }
 
 open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
+  private val ideaFrameComponent by lazy { driver.cast(component, IdeFrameImpl::class) }
   val projectViewTree = tree("//div[@class='ProjectViewTree']")
 
   val project: Project?
     get() = driver.utility(ProjectFrameHelper::class).getFrameHelper(component).getProject()
 
   val isFullScreen: Boolean
-    get() = driver.cast(component, IdeFrameImpl::class).isInFullScreen()
+    get() = ideaFrameComponent.isInFullScreen()
 
-  val leftToolWindowToolbar: ToolWindowLeftToolbarUi
-    get() = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
-
-  val rightToolWindowToolbar: ToolWindowRightToolbarUi
-    get() = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
+  val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
+  val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
+  val settingsButton = x("//div[@myicon='settings.svg']")
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")
