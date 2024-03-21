@@ -15,7 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -79,11 +79,17 @@ public class TargetOptionsComponent extends JPanel {
 
     TableSpeedSearch.installOn(myTable);
 
+    GridBag constraints = new GridBag()
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultWeightX(1.0).setDefaultWeightY(1.0)
+      .setDefaultFill(GridBagConstraints.NONE)
+      .setDefaultInsets(6, 0, 0, 0);
+
     JLabel label = new JLabel(JavaCompilerBundle.message("settings.project.bytecode.version"));
     label.setLabelFor(myCbProjectTargetLevel);
-    add(label, constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
-    add(myCbProjectTargetLevel, constraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NONE));
-    add(new JLabel(JavaCompilerBundle.message("settings.per.module.bytecode.version")), constraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.NONE));
+    add(label, constraints.nextLine().next().weightx(0.0));
+    add(myCbProjectTargetLevel, constraints.next());
+    add(new JLabel(JavaCompilerBundle.message("settings.per.module.bytecode.version")), constraints.nextLine().weightx(0.0));
     JPanel tableComp = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()
       .disableDownAction()
@@ -91,7 +97,7 @@ public class TargetOptionsComponent extends JPanel {
       .setRemoveAction(b -> removeSelectedModules())
       .createPanel();
     tableComp.setPreferredSize(new Dimension(myTable.getWidth(), 150));
-    add(tableComp, constraints(0, 2, 2, 1, 1.0, 1.0, GridBagConstraints.BOTH));
+    add(tableComp, constraints.nextLine().fillCell().coverLine());
   }
 
   private static ComboBox<String> createTargetOptionsCombo() {
@@ -107,11 +113,6 @@ public class TargetOptionsComponent extends JPanel {
       }
     });
     return combo;
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static GridBagConstraints constraints(int gridX, int gridY, int gridWidth, int gridHeight, double weightX, double weightY, int fill) {
-    return new GridBagConstraints(gridX, gridY, gridWidth, gridHeight, weightX, weightY, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
   }
 
   private void addModules() {
