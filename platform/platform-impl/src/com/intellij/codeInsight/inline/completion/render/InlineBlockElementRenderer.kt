@@ -10,11 +10,15 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
+@Deprecated("All rendering uses InlineSuffixRenderer")
+@ApiStatus.ScheduledForRemoval
 @ApiStatus.Internal
-@ApiStatus.Experimental
 class InlineBlockElementRenderer(private val editor: Editor, lines: List<String>) : EditorCustomElementRenderer {
 
-  val lines = lines.map { it.formatBeforeRendering(editor) }
+  val lines: List<String> = run {
+    val tabSize = editor.settings.getTabSize(editor.project)
+    lines.map { it.formatTabs(tabSize) }
+  }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int = lines.maxOf {
     InlineCompletionFontUtils.fontMetrics(editor).stringWidth(it)
