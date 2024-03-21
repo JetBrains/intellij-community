@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.PerformFixesModalTask;
 import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ public abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
     QuickFix<ProblemDescriptor>[] fixes = descriptor.getFixes();
     if (fixes != null) {
       for (final QuickFix<ProblemDescriptor> fix : fixes) {
-        if (fix != null && (myQuickfixClass == null || fix.getClass().isAssignableFrom(myQuickfixClass))) {
+        if (fix != null && (myQuickfixClass == null || ReportingClassSubstitutor.getClassToReport(fix).isAssignableFrom(myQuickfixClass))) {
           final ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
           final PsiElement element = problemDescriptor.getPsiElement();
           if (element != null && element.isValid()) {
