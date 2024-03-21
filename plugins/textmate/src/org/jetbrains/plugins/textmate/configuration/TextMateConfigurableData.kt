@@ -3,9 +3,10 @@ package org.jetbrains.plugins.textmate.configuration
 class TextMateConfigurableData(private val builtinBundlesSettings: TextMateBuiltinBundlesSettings,
                                private val userBundlesSettings: TextMateUserBundlesSettings) {
   companion object {
+    @JvmStatic
     fun getInstance(): TextMateConfigurableData? {
       return TextMateBuiltinBundlesSettings.instance?.let { builtinBundles ->
-        TextMateUserBundlesSettings.getInstance()?.let { userBundles ->
+        TextMateUserBundlesSettings.instance?.let { userBundles ->
           TextMateConfigurableData(builtinBundles, userBundles)
         }
       }
