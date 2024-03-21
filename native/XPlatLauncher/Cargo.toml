@@ -44,9 +44,12 @@ native-dialog = "0.6.3"
 cargo-deny = "0.14.2" # checks licenses / vulns
 cargo-about = "0.5.7" # generates license report
 
+[build-dependencies]
+anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
+
 [target.'cfg(target_os = "windows")'.build-dependencies]
-winresource = "0.1.17"
 windows = { version = "0.51.1", features = [ "Win32_System_SystemInformation", "Win32_Foundation" ] }
+winresource = "0.1.17"
 
 [dev-dependencies]
 tempfile = "3.8.0"
