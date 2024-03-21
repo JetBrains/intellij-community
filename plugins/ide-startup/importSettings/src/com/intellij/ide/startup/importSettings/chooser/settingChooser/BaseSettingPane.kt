@@ -5,6 +5,7 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.Configurable
 import com.intellij.ide.startup.importSettings.data.Multiple
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -117,6 +118,7 @@ class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit, val disp
 
         actionLink = ActionLink(object : AbstractAction(text) {
           override fun actionPerformed(e: ActionEvent) {
+            ImportSettingsEventsCollector.configurePageExpandClicked(item.setting.id)
             showPopup()
           }
         }).apply {

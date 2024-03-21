@@ -57,7 +57,7 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
   override fun goToProductChooserPage() {
     val page = ProductChooserPage(this, OnboardingBackgroundImageProvider.getInstance().getImage())
     Disposer.tryRegister(dialog.disposable, page)
-    ImportSettingsEventsCollector.firstPageShown()
+    ImportSettingsEventsCollector.productPageShown()
     dialog.changePage(page)
   }
 

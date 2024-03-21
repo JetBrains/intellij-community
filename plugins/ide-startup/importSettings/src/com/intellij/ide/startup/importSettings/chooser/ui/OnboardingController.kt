@@ -43,9 +43,15 @@ class OnboardingController private constructor(){
     val dl = getDialog(titleGetter)
 
     val skipAction: () -> Unit = skipImportAction ?: StartupWizardService.getInstance()?.let {
-      { startWizard(cancelCallback, titleGetter, isModal) }
+      {
+        ImportSettingsEventsCollector.productPageSkipButton()
+        startWizard(cancelCallback, titleGetter, isModal)
+      }
     } ?: run {
-      { dialogClose() }
+      {
+        ImportSettingsEventsCollector.productPageSkipButton()
+        dialogClose()
+      }
     }
 
     val controller = ImportSettingsController.createController(dl, skipAction)
@@ -57,6 +63,7 @@ class OnboardingController private constructor(){
     if (!dl.isShowing) {
       dl.initialize()
       dl.show()
+      ImportSettingsEventsCollector.importFinished()
     }
 
     state = State.IMPORT
@@ -105,7 +112,7 @@ class OnboardingController private constructor(){
     if(!dl.isShowing) {
       dl.initialize()
       dl.show()
-      ImportSettingsEventsCollector.importDialogClosed()
+      ImportSettingsEventsCollector.importFinished()
     }
 
     state = State.WIZARD

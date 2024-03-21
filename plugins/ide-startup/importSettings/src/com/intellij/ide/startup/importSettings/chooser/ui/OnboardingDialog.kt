@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.StartupWizardService
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
@@ -51,6 +52,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
 
   fun dialogClose() {
     if(isShowing && isVisible) {
+      ImportSettingsEventsCollector.dialogClosed()
       doClose(CANCEL_EXIT_CODE)
     }
   }
