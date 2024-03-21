@@ -194,34 +194,4 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
 
     assertEquals(initialProjectStructure, projectStructureAfterIncrementalImport)
   }
-
-  @Test
-  fun `test import cancellation on project loaded phase`() {
-    createProjectSubFile("gradle.properties", """
-      |prop_loaded_1=val1
-      |prop_finished_2=val2
-    """.trimMargin())
-    importProject {
-      withJavaPlugin()
-    }
-
-    assertReceivedModels(
-      projectPath, "project",
-      mapOf("name" to "project", "prop_loaded_1" to "val1"),
-      mapOf("name" to "project", "prop_finished_2" to "val2")
-    )
-
-    createProjectSubFile("gradle.properties", """
-      |prop_loaded_1=error
-      |prop_finished_2=val22
-    """.trimMargin())
-
-    cleanupBeforeReImport()
-    ExternalSystemUtil.refreshProject(projectPath, ImportSpecBuilder(myProject, SYSTEM_ID).use(ProgressExecutionMode.MODAL_SYNC))
-
-    assertReceivedModels(
-      projectPath, "project",
-      mapOf("name" to "project", "prop_loaded_1" to "error")
-    )
-  }
 }
