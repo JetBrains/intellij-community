@@ -2604,7 +2604,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public boolean isEvaluationPossible() {
-    return getSuspendManager().getPausedContext() != null;
+    return getSuspendManager().getPausedContext() != null
+           || DebuggerImplicitEvaluationContextUtil.getImplicitEvaluationThread(this) != null;
   }
 
   public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {
