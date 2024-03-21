@@ -1882,6 +1882,79 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/modifiers/suspend")
+    public static class Suspend extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousFunction.kt")
+        public void testAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/anonymousFunction.kt");
+        }
+
+        @TestMetadata("base.kt")
+        public void testBase() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/base.kt");
+        }
+
+        @TestMetadata("createCoroutine.kt")
+        public void testCreateCoroutine() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/createCoroutine.kt");
+        }
+
+        @TestMetadata("inLambda.kt")
+        public void testInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/inLambda.kt");
+        }
+
+        @TestMetadata("inLambda2.kt")
+        public void testInLambda2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/inLambda2.kt");
+        }
+
+        @TestMetadata("inLambda3.kt")
+        public void testInLambda3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/inLambda3.kt");
+        }
+
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/init.kt");
+        }
+
+        @TestMetadata("open.kt")
+        public void testOpen() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/open.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/override.kt");
+        }
+
+        @TestMetadata("public.kt")
+        public void testPublic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/public.kt");
+        }
+
+        @TestMetadata("startCoroutine.kt")
+        public void testStartCoroutine() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/startCoroutine.kt");
+        }
+
+        @TestMetadata("startCoroutineNoImport.kt")
+        public void testStartCoroutineNoImport() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/startCoroutineNoImport.kt");
+        }
+
+        @TestMetadata("topLevel.kt")
+        public void testTopLevel() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/suspend/topLevel.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/nullables")
     public abstract static class Nullables extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

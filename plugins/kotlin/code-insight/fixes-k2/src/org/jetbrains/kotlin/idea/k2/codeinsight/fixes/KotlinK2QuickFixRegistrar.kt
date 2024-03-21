@@ -86,6 +86,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
         registerFactory(MakeSuperTypeOpenFixFactory.makeUpperBoundOpenFixFactory)
         registerFactory(AddFunModifierFixFactory.addFunModifierFixFactory)
+        registerFactory(AddSuspendModifierFixFactory.addSuspendModifierFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
