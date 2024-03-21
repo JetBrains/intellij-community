@@ -120,7 +120,11 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     val counter = flowCounter.getAndIncrement()
     if (counter == 0) {
       while (!ongoingConfigurationFlow.compareAndSet(false, true)) {
-        // The loop can spin only if the activity finishes very fast and
+        // The loop should not spin for long.
+        // Suppose we have two activities: the first one is fast, and the second one is slow.
+        // CAS may fail only if slow activity sets itself before the fast one,
+        // but in this case the ending of the fast activity would set `false` back, and fast activity would be able to set `true` again.
+        // This can cause a blink, but it is technically correct.
       }
     }
   }
@@ -155,7 +159,7 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     val counter = flowCounter.decrementAndGet()
     if (counter == 0) {
       while (!ongoingConfigurationFlow.compareAndSet(true, false)) {
-        // The loop can spin only if the activity finishes very fast and
+        // See the comment in a similar loop of `enterConfiguration`
       }
     }
   }

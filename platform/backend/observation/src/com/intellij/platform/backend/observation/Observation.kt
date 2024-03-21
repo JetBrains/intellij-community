@@ -7,7 +7,16 @@ import kotlinx.coroutines.flow.StateFlow
 object Observation {
 
   /**
-   * Returns the flow representing ongoing configuration processes in a project.
+   * A flow that represents a state of configuration processes in a project.
+   * Configuration process is a generic name for indexing, build system import, VFS refresh, or similar CPU-heavy activity
+   * that change the readiness of the project.
+   *
+   * It is discouraged to perform project modification in collectors of this flow,
+   * since project modifications should be *covered* by the tracking machinery, which is the core principle behind this flow.
+   *
+   * The values in the flow may "blink", in the sense that every VFS refresh may trigger the change of states in the flow.
+   * One is advised to use [kotlinx.coroutines.flow.debounce] or similar operations to obtain proper granularity.
+   *
    * @return a state flow containing `true` if the configuration process is currently running,
    * or `false` otherwise.
    */
