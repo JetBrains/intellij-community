@@ -1,4 +1,3 @@
-// IGNORE_K2
 class X {
     public int length = 5;
 }

@@ -1,4 +1,3 @@
-// IGNORE_K2
 import test.Bar;
 
 public class Foo {

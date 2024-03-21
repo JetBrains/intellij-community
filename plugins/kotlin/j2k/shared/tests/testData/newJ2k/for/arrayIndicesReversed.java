@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.util.Collection;
 
 public class A {

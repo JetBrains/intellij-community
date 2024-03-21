@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Test {
     void test() {
         int i1 = 0x21;

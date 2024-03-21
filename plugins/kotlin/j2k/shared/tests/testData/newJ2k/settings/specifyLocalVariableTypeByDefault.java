@@ -1,4 +1,3 @@
-// IGNORE_K2
 //method
 // !SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT: true
 public void foo() {

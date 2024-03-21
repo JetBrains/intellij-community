@@ -1,4 +1,3 @@
-// IGNORE_K2
 class C{
     public boolean equals(C c) {
         return false;

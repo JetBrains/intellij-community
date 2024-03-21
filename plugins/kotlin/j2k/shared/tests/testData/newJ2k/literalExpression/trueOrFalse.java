@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Test {
   void test() {
     boolean t1 = true;

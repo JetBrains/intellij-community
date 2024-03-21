@@ -1,4 +1,3 @@
-// IGNORE_K2
 // WITH_LIBRARY: ../../libSources/simple/java
 
 import library.java.test.Library;

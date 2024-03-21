@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Test {
   void test() {
     long l1 = 10L;

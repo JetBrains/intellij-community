@@ -1,4 +1,3 @@
-// IGNORE_K2
 class J {
     private void test() {
         String message = B.vararg(

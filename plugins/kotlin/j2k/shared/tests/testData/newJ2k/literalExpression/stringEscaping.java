@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class A {
     // ascii escapes
     String ascii1 = "\t\b\n\r\'\"\\";

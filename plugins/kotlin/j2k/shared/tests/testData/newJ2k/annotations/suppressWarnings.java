@@ -1,4 +1,3 @@
-// IGNORE_K2
 @SuppressWarnings({"deprecation", "unused", "SpellCheckingInspection"})
 public class A {
 

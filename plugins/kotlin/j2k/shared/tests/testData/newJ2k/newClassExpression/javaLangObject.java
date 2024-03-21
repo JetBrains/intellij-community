@@ -1,4 +1,3 @@
-// IGNORE_K2
 class C {
     void foo() {
         Object o1 = new Object() {};
