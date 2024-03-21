@@ -48,6 +48,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/jvmMain/kotlin/annotation/An
      +PsiDirectory: time
      _Assertions
      BuilderInference
+     ConsistentCopyVisibility
      ContextFunctionTypeParams
      DeepRecursiveFunction
      DeepRecursiveScope
@@ -60,6 +61,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/jvmMain/kotlin/annotation/An
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExposedCopyVisibility
      ExtensionFunctionType
      Function
      InitializedLazyImpl
