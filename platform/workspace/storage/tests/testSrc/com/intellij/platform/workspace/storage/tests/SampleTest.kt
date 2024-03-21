@@ -37,11 +37,12 @@ class SampleTest {
     val entity = builder addEntity SampleEntity2("data", true, MySource)
 
     builder.toSnapshot()
-    builder.modifyEntity(entity) {
+    val updatedEntity = builder.modifyEntity(entity) {
       this.data = "data2"
     }
 
     assertEquals("data", entity.data)
+    assertEquals("data2", updatedEntity.data)
     assertEquals("data2", builder.entities(SampleEntity2::class.java).single().data)
   }
 

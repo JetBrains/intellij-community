@@ -2,12 +2,9 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -214,42 +211,6 @@ class AbstractEntitiesTest {
     builder.assertConsistency()
     assertNull(builder.entities(HeadAbstractionEntity::class.java).single { it.data == "Info" }.child)
     assertNotNull(builder.entities(HeadAbstractionEntity::class.java).single { it.data == "Info2" }.child)
-  }
-
-  @Test
-  @Disabled("Change of behaviour after IJPL-583")
-  // Deprecation note: Now builder.entities returns entitiesImpls instead of builders that are modified
-  fun `entity changes visible in mutable storage`() {
-    var builder = MutableEntityStorage.create()
-    val entity = ParentEntity("ParentData", MySource)
-    builder.addEntity(entity)
-
-    builder = MutableEntityStorage.from(builder.toSnapshot())
-    val resultEntity = builder.entities(ParentEntity::class.java).single()
-    resultEntity.parentData
-    var firstEntityData = (entity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
-    var secondEntityData = resultEntity.asBase().getData()
-    assertSame(firstEntityData, secondEntityData)
-    val originalEntityData = firstEntityData
-
-    builder.modifyEntity(resultEntity) {
-      this.parentData = "NewParentData"
-    }
-    val anotherResult = builder.entities(ParentEntity::class.java).single()
-    assertEquals(resultEntity.parentData, anotherResult.parentData)
-
-    firstEntityData = (resultEntity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
-    secondEntityData = (anotherResult as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
-    assertSame(firstEntityData, secondEntityData)
-    assertNotSame(firstEntityData, originalEntityData)
-
-    builder.modifyEntity(anotherResult) {
-      this.parentData = "AnotherParentData"
-    }
-    val oneMoreResult = builder.entities(ParentEntity::class.java).single()
-    assertEquals(resultEntity.parentData, anotherResult.parentData)
-    assertEquals(oneMoreResult.parentData, anotherResult.parentData)
-    assertEquals(oneMoreResult.parentData, resultEntity.parentData)
   }
 
   @Test

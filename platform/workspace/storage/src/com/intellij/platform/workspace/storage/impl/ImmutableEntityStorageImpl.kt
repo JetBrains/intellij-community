@@ -231,7 +231,6 @@ internal class MutableEntityStorageImpl(
       entityToAdd.applyToBuilder(this)
       entityToAdd.changedProperty.clear()
 
-      // TODO Do not re-request entities
       return@addMeasuredTime this.entityDataByIdOrDie(entityToAdd.id).createEntity(this) as T
     }
     finally {

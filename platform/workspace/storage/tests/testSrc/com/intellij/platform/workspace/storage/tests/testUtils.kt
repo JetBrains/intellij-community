@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageS
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import junit.framework.TestCase.*
+import org.jetbrains.annotations.ApiStatus
 import org.junit.Assert
 import java.nio.file.Files
 import java.util.function.BiPredicate
@@ -174,6 +175,10 @@ internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
   return this.createPointer<T>().resolve(storage)!!
 }
 
+@ApiStatus.Obsolete
+/**
+ * This function was created to simplify IJPL-583 refactoring. It should not be used in code anymore
+ */
 internal fun <T: WorkspaceEntity.Builder<M>, M: WorkspaceEntity> M.builderFrom(from: MutableEntityStorage): T {
   val pointer = this.createPointer<M>()
   val entityFromBuilder = pointer.resolve(from)!!

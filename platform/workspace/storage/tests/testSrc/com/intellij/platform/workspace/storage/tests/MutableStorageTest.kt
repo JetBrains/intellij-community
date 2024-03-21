@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -45,20 +44,6 @@ class MutableStorageTest {
     assertEquals("NewParentData", simpleEntityFromStore.data)
     assertEquals("ParentData", sampleBuilder.data)
     assertEquals("ParentData", entityTwoBuilder.data)
-  }
-
-  @Test
-  @Disabled("Change of behaviour after IJPL-583")
-  fun `check exception if request data from entity which was removed`() {
-    val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", false, MySource)
-    builder.addEntity(sampleEntity)
-    val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
-    val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()
-    newBuilder.removeEntity(entityFromStore)
-
-    assertThrows<IllegalStateException> { entityFromStore.data }
-    assertEquals("ParentData", sampleEntity.data)
   }
 
   @Test
