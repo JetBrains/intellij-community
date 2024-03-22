@@ -140,7 +140,13 @@ internal class KotlinIdeDeclarationRenderer(
         annotationListRenderer = object : KtAnnotationListRenderer {
             context(KtAnalysisSession, KtAnnotationRenderer)
             override fun renderAnnotations(owner: KtAnnotated, printer: PrettyPrinter) {
-                val annotations = owner.annotations.filter { annotationFilter.filter(it, owner) }.ifEmpty { return }
+                val backingFieldAnnotations = (owner as? KtPropertySymbol)?.backingFieldSymbol?.annotations
+                val annotations = (backingFieldAnnotations?.let { owner.annotations + it } ?: owner.annotations).filter {
+                    annotationFilter.filter(
+                        it,
+                        owner
+                    )
+                }.ifEmpty { return }
                 printer.printCollection(
                     annotations, separator = when (owner) {
                         is KtValueParameterSymbol -> " "
@@ -149,7 +155,10 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 ) { annotation ->
                     append(highlight("@") { asAnnotationName })
-                    annotationUseSiteTargetRenderer.renderUseSiteTarget(annotation, owner, printer)
+                    if (backingFieldAnnotations != null && annotation in backingFieldAnnotations) {
+                        printer.append(highlight("field") { asKeyword })
+                        printer.append(':')
+                    }
                     annotationsQualifiedNameRenderer.renderQualifier(annotation, owner, printer)
                     annotationArgumentsRenderer.renderAnnotationArguments(annotation, owner, printer)
                 }
@@ -164,7 +173,7 @@ internal class KotlinIdeDeclarationRenderer(
                 val classId = annotation.classId
                 if (classId != null) {
                     val buffer = StringBuilder()
-                    DocumentationManagerUtil.createHyperlink(buffer, classId.asString(), classId.shortClassName.renderName(), true, false)
+                    DocumentationManagerUtil.createHyperlink(buffer, classId.asSingleFqName().asString(), classId.shortClassName.renderName(), true, false)
                     printer.append(highlight(buffer.toString()) { asAnnotationName })
                 } else {
                     printer.append(highlight("ERROR_ANNOTATION") { asError })

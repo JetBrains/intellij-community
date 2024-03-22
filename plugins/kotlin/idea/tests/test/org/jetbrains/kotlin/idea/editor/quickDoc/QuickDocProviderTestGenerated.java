@@ -158,6 +158,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/JavaMethodUsedInKotlinInParen.kt");
     }
 
+    @TestMetadata("JvmFieldAnnotation.kt")
+    public void testJvmFieldAnnotation() throws Exception {
+        runTest("testData/editor/quickDoc/JvmFieldAnnotation.kt");
+    }
+
     @TestMetadata("KotlinClassUsedFromJava.java")
     public void testKotlinClassUsedFromJava() throws Exception {
         runTest("testData/editor/quickDoc/KotlinClassUsedFromJava.java");

@@ -158,6 +158,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/JavaMethodUsedInKotlinInParen.kt");
     }
 
+    @TestMetadata("JvmFieldAnnotation.kt")
+    public void testJvmFieldAnnotation() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/JvmFieldAnnotation.kt");
+    }
+
     @TestMetadata("KotlinClassUsedFromJava.java")
     public void testKotlinClassUsedFromJava() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/KotlinClassUsedFromJava.java");
