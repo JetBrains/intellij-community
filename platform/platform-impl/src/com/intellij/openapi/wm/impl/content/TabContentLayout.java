@@ -159,102 +159,113 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
     int tabsStart = data.eachX;
 
-    if (manager.getContentCount() == 0) return;
+    // Calculate total width of non-label components.
+    List<Component> nonLabelComponents = getNonLabelComponents();
+    int nonLabelWidth = calculateTotalPreferredWidth(nonLabelComponents);
 
-    Content selected = manager.getSelectedContent();
-    if (selected == null) {
-      selected = manager.getContents()[0];
-    }
+    boolean toolbarUpdateNeeded = false;
+    if (manager.getContentCount() != 0) {
+      Content selected = manager.getSelectedContent();
+      if (selected == null) {
+        selected = manager.getContents()[0];
+      }
 
-    if (lastLayout != null &&
-        (idLabel == null || idLabel.isValid()) &&
-        lastLayout.layoutSize.equals(bounds.getSize()) &&
-        lastLayout.contentCount == manager.getContentCount() &&
-        ContainerUtil.all(tabs, Component::isValid)) {
-      for (ContentTabLabel each : tabs) {
-        if (each.getContent() == selected && each.getBounds().width != 0) {
-          return; // keep last layout
+      if (lastLayout != null &&
+          (idLabel == null || idLabel.isValid()) &&
+          lastLayout.layoutSize.equals(bounds.getSize()) &&
+          lastLayout.contentCount == manager.getContentCount() &&
+          ContainerUtil.all(tabs, Component::isValid)) {
+        for (ContentTabLabel each : tabs) {
+          if (each.getContent() == selected && each.getBounds().width != 0) {
+            return; // keep last layout
+          }
         }
       }
-    }
 
-    ArrayList<JLabel> toLayout = new ArrayList<>();
-    Collection<JLabel> toDrop = new HashSet<>();
+      ArrayList<JLabel> toLayout = new ArrayList<>();
+      Collection<JLabel> toDrop = new HashSet<>();
 
-    for (JLabel eachTab : tabs) {
-      final Dimension eachSize = eachTab.getPreferredSize();
-      data.requiredWidth += eachSize.width;
-      toLayout.add(eachTab);
-    }
-
-    if (ui.dropOverIndex != -1 && !isSingleContentView) {
-      data.requiredWidth += ui.dropOverWidth;
-      int index = Math.min(toLayout.size(), Math.max(0, ui.dropOverIndex - 1));
-      toLayout.add(index, dropOverPlaceholder);
-    }
-
-    data.toFitWidth = bounds.getSize().width - data.eachX;
-
-    final ContentTabLabel selectedTab = contentToTabs.get(selected);
-    while (true) {
-      if (data.requiredWidth <= data.toFitWidth) break;
-      if (toLayout.size() <= 1) break;
-
-      JLabel firstLabel = toLayout.get(0);
-      JLabel lastLabel = toLayout.get(toLayout.size() - 1);
-      JLabel labelToDrop;
-      if (firstLabel != selectedTab && firstLabel != dropOverPlaceholder) {
-        labelToDrop = firstLabel;
+      for (JLabel eachTab : tabs) {
+        final Dimension eachSize = eachTab.getPreferredSize();
+        data.requiredWidth += eachSize.width;
+        toLayout.add(eachTab);
       }
-      else if (lastLabel != selectedTab && lastLabel != dropOverPlaceholder) {
-        labelToDrop = lastLabel;
-      }
-      else {
-        break;
-      }
-      data.requiredWidth -= (labelToDrop.getPreferredSize().width + 1);
-      toDrop.add(labelToDrop);
-      toLayout.remove(labelToDrop);
-    }
 
-    boolean reachedBounds = false;
-    TabsDrawMode toDrawTabs = isToDrawTabs();
-    for (JLabel each : toLayout) {
-      if (toDrawTabs == TabsDrawMode.HIDE) {
-        each.setBounds(0, 0, 0, 0);
-        continue;
+      if (ui.dropOverIndex != -1 && !isSingleContentView) {
+        data.requiredWidth += ui.dropOverWidth;
+        int index = Math.min(toLayout.size(), Math.max(0, ui.dropOverIndex - 1));
+        toLayout.add(index, dropOverPlaceholder);
       }
-      data.eachY = 0;
-      final Dimension eachSize = each.getPreferredSize();
-      if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
-        each.setBounds(data.eachX, data.eachY, eachSize.width, bounds.height - data.eachY);
-        data.eachX += eachSize.width;
-      }
-      else {
-        if (!reachedBounds) {
-          final int width = bounds.width - data.eachX;
-          each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
-          data.eachX += width;
+
+      data.toFitWidth = bounds.getSize().width - nonLabelWidth - data.eachX;
+
+      final ContentTabLabel selectedTab = contentToTabs.get(selected);
+      while (true) {
+        if (data.requiredWidth <= data.toFitWidth) break;
+        if (toLayout.size() <= 1) break;
+
+        JLabel firstLabel = toLayout.get(0);
+        JLabel lastLabel = toLayout.get(toLayout.size() - 1);
+        JLabel labelToDrop;
+        if (firstLabel != selectedTab && firstLabel != dropOverPlaceholder) {
+          labelToDrop = firstLabel;
+        }
+        else if (lastLabel != selectedTab && lastLabel != dropOverPlaceholder) {
+          labelToDrop = lastLabel;
         }
         else {
-          each.setBounds(0, 0, 0, 0);
+          break;
         }
-        reachedBounds = true;
+        data.requiredWidth -= (labelToDrop.getPreferredSize().width + 1);
+        toDrop.add(labelToDrop);
+        toLayout.remove(labelToDrop);
+      }
+
+      boolean reachedBounds = false;
+      TabsDrawMode toDrawTabs = isToDrawTabs();
+      for (JLabel each : toLayout) {
+        if (toDrawTabs == TabsDrawMode.HIDE) {
+          each.setBounds(0, 0, 0, 0);
+          continue;
+        }
+        data.eachY = 0;
+        final Dimension eachSize = each.getPreferredSize();
+        if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
+          each.setBounds(data.eachX, data.eachY, eachSize.width, bounds.height - data.eachY);
+          data.eachX += eachSize.width;
+        }
+        else {
+          if (!reachedBounds) {
+            final int width = bounds.width - data.eachX - nonLabelWidth;
+            each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
+            data.eachX += width;
+          }
+          else {
+            each.setBounds(0, 0, 0, 0);
+          }
+          reachedBounds = true;
+        }
+      }
+
+      for (JLabel each : toDrop) {
+        each.setBounds(0, 0, 0, 0);
+      }
+
+      if (toDrop.isEmpty()) {
+        toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset != null;
+        data.morePopupOffset = null;
+      }
+      else {
+        toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset == null;
+        data.morePopupOffset = new Point(data.eachX + nonLabelWidth + MORE_ICON_BORDER, bounds.height);
       }
     }
 
-    for (JLabel each : toDrop) {
-      each.setBounds(0, 0, 0, 0);
-    }
-
-    boolean toolbarUpdateNeeded;
-    if (!toDrop.isEmpty()) {
-      toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset == null;
-      data.morePopupOffset = new Point(data.eachX + MORE_ICON_BORDER, bounds.height);
-    }
-    else {
-      toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset != null;
-      data.morePopupOffset = null;
+    // Non-label components are positioned at the end.
+    for (Component c : nonLabelComponents) {
+      Dimension size = c.getPreferredSize();
+      c.setBounds(data.eachX, data.eachY + (bounds.height - size.height) / 2, size.width, size.height);
+      data.eachX += c.getWidth();
     }
 
     lastLayout = data;
@@ -289,6 +300,9 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         }
       }
     }
+
+    result += calculateTotalPreferredWidth(getNonLabelComponents());
+
     return result;
   }
 
@@ -374,19 +388,27 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Override
   public void rebuild() {
-    ui.getTabComponent().removeAll();
+    JPanel tabComponent = ui.getTabComponent();
+    List<Component> nonLabelComponents = getNonLabelComponents();
 
-    ui.getTabComponent().add(idLabel);
+    tabComponent.removeAll();
+
+    tabComponent.add(idLabel);
     ToolWindowContentUi.initMouseListeners(idLabel, ui, true);
 
     for (ContentTabLabel each : tabs) {
-      ui.getTabComponent().add(each);
+      tabComponent.add(each);
       ToolWindowContentUi.initMouseListeners(each, ui, false);
     }
     if ((!isSingleContentView || !Registry.is("debugger.new.tool.window.layout.dnd", false))
         && ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
-      int index = Math.min(ui.dropOverIndex, ui.getTabComponent().getComponentCount());
-      ui.getTabComponent().add(dropOverPlaceholder, index);
+      int index = Math.min(ui.dropOverIndex, tabComponent.getComponentCount());
+      tabComponent.add(dropOverPlaceholder, index);
+    }
+
+    // Add back the non-label components.
+    for (Component c : nonLabelComponents) {
+      tabComponent.add(c);
     }
   }
 

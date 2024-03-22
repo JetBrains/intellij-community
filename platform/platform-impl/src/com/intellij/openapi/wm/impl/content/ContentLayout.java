@@ -9,7 +9,12 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -66,6 +71,38 @@ public abstract class ContentLayout {
       label.setBorder(border);
     }
     label.setVisible(shouldShowId());
+  }
+
+  /**
+   * Returns a list of child components that are not instances of {@link BaseLabel}.
+   */
+  protected @NotNull java.util.List<Component> getNonLabelComponents() {
+    List<Component> result = null;
+    JPanel tabComponent = ui.getTabComponent();
+    int n = tabComponent.getComponentCount();
+    for (int i = 0; i < n; i++) {
+      Component component = tabComponent.getComponent(i);
+      if (!(component instanceof BaseLabel)) {
+        if (result == null) {
+          result = new SmartList<>(component);
+        }
+        else {
+          result.add(component);
+        }
+      }
+    }
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  /**
+   * Calculates the sum of preferred widths of the given components.
+   */
+  protected int calculateTotalPreferredWidth(Collection<Component> components) {
+    int width = 0;
+    for (Component c : components) {
+      width += c.getPreferredSize().width;
+    }
+    return width;
   }
 
   private String getTitleSuffix() {
