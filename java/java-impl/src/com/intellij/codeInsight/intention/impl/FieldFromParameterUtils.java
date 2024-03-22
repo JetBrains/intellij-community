@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.ASTFactory;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -28,11 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FieldFromParameterUtils {
   private FieldFromParameterUtils() {}
-
-  @Nullable
-  public static PsiParameter findParameterAtCursor(@NotNull PsiFile file, @NotNull Editor editor) {
-    return findParameterAtOffset(file, editor.getCaretModel().getOffset());
-  }
 
   @Nullable
   public static PsiParameter findParameterAtOffset(@NotNull PsiFile file, int offset) {
