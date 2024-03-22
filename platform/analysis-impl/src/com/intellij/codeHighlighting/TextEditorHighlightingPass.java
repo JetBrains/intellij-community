@@ -16,6 +16,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,15 +102,17 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (!isValid()) {
       return; // the document has changed.
     }
-    if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
-      Document document = getDocument();
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file != null) {
-        DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
-      }
-      return;
+    if (!DumbService.getInstance(myProject).isDumb() || DumbService.isDumbAware(this)) {
+      doApplyInformationToEditor();
     }
-    doApplyInformationToEditor();
+  }
+
+  @ApiStatus.Internal
+  public void markUpToDateIfStillValid() {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (isValid()) {
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
+    }
   }
 
   public abstract void doCollectInformation(@NotNull ProgressIndicator progress);
