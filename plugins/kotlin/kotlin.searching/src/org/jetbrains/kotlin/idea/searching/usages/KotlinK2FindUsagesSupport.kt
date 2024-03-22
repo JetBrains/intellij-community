@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
@@ -60,11 +61,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     context(KtAnalysisSession)
     private fun callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
         if (call !is KtCallableMemberCall<*, *>) return false
-        val dispatchReceiver = call.partiallyAppliedSymbol.dispatchReceiver
-        val extensionReceiver = call.partiallyAppliedSymbol.extensionReceiver
+        val implicitReceivers = call.getImplicitReceivers()
         val companionObjectSymbol = companionObject.getSymbol()
-        return (dispatchReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol ||
-                (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
+        return companionObjectSymbol in implicitReceivers.map { it.symbol }
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {

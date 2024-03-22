@@ -7,7 +7,9 @@ import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -182,3 +184,7 @@ fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolv
     is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
     else -> symbol
 }
+
+fun KtCallableMemberCall<*, *>.getImplicitReceivers(): List<KtImplicitReceiverValue> = partiallyAppliedSymbol
+    .let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
+    .filterIsInstance<KtImplicitReceiverValue>()
