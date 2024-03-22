@@ -58,10 +58,11 @@ final class HighlightInfoUpdater implements Disposable {
     return project.getService(HighlightInfoUpdater.class);
   }
 
-  static class ToolHighlights {
+  private static class ToolHighlights {
+    @NotNull
     final ConcurrentMap<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap((map,evicted) -> removeEvicted(map, evicted));
-
-    @NotNull ToolLatencies latencies = new ToolLatencies(0,0,0);
+    @NotNull
+    ToolLatencies latencies = new ToolLatencies(0,0,0);
   }
   record ToolLatencies(
       long errorLatency, // latency of the first error, in nanoseconds (or 0 if none)
@@ -196,23 +197,16 @@ final class HighlightInfoUpdater implements Disposable {
             PsiElement element = entry.getKey();
             if (element == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || element != FAKE_ELEMENT && !element.isValid()) {
               List<? extends HighlightInfo> infos = entry.getValue();
-              List<? extends HighlightInfo> newInfos = ContainerUtil.filter(infos, info -> {
+              for (HighlightInfo info : infos) {
                 RangeHighlighterEx highlighter = info.getHighlighter();
                 if (highlighter != null) {
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("removeInvalidPsiElements: " + info + " for invalid " + element + " from " + requestor);
                   }
                   disposeWithFileLevel(info, highlighter, highlightingSession);
-                  return false;
                 }
-                return true;
-              });
-              if (newInfos.isEmpty()) {
-                iterator.remove();
               }
-              else {
-                entry.setValue(List.copyOf(newInfos));
-              }
+              iterator.remove();
             }
           }
         }
@@ -288,14 +282,15 @@ final class HighlightInfoUpdater implements Disposable {
     Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
     ToolHighlights toolHighlights = newInfos.isEmpty() ? data.get(toolId) : data.computeIfAbsent(toolId, __ -> new ToolHighlights());
     // Sometimes multiple file editors are submitted for highlighting, some of which may have the same underlying document,
-    // e.g. when the editor for file v is opened along with the git log with "preview diff" for the same file.
-    // In this case, it's possible that several instances of e.g. LocalInspectionPass can run in parallel,
-    // thus making `psiElementVisited` potentially reentrant (i.e. it can be called with the same `toolId` from different threads concurrently),
+    // e.g., when the editor for file v is opened along with the git log with "preview diff" for the same file.
+    // In this case, it's possible that several instances of e.g., LocalInspectionPass can run in parallel,
+    // thus making `psiElementVisited` potentially reentrant (i.e., it can be called with the same `toolId` from different threads concurrently),
     // so we need to guard `ToolHighlights` against parallel modification:
     Object monitor = toolHighlights == null ? this : toolHighlights;
     synchronized (monitor) {
       List<? extends HighlightInfo> oldInfos = toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement);
       if (oldInfos != null || !newInfos.isEmpty()) {
+        newInfos = List.copyOf(newInfos);
         if (LOG.isDebugEnabled()) {
           //noinspection removal
           LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + psiFile +
@@ -435,7 +430,13 @@ final class HighlightInfoUpdater implements Disposable {
               List<? extends HighlightInfo> infos = elementEntry.getValue();
               int i = infos.indexOf(info);
               if (i != -1) {
-                elementEntry.setValue(ContainerUtil.concat(infos.subList(0,i), infos.subList(i+1, infos.size())));
+                List<HighlightInfo> listMinusInfo = ContainerUtil.concat(infos.subList(0, i), infos.subList(i + 1, infos.size()));
+                if (listMinusInfo.isEmpty()) {
+                  elementHighlights.elementHighlights.remove(elementEntry.getKey());
+                }
+                else {
+                  elementEntry.setValue(listMinusInfo);
+                }
                 break;
               }
             }
@@ -457,7 +458,7 @@ final class HighlightInfoUpdater implements Disposable {
    */
   void saveLatencies(@NotNull PsiFile psiFile, @NotNull Map<Object, ToolLatencies> latencies) {
     if (!psiFile.getViewProvider().isPhysical()) {
-      // ignore editor text fields/consoles etc
+      // ignore editor text fields/consoles etc.
       return;
     }
     Map<Object, ToolHighlights> map = getData(psiFile);
