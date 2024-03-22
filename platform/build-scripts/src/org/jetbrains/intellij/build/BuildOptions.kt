@@ -155,6 +155,8 @@ data class BuildOptions(
     /** Sign *.exe files in Windows distribution.  */
     const val WIN_SIGN_STEP: String = "windows_sign"
 
+    const val LOCALIZE_STEP: String = "localize"
+
     @JvmField
     @ApiStatus.Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
