@@ -48,6 +48,10 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     "fatal",
     "log"
   );
+  private static final String LOG4J_LOGGER = "org.apache.logging.log4j.Logger";
+  private static final String LOG4J_BUILDER = "org.apache.logging.log4j.LogBuilder";
+  private static final String GET_LOGGER = "getLogger";
+
   @SuppressWarnings("PublicField") public int warnLevel = 0;
 
   @Override
@@ -82,10 +86,61 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   @Nullable
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
+    if (!(infos[1] instanceof PsiMethodCallExpression logCall)) {
+      return null;
+    }
+
+    if (isFormattedLog4J(logCall)) return null;
+
     if (!StringConcatenationArgumentToLogCallFix.isAvailable((PsiExpression)infos[0])) {
       return null;
     }
     return new StringConcatenationArgumentToLogCallFix();
+  }
+
+  private static boolean isFormattedLog4J(@NotNull PsiMethodCallExpression logCall) {
+    PsiExpression qualifierExpression = logCall.getMethodExpression().getQualifierExpression();
+    if (qualifierExpression == null) {
+      return false;
+    }
+
+    boolean isLogBuilder = InheritanceUtil.isInheritor(qualifierExpression.getType(), LOG4J_BUILDER);
+    if (isLogBuilder || InheritanceUtil.isInheritor(qualifierExpression.getType(), LOG4J_LOGGER)) {
+
+      if (isLogBuilder) {
+        while (qualifierExpression != null &&
+               !InheritanceUtil.isInheritor(qualifierExpression.getType(), LOG4J_LOGGER)) {
+          if (qualifierExpression instanceof PsiMethodCallExpression nextCall) {
+            qualifierExpression = PsiUtil.skipParenthesizedExprDown(nextCall.getMethodExpression().getQualifierExpression());
+          }
+          else {
+            qualifierExpression = null;
+          }
+        }
+      }
+
+      if (qualifierExpression != null) {
+        boolean isFormatted = true;
+        if (qualifierExpression instanceof PsiReferenceExpression referenceExpression &&
+            referenceExpression.resolve() instanceof PsiVariable loggerVariable) {
+          if (!loggerVariable.isPhysical() ||
+              (loggerVariable.getInitializer() instanceof PsiMethodCallExpression callExpression &&
+               GET_LOGGER.equals(callExpression.getMethodExpression().getReferenceName()))) {
+            isFormatted = false;
+          }
+        }
+
+        if (qualifierExpression instanceof PsiMethodCallExpression callExpression &&
+            GET_LOGGER.equals(callExpression.getMethodExpression().getReferenceName())) {
+          isFormatted = false;
+        }
+
+        if (isFormatted) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -302,8 +357,8 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       }
       final PsiClass containingClass = method.getContainingClass();
       if (!InheritanceUtil.isInheritor(containingClass, "org.slf4j.Logger") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.LogBuilder")) {
+          !InheritanceUtil.isInheritor(containingClass, LOG4J_LOGGER) &&
+          !InheritanceUtil.isInheritor(containingClass, LOG4J_BUILDER)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -324,7 +379,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (!containsNonConstantConcatenation(argument)) {
         return;
       }
-      registerMethodCallError(expression, argument);
+      registerMethodCallError(expression, argument, expression);
     }
 
     private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
