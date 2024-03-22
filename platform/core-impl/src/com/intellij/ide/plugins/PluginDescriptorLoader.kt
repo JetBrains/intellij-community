@@ -674,18 +674,22 @@ private fun loadCoreProductPlugin(
     override fun toString() = "product classpath"
   }
 
-  val raw = readModuleDescriptor(reader,
-                                 readContext = context,
-                                 pathResolver = pathResolver,
-                                 dataLoader = dataLoader,
-                                 includeBase = null,
-                                 readInto = null)
-  val descriptor = IdeaPluginDescriptorImpl(raw = raw,
-                                            path = Paths.get(PathManager.getLibPath()),
-                                            isBundled = true,
-                                            id = null,
-                                            moduleName = null,
-                                            useCoreClassLoader = useCoreClassLoader)
+  val raw = readModuleDescriptor(
+    reader,
+    readContext = context,
+    pathResolver = pathResolver,
+    dataLoader = dataLoader,
+    includeBase = null,
+    readInto = null,
+  )
+  val descriptor = IdeaPluginDescriptorImpl(
+    raw = raw,
+    path = Paths.get(PathManager.getLibPath()),
+    isBundled = true,
+    id = null,
+    moduleName = null,
+    useCoreClassLoader = useCoreClassLoader,
+  )
   context.debugData?.recordDescriptorPath(descriptor, raw, path)
   descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
   return descriptor

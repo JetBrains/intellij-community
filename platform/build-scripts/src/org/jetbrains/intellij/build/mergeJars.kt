@@ -150,15 +150,19 @@ suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean 
   buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
 }
 
-internal suspend fun buildJar(targetFile: Path,
-                              sources: List<Source>,
-                              compress: Boolean = false,
-                              notify: Boolean = true,
-                              nativeFileHandler: NativeFileHandler? = null) {
+internal suspend fun buildJar(
+  targetFile: Path,
+  sources: List<Source>,
+  compress: Boolean = false,
+  notify: Boolean = true,
+  nativeFileHandler: NativeFileHandler? = null,
+) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
-    ZipFileWriter(channel = outChannel,
-                  deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
+    ZipFileWriter(
+      channel = outChannel,
+      deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+    ).use { zipCreator ->
       val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
@@ -181,8 +185,10 @@ internal suspend fun buildJar(targetFile: Path,
 
           is InMemoryContentSource -> {
             if (uniqueNames.putIfAbsent(source.relativePath, Path.of(source.relativePath)) != null) {
-              throw IllegalStateException("in-memory source must always be first " +
-                                          "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
+              throw IllegalStateException(
+                "in-memory source must always be first " +
+                "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})"
+              )
             }
 
             packageIndexBuilder?.addFile(source.relativePath)
@@ -194,34 +200,16 @@ internal suspend fun buildJar(targetFile: Path,
           is ZipSource -> {
             val sourceFile = source.file
             try {
-              //if (source.optimizeConfigId != null) {
-              //  TraceManager.spanBuilder("optimize").setAttribute("library", source.optimizeConfigId).useWithoutActiveScope {
-              //    val tempDir = optimizeLibraryContext!!.tempDir
-              //    val suffix = System.nanoTime().toString(Character.MAX_RADIX)
-              //    sourceFile = tempDir.resolve("${source.optimizeConfigId}-$suffix.jar")
-              //    val mappingFile = tempDir.resolve("${source.optimizeConfigId}-${System.nanoTime().toString(Character.MAX_RADIX)}.jar")
-              //    try {
-              //      optimizeLibrary(name = source.optimizeConfigId,
-              //                      input = source.file,
-              //                      output = sourceFile,
-              //                      javaHome = optimizeLibraryContext.javaHome.toString(),
-              //                      mapping = mappingFile)
-              //      zipCreator.file("${source.optimizeConfigId}.map.txt", mappingFile)
-              //    }
-              //    finally {
-              //      Files.deleteIfExists(mappingFile)
-              //    }
-              //  }
-              //}
-
-              handleZipSource(source = source,
-                              sourceFile = sourceFile,
-                              nativeFileHandler = nativeFileHandler,
-                              uniqueNames = uniqueNames,
-                              sources = sources,
-                              packageIndexBuilder = packageIndexBuilder,
-                              zipCreator = zipCreator,
-                              compress = compress)
+              handleZipSource(
+                source = source,
+                sourceFile = sourceFile,
+                nativeFileHandler = nativeFileHandler,
+                uniqueNames = uniqueNames,
+                sources = sources,
+                packageIndexBuilder = packageIndexBuilder,
+                zipCreator = zipCreator,
+                compress = compress
+              )
             }
             finally {
               @Suppress("KotlinConstantConditions")

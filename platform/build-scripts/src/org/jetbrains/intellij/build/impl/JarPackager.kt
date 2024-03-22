@@ -346,7 +346,7 @@ class JarPackager private constructor(
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
       assets.computeIfAbsent(moduleOutDir) { file ->
-        AssetDescriptor(isDir = true, file = file, relativePath = "", pathInClassLog = "")
+        AssetDescriptor(isDir = true, file = file, relativePath = "", pathInClassLog = "", nativeFiles = null)
       }
     }
     else {
@@ -753,7 +753,7 @@ private data class AssetDescriptor(
   @JvmField val relativePath: String,
   @JvmField var effectiveFile: Path = file,
   @JvmField val pathInClassLog: String,
-  @JvmField val nativeFiles: List<String>? = null
+  @JvmField val nativeFiles: List<String>?,
 ) {
   @JvmField
   val sources: MutableList<Source> = mutableListOf()
@@ -851,21 +851,12 @@ private suspend fun buildJars(
   dryRun: Boolean,
   layout: BaseLayout?
 ): Map<ZipSource, List<String>> {
-  val uniqueFiles = HashMap<Path, List<Source>>()
-  for (descriptor in assets) {
-    val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
-    check(existing == null) {
-      "File ${descriptor.file} is already associated." +
-      "\nPrevious:\n  ${existing!!.joinToString(separator = "\n  ")}" +
-      "\nCurrent:\n  ${descriptor.sources.joinToString(separator = "\n  ")}"
-    }
-  }
+  checkAssetUniqueness(assets)
 
   if (dryRun) {
     return emptyMap()
   }
 
-  //val optimizeLibraryContext = OptimizeLibraryContext(tempDir = context.paths.tempDir, javaHome = context.getStableJdkHome())
   val list = withContext(Dispatchers.IO) {
     assets.map { asset ->
       async {
@@ -927,6 +918,18 @@ private suspend fun buildJars(
   val result = TreeMap<ZipSource, List<String>>(compareBy { it.file.fileName.toString() })
   list.asSequence().map { it.getCompleted() }.forEach(result::putAll)
   return result
+}
+
+private fun checkAssetUniqueness(assets: Collection<AssetDescriptor>) {
+  val uniqueFiles = HashMap<Path, List<Source>>(assets.size)
+  for (asset in assets) {
+    val existing = uniqueFiles.putIfAbsent(asset.file, asset.sources)
+    check(existing == null) {
+      "File ${asset.file} is already associated." +
+      "\nPrevious:\n  ${existing!!.joinToString(separator = "\n  ")}" +
+      "\nCurrent:\n  ${asset.sources.joinToString(separator = "\n  ")}"
+    }
+  }
 }
 
 private class NativeFileHandlerImpl(private val context: BuildContext, private val descriptor: AssetDescriptor) : NativeFileHandler {
