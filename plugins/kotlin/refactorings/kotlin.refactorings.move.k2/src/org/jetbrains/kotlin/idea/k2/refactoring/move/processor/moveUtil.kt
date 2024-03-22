@@ -6,6 +6,7 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -33,7 +34,7 @@ internal fun KtFile.updatePackageDirective(pkgName: FqName) {
     if (pkgName.isRoot) {
         packageDirective?.delete()
     } else {
-        val newPackageDirective = KtPsiFactory(project).createPackageDirective(pkgName)
+        val newPackageDirective = KtPsiFactory(project).createPackageDirective(pkgName.quoteIfNeeded())
         packageDirective?.replace(newPackageDirective)
     }
 }
