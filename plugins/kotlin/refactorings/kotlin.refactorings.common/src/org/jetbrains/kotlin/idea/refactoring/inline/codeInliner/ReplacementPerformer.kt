@@ -181,10 +181,10 @@ class ExpressionReplacementPerformer(
                 }
                 if (canDropElementToBeReplaced) {
                     val parent = stub.parents.first { it !is KtParenthesizedExpression }
-                    if (parent is KtWhenExpression &&
-                        parent.subjectExpression?.safeDeparenthesize() == stub &&
-                        parent.leftParenthesis != null && parent.rightParenthesis != null) {
+                    if (parent is KtWhenExpression && parent.subjectExpression?.safeDeparenthesize() == stub && parent.leftParenthesis != null && parent.rightParenthesis != null) {
                         parent.deleteChildRange(parent.leftParenthesis, parent.rightParenthesis)
+                    } else if (parent is KtQualifiedExpression && parent.selectorExpression?.safeDeparenthesize() == stub) {
+                        parent.replaced(parent.receiverExpression)
                     } else {
                         stub.delete()
                     }
