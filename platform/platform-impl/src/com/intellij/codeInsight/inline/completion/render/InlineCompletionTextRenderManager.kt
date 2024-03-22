@@ -18,9 +18,18 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
-// TODO docs
-// TODO describe disposing (all at once)
-// TODO describe rectangle
+/**
+ * Accumulates all the text to be rendered at one offset and renders them.
+ * To be able to render streaming text, all blocks are split line by line.
+ *
+ * When a new text part comes, the last line is changed, while the previous lines stay the same.
+ * Even if an element has multiline text, it's split into lines and they are rendered one by one.
+ *
+ * Rules:
+ * * Disposing of the whole text happens only when all the 'children' elements are disposed.
+ *   It relies on the internal implementation of the inline completion: all elements are always disposed at once.
+ * * Each 'child' element returns [Rectangle] that represents the whole text. It may be fixed at some point.
+ */
 @ApiStatus.Experimental
 internal class InlineCompletionTextRenderManager private constructor(
   editor: Editor,
@@ -53,8 +62,8 @@ internal class InlineCompletionTextRenderManager private constructor(
 
   private class Renderer(private val editor: Editor, private val offset: Int) : Disposable {
 
-    private var suffixInlay: Inlay<InlineSuffixRenderer>? = null
-    private val blockLineInlays = mutableListOf<Inlay<InlineSuffixRenderer>>()
+    private var suffixInlay: Inlay<InlineCompletionLineRenderer>? = null
+    private val blockLineInlays = mutableListOf<Inlay<InlineCompletionLineRenderer>>()
     private var state = RenderState.RENDERING_SUFFIX
 
     fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor? {
@@ -94,7 +103,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       suffixInlay = null
 
       if (suffixBlocks.any { it.text.isNotEmpty() }) {
-        val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, suffixBlocks))
+        val element = editor.inlayModel.addInlineElement(offset, true, InlineCompletionLineRenderer(editor, suffixBlocks))
         if (element != null) {
           element.addActionAvailabilityHint(
             EditorActionAvailabilityHint(
@@ -136,13 +145,13 @@ internal class InlineCompletionTextRenderManager private constructor(
       editor: Editor,
       offset: Int,
       blocks: List<InlineCompletionRenderTextBlock>
-    ): Inlay<InlineSuffixRenderer>? {
+    ): Inlay<InlineCompletionLineRenderer>? {
       return editor.inlayModel.addBlockElement(
         offset,
         true,
         false,
         1,
-        InlineSuffixRenderer(editor, blocks)
+        InlineCompletionLineRenderer(editor, blocks)
       )
     }
 

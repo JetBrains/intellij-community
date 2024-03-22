@@ -7,7 +7,11 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
-// TODO docs
+/**
+ * Draws text using IntelliJ inlays with respect to provided [Color].
+ *
+ * It uses [InlineCompletionFontUtils.attributes] with changed [TextAttributes.getForegroundColor].
+ */
 @ApiStatus.Experimental
 open class InlineCompletionColorTextElement(
   override val text: String,

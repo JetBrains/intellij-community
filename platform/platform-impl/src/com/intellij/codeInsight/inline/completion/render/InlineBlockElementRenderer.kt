@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
-@Deprecated("All rendering uses InlineSuffixRenderer")
+@Deprecated("All rendering uses InlineCompletionLineRenderer")
 @ApiStatus.ScheduledForRemoval
 @ApiStatus.Internal
 class InlineBlockElementRenderer(private val editor: Editor, lines: List<String>) : EditorCustomElementRenderer {

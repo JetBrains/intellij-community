@@ -11,10 +11,18 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
-// TODO name
-// TODO what attributes are supported
+/**
+ * Should not be used outside rendering the default inline completion elements.
+ *
+ * For now, it supports:
+ * * [TextAttributes.getForegroundColor]
+ * * [TextAttributes.getFontType]
+ */
 @ApiStatus.Internal
-class InlineSuffixRenderer(private val editor: Editor, blocks: List<InlineCompletionRenderTextBlock>) : EditorCustomElementRenderer {
+class InlineCompletionLineRenderer(
+  private val editor: Editor,
+  blocks: List<InlineCompletionRenderTextBlock>
+) : EditorCustomElementRenderer {
 
   constructor(editor: Editor, text: String, attributes: TextAttributes = InlineCompletionFontUtils.attributes(editor)) : this(
     editor,
@@ -78,6 +86,6 @@ class InlineSuffixRenderer(private val editor: Editor, blocks: List<InlineComple
   }
 
   companion object {
-    private val LOG = logger<InlineSuffixRenderer>()
+    private val LOG = logger<InlineCompletionLineRenderer>()
   }
 }

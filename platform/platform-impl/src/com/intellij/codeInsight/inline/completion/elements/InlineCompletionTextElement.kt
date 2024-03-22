@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.elements
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionTextRenderManager
 import com.intellij.codeInsight.inline.completion.render.RenderedInlineCompletionElementDescriptor
 import com.intellij.openapi.editor.Editor
@@ -8,6 +9,15 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
+/**
+ * Draws text using the IntelliJ inlays with respect to provided [TextAttributes].
+ *
+ * Consider using [InlineCompletionFontUtils.attributes] as a base for custom attributes.
+ *
+ * At this moment the following attributes are supported:
+ * * [TextAttributes.getForegroundColor]
+ * * [TextAttributes.getFontType]
+ */
 @ApiStatus.Experimental
 open class InlineCompletionTextElement @ApiStatus.Experimental constructor(
   override val text: String,
