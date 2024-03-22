@@ -150,18 +150,15 @@ final class HighlightInfoUpdater implements Disposable {
       boolean shouldRemove = injectedLanguageManager.isInjectedFragment(psiFile) &&
                   !liveInjectedFiles.contains(psiFile) &&
                   restrictRange.contains(injectedLanguageManager.injectedToHost(psiFile, psiFile.getTextRange()));
-      boolean isEmpty;
       if (shouldRemove) {
-        isEmpty = removeAllHighlighterInsideFile(psiFile, this, true, true, highlightingSession, toolMap);
+        removeAllHighlighterInsideFile(psiFile, this, highlightingSession, toolMap);
+        return true;
       }
-      else {
-        isEmpty = false;
-      }
-      return isEmpty;
+      return false;
     });
   }
 
-  void removeInvalidPsiElements(@NotNull PsiFile psiFile, @NotNull Object requestor, boolean removeInspectionHighlights, boolean removeAnnotatorHighlights, @NotNull HighlightingSession highlightingSession) {
+  void removeInvalidPsiElements(@NotNull PsiFile psiFile, @NotNull Object requestor, @NotNull HighlightingSession highlightingSession) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
     PsiFile hostFile = injectedLanguageManager.getTopLevelFile(psiFile);
     Document hostDocument = hostFile.getFileDocument();
@@ -182,15 +179,14 @@ final class HighlightInfoUpdater implements Disposable {
       if (psi == psiFile) {
         return false;
       }
-      boolean isEmpty = removeAllHighlighterInsideFile(psi, requestor, removeInspectionHighlights, removeAnnotatorHighlights, highlightingSession, toolMap);
-      return isEmpty;
+      removeAllHighlighterInsideFile(psi, requestor, highlightingSession, toolMap);
+      return true;
     });
     for (Map<Object, ToolHighlights> map : myMaps) {
       if (map.isEmpty()) {
         continue;
       }
       for (Map.Entry<Object, ToolHighlights> toolEntry : map.entrySet()) {
-        Object toolId = toolEntry.getKey();
         ToolHighlights toolHighlights = toolEntry.getValue();
         synchronized (toolHighlights) {
           invokeProcessQueueToTriggerEvictedListener(toolHighlights.elementHighlights);
@@ -202,7 +198,7 @@ final class HighlightInfoUpdater implements Disposable {
               List<? extends HighlightInfo> infos = entry.getValue();
               List<? extends HighlightInfo> newInfos = ContainerUtil.filter(infos, info -> {
                 RangeHighlighterEx highlighter = info.getHighlighter();
-                if (highlighter != null && allowedToRemove(info, toolId, removeInspectionHighlights, removeAnnotatorHighlights)) {
+                if (highlighter != null) {
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("removeInvalidPsiElements: " + info + " for invalid " + element + " from " + requestor);
                   }
@@ -224,35 +220,25 @@ final class HighlightInfoUpdater implements Disposable {
     }
   }
 
-  // return true if all highlighters are removed and we can delete the entire map
-  private static boolean removeAllHighlighterInsideFile(@NotNull PsiFile psiFile,
-                                                        @NotNull Object requestor,
-                                                        boolean removeInspectionHighlights,
-                                                        boolean removeAnnotatorHighlights,
-                                                        @NotNull HighlightingSession highlightingSession,
-                                                        @NotNull Map<Object, ToolHighlights> toolMap) {
+  private static void removeAllHighlighterInsideFile(@NotNull PsiFile psiFile,
+                                                     @NotNull Object requestor,
+                                                     @NotNull HighlightingSession highlightingSession,
+                                                     @NotNull Map<Object, ToolHighlights> toolMap) {
     int removed = 0;
-    boolean isEmpty = true;
     for (ToolHighlights highlights : toolMap.values()) {
       for (List<? extends HighlightInfo> list : highlights.elementHighlights.values()) {
         for (HighlightInfo info : list) {
           RangeHighlighterEx highlighter = info.highlighter;
           if (highlighter != null) {
-            if (allowedToRemove(info, info.toolId, removeInspectionHighlights, removeAnnotatorHighlights)) {
-              disposeWithFileLevel(info, highlighter, highlightingSession);
-              removed++;
-            }
-            else {
-              isEmpty = false;
-            }
+            disposeWithFileLevel(info, highlighter, highlightingSession);
+            removed++;
           }
         }
       }
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("removeAllHighlighterInsideFile: removed invalid file: " + psiFile + " (" + removed + " highlighters removed); from " + requestor+" isEmpty="+isEmpty);
+      LOG.debug("removeAllHighlighterInsideFile: removed invalid file: " + psiFile + " (" + removed + " highlighters removed); from " + requestor);
     }
-    return isEmpty;
   }
 
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
@@ -263,10 +249,6 @@ final class HighlightInfoUpdater implements Disposable {
       highlightingSession.removeFileLevelHighlight(info);
     }
     highlighter.dispose();
-  }
-
-  private static boolean allowedToRemove(@NotNull HighlightInfo info, Object toolId, boolean removeInspectionHighlights, boolean removeAnnotatorHighlights) {
-    return info.isFromAnnotator() && removeAnnotatorHighlights || isInspectionToolId(toolId) && removeInspectionHighlights;
   }
 
   private void putInfosForVisitedPsi(@NotNull Map<Object, ToolHighlights> data,
