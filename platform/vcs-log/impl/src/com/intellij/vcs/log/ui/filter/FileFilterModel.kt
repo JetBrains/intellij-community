@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter
 
 import com.intellij.openapi.diagnostic.Logger
@@ -52,14 +52,8 @@ class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiPro
     }
   }
 
-  val rootFilter: VcsLogRootFilter?
-    get() = getFilter(VcsLogFilterCollection.ROOT_FILTER)
-
-  var structureFilter: VcsLogStructureFilter?
-    get() = getFilter(VcsLogFilterCollection.STRUCTURE_FILTER)
-    private set(filter) {
-      setFilter(VcsLogFilterObject.collection(filter))
-    }
+  var rootFilter by filterProperty(VcsLogFilterCollection.ROOT_FILTER)
+  var structureFilter by filterProperty(VcsLogFilterCollection.STRUCTURE_FILTER)
 
   companion object {
     private const val DIR: @NonNls String = "dir:"

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter
 
 import com.intellij.vcs.log.VcsLogFilter
@@ -6,6 +6,8 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 abstract class FilterModel<Filter> internal constructor(@JvmField protected val uiProperties: MainVcsLogUiProperties) {
   private val listeners = mutableListOf<Runnable>()
@@ -122,5 +124,14 @@ abstract class FilterModel<Filter> internal constructor(@JvmField protected val 
 
     protected abstract fun getFilterValues(filter: VcsLogFilter): List<String>?
     protected abstract fun createFilter(key: VcsLogFilterCollection.FilterKey<*>, values: List<String>): VcsLogFilter?
+
+    protected fun <F : VcsLogFilter?> filterProperty(key: VcsLogFilterCollection.FilterKey<F>): ReadWriteProperty<MultipleFilterModel, F?> {
+      return object : ReadWriteProperty<MultipleFilterModel, F?> {
+        override fun getValue(thisRef: MultipleFilterModel, property: KProperty<*>): F? = thisRef.getFilter(key)
+        override fun setValue(thisRef: MultipleFilterModel, property: KProperty<*>, value: F?) {
+          setFilter(VcsLogFilterObject.collection(value))
+        }
+      }
+    }
   }
 }

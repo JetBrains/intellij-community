@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter
 
 import com.intellij.openapi.diagnostic.Logger
@@ -116,20 +116,9 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
     return VcsLogFilterObject.collection(branchFilter, hashFilter, refDiffFilter)
   }
 
-  var branchFilter: VcsLogBranchFilter?
-    get() = getFilter(VcsLogFilterCollection.BRANCH_FILTER)
-    set(branchFilter) {
-      setFilter(VcsLogFilterObject.collection(branchFilter))
-    }
-
-  val revisionFilter: VcsLogRevisionFilter?
-    get() = getFilter(VcsLogFilterCollection.REVISION_FILTER)
-
-  var rangeFilter: VcsLogRangeFilter?
-    get() = getFilter(VcsLogFilterCollection.RANGE_FILTER)
-    set(rangeFilter) {
-      setFilter(VcsLogFilterObject.collection(rangeFilter))
-    }
+  var branchFilter by filterProperty(VcsLogFilterCollection.BRANCH_FILTER)
+  var revisionFilter by filterProperty(VcsLogFilterCollection.REVISION_FILTER)
+  var rangeFilter by filterProperty(VcsLogFilterCollection.RANGE_FILTER)
 
   companion object {
     private val LOG = Logger.getInstance(BranchFilterModel::class.java)
