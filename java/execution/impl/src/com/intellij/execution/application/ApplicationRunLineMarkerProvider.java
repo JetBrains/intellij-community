@@ -3,11 +3,13 @@ package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.ApplicationRunLineMarkerHider;
+import com.intellij.execution.actions.RunContextAction;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -93,6 +95,20 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
 
+    if (DumbService.isDumb(element.getProject())) {
+      AnActionEvent event = createActionEvent(element);
+      //prepare fields (including for dumb mode)
+      for (AnAction action : actions) {
+        if (action instanceof ExecutorAction executorAction) {
+          AnAction delegate = executorAction.getDelegate();
+          if (delegate.getClass() == RunContextAction.class) {
+            event.getPresentation().copyFrom(action.getTemplatePresentation());
+            event.getPresentation().setEnabledAndVisible(true);
+            delegate.beforeActionPerformedUpdate(event);
+          }
+        }
+      }
+    }
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
   }
 
