@@ -65,6 +65,8 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
                 if (root.isError()) return null
             }
 
+            contributor.reloadIfNeeded(workingDir, gradleHome, javaHome)
+
             val definitions = contributor.definitionsByRoots[root]
             if (definitions == null) {
                 scriptingInfoLog(
