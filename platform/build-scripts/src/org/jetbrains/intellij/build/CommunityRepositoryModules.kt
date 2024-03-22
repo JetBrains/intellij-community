@@ -218,7 +218,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     javaFXPlugin("intellij.javaFX.community"),
-    aeDatabasePlugin("intellij.ae.database.community"),
     plugin("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
       spec.withModule("intellij.terminal.sh")
