@@ -33,6 +33,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/AbstractCallableInInterface.kt");
     }
 
+    @TestMetadata("Annotation.kt")
+    public void testAnnotation() throws Exception {
+        runTest("testData/editor/quickDoc/Annotation.kt");
+    }
+
     @TestMetadata("AnonymousObjectLocalVariable.kt")
     public void testAnonymousObjectLocalVariable() throws Exception {
         runTest("testData/editor/quickDoc/AnonymousObjectLocalVariable.kt");
@@ -171,6 +176,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("MethodFromStdLib.kt")
     public void testMethodFromStdLib() throws Exception {
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
+    }
+
+    @TestMetadata("ObjectLiteral.kt")
+    public void testObjectLiteral() throws Exception {
+        runTest("testData/editor/quickDoc/ObjectLiteral.kt");
     }
 
     @TestMetadata("OnActualDeclaration.kt")
@@ -333,6 +343,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
     }
 
+    @TestMetadata("PropertiesInConstructor.kt")
+    public void testPropertiesInConstructor() throws Exception {
+        runTest("testData/editor/quickDoc/PropertiesInConstructor.kt");
+    }
+
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
     public void testRenderAnnotatedExtensionFunctionType() throws Exception {
         runTest("testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");
@@ -361,5 +376,10 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("TypeNamesFromStdLibNavigation.kt")
     public void testTypeNamesFromStdLibNavigation() throws Exception {
         runTest("testData/editor/quickDoc/TypeNamesFromStdLibNavigation.kt");
+    }
+
+    @TestMetadata("TypeParameterConstraints.kt")
+    public void testTypeParameterConstraints() throws Exception {
+        runTest("testData/editor/quickDoc/TypeParameterConstraints.kt");
     }
 }
