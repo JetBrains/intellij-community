@@ -567,7 +567,7 @@ private suspend fun buildPlugins(
 
       val directoryName = plugin.directoryName
       val pluginDir = targetDir.resolve(directoryName)
-      val task = async {
+      val task = async(CoroutineName("Build plugin (module=${plugin.mainModule})")) {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope {
           val (entries, file) = layoutDistribution(
             layout = plugin,
