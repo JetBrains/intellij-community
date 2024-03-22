@@ -139,14 +139,14 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   /** number of samples in this set of measurements */
   private val SAMPLES_COUNT: IntEventField = IntEventField("samples")
   /** mean task running time, in nanoseconds */
-  private val AVG_NS: DoubleEventField = DoubleEventField("avg_ns")
+  private val AVG_NS: FloatEventField = FloatEventField("avg_ns")
   /** 50%-tile of task running time, in nanoseconds */
   private val P50_NS: LongEventField = LongEventField("p50_ns")
 
   //below fields values are _relative to median_: 99%/50%, 99.9%/50%, max/50%
-  private val P99_TO_P50: DoubleEventField = DoubleEventField("p99_to_p50")
-  private val P999_TO_P50: DoubleEventField = DoubleEventField("p999_to_p50")
-  private val MAX_TO_P50: DoubleEventField = DoubleEventField("max_to_p50")
+  private val P99_TO_P50: FloatEventField = FloatEventField("p99_to_p50")
+  private val P999_TO_P50: FloatEventField = FloatEventField("p999_to_p50")
+  private val MAX_TO_P50: FloatEventField = FloatEventField("max_to_p50")
 
   private val RESPONSIVENESS_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "responsiveness",
@@ -160,12 +160,12 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     RESPONSIVENESS_EVENT.log(
       SAMPLES_COUNT.with(samplesCount),
 
-      AVG_NS.with(avg_ns),
+      AVG_NS.with(avg_ns.toFloat()),
       P50_NS.with(p50_ns),
 
-      P99_TO_P50.with(p99_ns * 1.0 / p50_ns),
-      P999_TO_P50.with(p999_ns * 1.0 / p50_ns),
-      MAX_TO_P50.with(max_ns * 1.0 / p50_ns)
+      P99_TO_P50.with((p99_ns * 1.0 / p50_ns).toFloat()),
+      P999_TO_P50.with((p999_ns * 1.0 / p50_ns).toFloat()),
+      MAX_TO_P50.with((max_ns * 1.0 / p50_ns).toFloat())
     )
   }
 

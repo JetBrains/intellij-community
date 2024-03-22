@@ -16,7 +16,7 @@ import static com.intellij.util.SystemProperties.getIntProperty;
  * Follows an idea of <a href="https://github.com/giltene/jHiccup">jhiccup</a> tool: monitors
  * general JVM responsiveness by periodically run a sample CPU/memory-bound task and measure
  * its run time.
- * Creates a histogram over task run distribution, and reports a few chosen statistics
+ * Creates a histogram over task run duration distribution, and reports a few chosen statistics
  * (avg, max, 50-99-99.9%-tile...) to FUS, as 'performance:responsiveness' event
  * <p>
  * The goal is to estimate how many 'hiccups' -- tail-delays in ordinary CPU/memory-bound
@@ -45,15 +45,15 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
   //  3. GC pauses: probably, the most important for JVM threads, and a something we have at least
   //     some means to deal with
 
-  private static final int SAMPLING_PERIOD_MS = getIntProperty("JVMResponsivenessMonitor.SAMPLING_PERIOD_MS", 500);
-  /** Should be >1000 for 99.9% to make any sense */
-  private static final int REPORTING_EACH_N_SAMPLES = getIntProperty("JVMResponsivenessMonitor.REPORTING_EACH_N_SAMPLES", 2000);
+  private static final int SAMPLING_PERIOD_MS = getIntProperty("JVMResponsivenessMonitor.SAMPLING_PERIOD_MS", 1_000);
+  /** Should be >1000 for 99.9%-ile to make any sense */
+  private static final int REPORTING_EACH_N_SAMPLES = getIntProperty("JVMResponsivenessMonitor.REPORTING_EACH_N_SAMPLES", 3600);
   private static final int MEMORY_BUFFER_SIZE = getIntProperty("JVMResponsivenessMonitor.MEMORY_BUFFER_SIZE", 512 * 1024);
   /**
-   * Should be tuned so that task duration is somewhere ~ 10s us. Not too long so it won't affect
-   * overall app's performance, not too short so it's duration could be measured with enough precision
+   * Should be tuned so that task duration ~ 10-50 us. Not too long so it won't affect overall app's performance, not too
+   * short -- so it's duration could be measured with enough precision
    */
-  private static final int MEMORY_OPS_PER_RUN = getIntProperty("JVMResponsivenessMonitor.MEMORY_OPS_PER_RUN", 50);
+  private static final int MEMORY_OPS_PER_RUN = getIntProperty("JVMResponsivenessMonitor.MEMORY_OPS_PER_RUN", 100);
 
 
   public static final String MONITOR_THREAD_NAME = "JVMResponsivenessMonitor";
