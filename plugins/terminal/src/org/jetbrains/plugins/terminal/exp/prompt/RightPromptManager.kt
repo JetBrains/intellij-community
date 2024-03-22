@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -13,15 +14,13 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.HighlightingInfo
-import org.jetbrains.plugins.terminal.exp.TerminalUi
+import org.jetbrains.plugins.terminal.exp.getCharSize
 import java.awt.Graphics
-import java.awt.Point
 import java.awt.Rectangle
+import kotlin.math.ceil
 
 /**
  * @param promptEditor the editor used for showing prompt and command input
@@ -74,21 +73,27 @@ internal class RightPromptManager(private val promptEditor: Editor,
     override fun calcWidthInPixels(inlay: Inlay<*>): Int = 1
 
     override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-      val textWidth = inlayEditor.contentComponent.preferredWidth
-      val visibleArea = inlay.editor.scrollingModel.visibleArea
-      val textX = visibleArea.x + visibleArea.width - textWidth - JBUI.scale(TerminalUi.cornerToBlockInset)
+      val promptEditor = inlay.editor as EditorEx
+      val columnWidth = promptEditor.getCharSize().width
 
-      val promptEditor = inlay.editor
+      val visibleArea = promptEditor.scrollingModel.visibleArea
+      val scrollBarWidth = promptEditor.scrollPane.verticalScrollBar.width
+      // Need to know the exact columns count to paint the inlay right at the column start.
+      // So, the inlay position will be the same as in the right prompt text in the output.
+      val terminalColumns = ((visibleArea.width - scrollBarWidth) / columnWidth).toInt()
+
+      val textColumns = inlayEditor.document.textLength
+      val textWidth = textColumns * columnWidth
+      val textX = terminalColumns * columnWidth - textWidth
+
       val promptLine = promptEditor.offsetToLogicalPosition(inlay.offset).line
-      val textY = promptLine * inlayEditor.lineHeight
       val lineStartOffset = promptEditor.document.getLineStartOffset(promptLine)
       val lineEndOffset = promptEditor.document.getLineEndOffset(promptLine)
-      val textPosition = promptEditor.xyToLogicalPosition(Point(textX, textY))
       // paint the right prompt only if the user input does not occupy the right prompt place
-      if (lineEndOffset - lineStartOffset < textPosition.column) {
+      if (lineEndOffset - lineStartOffset < terminalColumns - textColumns) {
         val g2 = g.create()
         try {
-          doPaint(g2, textX, textY, textWidth, targetRegion.height)
+          doPaint(g2, textX.toInt(), targetRegion.y, ceil(textWidth).toInt(), promptEditor.lineHeight)
         }
         finally {
           g2.dispose()

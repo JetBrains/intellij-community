@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.geom.Dimension2D
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JScrollBar
@@ -42,8 +43,8 @@ class TerminalOutputView(
       return visibleArea.width - scrollBarWidth
     }
 
-  val charSize: Dimension
-    get() = Dimension(editor.charHeight, editor.lineHeight)
+  val charSize: Dimension2D
+    get() = editor.getCharSize()
 
   init {
     editor = createEditor(settings)

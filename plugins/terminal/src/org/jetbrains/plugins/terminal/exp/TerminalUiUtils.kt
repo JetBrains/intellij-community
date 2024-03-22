@@ -4,6 +4,8 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -13,11 +15,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
@@ -48,6 +53,8 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.font.FontRenderContext
+import java.awt.geom.Dimension2D
 import java.util.concurrent.CompletableFuture
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
@@ -116,10 +123,10 @@ object TerminalUiUtils {
     return CustomShortcutSet(keyStroke)
   }
 
-  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
+  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension2D): TermSize {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
-    return ensureTermMinimumSize(TermSize(width, height))
+    return ensureTermMinimumSize(TermSize(width.toInt(), height.toInt()))
   }
 
   private fun ensureTermMinimumSize(size: TermSize): TermSize {
@@ -247,6 +254,27 @@ object TerminalUiUtils {
 
   const val GREEN_COLOR_INDEX: Int = 2
   const val YELLOW_COLOR_INDEX: Int = 3
+}
+
+fun Editor.getCharSize(): Dimension2D {
+  val baseContext = FontInfo.getFontRenderContext(contentComponent)
+  val context = FontRenderContext(baseContext.transform,
+                                  AntialiasingType.getKeyForCurrentScope(true),
+                                  UISettings.editorFractionalMetricsHint)
+  val fontMetrics = FontInfo.getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN), context)
+  val width = FontLayoutService.getInstance().charWidth2D(fontMetrics, ' '.code)
+  return Dimension2DDouble(width.toDouble(), lineHeight.toDouble())
+}
+
+private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {
+  override fun getWidth(): Double = width
+
+  override fun getHeight(): Double = height
+
+  override fun setSize(width: Double, height: Double) {
+    this.width = width
+    this.height = height
+  }
 }
 
 @RequiresBlockingContext

@@ -15,7 +15,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
 import java.awt.BorderLayout
-import java.awt.Dimension
+import java.awt.geom.Dimension2D
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -40,8 +40,8 @@ class SimpleTerminalView(
       return visibleArea.width - scrollBarWidth
     }
 
-  val charSize: Dimension
-    get() = Dimension(editor.charHeight, editor.lineHeight)
+  val charSize: Dimension2D
+    get() = editor.getCharSize()
 
   init {
     editor = createEditor()

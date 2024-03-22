@@ -32,6 +32,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 
 class TerminalPromptView(
   private val project: Project,
@@ -61,7 +62,7 @@ class TerminalPromptView(
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
                                          TerminalUi.promptBottomInset,
-                                         TerminalUi.blockRightInset + TerminalUi.cornerToBlockInset)
+                                         0)
     val outerBorder = object : CustomLineBorder(TerminalUi.promptSeparatorColor(editor),
                                                 JBInsets(1, 0, 0, 0)) {
       override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {
@@ -121,6 +122,9 @@ class TerminalPromptView(
     val editor = textField.getEditor(true) as EditorImpl
     editor.settings.isUseSoftWraps = true
     editor.scrollPane.border = JBUI.Borders.empty()
+    editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+    editor.setVerticalScrollbarVisible(true)
     editor.gutterComponentEx.isPaintBackground = false
     editor.useTerminalDefaultBackground(this)
     editor.colorsScheme.apply {
