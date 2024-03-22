@@ -24,6 +24,7 @@ public final class LicensingFacade {
   public Date perpetualFallbackDate;
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
+  public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
   public boolean ai_enabled;
   public static volatile boolean isUnusedSignalled;
@@ -131,6 +132,12 @@ public final class LicensingFacade {
 
   public static void signalUnused(boolean value) {
     isUnusedSignalled = value;
+  }
+
+  public static final class ProductLicenseData {
+    public String productCode;
+    public @Nullable String confirmationStamp;
+    public @Nullable Date expirationDate;
   }
 
   public interface LicenseStateListener extends EventListener {
