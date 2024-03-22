@@ -22,7 +22,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |    void method(Closure block) {};
       |}
       |new TestClass().method { <caret> }
-      |""".trimMargin("|")
+      |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
         val closure = elementUnderCaret(GrClosableBlock::class.java)
@@ -41,7 +41,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |    void method(@DelegatesTo(ClassForDelegation) Closure block) {};
       |}
       |new TestClass().method { <caret> }
-      |""".trimMargin("|")
+      |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
         closureDelegateTest("ClassForDelegation", 0)
@@ -60,7 +60,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |class TestClass extends ClassWithGeneric<ClassForDelegation> {}
       |
       |new TestClass().method { <caret> }
-      |""".trimMargin("|")
+      |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
         closureDelegateTest("ClassForDelegation", 1)
@@ -79,7 +79,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |class TestClass extends ClassWithGeneric<ClassForDelegation> {}
       |
       |new TestClass().method { <caret> }
-      |""".trimMargin("|")
+      |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
         closureDelegateTest("ClassForDelegation", 1)
@@ -99,7 +99,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |class TestClass extends ClassWithGeneric<ClassForDelegation> {}
       |
       |new TestClass().overloadedWithAction { <caret> }
-      |""".trimMargin("|")
+      |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
         val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
