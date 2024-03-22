@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
-import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.SingleContentLayout
@@ -242,13 +241,13 @@ abstract class ToolWindowHeader internal constructor(
   private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (!init) { // remove to avoid extra events, toolbars update on addNotify!
       westPanel.remove(contentUi.tabComponent)
-      toolbarWest?.apply { westPanel.remove(component) }
+      toolbarWest?.apply { contentUi.tabComponent.remove(component) }
       return
     }
     // Makes sure toolbar stays after the tab component
     val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
     westPanel.add(contentUi.tabComponent, if (allowDnd) CC().grow() else CC().growY())
-    toolbarWest?.apply { westPanel.add(component, CC().pushX()) }
+    toolbarWest?.apply { contentUi.tabComponent.add(component, CC().pushX()) }
   }
 
   override fun propertyChange(evt: PropertyChangeEvent?) {
@@ -295,8 +294,8 @@ abstract class ToolWindowHeader internal constructor(
         setReservePlaceAutoPopupIcon(false)
         isOpaque = false
         border = JBUI.Borders.empty()
-        if (westPanel.isShowing) {
-          westPanel.add(this, CC().pushX())
+        if (contentUi.tabComponent.isShowing) {
+          contentUi.tabComponent.add(component, CC().pushX())
         }
       }
     }

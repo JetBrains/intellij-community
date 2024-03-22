@@ -9,6 +9,8 @@ import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.JBUI;
+import java.util.List;
+import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -39,7 +41,6 @@ final class ComboContentLayout extends ContentLayout {
   public void layout() {
     Rectangle bounds = ui.getTabComponent().getBounds();
     Dimension idSize = isIdVisible() ? idLabel.getPreferredSize() : JBUI.emptySize();
-
     int eachX = 0;
     int eachY = 0;
 
@@ -47,7 +48,8 @@ final class ComboContentLayout extends ContentLayout {
     eachX += idSize.width;
 
     Dimension comboSize = comboLabel.getPreferredSize();
-    int spaceLeft = bounds.width - eachX - (isToDrawCombo() && isIdVisible() ? 3 : 0);
+    int nonLabelWidth = calculateTotalPreferredWidthOfNonLabelComponents();
+    int spaceLeft = bounds.width - eachX - nonLabelWidth - (isToDrawCombo() && isIdVisible() ? 3 : 0);
 
     int width = comboSize.width;
     if (width > spaceLeft) {
@@ -55,11 +57,19 @@ final class ComboContentLayout extends ContentLayout {
     }
 
     comboLabel.setBounds(eachX, eachY, width, bounds.height);
+    eachX += width;
+
+    // Non-label components are positioned at the end.
+    for (Component c : getNonLabelComponents(false)) {
+      Dimension size = c.getPreferredSize();
+      c.setBounds(eachX, eachY + (bounds.height - size.height) / 2, size.width, size.height);
+      eachX += c.getWidth();
+    }
   }
 
   @Override
   public int getMinimumWidth() {
-    return idLabel == null ? 0 : idLabel.getPreferredSize().width;
+    return (idLabel == null ? 0 : idLabel.getPreferredSize().width) + calculateTotalPreferredWidthOfNonLabelComponents();
   }
 
   @Override
@@ -70,13 +80,20 @@ final class ComboContentLayout extends ContentLayout {
 
   @Override
   public void rebuild() {
-    ui.getTabComponent().removeAll();
+    JPanel tabComponent = ui.getTabComponent();
+    List<Component> nonLabelComponents = getNonLabelComponents(true);
+    tabComponent.removeAll();
 
-    ui.getTabComponent().add(idLabel);
+    tabComponent.add(idLabel);
     ToolWindowContentUi.initMouseListeners(idLabel, ui, true);
 
-    ui.getTabComponent().add(comboLabel);
+    tabComponent.add(comboLabel);
     ToolWindowContentUi.initMouseListeners(comboLabel, ui, false);
+
+    // Add back the non-label components.
+    for (Component c : nonLabelComponents) {
+      tabComponent.add(c);
+    }
   }
 
   boolean isToDrawCombo() {

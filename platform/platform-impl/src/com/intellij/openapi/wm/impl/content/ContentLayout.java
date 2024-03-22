@@ -9,7 +9,12 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
+import java.util.Collections;
+import java.util.List;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -66,6 +71,43 @@ public abstract class ContentLayout {
       label.setBorder(border);
     }
     label.setVisible(shouldShowId());
+  }
+
+  /**
+   * Returns a list of child components that are not instances of {@link JLabel}.
+   */
+  protected @NotNull List<Component> getNonLabelComponents(boolean includeHidden) {
+    List<Component> result = null;
+    JPanel tabComponent = ui.getTabComponent();
+    int n = tabComponent.getComponentCount();
+    for (int i = 0; i < n; i++) {
+      Component component = tabComponent.getComponent(i);
+      if (!(component instanceof JLabel) && component.isVisible()) {
+        if (result == null) {
+          result = new SmartList<>(component);
+        }
+        else {
+          result.add(component);
+        }
+      }
+    }
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  /**
+   * Calculates the sum of preferred widths of visible child components that are not instances of {@link JLabel}.
+   */
+  protected int calculateTotalPreferredWidthOfNonLabelComponents() {
+    int width = 0;
+    JPanel tabComponent = ui.getTabComponent();
+    int n = tabComponent.getComponentCount();
+    for (int i = 0; i < n; i++) {
+      Component component = tabComponent.getComponent(i);
+      if (!(component instanceof JLabel) && component.isVisible()) {
+        width += component.getPreferredSize().width;
+      }
+    }
+    return width;
   }
 
   private String getTitleSuffix() {
