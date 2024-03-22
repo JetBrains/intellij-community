@@ -972,3 +972,10 @@ fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T
 fun <T : CommandChain> T.assertCaretPosition(line: Int, column: Int): T = apply {
   addCommand("${CMD_PREFIX}assertCaretPosition $line $column")
 }
+
+/**
+ * Assert the current file in editor.
+ */
+fun <T : CommandChain> T.assertCurrentFile(name: String): T = apply {
+  addCommand("${CMD_PREFIX}assertCurrentFile $name")
+}
