@@ -1025,3 +1025,12 @@ fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T
 fun <T : CommandChain> T.disableKotlinNotification(): T = apply {
   addCommand("${CMD_PREFIX}disableKotlinNotification")
 }
+
+
+/**
+ * Assert that the caret is located at the specified position.
+ * Lines and columns are counted from 1.
+ */
+fun <T : CommandChain> T.assertCaretPosition(line: Int, column: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertCaretPosition $line $column")
+}
