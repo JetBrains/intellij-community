@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractK2SharedQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
@@ -99,9 +100,16 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/optIn", pattern = pattern, testMethodName = "doTestWithExtraFile")
         }
 
+        testClass<AbstractK2MultiFileInspectionTest> {
+            model("${idea}/multiFileInspections/mismatchedPackageDirectoryWithEmptyKts", pattern = Patterns.TEST)
+            model("${idea}/multiFileInspections/mismatchedProjectAndDirectory", pattern = Patterns.TEST)
+            model("${idea}/multiFileInspections/mismatchedProjectAndDirectoryRoot", pattern = Patterns.TEST)
+        }
+
         testClass<AbstractK2MultiFileLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.test$")
             model("${idea}/multiFileLocalInspections/unusedSymbol", pattern = pattern)
+            model("${idea}/multiFileLocalInspections/reconcilePackageWithDirectory", pattern = pattern)
             model("${idea}/multiFileLocalInspections/redundantQualifierName", pattern = pattern)
             model("code-insight/inspections-k2/tests/testData/multiFileInspectionsLocal", pattern = pattern)
         }

@@ -58,5 +58,7 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>

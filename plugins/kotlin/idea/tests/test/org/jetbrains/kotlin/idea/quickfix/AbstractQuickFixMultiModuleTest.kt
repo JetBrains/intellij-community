@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
+import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -35,6 +37,9 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
     override fun getTestDataDirectory(): File {
         return File(TestMetadataUtil.getTestDataPath(this::class.java))
     }
+
+    override val additionalToolDirectives: Array<String>
+        get() = arrayOf(if (isFirPlugin()) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)
 
     fun doTest(unused: String) {
         setupMppProjectFromDirStructure(dataFile())

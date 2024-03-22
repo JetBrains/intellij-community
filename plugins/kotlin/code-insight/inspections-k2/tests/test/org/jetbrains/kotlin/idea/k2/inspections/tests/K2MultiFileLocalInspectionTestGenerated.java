@@ -114,6 +114,101 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory")
+    public abstract static class ReconcilePackageWithDirectory extends AbstractK2MultiFileLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/addQuotation")
+        public static class AddQuotation extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("addQuotation.test")
+            public void testAddQuotation() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/addQuotation/addQuotation.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToDefaultPackage")
+        public static class ChangeToDefaultPackage extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeToDefaultPackage.test")
+            public void testChangeToDefaultPackage() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToDefaultPackage/changeToDefaultPackage.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackage")
+        public static class ChangeToNonDefaultPackage extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeToNonDefaultPackage.test")
+            public void testChangeToNonDefaultPackage() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackageFromRoot")
+        public static class ChangeToNonDefaultPackageFromRoot extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeToNonDefaultPackageFromRoot.test")
+            public void testChangeToNonDefaultPackageFromRoot() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackageFromRoot/changeToNonDefaultPackageFromRoot.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackageFromRootWithPackageKeyword")
+        public static class ChangeToNonDefaultPackageFromRootWithPackageKeyword extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeToNonDefaultPackageFromRootWithPackageKeyword.test")
+            public void testChangeToNonDefaultPackageFromRootWithPackageKeyword() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackageFromRootWithPackageKeyword/changeToNonDefaultPackageFromRootWithPackageKeyword.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/innerClass")
+        public static class InnerClass extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("innerClass.test")
+            public void testInnerClass() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/innerClass/innerClass.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/packageMatchesDirectory")
+        public static class PackageMatchesDirectory extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("packageMatchesDirectory.test")
+            public void testPackageMatchesDirectory() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/reconcilePackageWithDirectory/packageMatchesDirectory/packageMatchesDirectory.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName")
     public abstract static class RedundantQualifierName extends AbstractK2MultiFileLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
