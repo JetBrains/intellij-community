@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.kernel
+package com.intellij.platform.kernel.util
 
 import com.jetbrains.rhizomedb.Datom
 import com.jetbrains.rhizomedb.Pattern
@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.IntConsumer
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
+import kotlin.collections.set
 
 internal class ReadTrackingIndex : ReadTrackingContext {
   companion object {

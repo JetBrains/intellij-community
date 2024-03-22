@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.kernel
+package com.intellij.platform.kernel.util
 
-import com.intellij.fleet.kernel.KernelService
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -11,7 +10,6 @@ import fleet.kernel.Kernel
 import fleet.kernel.KernelMiddleware
 import fleet.kernel.kernel
 import fleet.kernel.rebase.*
-import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
 import fleet.kernel.subscribe
 import fleet.rpc.core.Serialization
@@ -26,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-suspend fun <T> withKernel(scope: CoroutineScope, middleware: KernelMiddleware, body: suspend () -> T) {
+suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend () -> T) {
   val entityClasses = listOf(Kernel::class.java.classLoader).flatMap(::collectEntityClasses)
   fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
     withRete {
@@ -99,30 +97,6 @@ object ReadTracker {
   }
 }
 
-val FleetRpcSerialization = Serialization(SerializersModule {
+val KernelRpcSerialization = Serialization(SerializersModule {
   registerCRUDInstructions()
 })
-
-class BaseKernelService(coroutineScope: CoroutineScope) : KernelService {
-  private val kernelDeferred: CompletableDeferred<Kernel> = CompletableDeferred()
-  private val reteDeferred : CompletableDeferred<Rete> = CompletableDeferred()
-
-  init {
-    coroutineScope.launch(start = CoroutineStart.ATOMIC) {
-      withKernel(this, middleware = LeaderKernelMiddleware(FleetRpcSerialization, CommonInstructionSet.encoder())) {
-        kernelDeferred.complete(kernel())
-        reteDeferred.complete(currentCoroutineContext()[Rete]!!)
-        ReadTracker.subscribeForChanges()
-      }
-    }
-    runBlocking {
-      kernelDeferred.await()
-      reteDeferred.await()
-    }
-  }
-
-  override val kernel: Kernel
-    get() = kernelDeferred.getCompleted()
-  override val rete: Rete
-    get() = reteDeferred.getCompleted()
-}

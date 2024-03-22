@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.kernel
+package com.intellij.platform.kernel.util
 
-import com.intellij.fleet.kernel.KernelService
+import com.intellij.platform.kernel.KernelService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.entity
@@ -153,7 +153,6 @@ private class ModelChangeScopeImpl(val sharedChangeScope: SharedChangeScope) : M
       val value = serialization.json.encodeToJsonElement(serialization.kSerializer(ktype), value)
       val viewModel = lookupOne(ViewModelEntity::modelId, id)
       if (viewModel ==  null) {
-        println("Aha")
         throw IllegalStateException("ViewModelEntity not found for model $id")
       }
       val alreadyExist = lookupOne(ModelPropertyEntity::id, fqn)
