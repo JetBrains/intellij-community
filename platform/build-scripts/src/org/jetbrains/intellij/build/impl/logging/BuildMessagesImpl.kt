@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -16,14 +16,18 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Consumer
 
-class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
-                                            private val debugLogger: DebugLogger) : BuildMessages {
+class BuildMessagesImpl private constructor(
+  private val logger: BuildMessageLogger,
+  private val debugLogger: DebugLogger,
+) : BuildMessages {
   companion object {
     fun create(): BuildMessagesImpl {
       val mainLoggerFactory = if (isUnderTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
       val debugLogger = DebugLogger()
-      return BuildMessagesImpl(logger = CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger())),
-                               debugLogger = debugLogger)
+      return BuildMessagesImpl(
+        logger = CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger())),
+        debugLogger = debugLogger,
+      )
     }
   }
 
@@ -81,10 +85,15 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   override fun error(message: String, cause: Throwable) {
     val writer = StringWriter()
     PrintWriter(writer).use(cause::printStackTrace)
-    processMessage(LogMessage(kind = LogMessage.Kind.ERROR, text = """
-       $message
-       $writer
-       """.trimIndent()))
+    processMessage(
+      LogMessage(
+        kind = LogMessage.Kind.ERROR,
+        text = """
+         $message
+         $writer
+       """.trimIndent()
+      )
+    )
     throw BuildScriptsLoggedError(message, cause)
   }
 
