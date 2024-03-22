@@ -30,7 +30,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
-import java.util.List;
 import java.util.Objects;
 
 public class SplitButtonAction extends ActionGroupWrapper implements CustomComponentAction {
@@ -47,23 +46,19 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    UpdateSession session = e.getUpdateSession();
     Presentation presentation = e.getPresentation();
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
-    Presentation groupPresentation = e.getUpdateSession().presentation(getDelegate());
-    e.getPresentation().copyFrom(groupPresentation, splitButton);
-    List<? extends AnAction> children = e.getUpdateSession().children(getDelegate());
-    if (children.isEmpty()) {
-      e.getPresentation().setEnabled(false);
-    }
-    if (!presentation.isVisible()) {
-      return;
-    }
+    Presentation groupPresentation = session.presentation(getDelegate()); // do not remove (RemDev)
     AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
     if (action != null) {
-      Presentation actionPresentation = e.getUpdateSession().presentation(action);
+      Presentation actionPresentation = session.presentation(action);
       presentation.copyFrom(actionPresentation, splitButton);
       presentation.setEnabledAndVisible(true);
+    }
+    else {
+      e.getPresentation().copyFrom(groupPresentation, splitButton);
     }
     presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
   }
