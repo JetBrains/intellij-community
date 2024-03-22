@@ -486,7 +486,14 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtDeclarationNameRenderer {
             context(KtAnalysisSession, KtDeclarationRenderer)
             override fun renderName(name: Name, symbol: KtNamedSymbol?, printer: PrettyPrinter) {
-                if (symbol is KtClassOrObjectSymbol && symbol.classKind == KtClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) return
+                if (symbol is KtClassOrObjectSymbol && symbol.classKind == KtClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
+                    val className = (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.name
+                    if (className != null) {
+                        printer.append(highlight("of ") { asInfo } )
+                        printer.append(highlight(className.renderName()) { asClassName } )
+                    }
+                    return
+                }
                 if (symbol is KtEnumEntrySymbol) {
                     printer.append(highlight("enum entry") { asKeyword })
                     printer.append(" ")

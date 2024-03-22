@@ -198,6 +198,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnClassDeclarationWithNoPackage.kt");
     }
 
+    @TestMetadata("OnCompanionObject.kt")
+    public void testOnCompanionObject() throws Exception {
+        runTest("testData/editor/quickDoc/OnCompanionObject.kt");
+    }
+
     @TestMetadata("OnEmptySecondaryConstructor.kt")
     public void testOnEmptySecondaryConstructor() throws Exception {
         runTest("testData/editor/quickDoc/OnEmptySecondaryConstructor.kt");
