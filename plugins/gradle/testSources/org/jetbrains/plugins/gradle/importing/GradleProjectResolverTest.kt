@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase.Companion.assertNewlyRegisteredSdks
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase.Companion.assertUnexpectedSdksRegistration
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase.Companion.withRegisteredSdks
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase.Companion.withoutRegisteredSdks
+import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertNewlyRegisteredSdks
+import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertUnexpectedSdksRegistration
+import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.withRegisteredSdks
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import org.junit.Test
 
@@ -31,7 +30,7 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
     createGradleSubProject()
 
     environment.withVariables(JAVA_HOME to jdk.homePath) {
-      withoutRegisteredSdks {
+      assertUnexpectedSdksRegistration {
         assertNewlyRegisteredSdks({ jdk }, isAssertSdkName = false) {
           loadProject()
           assertSdks(jdk, "project", "project.main", "project.test", isAssertSdkName = false)

@@ -100,27 +100,9 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     return ModuleRootManager.getInstance(getModule(moduleName)).sdk
   }
 
-  private fun setProjectSdk(sdk: Sdk?) {
-    val projectRootManager = ProjectRootManager.getInstance(myProject)
-    ApplicationManager.getApplication().invokeAndWait {
-      runWriteAction {
-        projectRootManager.projectSdk = sdk
-      }
-    }
+  protected inline fun withProjectSdk(sdk: Sdk, action: () -> Unit) {
+    SdkTestCase.withProjectSdk(myProject, sdk, action)
   }
-
-  fun withProjectSdk(sdk: Sdk, action: () -> Unit) {
-    val projectRootManager = ProjectRootManager.getInstance(myProject)
-    val projectSdk = projectRootManager.projectSdk
-    setProjectSdk(sdk)
-    try {
-      action()
-    }
-    finally {
-      setProjectSdk(projectSdk)
-    }
-  }
-
 
   fun createGradleSubProject() {
     createSettingsFile {
