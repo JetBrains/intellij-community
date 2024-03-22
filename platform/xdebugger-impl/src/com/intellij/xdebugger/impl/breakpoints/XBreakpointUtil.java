@@ -33,6 +33,7 @@ import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -264,6 +265,8 @@ public final class XBreakpointUtil {
           lineWinner = lineStart;
         }
       }
+      // First type is the most important one.
+      typeWinner.sort(Comparator.comparingInt(type -> -type.getPriority()));
     }
     return Pair.create(typeWinner, lineWinner);
   }
