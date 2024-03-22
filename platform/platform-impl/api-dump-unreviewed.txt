@@ -26158,6 +26158,7 @@ com.intellij.ui.LicensingFacade$LicenseStateListener
 f:com.intellij.ui.LicensingFacade$ProductLicenseData
 - confirmationStamp:java.lang.String
 - expirationDate:java.util.Date
+- isPersonal:Z
 - productCode:java.lang.String
 - <init>():V
 c:com.intellij.ui.LightweightHint
