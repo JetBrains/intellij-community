@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
-import java.nio.file.Path
 
 open class RecentProjectListActionProvider {
   companion object {
@@ -117,7 +116,7 @@ open class RecentProjectListActionProvider {
 
     if (displayName.isNullOrBlank()) {
       displayName = if(duplicates.contains(projectName)) {
-        branch = RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(Path.of(path))?.currentBranch
+        branch = recentProjectManager.getCurrentBranchName(path)
         FileUtil.toSystemDependentName(path)
       } else projectName
     }

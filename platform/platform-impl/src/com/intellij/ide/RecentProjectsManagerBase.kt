@@ -427,6 +427,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  fun getCurrentBranchName(path: String): String? {
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)?.currentBranch
+    }
+  }
+
   fun getProjectName(path: String): String {
     nameCache.get(path)?.let {
       return it
