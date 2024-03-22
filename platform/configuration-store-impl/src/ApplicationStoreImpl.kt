@@ -36,6 +36,9 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   override val storageManager: StateStorageManagerImpl =
     ApplicationStateStorageManager(pathMacroManager = PathMacroManager.getInstance(app), controller = app.getService(SettingsController::class.java))
 
+  override val allowSavingWithoutModifications: Boolean
+    get() = true
+
   override val serviceContainer: ComponentManagerImpl
     get() = app as ComponentManagerImpl
 
