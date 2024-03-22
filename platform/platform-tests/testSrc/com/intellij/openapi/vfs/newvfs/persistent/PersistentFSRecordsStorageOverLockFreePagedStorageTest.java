@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.util.io.PageCacheUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
@@ -49,7 +48,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   @NotNull
   @Override
   protected PersistentFSRecordsOverLockFreePagedStorage openStorage(final Path storagePath) throws IOException {
-    return (PersistentFSRecordsOverLockFreePagedStorage)RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE.open(storagePath);
+    return (PersistentFSRecordsOverLockFreePagedStorage)PersistentFSRecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE.open(storagePath);
   }
 
   @Test

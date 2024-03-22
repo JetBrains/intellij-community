@@ -244,7 +244,7 @@ public final class FSRecordsImpl implements Closeable {
     //bumped main version (60 -> 61) because of PFSRecords header enlargement (HEADER_ERRORS_ACCUMULATED)
     final int mainVFSFormatVersion = 61;
     //@formatter:off (nextMask better be aligned)
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.recordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageKind.storageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
            nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
