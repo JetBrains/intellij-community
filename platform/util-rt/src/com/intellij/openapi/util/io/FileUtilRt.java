@@ -902,9 +902,9 @@ public final class FileUtilRt {
     try (DirectoryStream<Path> children = Files.newDirectoryStream(path, alwaysTrue)) {
       StringBuilder sb = new StringBuilder();
       for (Path child : children) {
-        sb.append(child.getFileName()).append("\n");
+        sb.append(child.getFileName()).append(", ");
       }
-      return new DirectoryNotEmptyException(path.toAbsolutePath() + "{" + sb + "}");
+      return new DirectoryNotEmptyException(path.toAbsolutePath() + " (children: " + sb + ")");
     }
   }
 
