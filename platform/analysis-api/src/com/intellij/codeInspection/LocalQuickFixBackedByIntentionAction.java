@@ -22,76 +22,81 @@ import java.util.Objects;
  * which could be adapted using {@link LocalQuickFix#from(ModCommandAction)}.
  */
 public class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Iconable, ReportingClassSubstitutor {
-    private final @NotNull IntentionAction myAction;
+  private final @NotNull IntentionAction myAction;
 
-    public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
-      myAction = action;
-    }
+  public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
+    myAction = action;
+  }
 
-    @Override
-    public @NotNull String getName() {
-      return myAction.getText();
-    }
+  @Override
+  public @NotNull String getName() {
+    return myAction.getText();
+  }
 
-    @Override
-    public @NotNull String getFamilyName() {
-      return myAction.getFamilyName();
-    }
+  @Override
+  public @NotNull String getFamilyName() {
+    return myAction.getFamilyName();
+  }
 
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myAction.invoke(project, null, getPsiFile(descriptor));
-    }
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    myAction.invoke(project, null, getPsiFile(descriptor));
+  }
 
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      return myAction.generatePreview(project,
-                                      Objects.requireNonNull(IntentionPreviewUtils.getPreviewEditor()),
-                                      Objects.requireNonNull(getPsiFile(previewDescriptor)));
-    }
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return myAction.generatePreview(project,
+                                    Objects.requireNonNull(IntentionPreviewUtils.getPreviewEditor()),
+                                    Objects.requireNonNull(getPsiFile(previewDescriptor)));
+  }
 
-    @Override
-    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-      return myAction.getElementToMakeWritable(file);
-    }
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myAction.getElementToMakeWritable(file);
+  }
 
   @Override
   public @NotNull Class<?> getSubstitutedClass() {
     return ReportingClassSubstitutor.getClassToReport(myAction);
   }
 
-  private static @Nullable PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
-      PsiElement startElement = descriptor.getStartElement();
-      if (startElement != null) {
-        return startElement.getContainingFile();
-      }
-      PsiElement endElement = descriptor.getEndElement();
-      if (endElement != null) {
-        return endElement.getContainingFile();
-      }
-      return null;
-    }
-
-    @Override
-    public Icon getIcon(@IconFlags int flags) {
-      if (myAction instanceof Iconable) {
-        return ((Iconable) myAction).getIcon(flags);
-      }
-      return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      LocalQuickFixBackedByIntentionAction action = (LocalQuickFixBackedByIntentionAction)o;
-
-      return myAction.equals(action.myAction);
-    }
-
-    @Override
-    public int hashCode() {
-      return myAction.hashCode();
-    }
+  @Override
+  public boolean startInWriteAction() {
+    return myAction.startInWriteAction();
   }
+
+  private static @Nullable PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
+    PsiElement startElement = descriptor.getStartElement();
+    if (startElement != null) {
+      return startElement.getContainingFile();
+    }
+    PsiElement endElement = descriptor.getEndElement();
+    if (endElement != null) {
+      return endElement.getContainingFile();
+    }
+    return null;
+  }
+
+  @Override
+  public Icon getIcon(@IconFlags int flags) {
+    if (myAction instanceof Iconable) {
+      return ((Iconable)myAction).getIcon(flags);
+    }
+    return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    LocalQuickFixBackedByIntentionAction action = (LocalQuickFixBackedByIntentionAction)o;
+
+    return myAction.equals(action.myAction);
+  }
+
+  @Override
+  public int hashCode() {
+    return myAction.hashCode();
+  }
+}
