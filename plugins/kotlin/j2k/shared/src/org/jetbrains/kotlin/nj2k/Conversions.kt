@@ -26,6 +26,8 @@ abstract class Conversion(val context: NewJ2kConverterContext) {
     context(KtAnalysisSession)
     abstract fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext)
 
+    open fun isEnabledInBasicMode(): Boolean = true
+
     protected fun <E : JKTreeElement> applyRecursive(element: E, func: (JKTreeElement) -> JKTreeElement): E =
         applyRecursiveWithData(element, data = null) { it, _ -> func(it) }
 

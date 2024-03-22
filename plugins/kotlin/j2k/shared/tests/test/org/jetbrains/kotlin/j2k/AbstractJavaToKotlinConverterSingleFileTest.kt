@@ -111,6 +111,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             directives["PUBLIC_BY_DEFAULT"]?.let {
                 publicByDefault = it.toBoolean()
             }
+            directives["BASIC_MODE"]?.let {
+                basicMode = it.toBoolean()
+            }
         }
 
     private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings): String =

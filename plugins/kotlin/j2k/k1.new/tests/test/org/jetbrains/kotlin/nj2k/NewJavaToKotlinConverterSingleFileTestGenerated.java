@@ -5435,6 +5435,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("basicMode.java")
+        public void testBasicMode() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/basicMode.java");
+        }
+
         @TestMetadata("equals.java")
         public void testEquals() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/equals.java");
