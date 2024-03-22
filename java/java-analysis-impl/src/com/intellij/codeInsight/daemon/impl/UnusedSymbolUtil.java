@@ -82,7 +82,7 @@ public final class UnusedSymbolUtil {
   /**
    * @deprecated use {@link #createUnusedSymbolInfoBuilder(PsiElement, String, HighlightInfoType, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
                                                      @NotNull @NlsContexts.DetailedDescription String message,
