@@ -195,6 +195,12 @@ as `[mainTag]-xxx`, and used to publish the artifacts for that major IJP version
 > We only support the latest build of IJP for each major IJP version. If the latest 233 version is 2023.3.3, for
 > example, we will only guarantee that Jewel works on that. Versions 2023.3.0–2023.3.2 might or might not work.
 
+> ![CAUTION]
+> When you target Android Studio, you might encounter issues due to Studio shipping its own (older) version of Jewel
+> and Compose for Desktop. If you want to target Android Studio, you'll need to shadow the CfD and Jewel dependencies
+> until that dependency isn't leaked on the classpath by Studio anymore. You can look at how the
+> [Package Search](https://github.com/JetBrains/package-search-intellij-plugin) plugin implements shadowing.
+
 ### Int UI Standalone theme
 
 The standalone theme can be used in any Compose for Desktop app. You use it as a normal theme, and you can customise it
