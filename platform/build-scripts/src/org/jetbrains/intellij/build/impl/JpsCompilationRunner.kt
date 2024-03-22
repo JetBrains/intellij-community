@@ -325,7 +325,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           }
           throw RuntimeException("Compilation failed")
         }
-        else if (!compilationData.statisticsReported) {
+        else if (!compilationData.statisticsReported && context.options.compilationLogEnabled) {
           messageHandler.printPerModuleCompilationStatistics(compilationStart)
           context.messages.reportStatisticValue("Compilation time, ms",
                                                 TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart).toString())
