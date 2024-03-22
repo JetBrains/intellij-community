@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.folding;
 
-import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.json.psi.impl.JsonCollectionPsiPresentationUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -77,11 +77,12 @@ public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
       if (candidate != null) {
         return "{\"" + candidate.getName() + "\": " + candidate.getValue().getText() + "...}";
       }
-      return "{...}";
+      else {
+        return JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(properties.size());
+      }
     }
     else if (type == JsonElementTypes.ARRAY && node.getPsi() instanceof JsonArray arrayNode) {
-      int length = arrayNode.getValueList().size();
-      return JsonBundle.message("folding.collapsed.array.text", length);
+      return JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(arrayNode);
     }
     else if (type == JsonElementTypes.LINE_COMMENT) {
       return "//...";
