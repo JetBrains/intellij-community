@@ -599,7 +599,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   @ApiStatus.Internal
-  static boolean hasComboBoxFocus(JComboBox<?> comboBox) {
+  public static boolean hasComboBoxFocus(JComboBox<?> comboBox) {
     if (!comboBox.isEnabled()) {
       return false;
     }
