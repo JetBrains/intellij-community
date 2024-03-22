@@ -182,10 +182,10 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
     }
 
     private fun KotlinMppTestsContext.findRunConfiguration(functionFqn: String): RunnerAndConfigurationSettings? {
-        val psiElement = findFunctionIdentifyingElement(functionFqn)
         ThreadingAssertions.assertBackgroundThread()
         return runBlocking {
-            smartReadAction(psiElement.project) {
+            smartReadAction(testProject) {
+                val psiElement = findFunctionIdentifyingElement(functionFqn)
                 createEmptyContextForLocation(PsiLocation(psiElement)).configuration
             }
         }
