@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -132,11 +133,63 @@ fun generateMember(
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
-            otherModifiersProvider = otherModifiersProvider and object : KtRendererOtherModifiersProvider {
+            val containingSymbol = targetClass?.getSymbol() as? KtClassOrObjectSymbol
+            otherModifiersProvider = object : KtRendererOtherModifiersProvider {
+                //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 context(KtAnalysisSession)
-                override fun getOtherModifiers(symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> =
-                    listOf(KtTokens.OVERRIDE_KEYWORD)
-            }.onlyIf { s -> mode == MemberGenerateMode.OVERRIDE && s == symbol }
+                override fun getOtherModifiers(s: KtDeclarationSymbol): List<KtModifierKeywordToken> = buildList {
+                    if (mode == MemberGenerateMode.OVERRIDE && s is KtPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
+                        //include actual modifier explicitly when containing class has modifier
+                        if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)
+                    }
+
+                    if (s is KtFunctionSymbol) {
+                        if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
+                        if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
+                        if (s.isInline) add(KtTokens.INLINE_KEYWORD)
+                        if (s.isInfix) add(KtTokens.INFIX_KEYWORD)
+                        if (s.isOperator) add(KtTokens.OPERATOR_KEYWORD)
+                        if (s.isSuspend) add(KtTokens.SUSPEND_KEYWORD)
+                    }
+
+                    if (s is KtPropertySymbol) {
+                        if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
+                    }
+
+                    if (s is KtValueParameterSymbol) {
+                        if (s.isVararg) add(KtTokens.VARARG_KEYWORD)
+                        if (s.isCrossinline) add(KtTokens.CROSSINLINE_KEYWORD)
+                        if (s.isNoinline) add(KtTokens.NOINLINE_KEYWORD)
+                    }
+
+                    if (s is KtKotlinPropertySymbol) {
+                        if (s.isConst) add(KtTokens.CONST_KEYWORD)
+                        if (s.isLateInit) add(KtTokens.LATEINIT_KEYWORD)
+                    }
+
+                    if (s is KtNamedClassOrObjectSymbol) {
+                        if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
+                        if (s.isInline) add(KtTokens.INLINE_KEYWORD)
+                        if (s.isData) add(KtTokens.DATA_KEYWORD)
+                        if (s.isFun) add(KtTokens.FUN_KEYWORD)
+                        if (s.isInner) add(KtTokens.INNER_KEYWORD)
+                    }
+
+                    if (s is KtTypeParameterSymbol) {
+                        if (s.isReified) add(KtTokens.REIFIED_KEYWORD)
+                        when (s.variance) {
+                            Variance.INVARIANT -> {}
+                            Variance.IN_VARIANCE -> add(KtTokens.IN_KEYWORD)
+                            Variance.OUT_VARIANCE -> add(KtTokens.OUT_KEYWORD)
+                        }
+                    }
+
+                    if (s == symbol && mode == MemberGenerateMode.OVERRIDE) {
+                        //include additional override modifier
+                        add(KtTokens.OVERRIDE_KEYWORD)
+                    }
+                }
+            }
         }
     }
 
@@ -158,15 +211,13 @@ fun generateMember(
         }
 
         MemberGenerateMode.OVERRIDE -> {
-            // TODO: add `actual` keyword to the generated member if the target class has `actual` and the generated member corresponds to
             //  an `expect` member.
         }
     }
 
     if (copyDoc) {
         val kDoc = when (val originalOverriddenPsi = symbol.unwrapFakeOverrides.psi) {
-            is KtDeclaration ->
-                findDocComment(originalOverriddenPsi)
+            is KtDeclaration -> findDocComment(originalOverriddenPsi)
 
             is PsiDocCommentOwner -> {
                 val kDocText = originalOverriddenPsi.docComment?.let { IdeaDocCommentConverter.convertDocComment(it) }
@@ -243,25 +294,21 @@ private fun generateProperty(
     val returnType = symbol.returnType
     val returnsNotUnit = !returnType.isUnit
 
-    val body =
-        if (bodyType != BodyType.NoBody) {
-            buildString {
-                append("\nget()")
-                append(" = ")
-                append(generateUnsupportedOrSuperCall(project, symbol, bodyType, !returnsNotUnit))
-                if (!symbol.isVal) {
-                    append("\nset(value) {}")
-                }
+    val body = if (bodyType != BodyType.NoBody) {
+        buildString {
+            append("\nget()")
+            append(" = ")
+            append(generateUnsupportedOrSuperCall(project, symbol, bodyType, !returnsNotUnit))
+            if (!symbol.isVal) {
+                append("\nset(value) {}")
             }
-        } else ""
+        }
+    } else ""
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
 private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
-    project: Project,
-    symbol: T,
-    bodyType: BodyType,
-    canBeEmpty: Boolean = true
+    project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
 ): String where T : KtNamedSymbol, T : KtCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
         BodyType.EmptyOrTemplate -> return ""
@@ -272,11 +319,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
                 else -> throw IllegalArgumentException("$symbol must be either a function or a property")
             }
             return getFunctionBodyTextFromTemplate(
-                project,
-                templateKind,
-                symbol.name.asString(),
-                symbol.returnType.render(position = Variance.OUT_VARIANCE),
-                null
+                project, templateKind, symbol.name.asString(), symbol.returnType.render(position = Variance.OUT_VARIANCE), null
             )
         }
 
