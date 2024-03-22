@@ -4,6 +4,9 @@ package com.intellij.codeInsight.inline.completion.render
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Represents a block to be rendered **on one line**. Passing a multiline text results into an exception.
+ */
 @ApiStatus.Internal
 class InlineCompletionRenderTextBlock(val text: String, val attributes: TextAttributes) {
   init {
