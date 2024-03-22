@@ -26135,6 +26135,7 @@ f:com.intellij.ui.LicensingFacade
 - metadata:java.lang.String
 - perpetualFallbackDate:java.util.Date
 - platformProductCode:java.lang.String
+- productLicenses:java.util.Map
 - restrictions:java.util.List
 - <init>():V
 - s:fromJson(java.lang.String):com.intellij.ui.LicensingFacade
@@ -26154,6 +26155,11 @@ com.intellij.ui.LicensingFacade$LicenseStateListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:licenseStateChanged(com.intellij.ui.LicensingFacade):V
+f:com.intellij.ui.LicensingFacade$ProductLicenseData
+- confirmationStamp:java.lang.String
+- expirationDate:java.util.Date
+- productCode:java.lang.String
+- <init>():V
 c:com.intellij.ui.LightweightHint
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.ui.Hint
