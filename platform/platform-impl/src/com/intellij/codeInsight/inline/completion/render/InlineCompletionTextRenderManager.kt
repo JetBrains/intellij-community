@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -15,14 +16,13 @@ import com.intellij.openapi.util.removeUserData
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
 import java.awt.Rectangle
 
 // TODO docs
 // TODO describe disposing (all at once)
 // TODO describe rectangle
 @ApiStatus.Experimental
-internal class InlineCompletionColorTextRenderManager private constructor(
+internal class InlineCompletionTextRenderManager private constructor(
   editor: Editor,
   offset: Int,
   private val onDispose: () -> Unit
@@ -32,7 +32,7 @@ internal class InlineCompletionColorTextRenderManager private constructor(
   private var elementsCounter = 0
   private var isActive = true
 
-  private fun append(text: String, color: Color, disposable: Disposable): RenderedInlineCompletionElementDescriptor? {
+  private fun append(text: String, attributes: TextAttributes, disposable: Disposable): RenderedInlineCompletionElementDescriptor? {
     check(isActive) { "Cannot render an element since the renderer is already disposed." }
     elementsCounter++
     disposable.whenDisposed {
@@ -42,7 +42,7 @@ internal class InlineCompletionColorTextRenderManager private constructor(
         cleanUp()
       }
     }
-    return renderer.append(text, color)
+    return renderer.append(text, attributes)
   }
 
   private fun cleanUp() {
@@ -57,11 +57,11 @@ internal class InlineCompletionColorTextRenderManager private constructor(
     private val blockLineInlays = mutableListOf<Inlay<InlineSuffixRenderer>>()
     private var state = RenderState.RENDERING_SUFFIX
 
-    fun append(text: String, color: Color): RenderedInlineCompletionElementDescriptor? {
+    fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor? {
       if (text.isEmpty()) {
         return null
       }
-      val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, color) }
+      val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
       render(newLines)
       return getDescriptor(offset)
     }
@@ -87,7 +87,7 @@ internal class InlineCompletionColorTextRenderManager private constructor(
       }
       check(newLines.isNotEmpty())
 
-      val previousSuffix = suffixInlay?.renderer?.contents ?: emptyList()
+      val previousSuffix = suffixInlay?.renderer?.blocks ?: emptyList()
       val suffixBlocks = previousSuffix + newLines[0]
 
       suffixInlay?.let { Disposer.dispose(it) }
@@ -120,7 +120,7 @@ internal class InlineCompletionColorTextRenderManager private constructor(
       var linesToRender = newLines
       val lastInlay = blockLineInlays.lastOrNull()
       if (lastInlay != null) {
-        val lastLineBlocks = lastInlay.renderer.contents + linesToRender[0]
+        val lastLineBlocks = lastInlay.renderer.blocks + linesToRender[0]
         Disposer.dispose(lastInlay)
         val newInlay = renderBlockInlay(editor, offset, lastLineBlocks) ?: return
         blockLineInlays[blockLineInlays.lastIndex] = newInlay
@@ -175,14 +175,14 @@ internal class InlineCompletionColorTextRenderManager private constructor(
 
   companion object {
 
-    private val STORAGE_KEY = Key.create<Storage<Int, InlineCompletionColorTextRenderManager>>("inline.completion.text.render")
+    private val STORAGE_KEY = Key.create<Storage<Int, InlineCompletionTextRenderManager>>("inline.completion.text.render")
 
     @ApiStatus.Experimental
     @RequiresEdt
     internal fun render(
       editor: Editor,
       text: String,
-      color: Color,
+      attributes: TextAttributes,
       offset: Int,
       disposable: Disposable
     ): RenderedInlineCompletionElementDescriptor? {
@@ -192,14 +192,14 @@ internal class InlineCompletionColorTextRenderManager private constructor(
       editor.putUserData(STORAGE_KEY, storage)
 
       val renderer = storage.getOrInitialize(offset) {
-        InlineCompletionColorTextRenderManager(editor, offset) {
+        InlineCompletionTextRenderManager(editor, offset) {
           storage.remove(offset)
           if (storage.isEmpty()) {
             editor.removeUserData(STORAGE_KEY)
           }
         }
       }
-      return renderer.append(text, color, disposable)
+      return renderer.append(text, attributes, disposable)
     }
 
     private class Storage<K : Any, V : Any> {
