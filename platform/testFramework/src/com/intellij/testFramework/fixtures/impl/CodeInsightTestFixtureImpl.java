@@ -513,6 +513,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
     assertNotNull(file);
     file.refresh(false, true);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null) {
@@ -520,8 +521,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(directory);
       policy.testDirectoryConfigured(directory);
     }
-
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return file;
   }
