@@ -138,6 +138,7 @@ public final class LicensingFacade {
     public String productCode;
     public @Nullable String confirmationStamp;
     public @Nullable Date expirationDate;
+    public boolean isPersonal;
   }
 
   public interface LicenseStateListener extends EventListener {
