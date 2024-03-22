@@ -2,14 +2,16 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.ByteBufferCleaner
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-
-// must be in a separate package to make sure that it will be not loaded via app class loader if test started using unified class loader
 
 class IkvIndexBuilder(private val writeSize: Boolean = true) {
   private val entries = LinkedHashSet<IkvIndexEntry>()
   @JvmField val names = mutableListOf<ByteArray>()
+
+  @JvmField var classPackages: LongOpenHashSet = LongOpenHashSet()
+  @JvmField var resourcePackages: LongOpenHashSet = LongOpenHashSet()
 
   fun entry(key: Long, offset: Long, size: Int): IkvIndexEntry {
     val entry = LongKeyedEntry(longKey = key, offset = offset)

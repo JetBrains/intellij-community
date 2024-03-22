@@ -19,9 +19,6 @@ const val INDEX_FILENAME: String = "__index__"
 internal class ZipArchiveOutputStream(
   private val channel: WritableByteChannel,
 ) : AutoCloseable {
-  private var classPackages: LongArray? = null
-  private var resourcePackages: LongArray? = null
-
   private var finished = false
   private var entryCount = 0
 
@@ -202,18 +199,25 @@ internal class ZipArchiveOutputStream(
 
     // write package class and resource hashes
     writeData { buffer ->
-      val classPackages = classPackages
-      val resourcePackages = resourcePackages
-      if (classPackages == null && resourcePackages == null) {
+      val classPackages = indexWriter.classPackages
+      val resourcePackages = indexWriter.resourcePackages
+      if (classPackages.isEmpty() && resourcePackages.isEmpty()) {
         buffer.putInt(0)
         buffer.putInt(0)
       }
       else {
-        buffer.putInt(classPackages!!.size)
-        buffer.putInt(resourcePackages!!.size)
+        val classPackageArray = indexWriter.classPackages.toLongArray()
+        val resourcePackageArray = indexWriter.resourcePackages.toLongArray()
+
+        // same content for same data
+        classPackageArray.sort()
+        resourcePackageArray.sort()
+
+        buffer.putInt(classPackages.size)
+        buffer.putInt(resourcePackages.size)
         useAsLongBuffer(buffer) {
-          it.put(classPackages)
-          it.put(resourcePackages)
+          it.put(classPackageArray)
+          it.put(resourcePackageArray)
         }
       }
     }
@@ -240,39 +244,14 @@ internal class ZipArchiveOutputStream(
     return indexDataEnd
   }
 
-  fun finish(indexWriter: IkvIndexBuilder?) {
+  internal fun finish(indexWriter: IkvIndexBuilder?) {
     if (finished) {
       throw IOException("This archive has already been finished")
     }
 
     val indexOffset: Int
     if (indexWriter != null && entryCount != 0) {
-      // ditto on macOS doesn't like arbitrary data in zip file - wrap into zip entry
-      val name = INDEX_FILENAME.toByteArray(Charsets.UTF_8)
-      val headerSize = 30 + name.size
-      val headerPosition = getChannelPositionAndAdd(headerSize)
-      val entryDataPosition = channelPosition
-
-      val crc32 = CRC32()
-      indexOffset = writeIndex(crc32, indexWriter)
-
-      val size = (channelPosition - entryDataPosition).toInt()
-      val crc = crc32.value
-
-      buffer.clear()
-      writeLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = buffer)
-      buffer.flip()
-      assert(buffer.remaining() == headerSize)
-      writeEntryHeaderAt(
-        name = name,
-        header = buffer,
-        position = headerPosition,
-        size = size,
-        compressedSize = size,
-        crc = crc,
-        method = ZipEntry.STORED,
-        indexWriter = indexWriter,
-      )
+      indexOffset = writeIndexFile(indexWriter, INDEX_FILENAME.encodeToByteArray())
     }
     else {
       indexOffset = -1
@@ -323,6 +302,35 @@ internal class ZipArchiveOutputStream(
     writeBuffer(buffer)
 
     finished = true
+  }
+
+  private fun writeIndexFile(indexWriter: IkvIndexBuilder, name: ByteArray): Int {
+    // ditto on macOS doesn't like arbitrary data in zip file - wrap into zip entry
+    val headerSize = 30 + name.size
+    val headerPosition = getChannelPositionAndAdd(headerSize)
+    val entryDataPosition = channelPosition
+
+    val crc32 = CRC32()
+    val indexOffset = writeIndex(crc32, indexWriter)
+
+    val size = (channelPosition - entryDataPosition).toInt()
+    val crc = crc32.value
+
+    buffer.clear()
+    writeLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = buffer)
+    buffer.flip()
+    assert(buffer.remaining() == headerSize)
+    writeEntryHeaderAt(
+      name = name,
+      header = buffer,
+      position = headerPosition,
+      size = size,
+      compressedSize = size,
+      crc = crc,
+      method = ZipEntry.STORED,
+      indexWriter = indexWriter,
+    )
+    return indexOffset
   }
 
   private fun writeZip64End(centralDirectoryLength: Int, centralDirectoryOffset: Long, optimizedMetadataOffset: Int) {
@@ -472,12 +480,6 @@ internal class ZipArchiveOutputStream(
     // file name
     buffer.position(headerOffset + 46)
     buffer.put(name)
-  }
-
-  fun setPackageIndex(classPackages: LongArray, resourcePackages: LongArray) {
-    assert(this.classPackages == null && this.resourcePackages == null)
-    this.classPackages = classPackages
-    this.resourcePackages = resourcePackages
   }
 }
 
