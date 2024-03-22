@@ -16,9 +16,8 @@ public final class TextMateSettings implements PersistentStateComponent<TextMate
     return new TextMateSettings();
   }
 
-  @NotNull
   @Override
-  public TextMateSettingsState getState() {
+  public @NotNull TextMateSettingsState getState() {
     TextMateSettingsState state = new TextMateSettingsState();
     ArrayList<BundleConfigBean> bundles = new ArrayList<>();
     TextMateUserBundlesSettings settings = TextMateUserBundlesSettings.getInstance();
@@ -32,7 +31,7 @@ public final class TextMateSettings implements PersistentStateComponent<TextMate
     TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
     if (builtinBundlesSettings != null) {
       Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
-      for (TextMateBundleToLoad bundle : TextMateServiceImpl.discoverBuiltinBundles(builtinBundlesSettings)) {
+      for (TextMateBundleToLoad bundle : TextMateServiceImpl.Companion.discoverBuiltinBundles(builtinBundlesSettings)) {
         bundles.add(new BundleConfigBean(bundle.getName(), bundle.getPath(), !turnedOffBundleNames.contains(bundle.getName())));
       }
     }
