@@ -722,9 +722,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
     }
 
+    // TODO IJPL-578 - behavior should be the same in tests and prod. Temporary flag to ease tests migration.
+    private val IS_UNDER_TEAMCITY: Boolean = System.getenv("TEAMCITY_VERSION") != null
+
     val useSynchronousTaskQueue: Boolean
       @VisibleForTesting
-      get() = isSynchronousTaskExecution
+      get() = SystemProperties.getBooleanProperty("unittest.synchronous.dumb.queue", IS_UNDER_TEAMCITY && isSynchronousTaskExecution)
 
     @JvmStatic
     val isSynchronousTaskExecution: Boolean
