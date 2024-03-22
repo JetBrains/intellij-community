@@ -26,7 +26,6 @@ import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 
 fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
@@ -247,11 +246,11 @@ private suspend fun doRunTestBuild(context: BuildContext,
 
 private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessages) {
   try {
-    val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
-    Files.createDirectories(targetFile.parent)
-    val debugLogFile = messages.debugLogFile
-    if (debugLogFile != null && Files.exists(debugLogFile)) {
-      Files.copy(debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    val debugLogFile = messages.getDebugLog()
+    if (!debugLogFile.isNullOrEmpty()) {
+      val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
+      Files.createDirectories(targetFile.parent)
+      Files.writeString(targetFile, debugLogFile)
       Span.current().addEvent("debug log copied to $targetFile")
     }
   }

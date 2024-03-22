@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -75,8 +74,7 @@ class BuildMessagesImpl private constructor(
     debugLogger.close()
   }
 
-  override val debugLogFile: Path?
-    get() = debugLogger.getOutputFile()
+  override fun getDebugLog(): String = debugLogger.getOutput()
 
   override fun error(message: String) {
     throw BuildScriptsLoggedError(message)
@@ -171,33 +169,29 @@ class BuildMessagesImpl private constructor(
  * It firstly prints messages to a temp file and copies it to the real file after the build process cleans up the output directory.
  */
 private class DebugLogger {
-  private var output: Writer = StringWriter()
+  // Most of the logging is carried out via OpenTelemetry. Thus, the debug log is commonly empty.
+  private val output = StringBuilder()
   private var outputFile: Path? = null
   private val loggers = ArrayList<PrintWriterBuildMessageLogger>()
 
   @Synchronized
   fun setOutputFile(outputFile: Path) {
     this.outputFile = outputFile
-    val oldOutput = output
-    oldOutput.close()
-    Files.createDirectories(outputFile.parent)
-    output = Files.newBufferedWriter(outputFile)
-    if (oldOutput is StringWriter && oldOutput.buffer.isNotEmpty()) {
-      output.write(oldOutput.buffer.toString())
-    }
-    for (logger in loggers) {
-      logger.setOutput(output)
-    }
   }
 
   @Synchronized
   fun close() {
-    output.close()
+    val file = outputFile ?: return
+    if (output.isNotEmpty()) {
+      Files.createDirectories(file.parent)
+      Files.writeString(outputFile, output.toString())
+    }
+
     outputFile = null
   }
 
   @Synchronized
-  fun getOutputFile(): Path? = outputFile
+  fun getOutput(): String = output.toString()
 
   @Synchronized
   fun createLogger(): BuildMessageLogger {
@@ -208,20 +202,14 @@ private class DebugLogger {
 }
 
 private class PrintWriterBuildMessageLogger(
-  private var output: Writer,
+  private val output: StringBuilder,
   private val disposer: Consumer<PrintWriterBuildMessageLogger>,
 ) : BuildMessageLoggerBase() {
-  @Synchronized
-  fun setOutput(output: Writer) {
-    this.output = output
-  }
-
   @Override
   @Synchronized
   override fun printLine(line: String) {
-    output.write(line)
-    output.write('\n'.code)
-    output.flush()
+    output.append(line)
+    output.append('\n'.code)
   }
 
   override fun dispose() {

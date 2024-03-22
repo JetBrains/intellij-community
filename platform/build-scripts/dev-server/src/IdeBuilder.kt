@@ -81,33 +81,37 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
   }
 
-  val runDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
-    val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
-    val productDirName = ((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
-      .takeLast(255)
+  val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
+  val productDirNameWithoutClassifier = if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix
+  val productDirName = (productDirNameWithoutClassifier + classifier).takeLast(255)
 
-    val runDir = rootDir.resolve("$productDirName/$productDirName")
+  val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
+    val buildDir = rootDir.resolve(productDirName)
     // on start, delete everything to avoid stale data
     val files = try {
-      Files.newDirectoryStream(runDir).toList()
+      Files.newDirectoryStream(buildDir).toList()
     }
     catch (ignored: NoSuchFileException) {
-      Files.createDirectories(runDir)
-      return@withContext runDir
+      Files.createDirectories(buildDir)
+      return@withContext buildDir
     }
 
     for (child in files) {
-      launch {
-        NioFiles.deleteRecursively(child)
+      if (child.fileName.toString() != "log") {
+        launch {
+          NioFiles.deleteRecursively(child)
+        }
       }
     }
-    runDir
+    buildDir
   }
 
+  val runDir = buildDir.resolve(productDirNameWithoutClassifier)
   val context = createBuildContext(
     productConfiguration = productConfiguration,
     request = request,
     runDir = runDir,
+    buildDir = buildDir,
     jarCacheDir = rootDir.resolve("jar-cache"),
   )
   compileIfNeeded(context)
@@ -162,7 +166,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         val byteOut = ByteArrayOutputStream()
         val out = DataOutputStream(byteOut)
         val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-        writePluginClassPathHeader(out, isJarOnly = !isUnpackedDist, pluginCount)
+        writePluginClassPathHeader(out = out, isJarOnly = !isUnpackedDist, pluginCount = pluginCount)
         out.write(mainData)
         additionalData?.let { out.write(it) }
         out.close()
@@ -185,9 +189,9 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
   }
     .invokeOnCompletion {
-    // close debug logging to prevent locking of output directory on Windows
-    context.messages.close()
-  }
+      // close debug logging to prevent locking of output directory on Windows
+      context.messages.close()
+    }
   return runDir
 }
 
@@ -332,6 +336,7 @@ private suspend fun createBuildContext(
   request: BuildRequest,
   runDir: Path,
   jarCacheDir: Path,
+  buildDir: Path,
 ): BuildContext {
   return coroutineScope {
     // ~1 second
@@ -355,7 +360,7 @@ private suspend fun createBuildContext(
           cleanOutDir = false,
           outRootDir = runDir,
           compilationLogEnabled = false,
-          logDir = null,
+          logDir = buildDir.resolve("log"),
         )
         options.setTargetOsAndArchToCurrent()
         options.buildStepsToSkip += listOf(
@@ -492,11 +497,11 @@ private fun getBundledMainModuleNames(productProperties: ProductProperties, addi
   return LinkedHashSet(productProperties.productLayout.bundledPluginModules) + additionalModules
 }
 
-fun getAdditionalModules(): Sequence<String>? {
+internal fun getAdditionalModules(): Sequence<String>? {
   return System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
 }
 
-fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
+private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
   if (additionalModules.isEmpty()) {
     return ""
   }
@@ -510,9 +515,5 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
 }
 
 private fun getCommunityHomePath(homePath: Path): Path {
-  return if (Files.isDirectory(homePath.resolve("community"))) {
-    homePath.resolve("community")
-  } else {
-    homePath
-  }
+  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
 }
