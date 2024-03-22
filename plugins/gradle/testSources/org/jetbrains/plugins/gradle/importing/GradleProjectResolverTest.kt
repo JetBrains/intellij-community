@@ -6,11 +6,12 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertN
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertUnexpectedSdksRegistration
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.withRegisteredSdks
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class GradleProjectResolverTest : GradleProjectResolverTestCase() {
   @Test
-  fun `test setup of project sdk for newly opened project`() {
+  fun `test setup of project sdk for newly opened project`() = runBlocking {
     val jdk = resolveRealTestSdk()
     createGradleSubProject()
 
@@ -25,7 +26,7 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
   }
 
   @Test
-  fun `test setup of project sdk for newly opened project in clean IDEA`() {
+  fun `test setup of project sdk for newly opened project in clean IDEA`() = runBlocking {
     val jdk = resolveRealTestSdk()
     createGradleSubProject()
 
@@ -40,7 +41,7 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
   }
 
   @Test
-  fun `test project-module sdk replacing`() {
+  fun `test project-module sdk replacing`() = runBlocking {
     val jdk = resolveRealTestSdk()
     val sdk = TestSdkGenerator.createNextSdk()
     createGradleSubProject()

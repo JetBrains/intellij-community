@@ -80,9 +80,9 @@ abstract class AutoLinkTestCase {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+      override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
         val projectDirectory = getProjectDirectory(projectFile).toNioPath()
-        unlinedProjectAware.linkAndLoadProject(project, projectDirectory.invariantSeparatorsPathString)
+        unlinedProjectAware.linkAndLoadProjectAsync(project, projectDirectory.invariantSeparatorsPathString)
       }
     }
     return object : ProjectOpenProcessor() {

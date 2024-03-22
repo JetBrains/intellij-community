@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.importing
 
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
@@ -21,11 +20,11 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
-import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
-import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
+import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
+import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
-import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleProjectReload
+import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
@@ -50,14 +49,14 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     TestUnknownSdkResolver.unknownSdkFixMode = TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
   }
 
-  fun loadProject() {
-    waitForAnyGradleProjectReload {
-      linkAndRefreshGradleProject(projectPath, myProject)
+  suspend fun loadProject() {
+    awaitAnyGradleProjectReload {
+      linkAndSyncGradleProject(myProject, projectPath)
     }
   }
 
-  fun reloadProject() {
-    waitForAnyGradleProjectReload {
+  suspend fun reloadProject() {
+    awaitAnyGradleProjectReload {
       val importSpec = ImportSpecBuilder(myProject, externalSystemId)
       ExternalSystemUtil.refreshProject(projectPath, importSpec)
     }
