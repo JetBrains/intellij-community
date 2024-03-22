@@ -12,6 +12,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.params.ParameterizedTest
 
+/**
+ * @see GradleDelegatesToProvider
+ */
 class GradleClosureResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
@@ -87,6 +90,27 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
     }
   }
 
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `when configurations#all(Closure) is called, take a delegate from overload with Action`(gradleVersion: GradleVersion) {
+    val buildScript = """
+      |configurations.all {
+      |  <caret>resolutionStrategy { }
+      |}
+      |""".trimMargin()
+    testEmptyProject(gradleVersion) {
+      testBuildscript(buildScript) {
+        val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
+        val methodCall = closableBlock.parent as GrMethodCall
+        assertCalledMethodHasClosureParameter(methodCall)
+        closureDelegateTest(GradleCommonClassNames.GRADLE_API_CONFIGURATION, 1)
+      }
+    }
+  }
+
+  /**
+   * Similar to the test case for configurations#all, but for a custom class.
+   */
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `take delegate from overload with Action if method with Closure was called`(gradleVersion: GradleVersion) {
