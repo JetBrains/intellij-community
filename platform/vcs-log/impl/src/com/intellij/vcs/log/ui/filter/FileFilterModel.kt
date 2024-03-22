@@ -52,8 +52,8 @@ class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiPro
     }
   }
 
-  var rootFilter by filterProperty(VcsLogFilterCollection.ROOT_FILTER)
-  var structureFilter by filterProperty(VcsLogFilterCollection.STRUCTURE_FILTER)
+  var rootFilter by filterProperty(VcsLogFilterCollection.ROOT_FILTER, exclusive = true)
+  var structureFilter by filterProperty(VcsLogFilterCollection.STRUCTURE_FILTER, exclusive = true)
 
   companion object {
     private const val DIR: @NonNls String = "dir:"
