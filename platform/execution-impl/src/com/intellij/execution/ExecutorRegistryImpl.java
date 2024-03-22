@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.NonEmptyActionGroup;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.*;
@@ -837,7 +838,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @ApiStatus.Internal
-  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
+  public static class ExecutorGroupActionGroup extends NonEmptyActionGroup implements DumbAware {
     protected final ExecutorGroup<?> myExecutorGroup;
     private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
@@ -862,18 +863,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
-      final Project project = e.getProject();
+      Project project = e.getProject();
       if (project == null || !project.isInitialized() || project.isDisposed()) {
         e.getPresentation().setEnabled(false);
         return;
       }
-      e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
+      if (!myExecutorGroup.isApplicable(project)) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+      super.update(e);
     }
   }
 
