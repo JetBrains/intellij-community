@@ -773,6 +773,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 public void testReturnNull() throws Exception {
                     runTest("testData/refactoring/inline/inlineVariableOrProperty/property/returnNull.kt");
                 }
+
+                @TestMetadata("when.kt")
+                public void testWhen() throws Exception {
+                    runTest("testData/refactoring/inline/inlineVariableOrProperty/property/when.kt");
+                }
             }
         }
 

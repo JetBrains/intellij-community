@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -178,7 +179,14 @@ class ExpressionReplacementPerformer(
                     }
                 }
                 if (canDropElementToBeReplaced) {
-                    stub.delete()
+                    val parent = stub.parents.first { it !is KtParenthesizedExpression }
+                    if (parent is KtWhenExpression &&
+                        parent.subjectExpression?.safeDeparenthesize() == stub &&
+                        parent.leftParenthesis != null && parent.rightParenthesis != null) {
+                        parent.deleteChildRange(parent.leftParenthesis, parent.rightParenthesis)
+                    } else {
+                        stub.delete()
+                    }
                     null
                 } else {
                     stub.replaced(psiFactory.createExpression("Unit"))
