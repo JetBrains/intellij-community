@@ -74,9 +74,14 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
                 else -> return
             }
 
-            if (body.isEmptyBodyOrNull() && expression.isCalling(controlFlowFunctions)) {
-                holder.registerProblem(expression, callee)
+            if (!body.isEmptyBodyOrNull()) return
+
+            val isCallingControlFlowFunctions = analyze(expression) {
+                expression.isCalling(sequenceOf(CONTROL_FLOW_FQ_NAME))
             }
+            if (!isCallingControlFlowFunctions) return
+
+            holder.registerProblem(expression, callee)
         }
     }
 
@@ -96,4 +101,4 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
     }
 }
 
-private val controlFlowFunctions: List<FqName> = listOf("kotlin.also").map { FqName(it) }
+private val CONTROL_FLOW_FQ_NAME = FqName("kotlin.also")

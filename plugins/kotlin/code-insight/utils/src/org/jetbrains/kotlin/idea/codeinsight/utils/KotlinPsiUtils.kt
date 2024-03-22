@@ -8,10 +8,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
@@ -356,27 +354,36 @@ fun KtExpression.isSynthesizedFunction(): Boolean {
     return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
-fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
+context(KtAnalysisSession)
+fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
-    if (targetFqNames.isEmpty()) return false
-    return analyze(this) {
-        val symbol = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtCallableSymbol ?: return false
-        targetFqNames.any { symbol.callableIdIfNonLocal?.asSingleFqName() == it }
-    }
+    if (!targetFqNames.iterator().hasNext()) return false
+
+    val fqName = resolveCall()
+        ?.singleFunctionCallOrNull()
+        ?.partiallyAppliedSymbol
+        ?.symbol
+        ?.callableIdIfNonLocal
+        ?.asSingleFqName()
+        ?: return false
+    return targetFqNames.any { it == fqName }
 }
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = sequenceOf(
+    "kotlin.enumValues",
+    "kotlin.enumValueOf",
+).map { FqName(it) }
 
 context(KtAnalysisSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
     return when (target) {
-        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS)
+        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
         is KtCallableDeclaration -> {
             target.anyDescendantOfType<KtCallExpression> {
-                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS) && it.isUsedAsExpression()
+                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression()
             }
         }
 

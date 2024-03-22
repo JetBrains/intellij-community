@@ -145,14 +145,6 @@ fun KtExpression.isCountCall(predicate: (KtCallExpression) -> Boolean = { true }
     return callExpression.isCalling(COUNT_FUNCTIONS)
 }
 
-fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
-    when (val receiver = receiverExpression) {
-        is KtDotQualifiedExpression -> receiver.deleteFirstReceiver()
-        else -> selectorExpression?.let { return this.replace(it) as KtExpression }
-    }
-    return this
-}
-
 private val ARRAY_OF_FUNCTION_NAMES = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
         Name.identifier("emptyArray")

@@ -339,5 +339,18 @@
                      language="kotlin"
                      key="infix.call.may.be.dot.call" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimpleRedundantLetInspection"
+                     language="kotlin"
+                     groupPath="Kotlin" groupKey="group.names.redundant.constructs" groupBundle="messages.KotlinBundle"
+                     level="WARNING" enabledByDefault="true"
+                     key="inspection.simple.redundant.let.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ComplexRedundantLetInspection"
+                     language="kotlin"
+                     shortName="ComplexRedundantLet"
+                     groupPath="Kotlin" groupKey="group.names.redundant.constructs" groupBundle="messages.KotlinBundle"
+                     level="WEAK WARNING" enabledByDefault="true"
+                     key="inspection.complex.redundant.let.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

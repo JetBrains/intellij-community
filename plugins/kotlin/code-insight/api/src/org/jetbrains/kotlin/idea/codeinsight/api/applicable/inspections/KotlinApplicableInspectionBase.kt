@@ -78,7 +78,7 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C> : LocalInspectio
             context: C,
         ): KotlinModCommandQuickFix<E>
 
-        override fun InspectionManager.createProblemDescriptor(
+        final override fun InspectionManager.createProblemDescriptor(
             element: E,
             context: C,
             rangeInElement: TextRange?,
