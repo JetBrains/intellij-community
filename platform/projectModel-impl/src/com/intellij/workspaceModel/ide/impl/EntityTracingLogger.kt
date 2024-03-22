@@ -4,10 +4,7 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.FacetId
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -22,7 +19,7 @@ class EntityTracingLogger {
     when (tokens.size) {
       3 -> {
         val (moduleName, facetTypeId, facetName) = tokens
-        FacetId(facetName, facetTypeId, ModuleId(moduleName))
+        FacetId(facetName, FacetEntityTypeId(facetTypeId), ModuleId(moduleName))
       }
       1 -> ModuleId(tokens.first())
       else -> null

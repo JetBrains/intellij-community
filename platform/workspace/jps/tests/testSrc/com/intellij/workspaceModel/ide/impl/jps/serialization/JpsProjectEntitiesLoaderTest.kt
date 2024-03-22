@@ -216,7 +216,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
     val single = modules.getValue("single").facets.single()
-    assertEquals("foo", single.facetType)
+    assertEquals("foo", single.typeId.name)
     assertEquals("Foo", single.name)
     assertEquals("""
                     <configuration>
