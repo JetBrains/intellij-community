@@ -1262,15 +1262,15 @@ private fun archivePlugin(optimized: Boolean,
                       source: Path,
                       context: BuildContext) {
   if (optimized) {
-    writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
+    writeNewZipWithoutIndex(target, compress = compress) { zipCreator ->
       ZipArchiver(zipCreator).use { archiver ->
         if (Files.isDirectory(source)) {
           archiver.setRootDir(source, source.fileName.toString())
-          archiveDir(startDir = source, archiver = archiver, excludes = null)
+          archiveDir(startDir = source, archiver = archiver, excludes = null, indexWriter = null)
         }
         else {
           archiver.setRootDir(source.parent)
-          archiver.addFile(source)
+          archiver.addFile(source, indexWriter = null)
         }
       }
     }
@@ -1300,7 +1300,7 @@ private fun buildBlockMap(file: Path, json: JSON) {
 
   val fileParent = file.parent
   val fileName = file.fileName.toString()
-  writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
+  writeNewZipWithoutIndex(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
     it.compressedData("blockmap.json", ByteBuffer.wrap(bytes))
   }
 

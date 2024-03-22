@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.lang;
+package org.jetbrains.intellij.build.io;
+
+import com.intellij.util.lang.Xxh3;
+import org.assertj.core.api.AssertionsForClassTypes;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -30,7 +33,7 @@ final class HashFunctionTest {
   }
 
   private static void testArrays(byte[] data, long eh, int len) {
-    assertThat(Xxh3.hash(data)).isEqualTo(eh);
+    AssertionsForClassTypes.assertThat(Xxh3.hash(data)).isEqualTo(eh);
 
     byte[] data2 = new byte[len + 2];
     System.arraycopy(data, 0, data2, 1, len);

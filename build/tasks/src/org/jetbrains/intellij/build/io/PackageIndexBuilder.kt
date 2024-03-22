@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.Xx3UnencodedString
+import com.intellij.util.lang.Xxh3
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 
 class PackageIndexBuilder {
@@ -12,6 +13,8 @@ class PackageIndexBuilder {
 
   private val dirsToRegister = HashSet<String>()
   private var wasWritten = false
+
+  @JvmField val indexWriter = IkvIndexBuilder()
 
   fun addFile(name: String, addClassDir: Boolean = false) {
     val i = name.lastIndexOf('/')
@@ -47,11 +50,15 @@ class PackageIndexBuilder {
 
     val stream = zipCreator.resultStream
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
-      stream.addDirsToIndex(sortedDirsToRegister)
+      for (dirName in sortedDirsToRegister) {
+        val nameBytes = dirName.encodeToByteArray()
+        indexWriter.add(indexWriter.entry(key = Xxh3.hash(nameBytes), offset = 0, size = -1))
+        indexWriter.names.add(nameBytes)
+      }
     }
     else {
       for (dir in sortedDirsToRegister) {
-        stream.addDirEntry(dir)
+        stream.addDirEntry(dir, indexWriter)
       }
     }
 

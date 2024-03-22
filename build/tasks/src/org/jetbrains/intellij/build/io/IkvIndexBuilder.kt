@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.ikv.builder
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.ByteBufferCleaner
 import java.nio.ByteBuffer
@@ -9,6 +9,7 @@ import java.nio.ByteOrder
 
 class IkvIndexBuilder(private val writeSize: Boolean = true) {
   private val entries = LinkedHashSet<IkvIndexEntry>()
+  @JvmField val names = mutableListOf<ByteArray>()
 
   fun entry(key: Long, offset: Long, size: Int): IkvIndexEntry {
     val entry = LongKeyedEntry(longKey = key, offset = offset)

@@ -206,11 +206,10 @@ class ModuleItem(
   }
 
   override fun equals(other: Any?): Boolean {
-    return this === other ||
-           other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
+    return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }
 
   override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=${moduleName}, relativeOutputFile=${relativeOutputFile}, reason=${reason})"
+  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason)"
 }

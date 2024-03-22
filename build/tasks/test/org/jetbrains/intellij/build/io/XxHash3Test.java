@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.lang;
+package org.jetbrains.intellij.build.io;
 
+import com.intellij.util.lang.Xx3UnencodedString;
+import com.intellij.util.lang.Xxh3;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Random;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -60,7 +59,7 @@ public class XxHash3Test {
       case 10_000 -> -4959357597963000776L;
       default -> throw new UnsupportedOperationException("Unknown size");
     };
-    assertThat(Xxh3.hashLongs(data)).isEqualTo(expected);
+    AssertionsForClassTypes.assertThat(Xxh3.hashLongs(data)).isEqualTo(expected);
   }
 
   @Test
@@ -100,7 +99,7 @@ public class XxHash3Test {
   }
 
   private static void checkPackage(String s, long expected) {
-    assertThat(Xx3UnencodedString.hashUnencodedString(s.replace('.', '/'))).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    AssertionsForClassTypes.assertThat(Xx3UnencodedString.hashUnencodedString(s.replace('.', '/'))).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
   private static void testUnencodedString(String s, long expected) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
-import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -96,12 +96,12 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
               jvmArgs = emptyList(),
               classPath = classPath)
     }
-    writeNewZip(assetJar, compress = true) { zipCreator ->
+    writeNewZipWithoutIndex(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)
-      archiveDir(resourceRoot.resolve("topics"), archiver)
-      archiveDir(resourceRoot.resolve("images"), archiver)
-      archiveDir(resourceRoot.resolve("search"), archiver)
+      archiveDir(resourceRoot.resolve("topics"), archiver, null)
+      archiveDir(resourceRoot.resolve("images"), archiver, null)
+      archiveDir(resourceRoot.resolve("search"), archiver, null)
     }
   }
 }

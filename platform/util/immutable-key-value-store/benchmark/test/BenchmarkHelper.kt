@@ -2,7 +2,7 @@
 package com.intellij.platform.util.immutableKeyValueStore.benchmark
 
 import com.intellij.util.lang.Xxh3
-import org.jetbrains.ikv.builder.IkvWriter
+import org.jetbrains.intellij.build.io.IkvWriter
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path

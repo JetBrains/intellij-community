@@ -180,7 +180,14 @@ internal suspend fun buildJar(
             })
             val normalizedDir = source.dir.toAbsolutePath().normalize()
             archiver.setRootDir(normalizedDir, source.prefix)
-            archiveDir(startDir = normalizedDir, archiver = archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
+            archiveDir(
+              startDir = normalizedDir,
+              archiver = archiver,
+              indexWriter = packageIndexBuilder?.indexWriter,
+              excludes = source.excludes.takeIf(
+                List<PathMatcher>::isNotEmpty,
+              )
+            )
           }
 
           is InMemoryContentSource -> {
@@ -192,9 +199,14 @@ internal suspend fun buildJar(
             }
 
             packageIndexBuilder?.addFile(source.relativePath)
-            zipCreator.uncompressedData(source.relativePath, source.data.size) {
-              it.put(source.data)
-            }
+            zipCreator.uncompressedData(
+              nameString = source.relativePath,
+              maxSize = source.data.size,
+              indexWriter = packageIndexBuilder?.indexWriter,
+              dataWriter = {
+                it.put(source.data)
+              },
+            )
           }
 
           is ZipSource -> {
@@ -276,11 +288,11 @@ private suspend fun handleZipSource(source: ZipSource,
               zipCreator.compressedData(name, dataSupplier())
             }
             else {
-              zipCreator.uncompressedData(name, dataSupplier())
+              zipCreator.uncompressedData(name, dataSupplier(), indexWriter = packageIndexBuilder?.indexWriter)
             }
           }
           else {
-            zipCreator.file(name, file)
+            zipCreator.file(name, file, indexWriter = packageIndexBuilder?.indexWriter)
             Files.delete(file)
           }
         }
@@ -293,7 +305,7 @@ private suspend fun handleZipSource(source: ZipSource,
           zipCreator.compressedData(name, data)
         }
         else {
-          zipCreator.uncompressedData(name, data)
+          zipCreator.uncompressedData(name, data, indexWriter = packageIndexBuilder?.indexWriter)
         }
       }
     }
