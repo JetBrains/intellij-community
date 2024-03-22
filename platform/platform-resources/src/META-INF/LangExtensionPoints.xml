@@ -440,6 +440,7 @@
     <extensionPoint name="usageContextPanelProvider" interface="com.intellij.usages.UsageContextPanel$Provider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory" dynamic="true"/>
     <extensionPoint name="usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener" dynamic="true"/>
+    <extensionPoint name="importBlockRangeProvider" interface="com.intellij.lang.imports.ImportBlockRangeProvider" dynamic="true"/>
 
     <extensionPoint name="treeStructureProvider" interface="com.intellij.ide.projectView.TreeStructureProvider" area="IDEA_PROJECT" dynamic="true"/>
 

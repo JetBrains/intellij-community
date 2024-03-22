@@ -18,8 +18,13 @@ package com.intellij.diff.tools.util.text;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.util.MergeConflictType;
+import com.intellij.diff.util.MergeRange;
+import com.intellij.diff.util.ThreeSide;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class FineMergeLineFragmentImpl extends MergeLineFragmentImpl implements FineMergeLineFragment {
   @NotNull private final MergeConflictType myConflictType;
@@ -44,4 +49,5 @@ public class FineMergeLineFragmentImpl extends MergeLineFragmentImpl implements 
   public MergeInnerDifferences getInnerFragments() {
     return myInnerDifferences;
   }
+
 }

@@ -5,6 +5,9 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.ThreeSide;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class MergeLineFragmentImpl implements MergeLineFragment {
   private final int myStartLine1;
   private final int myEndLine1;
@@ -46,4 +49,5 @@ public class MergeLineFragmentImpl implements MergeLineFragment {
   public int getEndLine(@NotNull ThreeSide side) {
     return side.select(myEndLine1, myEndLine2, myEndLine3);
   }
+
 }

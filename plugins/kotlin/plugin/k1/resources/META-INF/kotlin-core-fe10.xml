@@ -22,7 +22,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
-
+    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.imports.KotlinImportBlockRangeProvider"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>

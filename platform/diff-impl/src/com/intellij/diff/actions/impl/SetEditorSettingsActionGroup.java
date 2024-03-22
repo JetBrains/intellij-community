@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.HighlightingLevel;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffBundle;
@@ -159,7 +161,9 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
   public void applyDefaults() {
     for (AnAction action : myActions) {
-      ((EditorSettingAction)action).applyDefaults(myEditors.get());
+      if (action instanceof EditorSettingAction) {
+        ((EditorSettingAction)action).applyDefaults(myEditors.get());
+      }
     }
   }
 
@@ -181,6 +185,10 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     ContainerUtil.addAll(actions, myActions);
     actions.add(editorSettingsGroup);
     actions.add(Separator.getInstance());
+
+    if (e != null && e.getData(DiffDataKeys.MERGE_VIEWER) != null) {
+      actions.add(new ResolveConflictsInImportsToggleAction());
+    }
 
     if (e != null && ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
       return actions.toArray(AnAction.EMPTY_ARRAY);
@@ -335,5 +343,26 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
   private interface EditorSettingAction {
     void applyDefaults(@NotNull List<? extends Editor> editors);
+  }
+
+  private class ResolveConflictsInImportsToggleAction extends ToggleAction implements DumbAware {
+    private ResolveConflictsInImportsToggleAction() {
+      super(ActionsBundle.message("action.EditorToggleResolveConflictsInImports.text"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myTextSettings.isAutoResolveImportConflicts();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myTextSettings.setAutoResolveImportConflicts(state);
+    }
   }
 }

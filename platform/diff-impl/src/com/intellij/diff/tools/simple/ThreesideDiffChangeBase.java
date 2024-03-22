@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThreesideDiffChangeBase {
-  @NotNull private final MergeConflictType myType;
+  @NotNull protected MergeConflictType myType;
 
   @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
   @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();

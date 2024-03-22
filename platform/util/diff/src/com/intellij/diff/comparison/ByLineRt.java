@@ -391,6 +391,15 @@ public final class ByLineRt {
     return conflicts.stream().map(ch -> new MergeLineFragmentImpl(ch)).collect(Collectors.toList());
   }
 
+  @NotNull
+  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts, MergeRange range) {
+    //noinspection SSBasedInspection
+    return conflicts.stream().map(conflict -> new MergeLineFragmentImpl(conflict.start1 + range.start1, conflict.end1 + range.start1,
+                                                             conflict.start2 + range.start2, conflict.end2 + range.start2,
+                                                             conflict.start3 + range.start3, conflict.end3 + range.start3))
+      .collect(Collectors.toList());
+  }
+
   static class Line {
     @NotNull private final CharSequence myText;
     @NotNull private final ComparisonPolicy myPolicy;
