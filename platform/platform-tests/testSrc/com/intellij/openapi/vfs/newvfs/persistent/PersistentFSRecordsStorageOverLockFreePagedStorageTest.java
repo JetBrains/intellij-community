@@ -48,7 +48,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   @NotNull
   @Override
   protected PersistentFSRecordsOverLockFreePagedStorage openStorage(final Path storagePath) throws IOException {
-    return (PersistentFSRecordsOverLockFreePagedStorage)PersistentFSRecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE.open(storagePath);
+    return new PersistentFSRecordsStorageFactory.OverLockFreeFileCache().open(storagePath);
   }
 
   @Test

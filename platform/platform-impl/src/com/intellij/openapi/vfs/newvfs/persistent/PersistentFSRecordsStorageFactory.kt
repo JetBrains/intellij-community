@@ -8,39 +8,44 @@ import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.dev.StorageFactory
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 
-enum class PersistentFSRecordsStorageKind : StorageFactory<PersistentFSRecordsStorage> {
+@Internal
+abstract class PersistentFSRecordsStorageFactory(val id: Int) : StorageFactory<PersistentFSRecordsStorage> {
+
 
   /** Currently the default impl */
-  OVER_MMAPPED_FILE {
+  data class OverMMappedFile(val pageSize: Int = PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
+    : PersistentFSRecordsStorageFactory(id = 0) {
 
     override fun open(storagePath: Path): PersistentFSRecordsLockFreeOverMMappedFile = MMappedFileStorageFactory.withDefaults()
-      .pageSize(PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
-      .wrapStorageSafely<PersistentFSRecordsLockFreeOverMMappedFile, IOException>(storagePath) { storage ->
-        PersistentFSRecordsLockFreeOverMMappedFile(storage)
+      .pageSize(pageSize)
+      .wrapStorageSafely<PersistentFSRecordsLockFreeOverMMappedFile, IOException>(storagePath) { mappedFileStorage ->
+        PersistentFSRecordsLockFreeOverMMappedFile(mappedFileStorage)
       }
-  },
+  }
 
-  /** Fallback impl for [OVER_MMAPPED_FILE] if something goes terribly wrong, and we can't fix it quickly */
-  OVER_LOCK_FREE_FILE_CACHE {
+  /** Fallback impl for [OverMMappedFile] if something goes terribly wrong, and we can't fix it quickly */
+  data class OverLockFreeFileCache(val pageSize: Int = PageCacheUtils.DEFAULT_PAGE_SIZE) : PersistentFSRecordsStorageFactory(id = 1) {
     private val PERSISTENT_FS_STORAGE_CONTEXT_RW = StorageLockContext(true, true, true)
 
-    override fun open(storagePath: Path): PersistentFSRecordsOverLockFreePagedStorage {
+    init {
       val recordLength = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
-      val pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE
+      val recordsArePageAligned = pageSize % recordLength == 0
+      if (!recordsArePageAligned) {
+        throw AssertionError("Bug: record length(=$recordLength) is not aligned with page size(=$pageSize)")
+      }
+    }
+
+    override fun open(storagePath: Path): PersistentFSRecordsOverLockFreePagedStorage {
 
       if (!PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         throw IOException(
           "Configuration mismatch: PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED=false " +
           "=> can't create PersistentFSRecordsOverLockFreePagedStorage if FilePageCacheLockFree is disabled")
-      }
-
-      val recordsArePageAligned = pageSize % recordLength == 0
-      if (!recordsArePageAligned) {
-        throw AssertionError("Bug: record length(=$recordLength) is not aligned with page size(=$pageSize)")
       }
 
       val pagedStorage = PagedFileStorageWithRWLockedPageContent(
@@ -55,35 +60,41 @@ enum class PersistentFSRecordsStorageKind : StorageFactory<PersistentFSRecordsSt
         PersistentFSRecordsOverLockFreePagedStorage(it)
       }
     }
-  },
+  }
 
   /** For testing/benchmarking: serves as a reference point. Not a prod-level implementation! */
-  IN_MEMORY {
-    override fun open(storagePath: Path) =
-      @Suppress("TestOnlyProblems") (PersistentInMemoryFSRecordsStorage(storagePath,  /*max size: */1 shl 24))
-  };
+  data class InMemory(val maxRecordsCount: Int = (1 shl 24)) : PersistentFSRecordsStorageFactory(id = 2) {
+    @Suppress("TestOnlyProblems")
+    override fun open(storagePath: Path) = PersistentInMemoryFSRecordsStorage(storagePath, maxRecordsCount)
+  }
 
   companion object {
-    private var RECORDS_STORAGE_KIND = defaultFromSystemProperties()
+    private var storageFactory = defaultFromSystemProperties()
 
 
     @JvmStatic
-    fun storageImplementation(): PersistentFSRecordsStorageKind = RECORDS_STORAGE_KIND
+    fun storageImplementation(): PersistentFSRecordsStorageFactory = storageFactory
 
     @VisibleForTesting
     @JvmStatic
     @JvmName("setStorageImplementation")
-    fun setStorageImplementation(value: PersistentFSRecordsStorageKind) {
-      RECORDS_STORAGE_KIND = value
+    fun setStorageImplementation(value: PersistentFSRecordsStorageFactory) {
+      storageFactory = value
     }
 
     @VisibleForTesting
     @JvmStatic
     @JvmName("resetStorageImplementation")
     fun resetStorageImplementation() {
-      RECORDS_STORAGE_KIND = defaultFromSystemProperties()
+      storageFactory = defaultFromSystemProperties()
     }
 
-    private fun defaultFromSystemProperties() = PersistentFSRecordsStorageKind.valueOf(System.getProperty("vfs.records-storage.impl", OVER_MMAPPED_FILE.name))
+    private fun defaultFromSystemProperties(): PersistentFSRecordsStorageFactory {
+      return when (System.getProperty("vfs.records-storage.impl", "OVER_MMAPPED_FILE")) {
+        "OVER_LOCK_FREE_FILE_CACHE" -> OverLockFreeFileCache()
+        "IN_MEMORY" -> InMemory()
+        else -> OverMMappedFile()
+      }
+    }
   }
 }

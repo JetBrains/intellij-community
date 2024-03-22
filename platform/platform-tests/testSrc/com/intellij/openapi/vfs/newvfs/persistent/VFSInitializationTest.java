@@ -3,6 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverLockFreeFileCache;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
@@ -17,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageKind.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
@@ -195,17 +196,17 @@ public class VFSInitializationTest {
 
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (fails otherwise)
-    List<PersistentFSRecordsStorageKind> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                                           List.of(OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                                           List.of(OVER_MMAPPED_FILE);
+    List<PersistentFSRecordsStorageFactory> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
+                                                              List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
+                                                              List.of(new OverMMappedFile());
 
     List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
-    for (PersistentFSRecordsStorageKind storageKind : allStorageKinds) {
+    for (PersistentFSRecordsStorageFactory storageKind : allStorageKinds) {
       int vfsFilesCount = 1;
       int vfsVersion;
       for (int i = 0; i < vfsFilesCount; i++) {
         Path cachesDir = temporaryDirectory.createDir();
-        PersistentFSRecordsStorageKind.setStorageImplementation(storageKind);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(storageKind);
 
         FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
         try {
@@ -238,7 +239,7 @@ public class VFSInitializationTest {
         FileUtil.delete(fileToDelete);
 
         //reopen:
-        PersistentFSRecordsStorageKind.setStorageImplementation(storageKind);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(storageKind);
         try {
           PersistentFSConnection connection = tryInit(cachesDir, vfsVersion, Collections.emptyList());
           try {
@@ -269,15 +270,15 @@ public class VFSInitializationTest {
   public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (will fail)
-    final List<PersistentFSRecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                                          List.of(OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                                          List.of(OVER_MMAPPED_FILE);
+    final List<PersistentFSRecordsStorageFactory> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
+                                                             List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
+                                                             List.of(new OverMMappedFile());
 
     //check all combinations (from->to) of implementations:
-    for (PersistentFSRecordsStorageKind kindBefore : allKinds) {
-      for (PersistentFSRecordsStorageKind kindAfter : allKinds) {
+    for (PersistentFSRecordsStorageFactory kindBefore : allKinds) {
+      for (PersistentFSRecordsStorageFactory kindAfter : allKinds) {
         Path cachesDir = temporaryDirectory.createDir();
-        PersistentFSRecordsStorageKind.setStorageImplementation(kindBefore);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(kindBefore);
         long firstVfsCreationTimestamp;
         FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
         try {
@@ -289,7 +290,7 @@ public class VFSInitializationTest {
         Thread.sleep(500);//ensure system clock is moving
 
         //reopen:
-        PersistentFSRecordsStorageKind.setStorageImplementation(kindAfter);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(kindAfter);
         FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir);
         try {
           long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
@@ -413,7 +414,7 @@ public class VFSInitializationTest {
 
   @After
   public void tearDown() throws Exception {
-    PersistentFSRecordsStorageKind.resetStorageImplementation();
+    PersistentFSRecordsStorageFactory.resetStorageImplementation();
 
     for (PersistentFSConnection connection : connectionsOpened) {
       PersistentFSConnector.disconnect(connection);

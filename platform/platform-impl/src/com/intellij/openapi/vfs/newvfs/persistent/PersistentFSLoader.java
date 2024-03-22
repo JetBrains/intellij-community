@@ -777,7 +777,7 @@ public final class PersistentFSLoader {
   }
 
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
-    StorageFactory<PersistentFSRecordsStorage> recordsStorageFactory = PersistentFSRecordsStorageKind.storageImplementation();
+    StorageFactory<PersistentFSRecordsStorage> recordsStorageFactory = PersistentFSRecordsStorageFactory.storageImplementation();
 
     LOG.trace("VFS uses " + recordsStorageFactory + " storage for main file records table");
     return recordsStorageFactory.wrapStorageSafely(recordsFile, records -> {
