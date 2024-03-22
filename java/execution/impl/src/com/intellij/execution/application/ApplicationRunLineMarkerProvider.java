@@ -3,7 +3,6 @@ package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.ApplicationRunLineMarkerHider;
-import com.intellij.execution.actions.RunContextAction;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
@@ -93,19 +92,6 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-    AnActionEvent event = createActionEvent(element);
-
-    //prepare fields (including for dumb mode)
-    for (AnAction action : actions) {
-      if (action instanceof ExecutorAction executorAction) {
-        AnAction delegate = executorAction.getDelegate();
-        if (delegate instanceof RunContextAction runContextAction) {
-          event.getPresentation().copyFrom(action.getTemplatePresentation());
-          event.getPresentation().setEnabledAndVisible(true);
-          runContextAction.beforeActionPerformedUpdate(event);
-        }
-      }
-    }
 
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
   }
