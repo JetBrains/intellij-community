@@ -1,16 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.platform.ide.bootstrap.Splash;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.*;
 import java.util.Objects;
 
-import static com.intellij.platform.ide.bootstrap.SplashManagerKt.loadSplashImage;
+import static com.intellij.platform.ide.bootstrap.SplashManagerKt.blockingLoadSplashImage;
 
 /**
  * @author Konstantin Bulenkov
@@ -18,7 +19,7 @@ import static com.intellij.platform.ide.bootstrap.SplashManagerKt.loadSplashImag
 public final class ShowSplashAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Splash splash = new Splash(Objects.requireNonNull(loadSplashImage(ApplicationInfoImpl.getShadowInstance())));
+    Splash splash = new Splash(Objects.requireNonNull(blockingLoadSplashImage(ApplicationInfoImpl.getShadowInstance())), false);
     splash.setVisible(true);
     splash.toFront();
 

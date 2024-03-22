@@ -212,9 +212,11 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob: Job,
-                                                                                       initUiScale: Job,
-                                                                                       appInfoDeferred: Deferred<ApplicationInfoEx>) {
+internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
+  initAwtToolkitJob: Job,
+  initUiScale: Job,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+) {
   launch {
     initAwtToolkitJob.join()
 
@@ -232,7 +234,9 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
         catch (ignore: Throwable) {
         }
       }
-    } else if (StartupUiUtil.isWaylandToolkit()) {
+    }
+    else if (StartupUiUtil.isWaylandToolkit()) {
+      appInfoDeferred.join()
       System.setProperty("awt.app.id", AppUIUtil.getFrameClass())
     }
 

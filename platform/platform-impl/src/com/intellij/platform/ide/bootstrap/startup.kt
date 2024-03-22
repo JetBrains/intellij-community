@@ -96,9 +96,16 @@ fun CoroutineScope.startApplication(
 
   val appInfoDeferred = async {
     mainClassLoaderDeferred?.await()
-    span("app info") {
-      // required for DisabledPluginsState and EUA
-      ApplicationInfoImpl.getShadowInstance()
+    coroutineScope {
+      // required for log essential info about IDE, Wayland app id
+      async(CoroutineName("app name info")) {
+        ApplicationNamesInfo.getInstance()
+      }
+
+      span("app info") {
+        // required for DisabledPluginsState and EUA
+        ApplicationInfoImpl.getShadowInstance()
+      }
     }
   }
 
@@ -140,8 +147,8 @@ fun CoroutineScope.startApplication(
       }
     }
 
-    scheduleShowSplashIfNeeded(lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
     scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
+    scheduleShowSplashIfNeeded(lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
   }
 
   val initLafJob = launch {
@@ -323,9 +330,6 @@ private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
   mainScope: CoroutineScope,
 ) {
   launch {
-    // this must happen after locking system dirs
-    val log = logDeferred.await()
-
     if (SystemInfoRt.isWindows) {
       span("system libs setup") {
         if (System.getProperty("winp.folder.preferred") == null) {
@@ -333,6 +337,9 @@ private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
         }
       }
     }
+
+    // this must happen after locking system dirs
+    val log = logDeferred.await()
 
     span("system libs loading", Dispatchers.IO) {
       JnaLoader.load(log)
