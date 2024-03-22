@@ -29,7 +29,6 @@ fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>
   val ranges = getPlaceholderRanges(context) ?: return null
 
   val psiLiteralExpression = uExpression.sourcePsi ?: return null
-  val placeholderParametersSize = context.placeholderParameters.size
 
   val loggerReferenceList = ranges.zip(context.placeholderParameters) { placeholderRanges, parameter ->
     val parameterPsi = parameter.sourcePsi ?: return null
@@ -39,23 +38,7 @@ fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>
     }
   }.flatten()
 
-  return when (context.loggerType) {
-    SLF4J -> {
-      loggerReferenceList.take(if (context.lastArgumentIsException) placeholderParametersSize - 1 else placeholderParametersSize)
-    }
-    LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
-      if (context.lastArgumentIsException && placeholderParametersSize == 1) {
-        emptyList()
-      }
-      else {
-        loggerReferenceList
-      }
-    }
-    SLF4J_EQUAL_PLACEHOLDERS, LOG4J_EQUAL_PLACEHOLDERS -> {
-      loggerReferenceList
-    }
-    else -> null
-  }
+  return getAlignedPlaceholderCount(loggerReferenceList, context)
 }
 
 internal fun getContext(uExpression: UExpression): PlaceholderContext? {
@@ -65,6 +48,27 @@ internal fun getContext(uExpression: UExpression): PlaceholderContext? {
   val context = getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS)
   if (uExpression != context?.logStringArgument || context.partHolderList.size != 1) return null
   return context
+}
+
+internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: PlaceholderContext): List<T>? {
+  val placeholderParametersSize = context.placeholderParameters.size
+  return when (context.loggerType) {
+    SLF4J -> {
+      placeholderList.take(if (context.lastArgumentIsException) placeholderParametersSize - 1 else placeholderParametersSize)
+    }
+    LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
+      if (context.lastArgumentIsException && placeholderParametersSize == 1) {
+        emptyList()
+      }
+      else {
+        placeholderList
+      }
+    }
+    SLF4J_EQUAL_PLACEHOLDERS, LOG4J_EQUAL_PLACEHOLDERS -> {
+      placeholderList
+    }
+    else -> null
+  }
 }
 
 internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
