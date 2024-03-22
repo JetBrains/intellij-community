@@ -38,6 +38,8 @@ public class JavaSdkVersionTest {
     assertEquals(JavaSdkVersion.JDK_1_9, JavaSdkVersion.fromVersionString("java version \"9-ea\""));
     assertEquals(JavaSdkVersion.JDK_1_9, JavaSdkVersion.fromVersionString("java version \"9.1.2\""));
     assertEquals(JavaSdkVersion.JDK_14, JavaSdkVersion.fromVersionString("java version \"14\""));
+
+    assertEquals(JavaSdkVersion.JDK_21, JavaSdkVersion.fromVersionString("GraalVM 23.1.2 - Java 21.0.2"));
   }
 
   @Test
