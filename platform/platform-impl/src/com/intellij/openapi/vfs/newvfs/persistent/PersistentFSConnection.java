@@ -54,7 +54,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.notification.NotificationType.ERROR;
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
-import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.*;
@@ -73,24 +72,6 @@ public final class PersistentFSConnection {
    * restart now, since that many errors severely affect IDE operation.
    */
   private static final int INSIST_TO_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-to-restart-after-n-errors", 1000);
-
-  /**
-   * If true, each flush writes connectionStatus=SAFELY_CLOSED, if false -- only actual .close() writes SAFELY_CLOSED.
-   * <br/>
-   * SAFELY_CLOSED on flush is almost impossible to make strictly correct -- because modifications could run in
-   * parallel with flush itself, hence at the moment records.connectionStatus set to SAFELY_CLOSED -- some other
-   * storage could be in the middle of modification, i.e. in 'not safe state'. If at that moment IDE crashes/is
-   * killed -- we've got VFS with 'safely closed' status, but likely corrupted state. To avoid such a scenario
-   * we need to lock flush _and_ all modifications -- which is clearly undesirable.
-   * SAFELY_CLOSED_ON_EACH_FLUSH=false is the only 'safe' option -- but it is also the option that triggers
-   * more VFS rebuilds on improper IDE shutdowns -- which make users sad and sorrow. Ideally, we could avoid
-   * some/all of those VFS rebuilds if we are able to scan VFS and see is it really corrupted (and, maybe,
-   * even fix some corruptions) -- but this is a big topic itself.
-   * So the tradeoff: if we're able to avoid most of 'unnecessary' VFS rebuilds even with after improper shutdowns
-   * -- this flag should be 'false', since it is the most correct option. Otherwise set it to 'true', and hope for
-   * the best
-   */
-  private static final boolean SAFELY_CLOSED_ON_EACH_FLUSH = getBooleanProperty("vfs.safely-closed-on-flush", true);
 
 
   private final @NotNull NotNullLazyValue<? extends IntList> freeRecords;
@@ -238,27 +219,20 @@ public final class PersistentFSConnection {
     }
   }
 
-  private void resetDirty(boolean markSafelyClosed) throws IOException {
+  private void resetDirty() {
     // no synchronization, it's ok to have race here
     if (dirty) {
       dirty = false;
-      if (markSafelyClosed) {
-        records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
-      }
     }
   }
 
   void doForce() throws IOException {
-    doForce(/*markSafelyClosed: */ SAFELY_CLOSED_ON_EACH_FLUSH);
-  }
-
-  private void doForce(boolean markSafelyClosed) throws IOException {
     if (namesEnumerator instanceof Forceable) {
       ((Forceable)namesEnumerator).force();
     }
     attributesStorage.force();
     contentStorage.force();
-    resetDirty(markSafelyClosed);
+    resetDirty();
     records.force();
   }
 
@@ -279,7 +253,8 @@ public final class PersistentFSConnection {
       return;
     }
 
-    doForce(/*markSafelyClosed: */ true);
+    records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+    doForce();
 
     //ensure async loading is finished
     Exception freeRecordsLoadingError = ExceptionUtil.runAndCatch(() -> freeRecords.getValue());
@@ -613,13 +588,6 @@ public final class PersistentFSConnection {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        //Actually, this is no strictly correct: we can set SAFELY_CLOSED only if we just flush _all_ storages,
-        // but it is impossible to guarantee storages just flushed are not modified again already -- so it is
-        // possible to set SAFELY_CLOSED here while some storages are in the middle of modification, and not
-        // in a 'safe' state.
-        if (SAFELY_CLOSED_ON_EACH_FLUSH) {
-          connection.records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
-        }
         connection.records.force();
 
         unspentContentionQuota -= competingThreads();
