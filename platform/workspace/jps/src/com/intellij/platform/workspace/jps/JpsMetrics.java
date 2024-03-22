@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps;
 
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.Semaphore;
-
+@ApiStatus.Internal // Just insert this manually. This is needed for correct api surface
 public final class JpsMetrics extends SharedMetrics {
   private static final @NotNull ClearableLazyValue<JpsMetrics> _instance = ClearableLazyValue.createAtomic(() -> new JpsMetrics());
 

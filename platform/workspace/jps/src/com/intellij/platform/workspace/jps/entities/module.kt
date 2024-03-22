@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 data class ModuleTypeId(val name: @NonNls String)
@@ -68,16 +69,26 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
 }
 
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
 var ModuleEntity.Builder.customImlData: @Child ModuleCustomImlDataEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ModuleCustomImlDataEntity::class.java)
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
 var ModuleEntity.Builder.exModuleOptions: @Child ExternalSystemModuleOptionsEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ExternalSystemModuleOptionsEntity::class.java)
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
 var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity.Builder?
   by WorkspaceEntity.extensionBuilder(FacetsOrderEntity::class.java)
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
 var ModuleEntity.Builder.groupPath: @Child ModuleGroupPathEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
 var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
   by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
 var ModuleEntity.Builder.testProperties: @Child TestModulePropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(TestModulePropertiesEntity::class.java)
 //endregion
