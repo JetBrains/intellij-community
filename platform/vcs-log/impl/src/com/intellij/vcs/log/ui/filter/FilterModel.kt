@@ -6,6 +6,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.without
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -129,7 +130,7 @@ abstract class FilterModel<Filter> internal constructor(@JvmField protected val 
       return object : ReadWriteProperty<MultipleFilterModel, F?> {
         override fun getValue(thisRef: MultipleFilterModel, property: KProperty<*>): F? = thisRef.getFilter(key)
         override fun setValue(thisRef: MultipleFilterModel, property: KProperty<*>, value: F?) {
-          setFilter(VcsLogFilterObject.collection(value))
+          setFilter(if (value == null) getFilter()?.without(key) else VcsLogFilterObject.collection(value))
         }
       }
     }
