@@ -2,7 +2,6 @@
 package com.intellij.platform.navbar.compatibility.backend
 
 import com.intellij.ide.impl.dataRules.GetDataRule
-import com.intellij.ide.navbar.actions.extensionData
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.model.Pointer
@@ -14,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.compatibility.extensionData
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement

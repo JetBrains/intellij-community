@@ -4,11 +4,11 @@ package com.intellij.platform.navbar.compatibility.ide
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.ide.CopyPasteSupport
 import com.intellij.ide.impl.dataRules.GetDataRule
-import com.intellij.ide.navbar.actions.extensionData
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.platform.navbar.compatibility.extensionData
 import javax.swing.JComponent
 
 internal class CutProviderDataRule : GetDataRule {
