@@ -963,3 +963,12 @@ fun <T : CommandChain> T.repeatCommand(times: Int, commandChain: (CommandChain) 
 fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T = apply {
   addCommand("${CMD_PREFIX}createScratchFile $filename $content")
 }
+
+
+/**
+ * Assert that the caret is located at the specified position.
+ * Lines and columns are counted from 1.
+ */
+fun <T : CommandChain> T.assertCaretPosition(line: Int, column: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertCaretPosition $line $column")
+}
