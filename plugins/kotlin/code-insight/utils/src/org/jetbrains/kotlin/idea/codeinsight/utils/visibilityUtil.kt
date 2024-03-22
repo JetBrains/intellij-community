@@ -4,12 +4,10 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -158,7 +156,7 @@ private fun KtModifierListOwner.isAnnotationClassPrimaryConstructor(): Boolean =
 private fun KtModifierListOwner.isFinalClassConstructor(): Boolean {
     if (this !is KtConstructor<*>) return false
     val ktClass = getContainingClassOrObject() as? KtClass ?: return false
-    return analyze(ktClass) { ktClass.getSymbolOfType<KtSymbolWithModality>().modality == Modality.FINAL }
+    return ktClass.modalityModifierType()?.equals(KtTokens.FINAL_KEYWORD) ?: true
 }
 
 private fun KtModifierListOwner.isSealedClassConstructor(): Boolean {
