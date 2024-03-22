@@ -60,16 +60,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean isDone() {
-    int curPackIdx = myPackIdx;
-    while (curPackIdx <= myDescriptorPacks.size() - 1) {
-      CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
-      if (descriptors.length != 0)
-        return false;
-
-      curPackIdx ++;
-    }
-
-    return true;
+    return myPackIdx > myDescriptorPacks.size() - 1;
   }
 
   @Override
@@ -89,7 +80,11 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean iteration(@NotNull ProgressIndicator indicator) {
-    final Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
+    final @Nullable Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
+    if (pair == null) {
+      return isDone();
+    }
+
     CommonProblemDescriptor descriptor = pair.getFirst();
     boolean shouldDoPostponedOperations = pair.getSecond();
 
@@ -166,26 +161,20 @@ public abstract class PerformFixesModalTask implements SequentialTask {
       .joining("\n");
   }
 
-  private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
-    boolean shouldDoPostponedOperations = false;
-    while(true) {
-      CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
-      if (myDescriptorIdx == descriptors.length) {
-        // Possible only in case of empty descriptors
-        shouldDoPostponedOperations = true;
-        myPackIdx++;
-        myDescriptorIdx = 0;
-        assert myPackIdx <= myDescriptorPacks.size() - 1;
-        continue;
-      }
+  private @Nullable Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
+    CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
 
-      CommonProblemDescriptor descriptor = descriptors[myDescriptorIdx++];
-      if (myDescriptorIdx == descriptors.length) {
-        shouldDoPostponedOperations = true;
-        myPackIdx++;
-        myDescriptorIdx = 0;
-      }
-      return Pair.create(descriptor, shouldDoPostponedOperations);
+    boolean shouldDoPostponedOperations = myDescriptorIdx == descriptors.length - 1;
+    Pair<CommonProblemDescriptor, Boolean> result =
+      myDescriptorIdx >= descriptors.length
+        ? null
+        : Pair.create(descriptors[myDescriptorIdx++], shouldDoPostponedOperations);
+
+    if (myDescriptorIdx == descriptors.length) {
+      myPackIdx++;
+      myDescriptorIdx = 0;
     }
+
+    return result;
   }
 }
