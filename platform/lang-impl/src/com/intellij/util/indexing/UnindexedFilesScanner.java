@@ -83,7 +83,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   private final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final boolean myIsIndexingFilesFilterUpToDate;
+  private final FilesFilterScanningHandler myFilterHandler;
   private final String myIndexingReason;
   private final ScanningType myScanningType;
   private final Future<?> myStartCondition;
@@ -126,7 +126,10 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
-    myIsIndexingFilesFilterUpToDate = isIndexingFilesFilterUpToDate;
+    ProjectIndexableFilesFilterHolder filterHolder = myIndex.getIndexableFilesFilterHolder();
+    myFilterHandler = isIndexingFilesFilterUpToDate
+                      ? new IdleFilesFilterScanningHandler(filterHolder)
+                      : new UpdatingFilesFilterScanningHandler(filterHolder);
     myIndexingReason = (indexingReason != null) ? indexingReason : "<unknown>";
     myScanningType = scanningType;
     myStartCondition = startCondition;
@@ -438,12 +441,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myFutureScanningRequestToken.markSuccessful();
     projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken);
 
-    ProjectIndexableFilesFilterHolder filterHolder = myIndex.getIndexableFilesFilterHolder();
-    FilesFilterScanningHandler filterHandler = myIsIndexingFilesFilterUpToDate
-                                               ? new IdleFilesFilterScanningHandler(filterHolder)
-                                               : new UpdatingFilesFilterScanningHandler(filterHolder);
-    filterHandler.scanningStarted(project, isFullIndexUpdate());
-
     List<IndexableFileScanner.@NotNull ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
@@ -497,7 +494,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
           scanningStatistics.startFileChecking();
           for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
             UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
-                                                                   rootAndFiles.getFirst(), scanningRequest, filterHandler);
+                                                                   rootAndFiles.getFirst(), scanningRequest, myFilterHandler);
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
             if (!rootIterator.mayBeUsed()) {
@@ -542,7 +539,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
         projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate());
-        filterHandler.scanningCompleted(project);
       }
     }
   }
@@ -551,11 +547,13 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   public void perform(@NotNull CheckCancelOnlyProgressIndicator indicator, @NotNull IndexingProgressReporter progressReporter) {
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != Boolean.TRUE, "Scanning is already in progress");
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
+    myFilterHandler.scanningStarted(myProject, isFullIndexUpdate());
     try {
       performScanningAndIndexing(indicator, progressReporter);
     }
     finally {
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
+      myFilterHandler.scanningCompleted(myProject);
     }
   }
 
