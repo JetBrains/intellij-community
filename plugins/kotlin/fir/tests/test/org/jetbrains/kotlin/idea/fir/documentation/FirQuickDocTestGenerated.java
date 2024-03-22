@@ -113,6 +113,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/Formatting.kt");
     }
 
+    @TestMetadata("FromStdlib.kt")
+    public void testFromStdlib() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/FromStdlib.kt");
+    }
+
     @TestMetadata("FunctionTypeParameter.kt")
     public void testFunctionTypeParameter() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/FunctionTypeParameter.kt");

@@ -113,6 +113,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/Formatting.kt");
     }
 
+    @TestMetadata("FromStdlib.kt")
+    public void testFromStdlib() throws Exception {
+        runTest("testData/editor/quickDoc/FromStdlib.kt");
+    }
+
     @TestMetadata("FunctionTypeParameter.kt")
     public void testFunctionTypeParameter() throws Exception {
         runTest("testData/editor/quickDoc/FunctionTypeParameter.kt");
