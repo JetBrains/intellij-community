@@ -34,6 +34,11 @@ public interface TestIndexingModeSupporter {
       public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
         return new ShutdownToken(null);
       }
+
+      @Override
+      public void ensureIndexingStatus(@NotNull Project project) {
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
+      }
     }, DUMB_FULL_INDEX {
       @Override
       public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
