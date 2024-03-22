@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.util.telemetry
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
+import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.net.URI
@@ -12,21 +14,10 @@ class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope
 
   private fun exportTraces(binaryTraces: ByteArray) {
     if (binaryTraces.isEmpty()) return
-    val telemetryHost = getOpenTelemetryAddress() ?: return
+    val telemetryHost = getOtlpEndPoint() ?: return
     coroutineScope.launch {
-      GradleOpenTelemetryTraceExporter.export(telemetryHost, binaryTraces)
+      OpenTelemetryRawTraceExporter.export(URI.create(telemetryHost), binaryTraces, OpenTelemetryRawTraceExporter.Protocol.PROTOBUF)
     }
-  }
-
-  private fun getOpenTelemetryAddress(): URI? {
-    val property = System.getProperty("idea.diagnostic.opentelemetry.otlp")
-    if (property == null) {
-      return null
-    }
-    if (property.endsWith("/")) {
-      return URI.create(property + "v1/traces")
-    }
-    return URI.create("$property/v1/traces")
   }
 
   companion object {
