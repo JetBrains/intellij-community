@@ -44,12 +44,13 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     // they are not added to lists during disposing of project (in this case project may be stuck forever in those lists)
     boolean registered = ReadAction.compute(() -> {
       if (project.isDisposed()) return false;
-      myOpenProjects.add(project);
       // done mostly for tests. In real life this is no-op, because the set was removed on project closing
       Disposer.register(project, () -> onProjectClosing(project));
 
       fileBasedIndex.registerProjectFileSets(project);
       fileBasedIndex.getIndexableFilesFilterHolder().onProjectOpened(project);
+
+      myOpenProjects.add(project);
       return true;
     });
 
