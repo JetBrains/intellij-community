@@ -335,7 +335,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   }
 
   private void affectConflictingCallExpressions(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
-    if (clsMethod.isPrivate()) {
+    if (clsMethod.isPrivate() || clsMethod.isStaticInitializer()) {
       return;
     }
     if (clsMethod.isConstructor()) {
@@ -441,7 +441,9 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   }
 
   private void affectMemberLookupUsages(DifferentiateContext context, JvmClass cls, String name, Utils utils) {
-    affectLookupUsages(context, filter(map(utils.withAllSubclasses(cls.getReferenceID()), id -> id instanceof JvmNodeReferenceID? ((JvmNodeReferenceID)id) : null), Objects::nonNull), name, utils, null);
+    if (!"<init>".equals(name) && !"<clinit>".equals(name)) { // there should be no lookups on jvm-special names
+      affectLookupUsages(context, filter(map(utils.withAllSubclasses(cls.getReferenceID()), id -> id instanceof JvmNodeReferenceID? ((JvmNodeReferenceID)id) : null), Objects::nonNull), name, utils, null);
+    }
   }
 
   private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {

@@ -52,6 +52,10 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     return "<init>".equals(getName());
   }
 
+  public boolean isStaticInitializer() {
+    return "<clinit>".equals(getName());
+  }
+
   public boolean isOverridable() {
     return !isFinal() && !isStatic() && !isPrivate() && !isConstructor();
   }

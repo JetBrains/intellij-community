@@ -502,18 +502,20 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod);
       });
 
-      if (!removedMethod.isPrivate() && removedMethod.isStatic()) {
+      if (!removedMethod.isPrivate() && removedMethod.isStatic() && !removedMethod.isStaticInitializer()) {
         debug("The method was static --- affecting static method import usages");
         affectStaticMemberImportUsages(context, changedClass.getReferenceID(), removedMethod.getName(), propagated);
       }
 
       if (removedMethod.isPackageLocal()) {
-        // Sometimes javac cannot find an overridden package local method in superclasses, when superclasses are defined in different packages.
-        // This results in compilation error when the code is compiled from the very beginning.
-        // So even if we correctly find a corresponding overridden method and the bytecode compatibility remains,
-        // we still need to affect package local method usages to behave similar to javac.
-        debug("Removed method is package-local, affecting method usages");
-        affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+        if (!removedMethod.isStaticInitializer()) {
+          // Sometimes javac cannot find an overridden package local method in superclasses, when superclasses are defined in different packages.
+          // This results in compilation error when the code is compiled from the very beginning.
+          // So even if we correctly find a corresponding overridden method and the bytecode compatibility remains,
+          // we still need to affect package local method usages to behave similar to javac.
+          debug("Removed method is package-local, affecting method usages");
+          affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+        }
       }
       else {
         Iterable<Pair<JvmClass, JvmMethod>> overridden = removedMethod.isConstructor()? Collections.emptyList() : lazy(() -> {
@@ -573,10 +575,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod addedMethod : added) {
       debug("Method: ", addedMethod.getName());
 
-      if (!processAddedMethod(context, change, addedMethod, future, present)) {
-        return false;
-      }
-
       if (addedMethod.isPrivate()) {
         continue;
       }
@@ -595,7 +593,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      if (addedMethod.isStatic()) {
+      if (addedMethod.isStatic() && !addedMethod.isStaticInitializer()) {
         affectStaticMemberOnDemandUsages(context, changedClass.getReferenceID(), propagated);
       }
 
