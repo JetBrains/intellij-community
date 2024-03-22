@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -285,10 +286,11 @@ class ExpressionReplacementPerformer(
     }
 
     private fun KtElement.replaceWithRunBlockAndGetExpression(): KtExpression {
-        val runExpression = psiFactory.createExpressionByPattern("run { $0 }", this) as KtCallExpression
+        val runExpressionText = if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) "run({ $0 })" else "run { $0 }"
+        val runExpression = psiFactory.createExpressionByPattern(runExpressionText, this) as KtCallExpression
         val runAfterReplacement = this.replaced(runExpression)
-        val ktLambdaArgument = runAfterReplacement.lambdaArguments[0]
-        return ktLambdaArgument.getLambdaExpression()?.bodyExpression?.statements?.singleOrNull()
+        val ktLambdaArgument = runAfterReplacement.valueArguments[0]
+        return (ktLambdaArgument.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression?.statements?.singleOrNull()
             ?: throw KotlinExceptionWithAttachments("cant get body expression for $ktLambdaArgument")
                 .withPsiAttachment("ktLambdaArgument", ktLambdaArgument)
     }
