@@ -5,13 +5,15 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.*
 import com.intellij.util.asSafely
 import groovy.lang.Closure
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ACTION
 import org.jetbrains.plugins.gradle.service.resolve.transformation.GRADLE_GENERATED_CLOSURE_OVERLOAD_DELEGATE_KEY
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider
@@ -49,13 +51,8 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     val argumentMapping = resolvedCall.candidate?.argumentMapping ?: return null
     val type = argumentMapping.expectedType(ExpressionArgument(expression)) as? PsiClassType ?: return null
     val clazz = type.resolve() ?: return null
-    if (clazz.providesDelegateInGeneric()) {
-      return getDelegateInfoFromGenericType(type, resolvedCall.substitutor)
-    }
-    else if (clazz.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
-      return getDelegateInfoFromClosure(resolvedCall)
-    }
-    return null
+    return getDelegateFromAction(clazz, type, resolvedCall.substitutor)
+           ?: getDelegateFromClosure(clazz, resolvedCall)
   }
 
   /**
@@ -69,27 +66,38 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     return DelegatesToInfo(actualBridgeDelegate, Closure.DELEGATE_FIRST)
   }
 
-  private fun PsiClass.providesDelegateInGeneric(): Boolean {
-    return qualifiedName == GradleCommonClassNames.GRADLE_API_ACTION
-           || hasAnnotation("org.gradle.api.HasImplicitReceiver")
-  }
-
   /**
-   * I.e., if [type] is Action<? super T>, a delegate will be a result of substitution in T
+   * Takes a delegate from Action generic parameter.
+   * I.e., if [type] is Action<? super T>, a delegate will be a result of substitution in T.
+   * It also works for other classes with @HasImplicitReceiver and single generic parameter.
+   * But currently only Action has this annotation in Gradle sources.
    */
-  private fun getDelegateInfoFromGenericType(type: PsiClassType, substitutor: PsiSubstitutor): DelegatesToInfo? {
-    val typeArgument = type.parameters.singleOrNull() ?: return null
-    val genericType = if (typeArgument is PsiWildcardType && typeArgument.isSuper) {
-      typeArgument.bound
+  private fun getDelegateFromAction(clazz: PsiClass, type: PsiClassType, substitutor: PsiSubstitutor): DelegatesToInfo? {
+    if (clazz.qualifiedName != GRADLE_API_ACTION
+        && !clazz.hasAnnotation("org.gradle.api.HasImplicitReceiver")) {
+      return null
+    }
+    val genericParameter = type.parameters.singleOrNull() ?: return null
+    // if generic is super wildcard (i.e. ? super T), take its bound (T)
+    val specificType = if (genericParameter is PsiWildcardType && genericParameter.isSuper) {
+      genericParameter.bound
     }
     else {
-      typeArgument
+      genericParameter
     }
-    val delegateType = substitutor.substitute(genericType)
+    val delegateType = substitutor.substitute(specificType)
     return DelegatesToInfo(delegateType, Closure.DELEGATE_FIRST)
   }
 
-  private fun getDelegateInfoFromClosure(resolvedCall: GroovyMethodResult): DelegatesToInfo? {
+  /**
+   * If called method has a Closure parameter without @DelegatesTo, searches for overloaded methods with Action to extract a delegate from
+   * generic. If Closure parameter has @DelegatesTo, it should be processed by
+   * [org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DefaultDelegatesToProvider]
+   */
+  private fun getDelegateFromClosure(clazz: PsiClass, resolvedCall: GroovyMethodResult): DelegatesToInfo? {
+    if (clazz.qualifiedName != GROOVY_LANG_CLOSURE
+        || clazz.hasAnnotation(GROOVY_LANG_DELEGATES_TO)) return null
+
     val methodName = resolvedCall.candidate?.method?.name ?: return null
     val classProvidingMethod = resolvedCall.candidate?.receiverType.resolve() ?: return null
     val methodOverloads = classProvidingMethod.findMethodsAndTheirSubstitutorsByName(methodName, true)
@@ -103,11 +111,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
   private fun getDelegateFromMethodSignature(psiMethod: PsiMethod, substitutor: PsiSubstitutor): DelegatesToInfo? {
     val lastParam = psiMethod.parameters.lastOrNull() ?: return null
     val paramType = lastParam.type.asSafely<PsiClassType>() ?: return null
-    val resolveResult = paramType.resolveGenerics()
-    val resolvedClass = resolveResult.element ?: return null
-    if (resolvedClass.providesDelegateInGeneric()) {
-      return getDelegateInfoFromGenericType(paramType, substitutor)
-    }
-    return null
+    val resolvedClass = paramType.resolve() ?: return null
+    return getDelegateFromAction(resolvedClass, paramType, substitutor)
   }
 }
