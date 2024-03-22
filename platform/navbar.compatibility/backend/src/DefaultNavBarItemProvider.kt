@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.impl
+package com.intellij.platform.navbar.compatibility.backend
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.VisibleForTesting
  *
  * @see com.intellij.ide.navigationToolbar.NavBarModelExtension
  */
-class DefaultNavBarItemProvider : NavBarItemProvider {
+internal class DefaultNavBarItemProvider : NavBarItemProvider {
 
   @RequiresReadLock
   @RequiresBackgroundThread

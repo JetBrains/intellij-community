@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.compatibility.testFramework
 
-import com.intellij.ide.navbar.actions.getBgData
-import com.intellij.ide.navbar.impl.DefaultNavBarItem
-import com.intellij.ide.navbar.impl.compatibilityNavBarItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
@@ -11,6 +8,9 @@ import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.compatibility.backend.DefaultNavBarItem
+import com.intellij.platform.navbar.compatibility.backend.compatibilityNavBarItem
+import com.intellij.platform.navbar.compatibility.backend.getBgData
 import com.intellij.platform.navbar.ide.contextModel
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal

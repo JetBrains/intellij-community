@@ -697,18 +697,9 @@
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandExecutorImpl" overrides="true"/>
 
-    <navbar.item.provider implementation="com.intellij.ide.navbar.impl.DefaultNavBarItemProvider" order="last"/>
-
-    <getDataRule key="navigationBarItem"
-                 implementationClass="com.intellij.ide.navbar.actions.DefaultNavBarItemDataRule"
-                 type="context"
-                 order="last"/>
     <getDataRule key="cutProvider" type="fast" implementationClass="com.intellij.ide.navbar.ide.CutProviderDataRule"/>
     <getDataRule key="copyProvider" type="fast" implementationClass="com.intellij.ide.navbar.ide.CopyProviderDataRule"/>
     <getDataRule key="pasteProvider" type="fast" implementationClass="com.intellij.ide.navbar.ide.PasteProviderDataRule"/>
-    <getDataRule key="bgtDataProvider"
-                 implementationClass="com.intellij.ide.navbar.actions.BgtDataRule"
-                 type="provider"/>
 
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 

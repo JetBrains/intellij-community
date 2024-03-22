@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ide
+package com.intellij.platform.navbar.compatibility.backend
 
-import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.navbar.NavBarItemPresentation

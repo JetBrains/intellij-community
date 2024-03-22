@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.actions
+package com.intellij.platform.navbar.compatibility.backend
 
 import com.intellij.ide.impl.dataRules.GetDataRule
-import com.intellij.ide.navbar.ide.IdeNavBarVmItem
-import com.intellij.ide.navbar.impl.DefaultNavBarItem
-import com.intellij.ide.navbar.impl.ModuleNavBarItem
-import com.intellij.ide.navbar.impl.PsiNavBarItem
-import com.intellij.ide.navigationToolbar.NavBarModelExtension
+import com.intellij.ide.navbar.actions.extensionData
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.model.Pointer
@@ -24,25 +20,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.VisibleForTesting
-
-/**
- * Fast extension data without selection (allows to override cut/copy/paste providers)
- *
- * TODO consider a new extension for that OR new API for cut/copy/paste
- */
-internal fun extensionData(dataId: String): Any? {
-  return extensionData(dataId, emptyDataProvider)
-}
-
-private val emptyDataProvider = DataProvider { null }
-
-private fun extensionData(dataId: String, provider: DataProvider): Any? {
-  for (modelExtension in NavBarModelExtension.EP_NAME.extensionList) {
-    val data = modelExtension.getData(dataId, provider)
-    if (data != null) return data
-  }
-  return provider.getData(dataId)
-}
 
 internal class BgtDataRule : GetDataRule {
 

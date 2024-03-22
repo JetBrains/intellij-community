@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.actions
+package com.intellij.platform.navbar.compatibility.backend
 
 import com.intellij.ide.IdeView
-import com.intellij.ide.navbar.impl.psiDirectories
 import com.intellij.ide.util.DirectoryChooserUtil
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable

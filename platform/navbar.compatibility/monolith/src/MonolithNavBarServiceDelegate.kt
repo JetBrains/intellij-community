@@ -2,10 +2,6 @@
 package com.intellij.platform.navbar.compatibility.monolith
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
-import com.intellij.ide.navbar.ide.IdeNavBarVmItem
-import com.intellij.ide.navbar.ide.fireOnFileChanges
-import com.intellij.ide.navbar.ide.toVmItems
-import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -13,6 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.compatibility.backend.IdeNavBarVmItem
+import com.intellij.platform.navbar.compatibility.backend.ProjectNavBarItem
+import com.intellij.platform.navbar.compatibility.backend.fireOnFileChanges
+import com.intellij.platform.navbar.compatibility.backend.toVmItems
 import com.intellij.platform.navbar.ide.NavBarServiceDelegate
 import com.intellij.platform.navbar.ide.fireOnIdeActivity
 import kotlinx.coroutines.Dispatchers
