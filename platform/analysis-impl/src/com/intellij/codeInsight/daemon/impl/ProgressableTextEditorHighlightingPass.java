@@ -92,8 +92,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   public final void doApplyInformationToEditor() {
     myFinished = true;
     applyInformationWithProgress();
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   protected abstract void applyInformationWithProgress();
@@ -156,8 +154,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
     @Override
     public void doApplyInformationToEditor() {
-      FileStatusMap statusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
-      statusMap.markFileUpToDate(getDocument(), getId());
     }
   }
 }
