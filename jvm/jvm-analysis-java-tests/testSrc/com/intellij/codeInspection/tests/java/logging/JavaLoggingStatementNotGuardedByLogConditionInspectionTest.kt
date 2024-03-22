@@ -44,18 +44,6 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
     """.trimIndent())
   }
 
-  fun `test custom logger`() {
-    myFixture.testHighlighting(JvmLanguage.JAVA, """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.fine("test" + arg)</warning>;
-        }
-      }
-    """.trimIndent())
-  }
-
   fun `test skip according level for slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -199,19 +187,6 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
     """.trimIndent())
   }
 
-  fun `test skip with several log calls for custom logger`() {
-    myFixture.testHighlighting(JvmLanguage.JAVA, """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.fine("test" + arg)</warning>;
-          LOG.fine("test" + arg);
-        }
-      }
-    """.trimIndent())
-  }
-
   fun `test lambda`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -288,66 +263,6 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
     )
   }
 
-  fun `test fix simple custom`() {
-    myFixture.testQuickFix(
-      testPreview = true,
-      lang = JvmLanguage.JAVA,
-      before = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          LOG.<caret>fine("test" + arg);
-        }
-      }
-      """.trimIndent(),
-      after = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-            if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine("test" + arg);
-            }
-        }
-      }
-      """.trimIndent(),
-      hint = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.fix.family.name")
-    )
-  }
-
-  fun `test fix simple nested custom`() {
-    myFixture.testQuickFix(
-      testPreview = true,
-      lang = JvmLanguage.JAVA,
-      before = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          if(true){
-            LOG.<caret>fine("test" + arg);          
-          }
-        }
-      }
-      """.trimIndent(),
-      after = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          if(true){
-              if (LOG.isLoggable(Level.FINE)) {
-                  LOG.fine("test" + arg);
-              }
-          }
-        }
-      }
-      """.trimIndent(),
-      hint = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.fix.family.name")
-    )
-  }
-
   fun `test fix several similar slf4j`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -374,38 +289,6 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
                 LOG.debug("test1" + arg);
                 LOG.debug("test2" + arg);
                 LOG.debug("test3" + arg);
-            }
-        }
-      }
-      """.trimIndent(),
-      hint = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.fix.family.name")
-    )
-  }
-
-  fun `test fix several similar custom`() {
-    myFixture.testQuickFix(
-      testPreview = true,
-      lang = JvmLanguage.JAVA,
-      before = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          LOG<caret>.fine("test1" + arg);
-          LOG.fine("test2" + arg);
-          LOG.fine("test3" + arg);
-        }
-      }
-      """.trimIndent(),
-      after = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-            if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine("test1" + arg);
-                LOG.fine("test2" + arg);
-                LOG.fine("test3" + arg);
             }
         }
       }
@@ -441,38 +324,6 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
                 LOG.debug("test2" + arg);
             }
             LOG.trace("test3" + arg);
-        }
-      }
-      """.trimIndent(),
-      hint = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.fix.family.name")
-    )
-  }
-
-  fun `test fix several different custom`() {
-    myFixture.testQuickFix(
-      testPreview = true,
-      lang = JvmLanguage.JAVA,
-      before = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-          LOG<caret>.fine("test1" + arg);
-          LOG.fine("test2" + arg);
-          LOG.finer("test3" + arg);
-        }
-      }
-      """.trimIndent(),
-      after = """
-      import java.util.logging.*;
-      class X {
-        static final Logger LOG = Logger.getLogger("");
-        void n(String arg) {
-            if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine("test1" + arg);
-                LOG.fine("test2" + arg);
-            }
-            LOG.finer("test3" + arg);
         }
       }
       """.trimIndent(),

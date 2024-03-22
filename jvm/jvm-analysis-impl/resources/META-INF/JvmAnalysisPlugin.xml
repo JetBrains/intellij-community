@@ -9,11 +9,6 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.sourceToSink.SourceToSinkProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.codeInspection.customLoggingStatementNotGuardedByLogFix"
-                    dynamic="true"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInspection.logging.LoggingStatementNotGuardedByLogCustomFix"/>
-    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
@@ -206,9 +201,6 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInspection">
     <sourceToSinkProvider language="JAVA" implementationClass="com.intellij.codeInspection.sourceToSink.JavaSourceToSinkProvider"/>
-  </extensions>
-  <extensions defaultExtensionNs="com.intellij.codeInspection">
-    <customLoggingStatementNotGuardedByLogFix language="JAVA" implementationClass="com.intellij.codeInspection.logging.JavaLoggingStatementNotGuardedByLogCustomFix"/>
   </extensions>
   <actions>
     <group id="UastInternal" text="UAST" internal="true" popup="true">

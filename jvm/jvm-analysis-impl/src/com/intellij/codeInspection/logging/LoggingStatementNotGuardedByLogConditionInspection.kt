@@ -2,8 +2,6 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInsight.options.JavaClassValidator
-import com.intellij.codeInsight.options.JavaIdentifierValidator
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -20,29 +18,12 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.siyeh.ig.psiutils.JavaLoggingUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocalInspectionTool() {
-
-  //for backward compatibility
-  @JvmField
-  var customLogMethodNameList: MutableList<String?> = mutableListOf("fine", "finer", "finest")
-
-  //for backward compatibility
-  @JvmField
-  var customLogConditionMethodNameList: MutableList<String?> = mutableListOf(
-    "isLoggable(java.util.logging.Level.FINE)",
-    "isLoggable(java.util.logging.Level.FINER)",
-    "isLoggable(java.util.logging.Level.FINEST)",
-  )
-
-  //for backward compatibility
-  @JvmField
-  var customLoggerClassName: String = JavaLoggingUtils.JAVA_LOGGING
 
   @JvmField
   var myLimitLevelType: LimitLevelType = LimitLevelType.DEBUG_AND_LOWER
@@ -68,15 +49,7 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
       ),
       OptPane.checkbox("flagUnguardedConstant", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.unguarded.constant.option"))
         .description(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.unguarded.constant.option.comment")),
-
-      OptPane.string("customLoggerClassName", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.logger.name.option"),
-                     JavaClassValidator())
-        .description(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.logger.name.option.comment")),
-      OptPane.table("",
-                    OptPane.column("customLogMethodNameList", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.method.name"), JavaIdentifierValidator()),
-                    OptPane.column("customLogConditionMethodNameList", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.condition.text")))
-        .description(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.custom.table")),
-    )
+      )
   }
 
 
@@ -94,32 +67,16 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
   ) : AbstractUastNonRecursiveVisitor() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       val sourcePsi = node.sourcePsi ?: return true
-      val isCustom = if (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(node)) {
-        false
-      }
-      else if (node.isMethodNameOneOf(customLogMethodNameList.filterNotNull())) {
-        val uMethod = node.resolveToUElementOfType<UMethod>() ?: return true
-        if (uMethod.getContainingUClass()?.qualifiedName != customLoggerClassName) {
-          return true
-        }
-        true
-      }
-      else {
-        return true
-      }
-
-      val fix = LoggingStatementNotGuardedByLogCustomFix.fixProvider.forLanguage(sourcePsi.getLanguage())
-
-      if (isCustom && (fix == null || !fix.isAvailable(sourcePsi))) {
+      if (!LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(node)) {
         return true
       }
 
       val isInformationLevel = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), sourcePsi)
-      if (!isInformationLevel && !isCustom && LoggingUtil.skipAccordingLevel(node, myLimitLevelType)) {
+      if (!isInformationLevel && LoggingUtil.skipAccordingLevel(node, myLimitLevelType)) {
         return true
       }
 
-      if (isSurroundedByLogGuard(node, isCustom)) {
+      if (isSurroundedByLogGuard(node)) {
         return true
       }
 
@@ -135,7 +92,7 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
       val beforeCall = before.getUCallExpression(2)
       val beforeLoggerLevel = LoggingUtil.getLoggerLevel(beforeCall)
       if (beforeCall != null &&
-          (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(beforeCall) || beforeCall.isMethodNameOneOf(customLogMethodNameList.filterNotNull()))
+          LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(beforeCall)
       ) {
         val receiverText = node.receiver?.sourcePsi?.text
         val loggerLevel = LoggingUtil.getLoggerLevel(node)
@@ -156,22 +113,13 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
         return true
       }
 
-      val textCustomCondition = if (isCustom) {
-        val indexOfMethod = customLogMethodNameList.indexOf(node.methodName)
-        if (indexOfMethod == -1) return false
-        customLogConditionMethodNameList[indexOfMethod]
-      }
-      else {
-        null
-      }
-
       val message = JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.problem.descriptor")
 
       if (nodeParent is UQualifiedReferenceExpression) {
-        holder.registerUProblem(nodeParent as UExpression, message, CreateGuardFix(textCustomCondition))
+        holder.registerUProblem(nodeParent as UExpression, message, CreateGuardFix())
       }
       else {
-        holder.registerUProblem(node, message, CreateGuardFix(textCustomCondition))
+        holder.registerUProblem(node, message, CreateGuardFix())
       }
       return true
     }
@@ -215,22 +163,15 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
       return false
     }
 
-    private fun isSurroundedByLogGuard(callExpression: UCallExpression, isCustom: Boolean): Boolean {
+    private fun isSurroundedByLogGuard(callExpression: UCallExpression): Boolean {
       val guardedCondition = LoggingUtil.getGuardedCondition(callExpression) ?: return false
-      if (isCustom) {
-        val indexOfMethod = customLogMethodNameList.indexOf(callExpression.methodName)
-        if (indexOfMethod == -1) return false
-        val text = customLogConditionMethodNameList[indexOfMethod]
-        val expectedText = callExpression.receiver.toString() + "." + text
-        return guardedCondition.sourcePsi?.textMatches(expectedText) ?: return true
-      }
       val loggerLevel = LoggingUtil.getLoggerLevel(callExpression) ?: return true
       val levelFromCondition = LoggingUtil.getLevelFromCondition(guardedCondition) ?: return true
       return LoggingUtil.isGuardedIn(levelFromCondition, loggerLevel)
     }
   }
 
-  private inner class CreateGuardFix(private val textCustomCondition: String?) : PsiUpdateModCommandQuickFix() {
+  private inner class CreateGuardFix : PsiUpdateModCommandQuickFix() {
 
     override fun getFamilyName(): String {
       return JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.fix.family.name")
@@ -238,12 +179,6 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
       val uCallExpression: UCallExpression = element.toUElement().getUCallExpression(2) ?: return
-
-      if (textCustomCondition != null) {
-        val fix = LoggingStatementNotGuardedByLogCustomFix.fixProvider.forLanguage(element.getLanguage()) ?: return
-        fix.fix(uCallExpression, textCustomCondition)
-        return
-      }
 
       val qualifiedExpression = if (uCallExpression.uastParent is UQualifiedReferenceExpression) uCallExpression.uastParent else uCallExpression
       if (qualifiedExpression !is UExpression) return
@@ -266,7 +201,7 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
         val afterCall = after.getUCallExpression(2) ?: break
         val afterLevel = LoggingUtil.getLoggerLevel(afterCall)
         if (after != null &&
-            (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(afterCall) || afterCall.isMethodNameOneOf(customLogMethodNameList.filterNotNull())) &&
+            (LoggingUtil.LOG_MATCHERS_WITHOUT_BUILDERS.uCallMatches(afterCall)) &&
             receiverText == after.receiver.sourcePsi?.text &&
             uCallExpression.methodName == afterCall.methodName &&
             afterLevel == loggerLevel) {
