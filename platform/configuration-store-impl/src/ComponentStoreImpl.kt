@@ -85,6 +85,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
+  protected open val allowSavingWithoutModifications: Boolean
+    get() = false
+
   abstract override val storageManager: StateStorageManager
 
   private val featureUsageSettingManager by lazy {
@@ -290,7 +293,7 @@ abstract class ComponentStoreImpl : IComponentStore {
               SAVE_MOD_LOG.debug(
                 "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
             }
-            if (isUseModificationCount && !isForce) {
+            if (isUseModificationCount && !(isForce && allowSavingWithoutModifications)) {
               continue
             }
           }
