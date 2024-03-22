@@ -22,7 +22,7 @@ interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
     get() = LinkedListEntityId(myName)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<LinkedListEntity> {
     override var entitySource: EntitySource
     var myName: String

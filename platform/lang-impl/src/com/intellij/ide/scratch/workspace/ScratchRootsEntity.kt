@@ -13,7 +13,7 @@ interface ScratchRootsEntity : WorkspaceEntity {
   val roots: List<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ScratchRootsEntity> {
     override var entitySource: EntitySource
     var roots: MutableList<VirtualFileUrl>

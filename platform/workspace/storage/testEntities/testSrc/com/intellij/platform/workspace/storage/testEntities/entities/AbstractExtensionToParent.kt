@@ -10,7 +10,7 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
   val child: @Child AbstractChildWithLinkToParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ParentWithLinkToAbstractChild> {
     override var entitySource: EntitySource
     var data: String
@@ -50,7 +50,7 @@ interface AbstractChildWithLinkToParentEntity : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : AbstractChildWithLinkToParentEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     var data: String
@@ -82,7 +82,7 @@ var AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParen
 
 interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity>, AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity> {
     override var entitySource: EntitySource
     override var data: String

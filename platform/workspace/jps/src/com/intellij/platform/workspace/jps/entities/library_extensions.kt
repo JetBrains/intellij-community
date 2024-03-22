@@ -19,7 +19,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<LibraryPropertiesEntity> {
     override var entitySource: EntitySource
     var library: LibraryEntity.Builder

@@ -28,7 +28,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     get() = ModuleId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleEntity> {
     override var entitySource: EntitySource
     var name: String

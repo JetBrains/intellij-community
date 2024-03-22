@@ -54,7 +54,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         get() = KotlinSettingsId(name, moduleId)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<KotlinSettingsEntity>, ModuleSettingsBase.Builder<KotlinSettingsEntity> {
     override var entitySource: EntitySource
     override var name: String

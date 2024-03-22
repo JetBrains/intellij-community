@@ -28,7 +28,7 @@ interface ContentRootEntity : WorkspaceEntity {
     val excludedUrls: List<@Child ExcludeUrlEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ContentRootEntity> {
     override var entitySource: EntitySource
     var module: ModuleEntity.Builder
@@ -90,7 +90,7 @@ interface SourceRootEntity : WorkspaceEntity {
     val rootTypeId: SourceRootTypeId
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceRootEntity> {
     override var entitySource: EntitySource
     var contentRoot: ContentRootEntity.Builder

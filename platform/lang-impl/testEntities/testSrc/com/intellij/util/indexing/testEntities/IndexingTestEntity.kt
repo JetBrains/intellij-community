@@ -14,7 +14,7 @@ interface IndexingTestEntity : WorkspaceEntity {
   val excludedRoots: List<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<IndexingTestEntity> {
     override var entitySource: EntitySource
     var roots: MutableList<VirtualFileUrl>

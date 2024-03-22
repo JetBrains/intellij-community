@@ -15,7 +15,7 @@ interface ComputablePropEntity: WorkspaceEntity {
   val computableText: String // Change is here, property is not computable
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ComputablePropEntity> {
     override var entitySource: EntitySource
     var list: MutableList<Map<List<Int?>, String>>

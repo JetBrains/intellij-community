@@ -17,7 +17,7 @@ interface KeyPropEntity: WorkspaceEntity {
   val url: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<KeyPropEntity> {
     override var entitySource: EntitySource
     var someInt: Int

@@ -23,7 +23,7 @@ interface ChangedComputablePropsOrderEntity: WorkspaceEntityWithSymbolicId {
     get() = "id = $someKey"
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChangedComputablePropsOrderEntity> {
     override var entitySource: EntitySource
     var someKey: Int

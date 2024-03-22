@@ -31,7 +31,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
         get() = LibraryId(name, tableId)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<LibraryEntity> {
     override var entitySource: EntitySource
     var name: String

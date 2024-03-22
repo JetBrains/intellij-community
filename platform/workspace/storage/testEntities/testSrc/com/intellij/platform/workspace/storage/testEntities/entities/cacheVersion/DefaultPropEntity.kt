@@ -18,7 +18,7 @@ interface DefaultPropEntity: WorkspaceEntity {
     @Default get() = 9
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<DefaultPropEntity> {
     override var entitySource: EntitySource
     var someString: String

@@ -11,7 +11,7 @@ interface MainEntityToParent : WorkspaceEntity {
   val childNullableParent: @Child AttachedEntityToNullableParent?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<MainEntityToParent> {
     override var entitySource: EntitySource
     var x: String
@@ -52,7 +52,7 @@ interface AttachedEntityToParent : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AttachedEntityToParent> {
     override var entitySource: EntitySource
     var data: String
@@ -98,7 +98,7 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AttachedEntityToNullableParent> {
     override var entitySource: EntitySource
     var data: String

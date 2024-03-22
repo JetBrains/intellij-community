@@ -35,7 +35,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     get() = ArtifactId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ArtifactEntity> {
     override var entitySource: EntitySource
     var name: String
@@ -87,7 +87,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
     override var entitySource: EntitySource
     var artifact: ArtifactEntity.Builder
@@ -128,7 +128,7 @@ fun MutableEntityStorage.modifyEntity(
   val parentEntity: CompositePackagingElementEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : PackagingElementEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -158,7 +158,7 @@ fun MutableEntityStorage.modifyEntity(
   val children: List<@Child PackagingElementEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : CompositePackagingElementEntity> : WorkspaceEntity.Builder<T>, PackagingElementEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -188,7 +188,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
   val directoryName: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<DirectoryPackagingElementEntity>, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -230,7 +230,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
   val fileName: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ArchivePackagingElementEntity>, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -270,7 +270,7 @@ fun MutableEntityStorage.modifyEntity(
 
 interface ArtifactRootElementEntity: CompositePackagingElementEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ArtifactRootElementEntity>, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -309,7 +309,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
   val artifact: ArtifactId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity>, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -353,7 +353,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -391,7 +391,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
   val library: LibraryId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity>, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -429,7 +429,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity>, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -467,7 +467,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -505,7 +505,7 @@ fun MutableEntityStorage.modifyEntity(
   val filePath: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : FileOrDirectoryPackagingElementEntity> : WorkspaceEntity.Builder<T>, PackagingElementEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -535,7 +535,7 @@ fun MutableEntityStorage.modifyEntity(
 
 interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -575,7 +575,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
   val pathInArchive: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -618,7 +618,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
   val renamedOutputFileName: @NlsSafe String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<FileCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -660,7 +660,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
   val propertiesXmlTag: @NonNls String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<CustomPackagingElementEntity>, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
@@ -709,7 +709,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   val orderOfArtifacts: List<@NlsSafe String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ArtifactsOrderEntity> {
     override var entitySource: EntitySource
     var orderOfArtifacts: MutableList<String>

@@ -14,7 +14,7 @@ interface WithSealedEntity : WorkspaceEntity {
   val interfaces: List<MySealedInterface>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<WithSealedEntity> {
     override var entitySource: EntitySource
     var classes: MutableList<MySealedClass>

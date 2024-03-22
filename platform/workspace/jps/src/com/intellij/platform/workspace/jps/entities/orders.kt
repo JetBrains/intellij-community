@@ -21,7 +21,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
   val moduleEntity: ModuleEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<FacetsOrderEntity> {
     override var entitySource: EntitySource
     var orderOfFacets: MutableList<String>

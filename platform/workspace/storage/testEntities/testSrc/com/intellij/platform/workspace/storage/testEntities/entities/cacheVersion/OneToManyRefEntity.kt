@@ -14,7 +14,7 @@ interface OneToManyRefEntity: WorkspaceEntity {
   val anotherEntity: List<@Child com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToManyRefEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OneToManyRefEntity> {
     override var entitySource: EntitySource
     var someData: OneToManyRefDataClass
@@ -55,7 +55,7 @@ interface AnotherOneToManyRefEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefDataClass
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AnotherOneToManyRefEntity> {
     override var entitySource: EntitySource
     var parentEntity: OneToManyRefEntity.Builder

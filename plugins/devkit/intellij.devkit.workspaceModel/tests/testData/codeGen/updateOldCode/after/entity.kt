@@ -13,12 +13,12 @@ interface SimpleEntity : WorkspaceEntity {
   val isSimple: Boolean
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var name: String
-    override var isSimple: Boolean
+    var version: Int
+    var name: String
+    var isSimple: Boolean
   }
 
   companion object : EntityType<SimpleEntity, Builder>() {
@@ -31,7 +31,7 @@ interface SimpleEntity : WorkspaceEntity {
       isSimple: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SimpleEntity {
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.name = name

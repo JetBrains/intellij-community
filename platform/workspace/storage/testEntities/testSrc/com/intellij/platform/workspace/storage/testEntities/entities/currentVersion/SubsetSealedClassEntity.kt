@@ -13,7 +13,7 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClass
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SubsetSealedClassEntity> {
     override var entitySource: EntitySource
     var someData: SubsetSealedClass

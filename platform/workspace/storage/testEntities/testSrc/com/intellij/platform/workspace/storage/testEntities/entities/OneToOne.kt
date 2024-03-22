@@ -20,7 +20,7 @@ interface OoParentEntity : WorkspaceEntity {
   val anotherChild: @Child OoChildWithNullableParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoParentEntity> {
     override var entitySource: EntitySource
     var parentProperty: String
@@ -66,7 +66,7 @@ interface OoChildEntity : WorkspaceEntity {
   val parentEntity: OoParentEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoChildEntity> {
     override var entitySource: EntitySource
     var childProperty: String
@@ -108,7 +108,7 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
   val parentEntity: OoParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoChildWithNullableParentEntity> {
     override var entitySource: EntitySource
     var parentEntity: OoParentEntity.Builder?
@@ -158,7 +158,7 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
   val childThree: @Child OoChildAlsoWithPidEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoParentWithPidEntity> {
     override var entitySource: EntitySource
     var parentProperty: String
@@ -203,7 +203,7 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
   val parentEntity: OoParentWithPidEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoChildForParentWithPidEntity> {
     override var entitySource: EntitySource
     var childProperty: String
@@ -248,7 +248,7 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: OoChildEntityId get() = OoChildEntityId(childProperty)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoChildAlsoWithPidEntity> {
     override var entitySource: EntitySource
     var childProperty: String
@@ -292,7 +292,7 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
   val childOne: @Child OoChildWithPidEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoParentWithoutPidEntity> {
     override var entitySource: EntitySource
     var parentProperty: String
@@ -343,7 +343,7 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: OoChildEntityId get() = OoChildEntityId(childProperty)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OoChildWithPidEntity> {
     override var entitySource: EntitySource
     var childProperty: String

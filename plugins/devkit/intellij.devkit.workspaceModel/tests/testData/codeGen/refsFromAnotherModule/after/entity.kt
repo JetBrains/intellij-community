@@ -14,12 +14,12 @@ interface ReferredEntity : WorkspaceEntity {
   val contentRoot: @Child ContentRootEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ReferredEntity, WorkspaceEntity.Builder<ReferredEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ReferredEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var name: String
-    override var contentRoot: ContentRootEntity?
+    var version: Int
+    var name: String
+    var contentRoot: ContentRootEntity.Builder?
   }
 
   companion object : EntityType<ReferredEntity, Builder>() {
@@ -31,7 +31,7 @@ interface ReferredEntity : WorkspaceEntity {
       name: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ReferredEntity {
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -51,8 +51,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ReferredEntity.Builder::class.java, entity, modification)
 }
 
-var ContentRootEntity.Builder.ref: ReferredEntity
-  by WorkspaceEntity.extension()
+var ContentRootEntity.Builder.ref: ReferredEntity.Builder
+  by WorkspaceEntity.extensionBuilder(ReferredEntity::class.java)
 //endregion
 
 val ContentRootEntity.ref: ReferredEntity

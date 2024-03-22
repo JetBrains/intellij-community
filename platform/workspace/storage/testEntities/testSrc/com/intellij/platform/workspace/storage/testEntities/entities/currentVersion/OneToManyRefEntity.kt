@@ -14,7 +14,7 @@ interface OneToManyRefEntity: WorkspaceEntity {
   @Child val anotherEntity: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.AnotherOneToManyRefEntity? //Change is here, ONE_TO_MANY connection -> ONE_TO_ONE connection
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OneToManyRefEntity> {
     override var entitySource: EntitySource
     var someData: OneToManyRefDataClass
@@ -55,7 +55,7 @@ interface AnotherOneToManyRefEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefDataClass
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AnotherOneToManyRefEntity> {
     override var entitySource: EntitySource
     var parentEntity: OneToManyRefEntity.Builder

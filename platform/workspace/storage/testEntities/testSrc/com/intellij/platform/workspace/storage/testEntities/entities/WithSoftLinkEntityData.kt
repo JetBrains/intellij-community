@@ -44,7 +44,7 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
     get() = NameId(myName)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<NamedEntity> {
     override var entitySource: EntitySource
     var myName: String
@@ -94,7 +94,7 @@ interface NamedChildEntity : WorkspaceEntity {
   val parentEntity: NamedEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<NamedChildEntity> {
     override var entitySource: EntitySource
     var childProperty: String
@@ -137,7 +137,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
   val link: NameId
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<WithSoftLinkEntity> {
     override var entitySource: EntitySource
     var link: NameId
@@ -176,7 +176,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
   val link: ComposedId
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ComposedLinkEntity> {
     override var entitySource: EntitySource
     var link: ComposedId
@@ -220,7 +220,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: AnotherNameId get() = AnotherNameId(myName)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<WithListSoftLinksEntity> {
     override var entitySource: EntitySource
     var myName: String
@@ -268,7 +268,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: ComposedId get() = ComposedId(myName, link)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ComposedIdSoftRefEntity> {
     override var entitySource: EntitySource
     var myName: String

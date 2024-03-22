@@ -10,7 +10,7 @@ interface MainEntityParentList : WorkspaceEntity {
   val children: List<@Child AttachedEntityParentList>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<MainEntityParentList> {
     override var entitySource: EntitySource
     var x: String
@@ -50,7 +50,7 @@ interface AttachedEntityParentList : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AttachedEntityParentList> {
     override var entitySource: EntitySource
     var data: String

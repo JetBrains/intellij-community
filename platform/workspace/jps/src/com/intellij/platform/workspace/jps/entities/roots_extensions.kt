@@ -25,7 +25,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   val orderOfSourceRoots: List<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceRootOrderEntity> {
     override var entitySource: EntitySource
     var contentRootEntity: ContentRootEntity.Builder
@@ -76,7 +76,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
   val propertiesXmlTag: @NonNls String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     var sourceRoot: SourceRootEntity.Builder
@@ -127,7 +127,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ExcludeUrlOrderEntity> {
     override var entitySource: EntitySource
     var order: MutableList<VirtualFileUrl>

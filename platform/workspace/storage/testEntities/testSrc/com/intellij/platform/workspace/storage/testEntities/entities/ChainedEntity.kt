@@ -14,7 +14,7 @@ interface ChainedParentEntity : WorkspaceEntity {
   val child: List<@Child ChainedEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChainedParentEntity> {
     override var entitySource: EntitySource
     var child: List<ChainedEntity.Builder>
@@ -53,7 +53,7 @@ interface ChainedEntity : WorkspaceEntity {
   val generalParent: ChainedParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChainedEntity> {
     override var entitySource: EntitySource
     var data: String

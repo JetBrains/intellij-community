@@ -13,7 +13,7 @@ interface EnumPropsEntity: WorkspaceEntity {
   val someEnum: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.EnumPropsEnum
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<EnumPropsEntity> {
     override var entitySource: EntitySource
     var someEnum: EnumPropsEnum

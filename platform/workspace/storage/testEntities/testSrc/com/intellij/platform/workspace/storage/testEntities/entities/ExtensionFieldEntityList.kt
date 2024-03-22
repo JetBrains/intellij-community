@@ -9,7 +9,7 @@ interface MainEntityList : WorkspaceEntity {
   val x: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<MainEntityList> {
     override var entitySource: EntitySource
     var x: String
@@ -51,7 +51,7 @@ interface AttachedEntityList : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AttachedEntityList> {
     override var entitySource: EntitySource
     var ref: MainEntityList.Builder?

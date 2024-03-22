@@ -11,10 +11,10 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
   val date: Date
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : UnknownPropertyTypeEntity, WorkspaceEntity.Builder<UnknownPropertyTypeEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<UnknownPropertyTypeEntity> {
     override var entitySource: EntitySource
-    override var date: Date
+    var date: Date
   }
 
   companion object : EntityType<UnknownPropertyTypeEntity, Builder>() {
@@ -25,7 +25,7 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
       date: Date,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): UnknownPropertyTypeEntity {
+    ): Builder {
       val builder = builder()
       builder.date = date
       builder.entitySource = entitySource

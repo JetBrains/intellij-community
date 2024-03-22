@@ -19,8 +19,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import java.util.*
 import java.util.Date
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(3)
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
 open class UnknownFieldEntityImpl(private val dataSource: UnknownFieldEntityData) : UnknownFieldEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

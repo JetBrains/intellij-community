@@ -19,7 +19,7 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
     get() = ModuleTestEntitySymbolicId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleTestEntity> {
     override var entitySource: EntitySource
     var name: String
@@ -61,7 +61,7 @@ interface ContentRootTestEntity : WorkspaceEntity {
   val sourceRoots: List<@Child SourceRootTestEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ContentRootTestEntity> {
     override var entitySource: EntitySource
     var module: ModuleTestEntity.Builder
@@ -103,7 +103,7 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -143,7 +143,7 @@ interface SourceRootTestEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceRootTestEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -197,7 +197,7 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
     get() = FacetTestEntitySymbolicId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<FacetTestEntity> {
     override var entitySource: EntitySource
     var data: String

@@ -17,7 +17,7 @@ interface TreeEntity : WorkspaceEntity {
   val parentEntity: TreeEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<TreeEntity> {
     override var entitySource: EntitySource
     var data: String

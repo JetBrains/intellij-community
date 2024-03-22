@@ -13,7 +13,7 @@ interface SimpleObjectsEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleObjectsSealedClass
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SimpleObjectsEntity> {
     override var entitySource: EntitySource
     var someData: SimpleObjectsSealedClass

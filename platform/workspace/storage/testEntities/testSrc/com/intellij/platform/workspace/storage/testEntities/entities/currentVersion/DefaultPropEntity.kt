@@ -16,7 +16,7 @@ interface DefaultPropEntity: WorkspaceEntity {
   val constInt: Int // Change is here, property is not default
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<DefaultPropEntity> {
     override var entitySource: EntitySource
     var someString: String

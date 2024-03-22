@@ -17,8 +17,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(3)
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
 open class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase(dataSource) {
 
   private companion object {
@@ -249,7 +249,7 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return EntityWithUrls(simpleUrl, listOfUrls, dataClassWithUrl, entitySource) {
       this.nullableUrl = this@EntityWithUrlsData.nullableUrl
     }

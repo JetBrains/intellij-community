@@ -15,7 +15,7 @@ interface OneToOneRefEntity: WorkspaceEntity {
   @Child val anotherEntity: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OneToOneRefEntity> {
     override var entitySource: EntitySource
     var version: Int
@@ -59,7 +59,7 @@ interface AnotherOneToOneRefEntity: WorkspaceEntity {
   val parentEntity: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<AnotherOneToOneRefEntity> {
     override var entitySource: EntitySource
     var someString: String

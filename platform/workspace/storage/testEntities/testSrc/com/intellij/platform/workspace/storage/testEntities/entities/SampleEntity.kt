@@ -28,7 +28,7 @@ interface SampleEntity : WorkspaceEntity {
   val randomUUID: UUID?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SampleEntity> {
     override var entitySource: EntitySource
     var booleanProperty: Boolean
@@ -83,7 +83,7 @@ interface ChildSampleEntity : WorkspaceEntity {
   val parentEntity: SampleEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildSampleEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -139,7 +139,7 @@ interface SecondSampleEntity : WorkspaceEntity {
   val intProperty: Int
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SecondSampleEntity> {
     override var entitySource: EntitySource
     var intProperty: Int
@@ -179,7 +179,7 @@ interface SourceEntity : WorkspaceEntity {
   val children: List<@Child ChildSourceEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -220,7 +220,7 @@ interface ChildSourceEntity : WorkspaceEntity {
   val parentEntity: SourceEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildSourceEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -264,7 +264,7 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SymbolicIdEntity> {
     override var entitySource: EntitySource
     var data: String

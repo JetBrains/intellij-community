@@ -15,7 +15,7 @@ interface ChangedValueTypeEntity: WorkspaceEntity {
   val text: List<String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChangedValueTypeEntity> {
     override var entitySource: EntitySource
     var type: String

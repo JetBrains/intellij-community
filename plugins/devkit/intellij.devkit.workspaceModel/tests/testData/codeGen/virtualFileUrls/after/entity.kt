@@ -15,13 +15,13 @@ interface EntityWithUrls : WorkspaceEntity {
   val dataClassWithUrl: DataClassWithUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : EntityWithUrls, WorkspaceEntity.Builder<EntityWithUrls> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<EntityWithUrls> {
     override var entitySource: EntitySource
-    override var simpleUrl: VirtualFileUrl
-    override var nullableUrl: VirtualFileUrl?
-    override var listOfUrls: MutableList<VirtualFileUrl>
-    override var dataClassWithUrl: DataClassWithUrl
+    var simpleUrl: VirtualFileUrl
+    var nullableUrl: VirtualFileUrl?
+    var listOfUrls: MutableList<VirtualFileUrl>
+    var dataClassWithUrl: DataClassWithUrl
   }
 
   companion object : EntityType<EntityWithUrls, Builder>() {
@@ -34,7 +34,7 @@ interface EntityWithUrls : WorkspaceEntity {
       dataClassWithUrl: DataClassWithUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): EntityWithUrls {
+    ): Builder {
       val builder = builder()
       builder.simpleUrl = simpleUrl
       builder.listOfUrls = listOfUrls.toMutableWorkspaceList()

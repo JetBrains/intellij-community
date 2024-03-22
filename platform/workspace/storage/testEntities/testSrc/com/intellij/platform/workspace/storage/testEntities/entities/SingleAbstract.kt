@@ -15,7 +15,7 @@ interface ParentSingleAbEntity : WorkspaceEntity {
   val child: @Child ChildSingleAbstractBaseEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ParentSingleAbEntity> {
     override var entitySource: EntitySource
     var child: ChildSingleAbstractBaseEntity.Builder<out ChildSingleAbstractBaseEntity>?
@@ -55,7 +55,7 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
   val parentEntity: ParentSingleAbEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : ChildSingleAbstractBaseEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     var commonData: String
@@ -86,7 +86,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
   val firstData: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildSingleFirstEntity>, ChildSingleAbstractBaseEntity.Builder<ChildSingleFirstEntity> {
     override var entitySource: EntitySource
     override var commonData: String
@@ -129,7 +129,7 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
   val secondData: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildSingleSecondEntity>, ChildSingleAbstractBaseEntity.Builder<ChildSingleSecondEntity> {
     override var entitySource: EntitySource
     override var commonData: String

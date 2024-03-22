@@ -25,7 +25,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     get() = SampleSymbolicId(stringProperty)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SampleWithSymbolicIdEntity> {
     override var entitySource: EntitySource
     var booleanProperty: Boolean
@@ -84,7 +84,7 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
   val parentEntity: SampleWithSymbolicIdEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildWpidSampleEntity> {
     override var entitySource: EntitySource
     var data: String

@@ -17,7 +17,7 @@ interface ChangedPropsOrderEntity: WorkspaceEntity {
   val list: List<Set<Int>>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChangedPropsOrderEntity> {
     override var entitySource: EntitySource
     var version: Int

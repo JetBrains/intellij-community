@@ -26,7 +26,7 @@ interface FacetEntity: ModuleSettingsBase {
     get() = FacetId(name, typeId, moduleId)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsBase.Builder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String

@@ -16,13 +16,13 @@ interface DefaultFieldEntity : WorkspaceEntity {
     @Default get() = "Default description"
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<DefaultFieldEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var data: TestData
-    override var anotherVersion: Int
-    override var description: String
+    var version: Int
+    var data: TestData
+    var anotherVersion: Int
+    var description: String
   }
 
   companion object : EntityType<DefaultFieldEntity, Builder>() {
@@ -34,7 +34,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
       data: TestData,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): DefaultFieldEntity {
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.data = data

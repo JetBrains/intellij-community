@@ -14,7 +14,7 @@ interface BooleanEntity : WorkspaceEntity {
   val data: Boolean
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<BooleanEntity> {
     override var entitySource: EntitySource
     var data: Boolean
@@ -53,7 +53,7 @@ interface IntEntity : WorkspaceEntity {
   val data: Int
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<IntEntity> {
     override var entitySource: EntitySource
     var data: Int
@@ -92,7 +92,7 @@ interface StringEntity : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<StringEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -131,7 +131,7 @@ interface ListEntity : WorkspaceEntity {
   val data: List<String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ListEntity> {
     override var entitySource: EntitySource
     var data: MutableList<String>
@@ -171,7 +171,7 @@ interface OptionalIntEntity : WorkspaceEntity {
   val data: Int?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OptionalIntEntity> {
     override var entitySource: EntitySource
     var data: Int?
@@ -209,7 +209,7 @@ interface OptionalStringEntity : WorkspaceEntity {
   val data: String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<OptionalStringEntity> {
     override var entitySource: EntitySource
     var data: String?

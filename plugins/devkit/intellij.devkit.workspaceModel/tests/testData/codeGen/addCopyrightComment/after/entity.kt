@@ -11,10 +11,10 @@ interface SimpleEntity : WorkspaceEntity {
   val name: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleEntity> {
     override var entitySource: EntitySource
-    override var name: String
+    var name: String
   }
 
   companion object : EntityType<SimpleEntity, Builder>() {
@@ -25,7 +25,7 @@ interface SimpleEntity : WorkspaceEntity {
       name: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SimpleEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource

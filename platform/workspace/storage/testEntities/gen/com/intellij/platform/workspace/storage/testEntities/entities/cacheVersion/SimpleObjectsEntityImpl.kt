@@ -18,8 +18,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(3)
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
 open class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEntityData) : SimpleObjectsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

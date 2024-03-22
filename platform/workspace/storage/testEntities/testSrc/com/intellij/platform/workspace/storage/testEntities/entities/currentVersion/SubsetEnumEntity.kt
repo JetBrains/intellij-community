@@ -13,7 +13,7 @@ interface SubsetEnumEntity: WorkspaceEntity {
   val someEnum: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SubsetEnumEntity> {
     override var entitySource: EntitySource
     var someEnum: SubsetEnumEnum

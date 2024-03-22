@@ -24,7 +24,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
     get() = SdkId(name, type)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SdkEntity> {
     override var entitySource: EntitySource
     var name: String

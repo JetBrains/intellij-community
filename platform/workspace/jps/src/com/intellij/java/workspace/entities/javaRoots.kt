@@ -13,7 +13,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   val packagePrefix: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     var sourceRoot: SourceRootEntity.Builder
@@ -65,7 +65,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
   val relativeOutputPath: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     var sourceRoot: SourceRootEntity.Builder

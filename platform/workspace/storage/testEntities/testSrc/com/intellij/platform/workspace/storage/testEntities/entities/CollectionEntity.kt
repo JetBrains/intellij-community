@@ -16,7 +16,7 @@ interface CollectionFieldEntity : WorkspaceEntity {
   val names: List<String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<CollectionFieldEntity> {
     override var entitySource: EntitySource
     var versions: MutableSet<Int>

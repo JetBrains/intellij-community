@@ -17,7 +17,7 @@ interface ChildWithExtensionParent : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildWithExtensionParent> {
     override var entitySource: EntitySource
     var data: String
@@ -60,7 +60,7 @@ interface AbstractParentEntity : WorkspaceEntity {
   val child: @Child ChildWithExtensionParent?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : AbstractParentEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     var data: String
@@ -88,7 +88,7 @@ interface AbstractParentEntity : WorkspaceEntity {
 
 interface SpecificParent : AbstractParentEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SpecificParent>, AbstractParentEntity.Builder<SpecificParent> {
     override var entitySource: EntitySource
     override var data: String

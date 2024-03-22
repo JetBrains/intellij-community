@@ -12,7 +12,7 @@ interface ParentWithNullsMultiple : WorkspaceEntity {
   val children: List<ChildWithNullsMultiple>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ParentWithNullsMultiple> {
     override var entitySource: EntitySource
     var parentData: String
@@ -52,7 +52,7 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
   val childData: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ChildWithNullsMultiple> {
     override var entitySource: EntitySource
     var childData: String

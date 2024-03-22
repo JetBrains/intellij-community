@@ -16,7 +16,7 @@ interface NotNullToNullEntity: WorkspaceEntity {
   val notNullList: List<Int>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<NotNullToNullEntity> {
     override var entitySource: EntitySource
     var nullInt: Int?

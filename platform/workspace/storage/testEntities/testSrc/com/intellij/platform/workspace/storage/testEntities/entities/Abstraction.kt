@@ -19,7 +19,7 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
     get() = HeadAbstractionSymbolicId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<HeadAbstractionEntity> {
     override var entitySource: EntitySource
     var data: String
@@ -62,7 +62,7 @@ interface BaseEntity : WorkspaceEntity {
   val parentEntity: CompositeBaseEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : BaseEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
@@ -93,7 +93,7 @@ interface CompositeBaseEntity : BaseEntity {
   val parent: HeadAbstractionEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder<T : CompositeBaseEntity> : WorkspaceEntity.Builder<T>, BaseEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
@@ -123,7 +123,7 @@ interface MiddleEntity : BaseEntity {
   val property: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<MiddleEntity>, BaseEntity.Builder<MiddleEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
@@ -163,7 +163,7 @@ fun MutableEntityStorage.modifyEntity(
 
 interface LeftEntity : CompositeBaseEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<LeftEntity>, CompositeBaseEntity.Builder<LeftEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
@@ -202,7 +202,7 @@ fun MutableEntityStorage.modifyEntity(
 
 interface RightEntity : CompositeBaseEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<RightEntity>, CompositeBaseEntity.Builder<RightEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?

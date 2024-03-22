@@ -29,7 +29,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
     var module: ModuleEntity.Builder
@@ -81,7 +81,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   val path: List<@NonNls String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleGroupPathEntity> {
     override var entitySource: EntitySource
     var module: ModuleEntity.Builder
@@ -137,7 +137,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
   val externalSystemModuleType: String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
     override var entitySource: EntitySource
     var module: ModuleEntity.Builder
@@ -190,7 +190,7 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
   val productionModuleId: ModuleId
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
+  @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<TestModulePropertiesEntity> {
     override var entitySource: EntitySource
     var module: ModuleEntity.Builder
