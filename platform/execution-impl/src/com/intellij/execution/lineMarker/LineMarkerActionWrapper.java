@@ -2,9 +2,9 @@
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.execution.ExecutorRegistryImpl;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.actions.ExecutorGroupActionGroup;
 import com.intellij.execution.actions.RunContextAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -51,9 +51,9 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     // This is quickfix for IDEA-208231
     // See com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor.addActions(AnAction, List<? super IntentionActionDescriptor>, GutterIconRenderer, AtomicInteger, DataContext)`
     if (myOrigin instanceof ExecutorAction) {
-      if (((ExecutorAction)myOrigin).getOrigin() instanceof ExecutorRegistryImpl.ExecutorGroupActionGroup) {
+      if (((ExecutorAction)myOrigin).getOrigin() instanceof ExecutorGroupActionGroup) {
         final AnAction[] children =
-          ((ExecutorRegistryImpl.ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(null);
+          ((ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(null);
         LOG.assertTrue(ContainerUtil.all(Arrays.asList(children), o -> o instanceof RunContextAction));
         return ContainerUtil.mapNotNull(children, o -> {
           PsiElement element = myElement.getElement();

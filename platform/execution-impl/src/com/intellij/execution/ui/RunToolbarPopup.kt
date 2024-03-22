@@ -2,8 +2,11 @@
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
+import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction.SelectConfigAction
+import com.intellij.execution.actions.RunCurrentFileExecutorAction
+import com.intellij.execution.actions.RunSpecifiedConfigExecutorAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
@@ -381,21 +384,21 @@ private fun createRunConfigurationWithInlines(project: Project,
       if (secondVersionAction != null) {
         listOf(
           secondVersionAction,
-          ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+          RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
           StopConfigurationInlineAction(activeExecutor, conf)
         )
       }
       else {
         listOf(
-          ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+          RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
           StopConfigurationInlineAction(activeExecutor, conf)
         )
       }
     }
     else {
       listOf(
-        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
-        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
+        RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
+        RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
       )
     }
   val extraGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(conf, false)
@@ -404,7 +407,7 @@ private fun createRunConfigurationWithInlines(project: Project,
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
         val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
-        prefix = prefix + ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
+        prefix = prefix + RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
       }
       val pinActionText = if (isPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
       else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
@@ -429,7 +432,7 @@ private fun createCurrentFileWithInlineActions(project: Project,
   if (DumbService.isDumb(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction()
   }
-  val configs = selectedFile?.findPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) }
+  val configs = selectedFile?.findPsiFile(project)?.let { ExecutorAction.getRunConfigsForCurrentFile(it, false) }
                 ?: emptyList()
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
   val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
@@ -442,29 +445,29 @@ private fun createCurrentFileWithInlineActions(project: Project,
       }
     }.also {
       it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(
-        ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
-        ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
+        RunCurrentFileExecutorAction(runExecutor),
+        RunCurrentFileExecutorAction(debugExecutor))
       )
     }
   }
 
   val inlineActions = when {
     runRunningConfig != null -> listOf(
-      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+      RunCurrentFileExecutorAction(runExecutor),
       StopConfigurationInlineAction(runExecutor, runRunningConfig))
     debugRunningConfig != null -> listOf(
-      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor),
+      RunCurrentFileExecutorAction(debugExecutor),
       StopConfigurationInlineAction(debugExecutor, debugRunningConfig))
     else -> listOf(
-      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
-      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
+      RunCurrentFileExecutorAction(runExecutor),
+      RunCurrentFileExecutorAction(debugExecutor))
   }
 
   val res = object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       var suffix = emptyList<AnAction>()
-      if (debugRunningConfig != null) suffix = suffix + ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor)
-      if (runRunningConfig != null) suffix = suffix + ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor)
+      if (debugRunningConfig != null) suffix = suffix + RunCurrentFileExecutorAction(runExecutor)
+      if (runRunningConfig != null) suffix = suffix + RunCurrentFileExecutorAction(debugExecutor)
       return (suffix + getDefaultChildren(excludeRunAndDebug)).toTypedArray()
     }
   }

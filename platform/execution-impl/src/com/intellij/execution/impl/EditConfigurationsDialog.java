@@ -2,6 +2,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
+import com.intellij.execution.actions.ExecutorAction;
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -186,7 +187,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       myExecutorActions.forEach(action -> action.unregisterCustomShortcutSet(getContentPanel()));
       myExecutorActions.clear();
       if (selected != null) {
-        ExecutorRegistryImpl.ExecutorAction action = createAction(selected, executor);
+        ExecutorAction action = createAction(selected, executor);
         DefaultActionGroup group = new DefaultActionGroup();
         RunConfigurationsComboBoxAction.forAllExecutors(o -> {
           if (o != executor) {
@@ -200,8 +201,8 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
   }
 
   @NotNull
-  private ExecutorRegistryImpl.ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
-    return new ExecutorRegistryImpl.ExecutorAction(executor) {
+  private ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
+    return new ExecutorAction(executor) {
       {
         AnAction action = ActionManager.getInstance().getAction(executor.getId());
         if (action != null) {
