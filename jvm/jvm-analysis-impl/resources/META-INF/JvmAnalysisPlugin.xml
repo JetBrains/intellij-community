@@ -184,7 +184,7 @@
     <psi.symbolReferenceProvider
       hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
       hostLanguage="UAST"
-      implementationClass="com.intellij.analysis.logging.resolve.JvmLoggerSymbolReferenceProvider"
+      implementationClass="com.intellij.analysis.logging.resolve.LoggingArgumentSymbolReferenceProvider"
       targetClass="com.intellij.analysis.logging.resolve.LoggingArgumentSymbol"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"

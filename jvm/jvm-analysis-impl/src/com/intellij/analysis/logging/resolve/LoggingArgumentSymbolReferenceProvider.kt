@@ -15,7 +15,7 @@ import com.intellij.psi.PsiLiteralExpression
 import com.siyeh.ig.psiutils.ExpressionUtils
 import org.jetbrains.uast.*
 
-class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
+class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     if (!hintsCheck(hints)) return emptyList()
 
@@ -37,27 +37,15 @@ class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
 }
 
 fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>? {
-  val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
-  val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
+  val context = getContext(uExpression) ?: return null
+  val ranges = getAlignedRanges(uExpression, context) ?: return null
 
-  val logMethod = detectLoggerMethod(uCallExpression) ?: return null
-
-  val context = getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j) ?: return null
-  if (uExpression != context.logStringArgument || context.partHolderList.size > 1) return null
-
-  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
-  if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
-
-  val rangeWithParameterList = placeholderCountResult.placeholderRangeList.zip(context.placeholderParameters)
   val psiLiteralExpression = uExpression.sourcePsi ?: return null
-
-
   val placeholderParametersSize = context.placeholderParameters.size
-  val loggerReferenceList = rangeWithParameterList.map { (range, parameter) ->
-    if (range == null) return null
-    val alignedRange = getAlignedRangeInLiteralExpression(uExpression, range) ?: return null
+
+  val loggerReferenceList = ranges.zip(context.placeholderParameters) { range, parameter ->
     val parameterPsi = parameter.sourcePsi ?: return null
-    LoggingArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
+    LoggingArgumentSymbolReference(psiLiteralExpression, range, parameterPsi)
   }
 
   return when (context.loggerType) {
@@ -76,6 +64,27 @@ fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>
       loggerReferenceList
     }
     else -> null
+  }
+}
+
+internal fun getContext(uExpression: UExpression): PlaceholderContext? {
+  val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
+  val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
+
+  val logMethod = detectLoggerMethod(uCallExpression) ?: return null
+
+  val context = getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)
+  if (uExpression != context?.logStringArgument || context.partHolderList.size > 1) return null
+  return context
+}
+
+internal fun getAlignedRanges(uExpression: UExpression, context: PlaceholderContext) : List<TextRange>? {
+  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
+  if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
+
+  return placeholderCountResult.placeholderRangeList.map {range ->
+    if (range == null) return null
+    getAlignedRangeInLiteralExpression(uExpression, range) ?: return null
   }
 }
 
