@@ -45,7 +45,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -525,8 +524,8 @@ open class FileEditorManagerImpl(
 
   open fun isProblem(file: VirtualFile): Boolean = false
 
-  open fun getFileTooltipText(file: VirtualFile, window: EditorWindow): @NlsContexts.Tooltip String {
-    val composite = window.getComposite(file)
+  open fun getFileTooltipText(file: VirtualFile, window: EditorWindow?): @NlsContexts.Tooltip String {
+    val composite = window?.getComposite(file)
     val prefix = if (composite != null && composite.isPreview) "${LangBundle.message("preview.editor.tab.tooltip.text")} " else ""
     for (provider in EditorTabTitleProvider.EP_NAME.lazyDumbAwareExtensions(project)) {
       val text = provider.getEditorTabTooltipText(project, file)

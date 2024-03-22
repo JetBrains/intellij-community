@@ -42,7 +42,7 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
 
   override fun isProblem(file: VirtualFile): Boolean = problemSolver.isProblemFile(file)
 
-  override fun getFileTooltipText(file: VirtualFile, window: EditorWindow): String {
+  override fun getFileTooltipText(file: VirtualFile, window: EditorWindow?): String {
     val tooltipText: @NlsSafe StringBuilder = StringBuilder()
     if (Registry.`is`("ide.tab.tooltip.module", false)) {
       val module = ModuleUtilCore.findModuleForFile(file, project)
