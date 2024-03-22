@@ -180,7 +180,7 @@ internal class KotlinIdeDeclarationRenderer(
                 symbol is KtClassOrObjectSymbol -> !(symbol.classKind == KtClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
 
                 symbol is KtCallableSymbol -> {
-                    symbol.modality == Modality.OPEN || symbol.getContainingSymbol() != null && symbol.modality == Modality.FINAL
+                    symbol.modality == Modality.OPEN || symbol.getContainingSymbol() != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
                 }
 
                 else -> false

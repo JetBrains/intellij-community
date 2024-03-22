@@ -23,6 +23,16 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AbstractCallableInClass.kt")
+    public void testAbstractCallableInClass() throws Exception {
+        runTest("testData/editor/quickDoc/AbstractCallableInClass.kt");
+    }
+
+    @TestMetadata("AbstractCallableInInterface.kt")
+    public void testAbstractCallableInInterface() throws Exception {
+        runTest("testData/editor/quickDoc/AbstractCallableInInterface.kt");
+    }
+
     @TestMetadata("AnonymousObjectLocalVariable.kt")
     public void testAnonymousObjectLocalVariable() throws Exception {
         runTest("testData/editor/quickDoc/AnonymousObjectLocalVariable.kt");

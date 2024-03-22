@@ -23,6 +23,16 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AbstractCallableInClass.kt")
+    public void testAbstractCallableInClass() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/AbstractCallableInClass.kt");
+    }
+
+    @TestMetadata("AbstractCallableInInterface.kt")
+    public void testAbstractCallableInInterface() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/AbstractCallableInInterface.kt");
+    }
+
     @TestMetadata("AnonymousObjectLocalVariable.kt")
     public void testAnonymousObjectLocalVariable() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/AnonymousObjectLocalVariable.kt");
