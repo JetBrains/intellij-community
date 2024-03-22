@@ -39,14 +39,16 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
 use {
-    windows::core::{GUID, PWSTR},
+    windows::core::{GUID, PCWSTR, PWSTR},
     windows::Win32::Foundation,
     windows::Win32::UI::Shell,
     windows::Win32::System::Console::{AllocConsole, ATTACH_PARENT_PROCESS, AttachConsole},
+    windows::Win32::System::LibraryLoader::GetModuleHandleW,
 };
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+use crate::cef_sandbox::CefScopedSandboxInfo;
 
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
@@ -57,6 +59,8 @@ pub mod default;
 pub mod remote_dev;
 pub mod java;
 pub mod docker;
+pub mod cef_sandbox;
+pub mod cef_generated;
 
 pub const DEBUG_MODE_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
@@ -113,15 +117,56 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
+    #[cfg(target_os = "windows")]
+    let scoped_sandbox = CefScopedSandboxInfo::new();
+    #[cfg(target_os = "windows")]
+    let cef_sandbox = Some(&scoped_sandbox);
+    #[cfg(not(target_os = "windows"))]
+    let cef_sandbox: Option<&CefScopedSandboxInfo> = None;
+
+    #[cfg(target_os = "windows")]
+    {
+        let is_sandbox_subprocess = configuration.get_args()
+            .iter()
+            .any(|arg| arg.contains("--type"));
+
+        if is_sandbox_subprocess {
+            let exit_code = launch_cef_subprocess(&jre_home, cef_sandbox)?;
+            std::process::exit(exit_code)
+        }
+    }
+
     debug!("** Collecting JVM options");
     let vm_options = get_full_vm_options(&*configuration).context("Cannot collect JVM options")?;
     debug!("VM options: {vm_options:?}");
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode).context("Cannot start the runtime")?;
+    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), cef_sandbox, debug_mode).context("Cannot start the runtime")?;
 
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn launch_cef_subprocess(jre_home: &PathBuf, cef_sandbox: Option<&CefScopedSandboxInfo>) -> Result<i32> {
+    let sandbox = cef_sandbox
+        .context("CEF sandbox must be present on Windows")?;
+
+    unsafe {
+        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
+
+        let helper_path = jre_home.join("bin\\jcef_helper.dll");
+        let lib = libloading::Library::new(&helper_path)
+            .with_context(|| format!("Can't load jcef_helper, path='{:#?}'", helper_path))?;
+
+        let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> =
+            lib.get(b"execute_subprocess\0")
+                .context("Can't load execute_subprocess from jcef_helper")?;
+
+        let exit_code = proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, sandbox.ptr);
+
+        Ok(exit_code)
+    }
 }
 
 #[cfg(target_os = "macos")]

@@ -9,3 +9,9 @@
 
 # `cargo about`
 /about.html
+
+# external dependencies
+/deps/
+
+# CEF FFI
+*_generated.rs
