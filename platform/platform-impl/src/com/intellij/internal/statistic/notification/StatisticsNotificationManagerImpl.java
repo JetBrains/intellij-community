@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.notification;
 
-import com.intellij.application.Topics;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.StatisticsNotificationManager;
@@ -36,15 +35,16 @@ final class StatisticsNotificationManagerImpl implements StatisticsNotificationM
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
 
     Disposable disposable = Disposer.newDisposable();
-    Topics.subscribe(ApplicationActivationListener.TOPIC, disposable, new ApplicationActivationListener() {
-      @Override
-      public void applicationActivated(@NotNull IdeFrame ideFrame) {
-        if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
-          ApplicationManager.getApplication().invokeLater(() -> showNotification());
-          Disposer.dispose(disposable);
+    ApplicationManager.getApplication().getMessageBus().connect(disposable)
+      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
+          if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
+            Disposer.dispose(disposable);
+            ApplicationManager.getApplication().invokeLater(() -> showNotification());
+          }
         }
-      }
-    });
+      });
   }
 
   private static boolean isShouldShowNotification() {
@@ -53,7 +53,7 @@ final class StatisticsNotificationManagerImpl implements StatisticsNotificationM
   }
 
   private static void showNotification() {
-    if (AppUIUtil.showConsentsAgreementIfNeeded(Logger.getInstance(StatisticsNotificationManagerImpl.class), ConsentOptions.condUsageStatsConsent())) {
+    if (AppUIUtil.INSTANCE.showConsentsAgreementIfNeeded(Logger.getInstance(StatisticsNotificationManagerImpl.class), ConsentOptions.condUsageStatsConsent())) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         return StatisticsUploadAssistant.getEventLogStatisticsService("FUS").send();
       });
