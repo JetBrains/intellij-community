@@ -27,6 +27,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
@@ -86,7 +87,7 @@ public final class PersistentFSLoader {
       })
       .filter(e -> e instanceof IOException)
       .findFirst().orElse(null);
-    
+
     if (mainIoException != null && !mainIoException.getMessage().isEmpty()) {
       for (Throwable exception : exceptions) {
         if (exception != mainIoException) {
@@ -776,15 +777,21 @@ public final class PersistentFSLoader {
   }
 
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
-    PersistentFSRecordsStorage storage = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
-    if (vfsLog != null) {
-      var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
-        .filter(RecordsInterceptor.class::isInstance)
-        .map(RecordsInterceptor.class::cast)
-        .toList();
-      storage = InterceptorInjection.INSTANCE.injectInRecords(storage, recordsInterceptors);
-    }
-    return storage;
+    StorageFactory<PersistentFSRecordsStorage> recordsStorageFactory = PersistentFSRecordsStorageFactory.recordsStorageImplementation();
+
+    LOG.trace("VFS uses " + recordsStorageFactory + " storage for main file records table");
+    return recordsStorageFactory.wrapStorageSafely(recordsFile, records -> {
+      if (vfsLog != null) {
+        var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
+          .filter(RecordsInterceptor.class::isInstance)
+          .map(RecordsInterceptor.class::cast)
+          .toList();
+        return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
+      }
+      else {
+        return records;
+      }
+    });
   }
 
   /** @return common version of all 3 storages, or -1, if their versions are different (i.e. inconsistent) */

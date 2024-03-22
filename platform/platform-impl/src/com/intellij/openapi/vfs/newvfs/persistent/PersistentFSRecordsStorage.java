@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 @ApiStatus.Internal
-public interface PersistentFSRecordsStorage extends CleanableStorage {
+public interface PersistentFSRecordsStorage extends CleanableStorage, AutoCloseable {
   int NULL_ID = FSRecords.NULL_FILE_ID;
   int MIN_VALID_ID = NULL_ID + 1;
 
@@ -118,10 +118,11 @@ public interface PersistentFSRecordsStorage extends CleanableStorage {
 
   // TODO add a synchronization or requirement to be called on the loading
   @SuppressWarnings("UnusedReturnValue")
-  boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
+  boolean processAllRecords(@NotNull FsRecordProcessor processor) throws IOException;
 
   void force() throws IOException;
 
+  @Override
   void close() throws IOException;
 
   /** Close the storage and remove all its data files */

@@ -1,13 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.util.io.PageCacheUtils;
-import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
-import com.intellij.util.io.StorageLockContext;
-import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,13 +32,11 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   }
 
   public static final int MAX_RECORDS_TO_INSERT = 1 << 22;
-  private PagedFileStorageWithRWLockedPageContent pagedStorage;
 
+  private static final int PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
 
 
   public PersistentFSRecordsStorageOverLockFreePagedStorageTest(final UpdateAPIMethod updateMethodToTest) { super(MAX_RECORDS_TO_INSERT, updateMethodToTest); }
-
-  private StorageLockContext storageContext;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -54,43 +49,27 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   @NotNull
   @Override
   protected PersistentFSRecordsOverLockFreePagedStorage openStorage(final Path storagePath) throws IOException {
-    final int pageSize;
-    final boolean nativeBytesOrder;
-    try (var file = PersistentFSRecordsStorageFactory.openRMappedFile(storagePath, RECORD_SIZE_IN_BYTES)) {
-      storageContext = file.getStorageLockContext();
-      pageSize = file.getPagedFileStorage().getPageSize();
-      nativeBytesOrder = file.isNativeBytesOrder();
-    }
-    pagedStorage = new PagedFileStorageWithRWLockedPageContent(
-      storagePath,
-      storageContext,
-      pageSize,
-      nativeBytesOrder,
-      PageContentLockingStrategy.LOCK_PER_PAGE
-    );
-    return new PersistentFSRecordsOverLockFreePagedStorage(pagedStorage);
+    return (PersistentFSRecordsOverLockFreePagedStorage)RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE.open(storagePath);
   }
 
   @Test
   public void recordAreAlwaysAlignedFullyOnSinglePage() {
-    final int pageSize = pagedStorage.getPageSize();
-    final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
+    final int enoughRecords = (PAGE_SIZE / RECORD_SIZE_IN_BYTES) * 16;
 
     for (int recordId = 0; recordId < enoughRecords; recordId++) {
       final long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
       final long recordEndOffsetInFile = recordOffsetInFile + RECORD_SIZE_IN_BYTES - 1;
       assertEquals(
         "Record(#" + recordId + ", offset: " + recordOffsetInFile + ") must start and end on a same page",
-        recordOffsetInFile / pageSize,
-        recordEndOffsetInFile / pageSize
+        recordOffsetInFile / PAGE_SIZE,
+        recordEndOffsetInFile / PAGE_SIZE
       );
     }
   }
 
   @Test
   public void recordOffsetCalculatedByStorageIsConsistentWithPlainCalculation() {
-    final int pageSize = pagedStorage.getPageSize();
-    final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
+    final int enoughRecords = (PAGE_SIZE / RECORD_SIZE_IN_BYTES) * 16;
 
     long expectedRecordOffsetInFile = PersistentFSRecordsOverLockFreePagedStorage.HEADER_SIZE;
     for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
@@ -102,16 +81,15 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
       );
 
       expectedRecordOffsetInFile += RECORD_SIZE_IN_BYTES;
-      if (pageSize - (expectedRecordOffsetInFile % pageSize) < RECORD_SIZE_IN_BYTES) {
-        expectedRecordOffsetInFile = (expectedRecordOffsetInFile / pageSize + 1) * pageSize;
+      if (PAGE_SIZE - (expectedRecordOffsetInFile % PAGE_SIZE) < RECORD_SIZE_IN_BYTES) {
+        expectedRecordOffsetInFile = (expectedRecordOffsetInFile / PAGE_SIZE + 1) * PAGE_SIZE;
       }
     }
   }
 
   @Test
   public void loadRecordsCount_IsConsistentWith_recordOffsetInFile() throws IOException {
-    final int pageSize = pagedStorage.getPageSize();
-    final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
+    final int enoughRecords = (PAGE_SIZE / RECORD_SIZE_IN_BYTES) * 16;
 
     for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
       final long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
@@ -128,8 +106,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   public void loadRecordsCount_ThrowsIOException_IfUnEvenNumberOfRecordsFound() throws IOException {
     //RC: method is very slow, so use 1 random excess for each record, instead of iterating through
     // each excess: [1..RECORD_SIZE_IN_BYTES) on each record
-    final int pageSize = pagedStorage.getPageSize();
-    final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
+    final int enoughRecords = (PAGE_SIZE / RECORD_SIZE_IN_BYTES) * 16;
 
     for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
       final long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
