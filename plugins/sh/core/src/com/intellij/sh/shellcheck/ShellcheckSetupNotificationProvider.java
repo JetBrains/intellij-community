@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 import static com.intellij.sh.ShBundle.message;
-import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
+import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.shellcheck.ShShellcheckUtil.isValidPath;
 
 public class ShellcheckSetupNotificationProvider implements EditorNotificationProvider {

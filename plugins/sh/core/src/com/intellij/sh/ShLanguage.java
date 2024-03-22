@@ -7,9 +7,6 @@ import com.intellij.notification.NotificationGroupManager;
 
 public final class ShLanguage extends Language {
   public static final Language INSTANCE = new ShLanguage();
-  public static final String NOTIFICATION_GROUP_ID = "Shell Script";
-  public static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID);
 
   public ShLanguage() {
     super("Shell Script", "application/x-bsh", "application/x-sh", "text/x-script.sh");
