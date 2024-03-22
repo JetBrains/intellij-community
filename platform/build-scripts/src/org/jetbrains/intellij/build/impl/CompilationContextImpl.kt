@@ -246,18 +246,21 @@ class CompilationContextImpl private constructor(
     CompiledClasses.checkOptions(this)
 
     val logDir = paths.logDir
-    if (Files.exists(logDir)) {
-      Files.newDirectoryStream(logDir).use { stream ->
-        for (file in stream) {
-          if (!file.endsWith("trace.json")) {
-            NioFiles.deleteRecursively(file)
+    if (options.compilationLogEnabled) {
+      if (Files.exists(logDir)) {
+        Files.newDirectoryStream(logDir).use { stream ->
+          for (file in stream) {
+            if (!file.endsWith("trace.json")) {
+              NioFiles.deleteRecursively(file)
+            }
           }
         }
       }
+      else {
+        Files.createDirectories(logDir)
+      }
     }
-    else {
-      Files.createDirectories(logDir)
-    }
+
     overrideClassesOutputDirectory()
     if (!this::compilationData.isInitialized) {
       compilationData = JpsCompilationData(
