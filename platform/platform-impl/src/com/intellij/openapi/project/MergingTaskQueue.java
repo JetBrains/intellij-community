@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.concurrency.ThreadContext;
@@ -295,23 +295,23 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   }
 
   public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
-    private final T myTask;
-    private final ProgressIndicatorEx myIndicator;
+    private final T task;
+    private final ProgressIndicatorEx indicator;
     private final @Nullable ChildContext myChildContext;
 
     QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress, @Nullable ChildContext childContext) {
-      myTask = task;
-      myIndicator = progress;
+      this.task = task;
+      indicator = progress;
       myChildContext = childContext;
     }
 
     @Override
     public void close() {
-      Disposer.dispose(myTask);
+      Disposer.dispose(task);
     }
 
     public @NotNull ProgressIndicatorEx getIndicator() {
-      return myIndicator;
+      return indicator;
     }
 
     public void executeTask() {
@@ -319,30 +319,30 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
 
     public void executeTask(@Nullable ProgressIndicator customIndicator) {
-      //this is the cancellation check
-      myIndicator.checkCanceled();
-      myIndicator.setIndeterminate(true);
+      // this is the cancellation check
+      indicator.checkCanceled();
+      indicator.setIndeterminate(true);
 
-      ProgressIndicator indicator = customIndicator == null ? myIndicator : customIndicator;
+      ProgressIndicator indicator = customIndicator == null ? this.indicator : customIndicator;
       indicator.checkCanceled();
 
       beforeTask();
       if (AppExecutorUtil.propagateContextOrCancellation() && myChildContext != null) {
         try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-          myChildContext.runAsCoroutine(() -> myTask.perform(indicator));
+          myChildContext.runAsCoroutine(() -> task.perform(indicator));
         }
       }
       else {
-        myTask.perform(indicator);
+        task.perform(indicator);
       }
     }
 
     String getInfoString() {
-      return String.valueOf(myTask);
+      return String.valueOf(task);
     }
 
     protected T getTask() {
-      return myTask;
+      return task;
     }
 
     /**
@@ -356,7 +356,6 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
 
     public void beforeTask() {
-
     }
   }
 }
