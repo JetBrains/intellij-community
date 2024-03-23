@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LazyExtension
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -179,7 +178,7 @@ private suspend fun getProviderIfApplicable(item: LazyExtension<FileEditorProvid
                                             suppressors: List<FileEditorProviderSuppressor>): FileEditorProvider? {
   val provider = item.instance ?: return null
   if (!DumbService.isDumbAware(provider)) {
-    LOG.debug { "Please make ${provider.javaClass} dumb-aware" }
+    LOG.warn("Please make ${provider.javaClass} dumb-aware")
     if (DumbService.isDumb(project)) {
       return null
     }
