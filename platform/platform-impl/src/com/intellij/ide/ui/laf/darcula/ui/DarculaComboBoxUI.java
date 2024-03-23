@@ -317,14 +317,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     Graphics2D g2 = (Graphics2D)g.create();
-    Rectangle r = new Rectangle(c.getSize());
-    JBInsets.removeFrom(r, myBorderCompensation);
 
     if (comboBox.getBorder() instanceof DarculaComboBoxBorder comboBoxBorder && isNewBorderSupported(comboBox)) {
       comboBoxBorder.paintComboBoxBackground(g2, comboBox, getBackgroundColor());
     }
     else {
       try {
+        Rectangle r = new Rectangle(c.getSize());
+        JBInsets.removeFrom(r, myBorderCompensation);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.translate(r.x, r.y);

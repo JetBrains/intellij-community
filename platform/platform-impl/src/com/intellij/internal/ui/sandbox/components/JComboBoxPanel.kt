@@ -47,6 +47,51 @@ internal class JComboBoxPanel : UISandboxPanel {
           }
       }
 
+      group("IS_EMBEDDED_PROPERTY") {
+        withStateLabel {
+          comboBox(items).applyToComponent {
+            putClientProperty(ComboBox.IS_EMBEDDED_PROPERTY, true)
+          }
+        }
+        withStateLabel {
+          comboBox(items)
+            .enabled(false)
+            .applyToComponent {
+              putClientProperty(ComboBox.IS_EMBEDDED_PROPERTY, true)
+            }
+        }
+      }
+
+      group("IS_BORDERLESS_PROPERTY") {
+        withStateLabel {
+          comboBox(items).applyToComponent {
+            putClientProperty(ComboBox.IS_BORDERLESS_PROPERTY, true)
+          }
+        }
+        withStateLabel {
+          comboBox(items)
+            .enabled(false)
+            .applyToComponent {
+              putClientProperty(ComboBox.IS_BORDERLESS_PROPERTY, true)
+            }
+        }
+      }
+
+      group("IS_TABLE_CELL_EDITOR_PROPERTY") {
+        withStateLabel {
+          comboBox(items).applyToComponent {
+            putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, true)
+          }
+        }
+        withStateLabel {
+          comboBox(items)
+            .enabled(false)
+            .applyToComponent {
+              putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, true)
+            }
+        }
+      }
+
       group("Validation") {
         withStateLabel("Error") {
           comboBox(items).validationOnInput {

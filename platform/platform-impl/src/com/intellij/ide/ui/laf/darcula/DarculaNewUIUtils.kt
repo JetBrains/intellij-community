@@ -11,7 +11,8 @@ import kotlin.math.max
 /**
  * Paints rounded border for focusable component. Non focused border rect is inside [rect], focused/outlined border can come outside
  */
-internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean) {
+internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean,
+                                  bw: Int = DarculaUIUtil.BW.get()) {
   val g2 = g.create() as Graphics2D
 
   try {
@@ -20,7 +21,6 @@ internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: Darcula
                         if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
     val lw = DarculaUIUtil.LW.get()
-    val bw = DarculaUIUtil.BW.get()
     val arc = DarculaUIUtil.COMPONENT_ARC.get()
 
     when {

@@ -91,6 +91,9 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
         Type.TABLE_CELL_EDITOR, Type.EMBEDDED -> {
           DarculaUIUtil.paintCellEditorBorder(g2, comboBox, r, focused)
         }
+        Type.BORDERLESS -> {
+          paintBorderlessBorder(g2, comboBox, r, focused)
+        }
         else -> {
           paintNormalBorder(g2, comboBox, r, focused)
         }
@@ -104,6 +107,11 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
   protected fun paintNormalBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
     JBInsets.removeFrom(r, getBorderInsets(comboBox))
     paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled)
+  }
+
+  protected fun paintBorderlessBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
+    JBInsets.removeFrom(r, getBorderInsets(comboBox))
+    paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled, bw = DarculaUIUtil.LW.get())
   }
 
   /**
