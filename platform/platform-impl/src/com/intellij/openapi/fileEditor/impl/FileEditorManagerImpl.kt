@@ -251,8 +251,9 @@ open class FileEditorManagerImpl(
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
     coroutineScope.launch {
+      val providerManager = serviceAsync<FileEditorProviderManager>()
       dumbModeFinishedFlow.collectLatest {
-        dumbModeFinished(project)
+        dumbModeFinished(project, fileEditorProviderManager = providerManager)
       }
     }
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
@@ -419,18 +420,13 @@ open class FileEditorManagerImpl(
   }
 
   // need to open additional non-dumb-aware editors
-  private suspend fun dumbModeFinished(project: Project) {
-    val allSplitters = withContext(Dispatchers.EDT) {
-      getAllSplitters()
-    }
-
-    val providerManager = serviceAsync<FileEditorProviderManager>()
+  private suspend fun dumbModeFinished(project: Project, fileEditorProviderManager: FileEditorProviderManager) {
     // predictable order of iteration
     val fileToNewProviders = openedComposites.groupByTo(LinkedHashMap()) { it.file }.entries.mapNotNull { entry ->
       val composites = entry.value
       val existingIds = composites.asSequence().flatMap(EditorComposite::providerSequence).mapTo(HashSet()) { it.editorTypeId }
       val file = entry.key
-      val newProviders = providerManager.getProvidersAsync(project, file).filter { !existingIds.contains(it.editorTypeId) }
+      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(project, file, existingIds)
       if (newProviders.isEmpty()) {
         null
       }
@@ -438,6 +434,7 @@ open class FileEditorManagerImpl(
         file to composites.map { it to newProviders }
       }
     }
+
     for ((file, toOpen) in fileToNewProviders) {
       withContext(Dispatchers.EDT) {
         for ((composite, providers) in toOpen) {
@@ -450,7 +447,7 @@ open class FileEditorManagerImpl(
             composite.addEditor(editor = editor, provider = provider)
           }
         }
-        for (each in allSplitters) {
+        for (each in getAllSplitters()) {
           each.updateFileBackgroundColorAsync(file)
         }
       }
