@@ -46,7 +46,7 @@ class FileHistoryFilterUi(private val path: FilePath,
   }
 
   @RequiresEdt
-  fun hasBranchFilter(): Boolean = branchFilterModel.getFilter()?.isEmpty() == false
+  fun hasBranchFilter(): Boolean = branchFilterModel.getFilter()?.isEmpty == false
 
   fun isBranchFilterEnabled(): Boolean {
     if (FileHistoryFilterer.canFilterWithIndex(data.index, root, visiblePack.dataPack)) return true

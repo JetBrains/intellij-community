@@ -275,7 +275,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       }
 
       toolbar.setCustomButtonLook(FieldInplaceActionButtonLook())
-      toolbar.setReservePlaceAutoPopupIcon(false)
+      toolbar.isReservePlaceAutoPopupIcon = false
       toolbar.targetComponent = editor
       toolbar.updateActionsImmediately()
       return toolbar
