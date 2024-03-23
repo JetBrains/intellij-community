@@ -1,20 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.highlighting
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 
-@CompileStatic
-class GrHighlightingAttributesTest extends GrHighlightingTestBase {
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-
-  void 'test highlighting attributes'() {
-    fixture.testHighlighting false, true, false, "highlightingAttributes/test.groovy"
+public class GrHighlightingAttributesTest extends GrHighlightingTestBase {
+  public void testHighlightingAttributes() {
+    getFixture().testHighlighting(false, true, false, "highlightingAttributes/test.groovy");
   }
 
-  void 'test todo highlighting'() {
-    fixture.testHighlighting false, true, false, "highlightingAttributes/todo.groovy"
+  public void testTodoHighlighting() {
+    getFixture().testHighlighting(false, true, false, "highlightingAttributes/todo.groovy");
+  }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 }
