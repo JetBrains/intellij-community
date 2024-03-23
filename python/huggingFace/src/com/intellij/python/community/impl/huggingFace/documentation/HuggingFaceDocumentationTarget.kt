@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
+import com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceApi.fetchOrRetrieveModelCard
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsCache
@@ -19,6 +20,7 @@ import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUs
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.jetbrains.python.psi.PyTargetExpression
+
 
 internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement) : DocumentationTarget {
 
@@ -29,12 +31,13 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
 
   override fun computePresentation(): TargetPresentation {
     val elementText = when (myElement) {
-      is PyTargetExpression -> "${HuggingFaceConstants.HF_EMOJI} ${HuggingFaceUtil.extractTextFromPyTargetExpression(myElement)}"
-      is HuggingFaceIdentifierPsiElement -> "${HuggingFaceConstants.HF_EMOJI}  ${myElement.stringValue()}"
+      is PyTargetExpression -> HuggingFaceUtil.extractTextFromPyTargetExpression(myElement)
+      is HuggingFaceIdentifierPsiElement -> myElement.stringValue()
       else -> PyHuggingFaceBundle.message("python.hugging.face.unknown.element")
     }
-    // todo: add HF logo icon here once it is incorporated
-    return TargetPresentation.builder(elementText).icon(null).presentation()
+    return TargetPresentation.builder(elementText)
+      .icon(PythonCommunityImplHuggingFaceIcons.Logo)
+      .presentation()
   }
 
   override fun computeDocumentationHint(): String = IdeBundle.message("open.url.in.browser.tooltip")
