@@ -1,8 +1,9 @@
-// ERROR: Unresolved reference: ELinkedList
+import java.util.LinkedList
+
 class Lists {
     fun test() {
         val xs: MutableList<Any?> = ArrayList()
-        val ys: MutableList<Any?> = ELinkedList<Any>()
+        val ys: MutableList<Any?> = LinkedList()
         val zs = ArrayList<Any?>()
         xs.add(null)
         ys.add(null)

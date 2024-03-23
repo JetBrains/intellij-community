@@ -1,4 +1,3 @@
-// ERROR: Unresolved reference: bar
 import java.io.IOException
 
 internal class A {
@@ -10,5 +9,10 @@ internal class A {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+    }
+
+    @Throws(IOException::class)
+    private fun bar() {
+        throw IOException()
     }
 }

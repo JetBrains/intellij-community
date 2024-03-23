@@ -1,6 +1,9 @@
-// ERROR: Unresolved reference: x
 internal class C {
-    private val s: String? = x()
+    private val s = x()
+
+    private fun x(): String? {
+        return null
+    }
 
     fun foo() {
         if (s == null) {

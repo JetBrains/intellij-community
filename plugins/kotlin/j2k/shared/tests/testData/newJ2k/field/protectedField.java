@@ -1,4 +1,3 @@
-// IGNORE_K2
 class C {
-protected Foo f;
+    protected String f;
 }

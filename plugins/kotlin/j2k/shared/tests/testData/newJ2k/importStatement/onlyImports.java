@@ -1,3 +1,2 @@
-// IGNORE_K2
 import java.util.Arrays;
-import java.util.concurrent.ArrayBlockingQueues;
+import java.util.concurrent.BlockingDeque;

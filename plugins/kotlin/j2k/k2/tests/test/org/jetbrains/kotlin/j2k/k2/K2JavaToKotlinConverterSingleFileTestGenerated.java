@@ -2312,11 +2312,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/field/varWithInit.java");
         }
 
-        @TestMetadata("varWithoutInit.java")
-        public void testVarWithoutInit() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/field/varWithoutInit.java");
-        }
-
         @TestMetadata("volatileCommon.java")
         public void testVolatileCommon() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/field/volatileCommon.java");
