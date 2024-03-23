@@ -56,8 +56,8 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && !ui.getDataPack().isEmpty());
     if (visible) {
-      if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-          properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+      if (properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS) &&
+          properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS) == PermanentGraph.Options.LinearBek.INSTANCE) {
         e.getPresentation().setText(myMergesAction.get());
         e.getPresentation().setDescription(myMergesDescription.get());
       }

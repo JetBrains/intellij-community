@@ -49,14 +49,14 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
                                   @NotNull VcsLogFilterCollection filters,
-                                  @NotNull PermanentGraph.SortType sortType,
+                                  @NotNull PermanentGraph.Options options,
                                   @NotNull VcsLogFilterer filterer,
                                   @NotNull String logId) {
     myLogData = logData;
     myDataPack = logData.getDataPack();
     myVcsLogFilterer = filterer;
     myLogId = logId;
-    myState = new State(filters, sortType);
+    myState = new State(filters, options);
 
     myTaskController = new SingleTaskController<>("visible " + StringUtil.trimMiddle(logId, 40), this, state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
@@ -123,8 +123,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
-  public void onSortTypeChange(@NotNull PermanentGraph.SortType sortType) {
-    myTaskController.request(new SortTypeRequest(sortType));
+  public void onGraphOptionsChange(@NotNull PermanentGraph.Options graphOptions) {
+    myTaskController.request(new GraphOptionsRequest(graphOptions));
   }
 
   @Override
@@ -198,7 +198,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     private @NotNull State computeState(@NotNull State state, @NotNull List<? extends Request> requests) {
       ValidateRequest validateRequest = ContainerUtil.findLastInstance(requests, ValidateRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
-      SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
+      GraphOptionsRequest graphOptionsRequest = ContainerUtil.findLastInstance(requests, GraphOptionsRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
       List<IndexingFinishedRequest> indexingRequests = ContainerUtil.findAll(requests, IndexingFinishedRequest.class);
 
@@ -206,8 +206,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       if (filterRequest != null) {
         state = state.withFilters(filterRequest.filters);
       }
-      if (sortTypeRequest != null) {
-        state = state.withSortType(sortTypeRequest.sortType);
+      if (graphOptionsRequest != null) {
+        state = state.withGraphOptions(graphOptionsRequest.graphOptions);
       }
 
       // On validate requests vs refresh requests.
@@ -277,7 +277,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                                                           moreCommitsRequests.isEmpty()));
 
       try {
-        Pair<VisiblePack, CommitCountStage> pair = myVcsLogFilterer.filter(dataPack, state.getVisiblePack(), state.getSortType(),
+        Pair<VisiblePack, CommitCountStage> pair = myVcsLogFilterer.filter(dataPack, state.getVisiblePack(), state.getGraphOptions(),
                                                                            filters, state.getCommitCount());
         VisiblePack visiblePack = pair.getFirst();
         CommitCountStage commitCount = pair.getSecond();
@@ -300,24 +300,24 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   private static class State {
     private final @NotNull VcsLogFilterCollection myFilters;
-    private final @NotNull PermanentGraph.SortType mySortType;
+    private final @NotNull PermanentGraph.Options myGraphOptions;
     private final @NotNull CommitCountStage myCommitCount;
     private final @NotNull List<MoreCommitsRequest> myRequestsToRun;
     private final @NotNull VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
-    State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
-      this(filters, sortType, CommitCountStage.INITIAL, new ArrayList<>(), VisiblePack.EMPTY, true);
+    State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.Options graphOptions) {
+      this(filters, graphOptions, CommitCountStage.INITIAL, new ArrayList<>(), VisiblePack.EMPTY, true);
     }
 
     State(@NotNull VcsLogFilterCollection filters,
-          @NotNull PermanentGraph.SortType sortType,
+          @NotNull PermanentGraph.Options graphOptions,
           @NotNull CommitCountStage commitCountStage,
           @NotNull List<MoreCommitsRequest> requests,
           @NotNull VisiblePack visiblePack,
           boolean isValid) {
       myFilters = filters;
-      mySortType = sortType;
+      myGraphOptions = graphOptions;
       myCommitCount = commitCountStage;
       myRequestsToRun = Collections.unmodifiableList(requests);
       myVisiblePack = visiblePack;
@@ -340,8 +340,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       return myFilters;
     }
 
-    public @NotNull PermanentGraph.SortType getSortType() {
-      return mySortType;
+    public @NotNull PermanentGraph.Options getGraphOptions() {
+      return myGraphOptions;
     }
 
     public @NotNull CommitCountStage getCommitCount() {
@@ -349,34 +349,34 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
 
     public @NotNull State withValid(boolean valid) {
-      return new State(myFilters, mySortType, myCommitCount, myRequestsToRun, myVisiblePack, valid);
+      return new State(myFilters, myGraphOptions, myCommitCount, myRequestsToRun, myVisiblePack, valid);
     }
 
     public @NotNull State withVisiblePack(@NotNull VisiblePack visiblePack) {
-      return new State(myFilters, mySortType, myCommitCount, myRequestsToRun, visiblePack, myIsValid);
+      return new State(myFilters, myGraphOptions, myCommitCount, myRequestsToRun, visiblePack, myIsValid);
     }
 
     public @NotNull State withCommitCount(@NotNull CommitCountStage commitCount) {
-      return new State(myFilters, mySortType, commitCount, myRequestsToRun, myVisiblePack, myIsValid);
+      return new State(myFilters, myGraphOptions, commitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
 
     public @NotNull State withRequests(@NotNull List<MoreCommitsRequest> requests) {
-      return new State(myFilters, mySortType, myCommitCount, requests, myVisiblePack, myIsValid);
+      return new State(myFilters, myGraphOptions, myCommitCount, requests, myVisiblePack, myIsValid);
     }
 
     public @NotNull State withFilters(@NotNull VcsLogFilterCollection filters) {
-      return new State(filters, mySortType, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
+      return new State(filters, myGraphOptions, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
 
-    public @NotNull State withSortType(@NotNull PermanentGraph.SortType type) {
-      return new State(myFilters, type, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
+    public @NotNull State withGraphOptions(@NotNull PermanentGraph.Options graphOptions) {
+      return new State(myFilters, graphOptions, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
 
     @Override
     public @NonNls String toString() {
       return "State{" +
              "myFilters=" + myFilters +
-             ", mySortType=" + mySortType +
+             ", myGraphOptions=" + myGraphOptions +
              ", myCommitCount=" + myCommitCount +
              ", myRequestsToRun=" + myRequestsToRun +
              ", myVisiblePack=" + myVisiblePack +
@@ -421,16 +421,16 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
   }
 
-  private static final class SortTypeRequest implements Request {
-    private final PermanentGraph.SortType sortType;
+  private static final class GraphOptionsRequest implements Request {
+    private final PermanentGraph.Options graphOptions;
 
-    SortTypeRequest(PermanentGraph.SortType sortType) {
-      this.sortType = sortType;
+    GraphOptionsRequest(PermanentGraph.Options graphOptions) {
+      this.graphOptions = graphOptions;
     }
 
     @Override
     public String toString() {
-      return "SortTypeRequest " + sortType;
+      return "GraphOptionsRequest " + graphOptions;
     }
   }
 

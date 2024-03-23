@@ -93,8 +93,8 @@ internal class GitCompareBranchesUi(internal val project: Project,
                                val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val vcsLogFilterer = VcsLogFiltererImpl(logData)
-      val initialSortType = properties[MainVcsLogUiProperties.BEK_SORT_TYPE]
-      val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialSortType, vcsLogFilterer, logId)
+      val initialGraphOptions = properties[MainVcsLogUiProperties.GRAPH_OPTIONS]
+      val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialGraphOptions, vcsLogFilterer, logId)
 
       return MyVcsLogUi(logId, logData, colorManager, properties, refresher, rangeFilter, rootFilter)
     }

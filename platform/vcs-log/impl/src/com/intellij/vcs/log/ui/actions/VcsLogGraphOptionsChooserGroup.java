@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -11,14 +12,14 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
-import com.intellij.vcs.log.util.GraphSortPresentationUtil;
+import com.intellij.vcs.log.util.GraphOptionsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class VcsLogSortTypeChooserGroup extends DefaultActionGroup {
+public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -32,16 +33,21 @@ public class VcsLogSortTypeChooserGroup extends DefaultActionGroup {
     List<PermanentGraph.SortType> sortTypes = getAvailableSortTypes();
 
     List<AnAction> actions = new ArrayList<>();
+    actions.add(Separator.create(VcsLogBundle.message("action.vcs.log.sort.type.separator")));
     actions.addAll(ContainerUtil.map(sortTypes, sortType -> {
-      return new SelectSortTypeAction(logUI, properties, sortType);
+      return new SelectOptionsAction(logUI, properties, new PermanentGraph.Options.Base(sortType));
     }));
+    if (BekUtil.isLinearBekEnabled()) {
+      actions.add(Separator.create(VcsLogBundle.message("action.vcs.log.graph.options.separator")));
+      actions.add(new SelectOptionsAction(logUI, properties, PermanentGraph.Options.LinearBek.INSTANCE));
+    }
     return actions.toArray(EMPTY_ARRAY);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    e.getPresentation().setEnabled(properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE));
+    e.getPresentation().setEnabled(properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS));
   }
 
   @Override
@@ -54,44 +60,41 @@ public class VcsLogSortTypeChooserGroup extends DefaultActionGroup {
     if (!BekUtil.isBekEnabled()) {
       sortTypes.remove(PermanentGraph.SortType.Bek);
     }
-    else if (!BekUtil.isLinearBekEnabled()) {
-      sortTypes.remove(PermanentGraph.SortType.LinearBek);
-    }
     return sortTypes;
   }
 
-  private static class SelectSortTypeAction extends ToggleAction implements DumbAware {
-    private final PermanentGraph.SortType mySortType;
+  private static class SelectOptionsAction extends ToggleAction implements DumbAware {
+    private final PermanentGraph.Options myGraphOptions;
     private final VcsLogUi myUI;
     private final VcsLogUiProperties myProperties;
 
-    SelectSortTypeAction(@NotNull VcsLogUi ui,
-                         @NotNull VcsLogUiProperties properties,
-                         @NotNull PermanentGraph.SortType sortType) {
-      super(() -> GraphSortPresentationUtil.getLocalizedName(sortType),
-            () -> GraphSortPresentationUtil.getLocalizedDescription(sortType) + ".",
+    SelectOptionsAction(@NotNull VcsLogUi ui,
+                        @NotNull VcsLogUiProperties properties,
+                        @NotNull PermanentGraph.Options options) {
+      super(() -> GraphOptionsUtil.getLocalizedName(options),
+            () -> GraphOptionsUtil.getLocalizedDescription(options) + ".",
             null);
       myUI = ui;
       myProperties = properties;
-      mySortType = sortType;
+      myGraphOptions = options;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!myUI.getDataPack().isEmpty() && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE));
+      e.getPresentation().setEnabled(!myUI.getDataPack().isEmpty() && myProperties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS));
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-             myProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).equals(mySortType);
+      return myProperties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS) &&
+             myProperties.get(MainVcsLogUiProperties.GRAPH_OPTIONS).equals(myGraphOptions);
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
-        myProperties.set(MainVcsLogUiProperties.BEK_SORT_TYPE, mySortType);
+      if (state && myProperties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS)) {
+        myProperties.set(MainVcsLogUiProperties.GRAPH_OPTIONS, myGraphOptions);
       }
     }
 

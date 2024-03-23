@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -20,6 +20,7 @@ import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumn;
+import com.intellij.vcs.log.util.GraphOptionsUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumns
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 4);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
   private static final VarargEventId DIFF_PREVIEW = GROUP.registerVarargEvent("diffPreview", EventFields.Enabled);
@@ -45,7 +46,11 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final VarargEventId LONG_EDGES = GROUP.registerVarargEvent("long.edges", EventFields.Enabled);
   private static final EnumEventField<PermanentGraph.SortType> SORT_TYPE_FIELD =
     EventFields.Enum("value", PermanentGraph.SortType.class);
+  private static final StringEventField GRAPH_OPTIONS_TYPE_FIELD =
+    EventFields.String("value", GraphOptionsUtil.getOptionKindNames());
   private static final VarargEventId SORT = GROUP.registerVarargEvent("sort", EventFields.Enabled, SORT_TYPE_FIELD);
+  private static final VarargEventId GRAPH_OPTIONS_TYPE =
+    GROUP.registerVarargEvent("graphOptionsType", EventFields.Enabled, GRAPH_OPTIONS_TYPE_FIELD);
   private static final VarargEventId ROOTS = GROUP.registerVarargEvent("roots", EventFields.Enabled);
   private static final VarargEventId LABELS_COMPACT = GROUP.registerVarargEvent("labels.compact", EventFields.Enabled);
   private static final VarargEventId LABELS_SHOW_TAG_NAMES = GROUP.registerVarargEvent("labels.showTagNames", EventFields.Enabled);
@@ -87,7 +92,17 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ONLY_AFFECTED_CHANGES), ONLY_AFFECTED_CHANGES);
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_LONG_EDGES), LONG_EDGES);
 
-        addIfDiffers(metricEvents, properties, defaultProperties, getter(BEK_SORT_TYPE), SORT, SORT_TYPE_FIELD);
+        addIfDiffers(metricEvents, properties, defaultProperties, p -> GraphOptionsUtil.getKindName(p.get(GRAPH_OPTIONS)),
+                     GRAPH_OPTIONS_TYPE, GRAPH_OPTIONS_TYPE_FIELD);
+        if (properties.get(GRAPH_OPTIONS) instanceof PermanentGraph.Options.Base) {
+          addIfDiffers(metricEvents, properties, defaultProperties, p -> {
+            PermanentGraph.Options options = p.get(GRAPH_OPTIONS);
+            if (options instanceof PermanentGraph.Options.Base baseOptions) {
+              return baseOptions.getSortType();
+            }
+            return null;
+          }, SORT, SORT_TYPE_FIELD);
+        }
 
         if (ui.getTable().getColorManager().hasMultiplePaths()) {
           addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ROOT_NAMES), ROOTS);

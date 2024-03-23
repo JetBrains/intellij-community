@@ -24,7 +24,7 @@ public interface VisiblePackRefresher extends Disposable {
 
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 
-  void onSortTypeChange(@NotNull PermanentGraph.SortType sortType);
+  void onGraphOptionsChange(@NotNull PermanentGraph.Options graphOptions);
 
   void moreCommitsNeeded(@NotNull Runnable onLoaded);
 

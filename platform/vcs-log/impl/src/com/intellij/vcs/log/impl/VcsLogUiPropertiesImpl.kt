@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.Disposable
@@ -9,6 +9,8 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterPropert
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty
+import com.intellij.vcs.log.util.GraphOptionsUtil.toGraphOptions
+import com.intellij.vcs.log.util.GraphOptionsUtil.toStringList
 import java.util.*
 
 /**
@@ -31,7 +33,18 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
       MainVcsLogUiProperties.SHOW_LONG_EDGES -> state.isShowLongEdges
       CommonUiProperties.SHOW_ROOT_NAMES -> state.isShowRootNames
       MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> state.isShowOnlyAffectedChanges
-      MainVcsLogUiProperties.BEK_SORT_TYPE -> PermanentGraph.SortType.entries[state.bekSortType]
+      MainVcsLogUiProperties.GRAPH_OPTIONS -> {
+        val bekSortType = state.bekSortType
+        if (bekSortType != 0) {
+          val migratedOptions = if (bekSortType == 2) PermanentGraph.Options.LinearBek
+          else PermanentGraph.Options.Base(PermanentGraph.SortType.Bek)
+          state.graphOptions = migratedOptions.toStringList()
+          state.bekSortType = 0
+          migratedOptions
+        } else {
+          state.graphOptions.toGraphOptions() ?: PermanentGraph.Options.Default
+        }
+      }
       MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.textFilterSettings.isMatchCase
       MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.textFilterSettings.isRegex
       else -> throw UnsupportedOperationException("Property $property does not exist")
@@ -51,7 +64,7 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
       MainVcsLogUiProperties.SHOW_LONG_EDGES -> logUiState.isShowLongEdges = value as Boolean
       CommonUiProperties.SHOW_ROOT_NAMES -> logUiState.isShowRootNames = value as Boolean
       MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> logUiState.isShowOnlyAffectedChanges = value as Boolean
-      MainVcsLogUiProperties.BEK_SORT_TYPE -> logUiState.bekSortType = (value as PermanentGraph.SortType).ordinal
+      MainVcsLogUiProperties.GRAPH_OPTIONS -> logUiState.graphOptions = (value as PermanentGraph.Options).toStringList()
       MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.textFilterSettings.isRegex = value as Boolean
       MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.textFilterSettings.isMatchCase = value as Boolean
       is VcsLogHighlighterProperty -> logUiState.highlighters[(property as VcsLogHighlighterProperty).id] = value as Boolean
@@ -110,6 +123,9 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
     @get:OptionTag("BEK_SORT_TYPE")
     var bekSortType = 0
 
+    @get:OptionTag("GRAPH_OPTIONS")
+    var graphOptions: List<String> = PermanentGraph.Options.Default.toStringList()
+
     @get:OptionTag("SHOW_ROOT_NAMES")
     var isShowRootNames = false
 
@@ -141,7 +157,7 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
     private val SUPPORTED_PROPERTIES = setOf(
       CommonUiProperties.SHOW_DETAILS,
       MainVcsLogUiProperties.SHOW_LONG_EDGES,
-      MainVcsLogUiProperties.BEK_SORT_TYPE,
+      MainVcsLogUiProperties.GRAPH_OPTIONS,
       CommonUiProperties.SHOW_ROOT_NAMES,
       MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES,
       MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,

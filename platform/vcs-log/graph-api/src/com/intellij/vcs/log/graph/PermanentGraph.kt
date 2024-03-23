@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph
 
 import java.util.function.Predicate
@@ -26,19 +12,30 @@ import java.util.function.Predicate
  */
 interface PermanentGraph<Id> {
   /**
-   * Create a new instance of VisibleGraph with a specific sort type, visible branches, and commits.
+   * Create a new instance of VisibleGraph with a specific options, visible branches, and commits.
    *
-   * @param sortType               mechanism of sorting for commits in the graph (see [SortType]):
-   *                               * sort topologically and by date,
-   *                               * show incoming commits first for merges (IntelliSort),
+   * @param options                controls how the graph is created:
+   *                               * change sorting of the commits in the graph (see [SortType]),
    *                               * show incoming commits on top of main branch commits as if they were rebased (linear IntelliSort).
    * @param headsOfVisibleBranches heads of visible branches, null value means all branches are visible.
    * @param matchedCommits         visible commits, null value means all commits are visible.
    * @return new instance of VisibleGraph.
    */
-  fun createVisibleGraph(sortType: SortType,
-                         headsOfVisibleBranches: Set<Id>?,
-                         matchedCommits: Set<Id>?): VisibleGraph<Id>
+  fun createVisibleGraph(options: Options, headsOfVisibleBranches: Set<Id>?, matchedCommits: Set<Id>?): VisibleGraph<Id>
+
+  /**
+   * Create a new instance of VisibleGraph with a specific sort type, visible branches, and commits.
+   *
+   * @param sortType              mechanism of sorting for commits in the graph (see [SortType]):
+   *                              * sort topologically and by date,
+   *                              * show incoming commits first for merges (IntelliSort),
+   * @param headsOfVisibleBranches heads of visible branches, null value means all branches are visible.
+   * @param matchedCommits         visible commits, null value means all commits are visible.
+   * @return new instance of VisibleGraph.
+   */
+  fun createVisibleGraph(sortType: SortType, headsOfVisibleBranches: Set<Id>?, matchedCommits: Set<Id>?): VisibleGraph<Id> {
+    return createVisibleGraph(Options.Base(sortType), headsOfVisibleBranches, matchedCommits)
+  }
 
   val allCommits: List<GraphCommit<Id>>
 
@@ -48,9 +45,31 @@ interface PermanentGraph<Id> {
 
   fun getContainedInBranchCondition(currentBranchHead: Collection<Id>): Predicate<Id>
 
+  /**
+   * Sorting mechanism for the commits in the visible graph.
+   */
   enum class SortType(val presentation: String, val description: String) {
     Normal("Off", "Sort commits topologically and by date"),  // NON-NLS
     Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"),  // NON-NLS
-    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased") // NON-NLS
+  }
+
+  /**
+   * Options, controlling how the visible graph is created.
+   */
+  sealed class Options {
+    /**
+     * Show the graph as is, sort commits as specified by the provided [SortType].
+     */
+    data class Base(val sortType: SortType) : Options()
+
+    /**
+     * Modify the graph to show incoming commits on top of main branch commits as if they were rebased.
+     */
+    data object LinearBek : Options()
+
+    companion object {
+      @JvmField
+      val Default = Base(SortType.Normal)
+    }
   }
 }

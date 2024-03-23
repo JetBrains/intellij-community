@@ -34,9 +34,9 @@ class GitLogCommandUiFactory(private val logId: String,
   override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
     val vcsLogFilterer = GitLogCommandFilterer(project, logData.storage)
     val properties = uiProperties.createProperties(logId)
-    val initialSortType = properties[MainVcsLogUiProperties.BEK_SORT_TYPE]
+    val initialGraphOptions = properties[MainVcsLogUiProperties.GRAPH_OPTIONS]
     val initialFilters = filters ?: VcsLogFilterObject.collection()
-    val refresher = VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType, vcsLogFilterer, logId)
+    val refresher = VisiblePackRefresherImpl(project, logData, initialFilters, initialGraphOptions, vcsLogFilterer, logId)
     return GitLogCommandUi(logId, logData, colorManager, properties, refresher, filters)
   }
 }

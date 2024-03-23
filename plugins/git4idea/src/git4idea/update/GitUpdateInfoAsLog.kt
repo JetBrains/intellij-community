@@ -176,8 +176,8 @@ class GitUpdateInfoAsLog(private val project: Project,
       val logId = generateUpdateTabId()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
       val vcsLogFilterer = VcsLogFiltererImpl(logData)
-      val initialRangeSortType = properties[MainVcsLogUiProperties.BEK_SORT_TYPE]
-      val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(rangeFilter), initialRangeSortType,
+      val initialGraphOptions = properties[MainVcsLogUiProperties.GRAPH_OPTIONS]
+      val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(rangeFilter), initialGraphOptions,
                                                vcsLogFilterer, logId)
 
       // null for initial filters means that filters will be loaded from properties: saved filters + the range filter which we've just set

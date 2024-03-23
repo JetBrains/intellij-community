@@ -339,9 +339,9 @@ public class VcsLogManager implements Disposable {
     public T createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData);
-      PermanentGraph.SortType initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE);
+      PermanentGraph.Options initialOptions = properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS);
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
-      VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,
+      VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialOptions,
                                                                         vcsLogFilterer, myLogId);
       return createVcsLogUiImpl(myLogId, logData, properties, myColorManager, refresher, myFilters);
     }

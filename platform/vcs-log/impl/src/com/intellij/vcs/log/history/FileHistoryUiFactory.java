@@ -34,7 +34,7 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
 
     VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot);
     String logId = FileHistoryUi.getFileHistoryLogId(myFilePath, myHash);
-    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.SortType.Normal,
+    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.Options.Default,
                                                                                  new FileHistoryFilterer(logData, logId), logId);
     FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot, logId, filters,
                                          Objects.requireNonNull(logData.getLogProvider(myRoot).getDiffHandler()));

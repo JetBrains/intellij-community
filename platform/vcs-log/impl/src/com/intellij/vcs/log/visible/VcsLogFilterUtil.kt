@@ -53,7 +53,7 @@ private fun VcsLogFiltererImpl.filter(dataPack: DataPack,
     return commits.mapTo(IntOpenHashSet()) { it.id }
   }
 
-  val (visiblePack, _) = filter(dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filters, commitCount)
+  val (visiblePack, _) = filter(dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default, filters, commitCount)
 
   val maxCommits = visiblePack.visibleGraph.visibleCommitCount.applyIf(!commitCount.isAll()) { coerceAtMost(commitCount.count) }
   val result = IntOpenHashSet()

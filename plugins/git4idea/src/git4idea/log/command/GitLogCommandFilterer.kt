@@ -21,7 +21,7 @@ class GitLogCommandFilterer(private val project: Project,
                             private val storage: VcsLogStorage) : VcsLogFilterer {
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
-                      sortType: PermanentGraph.SortType,
+                      graphOptions: PermanentGraph.Options,
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val gitRoots = dataPack.logProviders.filterValues { it.supportedVcs == GitVcs.getKey() }.keys
@@ -31,7 +31,7 @@ class GitLogCommandFilterer(private val project: Project,
       collectMatchingCommits(gitRoots, commandFilter, commitCount)
     else Pair(null, false)
 
-    val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, matchingCommits)
+    val visibleGraph = dataPack.permanentGraph.createVisibleGraph(graphOptions, null, matchingCommits)
     return Pair(VisiblePack(dataPack, visibleGraph, canRequestMore, filters), commitCount)
   }
 

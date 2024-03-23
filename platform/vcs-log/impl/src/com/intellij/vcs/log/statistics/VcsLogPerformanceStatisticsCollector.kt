@@ -11,11 +11,12 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.graph.PermanentGraph
+import com.intellij.vcs.log.util.GraphOptionsUtil.optionKindNames
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.FilterKind
 
 object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.performance", 4)
+  private val GROUP = EventLogGroup("vcs.log.performance", 5)
 
   val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computed",
                                                    VcsLogRepoSizeCollector.VCS_FIELD,
@@ -30,14 +31,15 @@ object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
     override val validationRule: List<String> get() = VcsLogRepoSizeCollector.getVcsValidationRule()
   }
   val FILTERS_FIELD = EventFields.StringList("filters", VcsLogFilterCollection.STANDARD_KEYS.map { it.name })
-  val SORT_TYPE_FIELD = EventFields.String("intelli_sort_type", PermanentGraph.SortType.entries.map { it.presentation })
+  val SORT_TYPE_FIELD = EventFields.String("sort_type", PermanentGraph.SortType.entries.map { it.presentation })
+  val GRAPH_OPTIONS_TYPE_FIELD = EventFields.String("graph_options_type", optionKindNames)
   val FILTERED_COMMIT_COUNT_FIELD = object : StringEventField("filtered_commit_count") {
     override val validationRule: List<String> get() = listOf("{regexp#integer}", "{enum:${CommitCountStage.ALL}}")
   }
   val REPOSITORY_COMMIT_COUNT_FIELD = NullableRoundedLongEventField("repository_commit_count")
   val FILTER_KIND_FIELD = EventFields.String("filter_kind", FilterKind.entries.map { it.name })
-  val VCS_LOG_FILTER = GROUP.registerVarargEvent("vcs.log.filtered", VCS_LIST_FIELD, FILTERS_FIELD, SORT_TYPE_FIELD,
-                                                 REPOSITORY_COMMIT_COUNT_FIELD, FILTERED_COMMIT_COUNT_FIELD, FILTER_KIND_FIELD,
+  val VCS_LOG_FILTER = GROUP.registerVarargEvent("vcs.log.filtered", VCS_LIST_FIELD, FILTERS_FIELD, GRAPH_OPTIONS_TYPE_FIELD,
+                                                 SORT_TYPE_FIELD, REPOSITORY_COMMIT_COUNT_FIELD, FILTERED_COMMIT_COUNT_FIELD, FILTER_KIND_FIELD,
                                                  EventFields.DurationMs)
 
   override fun getGroup() = GROUP

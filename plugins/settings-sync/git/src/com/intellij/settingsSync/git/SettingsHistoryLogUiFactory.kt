@@ -15,7 +15,7 @@ class SettingsHistoryLogUiFactory : VcsLogManager.VcsLogUiFactory<SettingsHistor
     val filters = VcsLogFilterObject.EMPTY_COLLECTION
     val filterer = VcsLogFiltererImpl(logData)
 
-    val refresher = VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.SortType.Normal, filterer, logId)
+    val refresher = VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.Options.Default, filterer, logId)
     return SettingsHistoryLogUi(logId, logData, refresher)
   }
 }

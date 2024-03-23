@@ -162,7 +162,7 @@
       </action>
     </group>
 
-    <group id="Vcs.Log.SortTypeGroup" class="com.intellij.vcs.log.ui.actions.VcsLogSortTypeChooserGroup" popup="false"
+    <group id="Vcs.Log.GraphOptionsGroup" class="com.intellij.vcs.log.ui.actions.VcsLogGraphOptionsChooserGroup" popup="false"
            icon="VcsLogIcons.IntelliSort"/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
@@ -177,8 +177,7 @@
       <reference id="Vcs.Log.ToggleColumns"/>
       <separator/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
-      <separator key="action.vcs.log.sort.type.separator"/>
-      <reference ref="Vcs.Log.SortTypeGroup"/>
+      <reference ref="Vcs.Log.GraphOptionsGroup"/>
       <separator key="action.vcs.log.branches.separator"/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
