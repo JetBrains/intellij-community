@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.converters.values;
 
@@ -28,9 +14,9 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class BooleanValueConverter extends ResolvingConverter<String> {
-  @NonNls private static final String BOOLEAN = "boolean";
+  private static final @NonNls String BOOLEAN = "boolean";
 
-  @NonNls private static final String[] VARIANTS = {"false", "true"};
+  private static final @NonNls String[] VARIANTS = {"false", "true"};
 
   private final boolean myAllowEmpty;
 
@@ -46,8 +32,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
     myAllowEmpty = allowEmpty;
   }
 
-  @NonNls
-  public String[] getAllValues() {
+  public @NonNls String[] getAllValues() {
     final String[] strings = ArrayUtil.mergeArrays(getTrueValues(), getFalseValues());
 
     Arrays.sort(strings);
@@ -55,13 +40,11 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
     return strings;
   }
 
-  @NonNls
-  public String[] getTrueValues() {
+  public @NonNls String[] getTrueValues() {
     return new String[] {"true"};
   }
 
-  @NonNls
-  public String[] getFalseValues() {
+  public @NonNls String[] getFalseValues() {
     return new String[] {"false"};
   }
 
@@ -70,7 +53,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
   }
 
   @Override
-  public String fromString(@Nullable @NonNls final String stringValue, final ConvertContext context) {
+  public String fromString(final @Nullable @NonNls String stringValue, final ConvertContext context) {
     if (stringValue != null && ((myAllowEmpty && stringValue.trim().length() == 0) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
       return stringValue;
     }
@@ -78,18 +61,17 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
   }
 
   @Override
-  public String toString(@Nullable final String s, final ConvertContext context) {
+  public String toString(final @Nullable String s, final ConvertContext context) {
     return s;
   }
 
   @Override
-  @NotNull
-  public Collection<String> getVariants(final ConvertContext context) {
+  public @NotNull Collection<String> getVariants(final ConvertContext context) {
     return Arrays.asList(VARIANTS);
   }
 
   @Override
-  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final ConvertContext context) {
     return XmlDomBundle.message("dom.converter.format.exception", s, BOOLEAN);
   }
 }

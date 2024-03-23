@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.actions.generate;
 
 import com.intellij.openapi.editor.Editor;
@@ -23,13 +23,13 @@ import java.util.Map;
 public abstract class AbstractDomGenerateProvider<T extends DomElement> extends DefaultGenerateElementProvider<T> {
   public static final String NAMESPACE_PREFIX_VAR = "NS_PREFIX";
 
-  @Nullable private final String myMappingId;
+  private final @Nullable String myMappingId;
 
   /**
    * @deprecated Provide both action description and text, as they have different capitalization rules.
    */
   @Deprecated(forRemoval = true)
-  public AbstractDomGenerateProvider(@Nls final String description, final Class<T> aClass) {
+  public AbstractDomGenerateProvider(final @Nls String description, final Class<T> aClass) {
     this(description, aClass, null);
   }
 
@@ -37,7 +37,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
    * @deprecated Provide both action description and text, as they have different capitalization rules.
    */
   @Deprecated(forRemoval = true)
-  public AbstractDomGenerateProvider(@Nls final String description, final Class<T> aClass, @Nullable String mappingId) {
+  public AbstractDomGenerateProvider(final @Nls String description, final Class<T> aClass, @Nullable String mappingId) {
     this(description, description, aClass, mappingId);
   }
 
@@ -68,8 +68,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     return createNamespacePrefixMap(parentDomElement);
   }
 
-  @NotNull
-  public static Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
+  public static @NotNull Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
     Map<String, String> vars = new HashMap<>();
 
     addNamespacePrefix(domElement, vars);
@@ -105,8 +104,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     }
   }
 
-  @Nullable
-  protected DomElement getElementToNavigate(final T t) {
+  protected @Nullable DomElement getElementToNavigate(final T t) {
     return t;
   }
 
@@ -114,8 +112,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     return StringUtil.join(Arrays.asList(NameUtilCore.nameToWords(aClass.getSimpleName())), " ");
   }
 
-  @Nullable
-  public String getMappingId() {
+  public @Nullable String getMappingId() {
     return myMappingId;
   }
 }

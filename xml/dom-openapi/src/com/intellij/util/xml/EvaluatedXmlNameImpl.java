@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Key;
@@ -112,8 +112,7 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   @Override
-  @NonNls
-  public @NotNull String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
+  public @NonNls @NotNull String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
     final String xmlElementNamespace = getXmlElementNamespace(parentElement);
     if (myNamespaceKey != null && !myEqualToParent) {
       final List<String> strings = getAllowedNamespaces(file);

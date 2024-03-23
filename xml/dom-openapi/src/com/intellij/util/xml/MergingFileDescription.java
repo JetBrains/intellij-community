@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlFile;
@@ -14,16 +14,14 @@ import java.util.Set;
 public abstract class MergingFileDescription<T extends DomElement> extends DomFileDescription<T>{
   private ModelMerger myMerger;
 
-  protected MergingFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
+  protected MergingFileDescription(final Class<T> rootElementClass, final @NonNls String rootTagName) {
     super(rootElementClass, rootTagName);
   }
 
-  @NotNull
-  protected abstract Set<XmlFile> getFilesToMerge(DomElement element);
+  protected abstract @NotNull Set<XmlFile> getFilesToMerge(DomElement element);
 
   @Override
-  @NotNull
-  public DomElement getResolveScope(GenericDomValue<?> reference) {
+  public @NotNull DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
@@ -67,8 +65,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   }
 
   @Override
-  @NotNull
-  public DomElement getIdentityScope(DomElement element) {
+  public @NotNull DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
     if (annotation != null) return annotation;
 

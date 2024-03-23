@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -31,8 +31,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   private final boolean myAttribute;
   private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<>() {
     @Override
-    @NotNull
-    protected CachedValue<Map<String, DomElement>> create(final @NotNull DomElement scope) {
+    protected @NotNull CachedValue<Map<String, DomElement>> create(final @NotNull DomElement scope) {
       final DomManager domManager = scope.getManager();
       //noinspection ConstantConditions
       if (domManager == null) throw new AssertionError("Null DomManager for " + scope.getClass());
@@ -109,8 +108,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  @NotNull
-  public Collection<? extends T> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(final ConvertContext context) {
     final DomElement reference = context.getInvocationElement();
     final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
     return (Collection<T>)myResolveCache.get(scope).getValue().values();

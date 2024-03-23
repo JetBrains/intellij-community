@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.util.SmartList;
@@ -12,14 +12,11 @@ import java.util.List;
 
 public abstract class DomHighlightingHelper {
 
-  @NotNull
-  public abstract List<DomElementProblemDescriptor> checkRequired(DomElement element, DomElementAnnotationHolder holder);
+  public abstract @NotNull List<DomElementProblemDescriptor> checkRequired(DomElement element, DomElementAnnotationHolder holder);
 
-  @NotNull
-  public abstract List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, DomElementAnnotationHolder holder);
+  public abstract @NotNull List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, DomElementAnnotationHolder holder);
 
-  @NotNull
-  public abstract List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, DomElementAnnotationHolder holder);
+  public abstract @NotNull List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, DomElementAnnotationHolder holder);
 
   public abstract void runAnnotators(DomElement element, DomElementAnnotationHolder holder, @NotNull Class<? extends DomElement> rootClass);
 
@@ -30,8 +27,7 @@ public abstract class DomHighlightingHelper {
    * @param holder Holder instance.
    * @return Collected problem descriptors.
    */
-  @NotNull
-  public List<DomElementProblemDescriptor> checkCustomAnnotations(final DomElement element, final DomElementAnnotationHolder holder) {
+  public @NotNull List<DomElementProblemDescriptor> checkCustomAnnotations(final DomElement element, final DomElementAnnotationHolder holder) {
     List<DomElementProblemDescriptor> result = null;
     for (DomCustomAnnotationChecker<?> checker : DomCustomAnnotationChecker.EP_NAME.getExtensionList()) {
       final List<DomElementProblemDescriptor> list = checkAnno(element, checker, holder);
