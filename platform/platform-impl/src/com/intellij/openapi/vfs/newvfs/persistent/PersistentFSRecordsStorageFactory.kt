@@ -93,7 +93,7 @@ abstract class PersistentFSRecordsStorageFactory(val id: Int) : StorageFactory<P
   /** For testing/benchmarking: serves as a reference point. Not a prod-level implementation! */
   data class InMemory(val maxRecordsCount: Int = (1 shl 24)) : PersistentFSRecordsStorageFactory(id = 2) {
     @Suppress("TestOnlyProblems")
-    override fun open(storagePath: Path) = PersistentInMemoryFSRecordsStorage(storagePath, maxRecordsCount)
+    override fun open(storagePath: Path) = PersistentFSRecordsOverInMemoryStorage(storagePath, maxRecordsCount)
   }
 
   companion object {

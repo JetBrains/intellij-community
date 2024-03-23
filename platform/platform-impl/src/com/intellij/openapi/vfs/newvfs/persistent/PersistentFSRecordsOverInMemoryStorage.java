@@ -29,10 +29,9 @@ import static java.nio.file.StandardOpenOption.WRITE;
  * Intended for use as a reference implementation, to compare other impls against
  * (e.g. by performance)
  */
-//TODO RC: rename to PersistentFSRecordsOverInMemoryStorage
 @ApiStatus.Internal
 @TestOnly
-public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsStorage {
+public final class PersistentFSRecordsOverInMemoryStorage implements PersistentFSRecordsStorage {
 
   /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
 
@@ -81,8 +80,8 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
   private final Path storagePath;
 
 
-  public PersistentInMemoryFSRecordsStorage(final Path path,
-                                            final int maxRecords) throws IOException {
+  public PersistentFSRecordsOverInMemoryStorage(final Path path,
+                                                final int maxRecords) throws IOException {
     storagePath = Objects.requireNonNull(path, "path");
     if (maxRecords <= 0) {
       throw new IllegalArgumentException("maxRecords(=" + maxRecords + ") should be >0");

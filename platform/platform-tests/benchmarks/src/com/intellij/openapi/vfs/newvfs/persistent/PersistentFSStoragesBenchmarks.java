@@ -184,11 +184,11 @@ public class PersistentFSStoragesBenchmarks {
   @State(Scope.Benchmark)
   public static class FSRecordsInMemoryState extends RecordsState {
 
-    private PersistentInMemoryFSRecordsStorage storage;
+    private PersistentFSRecordsOverInMemoryStorage storage;
 
     @Setup
     public void setup(FileState fileState) throws IOException {
-      storage = new PersistentInMemoryFSRecordsStorage(
+      storage = new PersistentFSRecordsOverInMemoryStorage(
         fileState.file,
         RECORDS_COUNT
       );
