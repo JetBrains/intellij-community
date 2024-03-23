@@ -24,7 +24,6 @@ class HuggingFaceHtmlBuilder(
 ) {
   @NlsSafe
   suspend fun build(noHeader: Boolean = false): String {
-    val headChunk = HtmlChunk.tag("head").child(HuggingFaceQuickDocStyles.styleChunk())
     val cardHeaderChunk = if (noHeader) {
       HtmlChunk.empty()
     } else {
@@ -33,7 +32,7 @@ class HuggingFaceHtmlBuilder(
     @NlsSafe val convertedHtml = readAction { DocMarkdownToHtmlConverter.convert(project, modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
-      .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)
+      .setClass(DocumentationMarkup.CLASS_CONTENT)
       .child(HtmlChunk.raw(convertedHtml))
 
     val bodyChunk = HtmlChunk.tag("body")
@@ -42,14 +41,14 @@ class HuggingFaceHtmlBuilder(
         wrappedBodyContent,
       )
 
-    val htmlContent = HtmlChunk.tag("html").children(headChunk, bodyChunk)
+    val htmlContent = HtmlChunk.tag("html").child(bodyChunk)
     val htmlString = htmlContent.toString()
     return htmlString
   }
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
-    val cardTitle = modelInfo.itemId.replace("-", HuggingFaceQuickDocStyles.NBHP)
-    val modelNameWithIconRow = HtmlChunk.tag("h3").child(HtmlChunk.raw(cardTitle), )
+    val cardTitle = modelInfo.itemId.replace("-", NBHP)
+    val modelNameWithIconRow = HtmlChunk.tag("h3").child(HtmlChunk.raw(cardTitle))
 
     // modelPurpose chunk is not applicable for datasets
     val conditionalChunks = if (entityKind == HuggingFaceEntityKind.MODEL) {
@@ -58,6 +57,8 @@ class HuggingFaceHtmlBuilder(
     } else {
       listOf(HtmlChunk.text(PyHuggingFaceBundle.message("python.hugging.face.dataset")), HtmlChunk.nbsp(2))
     }
+
+
 
     val modelInfoRow = DocumentationMarkup.GRAYED_ELEMENT
       .children(
@@ -90,6 +91,7 @@ class HuggingFaceHtmlBuilder(
   }
 
   companion object {
+    private const val NBHP = "&#8209;"
     private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
       .attr("src", "AllIcons.Actions.Download")
     private val LIKES_ICON = HtmlChunk.tag("icon")
