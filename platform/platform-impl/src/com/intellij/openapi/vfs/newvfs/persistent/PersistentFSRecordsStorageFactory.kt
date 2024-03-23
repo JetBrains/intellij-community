@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.util.io.IOUtil
-import com.intellij.util.io.PageCacheUtils
-import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent
-import com.intellij.util.io.StorageLockContext
+import com.intellij.util.io.*
 import com.intellij.util.io.dev.StorageFactory
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy
@@ -12,19 +9,50 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.jvm.optionals.getOrNull
 
 @Internal
 abstract class PersistentFSRecordsStorageFactory(val id: Int) : StorageFactory<PersistentFSRecordsStorage> {
 
 
   /** Currently the default impl */
-  data class OverMMappedFile(val pageSize: Int = PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
+  data class OverMMappedFile(val pageSize: Int = PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE,
+                             val acquireStorageOwnership: Boolean = true)
     : PersistentFSRecordsStorageFactory(id = 0) {
 
     override fun open(storagePath: Path): PersistentFSRecordsLockFreeOverMMappedFile = MMappedFileStorageFactory.withDefaults()
       .pageSize(pageSize)
       .wrapStorageSafely<PersistentFSRecordsLockFreeOverMMappedFile, IOException>(storagePath) { mappedFileStorage ->
-        PersistentFSRecordsLockFreeOverMMappedFile(mappedFileStorage)
+        val recordsStorage = PersistentFSRecordsLockFreeOverMMappedFile(mappedFileStorage)
+
+        if (acquireStorageOwnership) {
+          val ownPid = ProcessHandle.current().pid().toInt()
+          val acquiredByPid = recordsStorage.tryAcquireExclusiveAccess(ownPid, /*forcibly: */ false)
+          if (acquiredByPid != ownPid) {
+            val ownerProcess = ProcessHandle.of(acquiredByPid.toLong()).getOrNull()
+            if (ownerProcess != null && ownerProcess.isAlive) {
+              //OSes re-use process ids, so false positives (pid collision) are possible.
+              //But this branch is reached only after improper shutdown, and we can't 100% guarantee VFS recovery after such
+              // a shutdowns anyway. So pid collision is just another case of bad luck -- it won't be a recovery, but a VFS
+              // rebuild.
+              //MAYBE RC: we could do a bit better by checking (how?) that an ownerProcess runs JVM -- this should greatly
+              //          reduce collision probability
+              throw StorageAlreadyInUseException("Records storage [$storagePath] is in use by another process [pid: $acquiredByPid, info: ${ownerProcess.info()}]")
+            }
+
+            //Previous owner process is terminated, i.e. storage wasn't closed properly on an app termination (crash?)
+            // => acquire storage forcibly
+            val acquiredByPidForcibly = recordsStorage.tryAcquireExclusiveAccess(ownPid, /*forcibly: */ true)
+            if (acquiredByPidForcibly != ownPid) {
+              //yet another process acquired records concurrently => whole scenario looks too damned, just fail:
+              val concurrentlyOwnedProcess = ProcessHandle.of(acquiredByPidForcibly.toLong()).getOrNull()
+              throw StorageAlreadyInUseException("Records storage [$storagePath] is in use by another process [pid: $acquiredByPidForcibly, info: ${concurrentlyOwnedProcess?.info()}]")
+            }
+            FSRecords.LOG.warn("Records storage [$storagePath] was in use by process [pid: $acquiredByPid] which is not exist now (wasn't closed properly/crashed?) -> re-acquired forcibly")
+          }
+        }
+
+        recordsStorage
       }
   }
 

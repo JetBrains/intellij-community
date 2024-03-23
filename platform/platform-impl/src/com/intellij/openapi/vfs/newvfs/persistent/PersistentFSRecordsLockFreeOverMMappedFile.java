@@ -48,9 +48,17 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    * Instead, we store allocated records count in header, in a reserved field (HEADER_RESERVED_OFFSET_1)
    */
   private static final int HEADER_RECORDS_ALLOCATED = HEADER_RESERVED_OFFSET_1;
+  /**
+   * ConnectionStatus header field re-purposed to keep owner process pid instead of magic numbers in {@link PersistentFSHeaders},
+   * renamed to emphasise that new purpose.
+   */
+  private static final int OWNER_PROCESS_ID_OFFSET = HEADER_CONNECTION_STATUS_OFFSET;
+
+  public static final int NULL_OWNER_PID = 0;
 
   @VisibleForTesting
   static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+
 
   @VisibleForTesting
   static final class RecordLayout {
@@ -121,6 +129,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    */
   private int cachedMaxAllocatedId;
 
+  private final boolean wasClosedProperly;
+
+  private volatile int owningProcessId = 0;
+
   public PersistentFSRecordsLockFreeOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     final int pageSize = storage.pageSize();
     if (pageSize < HEADER_SIZE) {
@@ -144,6 +156,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
 
     cachedMaxAllocatedId = maxAllocatedID();
+
+    int ownerProcessId = getIntHeaderField(OWNER_PROCESS_ID_OFFSET);
+    wasClosedProperly = (ownerProcessId == NULL_OWNER_PID);
   }
 
   @Override
@@ -337,11 +352,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
 
     @Override
-    public int getConnectionStatus() throws IOException {
-      return records.getConnectionStatus();
-    }
-
-    @Override
     public int getVersion() throws IOException {
       return records.getVersion();
     }
@@ -349,11 +359,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     @Override
     public int getGlobalModCount() {
       return records.getGlobalModCount();
-    }
-
-    @Override
-    public void setConnectionStatus(final int code) throws IOException {
-      records.setConnectionStatus(code);
     }
 
     @Override
@@ -578,14 +583,80 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public void setConnectionStatus(final int connectionStatus) {
-    setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-    dirty.compareAndSet(false, true);
+  public boolean wasClosedProperly() throws IOException {
+    return wasClosedProperly;
   }
 
-  @Override
-  public int getConnectionStatus() {
-    return getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+
+  /**
+   * Tries to acquire an exclusive ownership over the storage, for the process identified by acquiringProcessId.
+   * Storages based on memory mapped files _could_ be used from >1 process concurrently -- but current implementation
+   * of those storages is not designed for such a use -- and there is no legit scenarios of such a co-use for today.
+   * Hence we need a way to protect the storage(s) from multi-process access. This method provides a way to acquire
+   * 'ownership' of a storage for given process (identified by integer pid) -- implementation ensures that in a concurrent
+   * settings only a single process could successfully acquire ownership (see below definition of 'successful').
+   * <p>
+   * BEWARE: storage provides a way to acquire ownership, but storage does NOT ensure that only the owner process
+   * accesses it. It is the responsibility of the application to check (i.e. try acquiring) the ownership early,
+   * before starting any other operations with the storage -- and step back if ownership is already acquired by
+   * another process.
+   *
+   * @param acquiringProcessId must be != 0
+   * @return pid of the exclusive owner after the call.
+   * If [returned pid == acquiringProcessId] => acquiring has succeeded, and acquiringProcessId is the new exclusive owner.
+   * Otherwise: returned pid provides an information about who is the storage exclusive owner now.
+   */
+  public int tryAcquireExclusiveAccess(int acquiringProcessId,
+                                       boolean forcibly) {
+    if (acquiringProcessId == NULL_OWNER_PID) {
+      throw new IllegalArgumentException("acquiringPid(=" + acquiringProcessId + ") must be !=0");
+    }
+    ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
+    while (true) {//CAS loop
+      int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, OWNER_PROCESS_ID_OFFSET);
+      if (currentOwnerProcessId == acquiringProcessId) {
+        owningProcessId = acquiringProcessId;
+        return acquiringProcessId; //already acquired => nothing to do
+      }
+      if (currentOwnerProcessId != NULL_OWNER_PID && !forcibly) {
+        //already acquired by other process => return owner's pid as an indication of failure
+        return currentOwnerProcessId;
+      }
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
+        owningProcessId = acquiringProcessId;
+        dirty.compareAndSet(false, true);
+        return acquiringProcessId;
+      }
+    }
+  }
+
+  /**
+   * Releases the ownership acquired by {@link #tryAcquireExclusiveAccess(int, boolean)}.
+   * If {@code tryAcquireExclusiveAccess(pid)} has succeeded, than following {@code tryReleaseExclusiveAccess(pid)} must
+   * also succeed (given nobody forcibly overwrites the ownership by calling {@link #tryAcquireExclusiveAccess(int, boolean)}
+   * with forcible=true).
+   *
+   * @param ownerProcessId pid of current storage owner. Could be 0 if there is no current owner
+   * @return pid of exclusive owner after the call.
+   * If returned pid=0 => there is no owner, i.e. ownership was released successfully.
+   * Otherwise: returned pid provides an information about who is currently owning the storage.
+   */
+  private int tryReleaseExclusiveAccess(int ownerProcessId) {
+    ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
+    while (true) {//CAS loop
+      int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, OWNER_PROCESS_ID_OFFSET);
+      if (currentOwnerProcessId == NULL_OWNER_PID) {
+        return NULL_OWNER_PID;//nothing to do (method expected to be idempotent)
+      }
+      if (currentOwnerProcessId != ownerProcessId) {
+        //acquired by another process => return its pid as an indication of failure
+        return currentOwnerProcessId;
+      }
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, NULL_OWNER_PID)) {
+        dirty.compareAndSet(false, true);
+        return 0;
+      }
+    }
   }
 
   @Override
@@ -674,9 +745,20 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public void close() throws IOException {
-    force();
-    storage.close();
-    headerPage = null;
+    if (storage.isOpen()) {
+      int ourPid = owningProcessId;
+      int currentOwnerPid = tryReleaseExclusiveAccess(ourPid);
+
+      force();
+      storage.close();
+
+      headerPage = null;
+
+      if (currentOwnerPid != NULL_OWNER_PID) {
+        throw new IOException(
+          "Storage is exclusively owned by another process[pid: " + currentOwnerPid + ", our pid: " + ourPid + "]");
+      }
+    }
   }
 
   @Override

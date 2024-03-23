@@ -210,16 +210,16 @@ public class VFSInitializationTest {
 
         FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
         try {
-            //add something to VFS so it is not empty
-            int testFileId = fsRecords.createRecord();
-            fsRecords.setName(testFileId, "test");
-            try (var stream = fsRecords.writeContent(testFileId, false)) {
-              stream.writeUTF("test");
-            }
-            try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
-              stream.writeInt(42);
-            }
-            vfsVersion = fsRecords.getVersion();
+          //add something to VFS so it is not empty
+          int testFileId = fsRecords.createRecord();
+          fsRecords.setName(testFileId, "test");
+          try (var stream = fsRecords.writeContent(testFileId, false)) {
+            stream.writeUTF("test");
+          }
+          try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
+            stream.writeInt(42);
+          }
+          vfsVersion = fsRecords.getVersion();
         }
         finally {
           StorageTestingUtils.bestEffortToCloseAndUnmap(fsRecords);
@@ -324,20 +324,13 @@ public class VFSInitializationTest {
     final int version = 1;
 
     final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
-    try {
-      final PersistentFSRecordsStorage records = connection.getRecords();
-      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
-    }
-    finally {
-      //stamps connectionStatus=SAFELY_CLOSED_MAGIC
-      connection.close();
-    }
+    //stamps connectionStatus=SAFELY_CLOSED_MAGIC
+    connection.close();
 
     final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     try {
-      assertEquals("connectionStatus must be SAFELY_CLOSED since connection was disconnect()-ed",
-                   PersistentFSHeaders.SAFELY_CLOSED_MAGIC,
-                   reopenedConnection.getRecords().getConnectionStatus());
+      assertTrue("records must report 'closedProperly' since connection was properly disconnect()-ed",
+                   reopenedConnection.getRecords().wasClosedProperly());
     }
     finally {
       PersistentFSConnector.disconnect(reopenedConnection);
@@ -353,7 +346,6 @@ public class VFSInitializationTest {
     connection.doForce(); //persist VFS initial state
     try {
       final PersistentFSRecordsStorage records = connection.getRecords();
-      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
       records.force();
 
       //do NOT call connection.close() -- just reopen the connection:

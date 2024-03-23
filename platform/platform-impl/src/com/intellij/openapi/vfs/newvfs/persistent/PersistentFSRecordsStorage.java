@@ -66,7 +66,8 @@ public interface PersistentFSRecordsStorage extends CleanableStorage, AutoClosea
 
   boolean setContentRecordId(int fileId, int recordId) throws IOException;
 
-  @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
+  @PersistentFS.Attributes
+  int getFlags(int fileId) throws IOException;
 
   /**
    * Fills all record fields in one shot.
@@ -91,9 +92,13 @@ public interface PersistentFSRecordsStorage extends CleanableStorage, AutoClosea
 
   long getTimestamp() throws IOException;
 
-  void setConnectionStatus(int code) throws IOException;
-
-  int getConnectionStatus() throws IOException;
+  /**
+   * @return true if storage was closed properly (i.e. by {@link #close()} in a last session, or false if last session was
+   * finished without calling {@link #close()} -- storage content may be inconsistent or corrupted.
+   * The property describes events in a _previous_ session, so it is immutable during current session: changes to storage
+   * doesn't affect this property's value
+   */
+  boolean wasClosedProperly() throws IOException;
 
   int getErrorsAccumulated() throws IOException;
 

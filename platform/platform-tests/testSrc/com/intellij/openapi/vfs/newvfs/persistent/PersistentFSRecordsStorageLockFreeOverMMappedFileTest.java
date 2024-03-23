@@ -82,4 +82,59 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
     }
   }
 
+  @Test
+  public void tryAcquireExclusiveAccess_alwaysSucceedWithoutConcurrentRequests() {
+    int currentPid = 123;
+    int ownerPid = storage.tryAcquireExclusiveAccess(currentPid, false);
+    assertEquals(
+      "Acquire must be successful since there no other owners",
+      currentPid,
+      ownerPid
+    );
+  }
+
+  @Test
+  public void ifStorageIsAcquired_acquireWithDifferentPid_MustFailToChangeOwner() {
+    int currentPid = 123;
+    int competingPid = 124;
+    storage.tryAcquireExclusiveAccess(currentPid, false);
+    int ownerPid = storage.tryAcquireExclusiveAccess(competingPid, false);
+    assertEquals(
+      "If storage is already acquired, acquire must fail, and owner must not change",
+      currentPid,
+      ownerPid
+    );
+  }
+
+
+  @Test
+  public void processAlreadyAcquiredStorage_alwaysSucceedInAcquiringAgain() {
+    int currentPid = 123;
+    storage.tryAcquireExclusiveAccess(currentPid, false);
+    int ownerPid = storage.tryAcquireExclusiveAccess(currentPid, false);
+    assertEquals(
+      "Same process could always acquire storage again (i.e. acquire is idempotent)",
+      currentPid,
+      ownerPid
+    );
+  }
+
+  @Test
+  public void reopenedStorageHasNoOwner_henceCouldBeAcquired_ByAnyProcess() throws IOException {
+    int firstOwnerPid = 123;
+    storage.tryAcquireExclusiveAccess(firstOwnerPid, false);
+
+    storage.close();
+    storage = openStorage(storagePath);
+
+    int secondOwnerPid = 125;
+    int ownerPid = storage.tryAcquireExclusiveAccess(secondOwnerPid, false);
+    assertEquals(
+      ".close() clears the owner, so any process could acquire the reopened storage",
+      secondOwnerPid,
+      ownerPid
+    );
+
+  }
+
 }

@@ -426,8 +426,8 @@ public final class PersistentFSLoader {
     //So the tradeoff: we use few heuristics to quickly check for the most likely signs of corruption,
     // and if we find any such sign -- switch to more vigilant checking:
 
-    if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-      addProblem(NOT_CLOSED_PROPERLY, "VFS wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
+    if (!recordsStorage.wasClosedProperly()) {
+      addProblem(NOT_CLOSED_PROPERLY, "VFS wasn't safely shut down: records.wasClosedProperly is false");
     }
     int errorsAccumulated = recordsStorage.getErrorsAccumulated();
     if (errorsAccumulated > 0) {
@@ -779,7 +779,7 @@ public final class PersistentFSLoader {
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
     StorageFactory<PersistentFSRecordsStorage> recordsStorageFactory = PersistentFSRecordsStorageFactory.storageImplementation();
 
-    LOG.trace("VFS uses " + recordsStorageFactory + " storage for main file records table");
+    LOG.info("VFS uses " + recordsStorageFactory + " storage for main file records table");
     return recordsStorageFactory.wrapStorageSafely(recordsFile, records -> {
       if (vfsLog != null) {
         var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
@@ -819,7 +819,6 @@ public final class PersistentFSLoader {
     records.setVersion(version);
     attributes.setVersion(version);
     contents.setVersion(version);
-    records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
   }
 
   private static void makeBestEffortToCleanStorage(@Nullable Object storage,

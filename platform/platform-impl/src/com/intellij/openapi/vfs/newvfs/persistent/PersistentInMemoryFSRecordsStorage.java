@@ -29,6 +29,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
  * Intended for use as a reference implementation, to compare other impls against
  * (e.g. by performance)
  */
+//TODO RC: rename to PersistentFSRecordsOverInMemoryStorage
 @ApiStatus.Internal
 @TestOnly
 public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsStorage {
@@ -279,13 +280,8 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
   }
 
   @Override
-  public void setConnectionStatus(final int connectionStatus) throws IOException {
-    setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-  }
-
-  @Override
-  public int getConnectionStatus() throws IOException {
-    return getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+  public boolean wasClosedProperly() throws IOException {
+    return true;// 'previous session' make no sense for non-persistent in-memory storage
   }
 
   @Override

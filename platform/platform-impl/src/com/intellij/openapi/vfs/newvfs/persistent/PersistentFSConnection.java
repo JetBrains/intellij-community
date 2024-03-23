@@ -215,7 +215,6 @@ public final class PersistentFSConnection {
   void markDirty() throws IOException {
     if (!dirty) {
       dirty = true;
-      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
     }
   }
 
@@ -253,7 +252,6 @@ public final class PersistentFSConnection {
       return;
     }
 
-    records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     doForce();
 
     //ensure async loading is finished
