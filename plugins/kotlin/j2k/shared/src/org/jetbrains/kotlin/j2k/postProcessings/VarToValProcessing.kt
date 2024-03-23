@@ -38,7 +38,7 @@ class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProp
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
+    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings): Boolean {
         if (!element.isVar) return false
 
         return when {

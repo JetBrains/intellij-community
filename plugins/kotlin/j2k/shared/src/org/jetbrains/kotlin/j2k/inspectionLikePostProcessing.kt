@@ -112,7 +112,7 @@ class InspectionLikeProcessingGroup(
 }
 
 abstract class InspectionLikeProcessing {
-    abstract fun isApplicableToElement(element: PsiElement, settings: ConverterSettings?): Boolean
+    abstract fun isApplicableToElement(element: PsiElement, settings: ConverterSettings): Boolean
 
     abstract fun applyToElement(element: PsiElement)
 
@@ -125,12 +125,12 @@ abstract class InspectionLikeProcessing {
 }
 
 abstract class InspectionLikeProcessingForElement<E : PsiElement>(private val classTag: Class<E>) : InspectionLikeProcessing() {
-    protected abstract fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean
+    protected abstract fun isApplicableTo(element: E, settings: ConverterSettings): Boolean
 
     protected abstract fun apply(element: E)
 
     @Suppress("UNCHECKED_CAST")
-    final override fun isApplicableToElement(element: PsiElement, settings: ConverterSettings?): Boolean {
+    final override fun isApplicableToElement(element: PsiElement, settings: ConverterSettings): Boolean {
         if (!classTag.isInstance(element)) return false
         if (!element.isValid) return false
         @Suppress("UNCHECKED_CAST") return isApplicableTo(element as E, settings)

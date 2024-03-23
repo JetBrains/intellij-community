@@ -19,7 +19,7 @@ internal inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>>
     writeActionNeeded: Boolean = true,
     noinline additionalChecker: (E) -> Boolean = { true }
 ) = object : InspectionLikeProcessingForElement<E>(E::class.java) {
-    override fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean =
+    override fun isApplicableTo(element: E, settings: ConverterSettings): Boolean =
         intention.applicabilityRange(element) != null
                 && additionalChecker(element)
 
@@ -35,7 +35,7 @@ internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspe
     writeActionNeeded: Boolean = true,
     noinline additionalChecker: (E) -> Boolean = { true }
 ) = object : InspectionLikeProcessingForElement<E>(E::class.java) {
-    override fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean =
+    override fun isApplicableTo(element: E, settings: ConverterSettings): Boolean =
         isInspectionEnabledInCurrentProfile(inspection, element.project) && inspection.isApplicable(element) && additionalChecker(element)
 
     override fun apply(element: E) {

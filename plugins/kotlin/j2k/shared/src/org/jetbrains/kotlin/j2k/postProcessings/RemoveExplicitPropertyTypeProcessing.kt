@@ -18,15 +18,14 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
+    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings): Boolean {
         if (element.initializer == null) return false
         if (element.isMember && !element.isPrivate()) return false
 
         val typeReference = element.typeReference
         if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
 
-        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
-        if (needLocalVariablesTypes && element.isLocal) return false
+        if (settings.specifyLocalVariableTypeByDefault && element.isLocal) return false
 
         allowAnalysisOnEdt {
             analyze(element) {
