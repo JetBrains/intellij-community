@@ -131,7 +131,12 @@ class ControllerBackedStoreTest {
   })
 
     @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
-    class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test"))
+    class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test")) {
+
+      fun update(newState: Element) {
+        updateState { newState }
+      }
+    }
 
     val component = TestComponentWithElementState()
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -147,7 +152,7 @@ class ControllerBackedStoreTest {
         <text>hello</text>
       </test>
     """.trimIndent()
-    component.state = JDOMUtil.load(testElementXml)
+    component.update(JDOMUtil.load(testElementXml))
     store.save(forceSavingAllSettings = true)
 
     assertThat(jsonDomToXml(saved!!)).isEqualTo(testElementXml)
@@ -237,7 +242,7 @@ class ControllerBackedStoreTest {
     assertThat(component.state.foo).isEqualTo("old")
     assertThat(component.state.bar).isEmpty()
 
-    component.state = ControllerTestState(bar = "42")
+    component.update(ControllerTestState(bar = "42"))
     store.save(forceSavingAllSettings = true)
 
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -355,6 +360,10 @@ class ControllerBackedStoreTest {
       override fun noStateLoaded() {
         loadState(TestState())
       }
+
+      fun update(newState: TestState) {
+        updateState { newState }
+      }
     }
 
     val component = TestComponent()
@@ -363,6 +372,7 @@ class ControllerBackedStoreTest {
     assertThat(component.state.foo).isEqualTo("hello")
 
     component.state.foo = "newValue"
+    component.update(component.state)
     store.save(forceSavingAllSettings = true)
     assertThat(Json.encodeToString(saved)).isEqualTo("""{"foo":"newValue","bar":"test2"}""")
   }
@@ -391,6 +401,10 @@ class ControllerBackedStoreTest {
       override fun noStateLoaded() {
         loadState(TestState())
       }
+
+      fun update(newState: TestState) {
+        updateState { newState }
+      }
     }
 
     val component = TestComponent()
@@ -399,6 +413,7 @@ class ControllerBackedStoreTest {
     assertThat(component.state.foo).isEmpty()
 
     component.state.foo = "newValue"
+    component.update(component.state)
     store.save(forceSavingAllSettings = true)
     assertThat(component.state.foo).isEqualTo("newValue")
 
@@ -431,12 +446,16 @@ class ControllerBackedStoreTest {
       override fun noStateLoaded() {
         loadState(TestState())
       }
+      fun update(newState: TestState) {
+        updateState { newState }
+      }
     }
 
     val component = TestComponent()
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     component.state.foo = "hello"
+    component.update(component.state)
     store.save(forceSavingAllSettings = true)
 
     store.reloadStates(setOf("TestCacheState"))
@@ -498,6 +517,10 @@ private const val TEST_COMPONENT_FILE_NAME = "controllerBackedTest.xml"
 private class ControllerTestComponent : SerializablePersistentStateComponent<ControllerTestState>(ControllerTestState()) {
   override fun noStateLoaded() {
     loadState(ControllerTestState())
+  }
+
+  fun update(newState: ControllerTestState) {
+    updateState { newState }
   }
 }
 
