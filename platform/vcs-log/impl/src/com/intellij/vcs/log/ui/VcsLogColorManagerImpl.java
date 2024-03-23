@@ -31,11 +31,11 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     myPath2Palette = new HashMap<>();
 
     defaultPalette = defaultPalette.isEmpty() ? List.of(getDefaultRootColor()) : new ArrayList<>(defaultPalette);
-    myPath2Palette.put(VcsLogColorManager.DEFAULT_COLOR_MODE, generateFromPalette(defaultPalette));
+    myPath2Palette.put(DEFAULT_COLOR_MODE, generateFromPalette(defaultPalette));
 
     for (AdditionalColorSpace colorSpace : additionalColorSpaces) {
       // do not allow to override default palette
-      if (colorSpace.colorMode.equals(VcsLogColorManager.DEFAULT_COLOR_MODE)) continue;
+      if (colorSpace.colorMode.equals(DEFAULT_COLOR_MODE)) continue;
 
       // allow additional palettes only the same size as the default
       if (colorSpace.palette.size() != defaultPalette.size()) continue;
