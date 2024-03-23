@@ -91,7 +91,6 @@ import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -220,37 +219,38 @@ open class FileEditorManagerImpl(
       }
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
-    val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+    coroutineScope.launch {
+      val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
 
-    // not using collectLatest() to ensure that the listeners miss no selection update
-    selectionFlow
-      .zipWithNext { oldState, state ->
-        val oldEditorWithProvider = oldState?.fileEditorProvider
-        val newEditorWithProvider = state?.fileEditorProvider
-        if (oldEditorWithProvider == newEditorWithProvider) {
-          return@zipWithNext
-        }
+      // not using collectLatest() to ensure that the listeners miss no selection update
+      selectionFlow
+        .zipWithNext { oldState, state ->
+          val oldEditorWithProvider = oldState?.fileEditorProvider
+          val newEditorWithProvider = state?.fileEditorProvider
+          if (oldEditorWithProvider == newEditorWithProvider) {
+            return@zipWithNext
+          }
 
-        // expected in EDT
-        withContext(Dispatchers.EDT) {
-          blockingContext {
-            kotlin.runCatching {
-              fireSelectionChanged(newComposite = state?.composite,
-                                   oldEditorWithProvider = oldEditorWithProvider,
-                                   newEditorWithProvider = newEditorWithProvider,
-                                   publisher = publisher)
+          // expected in EDT
+          withContext(Dispatchers.EDT) {
+            runCatching {
+              fireSelectionChanged(
+                newComposite = state?.composite,
+                oldEditorWithProvider = oldEditorWithProvider,
+                newEditorWithProvider = newEditorWithProvider,
+                publisher = publisher,
+              )
             }.getOrLogException(LOG)
           }
         }
-      }
-      .launchIn(coroutineScope)
+        .collect()
+    }
 
     currentFileEditorFlow = selectionFlow
       .map { it?.fileEditorProvider?.fileEditor }
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
-    val dumbModeFinishedScope = coroutineScope.childScope()
-    dumbModeFinishedScope.launch(start = CoroutineStart.UNDISPATCHED) {
+    coroutineScope.launch {
       dumbModeFinishedFlow.collectLatest {
         dumbModeFinished(project)
       }
@@ -424,7 +424,7 @@ open class FileEditorManagerImpl(
       getAllSplitters()
     }
 
-    val providerManager = FileEditorProviderManager.getInstance()
+    val providerManager = serviceAsync<FileEditorProviderManager>()
     // predictable order of iteration
     val fileToNewProviders = openedComposites.groupByTo(LinkedHashMap()) { it.file }.entries.mapNotNull { entry ->
       val composites = entry.value
@@ -435,13 +435,15 @@ open class FileEditorManagerImpl(
         null
       }
       else {
-        file to composites.map { composite -> composite to newProviders }
+        file to composites.map { it to newProviders }
       }
     }
     for ((file, toOpen) in fileToNewProviders) {
       withContext(Dispatchers.EDT) {
         for ((composite, providers) in toOpen) {
-          if (!openedComposites.contains(composite)) continue
+          if (!openedComposites.contains(composite)) {
+            continue
+          }
 
           for (provider in providers) {
             val editor = provider.createEditor(project, file)
@@ -472,10 +474,11 @@ open class FileEditorManagerImpl(
 
   fun getAllSplitters(): Set<EditorsSplitters> {
     // ordered
-    var result = persistentSetOf(mainSplitters)
+    val result = LinkedHashSet<EditorsSplitters>()
+    result.add(mainSplitters)
     for (container in DockManager.getInstance(project).containers) {
       if (container is DockableEditorTabbedContainer) {
-        result = result.add(container.splitters)
+        result.add(container.splitters)
       }
     }
     return result
@@ -485,10 +488,7 @@ open class FileEditorManagerImpl(
     val result = CompletableDeferred<EditorsSplitters?>()
     val focusManager = IdeFocusManager.getGlobalInstance()
     focusManager.doWhenFocusSettlesDown {
-      result.complete(
-        if (project.isDisposed) null
-        else getDockContainer(focusManager.focusOwner)?.splitters ?: mainSplitters
-      )
+      result.complete(if (project.isDisposed) null else getDockContainer(focusManager.focusOwner)?.splitters ?: mainSplitters)
     }
     return result
   }
@@ -508,8 +508,8 @@ open class FileEditorManagerImpl(
   }
 
   private fun getDockContainer(focusOwner: Component?): DockableEditorTabbedContainer? {
-    return DockManager.getInstance(project).getContainerFor(
-      focusOwner) { it is DockableEditorTabbedContainer } as DockableEditorTabbedContainer?
+    return DockManager.getInstance(project)
+      .getContainerFor(focusOwner) { it is DockableEditorTabbedContainer } as DockableEditorTabbedContainer?
   }
 
   override val preferredFocusedComponent: JComponent?
@@ -1728,23 +1728,22 @@ open class FileEditorManagerImpl(
            ?: allClientFileEditorManagers.firstNotNullOfOrNull { it.getComposite(editor) }
   }
 
-  private fun fireSelectionChanged(newComposite: EditorComposite?,
-                                   oldEditorWithProvider: FileEditorWithProvider?,
-                                   newEditorWithProvider: FileEditorWithProvider?,
-                                   publisher: FileEditorManagerListener) {
-    val task = {
-      oldEditorWithProvider?.fileEditor?.deselectNotify()
-
-      val newEditor = newEditorWithProvider?.fileEditor
-      if (newEditor != null) {
+  private suspend fun fireSelectionChanged(
+    newComposite: EditorComposite?,
+    oldEditorWithProvider: FileEditorWithProvider?,
+    newEditorWithProvider: FileEditorWithProvider?,
+    publisher: FileEditorManagerListener,
+  ) {
+    oldEditorWithProvider?.fileEditor?.deselectNotify()
+    val newEditor = newEditorWithProvider?.fileEditor
+    if (newEditor != null) {
+      blockingContext {
         newEditor.selectNotify()
-        FileEditorCollector.logAlternativeFileEditorSelected(project, newComposite!!.file, newEditor)
-        (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).providerSelected(newComposite)
       }
-      IdeDocumentHistory.getInstance(project).onSelectionChanged()
+      FileEditorCollector.logAlternativeFileEditorSelected(project = project, file = newComposite!!.file, editor = newEditor)
+      (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).providerSelected(newComposite)
     }
-
-    task()
+    project.serviceAsync<IdeDocumentHistory>().onSelectionChanged()
 
     val newFile = newComposite?.file
     if (newFile != null) {

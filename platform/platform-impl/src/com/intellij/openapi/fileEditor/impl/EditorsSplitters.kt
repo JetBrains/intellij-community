@@ -91,7 +91,7 @@ private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 @DirtyUI
 open class EditorsSplitters internal constructor(
   val manager: FileEditorManagerImpl,
-  internal val coroutineScope: CoroutineScope,
+  @JvmField internal val coroutineScope: CoroutineScope,
 ) : JPanel(BorderLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
@@ -103,7 +103,6 @@ open class EditorsSplitters internal constructor(
       }
     }
 
-    @JvmStatic
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
       return getSplittersToFocus(project)?.currentWindow?.selectedComposite?.preferredFocusedComponent
     }

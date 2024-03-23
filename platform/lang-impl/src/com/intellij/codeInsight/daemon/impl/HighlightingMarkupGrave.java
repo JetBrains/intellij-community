@@ -271,7 +271,7 @@ public class HighlightingMarkupGrave {
     }
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
     if (info != null &&
-        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
+        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g., field text attribute)
          || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
       return true;
     }
@@ -362,9 +362,9 @@ public class HighlightingMarkupGrave {
     }
 
     private void writeTextAttributesKey(@NotNull DataOutput out) throws IOException {
-      boolean attributesKeyExists = textAttributesKey != null;
-      out.writeBoolean(attributesKeyExists);
-      if (attributesKeyExists) {
+      boolean attributeKeyExists = textAttributesKey != null;
+      out.writeBoolean(attributeKeyExists);
+      if (attributeKeyExists) {
         IOUtil.writeUTF(out, textAttributesKey.getExternalName());
       }
     }
@@ -413,7 +413,7 @@ public class HighlightingMarkupGrave {
         return STORE_NEW;
       }
       if (oldMarkup == null) {
-        // no a limb to put in grave
+        // no, a limb to put in grave
         return KEEP_OLD;
       }
       if (oldMarkup.contentHash() != newMarkup.contentHash() && !newMarkup.isEmpty()) {
@@ -429,7 +429,7 @@ public class HighlightingMarkupGrave {
         return KEEP_OLD;
       }
       if (isNewMoreRelevant == null) {
-        // should never happen. file is closed without being opened before
+        // should never happen. the file is closed without being opened before
         return STORE_NEW;
       }
       if (isNewMoreRelevant) {
@@ -482,6 +482,6 @@ public class HighlightingMarkupGrave {
   }
 
   private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event, int restoredCount) {
-    FileEditorCollector.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
+    FileEditorCollector.INSTANCE.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
   }
 }
