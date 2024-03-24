@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.icons.AllIcons;
@@ -42,130 +42,130 @@ public final class TabInfo implements Queryable, PlaceProvider {
   public static final String HIDDEN = "hidden";
   public static final String ENABLED = "enabled";
 
-  private JComponent myComponent;
-  private JComponent myPreferredFocusableComponent;
+  private JComponent component;
+  private JComponent preferredFocusableComponent;
 
-  private ActionGroup myGroup;
+  private ActionGroup group;
 
-  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
-  private Icon myIcon;
-  private @NonNls String myPlace;
-  private Object myObject;
-  private JComponent mySideComponent;
-  private JComponent myForeSideComponent;
-  private Reference<JComponent> myLastFocusOwner;
+  private Icon icon;
+  private @NonNls String place;
+  private Object object;
+  private JComponent sideComponent;
+  private JComponent foreSideComponent;
+  private Reference<JComponent> lastFocusOwner;
 
+  private ActionGroup tabLabelActions;
+  private @Nullable ActionGroup tabPaneActions;
+  private String tabActionPlace;
 
-  private ActionGroup myTabLabelActions;
-  private @Nullable ActionGroup myTabPaneActions;
-  private String myTabActionPlace;
+  private AlertIcon alertIcon;
 
-  private AlertIcon myAlertIcon;
+  private int blinkCount;
+  private boolean isAlertRequested;
+  private boolean isHidden;
+  private JComponent actionContextComponent;
 
-  private int myBlinkCount;
-  private boolean myAlertRequested;
-  private boolean myHidden;
-  private JComponent myActionsContextComponent;
+  private final SimpleColoredText text = new SimpleColoredText();
+  private @NlsContexts.Tooltip String tooltipText;
 
-  private final SimpleColoredText myText = new SimpleColoredText();
-  private @NlsContexts.Tooltip String myTooltipText;
-
-  private int myDefaultStyle = -1;
-  private Color myDefaultForeground;
+  private int defaultStyle = -1;
+  private Color defaultForeground;
   private TextAttributes editorAttributes;
-  private SimpleTextAttributes myDefaultAttributes;
+  private SimpleTextAttributes defaultAttributes;
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6));
 
-  private boolean myEnabled = true;
-  private Color myTabColor;
+  private boolean isEnabled = true;
+  private Color tabColor;
 
-  private Queryable myQueryable;
-  private DragOutDelegate myDragOutDelegate;
-  private DragDelegate myDragDelegate;
+  private Queryable queryable;
+  private DragOutDelegate dragOutDelegate;
+  private DragDelegate dragDelegate;
 
   /**
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
    * out of its container. (IDEA-61536)
    */
-  private WeakReference<TabInfo> myPreviousSelection = new WeakReference<>(null);
+  private WeakReference<TabInfo> previousSelection = new WeakReference<>(null);
 
-  public TabInfo(final JComponent component) {
-    myComponent = component;
-    myPreferredFocusableComponent = component;
+  public TabInfo(@Nullable JComponent component) {
+    this.component = component;
+    preferredFocusableComponent = component;
   }
 
   public @NotNull PropertyChangeSupport getChangeSupport() {
-    return myChangeSupport;
+    return changeSupport;
   }
 
   public @NotNull TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
-    List<SimpleTextAttributes> attributes = myText.getAttributes();
+    List<SimpleTextAttributes> attributes = this.text.getAttributes();
     TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
     SimpleTextAttributes defaultAttributes = getDefaultAttributes();
-    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
+    if (!this.text.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
       clearText(false);
+      //noinspection DialogTitleCapitalization
       append(text, defaultAttributes);
     }
     return this;
   }
 
   private @NotNull SimpleTextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes == null) {
-      int style = (myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN)
+    if (defaultAttributes == null) {
+      int style = (defaultStyle != -1 ? defaultStyle : SimpleTextAttributes.STYLE_PLAIN)
                   | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR;
       if (editorAttributes != null) {
         SimpleTextAttributes attr = SimpleTextAttributes.fromTextAttributes(editorAttributes);
-        attr = SimpleTextAttributes.merge(new SimpleTextAttributes(style, myDefaultForeground), attr);
-        myDefaultAttributes = attr;
+        attr = SimpleTextAttributes.merge(new SimpleTextAttributes(style, defaultForeground), attr);
+        defaultAttributes = attr;
       }
       else {
-        myDefaultAttributes = new SimpleTextAttributes(style, myDefaultForeground);
+        defaultAttributes = new SimpleTextAttributes(style, defaultForeground);
       }
     }
-    return myDefaultAttributes;
+    return defaultAttributes;
   }
 
   public @NotNull TabInfo clearText(final boolean invalidate) {
-    final String old = myText.toString();
-    myText.clear();
+    final String old = text.toString();
+    text.clear();
     if (invalidate) {
-      myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
+      changeSupport.firePropertyChange(TEXT, old, text.toString());
     }
     return this;
   }
 
   public @NotNull TabInfo append(@NotNull @NlsContexts.Label String fragment, @NotNull SimpleTextAttributes attributes) {
-    final String old = myText.toString();
-    myText.append(fragment, attributes);
-    myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
+    final String old = text.toString();
+    text.append(fragment, attributes);
+    changeSupport.firePropertyChange(TEXT, old, text.toString());
     return this;
   }
 
   public @NotNull TabInfo setIcon(Icon icon) {
-    Icon old = myIcon;
+    Icon old = this.icon;
     if (!Objects.equals(old, icon)) {
-      myIcon = icon;
-      myChangeSupport.firePropertyChange(ICON, old, icon);
+      this.icon = icon;
+      changeSupport.firePropertyChange(ICON, old, icon);
     }
     return this;
   }
 
   public @NotNull TabInfo setComponent(Component c) {
-    if (myComponent != c) {
-      JComponent old = myComponent;
-      myComponent = (JComponent)c;
-      myChangeSupport.firePropertyChange(COMPONENT, old, myComponent);
+    if (component != c) {
+      JComponent old = component;
+      component = (JComponent)c;
+      changeSupport.firePropertyChange(COMPONENT, old, component);
     }
     return this;
   }
 
   public ActionGroup getGroup() {
-    return myGroup;
+    return group;
   }
 
   public JComponent getComponent() {
-    return myComponent;
+    return component;
   }
 
   public boolean isPinned() {
@@ -173,134 +173,134 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   public @NotNull @NlsContexts.TabTitle String getText() {
-    return myText.toString();
+    return text.toString();
   }
 
   public @NotNull SimpleColoredText getColoredText() {
-    return myText;
+    return text;
   }
 
   public Icon getIcon() {
-    return myIcon;
+    return icon;
   }
 
   @Override
   public String getPlace() {
-    return myPlace;
+    return place;
   }
 
   public @NotNull TabInfo setSideComponent(JComponent comp) {
-    mySideComponent = comp;
+    sideComponent = comp;
     return this;
   }
 
   public JComponent getSideComponent() {
-    return mySideComponent;
+    return sideComponent;
   }
 
   public @NotNull TabInfo setForeSideComponent(JComponent comp) {
-    myForeSideComponent = comp;
+    foreSideComponent = comp;
     return this;
   }
 
   public JComponent getForeSideComponent() {
-    return myForeSideComponent;
+    return foreSideComponent;
   }
 
   public @NotNull TabInfo setActions(ActionGroup group, @NonNls String place) {
-    ActionGroup old = myGroup;
-    myGroup = group;
-    myPlace = place;
-    myChangeSupport.firePropertyChange(ACTION_GROUP, old, myGroup);
+    ActionGroup old = this.group;
+    this.group = group;
+    this.place = place;
+    changeSupport.firePropertyChange(ACTION_GROUP, old, this.group);
     return this;
   }
 
   public @NotNull TabInfo setActionsContextComponent(JComponent c) {
-    myActionsContextComponent = c;
+    actionContextComponent = c;
     return this;
   }
 
   public JComponent getActionsContextComponent() {
-    return myActionsContextComponent;
+    return actionContextComponent;
   }
 
   public @NotNull TabInfo setObject(final Object object) {
-    myObject = object;
+    this.object = object;
     return this;
   }
 
   public Object getObject() {
-    return myObject;
+    return object;
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return myPreferredFocusableComponent != null ? myPreferredFocusableComponent : myComponent;
+    return preferredFocusableComponent != null ? preferredFocusableComponent : component;
   }
 
   public @NotNull TabInfo setPreferredFocusableComponent(final JComponent component) {
-    myPreferredFocusableComponent = component;
+    preferredFocusableComponent = component;
     return this;
   }
 
   public void setLastFocusOwner(final JComponent owner) {
-    myLastFocusOwner = owner == null ? null : new WeakReference<>(owner);
+    lastFocusOwner = owner == null ? null : new WeakReference<>(owner);
   }
 
   public ActionGroup getTabLabelActions() {
-    return myTabLabelActions;
+    return tabLabelActions;
   }
 
   public String getTabActionPlace() {
-    return myTabActionPlace;
+    return tabActionPlace;
   }
 
   public @NotNull TabInfo setTabLabelActions(final ActionGroup tabActions, @NotNull String place) {
-    ActionGroup old = myTabLabelActions;
-    myTabLabelActions = tabActions;
-    myTabActionPlace = place;
-    myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabLabelActions);
+    ActionGroup old = tabLabelActions;
+    tabLabelActions = tabActions;
+    tabActionPlace = place;
+    changeSupport.firePropertyChange(TAB_ACTION_GROUP, old, tabLabelActions);
     return this;
   }
 
   public @Nullable ActionGroup getTabPaneActions() {
-    return myTabPaneActions;
+    return tabPaneActions;
   }
 
   /**
    * Sets the actions that will be displayed on the right side of the tabs
    */
   public @NotNull TabInfo setTabPaneActions(final @Nullable ActionGroup tabPaneActions) {
-    myTabPaneActions = tabPaneActions;
+    this.tabPaneActions = tabPaneActions;
     return this;
   }
 
   public @Nullable JComponent getLastFocusOwner() {
-    return SoftReference.dereference(myLastFocusOwner);
+    return SoftReference.dereference(lastFocusOwner);
   }
 
-  public @NotNull TabInfo setAlertIcon(final AlertIcon alertIcon) {
-    AlertIcon old = myAlertIcon;
-    myAlertIcon = alertIcon;
-    myChangeSupport.firePropertyChange(ALERT_ICON, old, myAlertIcon);
+  public @NotNull TabInfo setAlertIcon(AlertIcon alertIcon) {
+    AlertIcon old = this.alertIcon;
+    this.alertIcon = alertIcon;
+    changeSupport.firePropertyChange(ALERT_ICON, old, this.alertIcon);
     return this;
   }
 
   public void fireAlert() {
-    myAlertRequested = true;
-    myChangeSupport.firePropertyChange(ALERT_STATUS, null, true);
+    isAlertRequested = true;
+    changeSupport.firePropertyChange(ALERT_STATUS, null, true);
   }
 
   public void stopAlerting() {
-    myAlertRequested = false;
-    myChangeSupport.firePropertyChange(ALERT_STATUS, null, false);
+    isAlertRequested = false;
+    changeSupport.firePropertyChange(ALERT_STATUS, null, false);
   }
 
   public int getBlinkCount() {
-    return myBlinkCount;
+    return blinkCount;
   }
 
   public void setBlinkCount(final int blinkCount) {
-    myBlinkCount = blinkCount;
+    this.blinkCount = blinkCount;
   }
 
   @Override
@@ -309,58 +309,58 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   public @NotNull AlertIcon getAlertIcon() {
-    return myAlertIcon == null ? DEFAULT_ALERT_ICON : myAlertIcon;
+    return alertIcon == null ? DEFAULT_ALERT_ICON : alertIcon;
   }
 
   public void resetAlertRequest() {
-    myAlertRequested = false;
+    isAlertRequested = false;
   }
 
   public boolean isAlertRequested() {
-    return myAlertRequested;
+    return isAlertRequested;
   }
 
   public void setHidden(boolean hidden) {
-    boolean old = myHidden;
-    myHidden = hidden;
-    myChangeSupport.firePropertyChange(HIDDEN, old, myHidden);
+    boolean old = isHidden;
+    isHidden = hidden;
+    changeSupport.firePropertyChange(HIDDEN, old, isHidden);
   }
 
   public boolean isHidden() {
-    return myHidden;
+    return isHidden;
   }
 
   public void setEnabled(boolean enabled) {
-    boolean old = myEnabled;
-    myEnabled = enabled;
-    myChangeSupport.firePropertyChange(ENABLED, old, myEnabled);
+    boolean old = isEnabled;
+    isEnabled = enabled;
+    changeSupport.firePropertyChange(ENABLED, old, isEnabled);
   }
 
   public boolean isEnabled() {
-    return myEnabled;
+    return isEnabled;
   }
 
   public @NotNull TabInfo setDefaultStyle(@SimpleTextAttributes.StyleAttributeConstant int style) {
-    myDefaultStyle = style;
-    myDefaultAttributes = null;
+    defaultStyle = style;
+    defaultAttributes = null;
     update();
     return this;
   }
 
   public @NotNull TabInfo setDefaultForeground(final Color fg) {
-    myDefaultForeground = fg;
-    myDefaultAttributes = null;
+    defaultForeground = fg;
+    defaultAttributes = null;
     update();
     return this;
   }
 
   public Color getDefaultForeground() {
-    return myDefaultForeground;
+    return defaultForeground;
   }
 
   public @NotNull TabInfo setDefaultAttributes(@Nullable TextAttributes attributes) {
     editorAttributes = attributes;
-    myDefaultAttributes = null;
+    defaultAttributes = null;
     update();
     return this;
   }
@@ -371,75 +371,75 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   public void revalidate() {
-    myDefaultAttributes = null;
+    defaultAttributes = null;
     update();
   }
 
   public @NotNull TabInfo setTooltipText(@NlsContexts.Tooltip String text) {
-    String old = myTooltipText;
+    String old = tooltipText;
     if (!Objects.equals(old, text)) {
-      myTooltipText = text;
-      myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+      tooltipText = text;
+      changeSupport.firePropertyChange(TEXT, old, tooltipText);
     }
     return this;
   }
 
   public @NlsContexts.Tooltip String getTooltipText() {
-    return myTooltipText;
+    return tooltipText;
   }
 
   public @NotNull TabInfo setTabColor(Color color) {
-    Color old = myTabColor;
+    Color old = tabColor;
     if (!Comparing.equal(color, old)) {
-      myTabColor = color;
-      myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+      tabColor = color;
+      changeSupport.firePropertyChange(TAB_COLOR, old, color);
     }
     return this;
   }
 
   public Color getTabColor() {
-    return myTabColor;
+    return tabColor;
   }
 
   public @NotNull TabInfo setTestableUi(Queryable queryable) {
-    myQueryable = queryable;
+    this.queryable = queryable;
     return this;
   }
 
   @Override
   public void putInfo(@NotNull Map<? super String, ? super String> info) {
-    if (myQueryable != null) {
-      myQueryable.putInfo(info);
+    if (queryable != null) {
+      queryable.putInfo(info);
     }
   }
 
   public @NotNull TabInfo setDragOutDelegate(DragOutDelegate delegate) {
-    myDragOutDelegate = delegate;
+    dragOutDelegate = delegate;
     return this;
   }
 
   public boolean canBeDraggedOut() {
-    return myDragOutDelegate != null;
+    return dragOutDelegate != null;
   }
 
   public DragOutDelegate getDragOutDelegate() {
-    return myDragOutDelegate;
+    return dragOutDelegate;
   }
 
   public void setPreviousSelection(@Nullable TabInfo previousSelection) {
-    myPreviousSelection = new WeakReference<>(previousSelection);
+    this.previousSelection = new WeakReference<>(previousSelection);
   }
 
   public DragDelegate getDragDelegate() {
-    return myDragDelegate;
+    return dragDelegate;
   }
 
   public void setDragDelegate(DragDelegate dragDelegate) {
-    myDragDelegate = dragDelegate;
+    this.dragDelegate = dragDelegate;
   }
 
   public @Nullable TabInfo getPreviousSelection() {
-    return myPreviousSelection.get();
+    return previousSelection.get();
   }
 
   public interface DragDelegate {
@@ -453,5 +453,4 @@ public final class TabInfo implements Queryable, PlaceProvider {
     void dragOutFinished(@NotNull MouseEvent event, TabInfo source);
     void dragOutCancelled(TabInfo source);
   }
-
 }

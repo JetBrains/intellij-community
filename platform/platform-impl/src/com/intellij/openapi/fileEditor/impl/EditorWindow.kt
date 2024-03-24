@@ -289,7 +289,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   internal fun setComposite(composite: EditorComposite, focusEditor: Boolean) {
-    addComposite(composite, FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
+    addComposite(composite = composite, options = FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
   }
 
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
@@ -307,13 +307,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       val file = composite.file
       val template = AllIcons.FileTypes.Text
       val emptyIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
-      tabbedPane.insertTab(file = file,
-                           icon = emptyIcon,
-                           component = EditorWindowTopComponent(window = this, composite = composite),
-                           tooltip = null,
-                           indexToInsert = indexToInsert,
-                           composite = composite,
-                           parentDisposable = composite)
+      tabbedPane.insertTab(
+        file = file,
+        icon = emptyIcon,
+        component = EditorWindowTopComponent(window = this, composite = composite),
+        tooltip = null,
+        indexToInsert = indexToInsert,
+        composite = composite,
+        parentDisposable = composite,
+      )
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
       if (hash != null && System.identityHashCode(tabbedPane.tabs) == hash) {
@@ -1234,7 +1236,7 @@ private class MySplitPainter(
     updateRectangleAndRepaint()
   }
 
-  internal fun updateRectangleAndRepaint() {
+  fun updateRectangleAndRepaint() {
     rectangle = null
     setNeedsRepaint(true)
     val r = tabbedPane.tabs.dropArea

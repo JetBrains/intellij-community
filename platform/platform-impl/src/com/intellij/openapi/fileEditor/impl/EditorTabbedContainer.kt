@@ -261,13 +261,15 @@ class EditorTabbedContainer internal constructor(
     return selectedInfo?.component?.let { (it as EditorWindowTopComponent).composite }
   }
 
-  fun insertTab(file: VirtualFile,
-                icon: Icon?,
-                component: JComponent,
-                tooltip: @NlsContexts.Tooltip String?,
-                indexToInsert: Int,
-                composite: EditorComposite,
-                parentDisposable: Disposable) {
+  fun insertTab(
+    file: VirtualFile,
+    icon: Icon?,
+    component: JComponent,
+    tooltip: @NlsContexts.Tooltip String?,
+    indexToInsert: Int,
+    composite: EditorComposite,
+    parentDisposable: Disposable,
+  ) {
     val existing = editorTabs.findInfo(file)
     if (existing != null) {
       return
@@ -295,7 +297,7 @@ class EditorTabbedContainer internal constructor(
       }
     }
 
-    val closeTab = CloseTab(component, file, window, parentDisposable)
+    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
     val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
     val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
