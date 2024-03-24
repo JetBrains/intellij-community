@@ -302,8 +302,6 @@
 
     <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
-    <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
-              class="org.jetbrains.kotlin.idea.configuration.notifications.KotlinCodeStyleChangedFileListener"/>
   </projectListeners>
 
   <applicationListeners>
