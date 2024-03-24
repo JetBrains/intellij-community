@@ -440,8 +440,6 @@ class InternalDecoratorImpl internal constructor(
 
   val headerToolbarActions: ActionGroup
     get() = header.getToolbarActions()
-  val headerToolbarWestActions: ActionGroup
-    get() = header.getToolbarWestActions()
 
   override fun toString(): String {
     return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName ?: "null" }, 40) +
@@ -528,7 +526,7 @@ class InternalDecoratorImpl internal constructor(
 
   fun setTabActions(actions: List<AnAction>) {
     tabActions = actions
-    header.setTabActions(actions)
+    contentUi.setTabActions(actions)
     firstDecorator?.setTabActions(actions)
     secondDecorator?.setTabActions(actions)
   }
@@ -786,9 +784,9 @@ class InternalDecoratorImpl internal constructor(
       toolbar.alphaContext.isVisible = isVisible
     }
 
-    val toolbarWest = header.getToolbarWest()
-    if (toolbarWest != null && toolbarWest is AlphaAnimated) {
-      toolbarWest.alphaContext.isVisible = isVisible
+    val tabToolbar = contentUi.tabToolbar
+    if (tabToolbar != null && tabToolbar is AlphaAnimated) {
+      tabToolbar.alphaContext.isVisible = isVisible
     }
   }
 
