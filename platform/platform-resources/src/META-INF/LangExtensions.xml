@@ -164,8 +164,7 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
-    <!-- TemplateSettings is requested in the highlighting pass - preload it -->
-    <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings" preload="notHeadless"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
     <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
 
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>

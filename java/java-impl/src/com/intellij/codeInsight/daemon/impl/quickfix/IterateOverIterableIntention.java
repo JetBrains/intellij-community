@@ -60,9 +60,6 @@ public final class IterateOverIterableIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
-    if (template == null || template.isDeactivated()) return false;
-
     int offset = editor.getCaretModel().getOffset();
     int startOffset = offset;
     if (editor.getSelectionModel().hasSelection()) {
@@ -94,6 +91,9 @@ public final class IterateOverIterableIntention implements IntentionAction {
       // new array without initializers: all elements are 0/null/false, so iterating doesn't make much sense
       return false;
     }
+
+    TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
+    if (template == null || template.isDeactivated()) return false;
 
     // we are checking Template applicability later, because it requires initialization of all (for all languages) template context types
     if (!TemplateManagerImpl.isApplicable(file, offset, template) &&
