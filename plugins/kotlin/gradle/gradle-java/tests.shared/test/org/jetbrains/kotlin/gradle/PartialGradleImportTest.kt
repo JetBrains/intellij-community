@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
-import org.jetbrains.kotlin.idea.gradleJava.scripting.LoadConfigurationAction
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
@@ -22,7 +21,8 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
     class Regular : PartialGradleImportTest() {
         /**
          * Regular Gradle sync / import should not run in 'classpath' mode to prevent swallowing issues described in:
-         * Only when running the special [LoadConfigurationAction] this special mode shall be used.
+         * Only when running the special [org.jetbrains.kotlin.idea.gradleJava.scripting.LoadKtGradleConfigurationAction]
+         * this special mode shall be used.
          * https://youtrack.jetbrains.com/issue/KT-48823
          * https://youtrack.jetbrains.com/issue/KTIJ-19823
          */

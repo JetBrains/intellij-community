@@ -18,8 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFileBase
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver
@@ -59,7 +59,7 @@ fun runPartialGradleImport(project: Project, root: GradleBuildRoot) {
 }
 
 @Nls fun configurationsAreMissingRequestNeeded() = KotlinIdeaGradleBundle.message("notification.wasNotImportedAfterCreation.text")
-@Nls fun getConfigurationsActionText() = KotlinIdeaGradleBundle.message("action.text.load.script.configurations")
+@Nls fun getConfigurationsActionText() = KotlinIdeaGradleBundle.message("action.LoadKtGradleConfiguration.text")
 @Nls fun configurationsAreMissingRequestNeededHelp(): String = KotlinIdeaGradleBundle.message("notification.wasNotImportedAfterCreation.help")
 @Nls fun configurationsAreMissingAfterRequest(): String = KotlinIdeaGradleBundle.message("notification.notEvaluatedInLastImport.text")
 
@@ -81,11 +81,7 @@ fun scriptConfigurationsNeedToBeUpdated(project: Project, file: VirtualFile) {
 
 fun scriptConfigurationsAreUpToDate(project: Project): Boolean = true
 
-class LoadConfigurationAction : AnAction(
-    KotlinIdeaGradleBundle.message("action.text.load.script.configurations"),
-    KotlinIdeaGradleBundle.message("action.description.load.script.configurations"),
-    KotlinIcons.LOAD_SCRIPT_CONFIGURATION
-) {
+internal class LoadKtGradleConfigurationAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
