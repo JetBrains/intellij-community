@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.openapi.util.Ref
@@ -14,18 +14,29 @@ import kotlin.math.max
  * @return reachable nodes or all nodes if startNodes is null
  */
 internal fun LinearGraph.getReachableNodes(startNodes: Set<Int>?): UnsignedBitSet {
+  return getReachableMatchingNodes(startNodes, null)
+}
+
+/**
+ * Get matching nodes reachable from the specified by down edges of the graph.
+ * @return reachable matching nodes or all matching nodes if startNodes is null
+ */
+internal fun LinearGraph.getReachableMatchingNodes(startNodes: Set<Int>?, matchedNodes: Set<Int>?): UnsignedBitSet {
+  val visibility = UnsignedBitSet()
   if (startNodes == null) {
-    val nodesVisibility = UnsignedBitSet()
-    nodesVisibility.set(0, nodesCount() - 1, true)
-    return nodesVisibility
+    if (matchedNodes == null) {
+      visibility.set(0, nodesCount() - 1, true)
+    } else {
+      for (matchedId in matchedNodes) visibility[matchedId] = true
+    }
+    return visibility
   }
 
-  val result = UnsignedBitSet()
-  DfsWalk(startNodes, this).walk(true) { node: Int ->
-    result.set(node, true)
+  DfsWalk(startNodes, this).walk(true) { node ->
+    if (matchedNodes == null || matchedNodes.contains(node)) visibility[node] = true
     true
   }
-  return result
+  return visibility
 }
 
 /**

@@ -4,10 +4,10 @@ package com.intellij.vcs.log.graph.impl.facade
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
-import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator.Companion.update
-import com.intellij.vcs.log.graph.utils.DfsWalk
+import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import com.intellij.vcs.log.graph.utils.getReachableMatchingNodes
 
 class FilteredController(delegateLinearGraphController: LinearGraphController,
                          permanentGraphInfo: PermanentGraphInfo<*>,
@@ -15,22 +15,12 @@ class FilteredController(delegateLinearGraphController: LinearGraphController,
                          visibleHeadsIds: Set<Int>? = null) :
   CascadeController(delegateLinearGraphController, permanentGraphInfo) {
 
-  val collapsedGraph: CollapsedGraph
+  val collapsedGraph: CollapsedGraph = buildGraph(permanentGraphInfo.linearGraph.getReachableMatchingNodes(visibleHeadsIds, matchedIds))
 
-  init {
-    val initVisibility = UnsignedBitSet()
-    if (visibleHeadsIds != null) {
-      DfsWalk(visibleHeadsIds, permanentGraphInfo.linearGraph).walk(true) { node ->
-        if (matchedIds.contains(node)) initVisibility[node] = true
-        true
-      }
+  private fun buildGraph(visibility: UnsignedBitSet): CollapsedGraph {
+    return CollapsedGraph.newInstance(delegateController.compiledGraph, visibility).also {
+      DottedFilterEdgesGenerator.update(it, 0, it.delegatedGraph.nodesCount() - 1)
     }
-    else {
-      for (matchedId in matchedIds) initVisibility[matchedId] = true
-    }
-
-    collapsedGraph = CollapsedGraph.newInstance(delegateLinearGraphController.compiledGraph, initVisibility)
-    update(collapsedGraph, 0, collapsedGraph.delegatedGraph.nodesCount() - 1)
   }
 
   override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer {
