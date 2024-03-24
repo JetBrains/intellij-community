@@ -1,5 +1,5 @@
 internal class C {
-    var s: String? = ""
+    var s: String = ""
 }
 
 internal class D {

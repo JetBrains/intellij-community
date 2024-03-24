@@ -1,3 +1,3 @@
-fun nya(vararg objs: Any?): Int {
+fun nya(vararg objs: Any): Int {
     return objs.size
 }

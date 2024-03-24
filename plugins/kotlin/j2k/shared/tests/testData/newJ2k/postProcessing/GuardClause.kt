@@ -19,7 +19,7 @@ class Test {
         }
     }
 
-    fun testCheck(b: Boolean, notNullString: String?) {
+    fun testCheck(b: Boolean, notNullString: String) {
         check(!b)
 
         // comment above notNullString
