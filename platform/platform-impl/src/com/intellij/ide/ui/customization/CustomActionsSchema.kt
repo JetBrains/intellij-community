@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -80,9 +79,6 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   private var isFirstLoadState = true
   var modificationStamp: Int = 0
     private set
-
-  @NonInjectable
-  constructor() : this(null)
 
   init {
     val idToName = LinkedHashMap<String, String>()
