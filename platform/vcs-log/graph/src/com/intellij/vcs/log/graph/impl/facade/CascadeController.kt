@@ -1,76 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.graph.impl.facade;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 
-import java.util.function.Function;
-
-public abstract class CascadeController implements LinearGraphController {
-  private final @NotNull LinearGraphController myDelegateController;
-  @NotNull protected final PermanentGraphInfo<?> myPermanentGraphInfo;
-
-  protected CascadeController(@NotNull LinearGraphController delegateController, @NotNull PermanentGraphInfo<?> permanentGraphInfo) {
-    myDelegateController = delegateController;
-    myPermanentGraphInfo = permanentGraphInfo;
+abstract class CascadeController protected constructor(protected val delegateController: LinearGraphController,
+                                                       val permanentGraphInfo: PermanentGraphInfo<*>) : LinearGraphController {
+  override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer {
+    val answer = performAction(action)
+    if (answer != null) return answer
+    val delegateAction = VisibleGraphImpl.LinearGraphActionImpl(convertToDelegate(action.affectedElement), action.type)
+    return delegateGraphChanged(delegateController.performLinearGraphAction(delegateAction))
   }
 
-  @NotNull
-  @Override
-  public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
-    LinearGraphAnswer answer = performAction(action);
-    if (answer != null) {
-      return answer;
+  internal fun performAction(action: (CascadeController) -> GraphChanges<Int>?): GraphChanges<Int>? {
+    val graphChanges = action(this)
+    if (graphChanges != null) return graphChanges
+
+    if (delegateController is CascadeController) {
+      val result = delegateController.performAction(action) ?: return null
+      return delegateGraphChanged(LinearGraphController.LinearGraphAnswer(result)).graphChanges
     }
-    VisibleGraphImpl.LinearGraphActionImpl delegateAction =
-      new VisibleGraphImpl.LinearGraphActionImpl(convertToDelegate(action.getAffectedElement()), action.getType());
-    return delegateGraphChanged(myDelegateController.performLinearGraphAction(delegateAction));
+    return null
   }
 
-  @Nullable
-  GraphChanges<Integer> performAction(@NotNull Function<? super CascadeController, ? extends GraphChanges<Integer>> action) {
-    GraphChanges<Integer> graphChanges = action.apply(this);
-    if (graphChanges != null) return graphChanges;
-
-    if (myDelegateController instanceof CascadeController) {
-      GraphChanges<Integer> result = ((CascadeController)myDelegateController).performAction(action);
-      if (result != null) {
-        return delegateGraphChanged(new LinearGraphController.LinearGraphAnswer(result)).getGraphChanges();
-      }
-    }
-    return null;
+  private fun convertToDelegate(element: PrintElementWithGraphElement?): PrintElementWithGraphElement? {
+    if (element == null) return null
+    val convertedGraphElement = convertToDelegate(element.graphElement) ?: return null
+    return PrintElementWithGraphElement.converted(element, convertedGraphElement)
   }
 
-  @Nullable
-  private PrintElementWithGraphElement convertToDelegate(@Nullable PrintElementWithGraphElement element) {
-    if (element == null) return null;
-    GraphElement convertedGraphElement = convertToDelegate(element.getGraphElement());
-    if (convertedGraphElement == null) return null;
-    return PrintElementWithGraphElement.converted(element, convertedGraphElement);
-  }
+  protected open fun convertToDelegate(graphElement: GraphElement): GraphElement? = graphElement
 
-  @Nullable
-  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
-    return graphElement;
-  }
-
-  @NotNull
-  protected LinearGraphController getDelegateController() {
-    return myDelegateController;
-  }
-
-  @NotNull
-  public PermanentGraphInfo<?> getPermanentGraphInfo() {
-    return myPermanentGraphInfo;
-  }
-
-  @NotNull
-  protected abstract LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer);
+  protected abstract fun delegateGraphChanged(delegateAnswer: LinearGraphController.LinearGraphAnswer): LinearGraphController.LinearGraphAnswer
 
   // null mean that this action must be performed by delegateGraphController
-  @Nullable
-  protected abstract LinearGraphAnswer performAction(@NotNull LinearGraphAction action);
+  protected abstract fun performAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer?
 }
