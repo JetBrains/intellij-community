@@ -297,3 +297,15 @@ fun KtBlockExpression.getParentLambdaLabelName(): String? {
     val lambdaLabelName = (valueArgument.getArgumentExpression() as? KtLabeledExpression)?.getLabelName()
     return lambdaLabelName ?: callExpression.getCallNameExpression()?.text
 }
+
+/**
+ * Searches for a parameter with the given [name] in the parent function of the element.
+ * If not found in the immediate parent function, it recursively searches in the enclosing parent functions.
+ *
+ * @param name The name of the parameter to search for.
+ * @return The found `KtParameter` with the given name, or `null` if no parameter with such [name] is found.
+ */
+fun KtElement.findParameterWithName(name: String): KtParameter? {
+    val function = getStrictParentOfType<KtFunction>() ?: return null
+    return function.valueParameters.firstOrNull { it.name == name } ?: function.findParameterWithName(name)
+}
