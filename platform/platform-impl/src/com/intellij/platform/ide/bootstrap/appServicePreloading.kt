@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.PluginException
 import com.intellij.history.LocalHistory
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
@@ -9,6 +10,9 @@ import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.registry.RegistryManager
@@ -19,6 +23,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.*
+import java.util.concurrent.CancellationException
 
 fun CoroutineScope.preloadCriticalServices(
   app: ApplicationImpl,
@@ -140,5 +145,35 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
         loadComponentInEdtTask()
       }
     }
+  }
+
+  if (!app.isHeadlessEnvironment && !app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
+    asyncScope.launch(CoroutineName("preloadingActivity executing")) {
+      @Suppress("DEPRECATION")
+      val extensionPoint = app.extensionArea.getExtensionPoint<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity")
+      @Suppress("DEPRECATION")
+      for (item in ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>(extensionPoint.name).filterableLazySequence()) {
+        launch(CoroutineName(item.implementationClassName)) {
+          item.instance?.let {
+            executePreloadActivity(activity = it, descriptor = item.pluginDescriptor)
+          }
+        }
+      }
+      extensionPoint.reset()
+    }
+  }
+}
+
+@Suppress("DEPRECATION")
+private suspend fun executePreloadActivity(activity: com.intellij.openapi.application.PreloadingActivity, descriptor: PluginDescriptor) {
+  try {
+    activity.execute()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    logger<com.intellij.openapi.application.PreloadingActivity>()
+      .error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
   }
 }
