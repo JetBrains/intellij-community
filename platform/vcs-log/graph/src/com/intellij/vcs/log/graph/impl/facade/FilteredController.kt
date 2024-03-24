@@ -9,10 +9,10 @@ import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 
-open class FilteredController(delegateLinearGraphController: LinearGraphController,
-                              permanentGraphInfo: PermanentGraphInfo<*>,
-                              matchedIds: Set<Int>,
-                              visibleHeadsIds: Set<Int>? = null) :
+class FilteredController(delegateLinearGraphController: LinearGraphController,
+                         permanentGraphInfo: PermanentGraphInfo<*>,
+                         matchedIds: Set<Int>,
+                         visibleHeadsIds: Set<Int>? = null) :
   CascadeController(delegateLinearGraphController, permanentGraphInfo) {
 
   val collapsedGraph: CollapsedGraph
