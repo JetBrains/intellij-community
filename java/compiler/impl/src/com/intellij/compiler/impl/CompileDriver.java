@@ -564,7 +564,7 @@ public final class CompileDriver {
         }
 
         String wrappedMessage = _status == ExitStatus.UP_TO_DATE ? statusMessage : HtmlChunk.link("#", statusMessage).toString();
-        Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+        Notification notification = CompilerManager.getNotificationGroup().createNotification(wrappedMessage, messageType.toNotificationType())
           .setListener(new BuildToolWindowActivationListener(compileContext))
           .setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);
