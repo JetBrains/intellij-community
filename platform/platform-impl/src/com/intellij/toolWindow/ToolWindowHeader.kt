@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
-import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.SingleContentLayout
@@ -57,9 +56,7 @@ abstract class ToolWindowHeader internal constructor(
 ) : BorderLayoutPanel(), DataProvider, PropertyChangeListener {
 
   private val actionGroup = DefaultActionGroup()
-  private val actionGroupWest = DefaultActionGroup()
   private val toolbar: ActionToolbar
-  private var toolbarWest: ActionToolbar? = null
   private val westPanel: JPanel
   private val popupMenuListener = object : PopupMenuListener {
     override fun popupMenuWillBecomeVisible(event: PopupMenuEvent) = setPopupShowing(true)
@@ -242,13 +239,12 @@ abstract class ToolWindowHeader internal constructor(
   private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (!init) { // remove to avoid extra events, toolbars update on addNotify!
       westPanel.remove(contentUi.tabComponent)
-      toolbarWest?.apply { westPanel.remove(component) }
+      contentUi.disconnectTabToolbar()
       return
     }
-    // Makes sure toolbar stays after the tab component
     val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
     westPanel.add(contentUi.tabComponent, if (allowDnd) CC().grow() else CC().growY())
-    toolbarWest?.apply { westPanel.add(component, CC().pushX()) }
+    contentUi.connectTabToolbar()
   }
 
   override fun propertyChange(evt: PropertyChangeEvent?) {
@@ -269,11 +265,7 @@ abstract class ToolWindowHeader internal constructor(
 
   fun getToolbar(): ActionToolbar = toolbar
 
-  fun getToolbarWest(): ActionToolbar? = toolbarWest
-
   fun getToolbarActions(): DefaultActionGroup = actionGroup
-
-  fun getToolbarWestActions(): DefaultActionGroup = actionGroupWest
 
   override fun getData(dataId: String): Any? {
     if (MorePopupAware.KEY.`is`(dataId)) {
@@ -282,28 +274,6 @@ abstract class ToolWindowHeader internal constructor(
     else {
       return null
     }
-  }
-
-  fun setTabActions(actions: List<AnAction>) {
-    if (toolbarWest == null) {
-      toolbarWest = ActionManager.getInstance().createActionToolbar(
-        ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest), true)
-      with(toolbarWest as ActionToolbarImpl) {
-        targetComponent = this
-        setForceMinimumSize(true)
-        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-        setReservePlaceAutoPopupIcon(false)
-        isOpaque = false
-        border = JBUI.Borders.empty()
-        if (westPanel.isShowing) {
-          westPanel.add(this, CC().pushX())
-        }
-      }
-    }
-    actionGroupWest.removeAll()
-    actionGroupWest.addSeparator()
-    actionGroupWest.addAll(actions)
-    toolbarWest?.updateActionsImmediately()
   }
 
   fun setAdditionalTitleActions(actions: List<AnAction>) {

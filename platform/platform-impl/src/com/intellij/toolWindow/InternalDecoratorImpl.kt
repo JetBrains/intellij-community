@@ -161,7 +161,7 @@ class InternalDecoratorImpl internal constructor(
     internal fun headerNeedsTopBorder(header: ToolWindowHeader): Boolean {
       val decorator = findNearestDecorator(header) ?: return false
       return decorator.toolWindow.type == ToolWindowType.WINDOWED &&
-          SideProperty.TOP_TOOL_WINDOW_EDGE in decorator.getSideProperties(decorator)
+        SideProperty.TOP_TOOL_WINDOW_EDGE in decorator.getSideProperties(decorator)
     }
 
     @JvmStatic
@@ -238,7 +238,7 @@ class InternalDecoratorImpl internal constructor(
       override val isActive: Boolean
         get() {
           return toolWindow.isActive && !toolWindow.toolWindowManager.isNewUi &&
-                 ClientProperty.get(this@InternalDecoratorImpl, INACTIVE_LOOK) != true
+            ClientProperty.get(this@InternalDecoratorImpl, INACTIVE_LOOK) != true
         }
 
       override fun hideToolWindow() {
@@ -287,6 +287,7 @@ class InternalDecoratorImpl internal constructor(
         }
         return
       }
+
       Mode.VERTICAL_SPLIT, Mode.HORIZONTAL_SPLIT -> {
         val splitter = OnePixelSplitter(mode == Mode.VERTICAL_SPLIT)
         splitter.setFirstComponent(firstDecorator)
@@ -400,14 +401,17 @@ class InternalDecoratorImpl internal constructor(
         firstDecorator == null || secondDecorator == null -> {
           return
         }
+
         firstDecorator!!.mode!!.isSplit -> {
           raise(true)
           return
         }
+
         secondDecorator!!.mode!!.isSplit -> {
           raise(false)
           return
         }
+
         else -> {
           for (c in firstDecorator!!.contentManager.contents) {
             moveContent(c, firstDecorator!!, this)
@@ -440,12 +444,10 @@ class InternalDecoratorImpl internal constructor(
 
   val headerToolbarActions: ActionGroup
     get() = header.getToolbarActions()
-  val headerToolbarWestActions: ActionGroup
-    get() = header.getToolbarWestActions()
 
   override fun toString(): String {
     return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName ?: "null" }, 40) +
-           " #" + System.identityHashCode(this)
+      " #" + System.identityHashCode(this)
   }
 
   private fun initDivider(): JComponent {
@@ -528,7 +530,7 @@ class InternalDecoratorImpl internal constructor(
 
   fun setTabActions(actions: List<AnAction>) {
     tabActions = actions
-    header.setTabActions(actions)
+    contentUi.setTabActions(actions)
     firstDecorator?.setTabActions(actions)
     secondDecorator?.setTabActions(actions)
   }
@@ -558,7 +560,7 @@ class InternalDecoratorImpl internal constructor(
       y: Int,
       width: Int,
       height: Int,
-      ) {
+    ) {
       g.color = JBColor.border()
       if (insets.top > 0) {
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
@@ -605,19 +607,22 @@ class InternalDecoratorImpl internal constructor(
       val toolWindowManager = window.toolWindowManager
       val windowInfo = window.windowInfo
       if (toolWindowManager.project.isDisposed ||
-          !toolWindowManager.isToolWindowRegistered(window.id) ||
-          window.isDisposed || !windowInfo.type.isInternal) {
+        !toolWindowManager.isToolWindowRegistered(window.id) ||
+        window.isDisposed || !windowInfo.type.isInternal) {
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor
       val sideProperties = getSideProperties(c)
       val top = if (SideProperty.TOP_DIVIDER !in sideProperties && toolWindow.type != ToolWindowType.FLOATING &&
-                    SideProperty.TOP_TOOL_WINDOW_EDGE in sideProperties) 1 else 0
+        SideProperty.TOP_TOOL_WINDOW_EDGE in sideProperties) 1
+      else 0
       val bottom = 0
       var left = if (SideProperty.LEFT_DIVIDER !in sideProperties && anchor == ToolWindowAnchor.RIGHT &&
-                     SideProperty.LEFT_TOOL_WINDOW_EDGE in sideProperties) 1 else 0
+        SideProperty.LEFT_TOOL_WINDOW_EDGE in sideProperties) 1
+      else 0
       var right = if (SideProperty.RIGHT_DIVIDER !in sideProperties && anchor == ToolWindowAnchor.LEFT &&
-                      SideProperty.RIGHT_TOOL_WINDOW_EDGE in sideProperties) 1 else 0
+        SideProperty.RIGHT_TOOL_WINDOW_EDGE in sideProperties) 1
+      else 0
       paintLeftExternalBorder = left > 0
       paintRightExternalBorder = right > 0
       paintLeftInternalBorder = false
@@ -657,22 +662,22 @@ class InternalDecoratorImpl internal constructor(
         // In the 5th case we draw borders on the right side of the divider. The choice between left and right is random, but drawing both looks ugly.
         if ((
             anchor == ToolWindowAnchor.RIGHT &&
-            hasEditorLikeComponentOnTheLeft() &&
-            (isTouchingTheEditor || otherDecoratorInSplitter?.hasEditorLikeComponentOnTheRight() == true) // cases 1 & 2
-          ) || (
+              hasEditorLikeComponentOnTheLeft() &&
+              (isTouchingTheEditor || otherDecoratorInSplitter?.hasEditorLikeComponentOnTheRight() == true) // cases 1 & 2
+            ) || (
             anchor == ToolWindowAnchor.BOTTOM &&
-            hasEditorLikeComponentOnTheLeft() &&
-            isSplitter &&
-            !isFirstInSplitter &&
-            otherDecoratorInSplitter?.hasEditorLikeComponentOnTheRight() == true // case 5
-        )) {
+              hasEditorLikeComponentOnTheLeft() &&
+              isSplitter &&
+              !isFirstInSplitter &&
+              otherDecoratorInSplitter?.hasEditorLikeComponentOnTheRight() == true // case 5
+            )) {
           ++left
           paintLeftInternalBorder = true
         }
         if (
-            anchor == ToolWindowAnchor.LEFT &&
-            hasEditorLikeComponentOnTheRight() &&
-            (isTouchingTheEditor || otherDecoratorInSplitter?.hasEditorLikeComponentOnTheLeft() == true) // cases 3 & 4
+          anchor == ToolWindowAnchor.LEFT &&
+          hasEditorLikeComponentOnTheRight() &&
+          (isTouchingTheEditor || otherDecoratorInSplitter?.hasEditorLikeComponentOnTheLeft() == true) // cases 3 & 4
         ) {
           ++right
           paintRightInternalBorder = true
@@ -709,13 +714,15 @@ class InternalDecoratorImpl internal constructor(
               if (!reachedToolWindow) {
                 result.remove(SideProperty.BOTTOM_TOOL_WINDOW_EDGE)
               }
-            } else {
+            }
+            else {
               result.add(SideProperty.TOP_DIVIDER)
               if (!reachedToolWindow) {
                 result.remove(SideProperty.TOP_TOOL_WINDOW_EDGE)
               }
             }
-          } else if (component == splitter.firstComponent) {
+          }
+          else if (component == splitter.firstComponent) {
             result.add(SideProperty.RIGHT_DIVIDER)
             if (!reachedToolWindow) {
               result.remove(SideProperty.RIGHT_TOOL_WINDOW_EDGE)
@@ -776,8 +783,8 @@ class InternalDecoratorImpl internal constructor(
   fun updateActiveAndHoverState() {
     val isHoverAlphaAnimationEnabled =
       toolWindow.toolWindowManager.isNewUi &&
-      !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons") &&
-      toolWindow.component.getClientProperty(ToolWindowContentUi.DONT_HIDE_TOOLBAR_IN_HEADER) != true
+        !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons") &&
+        toolWindow.component.getClientProperty(ToolWindowContentUi.DONT_HIDE_TOOLBAR_IN_HEADER) != true
     val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
     val isVisible = narrow || !isHoverAlphaAnimationEnabled || isWindowHovered || header.isPopupShowing || toolWindow.isActive
 
@@ -786,9 +793,9 @@ class InternalDecoratorImpl internal constructor(
       toolbar.alphaContext.isVisible = isVisible
     }
 
-    val toolbarWest = header.getToolbarWest()
-    if (toolbarWest != null && toolbarWest is AlphaAnimated) {
-      toolbarWest.alphaContext.isVisible = isVisible
+    val tabToolbar = contentUi.tabToolbar
+    if (tabToolbar != null && tabToolbar is AlphaAnimated) {
+      tabToolbar.alphaContext.isVisible = isVisible
     }
   }
 
@@ -904,8 +911,8 @@ class InternalDecoratorImpl internal constructor(
     private var isDragging = false
     private fun isInDragZone(e: MouseEvent): Boolean {
       if (!divider.isShowing
-          || (divider.width == 0 && divider.height == 0)
-          || e.id == MouseEvent.MOUSE_DRAGGED) return false
+        || (divider.width == 0 && divider.height == 0)
+        || e.id == MouseEvent.MOUSE_DRAGGED) return false
 
       val point = SwingUtilities.convertPoint(e.component, e.point, divider)
       val isTopBottom = decorator.toolWindow.windowInfo.anchor.isHorizontal
@@ -996,10 +1003,10 @@ class InternalDecoratorImpl internal constructor(
   private inner class AccessibleInternalDecorator : AccessibleJPanel() {
     override fun getAccessibleName(): String {
       return super.getAccessibleName()
-             ?: (
-               ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id)
-               + " " + IdeBundle.message("internal.decorator.accessible.postfix")
-                )
+        ?: (
+          ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id)
+            + " " + IdeBundle.message("internal.decorator.accessible.postfix")
+          )
     }
 
     override fun getAccessibleRole(): AccessibleRole {
@@ -1013,6 +1020,7 @@ class InternalDecoratorImpl internal constructor(
     RIGHT_DIVIDER,
     TOP_DIVIDER,
     BOTTOM_DIVIDER,
+
     // Sides adjacent to the edges of the containing tool window.
     LEFT_TOOL_WINDOW_EDGE,
     RIGHT_TOOL_WINDOW_EDGE,
