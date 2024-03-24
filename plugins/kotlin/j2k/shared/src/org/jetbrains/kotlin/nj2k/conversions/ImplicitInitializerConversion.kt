@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.conversions.InitializationState.*
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
+import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
@@ -108,15 +110,19 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
     }
 
     private fun generateNewInitializerFor(field: JKField) {
-        val initializer = when (val fieldType = field.type.type) {
+        val fieldType = field.type.type
+        val initializer = when (fieldType) {
             is JKClassType, is JKTypeParameterType -> JKLiteralExpression("null", LiteralType.NULL)
             is JKJavaPrimitiveType -> createPrimitiveTypeInitializer(fieldType)
-            else -> null
+            else -> return
         }
-        if (initializer != null) {
-            initializer.commentsAfter += field.name.commentsAfter
-            field.name.commentsAfter.clear()
-            field.initializer = initializer
+
+        initializer.commentsAfter += field.name.commentsAfter
+        field.name.commentsAfter.clear()
+        field.initializer = initializer
+
+        if (initializer.type == LiteralType.NULL && fieldType.nullability != Nullable) {
+            field.type.type = fieldType.updateNullability(Nullable)
         }
     }
 
