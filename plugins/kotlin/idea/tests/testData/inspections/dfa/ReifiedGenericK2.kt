@@ -13,8 +13,7 @@ inline fun <reified T: Number> number(t: T) {
     // Cannot say anything
     if (x is T) {}
     x = "hello"
-    // TODO: support 'always false' here
-    if (x is T) {}
+    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">x is T</warning>) {}
 }
 
 // Non-reified
