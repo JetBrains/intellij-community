@@ -905,14 +905,21 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
                                    requestFocus: Boolean) {
     coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
-        val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
-        splitters.addWindow(editorWindow)
-        editorWindow.component.isFocusable = false
-        if (tabSizeLimit != 1) {
-          editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+        splitters.insideChange++
+        try {
+          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+          splitters.addWindow(editorWindow)
+          editorWindow.component.isFocusable = false
+          if (tabSizeLimit != 1) {
+            editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+          }
+          addChild(editorWindow.component)
+          editorWindow
         }
-        addChild(editorWindow.component)
-        editorWindow
+        finally {
+          // do not call `validate` - will be called on editor `add` in any case
+          splitters.insideChange--
+        }
       }
 
       val fileEditorManager = splitters.manager

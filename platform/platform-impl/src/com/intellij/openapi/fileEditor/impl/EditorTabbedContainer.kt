@@ -680,7 +680,7 @@ private class EditorTabs(
   override fun revalidateAndRepaint(layoutNow: Boolean) {
     // called from super constructor
     @Suppress("SENSELESS_COMPARISON")
-    if (window == null || !window.owner.isInsideChange) {
+    if (window != null && !window.owner.isInsideChange) {
       super.revalidateAndRepaint(layoutNow)
     }
   }
