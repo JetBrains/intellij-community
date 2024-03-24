@@ -9,6 +9,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
@@ -24,8 +26,10 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
@@ -33,8 +37,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
-import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
@@ -96,10 +98,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public Predicate<Point> isResizableArea = __ -> true;
 
   private final JPanel tabComponent = new TabPanel();
-
-  public @NotNull JPanel getTabComponent() {
-    return tabComponent;
-  }
+  private final DefaultActionGroup tabActionGroup = new DefaultActionGroup();
+  private ActionToolbar tabToolbar = null;
 
   public ToolWindowContentUi(@NotNull ToolWindowImpl window,
                              @NotNull ContentManager contentManager,
@@ -229,6 +229,36 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   public @NotNull ToolWindow getWindow() {
     return window;
+  }
+
+  public @NotNull JPanel getTabComponent() {
+    return tabComponent;
+  }
+
+  public @NotNull DefaultActionGroup getTabToolbarActions() {
+    return tabActionGroup;
+  }
+
+  public @Nullable ActionToolbar getTabToolbar() {
+    return tabToolbar;
+  }
+
+  /**
+   * Adds tab toolbar to the tab panel.
+   */
+  public void connectTabToolbar() {
+    if (tabToolbar != null) {
+      tabComponent.add(tabToolbar.getComponent());
+    }
+  }
+
+  /**
+   * Removes tab toolbar from the tab panel.
+   */
+  public void disconnectTabToolbar() {
+    if (tabToolbar != null) {
+      tabComponent.remove(tabToolbar.getComponent());
+    }
   }
 
   private boolean isResizeable() {
@@ -697,6 +727,28 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return null;
   }
 
+  public void setTabActions(@NotNull List<AnAction> actions) {
+    if (tabToolbar == null) {
+      tabToolbar =
+          ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(tabActionGroup), true);
+      ActionToolbarImpl tabToolbarImpl = (ActionToolbarImpl)tabToolbar;
+      ToolWindowHeader header = ComponentUtil.getParentOfType(ToolWindowHeader.class, tabComponent);
+      tabToolbarImpl.setTargetComponent(header);
+      tabToolbarImpl.setForceMinimumSize(true);
+      tabToolbarImpl.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
+      tabToolbarImpl.setReservePlaceAutoPopupIcon(false);
+      tabToolbarImpl.setOpaque(false);
+      tabToolbarImpl.setBorder(JBUI.Borders.empty());
+      if (tabComponent.isShowing()) {
+        tabComponent.add(tabToolbarImpl);
+      }
+    }
+    tabActionGroup.removeAll();
+    tabActionGroup.addSeparator();
+    tabActionGroup.addAll(actions);
+    tabToolbar.updateActionsImmediately();
+  }
+
   private @NotNull CloseAction.CloseTarget computeCloseTarget() {
     if (contentManager.canCloseContents()) {
       Content selected = contentManager.getSelectedContent();
@@ -763,7 +815,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   public final class TabPanel extends NonOpaquePanel implements UISettingsListener {
     private TabPanel() {
-      super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
       setBorder(JBUI.Borders.emptyRight(2));
       if (ExperimentalUI.isNewUI()) {
         setBorder(JBUI.Borders.empty());
@@ -800,7 +851,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       size.width = TabContentLayout.getTabLayoutStart() + getInsets().left + getInsets().right;
       for (int i = 0; i < getComponentCount(); i++) {
         final Component each = getComponent(i);
-        if (each.isVisible()) {
+        if (each.isVisible() || each == tabToolbar.getComponent()) {
           size.height = Math.max(each.getPreferredSize().height, size.height);
           size.width += each.getPreferredSize().width;
         }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.ClientProperty;
@@ -66,6 +67,14 @@ public abstract class ContentLayout {
       label.setBorder(border);
     }
     label.setVisible(shouldShowId());
+  }
+
+  /**
+   * Returns the preferred width of the tab toolbar if present, otherwise 0.
+   */
+  protected int getTabToolbarPreferredWidth() {
+    ActionToolbar tabToolbar = ui.getTabToolbar();
+    return tabToolbar == null ? 0 : tabToolbar.getComponent().getPreferredSize().width;
   }
 
   private String getTitleSuffix() {
