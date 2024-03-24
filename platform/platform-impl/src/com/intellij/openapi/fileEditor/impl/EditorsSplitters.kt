@@ -619,7 +619,9 @@ open class EditorsSplitters internal constructor(
     LOG.assertTrue(currentWindow == null)
     val window = EditorWindow(owner = this, coroutineScope.childScope(CoroutineName("EditorWindow")))
     add(window.component, BorderLayout.CENTER)
-    setCurrentWindowAndComposite(window)
+    windows.add(window)
+    currentWindowFlow.value = window
+    currentCompositeFlow.value = window.selectedComposite
   }
 
   /**
@@ -904,6 +906,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
     coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
         val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+        splitters.addWindow(editorWindow)
         editorWindow.component.isFocusable = false
         if (tabSizeLimit != 1) {
           editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)

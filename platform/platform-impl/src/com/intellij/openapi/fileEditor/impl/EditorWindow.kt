@@ -204,7 +204,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     else {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT)
     }
-    owner.addWindow(this)
     updateTabsVisibility()
   }
 
@@ -394,6 +393,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     val splitter = createSplitter(isVertical = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
     val result = EditorWindow(owner = owner, owner.coroutineScope.childScope(CoroutineName("EditorWindow")))
+    owner.addWindow(result)
     val selectedComposite = selectedComposite
 
     swapComponents(parent = component.parent as JPanel, toAdd = splitter, toRemove = component)

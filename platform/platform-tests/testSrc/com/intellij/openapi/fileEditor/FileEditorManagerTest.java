@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
@@ -257,7 +258,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.waitForAsyncUpdateOnDumbModeFinished();
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-    assertEquals(2, manager.getAllEditorList(createdFile).size());
+    assertThat(manager.getAllEditorList(createdFile)).hasSize(2);
   }
 
   public void testOpenSpecificTextEditor() {
