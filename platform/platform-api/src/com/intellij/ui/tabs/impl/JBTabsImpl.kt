@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.ui.tabs.impl
@@ -89,10 +89,12 @@ private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @DirtyUI
-open class JBTabsImpl(private var project: Project?,
-                      parentDisposable: Disposable) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
-                                                      PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
-                                                      QuickActionProvider, MorePopupAware, Accessible {
+open class JBTabsImpl(
+  private var project: Project?,
+  parentDisposable: Disposable,
+) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
+    PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
+    QuickActionProvider, MorePopupAware, Accessible {
   companion object {
     @JvmField
     val PINNED: Key<Boolean> = Key.create("pinned")

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final Key<Boolean> MARK_MODIFIED_KEY = Key.create("EDITOR_TABS_MARK_MODIFIED");
 
-  private boolean myAlphabeticalModeChanged = false;
+  private boolean isAlphabeticalModeChanged = false;
 
   public JBEditorTabs(@Nullable Project project, @SuppressWarnings("unused") @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
     super(project, parentDisposable);
@@ -54,12 +54,12 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public boolean useSmallLabels() {
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI();
+    return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs();
   }
 
   @Override
   public boolean isAlphabeticalMode() {
-    if (myAlphabeticalModeChanged) {
+    if (isAlphabeticalModeChanged) {
       return super.isAlphabeticalMode();
     }
     return UISettings.getInstance().getSortTabsAlphabetically();
@@ -67,7 +67,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public @NotNull JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
-    myAlphabeticalModeChanged = true;
+    isAlphabeticalModeChanged = true;
     return super.setAlphabeticalMode(alphabeticalMode);
   }
 
