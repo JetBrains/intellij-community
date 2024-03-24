@@ -60,8 +60,7 @@ class AsyncEditorLoader internal constructor(
     @JvmField
     internal val FIRST_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.first.in.bulk")
 
-    @Internal
-    fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
+    internal fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
 
     @JvmStatic
     @RequiresEdt

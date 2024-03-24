@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
@@ -492,37 +491,28 @@ class EditorTabbedContainer internal constructor(
     }
   }
 
-  class DockableEditor(val img: Image?,
-                       val file: VirtualFile,
-                       private val presentation: Presentation,
-                       private val preferredSize: Dimension,
-                       val isPinned: Boolean,
-                       val isNorthPanelAvailable: Boolean) : DockableContent<VirtualFile?> {
-
-    @Suppress("UNUSED_PARAMETER")
-    @Deprecated("project is not required.")
-    constructor(project: Project?,
-                img: Image,
-                file: VirtualFile,
-                presentation: Presentation,
-                preferredSize: Dimension,
-                isFilePinned: Boolean) : this(img = img,
-                                              file = file,
-                                              presentation = presentation,
-                                              preferredSize = preferredSize,
-                                              isPinned = isFilePinned,
-                                              isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()))
-
-    constructor(img: Image,
-                file: VirtualFile,
-                presentation: Presentation,
-                preferredSize: Dimension,
-                isFilePinned: Boolean) : this(img = img,
-                                              file = file,
-                                              presentation = presentation,
-                                              preferredSize = preferredSize,
-                                              isPinned = isFilePinned,
-                                              isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()))
+  class DockableEditor(
+    val img: Image?,
+    val file: VirtualFile,
+    private val presentation: Presentation,
+    private val preferredSize: Dimension,
+    val isPinned: Boolean,
+    val isNorthPanelAvailable: Boolean,
+  ) : DockableContent<VirtualFile?> {
+    constructor(
+      img: Image,
+      file: VirtualFile,
+      presentation: Presentation,
+      preferredSize: Dimension,
+      isFilePinned: Boolean,
+    ) : this(
+      img = img,
+      file = file,
+      presentation = presentation,
+      preferredSize = preferredSize,
+      isPinned = isFilePinned,
+      isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()),
+    )
 
     override fun getKey(): VirtualFile = file
 
@@ -716,7 +706,7 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
     return height - layoutInsets.top - layoutInsets.bottom
   }
 
-  override fun isShowTabActions(): Boolean = UISettings.getInstance().showCloseButton || isPinned
+  override fun isShowTabActions(): Boolean = isPinned || UISettings.getInstance().showCloseButton
 
   override fun isTabActionsOnTheRight(): Boolean = UISettings.getInstance().closeTabButtonOnTheRight
 
