@@ -18,6 +18,7 @@ import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -29,7 +30,6 @@ import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
@@ -913,7 +913,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       }
 
       val fileEditorManager = splitters.manager
-      val fileDocumentManager = serviceAsync<FileDocumentManager>()
+      var fileDocumentManager: FileDocumentManager? = null
       val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
 
       fun weight(item: FileEntry) = (if (item.currentInTab) 1 else 0)
@@ -930,27 +930,34 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         span("opening editor") {
           val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
-          // preload filetype
-          splitters.coroutineScope.launch {
-            blockingContext {
-              file.fileType
-            }
-          }
-
-          if (isFirstInBulk) {
-            // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
-            // This enables painting the first editor as soon as it's ready (IJPL-687).
-            file.putUserData(AsyncEditorLoader.FIRST_IN_BULK, true)
-            isFirstInBulk = false
-          }
           try {
-            openFile(file = file,
-                     fileEntry = fileEntry,
-                     fileEditorProviderManager = fileEditorProviderManager,
-                     fileEditorManager = fileEditorManager,
-                     fileDocumentManager = fileDocumentManager,
-                     windowDeferred = windowDeferred,
-                     index = index)
+            if (isFirstInBulk) {
+              // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
+              // This enables painting the first editor as soon as it's ready (IJPL-687).
+              file.putUserData(AsyncEditorLoader.FIRST_IN_BULK, true)
+              isFirstInBulk = false
+            }
+
+            val document = async {
+              var m = fileDocumentManager
+              if (m == null) {
+                m = serviceAsync<FileDocumentManager>()
+                fileDocumentManager = m
+              }
+              readAction {
+                m.getDocument(file)
+              }
+            }
+
+            openFile(
+              file = file,
+              fileEntry = fileEntry,
+              fileEditorProviderManager = fileEditorProviderManager,
+              fileEditorManager = fileEditorManager,
+              document = document,
+              windowDeferred = windowDeferred,
+              index = index,
+            )
             if (fileEntry.currentInTab) {
               focusedFile = file
             }
@@ -990,13 +997,15 @@ private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEn
   return null
 }
 
-private suspend fun openFile(file: VirtualFile,
-                             fileEntry: FileEntry,
-                             fileEditorProviderManager: FileEditorProviderManager,
-                             fileEditorManager: FileEditorManagerImpl,
-                             fileDocumentManager: FileDocumentManager,
-                             windowDeferred: Deferred<EditorWindow>,
-                             index: Int) {
+private suspend fun openFile(
+  file: VirtualFile,
+  fileEntry: FileEntry,
+  fileEditorProviderManager: FileEditorProviderManager,
+  fileEditorManager: FileEditorManagerImpl,
+  document: Deferred<Document?>,
+  windowDeferred: Deferred<EditorWindow>,
+  index: Int,
+) {
   coroutineScope {
     val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
       async(CoroutineName("editor provider resolving")) {
@@ -1037,10 +1046,6 @@ private suspend fun openFile(file: VirtualFile,
       override suspend fun getState(provider: FileEditorProvider): FileEditorState? {
         return providerAndStateList.await().firstOrNull { it.first === provider }?.second
       }
-    }
-
-    val document = readAction {
-      fileDocumentManager.getDocument(file)
     }
 
     val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
