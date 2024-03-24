@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixM
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 
@@ -58,7 +57,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addConstructorParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addConstructorParameterFromSuperTypeCall", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addConversionCall", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/addCrossinline", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addCrossinline", pattern = pattern)
             model("$idea/quickfix/addDataModifier", pattern = pattern)
             model("$idea/quickfix/addDefaultConstructor", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addElseBranchToIf", pattern = pattern, isIgnored = true)
@@ -72,7 +71,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addJvmInline", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addJvmStaticAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addNewLineAfterAnnotations", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/addNoinline", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addNoinline", pattern = pattern)
             model("$idea/quickfix/addReifiedToTypeParameterOfFunctionFix", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addReturnExpression", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addReturnToLastExpressionInFunction", pattern = pattern, isIgnored = true)

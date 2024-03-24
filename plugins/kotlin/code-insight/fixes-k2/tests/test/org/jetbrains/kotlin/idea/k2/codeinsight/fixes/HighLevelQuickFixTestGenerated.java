@@ -4551,7 +4551,23 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addCrossinline")
+    public static class AddCrossinline extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addCrossinline/basic.kt");
+        }
+
+        @TestMetadata("suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addCrossinline/suspend.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addDataModifier")
@@ -4726,7 +4742,33 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addNoinline")
+    public static class AddNoinline extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addNoinline/basic.kt");
+        }
+
+        @TestMetadata("extensionCalls.kt")
+        public void testExtensionCalls() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addNoinline/extensionCalls.kt");
+        }
+
+        @TestMetadata("suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addNoinline/suspend.kt");
+        }
+
+        @TestMetadata("withCrossinline.kt")
+        public void testWithCrossinline() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addNoinline/withCrossinline.kt");
+        }
+    }
 
 
 
