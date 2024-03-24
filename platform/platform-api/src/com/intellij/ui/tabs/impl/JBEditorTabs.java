@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -15,11 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final Key<Boolean> MARK_MODIFIED_KEY = Key.create("EDITOR_TABS_MARK_MODIFIED");
-  /**
-   * @deprecated use {@link #myTabPainter}.
-   */
-  @Deprecated(forRemoval = true)
-  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
 
   private boolean myAlphabeticalModeChanged = false;
 
