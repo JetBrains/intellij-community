@@ -86,19 +86,23 @@ open class IdeRootPane internal constructor(
 
   private var toolWindowPane: ToolWindowPane? = null
   private val glassPaneInitialized: Boolean
-  private var fullScreen = false
+  private var isFullScreen = false
 
-  internal inline fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, HorizontalLayout.Group>>): Boolean = when {
-    isCompactHeaderFastCheck() -> true
-    SystemInfoRt.isMac -> mainToolbarHasNoActions(mainToolbarActionSupplier)
-    else -> !UISettings.shadowInstance.separateMainMenu && mainToolbarHasNoActions(mainToolbarActionSupplier)
+  internal inline fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, HorizontalLayout.Group>>): Boolean {
+    return when {
+      isCompactHeaderFastCheck() -> true
+      SystemInfoRt.isMac -> mainToolbarHasNoActions(mainToolbarActionSupplier)
+      else -> mainToolbarHasNoActions(mainToolbarActionSupplier) && !UISettings.getInstance().separateMainMenu
+    }
   }
 
-  private inline fun mainToolbarHasNoActions(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, *>>): Boolean =
-    mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+  private inline fun mainToolbarHasNoActions(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, *>>): Boolean {
+    return mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+  }
 
-  internal fun isCompactHeaderFastCheck(): Boolean =
-    DistractionFreeModeController.shouldMinimizeCustomHeader() || isLightEdit || !UISettings.getInstance().showNewMainToolbar
+  internal fun isCompactHeaderFastCheck(): Boolean {
+    return DistractionFreeModeController.shouldMinimizeCustomHeader() || isLightEdit || !UISettings.getInstance().showNewMainToolbar
+  }
 
   protected open val isLightEdit: Boolean
     get() = false
@@ -148,8 +152,6 @@ open class IdeRootPane internal constructor(
     return isNewToolbar && !isToolbarInHeader() && !isCompactHeader(mainToolbarActionSupplier) || !isNewToolbar && uiSettings.showMainToolbar
   }
 
-  fun isToolbarInHeader() = isToolbarInHeader(fullScreen)
-
   init {
     if (SystemInfoRt.isWindows) {
       runCatching {
@@ -197,7 +199,7 @@ open class IdeRootPane internal constructor(
           isLightEdit,
           ideMenu,
           isFloatingMenuBarSupported,
-          isFullScreen = this::fullScreen)
+          isFullScreen = this::isFullScreen)
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else if (hideNativeLinuxTitle) {
@@ -209,7 +211,7 @@ open class IdeRootPane internal constructor(
           isLightEdit,
           ideMenu,
           isFloatingMenuBarSupported = true,
-          isFullScreen = this::fullScreen
+          isFullScreen = this::isFullScreen
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
 
@@ -262,7 +264,7 @@ open class IdeRootPane internal constructor(
     }
 
     helper.init(frame, pane = this, coroutineScope)
-    updateMainMenuVisibility()
+    scheduleUpdateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
       coroutineScope.launch(rootTask() + ModalityState.any().asContextElement()) {
@@ -346,8 +348,11 @@ open class IdeRootPane internal constructor(
         (isToolbarInHeader(false) || IdeFrameDecorator.isCustomDecorationActive())
   }
 
-  internal fun createDecorator(): IdeFrameDecorator? =
-    IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
+  internal fun isToolbarInHeader(): Boolean = isToolbarInHeader(isFullScreen)
+
+  internal fun createDecorator(): IdeFrameDecorator? {
+    return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
+  }
 
   @Suppress("unused")
   internal val isCoroutineScopeCancelled: Boolean
@@ -409,17 +414,17 @@ open class IdeRootPane internal constructor(
   private fun installLinuxBorder() {
     if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       val maximized = frame.extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
-      border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && !maximized && hideNativeLinuxTitle)
+      border = JBUI.CurrentTheme.Window.getBorder(!isFullScreen && !maximized && hideNativeLinuxTitle)
     }
   }
 
-  private fun updateScreenState(fullScreen: Boolean) {
-    this.fullScreen = fullScreen
+  private fun updateScreenState(isFullScreen: Boolean) {
+    this.isFullScreen = isFullScreen
     installLinuxBorder()
     if (helper is DecoratedHelper) {
       val wasCustomFrameHeaderVisible = helper.customFrameTitlePane.getComponent().isVisible
       val isCustomFrameHeaderVisible =
-        !fullScreen ||
+        !isFullScreen ||
         !SystemInfoRt.isMac && isToolbarInHeader() ||
         SystemInfoRt.isMac && !isCompactHeader { blockingComputeMainActionGroups(CustomActionsSchema.getInstance()) }
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
@@ -432,11 +437,12 @@ open class IdeRootPane internal constructor(
       toolbar?.isVisible = isToolbarVisible { blockingComputeMainActionGroups(CustomActionsSchema.getInstance()) }
     }
 
-    updateMainMenuVisibility()
+    scheduleUpdateMainMenuVisibility()
   }
 
-  override fun createRootLayout(): LayoutManager =
-    if (isFloatingMenuBarSupported || isDecoratedMenu) MyRootLayout() else super.createRootLayout()
+  override fun createRootLayout(): LayoutManager {
+    return if (isFloatingMenuBarSupported || isDecoratedMenu) MyRootLayout() else super.createRootLayout()
+  }
 
   final override fun setGlassPane(glass: Component) {
     check(!glassPaneInitialized) { "Setting of glass pane for IdeFrame is prohibited" }
@@ -554,22 +560,23 @@ open class IdeRootPane internal constructor(
     statusBar!!.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
   }
 
-  private fun updateMainMenuVisibility() {
+  private fun scheduleUpdateMainMenuVisibility() {
     if (menuBar == null) {
       return
     }
 
-    // don't show the Swing menu when a global (system) menu is presented
-    val visible = SystemInfo.isMacSystemMenu ||
-                  fullScreen ||
-                  (!IdeFrameDecorator.isCustomDecorationActive() &&
-                   !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented()) &&
-                   UISettings.shadowInstance.showMainMenu &&
-                   (!isMenuButtonInToolbar ||
-                    isCompactHeader { blockingComputeMainActionGroups(CustomActionsSchema.getInstance()) } && ExperimentalUI.isNewUI()) &&
-                   !hideNativeLinuxTitle)
-    if (visible != menuBar.isVisible) {
-      menuBar.isVisible = visible
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      // don't show the Swing menu when a global (system) menu is presented
+      val visible = SystemInfo.isMacSystemMenu ||
+                    isFullScreen ||
+                    (!IdeFrameDecorator.isCustomDecorationActive() &&
+                     !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented()) &&
+                     UISettings.shadowInstance.showMainMenu &&
+                     !hideNativeLinuxTitle &&
+                     (!isMenuButtonInToolbar || (ExperimentalUI.isNewUI() && isCompactHeader { computeMainActionGroups() })))
+      if (visible != menuBar.isVisible) {
+        menuBar.isVisible = visible
+      }
     }
   }
 
@@ -590,6 +597,7 @@ open class IdeRootPane internal constructor(
       }
       return
     }
+
     val titlePane = (helper as? DecoratedHelper)?.customFrameTitlePane
     val customTitleBar = (titlePane as? CustomHeader)?.customTitleBar ?: (titlePane as? MacToolbarFrameHeader)?.customTitleBar ?: return
 
@@ -656,11 +664,13 @@ open class IdeRootPane internal constructor(
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
 
-    updateScreenState(fullScreen)
+    updateScreenState(isFullScreen)
   }
 
   private fun updateToolbarVisibility() {
-    if (ExperimentalUI.isNewUI() && SystemInfoRt.isMac) return
+    if (ExperimentalUI.isNewUI() && SystemInfoRt.isMac) {
+      return
+    }
 
     coroutineScope.launch(ModalityState.any().asContextElement()) {
       val isToolbarVisible = isToolbarVisible { computeMainActionGroups() }
@@ -683,11 +693,9 @@ open class IdeRootPane internal constructor(
     private val customFrameTitlePane: MainFrameCustomHeader?
       get() = (helper as? DecoratedHelper)?.customFrameTitlePane
 
-    override fun preferredLayoutSize(parent: Container): Dimension =
-      computeLayoutSize(parent) { it.preferredSize }
+    override fun preferredLayoutSize(parent: Container): Dimension = computeLayoutSize(parent) { it.preferredSize }
 
-    override fun minimumLayoutSize(parent: Container): Dimension =
-      computeLayoutSize(parent) { it.preferredSize }
+    override fun minimumLayoutSize(parent: Container): Dimension = computeLayoutSize(parent) { it.preferredSize }
 
     private inline fun computeLayoutSize(parent: Container, getter: (menuBar: Container) -> Dimension): Dimension {
       val insets = insets
@@ -725,7 +733,7 @@ open class IdeRootPane internal constructor(
 
     private inline fun getMenuBarDimension(getter: (menuBar: JComponent) -> Dimension): Dimension {
       val menuBar = menuBar
-      return if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) getter(menuBar) else JBUI.emptySize()
+      return if (menuBar != null && menuBar.isVisible && !isFullScreen && !isDecoratedMenu) getter(menuBar) else JBUI.emptySize()
     }
 
     override fun layoutContainer(parent: Container) {
@@ -741,7 +749,7 @@ open class IdeRootPane internal constructor(
       if (menuBar != null && menuBar.isVisible) {
         val mbd = menuBar.preferredSize
         menuBar.setBounds(0, 0, w, mbd.height)
-        if (!fullScreen && !isDecoratedMenu) {
+        if (!isFullScreen && !isDecoratedMenu) {
           contentY += mbd.height
         }
       }
@@ -761,7 +769,12 @@ open class IdeRootPane internal constructor(
   private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
     if (ExperimentalUI.isNewUI()) {
       val toolbar = withContext(Dispatchers.EDT) {
-        val toolbar = MainToolbar(coroutineScope, frame, isOpaque = true, background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true))
+        val toolbar = MainToolbar(
+          coroutineScope = coroutineScope,
+          frame = frame,
+          isOpaque = true,
+          background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
+        )
         toolbar.border = JBUI.Borders.emptyLeft(5)
         toolbar
       }
@@ -794,16 +807,25 @@ open class IdeRootPane internal constructor(
     }
     else {
       val menuBar = IdeJMenuBar(coroutineScope, frame, mainMenuActionGroup)
-      if (frame.rootPane != null) frame.jMenuBar = menuBar
-      if (!ExperimentalUI.isNewUI()) component.jMenuBar = menuBar
+      if (frame.rootPane != null) {
+        frame.jMenuBar = menuBar
+      }
+      if (!ExperimentalUI.isNewUI()) {
+        component.jMenuBar = menuBar
+      }
       return menuBar
     }
   }
 }
 
-internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?): IdeJMenuBar =
-  if (SystemInfoRt.isLinux) LinuxIdeMenuBar(coroutineScope, frame, customMenuGroup)
-  else IdeJMenuBar(coroutineScope, frame, customMenuGroup)
+internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?): IdeJMenuBar {
+  if (SystemInfoRt.isLinux) {
+    return LinuxIdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
+  }
+  else {
+    return IdeJMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
+  }
+}
 
 internal fun getPreferredWindowHeaderHeight(isCompactHeader: Boolean): Int = JBUI.scale(
   when {

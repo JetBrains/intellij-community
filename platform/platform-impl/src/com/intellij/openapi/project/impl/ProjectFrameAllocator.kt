@@ -117,7 +117,7 @@ private class FrameAllocatorProjectInitObserver(
       val frameHelper = deferredProjectFrameHelper.await()
 
       launch {
-        val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
+        val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
         withContext(Dispatchers.EDT) {
           windowManager.assignFrame(frameHelper, project)
           frameHelper.setRawProject(project)
@@ -145,8 +145,10 @@ private class FrameAllocatorProjectInitObserver(
   override val rawProjectDeferred = CompletableDeferred<Project>()
 }
 
-internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
-                                       private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
+internal class ProjectUiFrameAllocator(
+  @JvmField val options: OpenProjectTask,
+  private val projectStoreBaseDir: Path,
+) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
   override suspend fun run(task: FrameAllocatorTask) {
