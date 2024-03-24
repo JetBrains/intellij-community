@@ -14,17 +14,6 @@ abstract class CascadeController protected constructor(protected val delegateCon
     return delegateGraphChanged(delegateController.performLinearGraphAction(delegateAction))
   }
 
-  internal fun performAction(action: (CascadeController) -> GraphChanges<Int>?): GraphChanges<Int>? {
-    val graphChanges = action(this)
-    if (graphChanges != null) return graphChanges
-
-    if (delegateController is CascadeController) {
-      val result = delegateController.performAction(action) ?: return null
-      return delegateGraphChanged(LinearGraphController.LinearGraphAnswer(result)).graphChanges
-    }
-    return null
-  }
-
   private fun convertToDelegate(element: PrintElementWithGraphElement?): PrintElementWithGraphElement? {
     if (element == null) return null
     val convertedGraphElement = convertToDelegate(element.graphElement) ?: return null
@@ -37,4 +26,16 @@ abstract class CascadeController protected constructor(protected val delegateCon
 
   // null mean that this action must be performed by delegateGraphController
   protected abstract fun performAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer?
+
+  companion object {
+    internal fun LinearGraphController.performActionRecursively(action: (LinearGraphController) -> GraphChanges<Int>?): GraphChanges<Int>? {
+      val graphChanges = action(this)
+      if (graphChanges != null) return graphChanges
+
+      if (this !is CascadeController) return null
+
+      val result = delegateController.performActionRecursively(action) ?: return null
+      return delegateGraphChanged(LinearGraphController.LinearGraphAnswer(result)).graphChanges
+    }
+  }
 }
