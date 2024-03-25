@@ -19,12 +19,9 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
@@ -37,20 +34,6 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val checkingJob = coroutineScope {
-      launch {
-        while (true) {
-          @Suppress("TestOnlyProblems")
-          if (!service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished()) {
-            delay(500)
-          }
-          else {
-            return@launch
-          }
-        }
-      }
-    }
-    checkingJob.join()
     context.project.service<ListenerState>().waitAnalysisToFinish()
   }
 
