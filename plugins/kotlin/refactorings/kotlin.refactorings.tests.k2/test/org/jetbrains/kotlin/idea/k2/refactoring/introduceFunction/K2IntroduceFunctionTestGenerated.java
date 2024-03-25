@@ -1682,6 +1682,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObject.kt");
             }
 
+            @TestMetadata("anonymousObject1.kt")
+            public void testAnonymousObject1() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObject1.kt");
+            }
+
             @TestMetadata("anonymousObjectWithCall.kt")
             public void testAnonymousObjectWithCall() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObjectWithCall.kt");

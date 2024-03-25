@@ -1,0 +1,13 @@
+open class T
+
+fun foo(): T {
+    val o = anonymous()
+    return o
+}
+
+private fun anonymous(): T {
+    val o = object : T() {}
+    return o
+}
+
+// IGNORE_K1

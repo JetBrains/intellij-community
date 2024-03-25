@@ -2524,6 +2524,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObject.kt");
                 }
 
+                @TestMetadata("anonymousObject1.kt")
+                public void testAnonymousObject1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObject1.kt");
+                }
+
                 @TestMetadata("anonymousObjectWithCall.kt")
                 public void testAnonymousObjectWithCall() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObjectWithCall.kt");
