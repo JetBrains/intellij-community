@@ -25,7 +25,7 @@ class FileHistoryTest {
   fun LinearGraph.assert(startCommit: Int, startPath: FilePath, fileNamesData: FileHistoryData, result: TestGraphBuilder.() -> Unit) {
     val permanentGraphInfo = TestPermanentGraphInfo(this)
     val baseController = BaseController(permanentGraphInfo)
-    val filteredController = FilteredController(baseController, permanentGraphInfo, fileNamesData.getCommits())
+    val filteredController = FilteredController.create(baseController, permanentGraphInfo, fileNamesData.getCommits())
 
     val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, FileHistory.EMPTY)
     historyBuilder.accept(filteredController, permanentGraphInfo)

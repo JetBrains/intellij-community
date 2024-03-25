@@ -38,29 +38,35 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
   private val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph))
 
   private fun createFilteredController(options: PermanentGraph.Options, visibleHeads: Set<CommitId>?, matchingCommits: Set<CommitId>?): LinearGraphController {
-    val baseController = when (options) {
-      PermanentGraph.Options.LinearBek -> LinearBekController(BekBaseController(this, bekIntMap), this)
+    val visibleHeadsIds = if (visibleHeads != null) permanentCommitsInfo.convertToNodeIds(visibleHeads) else null
+    val matchingCommitIds = if (matchingCommits != null) permanentCommitsInfo.convertToNodeIds(matchingCommits) else null
+
+    when (options) {
       is PermanentGraph.Options.Base -> {
-        when (options.sortType) {
+        val baseController = when (options.sortType) {
           PermanentGraph.SortType.Normal -> BaseController(this)
           PermanentGraph.SortType.Bek -> BekBaseController(this, bekIntMap)
         }
+        if (matchingCommitIds != null) {
+          return FilteredController.create(baseController, this, matchingCommitIds, visibleHeadsIds)
+        }
+        return CollapsedController(baseController, this, visibleHeadsIds)
+      }
+      PermanentGraph.Options.FirstParent -> {
+        val baseController = BaseController(this)
+        return FirstParentController.create(baseController, this, matchingCommitIds, visibleHeadsIds)
+      }
+      PermanentGraph.Options.LinearBek -> {
+        val baseController = LinearBekController(BekBaseController(this, bekIntMap), this)
+        if (matchingCommitIds != null) {
+          return FilteredController.create(baseController, this, matchingCommitIds, visibleHeadsIds)
+        }
+        if (visibleHeadsIds != null) {
+          return BranchFilterController(baseController, this, visibleHeadsIds)
+        }
+        return baseController
       }
     }
-
-    val visibleHeadsIds = if (visibleHeads != null) permanentCommitsInfo.convertToNodeIds(visibleHeads) else null
-    if (matchingCommits != null) {
-      return FilteredController(baseController, this, permanentCommitsInfo.convertToNodeIds(matchingCommits), visibleHeadsIds)
-    }
-
-    if (options == PermanentGraph.Options.LinearBek) {
-      if (visibleHeadsIds != null) {
-        return BranchFilterController(baseController, this, visibleHeadsIds)
-      }
-      return baseController
-    }
-
-    return CollapsedController(baseController, this, visibleHeadsIds)
   }
 
   fun createVisibleGraph(options: PermanentGraph.Options,

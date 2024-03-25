@@ -43,7 +43,7 @@ object GraphLayoutBuilder {
     return this
   }
 
-  private fun LinearGraph.getHeads(): IntList {
+  internal fun LinearGraph.getHeads(): IntList {
     val heads = IntArrayList()
     for (i in 0 until nodesCount()) {
       if (LinearGraphUtils.getUpNodes(this, i).isEmpty()) {

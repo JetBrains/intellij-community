@@ -26,6 +26,7 @@ object GraphOptionsUtil {
     @NlsActions.ActionText get() = when (this) {
       is PermanentGraph.Options.Base -> sortType.localizedName
       PermanentGraph.Options.LinearBek -> VcsLogBundle.message("graph.options.linear")
+      PermanentGraph.Options.FirstParent -> VcsLogBundle.message("graph.options.first.parent")
     }
 
   @JvmStatic
@@ -33,25 +34,28 @@ object GraphOptionsUtil {
     @NlsActions.ActionDescription get() = when (this) {
       is PermanentGraph.Options.Base -> sortType.localizedDescription
       PermanentGraph.Options.LinearBek -> VcsLogBundle.message("graph.options.linear.description")
+      PermanentGraph.Options.FirstParent -> VcsLogBundle.message("graph.options.first.parent.description")
     }
 
   private const val BASE = "Base"
   private const val LINEAR_BEK = "LinearBek"
+  private const val FIRST_PARENT = "FirstParent"
 
   @JvmStatic
-  val optionKindNames = listOf(BASE, LINEAR_BEK)
+  val optionKindNames = listOf(BASE, LINEAR_BEK, FIRST_PARENT)
 
   @JvmStatic
   val PermanentGraph.Options.kindName
     get() = when (this) {
       is PermanentGraph.Options.Base -> BASE
       PermanentGraph.Options.LinearBek -> LINEAR_BEK
+      PermanentGraph.Options.FirstParent -> FIRST_PARENT
     }
 
   internal fun PermanentGraph.Options.toStringList(): List<String> {
     return when (this) {
       is PermanentGraph.Options.Base -> listOf(kindName, sortType.presentation)
-      PermanentGraph.Options.LinearBek -> listOf(kindName)
+      PermanentGraph.Options.LinearBek, PermanentGraph.Options.FirstParent -> listOf(kindName)
     }
   }
 
@@ -61,6 +65,7 @@ object GraphOptionsUtil {
     val kind = first()
     return when (kind) {
       LINEAR_BEK -> PermanentGraph.Options.LinearBek
+      FIRST_PARENT -> PermanentGraph.Options.FirstParent
       BASE -> {
         if (size != 2) return null
         val sortType = PermanentGraph.SortType.entries.find { it.presentation == get(1) } ?: return null

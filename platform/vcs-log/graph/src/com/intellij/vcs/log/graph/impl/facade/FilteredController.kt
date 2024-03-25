@@ -6,22 +6,13 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 import com.intellij.vcs.log.graph.utils.getReachableMatchingNodes
 
-class FilteredController(delegateLinearGraphController: LinearGraphController,
-                         permanentGraphInfo: PermanentGraphInfo<*>,
-                         matchedIds: Set<Int>,
-                         visibleHeadsIds: Set<Int>? = null) :
+class FilteredController(delegateLinearGraphController: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<*>,
+                         buildCollapsedGraph: () -> CollapsedGraph) :
   CascadeController(delegateLinearGraphController, permanentGraphInfo) {
 
-  val collapsedGraph: CollapsedGraph = buildGraph(permanentGraphInfo.linearGraph.getReachableMatchingNodes(visibleHeadsIds, matchedIds))
-
-  private fun buildGraph(visibility: UnsignedBitSet): CollapsedGraph {
-    return CollapsedGraph.newInstance(delegateController.compiledGraph, visibility).also {
-      DottedFilterEdgesGenerator.update(it, 0, it.delegatedGraph.nodesCount() - 1)
-    }
-  }
+  val collapsedGraph: CollapsedGraph = buildCollapsedGraph()
 
   override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer {
     // filter prohibits any actions on delegate graph for now
@@ -41,4 +32,18 @@ class FilteredController(delegateLinearGraphController: LinearGraphController,
   override fun performAction(action: LinearGraphController.LinearGraphAction) = null
 
   override fun getCompiledGraph() = collapsedGraph.compiledGraph
+
+  companion object {
+    fun create(delegateController: LinearGraphController,
+               permanentGraphInfo: PermanentGraphInfo<*>,
+               matchedIds: Set<Int>,
+               visibleHeadsIds: Set<Int>? = null): FilteredController {
+      val visibility = delegateController.compiledGraph.getReachableMatchingNodes(visibleHeadsIds, matchedIds)
+      return FilteredController(delegateController, permanentGraphInfo) {
+        CollapsedGraph.newInstance(delegateController.compiledGraph, visibility).also {
+          DottedFilterEdgesGenerator.update(it, 0, it.delegatedGraph.nodesCount() - 1)
+        }
+      }
+    }
+  }
 }

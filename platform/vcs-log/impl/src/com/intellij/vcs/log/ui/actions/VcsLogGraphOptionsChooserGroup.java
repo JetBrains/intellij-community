@@ -37,10 +37,11 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
     actions.addAll(ContainerUtil.map(sortTypes, sortType -> {
       return new SelectOptionsAction(logUI, properties, new PermanentGraph.Options.Base(sortType));
     }));
+    actions.add(Separator.create(VcsLogBundle.message("action.vcs.log.graph.options.separator")));
     if (BekUtil.isLinearBekEnabled()) {
-      actions.add(Separator.create(VcsLogBundle.message("action.vcs.log.graph.options.separator")));
-      actions.add(new SelectOptionsAction(logUI, properties, PermanentGraph.Options.LinearBek.INSTANCE));
+      actions.add(new SelectNonBaseOptionsAction(logUI, properties, PermanentGraph.Options.LinearBek.INSTANCE));
     }
+    actions.add(new SelectNonBaseOptionsAction(logUI, properties, PermanentGraph.Options.FirstParent.INSTANCE));
     return actions.toArray(EMPTY_ARRAY);
   }
 
@@ -64,7 +65,7 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
   }
 
   private static class SelectOptionsAction extends ToggleAction implements DumbAware {
-    private final PermanentGraph.Options myGraphOptions;
+    protected final PermanentGraph.Options myGraphOptions;
     private final VcsLogUi myUI;
     private final VcsLogUiProperties myProperties;
 
@@ -93,14 +94,31 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state && myProperties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS)) {
-        myProperties.set(MainVcsLogUiProperties.GRAPH_OPTIONS, myGraphOptions);
+      if (myProperties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS)) {
+        myProperties.set(MainVcsLogUiProperties.GRAPH_OPTIONS, getOptionsToSet(state));
       }
+    }
+
+    protected @NotNull PermanentGraph.Options getOptionsToSet(boolean state) {
+      return myGraphOptions;
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+  }
+
+  private static class SelectNonBaseOptionsAction extends SelectOptionsAction {
+    SelectNonBaseOptionsAction(@NotNull VcsLogUi ui,
+                               @NotNull VcsLogUiProperties properties,
+                               @NotNull PermanentGraph.Options options) {
+      super(ui, properties, options);
+    }
+
+    @Override
+    protected @NotNull PermanentGraph.Options getOptionsToSet(boolean state) {
+      return state ? myGraphOptions : PermanentGraph.Options.Default;
     }
   }
 }

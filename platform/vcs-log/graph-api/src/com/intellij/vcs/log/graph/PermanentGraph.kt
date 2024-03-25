@@ -67,6 +67,11 @@ interface PermanentGraph<Id> {
      */
     data object LinearBek : Options()
 
+    /**
+     * Follow only the first parent commit upon seeing a merge commit.
+     */
+    data object FirstParent: Options()
+
     companion object {
       @JvmField
       val Default = Base(SortType.Normal)
