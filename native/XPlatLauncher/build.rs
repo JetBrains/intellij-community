@@ -183,7 +183,11 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     let lib_file = &cef_lib_search_path.join(lib_name);
     assert_exists_and_file(lib_file)?;
 
-    println!("cargo:rustc-link-lib=static={lib_name_without_extension}");
+    // https://doc.rust-lang.org/rustc/command-line-arguments.html#linking-modifiers-whole-archive
+    // the default is -whole-archive until it becomes +whole-archive...
+    // which happens in "some cases for backward compatibility, but it is not guaranteed"
+    // (in our case that happens when running `cargo test` and linker blows up after that)
+    println!("cargo:rustc-link-lib=static:-whole-archive={lib_name_without_extension}");
 
     let cef_sandbox_dependencies = [
         "Advapi32",
