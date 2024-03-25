@@ -1487,6 +1487,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             public void testQualifiedThisAsArgument() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/qualifiedThisAsArgument.kt");
             }
+
+            @TestMetadata("unusedReceiver.kt")
+            public void testUnusedReceiver() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/unusedReceiver.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

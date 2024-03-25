@@ -2329,6 +2329,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 public void testQualifiedThisAsArgument() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/qualifiedThisAsArgument.kt");
                 }
+
+                @TestMetadata("unusedReceiver.kt")
+                public void testUnusedReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/unusedReceiver.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
