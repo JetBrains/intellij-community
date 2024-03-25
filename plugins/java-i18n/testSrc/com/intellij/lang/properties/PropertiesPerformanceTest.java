@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,6 +90,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(src);
     assertNotNull(src, virtualFile);
     virtualFile.refresh(false, true);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
     final PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
     assert aClass != null;
