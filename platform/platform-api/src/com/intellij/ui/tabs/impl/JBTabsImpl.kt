@@ -2639,6 +2639,7 @@ open class JBTabsImpl(
     init {
       @Suppress("LeakingThis")
       shadowAction = ShadowAction(this, copyFromId, tabs, parentDisposable)
+      copySourceActionId = copyFromId
       isEnabledInModalContext = true
     }
 
