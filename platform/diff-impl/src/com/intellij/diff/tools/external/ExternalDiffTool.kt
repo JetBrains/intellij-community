@@ -18,17 +18,16 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.util.ThrowableConvertor
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.io.IOException
 
@@ -125,12 +124,14 @@ object ExternalDiffTool {
                            hints: DiffDialogHints,
                            requestProducer: () -> List<DiffRequestProducer>): Boolean {
     try {
-      val requests: List<DiffRequest>? = computeWithModalProgress(
-        project,
-        DiffBundle.message("progress.title.loading.requests")
-      ) { indicator ->
-        val requestProducers = requestProducer()
-        collectRequests(project, requestProducers, indicator)
+      val requests: List<DiffRequest>? = runWithModalProgressBlocking(
+        owner = if (project != null) ModalTaskOwner.project(project) else ModalTaskOwner.guess(),
+        title = DiffBundle.message("progress.title.loading.requests")
+      ) {
+        coroutineToIndicator {
+          val requestProducers = requestProducer()
+          collectRequests(project, requestProducers)
+        }
       }
       if (requests == null) return false
 
@@ -176,8 +177,7 @@ object ExternalDiffTool {
   }
 
   private fun collectRequests(project: Project?,
-                              producers: List<DiffRequestProducer>,
-                              indicator: ProgressIndicator): List<DiffRequest>? {
+                              producers: List<DiffRequestProducer>): List<DiffRequest>? {
     if (!wantShowExternalToolFor(producers)) return null
     if (!checkNotTooManyRequests(project, producers)) return null
 
@@ -186,6 +186,7 @@ object ExternalDiffTool {
     val context = UserDataHolderBase()
     val errorRequests = mutableListOf<DiffRequestProducer>()
 
+    val indicator = ProgressManager.getGlobalProgressIndicator()
     for (producer in producers) {
       try {
         requests.add(producer.process(context, indicator))
@@ -208,18 +209,6 @@ object ExternalDiffTool {
     }
 
     return requests
-  }
-
-  @Throws(Exception::class)
-  private fun <T> computeWithModalProgress(project: Project?,
-                                           title: @NlsContexts.DialogTitle String,
-                                           computable: ThrowableConvertor<in ProgressIndicator, T, out Exception>): T {
-    return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
-      @Throws(Exception::class)
-      override fun compute(indicator: ProgressIndicator): T {
-        return computable.convert(indicator)
-      }
-    })
   }
 
   @JvmStatic
