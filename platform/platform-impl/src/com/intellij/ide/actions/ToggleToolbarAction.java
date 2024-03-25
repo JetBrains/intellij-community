@@ -15,8 +15,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -223,38 +224,40 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
-      return e.getUpdateSession()
-        .compute(this, "getChildrenImpl", ActionUpdateThread.EDT, this::getChildrenImpl);
-    }
-
-    private AnAction @NotNull [] getChildrenImpl() {
-      ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
-      Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
-      JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
-      if (contentComponent == null) return EMPTY_ARRAY;
-      List<AnAction> result = new SmartList<>();
-      for (final ActionToolbar toolbar : iterateToolbars(Collections.singletonList(contentComponent))) {
-        JComponent c = toolbar.getComponent();
-        if (c.isVisible() || !c.isValid()) continue;
-        if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {
-          result.add(Separator.getInstance());
-        }
-
-        List<AnAction> actions = toolbar.getActions();
+      UpdateSession updateSession = e.getUpdateSession();
+      List<ActionGroup> groups = updateSession.compute(
+        this, "collectActionGroups", ActionUpdateThread.EDT, this::collectActionGroups);
+      if (groups.isEmpty()) return EMPTY_ARRAY;
+      List<AnAction> result = new ArrayList<>();
+      for (ActionGroup group : groups) {
+        Iterable<? extends AnAction> actions = updateSession.expandedChildren(group);
         for (AnAction action : actions) {
           if (action instanceof ToggleAction && !result.contains(action)) {
             result.add(action);
           }
-          else if (action instanceof Separator) {
-            if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {
-              result.add(Separator.getInstance());
-            }
+          else if (action instanceof Separator && !result.isEmpty() &&
+                   !(ContainerUtil.getLastItem(result) instanceof Separator)) {
+            result.add(Separator.getInstance());
           }
         }
       }
       boolean popup = ContainerUtil.count(result, it -> !(it instanceof Separator)) > 3;
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
-      return result.toArray(AnAction.EMPTY_ARRAY);
+      return result.toArray(EMPTY_ARRAY);
+    }
+
+    private @NotNull List<ActionGroup> collectActionGroups() {
+      ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
+      Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
+      JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
+      if (contentComponent == null) return Collections.emptyList();
+      return JBIterable.from(iterateToolbars(Collections.singletonList(contentComponent)))
+        .filterMap(toolbar -> {
+          JComponent c = toolbar.getComponent();
+          if (c.isVisible() || !c.isValid()) return null;
+          return toolbar.getActionGroup();
+        })
+        .toList();
     }
   }
 }
