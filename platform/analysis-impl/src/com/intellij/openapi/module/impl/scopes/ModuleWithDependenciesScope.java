@@ -43,7 +43,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   private final int myOptions;
   private final ProjectFileIndexImpl myProjectFileIndex;
 
-  private volatile Set<Module> myModules;
+  private volatile Set<Module> myModules; // lazy calculated, use `getModules()` instead!
   private final Object2IntMap<VirtualFile> myRoots;
   private final SingleFileSourcesTracker mySingleFileSourcesTracker;
 
@@ -115,11 +115,16 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
+    Set<Module> allModules = getModules();
+    return allModules.contains(aModule);
+  }
+
+  private @NotNull Set<Module> getModules() {
     Set<Module> allModules = myModules;
     if (allModules == null) {
       myModules = allModules = new HashSet<>(calcModules());
     }
-    return allModules.contains(aModule);
+    return allModules;
   }
 
   @Override
@@ -178,9 +183,9 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   }
 
   private @NotNull VirtualFileEnumeration doExtractFileEnumeration() {
-    isSearchInModuleContent(myModule); // init myModules
+    Set<Module> modules = getModules();
     // todo might be not cheap
-    if (myRoots.size() > 1 && (hasOption(MODULES) && myModules.size() > 1 || hasOption(LIBRARIES))) {
+    if (myRoots.size() > 1 && (hasOption(MODULES) && modules.size() > 1 || hasOption(LIBRARIES))) {
       return VirtualFileEnumeration.EMPTY;
     }
 
