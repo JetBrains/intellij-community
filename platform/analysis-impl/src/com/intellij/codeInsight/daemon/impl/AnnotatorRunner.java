@@ -124,6 +124,7 @@ final class AnnotatorRunner {
     if (supported.isEmpty()) {
       return;
     }
+    boolean isInjected = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myPsiFile);
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
     AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, myHighlightInfoHolder.getAnnotationSession(), annotationHolder -> {
       for (PsiElement element : insideThenOutside) {
@@ -148,6 +149,9 @@ final class AnnotatorRunner {
             Annotation annotation = annotationHolder.get(i);
             HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode);
             info.setGroup(-1); // prevent DefaultHighlightProcessor from removing this info, we want to control it ourselves via `psiElementVisited` below
+            if (isInjected) {
+              info.markFromInjection();
+            }
             addConvertedToHostInfo(info, newInfos);
             if (LOG.isDebugEnabled()) {
               LOG.debug("runAnnotator annotation="+annotation+" -> "+newInfos);
@@ -164,17 +168,17 @@ final class AnnotatorRunner {
     });
   }
 
-  private static void addPatchedInfos(@NotNull HighlightInfo info,
+  private static void addPatchedInfos(@NotNull HighlightInfo injectedInfo,
                                       @NotNull PsiFile injectedPsi,
                                       @NotNull DocumentWindow documentWindow,
                                       @NotNull InjectedLanguageManager injectedLanguageManager,
-                                      @NotNull Consumer<? super HighlightInfo> outInfos) {
-    ProperTextRange infoRange = new ProperTextRange(info.startOffset, info.endOffset);
+                                      @NotNull Consumer<? super HighlightInfo> outHostInfos) {
+    TextRange infoRange = TextRange.create(injectedInfo);
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, infoRange);
     for (TextRange editable : editables) {
       TextRange hostRange = documentWindow.injectedToHost(editable);
 
-      boolean isAfterEndOfLine = info.isAfterEndOfLine();
+      boolean isAfterEndOfLine = injectedInfo.isAfterEndOfLine();
       if (isAfterEndOfLine) {
         // convert injected afterEndOfLine to either host's afterEndOfLine or not-afterEndOfLine highlight of the injected fragment boundary
         int hostEndOffset = hostRange.getEndOffset();
@@ -187,13 +191,14 @@ final class AnnotatorRunner {
         }
       }
 
-      HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+      // create manually to avoid extra call to HighlightInfoFilter.accept() in HighlightInfo.Builder.create()
+      HighlightInfo patched = new HighlightInfo(injectedInfo.forcedTextAttributes, injectedInfo.forcedTextAttributesKey, injectedInfo.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.toolId, info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
-      patched.setHint(info.hasHint());
+                          injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
+                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), injectedInfo.getGroup(), injectedInfo.unresolvedReference);
+      patched.setHint(injectedInfo.hasHint());
 
-      info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
+      injectedInfo.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
         for (TextRange editableRange : editableQF) {
           TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
@@ -202,22 +207,17 @@ final class AnnotatorRunner {
         return null;
       });
       patched.markFromInjection();
-      outInfos.accept(patched);
+      outHostInfos.accept(patched);
     }
   }
 
   private void addConvertedToHostInfo(@NotNull HighlightInfo info, @NotNull List<? super HighlightInfo> newInfos) {
     Document document = myPsiFile.getFileDocument();
-    if (document instanceof DocumentWindow window) {
-      PsiFile hostPsiFile = InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile);
-      addPatchedInfos(info, myPsiFile, window, InjectedLanguageManager.getInstance(myProject), patched -> {
-        if (HighlightInfoB.isAcceptedByFilters(patched, hostPsiFile)) {
-          newInfos.add(patched);
-        }
-      });
-    }
-    else {
-      if (HighlightInfoB.isAcceptedByFilters(info, myPsiFile)) {
+    if (HighlightInfoB.isAcceptedByFilters(info, myPsiFile)) {
+      if (document instanceof DocumentWindow window) {
+        addPatchedInfos(info, myPsiFile, window, InjectedLanguageManager.getInstance(myProject), patched -> newInfos.add(patched));
+      }
+      else {
         newInfos.add(info);
       }
     }
