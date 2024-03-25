@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class GradleProjectResolverTest : GradleProjectResolverTestCase() {
+class GradleProjectSdkResolverTest : GradleProjectSdkResolverTestCase() {
   @Test
   fun `test setup of project sdk for newly opened project`() = runBlocking {
     val jdk = resolveRealTestSdk()

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 
-abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
+abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
 
   val environment get() = Environment.getInstance() as TestEnvironment
 
