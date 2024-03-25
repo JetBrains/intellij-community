@@ -335,7 +335,7 @@ public final class X11UiUtil {
     if (SystemInfo.isGNOME) {
       String result = exec("Cannot get gnome theme", "gsettings", "get", "org.gnome.desktop.interface", "gtk-theme");
 
-      if (result == null || !result.startsWith("'") || !result.endsWith("'")) {
+      if (result == null || result.length() <= 1 || !result.startsWith("'") || !result.endsWith("'")) {
         return result;
       }
 
