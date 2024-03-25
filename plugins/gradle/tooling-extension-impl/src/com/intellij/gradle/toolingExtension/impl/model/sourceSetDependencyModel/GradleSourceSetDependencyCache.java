@@ -37,9 +37,7 @@ public class GradleSourceSetDependencyCache {
           "All source set dependencies should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE + "."
         )
         .withInternal().withStackTrace()
-/* Android Studio (b/329732173): This became an error in commit 3b50992fa9, breaking some Studio tests.
         .withKind(Message.Kind.ERROR)
-*/      .withKind(Message.Kind.WARNING)
         .reportMessage(project);
       return new DefaultGradleSourceSetDependencyModel();
     }

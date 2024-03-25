@@ -41,8 +41,11 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
     catch (Throwable ignored) {
       skipTasks = false;
     }
-    if (!skipTasks) {
-      GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
+
+    GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
+    if (skipTasks) {
+      taskCache.setProjectTasks(project, Collections.emptySet());
+    } else {
       Set<Task> projectTasks = collectProjectTasks(project, context);
       taskCache.setProjectTasks(project, projectTasks);
     }
