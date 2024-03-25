@@ -8,7 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class ExceptionUtilRt {
+public final class ExceptionUtilRt {
+
+  private ExceptionUtilRt() {}
+
   public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     if (t instanceof Error) throw (Error)t;
     if (t instanceof RuntimeException) throw (RuntimeException)t;
