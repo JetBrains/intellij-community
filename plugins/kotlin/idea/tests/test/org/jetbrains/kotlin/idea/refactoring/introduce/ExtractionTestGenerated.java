@@ -2481,6 +2481,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks2.kt");
                 }
 
+                @TestMetadata("runQualifier.kt")
+                public void testRunQualifier() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/runQualifier.kt");
+                }
+
                 @TestMetadata("thisInObject.kt")
                 public void testThisInObject() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");
