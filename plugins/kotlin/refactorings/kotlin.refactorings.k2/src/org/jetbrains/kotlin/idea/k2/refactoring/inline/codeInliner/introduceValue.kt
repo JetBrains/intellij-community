@@ -104,7 +104,9 @@ internal fun MutableCodeToInline.introduceValue(
 
 context(KtAnalysisSession)
 fun String.nameHasConflictsInScope(expressionToBeReplaced: KtExpression): Boolean {
-    return !KotlinDeclarationNameValidator(expressionToBeReplaced, true, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, this@KtAnalysisSession)(this)
+    val nameValidator =
+        KotlinDeclarationNameValidator(expressionToBeReplaced, true, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)
+    return !nameValidator.validate(this)
 }
 
 private fun collectNameUsages(scope: MutableCodeToInline, name: String): List<KtSimpleNameExpression> {

@@ -252,9 +252,8 @@ object ChangeSignatureFixFactory {
             callable,
             true,
             KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
-            this@KtAnalysisSession,
         )
-        return { name -> usedNames.add(name) && nameValidator(name) }
+        return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
 
     context(KtAnalysisSession)

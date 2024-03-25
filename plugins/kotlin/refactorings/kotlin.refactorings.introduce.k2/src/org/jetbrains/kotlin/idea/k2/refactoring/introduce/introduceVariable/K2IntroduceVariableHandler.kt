@@ -242,14 +242,17 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     val nameValidator = KotlinDeclarationNameValidator(
                         anchor,
                         true,
-                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                        this,
+                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                     )
                     if (isDestructuringDeclaration) {
-                        componentNames.map { componentName -> suggestNameByName(componentName, nameValidator).let(::listOf) }
+                        componentNames.map { componentName ->
+                            suggestNameByName(
+                                componentName
+                            ) { nameValidator.validate(it) }.let(::listOf)
+                        }
                     } else {
                         with(KotlinNameSuggester()) {
-                            suggestExpressionNames(expression, nameValidator).toList()
+                            suggestExpressionNames(expression) { nameValidator.validate(it) }.toList()
                         }.let(::listOf)
                     }
                 }

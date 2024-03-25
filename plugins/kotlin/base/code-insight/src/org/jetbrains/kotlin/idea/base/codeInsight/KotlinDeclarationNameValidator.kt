@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -12,12 +13,12 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
+@ApiStatus.Internal
 class KotlinDeclarationNameValidator(
     private val visibleDeclarationsContext: KtElement,
     private val checkVisibleDeclarationsContext: Boolean,
     private val target: KotlinNameSuggestionProvider.ValidatorTarget,
-    private val analysisSession: KtAnalysisSession
-) : (String) -> Boolean {
+) {
 
     init {
         check(
@@ -32,14 +33,13 @@ class KotlinDeclarationNameValidator(
     }
 
 
-    override fun invoke(name: String): Boolean {
+    context(KtAnalysisSession)
+    fun validate(name: String): Boolean {
         val identifier = Name.identifier(name)
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
-            with(analysisSession) {
-                if (hasConflict(identifier)) return false
-            }
+            if (hasConflict(identifier)) return false
         }
 
         return visibleDeclarationsContext.siblings(withItself = checkVisibleDeclarationsContext).none { declaration ->

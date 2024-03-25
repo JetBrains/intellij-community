@@ -227,10 +227,9 @@ class CodeInliner(
             val nameValidator = KotlinDeclarationNameValidator(
                 context,
                 true,
-                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                this,
+                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
             )
-            val validator = CollectingNameValidator { nameValidator.invoke(it) }
+            val validator = CollectingNameValidator { nameValidator.validate(it) }
             for (declaration in declarations) {
                 val oldName = declaration.name
                 if (oldName != null && !names.add(oldName)) {

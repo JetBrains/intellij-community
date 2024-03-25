@@ -30,11 +30,10 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                                 declaration,
                                 false,
                                 KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                                this
                             )
 
                             return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestExpressionNames(initializer))
-                                .filter(nameValidator)
+                                .filter { nameValidator.validate(it) }
                                 .toList()
                         }
                     }
@@ -51,11 +50,10 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                         val nameValidator = KotlinDeclarationNameValidator(
                             declaration,
                             false,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                            this
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                         )
                         return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
-                            .filter(nameValidator)
+                            .filter { nameValidator.validate(it) }
                             .toList()
                     }
                 }

@@ -40,8 +40,7 @@ internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDecla
                         val nameValidator = KotlinDeclarationNameValidator(
                             ktCallableDeclaration,
                             true,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                            this@analyze,
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                         )
                         appendFixedText("val (")
                         for (i in 0..lastIndex) {
@@ -54,7 +53,7 @@ internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDecla
                             if (oldIndex >= 0 && oldIndex < currentEntries.size) {
                                 appendChildRange(PsiChildRange.singleElement(currentEntries[oldIndex]))
                             } else {
-                                appendFixedText(KotlinNameSuggester.suggestNameByName(paramInfo.name, nameValidator))
+                                appendFixedText(KotlinNameSuggester.suggestNameByName(paramInfo.name) { nameValidator.validate(it) })
                             }
                         }
                         appendFixedText(")")

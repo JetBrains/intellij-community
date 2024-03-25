@@ -44,11 +44,10 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
                     callable,
                     true,
                     KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                    this,
                 )
                 val receiverName = with(KotlinNameSuggester()) {
                     suggestTypeNames(ktType).map { typeName ->
-                        KotlinNameSuggester.suggestNameByName(typeName, nameValidator)
+                        KotlinNameSuggester.suggestNameByName(typeName) { nameValidator.validate(it) }
                     }
                 }.firstOrNull() ?: "receiver"
 
