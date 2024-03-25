@@ -443,6 +443,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/definiteReturns/labeledAndUnlabeledReturn2.kt");
             }
 
+            @TestMetadata("nonLocalContinue.kt")
+            public void testNonLocalContinue() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/definiteReturns/nonLocalContinue.kt");
+            }
+
             @TestMetadata("nonLocalReturn.kt")
             public void testNonLocalReturn() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/definiteReturns/nonLocalReturn.kt");

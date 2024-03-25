@@ -1222,6 +1222,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/definiteReturns/labeledAndUnlabeledReturn2.kt");
                 }
 
+                @TestMetadata("nonLocalContinue.kt")
+                public void testNonLocalContinue() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/definiteReturns/nonLocalContinue.kt");
+                }
+
                 @TestMetadata("nonLocalReturn.kt")
                 public void testNonLocalReturn() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/definiteReturns/nonLocalReturn.kt");
