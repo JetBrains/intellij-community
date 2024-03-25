@@ -13,12 +13,5 @@ public interface ProjectModelContributor {
 
   ExtensionPointName<ProjectModelContributor> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.projectModelContributor");
 
-  /**
-   * @param modifiableGradleProjectModel provides write/read api to contribute to the Gradle IDE project model
-   * @param resolverContext              Gradle project resolver context
-   */
-  void accept(
-    @NotNull ModifiableGradleProjectModel modifiableGradleProjectModel,
-    @NotNull ProjectResolverContext resolverContext
-  );
+  void accept(@NotNull ProjectResolverContext resolverContext);
 }

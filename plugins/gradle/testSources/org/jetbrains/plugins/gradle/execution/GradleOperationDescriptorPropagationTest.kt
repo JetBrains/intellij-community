@@ -15,7 +15,7 @@ class GradleOperationDescriptorPropagationTest : GradleProjectResolverTestCase()
   @Test
   fun testProjectImport() {
     val externalSystemTaskId = Ref<ExternalSystemTaskId>()
-    addProjectModelContributor(testRootDisposable, ProjectModelContributor { _, resolverContext ->
+    addProjectModelContributor(testRootDisposable, ProjectModelContributor { resolverContext ->
       externalSystemTaskId.set(resolverContext.externalSystemTaskId)
     })
 

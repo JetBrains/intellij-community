@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImpor
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.plugins.gradle.service.project.ModifiableGradleProjectModel
 import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
@@ -31,10 +30,7 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 }
 
 class KotlinDslScriptModelContributor : ProjectModelContributor {
-    override fun accept(
-        projectModelBuilder: ModifiableGradleProjectModel,
-        resolverCtx: ProjectResolverContext
-    ) {
+    override fun accept(resolverCtx: ProjectResolverContext) {
         for (buildModel in resolverCtx.allBuilds) {
             for (projectModel in buildModel.projects) {
                 val projectIdentifier = projectModel.projectIdentifier.projectPath

@@ -34,7 +34,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+      addProjectModelContributor(disposable, ProjectModelContributor { resolverContext ->
         projectModelContributorAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
             for (projectModel in buildModel.projects) {
@@ -103,7 +103,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+      addProjectModelContributor(disposable, ProjectModelContributor { resolverContext ->
         projectModelContributorAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
             for (projectModel in buildModel.projects) {
@@ -199,7 +199,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+      addProjectModelContributor(disposable, ProjectModelContributor { resolverContext ->
         projectModelContributorAssertion.trace {
           Assertions.assertEquals(allPhases.toList(), completedPhases.toList()) {
             "All phases should be completed before running the project model contributor"
@@ -248,7 +248,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         buildCompletionAssertion.touch()
         throw ProcessCanceledException()
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
+      addProjectModelContributor(disposable, ProjectModelContributor { _ ->
         projectModelContributorAssertion.touch()
       })
 
@@ -288,7 +288,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       whenBuildCompleted(disposable) {
         buildCompletionAssertion.touch()
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
+      addProjectModelContributor(disposable, ProjectModelContributor { _ ->
         projectModelContributorAssertion.touch()
       })
 
@@ -355,7 +355,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       whenBuildCompleted(disposable) {
         buildCompletionAssertion.touch()
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
+      addProjectModelContributor(disposable, ProjectModelContributor { _ ->
         projectModelContributorAssertion.touch()
       })
 

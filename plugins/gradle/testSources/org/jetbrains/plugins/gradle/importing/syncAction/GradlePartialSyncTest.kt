@@ -28,7 +28,7 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
       addProjectResolverExtension(TestPartialProjectResolverExtension::class.java, disposable) {
         addModelProviders(disposable, TestModelProvider(partialModelClass))
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { _, resolverContext ->
+      addProjectModelContributor(disposable, ProjectModelContributor { resolverContext ->
         projectModelContributorAssertion.trace {
           resultResolverContext = resolverContext
         }

@@ -345,15 +345,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   ) {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
 
+    String projectPath = resolverCtx.getProjectPath();
+    String projectName = resolverCtx.getRootBuild().getName();
+
     extractExternalProjectModels(resolverCtx.getModels(), useCustomSerialization);
 
-    String projectName = resolverCtx.getRootBuild().getName();
-    ModifiableGradleProjectModelImpl modifiableGradleProjectModel =
-      new ModifiableGradleProjectModelImpl(projectName, resolverCtx.getProjectPath());
+    applyProjectModelContributors(resolverCtx);
 
-    applyProjectModelContributors(resolverCtx, modifiableGradleProjectModel);
-
-    DataNode<ProjectData> projectDataNode = modifiableGradleProjectModel.buildDataNodeGraph();
+    ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
+    DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
     DataNode<ExternalSystemOperationDescriptor> descriptorDataNode = new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY,
                                                                                     new ExternalSystemOperationDescriptor(activityId),
                                                                                     projectDataNode);
@@ -485,8 +485,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void applyProjectModelContributors(
-    @NotNull DefaultProjectResolverContext resolverCtx,
-    @NotNull ModifiableGradleProjectModelImpl modifiableGradleProjectModel
+    @NotNull DefaultProjectResolverContext resolverCtx
   ) {
     ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
       resolverCtx.checkCancelled();
@@ -494,7 +493,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       String modelContributorName = extension.getClass().getSimpleName();
       ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor", (span) -> {
         span.setAttribute("contributor.name", modelContributorName);
-        extension.accept(modifiableGradleProjectModel, resolverCtx);
+        extension.accept(resolverCtx);
       });
       final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
       LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
