@@ -351,7 +351,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
           }
         }
         if (!moduleName.startsWith("kotlin.")) {
-           // kotlin modules are loaded via conditional includes and the test cannot detect them
+          // kotlin modules are loaded via conditional includes and the test cannot detect them
           _errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
         }
         continue
@@ -501,8 +501,9 @@ class PluginModelValidator(sourceModules: List<Module>) {
 
     val prefix = referencingModuleInfo.sourceModuleName + "/"
     if (!moduleName.startsWith(prefix)) {
-      _errors.add(PluginValidationError(
-        "Cannot find module $moduleName",
+      val i = moduleName.indexOf("/")
+      val message = if (i > -1) "$moduleName can only be accessed from ${moduleName.substring(0, i)}" else  "Cannot find module $moduleName"
+      _errors.add(PluginValidationError(message,
         getErrorInfo(),
       ))
       return null
