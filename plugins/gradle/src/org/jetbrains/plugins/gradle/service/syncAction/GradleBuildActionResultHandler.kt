@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import org.gradle.tooling.GradleConnectionException
@@ -18,58 +16,14 @@ import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
 class GradleBuildActionResultHandler(
-  private val resolverCtx: DefaultProjectResolverContext,
-  private val buildAction: GradleModelFetchAction,
-  private val buildActionMulticaster: GradleBuildActionListener
+  private val resolverContext: DefaultProjectResolverContext,
+  private val resultHandler: GradleModelFetchActionResultHandler
 ) {
 
   private val buildFinishWaiter = CountDownLatch(1)
 
   private val isBuildActionInterrupted = AtomicBoolean(true)
   private val buildFailure = AtomicReference<Throwable>(null)
-
-  private fun onPhaseCompleted(phase: GradleModelFetchPhase, state: GradleModelHolderState) {
-    resolverCtx.models.addState(state)
-    buildActionMulticaster.onPhaseCompleted(phase)
-  }
-
-  private fun onProjectLoaded(state: GradleModelHolderState) {
-    resolverCtx.models.addState(state)
-
-    if (!buildAction.isUseStreamedValues) {
-      for (phase in buildAction.projectLoadedModelProviders.keys) {
-        buildActionMulticaster.onPhaseCompleted(phase)
-      }
-    }
-
-    buildActionMulticaster.onProjectLoaded()
-  }
-
-  private fun onBuildCompleted(state: GradleModelHolderState) {
-    resolverCtx.models.addState(state)
-    isBuildActionInterrupted.set(false)
-
-    if (!buildAction.isUseProjectsLoadedPhase && !buildAction.isUseStreamedValues) {
-      for (phase in buildAction.projectLoadedModelProviders.keys) {
-        buildActionMulticaster.onPhaseCompleted(phase)
-      }
-    }
-    if (!buildAction.isUseProjectsLoadedPhase) {
-      buildActionMulticaster.onProjectLoaded()
-    }
-    if (!buildAction.isUseStreamedValues) {
-      for (phase in buildAction.buildFinishedModelProviders.keys) {
-        buildActionMulticaster.onPhaseCompleted(phase)
-      }
-    }
-
-    buildActionMulticaster.onBuildCompleted()
-  }
-
-  private fun onBuildFailed(failure: GradleConnectionException) {
-    buildFailure.set(failure)
-    buildActionMulticaster.onBuildFailed(failure)
-  }
 
   fun waitForBuildFinish() {
     // Wait for the last event during the Gradle build action execution
@@ -91,7 +45,7 @@ class GradleBuildActionResultHandler(
     return StreamedValueListener { state ->
       if (state is GradleModelHolderState) {
         runCancellable {
-          onPhaseCompleted(state.phase!!, state)
+          resultHandler.onPhaseCompleted(state.phase!!, state)
         }
       }
     }
@@ -100,7 +54,7 @@ class GradleBuildActionResultHandler(
   fun createProjectLoadedHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       runCancellable {
-        onProjectLoaded(state)
+        resultHandler.onProjectLoaded(state)
       }
     }
   }
@@ -108,7 +62,8 @@ class GradleBuildActionResultHandler(
   fun createBuildFinishedHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       runCancellable {
-        onBuildCompleted(state)
+        isBuildActionInterrupted.set(false)
+        resultHandler.onBuildCompleted(state)
       }
     }
   }
@@ -125,7 +80,8 @@ class GradleBuildActionResultHandler(
         try {
           if (result is GradleModelHolderState) {
             runCancellable {
-              onBuildCompleted(result)
+              isBuildActionInterrupted.set(false)
+              resultHandler.onBuildCompleted(result)
             }
           }
         }
@@ -137,7 +93,8 @@ class GradleBuildActionResultHandler(
       override fun onFailure(failure: GradleConnectionException) {
         try {
           runCancellable {
-            onBuildFailed(failure)
+            buildFailure.set(failure)
+            resultHandler.onBuildFailed(failure)
           }
         }
         finally {
@@ -149,12 +106,12 @@ class GradleBuildActionResultHandler(
 
   private fun runCancellable(action: () -> Unit) {
     try {
-      if (!resolverCtx.isCancellationRequested) {
+      if (!resolverContext.isCancellationRequested) {
         action()
       }
     }
     catch (e: ProcessCanceledException) {
-      resolverCtx.cancel()
+      resolverContext.cancel()
     }
   }
 }

@@ -55,9 +55,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionListener;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionRunner;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.*;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -221,7 +219,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var buildAction = useCustomSerialization
                       ? new GradleModelFetchActionWithCustomSerializer()
                       : new GradleModelFetchAction();
-    var buildActionEventDispatcher = EventDispatcher.create(GradleBuildActionListener.class);
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -255,11 +252,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       catch (Throwable t) {
         LOG.warn(t);
       }
-
-      GradleBuildActionListener buildActionListener = resolverExtension.createBuildListener();
-      if (buildActionListener != null) {
-        buildActionEventDispatcher.addListener(buildActionListener);
-      }
     }
 
     GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
@@ -274,6 +266,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var pathMapper = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getPathMapper());
     var models = new GradleIdeaModelHolder(useCustomSerialization, pathMapper, buildEnvironment);
     resolverCtx.setModels(models);
+
 
     resolverCtx.checkCancelled();
 
@@ -293,9 +286,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      var buildActionMulticaster = buildActionEventDispatcher.getMulticaster();
-      var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper, buildActionMulticaster);
+      var syncResultHandler = new GradleSyncActionResultHandler(resolverCtx);
+      var modelFetchResultHandler = new GradleModelFetchActionResultHandler(resolverCtx, buildAction, syncResultHandler);
+      var buildActionResultHandler = new GradleBuildActionResultHandler(resolverCtx, modelFetchResultHandler);
+      var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, buildActionResultHandler);
       buildActionRunner.runBuildAction();
+
       var gradleVersion = ObjectUtils.doIfNotNull(resolverCtx.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));

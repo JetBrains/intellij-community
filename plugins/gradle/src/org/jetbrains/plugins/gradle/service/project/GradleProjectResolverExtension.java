@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionListener;
 
 import java.util.*;
 
@@ -144,10 +143,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * Performs project configuration and other checks before the actual project import (before invocation of gradle tooling API).
    */
   void preImportCheck();
-
-  default @Nullable GradleBuildActionListener createBuildListener() {
-    return null;
-  }
 
   /**
    * Allows extension to contribute to init script

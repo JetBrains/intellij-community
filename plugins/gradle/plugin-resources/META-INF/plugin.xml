@@ -27,6 +27,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.projectModelContributor" interface="org.jetbrains.plugins.gradle.service.project.ProjectModelContributor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.syncContributor"
+                    interface="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor"
+                    dynamic="true"/>
     <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"

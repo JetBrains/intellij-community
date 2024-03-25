@@ -8,14 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.util.containers.DisposableWrapperList
-import org.gradle.tooling.GradleConnectionException
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
-import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionListener
+import org.jetbrains.plugins.gradle.service.project.*
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.Assertions
@@ -26,6 +22,30 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   fun addProjectModelContributor(parentDisposable: Disposable, contributor: ProjectModelContributor) {
     ProjectModelContributor.EP_NAME.point.registerExtension(contributor, parentDisposable)
+  }
+
+  fun whenPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
+      override fun onModelFetchPhaseCompleted(resolverContext: ProjectResolverContext, phase: GradleModelFetchPhase) {
+        action(resolverContext, phase)
+      }
+    }, parentDisposable)
+  }
+
+  fun whenModelFetchCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
+      override fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
+        action(resolverContext)
+      }
+    }, parentDisposable)
+  }
+
+  fun whenProjectLoaded(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
+      override fun onProjectLoadedActionCompleted(resolverContext: ProjectResolverContext) {
+        action(resolverContext)
+      }
+    }, parentDisposable)
   }
 
   /**
@@ -143,17 +163,12 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     override fun getModelProviders(): List<ProjectImportModelProvider> {
       return getService().getModelProviders()
     }
-
-    override fun createBuildListener(): GradleBuildActionListener {
-      return getService().createBuildActionListener(resolverCtx)
-    }
   }
 
   abstract class AbstractTestProjectResolverService {
 
     private val toolingExtensionClasses = DisposableWrapperList<Class<*>>()
     private val modelProviders = DisposableWrapperList<ProjectImportModelProvider>()
-    private val buildActionListeners = DisposableWrapperList<TestBuildActionListener>()
 
     fun getToolingExtensionsClasses(): Set<Class<*>> {
       return toolingExtensionClasses.toSet()
@@ -182,61 +197,6 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
         this.modelProviders.add(modelProvider, parentDisposable)
       }
     }
-
-    fun whenPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
-      addBuildActionListener(parentDisposable, object : TestBuildActionListener() {
-        override fun onPhaseCompleted(phase: GradleModelFetchPhase) {
-          action(resolverContext, phase)
-        }
-      })
-    }
-
-    fun whenProjectLoaded(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
-      addBuildActionListener(parentDisposable, object : TestBuildActionListener() {
-        override fun onProjectLoaded() {
-          action(resolverContext)
-        }
-      })
-    }
-
-    fun whenBuildCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
-      addBuildActionListener(parentDisposable, object : TestBuildActionListener() {
-        override fun onBuildCompleted() {
-          action(resolverContext)
-        }
-      })
-    }
-
-    fun addBuildActionListener(parentDisposable: Disposable, listener: TestBuildActionListener) {
-      buildActionListeners.add(listener, parentDisposable)
-    }
-
-    fun createBuildActionListener(resolverContext: ProjectResolverContext): GradleBuildActionListener {
-      buildActionListeners.forEach { it.resolverContext = resolverContext }
-      return object : GradleBuildActionListener {
-
-        override fun onPhaseCompleted(phase: GradleModelFetchPhase) {
-          buildActionListeners.forEach { it.onPhaseCompleted(phase) }
-        }
-
-        override fun onProjectLoaded() {
-          buildActionListeners.forEach { it.onProjectLoaded() }
-        }
-
-        override fun onBuildCompleted() {
-          buildActionListeners.forEach { it.onBuildCompleted() }
-        }
-
-        override fun onBuildFailed(exception: GradleConnectionException) {
-          buildActionListeners.forEach { it.onBuildFailed(exception) }
-        }
-      }
-    }
-  }
-
-  abstract class TestBuildActionListener : GradleBuildActionListener {
-
-    lateinit var resolverContext: ProjectResolverContext
   }
 
   protected class ListenerAssertion {
