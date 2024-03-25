@@ -98,7 +98,9 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     val textEditorProvider = TextEditorProvider.getInstance()
     return CombinedDiffEditorState(
       model.requests.map { it.id }.toSet(),
-      viewer.getCurrentBlockId(),
+      // FULL editor states are requested for actions restoring editor state after close, not by navigation.
+      // We only want to restore the exact block selection when restoring for navigation or undo.
+      if (level != FileEditorStateLevel.FULL) viewer.getCurrentBlockId() else null,
       viewer.getCurrentDiffViewer()?.editors?.map { textEditorProvider.getStateImpl(null, it, level) } ?: listOf()
     )
   }
@@ -110,12 +112,14 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     if (model.requests.map { it.id }.toSet() != state.currentBlockIds) return
 
     val textEditorProvider = TextEditorProvider.getInstance()
-    state.activeEditorStates.zip(viewer.getDiffViewerForId(state.activeBlockId)?.editors ?: listOf()) { st, editor ->
+    state.activeEditorStates.zip(state.activeBlockId?.let(viewer::getDiffViewerForId)?.editors ?: listOf()) { st, editor ->
       textEditorProvider.setStateImpl(null, editor, st, true)
     }
 
-    viewer.selectDiffBlock(state.activeBlockId, true)
-    viewer.scrollToCaret()
+    if (state.activeBlockId != null) {
+      viewer.selectDiffBlock(state.activeBlockId, true)
+      viewer.scrollToCaret()
+    }
   }
 
   private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
@@ -242,7 +246,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
 
 data class CombinedDiffEditorState(
   val currentBlockIds: Set<CombinedBlockId>,
-  val activeBlockId: CombinedBlockId,
+  val activeBlockId: CombinedBlockId?,
   val activeEditorStates: List<TextEditorState>
 ) : FileEditorStateWithPreferredOpenMode {
   override val openMode: FileEditorManagerImpl.OpenMode?
