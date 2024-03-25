@@ -55,7 +55,17 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private JavaExecutionStack myActiveExecutionStack;
 
-  private @Nullable ThreadReferenceProxyImpl myAnotherThreadToFocus = null;
+  private final ThreadReferenceProxyImpl.ThreadListener myListener = new ThreadReferenceProxyImpl.ThreadListener() {
+    @Override
+    public void threadSuspended() {
+      myFrameCount = -1;
+    }
+
+    @Override
+    public void threadResumed() {
+      myFrameCount = -1;
+    }
+  };
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
                      @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
@@ -69,23 +79,32 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public void setThread(@Nullable ThreadReference thread) {
     assertNotResumed();
-    setThread(myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread));
+    ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
+    LOG.assertTrue(myThread == null || myThread == threadProxy);
+    setThread(threadProxy);
+  }
+
+  void resetThread(@NotNull ThreadReferenceProxyImpl threadProxy) {
+    if (myThread == threadProxy) {
+      return;
+    }
+    if (myEvaluationContext != null) {
+      LOG.error("Resetting thread during evaluation is not supported");
+    }
+    if (myActiveExecutionStack != null) {
+      LOG.error("Thread should be retested before the active execution stack initialization");
+    }
+    assertNotResumed();
+    if (myThread != null) {
+      myThread.removeListener(myListener);
+    }
+    myFrameCount = -1;
+    setThread(threadProxy);
   }
 
   private void setThread(@Nullable ThreadReferenceProxyImpl threadProxy) {
-    LOG.assertTrue(myThread == null || myThread == threadProxy);
     if (threadProxy != null && myThread != threadProxy) { // do not add more than once
-      threadProxy.addListener(new ThreadReferenceProxyImpl.ThreadListener() {
-        @Override
-        public void threadSuspended() {
-          myFrameCount = -1;
-        }
-
-        @Override
-        public void threadResumed() {
-          myFrameCount = -1;
-        }
-      }, this);
+      threadProxy.addListener(myListener, this);
     }
     myThread = threadProxy;
   }
@@ -112,10 +131,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (myEventSet != null) {
       LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
       if (event != null) {
-        if (myThread != null && !myThread.getThreadReference().equals(event.thread())) {
-          LOG.error("Invalid thread");
+        // myThread can be reset to the different thread in resetThread() method
+        if (myThread == null || myThread.getThreadReference().equals(event.thread())) {
+          return event.location();
         }
-        return event.location();
       }
     }
     try {
@@ -359,12 +378,4 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
     Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
-
-  public @Nullable ThreadReferenceProxyImpl getAnotherThreadToFocus() {
-    return myAnotherThreadToFocus;
-  }
-
-  public void setAnotherThreadToFocus(@Nullable ThreadReferenceProxyImpl threadToFocus) {
-    myAnotherThreadToFocus = threadToFocus;
-  }
 }

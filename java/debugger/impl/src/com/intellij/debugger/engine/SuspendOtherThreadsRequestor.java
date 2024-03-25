@@ -13,6 +13,7 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 public class SuspendOtherThreadsRequestor implements FilteredRequestor {
@@ -187,7 +188,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
                                            @NotNull SuspendContextImpl originalContext,
                                            @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     // Need to 'replace' the myThreadSuspendContext (single-thread suspend context passed filtering) with this one.
-    suspendContext.setAnotherThreadToFocus(originalContext.getThread());
+    suspendContext.resetThread(Objects.requireNonNull(originalContext.getThread()));
 
     // Note, myThreadSuspendContext is resuming without SuspendManager#voteSuspend.
     // Look at the end of DebugProcessEvents#processLocatableEvent for more details.

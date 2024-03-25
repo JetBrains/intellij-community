@@ -255,11 +255,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
                 return@runReadAction println("Context thread is null", ProcessOutputTypes.SYSTEM)
             }
 
-            val sourcePosition = if (anotherThreadToFocus != null)
-                debugProcess.positionManager.getSourcePosition(getFrameProxy(this).location())
-            else
-                PositionUtil.getSourcePosition(this)
-            println(sourcePosition?.render() ?: "null", ProcessOutputTypes.SYSTEM)
+            println(PositionUtil.getSourcePosition(this)?.render() ?: "null", ProcessOutputTypes.SYSTEM)
             extraPrintContext(this)
         }
     }

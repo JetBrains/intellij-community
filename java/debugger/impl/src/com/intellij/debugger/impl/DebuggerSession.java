@@ -502,8 +502,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     public void paused(final SuspendContextImpl suspendContext) {
       LOG.debug("paused");
 
-      ThreadReferenceProxyImpl anotherThreadToFocus = suspendContext.getAnotherThreadToFocus();
-      ThreadReferenceProxyImpl currentThread = anotherThreadToFocus != null ? anotherThreadToFocus : suspendContext.getThread();
+      ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
 
       if (!shouldSetAsActiveContext(suspendContext)) {
         notifyThreadsRefresh();

@@ -450,6 +450,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     myListeners.addListener(listener, disposable);
   }
 
+  public void removeListener(ThreadListener listener) {
+    myListeners.removeListener(listener);
+  }
+
   public interface ThreadListener extends EventListener{
     default void threadSuspended() {
     }
