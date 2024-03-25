@@ -12,9 +12,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.base.util.KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.util.sourceRoots
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -25,10 +27,20 @@ class JavaOutsideModuleDetector : EditorNotificationProvider {
             return null
         }
 
-        if (ModuleUtilCore.findModuleForFile(file, project)?.isGradleModule != true) return null
+        val module = ModuleUtilCore.findModuleForFile(file, project)?.takeIf { it.isGradleModule } ?: return null
 
         val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
-        if (!fileIndex.isUnderSourceRootOfType(file, KOTLIN_SOURCE_ROOT_TYPES)) return null
+
+        if (fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) return null
+
+        if (fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)) {
+            val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return null
+            val filePath = file.path
+            val nonKotlinPath = module.sourceRoots.map { it.path } - facetSettings.pureKotlinSourceFolders
+            if (nonKotlinPath.any { filePath.startsWith(it) }) {
+                return null
+            }
+        }
 
         return Function {
             EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
