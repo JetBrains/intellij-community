@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class ExtractKotlinFunctionHandler(
     val allContainersEnabled: Boolean = false,
     private val helper: ExtractionEngineHelper = getDefaultHelper(allContainersEnabled)
-) : AbstractExtractKotlinFunctionHandler() {
+) : AbstractExtractKotlinFunctionHandler(allContainersEnabled) {
 
     companion object {
         private val isInplaceRefactoringEnabled: Boolean
