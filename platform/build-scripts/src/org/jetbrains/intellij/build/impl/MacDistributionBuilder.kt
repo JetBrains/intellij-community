@@ -612,6 +612,21 @@ internal fun substitutePlaceholdersInInfoPlist(
       Pair("min_osx", macCustomizer.minOSXVersion),
     )
   )
+
+  val resources = macAppDir.resolve("Resources").toFile()
+  resources.walk().filter { it.isFile && it.extension == "strings" }.forEach { file ->
+    substituteTemplatePlaceholders(
+      inputFile = file.toPath(),
+      outputFile = file.toPath(),
+      placeholder = "@@",
+      values = listOf(
+        Pair("bundle_name", fullName),
+        Pair("version", version),
+        Pair("year", todayYear),
+        Pair("build", context.fullBuildNumber)
+      )
+    )
+  }
 }
 
 internal val ProductProperties.targetIcnsFileName: String
