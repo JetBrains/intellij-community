@@ -1894,7 +1894,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           .addClass(CLASS_DOWNLOAD_DOCUMENTATION)
           .appendChildren(Arrays.asList(
             new Element("icon").attr("src", "AllIcons.Plugins.Downloads"),
-            new TextNode("&nbsp;"),
+            new TextNode(" "),
             new Element("a").attr("href", downloadDocumentationActionLink)
               .text(CodeInsightBundle.message("documentation.download.button.label"))
           )));
