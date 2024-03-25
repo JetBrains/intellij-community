@@ -1439,6 +1439,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/lambdaReturn.kt");
                 }
 
+                @TestMetadata("letExpression.kt")
+                public void testLetExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/letExpression.kt");
+                }
+
                 @TestMetadata("nestedNonInlinableCall.kt")
                 public void testNestedNonInlinableCall() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");

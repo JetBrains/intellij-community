@@ -660,6 +660,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/lambdaReturn.kt");
             }
 
+            @TestMetadata("letExpression.kt")
+            public void testLetExpression() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/letExpression.kt");
+            }
+
             @TestMetadata("nestedNonInlinableCall.kt")
             public void testNestedNonInlinableCall() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");
