@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -60,6 +60,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
@@ -870,7 +871,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     }
     catch (Throwable e) {
       LOG.debug(e);
-      String message = ExceptionUtilRt.unwrapInvocationTargetException(e).getMessage();
+      String message = ExceptionUtilRt.unwrapException(e, InvocationTargetException.class).getMessage();
       Messages.showMessageDialog(message, UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
       return false;
     }

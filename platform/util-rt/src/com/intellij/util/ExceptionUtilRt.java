@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
 
 public class ExceptionUtilRt {
   public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
@@ -33,14 +32,6 @@ public class ExceptionUtilRt {
 
   public static boolean causedBy(Throwable e, Class<?> klass) {
     return findCause(e, klass) != null;
-  }
-
-  /**
-   * @param throwable exception to unwrap
-   * @return the supplied exception, or unwrapped exception (if the supplied exception is InvocationTargetException)
-   */
-  public static @NotNull Throwable unwrapInvocationTargetException(@NotNull Throwable throwable) {
-    return unwrapException(throwable, InvocationTargetException.class);
   }
 
   /**
