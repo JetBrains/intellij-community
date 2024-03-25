@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
@@ -52,7 +53,7 @@ internal class SelectInProjectViewImpl(
       LOG.debug("Attempting to start $taskName")
     }
     coroutineScope.launch(
-      CoroutineName(taskName),
+      CoroutineName(taskName) + ClientId.coroutineContext(),
       start = CoroutineStart.UNDISPATCHED
     ) {
       try {
