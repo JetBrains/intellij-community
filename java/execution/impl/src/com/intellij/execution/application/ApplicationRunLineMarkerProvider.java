@@ -8,6 +8,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -24,7 +25,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
+
+public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor
+  implements DumbAware {
+
   private final static Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
 
     boolean isO1Static = o1.hasModifierProperty(PsiModifier.STATIC);
@@ -47,11 +51,6 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       return 1;
     }
   };
-
-  @Override
-  public boolean isDumbAware() {
-    return true;
-  }
 
   @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {

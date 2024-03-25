@@ -2,14 +2,11 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class ApplicationConfigurationProducer extends AbstractApplicationConfigurationProducer<ApplicationConfiguration> {
-
-  @Override
-  public boolean isDumbAware() {
-    return true;
-  }
+public class ApplicationConfigurationProducer extends AbstractApplicationConfigurationProducer<ApplicationConfiguration>
+  implements DumbAware {
 
   @NotNull
   @Override
