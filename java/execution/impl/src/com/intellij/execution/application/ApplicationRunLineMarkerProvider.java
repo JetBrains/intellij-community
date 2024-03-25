@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -49,11 +49,6 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   };
 
   @Override
-  public boolean isDumbAware() {
-    return true;
-  }
-
-  @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
     if (Registry.is("ide.jvm.run.marker") ||
         !isIdentifier(element) ||
@@ -92,14 +87,6 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-    AnActionEvent event = createActionEvent(element);
-
-    //prepare fields (including for dumb mode)
-    for (AnAction action : actions) {
-      event.getPresentation().copyFrom(action.getTemplatePresentation());
-      event.getPresentation().setEnabledAndVisible(true);
-      action.update(event);
-    }
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
   }
 
