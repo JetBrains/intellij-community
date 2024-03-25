@@ -43,10 +43,17 @@ internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInsp
     val className = stringValue
     if (className.isNullOrBlank()) return false
     val normalizedClassName = ExtensionUtil.getNormalizedClassName(className) ?: return false
-    val fqName = FqName(normalizedClassName).takeIf { it.shortName().identifier.isNotEmpty() } ?: return false
+    val fqName = FqName(normalizedClassName).takeIf { it.isValidIdentifier() } ?: return false
     val kotlinAsJavaSupport = project.getService(KotlinAsJavaSupport::class.java) ?: return false
     val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(fqName, this.resolveScope)
     return classOrObjectDeclarations.size == 1 && classOrObjectDeclarations.firstOrNull() is KtObjectDeclaration
+  }
+
+  private fun FqName.isValidIdentifier(): Boolean {
+    return this.shortName()
+      .takeIf { !it.isSpecial } // IDEA-349976
+      ?.identifier
+      ?.isNotEmpty() == true
   }
 }
 
