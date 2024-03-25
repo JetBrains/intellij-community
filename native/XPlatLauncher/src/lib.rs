@@ -219,11 +219,6 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration) -> Result<Vec<St
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> Result<PathBuf> {
-    get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_cache_home() -> Result<PathBuf> {
     get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
 }
 
