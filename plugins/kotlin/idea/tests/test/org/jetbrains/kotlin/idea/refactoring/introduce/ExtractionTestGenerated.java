@@ -1494,6 +1494,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithWhen.kt");
                 }
 
+                @TestMetadata("runExpression.kt")
+                public void testRunExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/runExpression.kt");
+                }
+
                 @TestMetadata("singleOutputValue.kt")
                 public void testSingleOutputValue() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");

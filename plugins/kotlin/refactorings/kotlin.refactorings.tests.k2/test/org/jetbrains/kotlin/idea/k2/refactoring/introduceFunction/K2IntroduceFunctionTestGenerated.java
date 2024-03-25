@@ -715,6 +715,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/pairWithWhen.kt");
             }
 
+            @TestMetadata("runExpression.kt")
+            public void testRunExpression() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/runExpression.kt");
+            }
+
             @TestMetadata("singleOutputValue.kt")
             public void testSingleOutputValue() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
