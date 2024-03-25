@@ -34,28 +34,23 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
     ) {
         val entitySource = evaluateEntitySource(facetState)
         val kotlinSettingsEntity = KotlinSettingsEntity(
-            facetState.name, ModuleId(moduleEntity.name),
-            emptyList(),
-            emptyList(),
-            true,
-            emptyList(),
-            emptyList(),
-            emptySet(),
-            "",
-            "",
-            emptyList(),
-            false,
-            "",
-            false,
-            emptyList(),
-            KotlinModuleKind.DEFAULT,
-            "",
-            CompilerSettingsData("", "", "", true, "lib", false),
-            "",
-            emptyList(),
-            KotlinFacetSettings.CURRENT_VERSION,
-            false,
-            entitySource
+            name = facetState.name, moduleId = ModuleId(moduleEntity.name),
+            sourceRoots = emptyList(),
+            configFileItems = emptyList(),
+            useProjectSettings = true,
+            implementedModuleNames = emptyList(),
+            dependsOnModuleNames = emptyList(),
+            additionalVisibleModuleNames = emptySet(),
+            sourceSetNames = emptyList(),
+            isTestModule = false,
+            externalProjectId = "",
+            isHmppEnabled = false,
+            pureKotlinSourceFolders = emptyList(),
+            kind = KotlinModuleKind.DEFAULT,
+            externalSystemRunTasks = emptyList(),
+            version = KotlinFacetSettings.CURRENT_VERSION,
+            flushNeeded = false,
+            entitySource = entitySource
         ) {
             module = moduleEntity
         }
@@ -76,27 +71,22 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         kotlinSettingsEntity.testOutputPath = kotlinFacetSettings.testOutputPath
         kotlinSettingsEntity.sourceSetNames = kotlinFacetSettings.sourceSetNames.toMutableList()
         kotlinSettingsEntity.isTestModule = kotlinFacetSettings.isTestModule
-        kotlinSettingsEntity.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms() ?: ""
+        kotlinSettingsEntity.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms()
         kotlinSettingsEntity.externalProjectId = kotlinFacetSettings.externalProjectId
         kotlinSettingsEntity.isHmppEnabled = kotlinFacetSettings.isHmppEnabled
         kotlinSettingsEntity.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
         kotlinSettingsEntity.kind = kotlinFacetSettings.kind
-
-        if (kotlinFacetSettings.compilerArguments != null) {
-            kotlinSettingsEntity.compilerArguments = CompilerArgumentsSerializer.serializeToString(kotlinFacetSettings.compilerArguments!!)
-        }
-
-        val compilerSettings = kotlinFacetSettings.compilerSettings
-        if (compilerSettings != null) {
-            kotlinSettingsEntity.compilerSettings = CompilerSettingsData(
-                compilerSettings.additionalArguments,
-                compilerSettings.scriptTemplates,
-                compilerSettings.scriptTemplatesClasspath,
-                compilerSettings.copyJsLibraryFiles,
-                compilerSettings.outputDirectoryForJsLibraryFiles,
-                true
+        kotlinSettingsEntity.compilerArguments = CompilerArgumentsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
+        kotlinSettingsEntity.compilerSettings = kotlinFacetSettings.compilerSettings?.let {
+            CompilerSettingsData(
+                it.additionalArguments,
+                it.scriptTemplates,
+                it.scriptTemplatesClasspath,
+                it.copyJsLibraryFiles,
+                it.outputDirectoryForJsLibraryFiles
             )
         }
+
         kotlinSettingsEntity.externalSystemRunTasks =
             kotlinFacetSettings.externalSystemRunTasks.map { it.serializeExternalSystemTestRunTask() }.toMutableList()
         kotlinSettingsEntity.flushNeeded =
@@ -109,23 +99,23 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             version = entity.version
             useProjectSettings = entity.useProjectSettings
 
-            compilerArguments =
-                if (entity.compilerArguments.isEmpty()) null else CompilerArgumentsSerializer.deserializeFromString(entity.compilerArguments)
+            compilerArguments = CompilerArgumentsSerializer.deserializeFromString(entity.compilerArguments)
 
-            val compilerSettingsFromEntity = entity.compilerSettings
-            compilerSettings = CompilerSettings().apply {
-                additionalArguments = compilerSettingsFromEntity.additionalArguments
-                scriptTemplates = compilerSettingsFromEntity.scriptTemplates
-                scriptTemplatesClasspath = compilerSettingsFromEntity.scriptTemplatesClasspath
-                copyJsLibraryFiles = compilerSettingsFromEntity.copyJsLibraryFiles
-                outputDirectoryForJsLibraryFiles = compilerSettingsFromEntity.outputDirectoryForJsLibraryFiles
+            compilerSettings = entity.compilerSettings?.let {
+                CompilerSettings().apply {
+                    additionalArguments = it.additionalArguments
+                    scriptTemplates = it.scriptTemplates
+                    scriptTemplatesClasspath = it.scriptTemplatesClasspath
+                    copyJsLibraryFiles = it.copyJsLibraryFiles
+                    outputDirectoryForJsLibraryFiles = it.outputDirectoryForJsLibraryFiles
+                }
             }
 
             implementedModuleNames = entity.implementedModuleNames
             dependsOnModuleNames = entity.dependsOnModuleNames
             additionalVisibleModuleNames = entity.additionalVisibleModuleNames
-            productionOutputPath = entity.productionOutputPath?.ifEmpty { null }
-            testOutputPath = entity.testOutputPath?.ifEmpty { null }
+            productionOutputPath = entity.productionOutputPath
+            testOutputPath = entity.testOutputPath
             kind = entity.kind
             sourceSetNames = entity.sourceSetNames
             isTestModule = entity.isTestModule
@@ -136,7 +126,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
 
             val args = compilerArguments
             val deserializedTargetPlatform =
-                entity.targetPlatform.takeIf { it.isNotEmpty() }.deserializeTargetPlatformByComponentPlatforms()
+                entity.targetPlatform?.deserializeTargetPlatformByComponentPlatforms()
             val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
             if (singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull() && args != null) {
                 targetPlatform = IdePlatformKind.platformByCompilerArguments(args)

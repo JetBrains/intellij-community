@@ -56,17 +56,12 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             emptyList(),
             emptyList(),
             emptySet(),
-            "",
-            "",
             emptyList(),
             false,
             "",
             false,
             emptyList(),
             KotlinModuleKind.DEFAULT,
-            "",
-            CompilerSettingsData("", "", "", true, "lib", true),
-            "",
             emptyList(),
             KotlinFacetSettings.CURRENT_VERSION,
             false,
@@ -233,8 +228,8 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             this.implementedModuleNames = kotlinFacetSettings.implementedModuleNames.toMutableList()
             this.dependsOnModuleNames = kotlinFacetSettings.dependsOnModuleNames.toMutableList()
             this.additionalVisibleModuleNames = kotlinFacetSettings.additionalVisibleModuleNames.toMutableSet()
-            this.productionOutputPath = kotlinFacetSettings.productionOutputPath ?: ""
-            this.testOutputPath = kotlinFacetSettings.testOutputPath ?: ""
+            this.productionOutputPath = kotlinFacetSettings.productionOutputPath
+            this.testOutputPath = kotlinFacetSettings.testOutputPath
             this.sourceSetNames = kotlinFacetSettings.sourceSetNames.toMutableList()
             this.isTestModule = kotlinFacetSettings.isTestModule
             this.externalProjectId = "Maven"
@@ -242,18 +237,16 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             this.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
             this.kind = kotlinFacetSettings.kind
             this.compilerArguments = CompilerArgumentsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
-            val compilerSettings = kotlinFacetSettings.compilerSettings
-            this.compilerSettings =
-                if (compilerSettings == null) CompilerSettingsData("", "", "", true, "lib", false)
-                else CompilerSettingsData(
-                    compilerSettings.additionalArguments,
-                    compilerSettings.scriptTemplates,
-                    compilerSettings.scriptTemplatesClasspath,
-                    compilerSettings.copyJsLibraryFiles,
-                    compilerSettings.outputDirectoryForJsLibraryFiles,
-                    true
+            this.compilerSettings = kotlinFacetSettings.compilerSettings?.let {
+                CompilerSettingsData(
+                    it.additionalArguments,
+                    it.scriptTemplates,
+                    it.scriptTemplatesClasspath,
+                    it.copyJsLibraryFiles,
+                    it.outputDirectoryForJsLibraryFiles
                 )
-            this.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms() ?: ""
+            }
+            this.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms()
         }
     }
 

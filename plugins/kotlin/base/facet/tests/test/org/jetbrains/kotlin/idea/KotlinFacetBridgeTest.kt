@@ -95,6 +95,19 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         fireFacetChangedAndValidateKotlinFacet(mainFacet)
     }
 
+    fun testCreateFacetAndCheckNullableTypes() {
+        val mainFacet = getKotlinFacet()
+        checkStorageForEntityAndFacet()
+
+        mainFacet.configuration.settings.compilerArguments = null
+        mainFacet.configuration.settings.compilerSettings = null
+        mainFacet.configuration.settings.targetPlatform = null
+        mainFacet.configuration.settings.productionOutputPath = null
+        mainFacet.configuration.settings.testOutputPath = null
+
+        fireFacetChangedAndValidateKotlinFacet(mainFacet)
+    }
+
     private fun fireFacetChangedAndValidateKotlinFacet(mainFacet: KotlinFacet) {
         val allFacets = FacetManager.getInstance(myModule).allFacets
         assertSize(1, allFacets)
@@ -134,6 +147,26 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         assertTrue(
             "externalSystemRunTasks differs. Entity: ${entity.externalSystemRunTasks}, facet: ${facet.configuration.settings.externalSystemRunTasks}",
             entity.externalSystemRunTasks.map { deserializeExternalSystemTestRunTask(it) } == facet.configuration.settings.externalSystemRunTasks
+        )
+        assertTrue(
+            "compilerArguments is not null",
+            entity.compilerArguments == null
+        )
+        assertTrue(
+            "compilerSettings is not null",
+            entity.compilerSettings == null
+        )
+        assertTrue(
+            "targetPlatform differs. Entity: ${entity.targetPlatform}, facet: ${facet.configuration.settings.targetPlatform}",
+            entity.targetPlatform == null
+        )
+        assertTrue(
+            "productionOutputPath differs. Entity: ${entity.productionOutputPath}, facet: ${facet.configuration.settings.productionOutputPath}",
+            entity.productionOutputPath == facet.configuration.settings.productionOutputPath
+        )
+        assertTrue(
+            "testOutputPath differs. Entity: ${entity.testOutputPath}, facet: ${facet.configuration.settings.testOutputPath}",
+            entity.testOutputPath == facet.configuration.settings.testOutputPath
         )
     }
 }

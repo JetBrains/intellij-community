@@ -51,15 +51,15 @@ fun CompilerSettingsData.toCompilerSettings(notifier: (CompilerSettings) -> Unit
         it.outputDirectoryForJsLibraryFiles = this.outputDirectoryForJsLibraryFiles
     }
 
-fun CompilerSettings?.toCompilerSettingsData(): CompilerSettingsData =
+fun CompilerSettings?.toCompilerSettingsData(): CompilerSettingsData? = this?.let {
     CompilerSettingsData(
-        this?.additionalArguments ?: "",
-        this?.scriptTemplates ?: "",
-        this?.scriptTemplatesClasspath ?: "",
-        this?.copyJsLibraryFiles ?: true,
-        this?.outputDirectoryForJsLibraryFiles ?: "lib",
-        true
+        additionalArguments,
+        scriptTemplates,
+        scriptTemplatesClasspath,
+        copyJsLibraryFiles,
+        outputDirectoryForJsLibraryFiles
     )
+}
 
 fun ExternalSystemRunTask.serializeExternalSystemTestRunTask(): String {
     return when(this) {
@@ -96,17 +96,15 @@ object CompilerArgumentsSerializer {
         "D" to CommonCompilerArguments.DummyImpl::class.java
     )
 
-    fun serializeToString(commonCompilerArguments: CommonCompilerArguments?): String {
-        return commonCompilerArguments?.let {
-            val classIdentifier = argumentsTypeMap.entries.firstOrNull { it.value == commonCompilerArguments.javaClass }?.key
-                ?: error("Class not found: ${commonCompilerArguments.javaClass}")
+    fun serializeToString(commonCompilerArguments: CommonCompilerArguments?): String? = commonCompilerArguments?.let {
+        val classIdentifier = argumentsTypeMap.entries.firstOrNull { it.value == commonCompilerArguments.javaClass }?.key
+            ?: error("Class not found: ${commonCompilerArguments.javaClass}")
 
-            classIdentifier + gson.toJson(commonCompilerArguments)
-        } ?: ""
+        classIdentifier + gson.toJson(commonCompilerArguments)
     }
 
-    fun deserializeFromString(serializedArguments: String): CommonCompilerArguments? {
-        return when {
+    fun deserializeFromString(serializedArguments: String?): CommonCompilerArguments? = serializedArguments?.let {
+        when {
             serializedArguments.isEmpty() -> null
             serializedArguments.isNotBlank() && serializedArguments[0].isLetter() -> {
                 val classIdentifier = serializedArguments.substring(0, 1)

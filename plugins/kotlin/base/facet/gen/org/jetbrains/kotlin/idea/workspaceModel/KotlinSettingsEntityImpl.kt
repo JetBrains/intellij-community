@@ -32,7 +32,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.descriptors.ConfigFileItem
+import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity.Builder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
@@ -145,19 +148,19 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
       return dataSource.kind
     }
 
-  override val compilerArguments: String
+  override val compilerArguments: String?
     get() {
       readField("compilerArguments")
       return dataSource.compilerArguments
     }
 
-  override val compilerSettings: CompilerSettingsData
+  override val compilerSettings: CompilerSettingsData?
     get() {
       readField("compilerSettings")
       return dataSource.compilerSettings
     }
 
-  override val targetPlatform: String
+  override val targetPlatform: String?
     get() {
       readField("targetPlatform")
       return dataSource.targetPlatform
@@ -267,15 +270,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
       if (!getEntityData().isKindInitialized()) {
         error("Field KotlinSettingsEntity#kind should be initialized")
       }
-      if (!getEntityData().isCompilerArgumentsInitialized()) {
-        error("Field KotlinSettingsEntity#compilerArguments should be initialized")
-      }
-      if (!getEntityData().isCompilerSettingsInitialized()) {
-        error("Field KotlinSettingsEntity#compilerSettings should be initialized")
-      }
-      if (!getEntityData().isTargetPlatformInitialized()) {
-        error("Field KotlinSettingsEntity#targetPlatform should be initialized")
-      }
       if (!getEntityData().isExternalSystemRunTasksInitialized()) {
         error("Field KotlinSettingsEntity#externalSystemRunTasks should be initialized")
       }
@@ -332,17 +326,17 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
       if (this.implementedModuleNames != dataSource.implementedModuleNames) this.implementedModuleNames = dataSource.implementedModuleNames.toMutableList()
       if (this.dependsOnModuleNames != dataSource.dependsOnModuleNames) this.dependsOnModuleNames = dataSource.dependsOnModuleNames.toMutableList()
       if (this.additionalVisibleModuleNames != dataSource.additionalVisibleModuleNames) this.additionalVisibleModuleNames = dataSource.additionalVisibleModuleNames.toMutableSet()
-      if (this.productionOutputPath != dataSource.productionOutputPath) this.productionOutputPath = dataSource.productionOutputPath
-      if (this.testOutputPath != dataSource.testOutputPath) this.testOutputPath = dataSource.testOutputPath
+      if (this.productionOutputPath != dataSource?.productionOutputPath) this.productionOutputPath = dataSource.productionOutputPath
+      if (this.testOutputPath != dataSource?.testOutputPath) this.testOutputPath = dataSource.testOutputPath
       if (this.sourceSetNames != dataSource.sourceSetNames) this.sourceSetNames = dataSource.sourceSetNames.toMutableList()
       if (this.isTestModule != dataSource.isTestModule) this.isTestModule = dataSource.isTestModule
       if (this.externalProjectId != dataSource.externalProjectId) this.externalProjectId = dataSource.externalProjectId
       if (this.isHmppEnabled != dataSource.isHmppEnabled) this.isHmppEnabled = dataSource.isHmppEnabled
       if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders = dataSource.pureKotlinSourceFolders.toMutableList()
       if (this.kind != dataSource.kind) this.kind = dataSource.kind
-      if (this.compilerArguments != dataSource.compilerArguments) this.compilerArguments = dataSource.compilerArguments
-      if (this.compilerSettings != dataSource.compilerSettings) this.compilerSettings = dataSource.compilerSettings
-      if (this.targetPlatform != dataSource.targetPlatform) this.targetPlatform = dataSource.targetPlatform
+      if (this.compilerArguments != dataSource?.compilerArguments) this.compilerArguments = dataSource.compilerArguments
+      if (this.compilerSettings != dataSource?.compilerSettings) this.compilerSettings = dataSource.compilerSettings
+      if (this.targetPlatform != dataSource?.targetPlatform) this.targetPlatform = dataSource.targetPlatform
       if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks = dataSource.externalSystemRunTasks.toMutableList()
       if (this.version != dataSource.version) this.version = dataSource.version
       if (this.flushNeeded != dataSource.flushNeeded) this.flushNeeded = dataSource.flushNeeded
@@ -627,7 +621,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
 
       }
 
-    override var compilerArguments: String
+    override var compilerArguments: String?
       get() = getEntityData().compilerArguments
       set(value) {
         checkModificationAllowed()
@@ -635,7 +629,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
         changedProperty.add("compilerArguments")
       }
 
-    override var compilerSettings: CompilerSettingsData
+    override var compilerSettings: CompilerSettingsData?
       get() = getEntityData().compilerSettings
       set(value) {
         checkModificationAllowed()
@@ -644,7 +638,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
 
       }
 
-    override var targetPlatform: String
+    override var targetPlatform: String?
       get() = getEntityData().targetPlatform
       set(value) {
         checkModificationAllowed()
@@ -703,20 +697,20 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   lateinit var implementedModuleNames: MutableList<String>
   lateinit var dependsOnModuleNames: MutableList<String>
   lateinit var additionalVisibleModuleNames: MutableSet<String>
+  var productionOutputPath: String? = null
+  var testOutputPath: String? = null
   lateinit var sourceSetNames: MutableList<String>
   var isTestModule: Boolean = false
   lateinit var externalProjectId: String
   var isHmppEnabled: Boolean = false
   lateinit var pureKotlinSourceFolders: MutableList<String>
   lateinit var kind: KotlinModuleKind
-  lateinit var compilerArguments: String
-  lateinit var compilerSettings: CompilerSettingsData
-  lateinit var targetPlatform: String
+  var compilerArguments: String? = null
+  var compilerSettings: CompilerSettingsData? = null
+  var targetPlatform: String? = null
   lateinit var externalSystemRunTasks: MutableList<String>
   var version: Int = 0
   var flushNeeded: Boolean = false
-  var productionOutputPath: String? = null
-  var testOutputPath: String? = null
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
@@ -732,9 +726,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
 
   internal fun isPureKotlinSourceFoldersInitialized(): Boolean = ::pureKotlinSourceFolders.isInitialized
   internal fun isKindInitialized(): Boolean = ::kind.isInitialized
-  internal fun isCompilerArgumentsInitialized(): Boolean = ::compilerArguments.isInitialized
-  internal fun isCompilerSettingsInitialized(): Boolean = ::compilerSettings.isInitialized
-  internal fun isTargetPlatformInitialized(): Boolean = ::targetPlatform.isInitialized
   internal fun isExternalSystemRunTasksInitialized(): Boolean = ::externalSystemRunTasks.isInitialized
 
 
@@ -876,9 +867,13 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return KotlinSettingsEntity(name, moduleId, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames,
-                                dependsOnModuleNames, additionalVisibleModuleNames, productionOutputPath, testOutputPath, sourceSetNames,
-                                isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, compilerArguments,
-                                compilerSettings, targetPlatform, externalSystemRunTasks, version, flushNeeded, entitySource) {
+                                dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId,
+                                isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource) {
+      this.productionOutputPath = this@KotlinSettingsEntityData.productionOutputPath
+      this.testOutputPath = this@KotlinSettingsEntityData.testOutputPath
+      this.compilerArguments = this@KotlinSettingsEntityData.compilerArguments
+      this.compilerSettings = this@KotlinSettingsEntityData.compilerSettings
+      this.targetPlatform = this@KotlinSettingsEntityData.targetPlatform
       parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
     }
   }
