@@ -60,6 +60,7 @@ internal class SearchEverywhereMlFeaturesCache {
         contributor = contributorFeatures,
         id = elementId,
         mlFeatures = it.mlFeatures.ifEmpty { null },
+        priority = it.priority,
         mlWeight = if (mlWeight >= 0) roundDouble(mlWeight) else null,
         actionId = getActionIdIfApplicable(it.element, actionManager)
       )
@@ -68,6 +69,7 @@ internal class SearchEverywhereMlFeaturesCache {
       return SearchEverywhereMLElementCache(
         contributor = contributorFeatures,
         id = elementId,
+        priority = it.priority,
       )
     }
   }
@@ -94,6 +96,7 @@ internal data class SearchEverywhereMLElementCache(
   val id: Int? = null,
   val mlFeatures: List<EventPair<*>>? = null,
   val mlWeight: Double? = null,
+  val priority: Int? = null,
   val actionId: String? = null,
   val absentFeatures: List<String>? = null
 ) {
@@ -102,6 +105,7 @@ internal data class SearchEverywhereMLElementCache(
     contributor?.let { result.add(SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY.with(ObjectEventData(it))) }
     id?.let { result.add(SearchEverywhereMLStatisticsCollector.ID_KEY.with(it)) }
     mlWeight?.let { result.add(SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY.with(it)) }
+    priority?.let { result.add(SearchEverywhereMLStatisticsCollector.PRIORITY_KEY.with(it))}
     mlFeatures?.let { result.add(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY.with(ObjectEventData(it))) }
     actionId?.let { result.add(SearchEverywhereMLStatisticsCollector.ACTION_ID_KEY.with(it)) }
     absentFeatures?.let { result.add(SearchEverywhereMLStatisticsCollector.ABSENT_FEATURES_KEY.with(it)) }
@@ -116,6 +120,8 @@ internal data class SearchEverywhereMLElementCache(
 
     val updateWeight = if (mlWeight != prevCache?.mlWeight) mlWeight else null
 
+    val updatePriority = if (priority != prevCache?.priority) priority else null
+
     val updateActionId = if (actionId != prevCache?.actionId) actionId else null
 
     val updateFeatures = mlFeatures?.minus((prevCache?.mlFeatures ?: emptyList()).toSet())
@@ -127,6 +133,7 @@ internal data class SearchEverywhereMLElementCache(
       contributor = null,
       mlFeatures = updateFeatures,
       mlWeight = updateWeight,
+      priority = updatePriority,
       actionId = updateActionId,
       absentFeatures = absentFeatures?.ifEmpty { null }
     )

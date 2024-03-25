@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Contract
 
 internal open class SearchEverywhereFoundElementInfoWithMl(
   element: Any,
-  val sePriority: Int,
+  val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
   val mlFeatures: List<EventPair<*>>
-) : SearchEverywhereFoundElementInfo(element, getPriority(element, sePriority, mlWeight), contributor) {
+) : SearchEverywhereFoundElementInfo(element, getPriority(element, heuristicPriority, mlWeight), contributor) {
   companion object {
     internal const val MAX_ELEMENT_WEIGHT = 10_000
 
@@ -27,7 +27,7 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
         is SearchEverywhereFoundElementInfoWithMl -> info
         is SearchEverywhereFoundElementInfoBeforeDiff -> SearchEverywhereFoundElementInfoWithMl(
           element = info.element,
-          sePriority = info.sePriority,
+          heuristicPriority = info.heuristicPriority,
           contributor = info.contributor,
           mlWeight = info.mlWeight,
           mlFeatures = info.mlFeatures

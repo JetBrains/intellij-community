@@ -14,7 +14,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.statistician.Search
 
 internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   object Fields {
-    internal val PRIORITY_DATA_KEY = EventFields.Int("priority")
+    internal val PRIORITY_DATA_KEY = EventFields.Int("heuristicPriority")
 
     internal val STATISTICIAN_USE_COUNT_DATA_KEY = EventFields.Int("statUseCount")
     internal val STATISTICIAN_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("statIsMostPopular")

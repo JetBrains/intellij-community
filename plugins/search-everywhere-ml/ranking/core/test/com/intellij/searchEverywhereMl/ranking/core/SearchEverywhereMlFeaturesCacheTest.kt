@@ -19,13 +19,13 @@ import junit.framework.TestCase
 class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
   private class MockElementInfoBuilder {
     private var element: Any? = null
-    private var priority: Int? = null
+    private var heuristicPriority: Int? = null
     private var contributor: SearchEverywhereContributor<*>? = null
     private val mlFeatures = mutableListOf<EventPair<*>>()
     private var mlWeight: Double? = null
 
-    fun withPriority(priority: Int) = apply {
-      this.priority = priority
+    fun withHeuristicPriority(priority: Int) = apply {
+      this.heuristicPriority = priority
       mlFeatures.add(SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(priority))
     }
 
@@ -60,7 +60,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     fun build(): SearchEverywhereFoundElementInfoWithMl {
       return SearchEverywhereFoundElementInfoWithMl(
         element ?: Any(),
-        priority ?: 0,
+        heuristicPriority ?: 0,
         contributor ?: MockSearchEverywhereContributor(),
         mlWeight,
         mlFeatures)
@@ -139,6 +139,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY,
                                SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
+                               SearchEverywhereMLStatisticsCollector.PRIORITY_KEY,
                                SearchEverywhereMLStatisticsCollector.ID_KEY,
                                SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY)
 
@@ -161,6 +162,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY,
                                SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
+                               SearchEverywhereMLStatisticsCollector.PRIORITY_KEY,
                                SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ID_KEY)
 
@@ -187,21 +189,21 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val idProvider = MockItemIdProvider()
     val elementsFirstSearch = listOf(
       MockElementInfoBuilder()
-        .withPriority(1011)
+        .withHeuristicPriority(1011)
         .withUsage(11)
         .withMlWeight(600000.0)
         .withContributorId("ActionSearchEverywhereContributor")
         .withIsAction(true)
         .build(),
       MockElementInfoBuilder()
-        .withPriority(1010)
+        .withHeuristicPriority(1010)
         .withUsage(9)
         .withMlWeight(50000.0)
         .withContributorId("ActionSearchEverywhereContributor")
         .withIsAction(true)
         .build(),
       MockElementInfoBuilder()
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(7)
         .withMlWeight(30000.0)
         .withContributorId("ClassSearchEverywhereContributor")
@@ -223,14 +225,14 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val newElements = listOf(
       MockElementInfoBuilder()
-        .withPriority(100)
+        .withHeuristicPriority(100)
         .withUsage(2)
         .withMlWeight(35000.0)
         .withContributorId("ActionSearchEverywhereContributor")
         .withIsAction(true)
         .build(),
       MockElementInfoBuilder()
-        .withPriority(900)
+        .withHeuristicPriority(900)
         .withUsage(1)
         .withMlWeight(20100.0)
         .withContributorId("ClassSearchEverywhereContributor")
@@ -265,14 +267,14 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val elementsFirstSearch = listOf(
       MockElementInfoBuilder()
-        .withPriority(100)
+        .withHeuristicPriority(100)
         .withIsAction(true)
         .withContributorId("ActionSearchEverywhereContributor")
         .withMlWeight(1000.0)
         .withTotalSymbolsAmount(1)
         .build(),
       MockElementInfoBuilder()
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withIsAction(false)
         .withContributorId("ClassSearchEverywhereContributor")
         .withMlWeight(1000.0)
@@ -295,14 +297,14 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val elementsSecondSearch = listOf(
       MockElementInfoBuilder()
-        .withPriority(100)
+        .withHeuristicPriority(100)
         .withIsAction(true)
         .withContributorId("ActionSearchEverywhereContributor")
         .withMlWeight(1000.0)
         .withTotalSymbolsAmount(2)
         .build(),
       MockElementInfoBuilder()
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withIsAction(false)
         .withContributorId("ClassSearchEverywhereContributor")
         .withMlWeight(1000.0)
@@ -328,7 +330,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsThirdSearch = listOf(
       elementsSecondSearch[0],
       MockElementInfoBuilder()
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withIsAction(true) // changed false -> true
         .withContributorId("ClassSearchEverywhereContributor")
         .withMlWeight(1000.0)
@@ -351,7 +353,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     // Changed only first element with id 1
     val elementsFourthSearch = listOf(
       MockElementInfoBuilder()
-        .withPriority(100)
+        .withHeuristicPriority(100)
         .withIsAction(false) // true -> false
         .withContributorId("ActionSearchEverywhereContributor")
         .withMlWeight(1000.0)
@@ -380,19 +382,19 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsFirstSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(10)
         .withContributorId("ActionSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(200.0)
-        .withPriority(2000)
+        .withHeuristicPriority(2000)
         .withUsage(20)
         .withContributorId("ActionSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(300.0)
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .withContributorId("ActionSearchEverywhereContributor")
         .build()
@@ -414,20 +416,20 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
       elementsFirstSearch[0],
       MockElementInfoBuilder()
         .withMlWeight(200.0)
-        .withPriority(2000)
+        .withHeuristicPriority(2000)
         .withUsage(25) // 20 -> 25
         .withContributorId("ActionSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder() // new element
         .withMlWeight(200.0)
-        .withPriority(2000)
+        .withHeuristicPriority(2000)
         .withUsage(20)
         .withContributorId("ActionSearchEverywhereContributor")
         .build(),
       elementsFirstSearch[2],
       MockElementInfoBuilder() // new element
         .withMlWeight(400.0)
-        .withPriority(4000)
+        .withHeuristicPriority(4000)
         .withUsage(40)
         .withContributorId("ActionSearchEverywhereContributor")
         .build(),
@@ -453,19 +455,19 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsFirstSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(10)
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(200.0)
-        .withPriority(2000)
+        .withHeuristicPriority(2000)
         .withUsage(20)
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(300.0)
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .withContributorId("FileSearchEverywhereContributor")
         .build()
@@ -484,20 +486,20 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsSecondSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(25) // 10 -> 25
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(200.0)
-        .withPriority(3000) // 2000 -> 3000
+        .withHeuristicPriority(3000) // 2000 -> 3000
         .withContributorId("FileSearchEverywhereContributor")
         .withUsage(20)
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(400.0) // 300.0 -> 400.0
         .withContributorId("FileSearchEverywhereContributor")
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .build()
     )
@@ -518,7 +520,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
       assertFeatures(
         it,
         listOf(listOf(), listOf(), listOf("mlWeight" to 400.0)),
-        listOf(listOf("usage" to 25), listOf("priority" to 3000), listOf())
+        listOf(listOf("usage" to 25), listOf("heuristicPriority" to 3000), listOf())
       )
     }
   }
@@ -530,13 +532,13 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsFirstSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(10)
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(300.0)
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .withContributorId("FileSearchEverywhereContributor")
         .build()
@@ -562,13 +564,13 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsSecondSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(10)
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(300.0)
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .withContributorId("FileSearchEverywhereContributor")
         .build()
@@ -594,13 +596,13 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsFirstSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(10)
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(300.0)
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .withContributorId("ClassSearchEverywhereContributor")
         .build()
@@ -638,13 +640,13 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val elementsSecondSearch = listOf(
       MockElementInfoBuilder()
         .withMlWeight(100.0)
-        .withPriority(1000)
+        .withHeuristicPriority(1000)
         .withUsage(10)
         .withContributorId("FileSearchEverywhereContributor")
         .build(),
       MockElementInfoBuilder()
         .withMlWeight(300.0)
-        .withPriority(3000)
+        .withHeuristicPriority(3000)
         .withUsage(30)
         .withContributorId("ClassSearchEverywhereContributor")
         .build()
@@ -671,7 +673,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
       assertFeatures(
         it,
         listOf(listOf(), listOf("mlWeight" to 300.0, "contributor" to updatedContributorEvents)),
-        listOf(listOf(), listOf("usage" to 30, "priority" to 3000))
+        listOf(listOf(), listOf("usage" to 30, "heuristicPriority" to 3000))
       )
     }
   }

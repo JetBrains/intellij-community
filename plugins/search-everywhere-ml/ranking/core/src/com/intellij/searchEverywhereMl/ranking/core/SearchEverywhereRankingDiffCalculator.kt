@@ -35,7 +35,7 @@ object SearchEverywhereRankingDiffCalculator {
       if (it is SearchEverywhereFoundElementInfoBeforeDiff) {
         SearchEverywhereFoundElementInfoAfterDiff(
           element = it.element,
-          sePriority = it.sePriority,
+          heuristicPriority = it.heuristicPriority,
           contributor = it.contributor,
           mlWeight = it.mlWeight,
           mlFeatures = it.mlFeatures,
@@ -54,7 +54,7 @@ object SearchEverywhereRankingDiffCalculator {
       if (elementInfo is SearchEverywhereFoundElementInfoAfterDiff) {
         RankingDiffInfo(
           mlPriority = elementInfo.priority,
-          sePriority = elementInfo.sePriority,
+          sePriority = elementInfo.heuristicPriority,
           mlIndex = mlSearchPosition,
           seIndex = elementInfo.seSearchPosition
         )

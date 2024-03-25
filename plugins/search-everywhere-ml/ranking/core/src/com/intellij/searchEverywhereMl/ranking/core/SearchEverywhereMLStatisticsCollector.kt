@@ -292,7 +292,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 96, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 97, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
@@ -335,6 +335,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   @VisibleForTesting
   val FEATURES_DATA_KEY = createFeaturesEventObject()
   val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
+  val PRIORITY_KEY = EventFields.Int("priority", "The final priority used for sorting elements")
   val ABSENT_FEATURES_KEY = EventFields.StringListValidatedByCustomRule("absentFeatures",
                                                                         SearchEverywhereMlElementFeatureValidationRule::class.java)
   val CONTRIBUTOR_DATA_KEY = ObjectEventField(
@@ -342,7 +343,8 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   )
 
   val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
-    "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_DATA_KEY, ML_WEIGHT_KEY, ABSENT_FEATURES_KEY
+    "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_DATA_KEY, ML_WEIGHT_KEY, PRIORITY_KEY,
+    ABSENT_FEATURES_KEY
   )
 
   // events

@@ -155,7 +155,7 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
     }
 
     private fun SearchEverywhereFoundElementInfoWithMl.copy(element: Any = this.element,
-                                                            sePriority: Int = this.sePriority,
+                                                            sePriority: Int = this.heuristicPriority,
                                                             contributor: SearchEverywhereContributor<*> = this.contributor,
                                                             mlWeight: Double? = this.mlWeight,
                                                             mlFeatures: List<EventPair<*>> = this.mlFeatures) =
