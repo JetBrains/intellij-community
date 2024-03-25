@@ -278,9 +278,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
 
+  private static Dimension getMinimumSize(@NotNull JComboBox<?> comboBox) {
+    Dimension result = JBUI.CurrentTheme.ComboBox.minimumSize();
+    return isBorderless(comboBox) ? new Dimension(result.width, result.height - JBUIScale.scale(4)) : result;
+  }
+
   private static @NotNull Dimension getArrowButtonPreferredSize(@NotNull JComboBox<?> comboBox) {
     Insets i = comboBox.getInsets();
-    int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.ComboBox.minimumSize().height) + i.top + i.bottom;
+    int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : getMinimumSize(comboBox).height) + i.top + i.bottom;
     return new Dimension(JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + i.right, height);
   }
 
@@ -644,7 +649,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       JBInsets.removeFrom(size, padding); // don't count paddings in compact mode
     }
 
-    Dimension minSize = JBUI.CurrentTheme.ComboBox.minimumSize();
+    Dimension minSize = getMinimumSize(comboBox);
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, minSize.width + i.left);
@@ -668,7 +673,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public Dimension getMinimumSize(JComponent c) {
     Dimension minSize = super.getMinimumSize(c);
     Insets i = c.getInsets();
-    minSize.width = JBUI.CurrentTheme.ComboBox.minimumSize().width + JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + i.left + i.right;
+    minSize.width = getMinimumSize(comboBox).width + JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + i.left + i.right;
     return getSizeWithButton(minSize, editor != null ? editor.getMinimumSize() : null);
   }
 

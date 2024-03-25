@@ -45,7 +45,7 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
       return when (getType(c)) {
         Type.TABLE_CELL_EDITOR, Type.COMPACT -> JBInsets.create(2, 3)
         Type.EMBEDDED -> JBUI.insets(2)
-        Type.BORDERLESS -> JBInsets.emptyInsets()
+        Type.BORDERLESS -> JBUI.insets(1)
         Type.DEFAULT -> DarculaComboBoxUI.getDefaultComboBoxInsets()
       }
     }
@@ -104,12 +104,12 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
     }
   }
 
-  protected fun paintNormalBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
+  private fun paintNormalBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
     JBInsets.removeFrom(r, getBorderInsets(comboBox))
     paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled)
   }
 
-  protected fun paintBorderlessBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
+  private fun paintBorderlessBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
     JBInsets.removeFrom(r, getBorderInsets(comboBox))
     paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled, bw = DarculaUIUtil.LW.get())
   }
