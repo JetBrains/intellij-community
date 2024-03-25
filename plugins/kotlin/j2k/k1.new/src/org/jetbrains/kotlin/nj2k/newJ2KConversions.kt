@@ -62,5 +62,6 @@ fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = li
     FunctionalInterfacesConversion(context),
     FilterImportsConversion(context),
     AddElementsInfoConversion(context),
-    EnumSyntheticValuesMethodConversion(context)
+    EnumSyntheticValuesMethodConversion(context),
+    InferMutabilityOfLocalVariablesConversion(context)
 )

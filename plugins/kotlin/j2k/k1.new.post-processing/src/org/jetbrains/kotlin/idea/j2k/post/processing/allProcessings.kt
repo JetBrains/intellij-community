@@ -122,19 +122,11 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
 private val cleaningUpDiagnosticBasedPostProcessingGroup = DiagnosticBasedPostProcessingGroup(
     removeUselessCastDiagnosticBasedProcessing,
     removeUnnecessaryNotNullAssertionDiagnosticBasedProcessing,
-    fixValToVarDiagnosticBasedProcessing
 )
 
 private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
     KotlinNJ2KServicesBundle.message("processing.step.inferring.types"),
     listOf(
-        InspectionLikeProcessingGroup(
-            processings = listOf(
-                VarToValProcessing(),
-                LocalVarToValInspectionBasedProcessing()
-            ),
-            runSingleTime = true
-        ),
         NullabilityInferenceProcessing(),
         MutabilityInferenceProcessing(),
         ClearUnknownInferenceLabelsProcessing()

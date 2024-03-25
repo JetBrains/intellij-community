@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Test {
     public static void test(int i) {
         int x;
