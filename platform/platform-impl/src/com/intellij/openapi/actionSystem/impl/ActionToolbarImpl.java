@@ -1506,10 +1506,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public @NotNull List<AnAction> getActions() {
     List<AnAction> result = new ArrayList<>();
-
     List<AnAction> secondary = new ArrayList<>();
-    AnAction[] kids = myActionGroup.getChildren(null);
-    for (AnAction each : kids) {
+    for (AnAction each : myVisibleActions) {
       if (myActionGroup.isPrimary(each)) {
         result.add(each);
       }
@@ -1519,7 +1517,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     result.add(new Separator());
     result.addAll(secondary);
-
     return result;
   }
 
