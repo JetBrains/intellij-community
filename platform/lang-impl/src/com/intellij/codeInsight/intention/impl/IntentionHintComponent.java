@@ -445,7 +445,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
 
       Point realPoint = new Point(-(EmptyIcon.ICON_16.getIconWidth() / 2) - 4, -(EmptyIcon.ICON_16.getIconHeight() / 2));
-      Point p = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
+      Point p = SwingUtilities.convertPoint(convertComponent, realPoint, getLayeredPane(editor));
       return new Point(p.x, p.y);
     }
 
@@ -483,8 +483,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         y = lineY + lineHeight;
       }
 
-      return SwingUtilities.convertPoint(editor.getContentComponent(), new Point(x, y),
-                                         editor.getComponent().getRootPane().getLayeredPane());
+      return SwingUtilities.convertPoint(editor.getContentComponent(), new Point(x, y), getLayeredPane(editor));
+    }
+
+    private static @Nullable JLayeredPane getLayeredPane(@NotNull Editor editor) {
+      final var rootPane = editor.getComponent().getRootPane();
+      return rootPane != null ? rootPane.getLayeredPane() : null;
     }
 
     private static boolean fitsInCaretLine(Editor editor, int windowRight) {
