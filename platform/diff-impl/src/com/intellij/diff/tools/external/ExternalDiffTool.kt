@@ -49,13 +49,13 @@ object ExternalDiffTool {
     if (isDefault()) return true
 
     return diffProducers.asSequence()
-      .map { producer -> getFileType(producer) }
+      .map { producer -> getProducerFileType(producer) }
       .distinct()
       .mapNotNull { fileType -> ExternalDiffSettings.findDiffTool(fileType) }
       .firstOrNull() != null
   }
 
-  private fun getFileType(producer: DiffRequestProducer): FileType {
+  private fun getProducerFileType(producer: DiffRequestProducer): FileType {
     val contentType = producer.contentType
     if (contentType != null) return contentType
 
@@ -74,9 +74,15 @@ object ExternalDiffTool {
     return false
   }
 
-  private fun getExternalToolFor(request: ContentDiffRequest): ExternalTool? {
-    val diffTool = request.contents.asSequence()
-      .mapNotNull { content -> content.contentType }
+  private fun getExternalToolFor(producer: DiffRequestProducer, request: DiffRequest): ExternalTool? {
+    if (request !is ContentDiffRequest) return null
+    if (!canShow(request)) return null
+
+    val fileTypes: List<FileType?> = request.contents.map { content -> content.contentType } +
+                                     getProducerFileType(producer) // Fix disappearing 'Unknown' type after automatic detection as 'PlainText'
+
+    val diffTool = fileTypes.asSequence()
+      .filterNotNull()
       .distinct()
       .sortedBy { fileType -> if (fileType !== UnknownFileType.INSTANCE) -1 else 1 }
       .mapNotNull { fileType -> ExternalDiffSettings.findDiffTool(fileType) }
@@ -124,18 +130,31 @@ object ExternalDiffTool {
                            hints: DiffDialogHints,
                            requestProducer: () -> List<DiffRequestProducer>): Boolean {
     try {
-      val requests: List<DiffRequest>? = runWithModalProgressBlocking(
+      val requestsByTool = runWithModalProgressBlocking(
         owner = if (project != null) ModalTaskOwner.project(project) else ModalTaskOwner.guess(),
         title = DiffBundle.message("progress.title.loading.requests")
       ) {
         coroutineToIndicator {
           val requestProducers = requestProducer()
-          collectRequests(project, requestProducers)
+          collectRequestsForExternalTool(project, requestProducers)
         }
       }
-      if (requests == null) return false
+      if (requestsByTool == null) return false
 
-      showRequests(project, requests, hints)
+      if (requestsByTool.showByExternalTool.isEmpty()) {
+        return false // do not show all in built-in ourselves, let the caller handle the request (ex: show diff-preview)
+      }
+
+      for ((externalTool, requests) in requestsByTool.showByExternalTool) {
+        for (request in requests) {
+          showRequest(project, request, externalTool)
+        }
+      }
+
+      if (!requestsByTool.showInBuiltin.isEmpty()) {
+        DiffManagerEx.getInstance().showDiffBuiltin(project, SimpleDiffRequestChain(requestsByTool.showInBuiltin), hints)
+      }
+
       return true
     }
     catch (ignore: ProcessCanceledException) {
@@ -147,41 +166,13 @@ object ExternalDiffTool {
     return false
   }
 
-  @RequiresEdt
-  @Throws(IOException::class)
-  private fun showRequests(project: Project?,
-                           requests: List<DiffRequest>,
-                           hints: DiffDialogHints) {
-    val showInBuiltin = mutableListOf<DiffRequest>()
-    for (request in requests) {
-      val success = tryShowRequestInExternal(project, request)
-      if (!success) {
-        showInBuiltin.add(request)
-      }
-    }
-
-    if (!showInBuiltin.isEmpty()) {
-      DiffManagerEx.getInstance().showDiffBuiltin(project, SimpleDiffRequestChain(showInBuiltin), hints)
-    }
-  }
-
-  @Throws(IOException::class)
-  private fun tryShowRequestInExternal(project: Project?, request: DiffRequest): Boolean {
-    if (!canShow(request)) return false
-
-    val externalTool = getExternalToolFor((request as ContentDiffRequest))
-    if (externalTool == null) return false
-
-    showRequest(project, request, externalTool)
-    return true
-  }
-
-  private fun collectRequests(project: Project?,
-                              producers: List<DiffRequestProducer>): List<DiffRequest>? {
+  private fun collectRequestsForExternalTool(project: Project?,
+                                             producers: List<DiffRequestProducer>): RequestsByTool? {
     if (!wantShowExternalToolFor(producers)) return null
     if (!checkNotTooManyRequests(project, producers)) return null
 
-    val requests = mutableListOf<DiffRequest>()
+    val showInBuiltin = mutableListOf<DiffRequest>()
+    val showByExternalTool = mutableMapOf<ExternalTool, MutableList<DiffRequest>>()
 
     val context = UserDataHolderBase()
     val errorRequests = mutableListOf<DiffRequestProducer>()
@@ -189,7 +180,15 @@ object ExternalDiffTool {
     val indicator = ProgressManager.getGlobalProgressIndicator()
     for (producer in producers) {
       try {
-        requests.add(producer.process(context, indicator))
+        val request = producer.process(context, indicator)
+        val externalTool = getExternalToolFor(producer, request)
+        if (externalTool != null) {
+          val toolRequests = showByExternalTool.computeIfAbsent(externalTool) { mutableListOf() }
+          toolRequests.add(request)
+        }
+        else {
+          showInBuiltin.add(request)
+        }
       }
       catch (e: DiffRequestProducerException) {
         LOG.warn(e)
@@ -208,7 +207,7 @@ object ExternalDiffTool {
         .notify(project)
     }
 
-    return requests
+    return RequestsByTool(showByExternalTool, showInBuiltin)
   }
 
   @JvmStatic
@@ -239,4 +238,9 @@ object ExternalDiffTool {
     }
     return true
   }
+
+  private class RequestsByTool(
+    val showByExternalTool: Map<ExternalTool, List<DiffRequest>>,
+    val showInBuiltin: List<DiffRequest>
+  )
 }
