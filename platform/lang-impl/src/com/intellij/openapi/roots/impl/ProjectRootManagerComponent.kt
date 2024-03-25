@@ -325,14 +325,14 @@ open class ProjectRootManagerComponent(project: Project,
       }
 
       if (logRoots) {
-        LOG.trace { "    ${logDescriptor}: ${recursive}, ${flat}" }
+        WATCH_ROOTS_LOG.trace { "    ${logDescriptor}: ${recursive}, ${flat}" }
         recursivePaths += recursive
         flatPaths += flat
       }
     }
 
     for (module in ModuleManager.getInstance(project).modules) {
-      if (logRoots) LOG.trace { "  module ${module}" }
+      if (logRoots) WATCH_ROOTS_LOG.trace { "  module ${module}" }
       val rootManager = ModuleRootManager.getInstance(module)
       collectUrls(rootManager.contentRootUrls, "content")
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
