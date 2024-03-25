@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -58,7 +58,6 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -323,16 +322,6 @@ public class GradleExecutionHelper {
     settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString());
 
     return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
-  }
-
-  public static @Nullable BuildEnvironment getBuildEnvironment(@NotNull ProjectResolverContext projectResolverContext) {
-    return getBuildEnvironment(
-      projectResolverContext.getConnection(),
-      projectResolverContext.getExternalSystemTaskId(),
-      projectResolverContext.getListener(),
-      projectResolverContext.getCancellationTokenSource().token(),
-      projectResolverContext.getSettings()
-    );
   }
 
   public static void prepare(

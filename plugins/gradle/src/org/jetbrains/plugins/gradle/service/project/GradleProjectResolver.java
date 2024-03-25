@@ -38,10 +38,7 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
-import org.gradle.tooling.BuildActionFailureException;
-import org.gradle.tooling.CancellationToken;
-import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -137,11 +134,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       return GradlePreviewCustomizer.Companion.getCustomizer(projectPath, syncTaskId).resolvePreviewProjectInfo(projectPath, syncTaskId, settings);
     }
 
-    DefaultProjectResolverContext resolverContext =
-      new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, gradleResolverPolicy);
-    CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
+    CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     CancellationToken cancellationToken = cancellationTokenSource.token();
-    myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
+    myCancellationMap.putValue(syncTaskId, cancellationTokenSource);
+
+    DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
+      syncTaskId, projectPath, settings, listener, gradleResolverPolicy, cancellationTokenSource
+    );
 
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId);
@@ -154,25 +153,29 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationToken);
       }
 
-      Predicate<GradleProjectResolverExtension> extensionsFilter =
-        gradleResolverPolicy != null ? gradleResolverPolicy.getExtensionsFilter() : null;
-      final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext, extensionsFilter);
+      final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext);
+      var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain, false);
       final DataNode<ProjectData> projectDataNode = myHelper.execute(
-        projectPath, settings, syncTaskId, listener, cancellationToken,
-        getProjectDataFunction(resolverContext, projectResolverChain, false));
+        resolverContext.getProjectPath(),
+        resolverContext.getSettings(),
+        resolverContext.getExternalSystemTaskId(),
+        resolverContext.getListener(),
+        resolverContext.getCancellationTokenSource().token(),
+        projectDataFunction
+      );
 
       // auto-discover buildSrc projects of the main and included builds
       String gradleVersion = resolverContext.getProjectGradleVersion();
       if (gradleVersion != null && GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.0")) {
-        File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
-        new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
+        String gradleHome = ObjectUtils.doIfNotNull(resolverContext.getUserData(GRADLE_HOME_DIR), it -> it.getPath());
+        new GradleBuildSrcProjectsResolver(this, resolverContext, gradleHome, projectResolverChain)
           .discoverAndAppendTo(projectDataNode);
       }
 
       return projectDataNode;
     }
     finally {
-      myCancellationMap.remove(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
+      myCancellationMap.remove(syncTaskId, cancellationTokenSource);
       gradleExecutionSpan.end();
     }
   }
@@ -203,7 +206,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
 
-    final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
+    final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(
+      resolverCtx.getConnection(),
+      resolverCtx.getExternalSystemTaskId(),
+      resolverCtx.getListener(),
+      resolverCtx.getCancellationTokenSource().token(),
+      resolverCtx.getSettings()
+    );
     if (buildEnvironment != null) {
       resolverCtx.setBuildEnvironment(buildEnvironment);
     }
@@ -919,16 +928,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @ApiStatus.Experimental // chaining of resolver extensions complicates things and can be replaced in future
   public static GradleProjectResolverExtension createProjectResolverChain() {
-    return createProjectResolverChain(null, null);
+    return createProjectResolverChain(null);
   }
 
-  @NotNull
-  private static GradleProjectResolverExtension createProjectResolverChain(@Nullable DefaultProjectResolverContext resolverContext,
-                                                                           @Nullable Predicate<? super GradleProjectResolverExtension> extensionsFilter) {
-    Stream<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(resolverContext);
-    if (extensionsFilter != null) {
-      extensions = extensions.filter(extensionsFilter.or(BaseResolverExtension.class::isInstance));
-    }
+  private static @NotNull GradleProjectResolverExtension createProjectResolverChain(
+    @Nullable DefaultProjectResolverContext resolverContext
+  ) {
+    Predicate<GradleProjectResolverExtension> extensionsFilter =
+      resolverContext == null ? __ -> true :
+      resolverContext.getPolicy() == null ? __ -> true :
+      resolverContext.getPolicy().getExtensionsFilter();
+    Stream<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(resolverContext)
+      .filter(extensionsFilter.or(BaseResolverExtension.class::isInstance));
 
     Deque<GradleProjectResolverExtension> deque = new ArrayDeque<>();
     extensions.forEachOrdered(extension -> {

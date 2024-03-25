@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
@@ -48,18 +47,37 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @NotNull private final ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
 
-  public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
-                                       @NotNull final String projectPath,
-                                       @Nullable final GradleExecutionSettings settings,
-                                       @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy) {
+  public DefaultProjectResolverContext(
+    @NotNull ExternalSystemTaskId externalSystemTaskId,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable GradlePartialResolverPolicy resolverPolicy,
+    @NotNull CancellationTokenSource cancellationTokenSource
+  ) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
     myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
-    myCancellationTokenSource = GradleConnector.newCancellationTokenSource();
+    myCancellationTokenSource = cancellationTokenSource;
+  }
+
+  public DefaultProjectResolverContext(
+    @NotNull DefaultProjectResolverContext resolverContext,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings
+  ) {
+    this(
+      resolverContext.myExternalSystemTaskId,
+      projectPath,
+      settings,
+      resolverContext.myListener,
+      resolverContext.myPolicy,
+      resolverContext.myCancellationTokenSource
+    );
+    resolverContext.copyUserDataTo(this);
   }
 
   @NotNull
