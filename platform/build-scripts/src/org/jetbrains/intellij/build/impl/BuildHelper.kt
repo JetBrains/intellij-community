@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.JavaModuleOptions
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
@@ -19,7 +20,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -142,8 +142,8 @@ private fun readPluginId(pluginJar: Path): String? {
   }
 
   try {
-    FileSystems.newFileSystem(pluginJar, null as ClassLoader?).use {
-      return readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
+    HashMapZipFile.load(pluginJar).use { zip ->
+      return readXmlAsModel(zip.getInputStream("META-INF/plugin.xml") ?: return null).getChild("id")?.content
     }
   }
   catch (ignore: NoSuchFileException) {
@@ -151,9 +151,7 @@ private fun readPluginId(pluginJar: Path): String? {
   }
 }
 
-private fun disableCompatibleIgnoredPlugins(context: BuildContext,
-                                            configDir: Path,
-                                            explicitlyEnabledPlugins: Set<String?>) {
+private fun disableCompatibleIgnoredPlugins(context: BuildContext, configDir: Path, explicitlyEnabledPlugins: Set<String?>) {
   val toDisable = LinkedHashSet<String>()
   for (moduleName in context.productProperties.productLayout.compatiblePluginsToIgnore) {
     val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")!!
