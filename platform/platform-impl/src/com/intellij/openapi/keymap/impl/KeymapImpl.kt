@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -591,7 +592,11 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
     }
 
     val actionIds = HashSet<String>()
-    val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
+
+    val skipInserts = KeymapSchemeManager.FILTER.test(this)
+                      && SystemInfo.isMac
+                      && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
+
     for (actionElement in keymapElement.children) {
       if (actionElement.name != ACTION) {
         throw InvalidDataException("unknown element: $actionElement; Keymap's name=$name")
