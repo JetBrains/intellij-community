@@ -56,15 +56,10 @@ abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeI
 
         // We intentionally use ktFile here as a context element, because resolving
         // from compiled PSI-elements (e.g. caretResolutionTarget) is not yet supported
-        // Android Studio (b/329228828): this code breaks the monobuild (as of IntelliJ 2024.1).
-        // We do not run this test, so for now we can just remove this code. This patch can likely
-        // be dropped in a subsequent IntelliJ merge.
-        /*
         resolveWithClearCaches(ktFile) { resolveState ->
             val firSymbol = caretResolutionTarget.resolveToFirSymbol(resolveState, FirResolvePhase.TYPES)
             val renderedDeclaration = FirRenderer.withResolvePhase().renderElementAsString(firSymbol.fir)
             KotlinTestUtils.assertEqualsToFile(expectedFile, renderedDeclaration)
         }
-        */
     }
 }
