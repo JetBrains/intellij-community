@@ -20,12 +20,16 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import java.awt.Color
 import java.lang.Integer.toHexString
 import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
+
+@ApiStatus.Internal
+const val CODE_BLOCK_CLASS = "code-block"
 
 /**
  * Provides list of default CSS rules for JBHtmlPane
@@ -36,8 +40,6 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
   @JvmStatic
   fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     styleSheetCache.get(Pair(paneBackgroundColor.rgb and 0xffffff, configuration))
-
-  private const val CODE_BLOCK_CLASS = "code-block"
 
   internal fun buildCodeBlock(childNodes: List<Node>) =
     Element("div").addClass(CODE_BLOCK_CLASS).appendChild(

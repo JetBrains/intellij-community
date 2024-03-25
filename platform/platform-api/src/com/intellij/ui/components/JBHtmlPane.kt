@@ -9,9 +9,6 @@ import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
 import com.intellij.util.ui.accessibility.ScreenReader
-import com.intellij.util.ui.html.cssMargin
-import com.intellij.util.ui.html.cssPadding
-import com.intellij.util.ui.html.width
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
@@ -28,8 +25,6 @@ import javax.swing.KeyStroke
 import javax.swing.text.Document
 import javax.swing.text.EditorKit
 import javax.swing.text.StyledDocument
-import javax.swing.text.View
-import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
@@ -221,33 +216,6 @@ open class JBHtmlPane(
     if (doc is StyledDocument) {
       doc.putProperty("imageCache", myPaneConfiguration.imageResolverFactory(this))
     }
-  }
-
-  protected fun getPreferredSectionWidth(sectionClassName: String): Int {
-    val definition = findSection(getUI().getRootView(this), sectionClassName)
-    var result = definition?.getPreferredSpan(View.X_AXIS)?.toInt() ?: -1
-    if (result > 0) {
-      result += definition!!.cssMargin.width
-      var parent = definition.parent
-      while (parent != null) {
-        result += parent.cssMargin.width + parent.cssPadding.width
-        parent = parent.parent
-      }
-    }
-    return result
-  }
-
-  private fun findSection(view: View, sectionClassName: String): View? {
-    if (sectionClassName == view.element.attributes.getAttribute(HTML.Attribute.CLASS)) {
-      return view
-    }
-    for (i in 0 until view.viewCount) {
-      val definition = findSection(view.getView(i), sectionClassName)
-      if (definition != null) {
-        return definition
-      }
-    }
-    return null
   }
 
   @ApiStatus.Internal
