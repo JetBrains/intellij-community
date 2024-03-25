@@ -53,7 +53,7 @@ class NewExternalCodeProcessing(
     }
 
     context(KtAnalysisSession)
-        fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
+    fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
 
     context(KtAnalysisSession)
     fun getMember(element: KtNamedDeclaration): JKMemberData? {

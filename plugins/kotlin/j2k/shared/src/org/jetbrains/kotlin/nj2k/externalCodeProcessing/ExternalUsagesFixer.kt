@@ -120,7 +120,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
         ShortenReferencesFacility.getInstance().shorten(annotation)
     }
 
-        data class JKMemberInfoWithUsages(
+    data class JKMemberInfoWithUsages(
         val member: JKMemberData,
         val javaUsages: List<PsiElement>,
         val kotlinUsages: List<KtElement>
