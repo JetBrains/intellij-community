@@ -6,6 +6,7 @@ import com.intellij.util.ui.CSSFontResolver
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.StyleSheetUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Color
 import java.awt.Image
@@ -42,12 +43,12 @@ import javax.swing.text.html.StyleSheet
  * ```
  */
 class JBHtmlPaneConfiguration private constructor(builder: Builder) {
-  val keyboardActions: Map<KeyStroke, ActionListener> = builder.keyboardActions.toMap()
-  val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = builder.imageResolverFactory
-  val iconResolver: (String) -> Icon? = builder.iconResolver
-  val customStyleSheetProviders: List<(backgroundColor: Color) -> StyleSheet> = builder.customStyleSheetProviders.toList()
-  val fontResolver: CSSFontResolver? = builder.fontResolver
-  val extensions: List<ExtendableHTMLViewFactory.Extension> = builder.extensions.toList()
+  internal val keyboardActions: Map<KeyStroke, ActionListener> = builder.keyboardActions.toMap()
+  internal val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = builder.imageResolverFactory
+  internal val iconResolver: (String) -> Icon? = builder.iconResolver
+  internal val customStyleSheetProviders: List<(backgroundColor: Color) -> StyleSheet> = builder.customStyleSheetProviders.toList()
+  internal val fontResolver: CSSFontResolver? = builder.fontResolver
+  internal val extensions: List<ExtendableHTMLViewFactory.Extension> = builder.extensions.toList()
 
   constructor() : this(builder())
 
@@ -82,6 +83,7 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
      * @see [customStyleSheetProvider]
      */
     val customStyleSheetProviders: MutableList<(backgroundColor: Color) -> StyleSheet> = mutableListOf()
+
     /**
      * Provide custom [fontResolver].
      * Usually this would be needed only in the context of an editor.
@@ -158,9 +160,11 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
      */
     fun customStyleSheet(@Language("CSS") customStyleSheet: String): Builder =
       apply {
-        this.customStyleSheetProviders.add { StyleSheetUtil.loadStyleSheet(
-          customStyleSheet.replace(PX_SIZE_REGEX) { JBUIScale.scale(it.groupValues[1].toInt()).toString() + "px" }
-        ) }
+        this.customStyleSheetProviders.add {
+          StyleSheetUtil.loadStyleSheet(
+            customStyleSheet.replace(PX_SIZE_REGEX) { JBUIScale.scale(it.groupValues[1].toInt()).toString() + "px" }
+          )
+        }
       }
 
     /**

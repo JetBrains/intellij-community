@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Builder
 import com.intellij.ui.scale.JBUIScale
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.*
 
@@ -41,19 +42,36 @@ import java.util.*
  * ```
  */
 class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
+  @ApiStatus.Internal
   val colorScheme: EditorColorsScheme = builder.colorScheme
+
+  @ApiStatus.Internal
   val editorInlineContext: Boolean = builder.editorInlineContext
+
+  @ApiStatus.Internal
   val inlineCodeParentSelectors: List<String> = builder.inlineCodeParentSelectors.toList().ifEmpty { listOf("") }
+
+  @ApiStatus.Internal
   val largeCodeFontSizeSelectors: List<String> = builder.largeCodeFontSizeSelectors.toList()
+
+  @ApiStatus.Internal
   val enableInlineCodeBackground: Boolean = builder.enableInlineCodeBackground
+
+  @ApiStatus.Internal
   val enableCodeBlocksBackground: Boolean = builder.enableCodeBlocksBackground
+
+  @ApiStatus.Internal
   val useFontLigaturesInCode: Boolean = builder.useFontLigaturesInCode
 
   /** unscaled */
+  @ApiStatus.Internal
   val spaceBeforeParagraph: Int = builder.spaceBeforeParagraph
 
   /** unscaled */
+  @ApiStatus.Internal
   val spaceAfterParagraph: Int = builder.spaceAfterParagraph
+
+  @ApiStatus.Internal
   val elementStyleOverrides: ElementStyleOverrides? = builder.elementStyleOverrides
 
   constructor() : this(builder())
@@ -102,8 +120,12 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
    * [new values for themes](https://plugins.jetbrains.com/docs/intellij/themes-customize.html)
    */
   class ElementStyleOverrides(builder: Builder) {
+
+    @ApiStatus.Internal
     val elementKindThemePropertySuffix: String = builder.elementKindThemePropertySuffix?.takeUnless { it.isBlank() }
                                                  ?: throw IllegalStateException("elementKindThemePropertySuffix must not be null or blank")
+
+    @ApiStatus.Internal
     val overrides: Map<ElementKind, Collection<ElementProperty>> = builder.overrides.mapValues { it.value.toList() }
 
     override fun equals(other: Any?): Boolean =
