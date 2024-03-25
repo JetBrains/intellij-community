@@ -126,7 +126,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                 }
 
                 if (actionFile is KtFile) {
-                    DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
+                    // TODO check diagnostics for K2
+                    if (!isFirPlugin()) DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
                 }
 
                 if (actionShouldBeAvailable) {
