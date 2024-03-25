@@ -72,6 +72,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     myPaintArrowButton = paintArrowButton;
   }
 
+  /**
+   * @deprecated Parameter {@code c} is not used. Please use {@link #DarculaComboBoxUI()} constructor instead
+   */
   @SuppressWarnings("unused")
   @Deprecated
   public DarculaComboBoxUI(JComboBox c) {
@@ -92,8 +95,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
    * <li>Remove Border and ErrorBorderCapable implementations from DarculaComboBoxUI.
    * Extract border functionality from {@link DarculaComboBoxUI} into a separate class like OldDarculaComboBoxBorder, add it into base themes
    * <li>Remove isNewBorderSupported method
+   * <li>Use {@link DarculaComboBoxBorder} or its descendants
    * </ol>
-   * and use {@link DarculaComboBoxBorder} or its descendants instead.
    *
    * @return true if this DarculaComboBoxUI has no specific customization for Border, so {@link DarculaComboBoxBorder} can use own rendering
    */
@@ -272,6 +275,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  /**
+   * @deprecated The method is not used anymore
+   */
   @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
   protected Color getArrowButtonFillColor(Color defaultColor) {
