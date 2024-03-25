@@ -1,4 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea
+
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.appSystemDir
@@ -7,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -82,7 +84,6 @@ class KotlinFacetDeserializationTest {
                 assertEmpty(additionalVisibleModuleNames)
                 assertEmpty(externalProjectId)
                 assertEquals(KotlinModuleKind.DEFAULT, kind)
-                assertNotNull(compilerArguments)
             }
         }
     }

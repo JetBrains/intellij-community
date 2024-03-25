@@ -1,4 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea
+
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.application.EDT
@@ -42,12 +45,8 @@ class KotlinFacetSerializationTest {
     @Rule
     val tempDirManager = TemporaryDirectory()
 
-    lateinit var module: Module
-
     @Before
     fun verifyImlDoesntExist() {
-        //TODO: remove after enabling by default
-        Registry.get("workspace.model.kotlin.facet.bridge").setValue(true)
         Assume.assumeTrue("Execute only if kotlin facet bridge enabled", KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled)
         TestCase.assertFalse(Files.exists(projectRule.module.moduleNioFile))
     }

@@ -1,4 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea
+
 import com.intellij.facet.FacetTypeRegistry
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.module.Module
@@ -13,16 +16,9 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-interface KotlinModuleFixtureBuilder : JavaModuleFixtureBuilder<KotlinModuleTestFixture> {
+interface KotlinModuleFixtureBuilder : JavaModuleFixtureBuilder<KotlinModuleTestFixture>
 
-
-
-    //fun addWebRoot(rootPath: @NonNls String, relativePath: @NonNls String): com.intellij.testFramework.builders.WebModuleFixtureBuilder
-    //fun setWebXml(path: @NonNls String): com.intellij.testFramework.builders.WebModuleFixtureBuilder
-}
-
-class KotlinModuleFixtureBuilderImpl(val fixtureBuilder: TestFixtureBuilder<IdeaProjectTestFixture>) :
+class KotlinModuleFixtureBuilderImpl(fixtureBuilder: TestFixtureBuilder<IdeaProjectTestFixture>) :
     JavaModuleFixtureBuilderImpl<KotlinModuleTestFixture>(StdModuleTypes.JAVA, fixtureBuilder), KotlinModuleFixtureBuilder {
 
     override fun instantiateFixture() = KotlinModuleTestFixtureImpl(this)
@@ -33,16 +29,13 @@ class KotlinModuleFixtureBuilderImpl(val fixtureBuilder: TestFixtureBuilder<Idea
     }
 }
 
-
 interface KotlinModuleTestFixture : ModuleFixture {
-    //fun setWebXml(webXmlPath: @NonNls String?)
     val kotlinFacet: KotlinFacet?
 }
 
 class KotlinModuleTestFixtureImpl(builder: ModuleFixtureBuilderImpl<*>?) : ModuleFixtureImpl(builder!!), KotlinModuleTestFixture {
     override val kotlinFacet: KotlinFacet?
         get() = KotlinFacet.get(module)!!
-
 }
 
 

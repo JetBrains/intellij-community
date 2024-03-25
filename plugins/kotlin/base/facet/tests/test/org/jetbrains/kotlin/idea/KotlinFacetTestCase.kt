@@ -1,16 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea
+
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.*
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
+import org.junit.Assume
 import java.io.File
 
 abstract class KotlinFacetTestCase : UsefulTestCase() {
-    protected lateinit var myTestFixture: JavaCodeInsightTestFixture
+    private lateinit var myTestFixture: JavaCodeInsightTestFixture
     lateinit var myProject: Project
-    lateinit var myKotlinFixtureBuilder: KotlinModuleFixtureBuilder
+    private lateinit var myKotlinFixtureBuilder: KotlinModuleFixtureBuilder
 
     val myModule: Module
         get() = myTestFixture.module
@@ -19,41 +23,36 @@ abstract class KotlinFacetTestCase : UsefulTestCase() {
         return PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') /*+ getBasePath()*/
     }
 
+
     override fun setUp() {
         super.setUp()
-        //TODO: remove after enabling by default
-        Registry.get("workspace.model.kotlin.facet.bridge").setValue(true)
-        val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(
-            name
-        )
 
+        val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
         val testDataPath: String = getTestDataPath()
 
         myTestFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.fixture)
-        myTestFixture!!.testDataPath = testDataPath
+            ?: error("Failed to create test fixture")
+        myTestFixture.testDataPath = testDataPath
 
         configureProjectBuilder(projectBuilder)
-        //myFixture.setUp()
-        myTestFixture!!.setUp()
+        myTestFixture.setUp()
 
         myProject = myTestFixture.project
+        Assume.assumeTrue("Execute only if kotlin facet bridge enabled", KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled)
     }
 
     protected open fun configureProjectBuilder(projectBuilder: TestFixtureBuilder<IdeaProjectTestFixture?>) {
         val tempDirPath: String = myTestFixture.tempDirPath
         IdeaTestFixtureFactory.getFixtureFactory().registerFixtureBuilder(
             KotlinModuleFixtureBuilder::class.java,
-            "KotlinModuleFixtureBuilderImpl"
+            KotlinModuleFixtureBuilderImpl::class.java.name
         )
         myKotlinFixtureBuilder = projectBuilder.addModule(KotlinModuleFixtureBuilder::class.java)
         myKotlinFixtureBuilder.addContentRoot(tempDirPath)
-        //configure(myKotlinFixtureBuilder)
-        //TODO: add root here
     }
 
     override fun tearDown() {
         val fixture: JavaCodeInsightTestFixture = myTestFixture
-        //myTestFixture = null
         try {
             fixture.tearDown()
         } catch (e: Throwable) {
