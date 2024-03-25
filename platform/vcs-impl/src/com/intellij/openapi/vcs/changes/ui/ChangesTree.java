@@ -814,6 +814,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
     }

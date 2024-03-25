@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
@@ -65,7 +64,6 @@ class SavedPatchesTree(project: Project,
     val selectedObjects = selectedPatchObjects()
     val data = visibleProvidersList.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
     if (data != null) return data
-    if (CommonDataKeys.PROJECT.`is`(dataId)) return myProject
     return super.getData(dataId)
   }
 
