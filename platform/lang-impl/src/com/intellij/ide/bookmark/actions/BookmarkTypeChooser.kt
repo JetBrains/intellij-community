@@ -116,6 +116,7 @@ internal class BookmarkTypeChooser(
           return super.accept(aComponent) && (aComponent !is JButton || aComponent == firstButton)
         }
       }
+      putClientProperty(UIUtil.ENABLE_IME_FORWARDING_IN_POPUP, true)
     }
   }
 
