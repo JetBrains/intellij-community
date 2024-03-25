@@ -12,6 +12,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -29,8 +30,16 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class StringUtil extends StringUtilRt {
+@SuppressWarnings({"NonFinalUtilityClass", "UtilityClassWithPublicConstructor"})
+@NonExtendable
+public class StringUtil {
+
+  /**
+   * @deprecated do not inherit from this class
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public StringUtil() { }
 
   @SuppressWarnings("UnnecessaryUnicodeEscape")
   public static final String ELLIPSIS = "\u2026";
@@ -3139,5 +3148,56 @@ public class StringUtil extends StringUtilRt {
 
   private static boolean isWhitespaceTabOrNewLine(char c) {
     return c == ' ' || c == '\t' || c == '\n';
+  }
+
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
+  public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
+    return StringUtilRt.equal(s1, s2, caseSensitive);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull CharSequence convertLineSeparators(@NotNull CharSequence text, @NotNull String newSeparator) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator);
+  }
+
+  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text,
+                                             @NotNull String newSeparator,
+                                             int @Nullable [] offsetsToKeep,
+                                             boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWithIgnoreCase(@NotNull String str, int startOffset, @NotNull String prefix) {
+    return StringUtilRt.startsWithIgnoreCase(str, startOffset, prefix);
+  }
+
+  @Contract(pure = true)
+  public static boolean endsWithIgnoreCase(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    return StringUtilRt.endsWithIgnoreCase(text, suffix);
+  }
+
+  /**
+   * @see StringUtilRt#formatFileSize(long, String, int)
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+    return StringUtilRt.formatFileSize(fileSize, unitSeparator, rank);
+  }
+
+  @Contract(pure = true)
+  public static int rankForFileSize(long fileSize) {
+    return StringUtilRt.rankForFileSize(fileSize);
   }
 }
