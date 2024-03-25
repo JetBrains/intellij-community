@@ -1504,6 +1504,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithWhen.kt");
                 }
 
+                @TestMetadata("returnFromInlineLambda.kt")
+                public void testReturnFromInlineLambda() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/returnFromInlineLambda.kt");
+                }
+
                 @TestMetadata("runExpression.kt")
                 public void testRunExpression() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/runExpression.kt");
