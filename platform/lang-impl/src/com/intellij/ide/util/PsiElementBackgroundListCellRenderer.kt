@@ -4,6 +4,7 @@ package com.intellij.ide.util
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.navigation.LocationPresentation
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
@@ -80,7 +81,7 @@ internal class PsiElementBackgroundListCellRenderer(
                                                   index: Int,
                                                   isSelected: Boolean,
                                                   cellHasFocus: Boolean): Component {
-          val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+          val component= ReadAction.compute<Component, Error> { super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) }
           foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(cellHasFocus) else NamedColorUtil.getInactiveTextColor()
           isOpaque = false
           icon = presentation.locationIcon
